@@ -59,8 +59,10 @@ import com.mobi.rest.security.annotations.Value;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
@@ -90,7 +92,6 @@ import javax.ws.rs.core.Response;
 
 @Component(service = MergeRequestRest.class, immediate = true)
 @Path("/merge-requests")
-@Api(value = "/merge-requests")
 public class MergeRequestRest {
 
     private MergeRequestManager manager;
@@ -148,10 +149,20 @@ public class MergeRequestRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves all MergeRequests in the application")
-    public Response getMergeRequests(@QueryParam("sort") String sort,
-                              @DefaultValue("false") @QueryParam("ascending") boolean asc,
-                              @DefaultValue("false") @QueryParam("accepted") boolean accepted) {
+    @Operation(
+        summary = "Retrieves all MergeRequests in the application",
+        responses = {
+            @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getMergeRequests(
+            @Parameter(description = "")
+            @QueryParam("sort") String sort,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("ascending") boolean asc,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("accepted") boolean accepted) {
         MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
         if (!StringUtils.isEmpty(sort)) {
             builder.setSortBy(createIRI(sort, vf));
@@ -191,15 +202,30 @@ public class MergeRequestRest {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Creates a new MergeRequest in the application with the provided information")
-    public Response createMergeRequests(@Context ContainerRequestContext context,
-                                 @FormDataParam("title") String title,
-                                 @FormDataParam("description") String description,
-                                 @FormDataParam("recordId") String recordId,
-                                 @FormDataParam("sourceBranchId") String sourceBranchId,
-                                 @FormDataParam("targetBranchId") String targetBranchId,
-                                 @FormDataParam("assignees") List<FormDataBodyPart> assignees,
-                                 @FormDataParam("removeSource") @DefaultValue("false") boolean removeSource) {
+    @Operation(
+        summary = "Creates a new MergeRequest in the application with the provided information",
+        responses = {
+            @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response createMergeRequests(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @FormDataParam("title") String title,
+            @Parameter(description = "")
+            @FormDataParam("description") String description,
+            @Parameter(description = "")
+            @FormDataParam("recordId") String recordId,
+            @Parameter(description = "")
+            @FormDataParam("sourceBranchId") String sourceBranchId,
+            @Parameter(description = "")
+            @FormDataParam("targetBranchId") String targetBranchId,
+            @Parameter(description = "")
+            @FormDataParam("assignees") List<FormDataBodyPart> assignees,
+            @Parameter(description = "")
+            @FormDataParam("removeSource") @DefaultValue("false") boolean removeSource) {
 
         checkStringParam(title, "Merge Request title is required");
         checkStringParam(recordId, "Merge Request record is required");
@@ -243,8 +269,17 @@ public class MergeRequestRest {
     @Path("{requestId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves a MergeRequest from the application by its ID")
-    public Response getMergeRequest(@PathParam("requestId") String requestId) {
+    @Operation(
+        summary = "Retrieves a MergeRequest from the application by its ID",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getMergeRequest(
+            @Parameter(description = "")
+            @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
             MergeRequest request = manager.getMergeRequest(requestIdResource).orElseThrow(() ->
@@ -270,8 +305,16 @@ public class MergeRequestRest {
     @Path("{requestId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Updates a MergeRequest by its ID using the provided JSON-LD")
-    public Response updateMergeRequest(@PathParam("requestId") String requestId, String newMergeRequest) {
+    @Operation(
+        summary = "Updates a MergeRequest by its ID using the provided JSON-LD",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response updateMergeRequest(
+            @Parameter(description = "")
+            @PathParam("requestId") String requestId, String newMergeRequest) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
             manager.updateMergeRequest(requestIdResource, jsonToMergeRequest(requestIdResource, newMergeRequest));
@@ -280,7 +323,6 @@ public class MergeRequestRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
-
     
     /**
      * Accepts a {@link MergeRequest} with the provided ID by completing the merge it represents and changing the
@@ -294,14 +336,23 @@ public class MergeRequestRest {
     @POST
     @Path("{requestId}")
     @RolesAllowed("user")
-    @ApiOperation("Accepts a MergeRequest by performing the merge and changing the type")
+    @Operation(
+        summary = "Accepts a MergeRequest by performing the merge and changing the type",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PROP_PATH, value = "<" + MergeRequest.onRecord_IRI + ">",
             start = @Value(type = ValueType.PATH, value = "requestId"))
     @ActionAttributes(@AttributeValue(type = ValueType.PROP_PATH, value = "<" + MergeRequest.targetBranch_IRI + ">",
             id = VersionedRDFRecord.branch_IRI, start = @Value(type = ValueType.PATH, value = "requestId")))
-    public Response acceptMergeRequest(@Context ContainerRequestContext context,
-                                @PathParam("requestId") String requestId) {
+    public Response acceptMergeRequest(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         User activeUser = getActiveUser(context, engineManager);
         try {
@@ -324,8 +375,17 @@ public class MergeRequestRest {
     @DELETE
     @Path("{requestId}")
     @RolesAllowed("user")
-    @ApiOperation("Deletes a MergeRequest that has the provided requestId")
-    public Response deleteMergeRequest(@PathParam("requestId") String requestId) {
+    @Operation(
+        summary = "Deletes a MergeRequest that has the provided requestId",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response deleteMergeRequest(
+            @Parameter(description = "")
+            @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
             manager.deleteMergeRequest(requestIdResource);
@@ -337,7 +397,6 @@ public class MergeRequestRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
-
 
     /**
      * Retrieves a list of all the {@link Comment} chains in Mobi on the provided {@code requestId} sorted by issued
@@ -351,8 +410,17 @@ public class MergeRequestRest {
     @Path("{requestId}/comments")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves all Comment threads on a MergeRequest")
-    public Response getComments(@PathParam("requestId") String requestId) {
+    @Operation(
+        summary = "Retrieves all Comment threads on a MergeRequest",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getComments(
+            @Parameter(description = "")
+            @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
             List<List<JSONObject>> commentsJson = manager.getComments(requestIdResource).stream().map(
@@ -381,8 +449,20 @@ public class MergeRequestRest {
     @Path("{requestId}/comments/{commentId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves a Comment from the application by its ID")
-    public Response getComment(@PathParam("requestId") String requestId, @PathParam("commentId") String commentId) {
+    @Operation(
+        summary = "Retrieves a Comment from the application by its ID",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getComment(
+            @Parameter(description = "")
+            @PathParam("requestId") String requestId,
+            @Parameter(description = "")
+            @PathParam("commentId") String commentId) {
         try {
             manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->
                     ErrorUtils.sendError("MergeRequest " + requestId + " could not be found",
@@ -418,11 +498,22 @@ public class MergeRequestRest {
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @ApiOperation("Creates a new Comment on the MergeRequest in the application with the provided information")
-    public Response createComment(@Context ContainerRequestContext context,
-                           @PathParam("requestId") String requestId,
-                           @QueryParam("commentId") String commentId,
-                           String commentStr) {
+    @Operation(
+        summary = "Creates a new Comment on the MergeRequest in the application with the provided information",
+        responses = {
+            @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response createComment(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("requestId") String requestId,
+            @Parameter(description = "")
+            @QueryParam("commentId") String commentId,
+            @Parameter(description = "")
+            String commentStr) {
         checkStringParam(commentStr, "Comment string is required");
         User activeUser = getActiveUser(context, engineManager);
 
@@ -455,8 +546,19 @@ public class MergeRequestRest {
     @Path("{requestId}/comments/{commentId}")
     @Consumes(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @ApiOperation("Updates a Comment by its ID using the provided String")
-    public Response updateComment(@PathParam("commentId") String commentId, String newCommentStr) {
+    @Operation(
+        summary = "Updates a Comment by its ID using the provided String",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response updateComment(
+            @Parameter(description = "")
+            @PathParam("commentId") String commentId,
+            @Parameter(description = "")
+            String newCommentStr) {
         Resource commentIdResource = createIRI(commentId, vf);
         Comment comment = manager.getComment(commentIdResource).orElseThrow(() ->
                 ErrorUtils.sendError("Comment " + commentId + " could not be found",
@@ -486,10 +588,22 @@ public class MergeRequestRest {
     @DELETE
     @Path("{requestId}/comments/{commentId}")
     @RolesAllowed("user")
-    @ApiOperation("Deletes a Comment that has the provided commentId")
-    public Response deleteComment(@Context ContainerRequestContext context,
-                           @PathParam("requestId") String requestId,
-                           @PathParam("commentId") String commentId) {
+    @Operation(
+        summary = "Deletes a Comment that has the provided commentId",
+        responses = {
+            @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+            @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response deleteComment(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("requestId") String requestId,
+            @Parameter(description = "")
+            @PathParam("commentId") String commentId) {
         try {
             Resource commentIRI = createIRI(commentId, vf);
             manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->

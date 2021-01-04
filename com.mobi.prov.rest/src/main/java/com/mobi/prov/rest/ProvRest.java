@@ -46,8 +46,10 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.jaxb.Links;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -77,7 +79,6 @@ import javax.ws.rs.core.UriInfo;
 
 @Component(service = ProvRest.class, immediate = true)
 @Path("/provenance-data")
-@Api( value = "/provenance-data" )
 public class ProvRest {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProvRest.class);
@@ -150,10 +151,18 @@ public class ProvRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities")
-    public Response getActivities(@Context UriInfo uriInfo,
-                           @DefaultValue("0") @QueryParam("offset") int offset,
-                           @DefaultValue("50") @QueryParam("limit") int limit) {
+    @Operation(
+        summary = "Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "A JSON object with a key for activities and a key for entities"),
+        }
+    )
+    public Response getActivities(
+            @Context UriInfo uriInfo,
+            @Parameter(schema = @Schema(type = "integer", description = "offset.", required = false))
+            @DefaultValue("0") @QueryParam("offset") int offset,
+            @Parameter(schema = @Schema(type = "integer", description = "limit.", required = false))
+            @DefaultValue("50") @QueryParam("limit") int limit) {
         validateParams(limit, offset);
         List<Activity> activityList = new ArrayList<>();
         try (RepositoryConnection conn = provService.getConnection()) {

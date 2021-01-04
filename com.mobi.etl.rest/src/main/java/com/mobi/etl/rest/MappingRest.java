@@ -53,8 +53,10 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -92,7 +94,6 @@ import javax.ws.rs.core.StreamingOutput;
 
 @Component(service = MappingRest.class, immediate = true)
 @Path("/mappings")
-@Api( value = "/mappings" )
 public class MappingRest {
 
     private final Logger logger = LoggerFactory.getLogger(MappingRest.class);
@@ -151,17 +152,32 @@ public class MappingRest {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Upload mapping sent as form data.")
+    @Operation(
+        summary = "Upload mapping sent as form data",
+        responses = {
+            @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = MappingRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
-    public Response upload(@Context ContainerRequestContext context,
-                    @FormDataParam("title") String title,
-                    @FormDataParam("description") String description,
-                    @FormDataParam("markdown") String markdown,
-                    @FormDataParam("keywords") List<FormDataBodyPart> keywords,
-                    @FormDataParam("file") InputStream fileInputStream,
-                    @FormDataParam("file") FormDataContentDisposition fileDetail,
-                    @FormDataParam("jsonld") String jsonld) {
+    public Response upload(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @FormDataParam("title") String title,
+            @Parameter(description = "")
+            @FormDataParam("description") String description,
+            @Parameter(description = "")
+            @FormDataParam("markdown") String markdown,
+            @Parameter(description = "")
+            @FormDataParam("keywords") List<FormDataBodyPart> keywords,
+            @Parameter(description = "")
+            @FormDataParam("file") InputStream fileInputStream,
+            @Parameter(description = "")
+            @FormDataParam("file") FormDataContentDisposition fileDetail,
+            @Parameter(description = "")
+            @FormDataParam("jsonld") String jsonld) {
         if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
             throw ErrorUtils.sendError("Must provide either a file or a JSON-LD string", Response.Status.BAD_REQUEST);
         }
@@ -214,9 +230,18 @@ public class MappingRest {
     @Path("{recordId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieve JSON-LD of an uploaded mapping")
+    @Operation(
+        summary = "Retrieve JSON-LD of an uploaded mapping",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getMapping(@PathParam("recordId") String recordId) {
+    public Response getMapping(
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId) {
         try {
             logger.info("Getting mapping " + recordId);
             MappingWrapper mapping = manager.retrieveMapping(vf.createIRI(recordId)).orElseThrow(() ->
@@ -240,10 +265,20 @@ public class MappingRest {
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
-    @ApiOperation("Download an uploaded mapping")
+    @Operation(
+        summary = "Download an uploaded mapping",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response downloadMapping(@PathParam("recordId") String recordId,
-                             @DefaultValue("jsonld") @QueryParam("format") String format) {
+    public Response downloadMapping(
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String format) {
         try {
             logger.info("Downloading mapping " + recordId);
             MappingWrapper mapping = manager.retrieveMapping(vf.createIRI(recordId)).orElseThrow(() ->
@@ -277,11 +312,20 @@ public class MappingRest {
     @DELETE
     @Path("{recordId}")
     @RolesAllowed("user")
-    @ApiOperation("Delete an uploaded mapping")
+    @Operation(
+        summary = "Delete an uploaded mapping",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(Delete.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteMapping(@Context ContainerRequestContext context,
-                           @PathParam("recordId") String recordId) {
+    public Response deleteMapping(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId) {
         try {
             catalogManager.deleteRecord(getActiveUser(context, engineManager), vf.createIRI(recordId),
                     MappingRecord.class);

@@ -55,8 +55,10 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -90,7 +92,6 @@ import javax.ws.rs.core.UriInfo;
 
 @Component(service = DatasetRest.class, immediate = true)
 @Path("/datasets")
-@Api(value = "/datasets")
 public class DatasetRest {
     private DatasetManager manager;
     private EngineManager engineManager;
@@ -168,13 +169,24 @@ public class DatasetRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves all DatasetRecords in the local Catalog")
-    public Response getDatasetRecords(@Context UriInfo uriInfo,
-                               @QueryParam("offset") int offset,
-                               @QueryParam("limit") int limit,
-                               @QueryParam("sort") String sort,
-                               @DefaultValue("true") @QueryParam("ascending") boolean asc,
-                               @QueryParam("searchText") String searchText) {
+    @Operation(
+        summary = "Retrieves all DatasetRecords in the local Catalog.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "A Response with a JSON array of DatasetRecords"),
+        }
+    )
+    public Response getDatasetRecords(
+            @Context UriInfo uriInfo,
+            @Parameter(description = "")
+            @QueryParam("offset") int offset,
+            @Parameter(description = "")
+            @QueryParam("limit") int limit,
+            @Parameter(description = "")
+            @QueryParam("sort") String sort,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("ascending") boolean asc,
+            @Parameter(description = "")
+            @QueryParam("searchText") String searchText) {
         try {
             LinksUtils.validateParams(limit, offset);
             DatasetPaginatedSearchParams params = new DatasetPaginatedSearchParams(vf).setOffset(offset)
@@ -228,15 +240,28 @@ public class DatasetRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @ApiOperation("Creates a new DatasetRecord in the local Catalog and Dataset in the specified repository")
-    public Response createDatasetRecord(@Context ContainerRequestContext context,
-                                 @FormDataParam("title") String title,
-                                 @FormDataParam("repositoryId") String repositoryId,
-                                 @FormDataParam("datasetIRI") String datasetIRI,
-                                 @FormDataParam("description") String description,
-                                 @FormDataParam("markdown") String markdown,
-                                 @FormDataParam("keywords") List<FormDataBodyPart> keywords,
-                                 @FormDataParam("ontologies") List<FormDataBodyPart> ontologies) {
+    @Operation(
+        summary = "Creates a new DatasetRecord in the local Catalog and Dataset in the specified repository.",
+        responses = {
+            @ApiResponse(responseCode = "201", description = "A Response with the IRI string of the created DatasetRecord"),
+        }
+    )
+    public Response createDatasetRecord(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @FormDataParam("title") String title,
+            @Parameter(description = "")
+            @FormDataParam("repositoryId") String repositoryId,
+            @Parameter(description = "")
+            @FormDataParam("datasetIRI") String datasetIRI,
+            @Parameter(description = "")
+            @FormDataParam("description") String description,
+            @Parameter(description = "")
+            @FormDataParam("markdown") String markdown,
+            @Parameter(description = "")
+            @FormDataParam("keywords") List<FormDataBodyPart> keywords,
+            @Parameter(description = "")
+            @FormDataParam("ontologies") List<FormDataBodyPart> ontologies) {
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
         User activeUser = getActiveUser(context, engineManager);
@@ -286,8 +311,15 @@ public class DatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("{datasetRecordId}")
     @RolesAllowed("user")
-    @ApiOperation("Gets a specific DatasetRecord from the local Catalog")
-    public Response getDatasetRecord(@PathParam("datasetRecordId") String datasetRecordId) {
+    @Operation(
+    summary = "Gets a specific DatasetRecord from the local Catalog.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),
+        }
+    )
+    public Response getDatasetRecord(
+            @Parameter(description = "")
+            @PathParam("datasetRecordId") String datasetRecordId) {
         Resource recordIRI = vf.createIRI(datasetRecordId);
         try {
             DatasetRecord datasetRecord = manager.getDatasetRecord(recordIRI).orElseThrow(() ->
@@ -315,10 +347,18 @@ public class DatasetRest {
     @DELETE
     @Path("{datasetRecordId}")
     @RolesAllowed("user")
-    @ApiOperation("Deletes a specific DatasetRecord in the local Catalog")
-    public Response deleteDatasetRecord(@Context ContainerRequestContext context,
-                                 @PathParam("datasetRecordId") String datasetRecordId,
-                                 @DefaultValue("false") @QueryParam("force") boolean force) {
+    @Operation(
+        summary = "Deletes a specific DatasetRecord in the local Catalog.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),
+        }
+    )
+    public Response deleteDatasetRecord(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("datasetRecordId") String datasetRecordId,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("force") boolean force) {
         Resource recordIRI = vf.createIRI(datasetRecordId);
         User activeUser = getActiveUser(context, engineManager);
         DeleteActivity deleteActivity = null;
@@ -351,9 +391,17 @@ public class DatasetRest {
     @DELETE
     @Path("{datasetRecordId}/data")
     @RolesAllowed("user")
-    @ApiOperation("Clears the data within a specific DatasetRecord in the local Catalog")
-    public Response clearDatasetRecord(@PathParam("datasetRecordId") String datasetRecordId,
-                                @DefaultValue("false") @QueryParam("force") boolean force) {
+    @Operation(
+        summary = "Clears the data within a specific DatasetRecord in the local Catalog.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),
+        }
+    )
+    public Response clearDatasetRecord(
+            @Parameter(description = "")
+            @PathParam("datasetRecordId") String datasetRecordId,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("force") boolean force) {
         Resource recordIRI = vf.createIRI(datasetRecordId);
         try {
             if (force) {
@@ -380,10 +428,21 @@ public class DatasetRest {
     @POST
     @Path("{datasetRecordId}/data")
     @RolesAllowed("user")
-    @ApiOperation("Uploads the data within an RDF file to a specific DatasetRecord in the local Catalog")
-    public Response uploadData(@PathParam("datasetRecordId") String datasetRecordId,
-                        @FormDataParam("file") InputStream fileInputStream,
-                        @FormDataParam("file") FormDataContentDisposition fileDetail) {
+    @Operation(
+        summary = "Uploads the data within an RDF file to a specific DatasetRecord in the local Catalog.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),
+            @ApiResponse(responseCode = "400", description = "A Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "A Response indicating INTERNAL_SERVER_ERROR")
+        }
+    )
+    public Response uploadData(
+            @Parameter(description = "")
+            @PathParam("datasetRecordId") String datasetRecordId,
+            @Parameter(description = "")
+            @FormDataParam("file") InputStream fileInputStream,
+            @Parameter(description = "")
+            @FormDataParam("file") FormDataContentDisposition fileDetail) {
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("Must provide a file", Response.Status.BAD_REQUEST);
         }

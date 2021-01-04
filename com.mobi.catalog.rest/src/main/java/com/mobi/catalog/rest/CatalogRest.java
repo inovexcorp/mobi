@@ -92,8 +92,10 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -139,7 +141,6 @@ import javax.ws.rs.core.UriInfo;
 
 @Component(service = CatalogRest.class, immediate = true)
 @Path("/catalogs")
-@Api(value = "/catalogs")
 public class CatalogRest {
 
     private static final Logger LOG = LoggerFactory.getLogger(CatalogRest.class);
@@ -250,8 +251,17 @@ public class CatalogRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the distributed and local Catalogs.")
-    public Response getCatalogs(@QueryParam("type") String catalogType) {
+    @Operation(
+        summary = "Retrieves the distributed and local Catalogs",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getCatalogs(
+            @Parameter(description = "")
+            @QueryParam("type") String catalogType) {
         try {
             Set<Catalog> catalogs = new HashSet<>();
             Catalog localCatalog = catalogManager.getLocalCatalog();
@@ -286,8 +296,17 @@ public class CatalogRest {
     @Path("{catalogId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the Catalog specified by the provided ID.")
-    public Response getCatalog(@PathParam("catalogId") String catalogId) {
+    @Operation(
+        summary = "Retrieves the Catalog specified by the provided ID",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getCatalog(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId) {
         try {
             Resource catalogIri = vf.createIRI(catalogId);
             if (catalogIri.equals(configProvider.getLocalCatalogIRI())) {
@@ -323,15 +342,30 @@ public class CatalogRest {
     @Path("{catalogId}/records")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the Records in the Catalog.")
-    public Response getRecords(@Context UriInfo uriInfo,
-                        @PathParam("catalogId") String catalogId,
-                        @QueryParam("sort") String sort,
-                        @QueryParam("type") String recordType,
-                        @QueryParam("offset") int offset,
-                        @QueryParam("limit") int limit,
-                        @DefaultValue("true") @QueryParam("ascending") boolean asc,
-                        @QueryParam("searchText") String searchText) {
+    @Operation(
+        summary = "Retrieves the Records in the Catalog",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getRecords(
+            @Context UriInfo uriInfo,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @QueryParam("sort") String sort,
+            @Parameter(description = "")
+            @QueryParam("type") String recordType,
+            @Parameter(description = "")
+            @QueryParam("offset") int offset,
+            @Parameter(description = "")
+            @QueryParam("limit") int limit,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("ascending") boolean asc,
+            @Parameter(description = "")
+            @QueryParam("searchText") String searchText) {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
 
@@ -384,19 +418,34 @@ public class CatalogRest {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Creates a new Record in the Catalog.")
+    @Operation(
+        summary = "Creates a new Record in the Catalog",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionAttributes(
             @AttributeValue(id = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", value = "type",
                     type = ValueType.BODY))
     @ResourceId(value = "catalogId", type = ValueType.PATH)
-    public Response createRecord(@Context ContainerRequestContext context,
-                          @PathParam("catalogId") String catalogId,
-                          @FormDataParam("type") String typeIRI,
-                          @FormDataParam("title") String title,
-                          @FormDataParam("identifier") String identifier,
-                          @FormDataParam("description") String description,
-                          @FormDataParam("markdown") String markdown,
-                          @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
+    public Response createRecord(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @FormDataParam("type") String typeIRI,
+            @Parameter(description = "")
+            @FormDataParam("title") String title,
+            @Parameter(description = "")
+            @FormDataParam("identifier") String identifier,
+            @Parameter(description = "")
+            @FormDataParam("description") String description,
+            @Parameter(description = "")
+            @FormDataParam("markdown") String markdown,
+            @Parameter(description = "")
+            @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
         checkStringParam(title, "Record title is required");
         Map<String, OrmFactory<? extends Record>> recordFactories = getRecordFactories();
         if (typeIRI == null || !recordFactories.keySet().contains(typeIRI)) {
@@ -449,10 +498,20 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the Catalog record by its ID.")
+    @Operation(
+        summary = "Retrieves the Catalog record by its ID",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getRecord(@PathParam("catalogId") String catalogId,
-                       @PathParam("recordId") String recordId) {
+    public Response getRecord(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId) {
         try {
             Record record = catalogManager.getRecord(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get()).orElseThrow(() ->
@@ -481,11 +540,21 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes the Catalog Record by its ID.")
+    @Operation(
+        summary = "Deletes the Catalog Record by its ID",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteRecord(@Context ContainerRequestContext context,
-                          @PathParam("catalogId") String catalogId,
-                          @PathParam("recordId") String recordId) {
+    public Response deleteRecord(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId) {
         User activeUser = getActiveUser(context, engineManager);
         IRI recordIri = vf.createIRI(recordId);
         DeleteActivity deleteActivity = null;
@@ -520,11 +589,22 @@ public class CatalogRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Updates the Catalog Record by its ID using the provided Record JSON-LD.")
+    @Operation(
+        summary = "Updates the Catalog Record by its ID using the provided Record JSON-LD",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response updateRecord(@PathParam("catalogId") String catalogId,
-                          @PathParam("recordId") String recordId,
-                          String newRecordJson) {
+    public Response updateRecord(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            String newRecordJson) {
         try {
             Record newRecord = getNewThing(newRecordJson, vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get());
@@ -556,14 +636,28 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/distributions")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the list of Distributions associated with an UnversionedRecord.")
-    public Response getUnversionedDistributions(@Context UriInfo uriInfo,
-                                         @PathParam("catalogId") String catalogId,
-                                         @PathParam("recordId") String recordId,
-                                         @QueryParam("sort") String sort,
-                                         @DefaultValue("0") @QueryParam("offset") int offset,
-                                         @DefaultValue("100") @QueryParam("limit") int limit,
-                                         @DefaultValue("true") @QueryParam("ascending") boolean asc) {
+    @Operation(
+        summary = "Retrieves the list of Distributions associated with an UnversionedRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getUnversionedDistributions(
+            @Context UriInfo uriInfo,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @QueryParam("sort") String sort,
+            @Parameter(description = "")
+            @DefaultValue("0") @QueryParam("offset") int offset,
+            @Parameter(description = "")
+            @DefaultValue("100") @QueryParam("limit") int limit,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("ascending") boolean asc) {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Distribution> distributions = catalogManager.getUnversionedDistributions(vf.createIRI(catalogId),
@@ -598,15 +692,30 @@ public class CatalogRest {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Creates a new Distribution for the provided UnversionedRecord.")
-    public Response createUnversionedDistribution(@Context ContainerRequestContext context,
-                                           @PathParam("catalogId") String catalogId,
-                                           @PathParam("recordId") String recordId,
-                                           @FormDataParam("title") String title,
-                                           @FormDataParam("description") String description,
-                                           @FormDataParam("format") String format,
-                                           @FormDataParam("accessURL") String accessURL,
-                                           @FormDataParam("downloadURL") String downloadURL) {
+    @Operation(
+        summary = "Creates a new Distribution for the provided UnversionedRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response createUnversionedDistribution(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @FormDataParam("title") String title,
+            @Parameter(description = "")
+            @FormDataParam("description") String description,
+            @Parameter(description = "")
+            @FormDataParam("format") String format,
+            @Parameter(description = "")
+            @FormDataParam("accessURL") String accessURL,
+            @Parameter(description = "")
+            @FormDataParam("downloadURL") String downloadURL) {
         try {
             Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL,
                     context);
@@ -634,10 +743,21 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/distributions/{distributionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets a specific Distribution of an UnversionedRecord.")
-    public Response getUnversionedDistribution(@PathParam("catalogId") String catalogId,
-                                        @PathParam("recordId") String recordId,
-                                        @PathParam("distributionId") String distributionId) {
+    @Operation(
+        summary = "Gets a specific Distribution of an UnversionedRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getUnversionedDistribution(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("distributionId") String distributionId) {
         try {
             Distribution distribution = catalogManager.getUnversionedDistribution(vf.createIRI(catalogId),
                     vf.createIRI(recordId), vf.createIRI(distributionId)).orElseThrow(() ->
@@ -668,10 +788,21 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/distributions/{distributionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes a specific Distribution of an UnversionedRecord.")
-    public Response deleteUnversionedDistribution(@PathParam("catalogId") String catalogId,
-                                           @PathParam("recordId") String recordId,
-                                           @PathParam("distributionId") String distributionId) {
+    @Operation(
+        summary = "Deletes a specific Distribution of an UnversionedRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response deleteUnversionedDistribution(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("distributionId") String distributionId) {
         try {
             catalogManager.removeUnversionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(distributionId));
@@ -700,11 +831,23 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/distributions/{distributionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Updates a specific Distribution of an UnversionedRecord.")
-    public Response updateUnversionedDistribution(@PathParam("catalogId") String catalogId,
-                                           @PathParam("recordId") String recordId,
-                                           @PathParam("distributionId") String distributionId,
-                                           String newDistributionJson) {
+    @Operation(
+        summary = "Updates a specific Distribution of an UnversionedRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response updateUnversionedDistribution(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("distributionId") String distributionId,
+            @Parameter(description = "")
+            String newDistributionJson) {
         try {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
                     distributionFactory);
@@ -736,15 +879,29 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/versions")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets a list of Versions for a VersionedRecord.")
+    @Operation(
+        summary = "Gets a list of Versions for a VersionedRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getVersions(@Context UriInfo uriInfo,
-                         @PathParam("catalogId") String catalogId,
-                         @PathParam("recordId") String recordId,
-                         @QueryParam("sort") String sort,
-                         @DefaultValue("0") @QueryParam("offset") int offset,
-                         @DefaultValue("100") @QueryParam("limit") int limit,
-                         @DefaultValue("true") @QueryParam("ascending") boolean asc) {
+    public Response getVersions(
+            @Context UriInfo uriInfo,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @QueryParam("sort") String sort,
+            @Parameter(description = "")
+            @DefaultValue("0") @QueryParam("offset") int offset,
+            @Parameter(description = "")
+            @DefaultValue("100") @QueryParam("limit") int limit,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("ascending") boolean asc) {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Version> versions = catalogManager.getVersions(vf.createIRI(catalogId), vf.createIRI(recordId));
@@ -777,15 +934,28 @@ public class CatalogRest {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Creates a Version for the identified VersionedRecord.")
+    @Operation(
+        summary = "Creates a Version for the identified VersionedRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response createVersion(@Context ContainerRequestContext context,
-                           @PathParam("catalogId") String catalogId,
-                           @PathParam("recordId") String recordId,
-                           @FormDataParam("type") String typeIRI,
-                           @FormDataParam("title") String title,
-                           @FormDataParam("description") String description) {
+    public Response createVersion(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @FormDataParam("type") String typeIRI,
+            @Parameter(description = "")
+            @FormDataParam("title") String title,
+            @Parameter(description = "")
+            @FormDataParam("description") String description) {
         try {
             checkStringParam(title, "Version title is required");
             Map<String, OrmFactory<? extends Version>> versionFactories = getVersionFactories();
@@ -826,16 +996,30 @@ public class CatalogRest {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Creates a Tag for the identified VersionedRecord.")
+    @Operation(
+        summary = "Creates a Tag for the identified VersionedRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response createTag(@Context ContainerRequestContext context,
-                       @PathParam("catalogId") String catalogId,
-                       @PathParam("recordId") String recordId,
-                       @FormDataParam("title") String title,
-                       @FormDataParam("description") String description,
-                       @FormDataParam("iri") String iri,
-                       @FormDataParam("commit") String commitId) {
+    public Response createTag(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @FormDataParam("title") String title,
+            @Parameter(description = "")
+            @FormDataParam("description") String description,
+            @Parameter(description = "")
+            @FormDataParam("iri") String iri,
+            @Parameter(description = "")
+            @FormDataParam("commit") String commitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(iri, "Tag iri is required");
             checkStringParam(title, "Tag title is required");
@@ -883,9 +1067,19 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/versions/latest")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the latest Version of a VersionedRecord.")
-    public Response getLatestVersion(@PathParam("catalogId") String catalogId,
-                              @PathParam("recordId") String recordId) {
+    @Operation(
+        summary = "Gets the latest Version of a VersionedRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getLatestVersion(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId) {
         try {
             Version version = catalogManager.getLatestVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Version.class).get()).orElseThrow(() ->
@@ -914,11 +1108,22 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/versions/{versionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets a specific Version for the identified VersionedRecord.")
+    @Operation(
+        summary = "Gets a specific Version for the identified VersionedRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getVersion(@PathParam("catalogId") String catalogId,
-                        @PathParam("recordId") String recordId,
-                        @PathParam("versionId") String versionId) {
+    public Response getVersion(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("versionId") String versionId) {
         try {
             Version version = catalogManager.getVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(versionId), factoryRegistry.getFactoryOfType(Version.class).get()).orElseThrow(() ->
@@ -949,12 +1154,23 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/versions/{versionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes a specific Version from the identified VersionedRecord.")
+    @Operation(
+        summary = "Deletes a specific Version from the identified VersionedRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteVersion(@PathParam("catalogId") String catalogId,
-                           @PathParam("recordId") String recordId,
-                           @PathParam("versionId") String versionId) {
+    public Response deleteVersion(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("versionId") String versionId) {
         try {
             catalogManager.removeVersion(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(versionId));
             return Response.ok().build();
@@ -983,13 +1199,25 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Updates a specific Version of the identified VersionedRecord.")
+    @Operation(
+        summary = "Updates a specific Version of the identified VersionedRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response updateVersion(@PathParam("catalogId") String catalogId,
-                           @PathParam("recordId") String recordId,
-                           @PathParam("versionId") String versionId,
-                           String newVersionJson) {
+    public Response updateVersion(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("versionId") String versionId,
+            @Parameter(description = "")
+            String newVersionJson) {
         try {
             Version newVersion = getNewThing(newVersionJson, vf.createIRI(versionId),
                     factoryRegistry.getFactoryOfType(Version.class).get());
@@ -1023,15 +1251,30 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/versions/{versionId}/distributions")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the list of all Distributions for the identified Version.")
-    public Response getVersionedDistributions(@Context UriInfo uriInfo,
-                                       @PathParam("catalogId") String catalogId,
-                                       @PathParam("recordId") String recordId,
-                                       @PathParam("versionId") String versionId,
-                                       @QueryParam("sort") String sort,
-                                       @DefaultValue("0") @QueryParam("offset") int offset,
-                                       @DefaultValue("100") @QueryParam("limit") int limit,
-                                       @DefaultValue("true") @QueryParam("ascending") boolean asc) {
+    @Operation(
+        summary = "Gets the list of all Distributions for the identified Version",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getVersionedDistributions(
+            @Context UriInfo uriInfo,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("versionId") String versionId,
+            @Parameter(description = "")
+            @QueryParam("sort") String sort,
+            @Parameter(description = "")
+            @DefaultValue("0") @QueryParam("offset") int offset,
+            @Parameter(description = "")
+            @DefaultValue("100") @QueryParam("limit") int limit,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("ascending") boolean asc) {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Distribution> distributions = catalogManager.getVersionedDistributions(vf.createIRI(catalogId),
@@ -1068,16 +1311,32 @@ public class CatalogRest {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Creates a Distribution for the identified Version.")
-    public Response createVersionedDistribution(@Context ContainerRequestContext context,
-                                         @PathParam("catalogId") String catalogId,
-                                         @PathParam("recordId") String recordId,
-                                         @PathParam("versionId") String versionId,
-                                         @FormDataParam("title") String title,
-                                         @FormDataParam("description") String description,
-                                         @FormDataParam("format") String format,
-                                         @FormDataParam("accessURL") String accessURL,
-                                         @FormDataParam("downloadURL") String downloadURL) {
+    @Operation(
+        summary = "Creates a Distribution for the identified Version",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response createVersionedDistribution(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("versionId") String versionId,
+            @Parameter(description = "")
+            @FormDataParam("title") String title,
+            @Parameter(description = "")
+            @FormDataParam("description") String description,
+            @Parameter(description = "")
+            @FormDataParam("format") String format,
+            @Parameter(description = "")
+            @FormDataParam("accessURL") String accessURL,
+            @Parameter(description = "")
+            @FormDataParam("downloadURL") String downloadURL) {
         try {
             Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL,
                     context);
@@ -1108,11 +1367,23 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets a specific Distribution for the identified Version.")
-    public Response getVersionedDistribution(@PathParam("catalogId") String catalogId,
-                                      @PathParam("recordId") String recordId,
-                                      @PathParam("versionId") String versionId,
-                                      @PathParam("distributionId") String distributionId) {
+    @Operation(
+        summary = "Gets a specific Distribution for the identified Version",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getVersionedDistribution(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("versionId") String versionId,
+            @Parameter(description = "")
+            @PathParam("distributionId") String distributionId) {
         try {
             Distribution distribution = catalogManager.getVersionedDistribution(vf.createIRI(catalogId),
                     vf.createIRI(recordId), vf.createIRI(versionId), vf.createIRI(distributionId)).orElseThrow(() ->
@@ -1145,11 +1416,23 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes a specific Distribution of the identified Version.")
-    public Response deleteVersionedDistribution(@PathParam("catalogId") String catalogId,
-                                         @PathParam("recordId") String recordId,
-                                         @PathParam("versionId") String versionId,
-                                         @PathParam("distributionId") String distributionId) {
+    @Operation(
+        summary = "Deletes a specific Distribution of the identified Version",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response deleteVersionedDistribution(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("versionId") String versionId,
+            @Parameter(description = "")
+            @PathParam("distributionId") String distributionId) {
         try {
             catalogManager.removeVersionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(versionId), vf.createIRI(distributionId));
@@ -1181,12 +1464,25 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Updates a specific Distribution of the identified Version.")
-    public Response updateVersionedDistribution(@PathParam("catalogId") String catalogId,
-                                         @PathParam("recordId") String recordId,
-                                         @PathParam("versionId") String versionId,
-                                         @PathParam("distributionId") String distributionId,
-                                         String newDistributionJson) {
+    @Operation(
+        summary = "Updates a specific Distribution of the identified Version",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response updateVersionedDistribution(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("versionId") String versionId,
+            @Parameter(description = "")
+            @PathParam("distributionId") String distributionId,
+            @Parameter(description = "")
+            String newDistributionJson) {
         try {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
                     distributionFactory);
@@ -1215,11 +1511,23 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/versions/{versionId}/commit")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the Commit associated with the identified Version.")
-    public Response getVersionCommit(@PathParam("catalogId") String catalogId,
-                              @PathParam("recordId") String recordId,
-                              @PathParam("versionId") String versionId,
-                              @DefaultValue("jsonld") @QueryParam("format") String format) {
+    @Operation(
+        summary = "Gets the Commit associated with the identified Version",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getVersionCommit(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("versionId") String versionId,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
         try {
             Commit commit = catalogManager.getTaggedCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -1256,17 +1564,32 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/branches")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets list of Branches associated with a specific VersionedRDFRecord.")
+    @Operation(
+        summary = "Gets list of Branches associated with a specific VersionedRDFRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getBranches(@Context ContainerRequestContext context,
-                         @Context UriInfo uriInfo,
-                         @PathParam("catalogId") String catalogId,
-                         @PathParam("recordId") String recordId,
-                         @DefaultValue("http://purl.org/dc/terms/title") @QueryParam("sort") String sort,
-                         @DefaultValue("0") @QueryParam("offset") int offset,
-                         @DefaultValue("100") @QueryParam("limit") int limit,
-                         @DefaultValue("true") @QueryParam("ascending") boolean asc,
-                         @DefaultValue("false") @QueryParam("applyUserFilter") boolean applyUserFilter) {
+    public Response getBranches(
+            @Context ContainerRequestContext context,
+            @Context UriInfo uriInfo,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @DefaultValue("http://purl.org/dc/terms/title") @QueryParam("sort") String sort,
+            @Parameter(description = "")
+            @DefaultValue("0") @QueryParam("offset") int offset,
+            @Parameter(description = "")
+            @DefaultValue("100") @QueryParam("limit") int limit,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("ascending") boolean asc,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("applyUserFilter") boolean applyUserFilter) {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Branch> branches = catalogManager.getBranches(vf.createIRI(catalogId), vf.createIRI(recordId));
@@ -1311,16 +1634,30 @@ public class CatalogRest {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Creates a branch for a specific VersionedRDFRecord.")
+    @Operation(
+        summary = "Creates a branch for a specific VersionedRDFRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response createBranch(@Context ContainerRequestContext context,
-                          @PathParam("catalogId") String catalogId,
-                          @PathParam("recordId") String recordId,
-                          @FormDataParam("type") String typeIRI,
-                          @FormDataParam("title") String title,
-                          @FormDataParam("description") String description,
-                          @FormDataParam("commitId") String commitId) {
+    public Response createBranch(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @FormDataParam("type") String typeIRI,
+            @Parameter(description = "")
+            @FormDataParam("title") String title,
+            @Parameter(description = "")
+            @FormDataParam("description") String description,
+            @Parameter(description = "")
+            @FormDataParam("commitId") String commitId) {
         try ( RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(title, "Branch title is required");
             checkStringParam(commitId, "Commit ID is required");
@@ -1362,10 +1699,20 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/branches/master")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the master Branch of a VersionedRDFRecord.")
+    @Operation(
+        summary = "Gets the master Branch of a VersionedRDFRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getMasterBranch(@PathParam("catalogId") String catalogId,
-                             @PathParam("recordId") String recordId) {
+    public Response getMasterBranch(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId) {
         try {
             Branch masterBranch = catalogManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId));
             return Response.ok(thingToSkolemizedObjectNode(masterBranch, Branch.TYPE, transformer, bNodeService)
@@ -1392,11 +1739,22 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/branches/{branchId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Get a specific Branch for a specific VersionedRDFRecord.")
+    @Operation(
+        summary = "Get a specific Branch for a specific VersionedRDFRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getBranch(@PathParam("catalogId") String catalogId,
-                       @PathParam("recordId") String recordId,
-                       @PathParam("branchId") String branchId) {
+    public Response getBranch(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("branchId") String branchId) {
         try {
             Branch branch = catalogManager.getBranch(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId), factoryRegistry.getFactoryOfType(Branch.class).get()).orElseThrow(() ->
@@ -1426,15 +1784,26 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/branches/{branchId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes a specific Branch for a specific VersionedRDFRecord.")
+    @Operation(
+        summary = "Deletes a specific Branch for a specific VersionedRDFRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     @ActionAttributes(
             @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
     )
-    public Response deleteBranch(@PathParam("catalogId") String catalogId,
-                          @PathParam("recordId") String recordId,
-                          @PathParam("branchId") String branchId) {
+    public Response deleteBranch(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("branchId") String branchId) {
         try {
             catalogManager.removeBranch(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(branchId));
             return Response.ok().build();
@@ -1463,13 +1832,25 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Updates a specific Branch for a specific VersionedRDFRecord.")
+    @Operation(
+        summary = "Updates a specific Branch for a specific VersionedRDFRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response updateBranch(@PathParam("catalogId") String catalogId,
-                          @PathParam("recordId") String recordId,
-                          @PathParam("branchId") String branchId,
-                          String newBranchJson) {
+    public Response updateBranch(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("branchId") String branchId,
+            @Parameter(description = "")
+            String newBranchJson) {
         try {
             Branch newBranch = getNewThing(newBranchJson, vf.createIRI(branchId),
                     factoryRegistry.getFactoryOfType(Branch.class).get());
@@ -1503,15 +1884,29 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the Commit chain for a specific Branch.")
+    @Operation(
+        summary = "Gets the Commit chain for a specific Branch",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getCommitChain(@Context UriInfo uriInfo,
-                            @PathParam("catalogId") String catalogId,
-                            @PathParam("recordId") String recordId,
-                            @PathParam("branchId") String branchId,
-                            @QueryParam("targetId") String targetId,
-                            @QueryParam("offset") int offset,
-                            @QueryParam("limit") int limit) {
+    public Response getCommitChain(
+            @Context UriInfo uriInfo,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("branchId") String branchId,
+            @Parameter(description = "")
+            @QueryParam("targetId") String targetId,
+            @Parameter(description = "")
+            @QueryParam("offset") int offset,
+            @Parameter(description = "")
+            @QueryParam("limit") int limit) {
         LinksUtils.validateParams(limit, offset);
 
         try {
@@ -1558,17 +1953,29 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits")
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @ApiOperation("Creates a Commit for a specific Branch and sets it to be the new HEAD Commit.")
+    @Operation(
+        summary = "Creates a Commit for a specific Branch and sets it to be the new HEAD Commit",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     @ActionAttributes(
             @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
     )
-    public Response createBranchCommit(@Context ContainerRequestContext context,
-                                @PathParam("catalogId") String catalogId,
-                                @PathParam("recordId") String recordId,
-                                @PathParam("branchId") String branchId,
-                                @QueryParam("message") String message) {
+    public Response createBranchCommit(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("branchId") String branchId,
+            @Parameter(description = "")
+            @QueryParam("message") String message) {
         try {
             checkStringParam(message, "Commit message is required");
             User activeUser = getActiveUser(context, engineManager);
@@ -1598,12 +2005,24 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/head")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the HEAD Commit for a specific Branch.")
+    @Operation(
+        summary = "Gets the HEAD Commit for a specific Branch",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getHead(@PathParam("catalogId") String catalogId,
-                     @PathParam("recordId") String recordId,
-                     @PathParam("branchId") String branchId,
-                     @DefaultValue("jsonld") @QueryParam("format") String format) {
+    public Response getHead(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("branchId") String branchId,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
         try {
             Commit headCommit = catalogManager.getHeadCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -1637,13 +2056,26 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets a specific Commit on a specific Branch.")
+    @Operation(
+        summary = "Gets a specific Commit on a specific Branch",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getBranchCommit(@PathParam("catalogId") String catalogId,
-                             @PathParam("recordId") String recordId,
-                             @PathParam("branchId") String branchId,
-                             @PathParam("commitId") String commitId,
-                             @DefaultValue("jsonld") @QueryParam("format") String format) {
+    public Response getBranchCommit(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("branchId") String branchId,
+            @Parameter(description = "")
+            @PathParam("commitId") String commitId,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
         try {
             Commit commit = catalogManager.getCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -1679,13 +2111,26 @@ public class CatalogRest {
     @GET
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/difference")
     @RolesAllowed("user")
-    @ApiOperation("Gets the difference between the two provided Branches' HEAD Commits.")
+    @Operation(
+        summary = "Gets the difference between the two provided Branches' HEAD Commits",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getDifference(@PathParam("catalogId") String catalogId,
-                           @PathParam("recordId") String recordId,
-                           @PathParam("branchId") String branchId,
-                           @QueryParam("targetId") String targetBranchId,
-                           @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
+    public Response getDifference(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("branchId") String branchId,
+            @Parameter(description = "")
+            @QueryParam("targetId") String targetBranchId,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         try {
             checkStringParam(targetBranchId, "Target branch is required");
             Resource catalogIRI = vf.createIRI(catalogId);
@@ -1722,13 +2167,26 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/conflicts")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets a list of Conflicts found between the two provided Branches' HEAD Commits.")
+    @Operation(
+        summary = "Gets a list of Conflicts found between the two provided Branches' HEAD Commits",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getConflicts(@PathParam("catalogId") String catalogId,
-                          @PathParam("recordId") String recordId,
-                          @PathParam("branchId") String branchId,
-                          @QueryParam("targetId") String targetBranchId,
-                          @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
+    public Response getConflicts(
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("branchId") String branchId,
+            @Parameter(description = "")
+            @QueryParam("targetId") String targetBranchId,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
         try {
             checkStringParam(targetBranchId, "Target branch is required");
@@ -1775,19 +2233,33 @@ public class CatalogRest {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Merges the two commits identified by the provided IDs.")
+    @Operation(
+        summary = "Merges the two commits identified by the provided IDs",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(value = Modify.TYPE)
     @ActionAttributes(
             @AttributeValue(type = ValueType.QUERY, id = VersionedRDFRecord.branch_IRI, value = "targetId")
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response merge(@Context ContainerRequestContext context,
-                   @PathParam("catalogId") String catalogId,
-                   @PathParam("recordId") String recordId,
-                   @PathParam("branchId") String sourceBranchId,
-                   @QueryParam("targetId") String targetBranchId,
-                   @FormDataParam("additions") String additionsJson,
-                   @FormDataParam("deletions") String deletionsJson) {
+    public Response merge(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("branchId") String sourceBranchId,
+            @Parameter(description = "")
+            @QueryParam("targetId") String targetBranchId,
+            @Parameter(description = "")
+            @FormDataParam("additions") String additionsJson,
+            @Parameter(description = "")
+            @FormDataParam("deletions") String deletionsJson) {
         try {
             User activeUser = getActiveUser(context, engineManager);
             Model additions = StringUtils.isEmpty(additionsJson) ? null : convertJsonld(additionsJson);
@@ -1824,15 +2296,29 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
-    @ApiOperation("Gets the compiled resource for a the entity identified by a specific Commit.")
+    @Operation(
+        summary = "Gets the compiled resource for a the entity identified by a specific Commit",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getCompiledResource(@Context ContainerRequestContext context,
-                                 @PathParam("catalogId") String catalogId,
-                                 @PathParam("recordId") String recordId,
-                                 @PathParam("branchId") String branchId,
-                                 @PathParam("commitId") String commitId,
-                                 @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
-                                 @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply) {
+    public Response getCompiledResource(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("branchId") String branchId,
+            @Parameter(description = "")
+            @PathParam("commitId") String commitId,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply) {
         try {
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
@@ -1878,16 +2364,31 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
-    @ApiOperation("Gets the compiled resource for a the entity identified by a specific Commit.")
+    @Operation(
+        summary = "Gets the compiled resource for a the entity identified by a specific Commit",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response downloadCompiledResource(@Context ContainerRequestContext context,
-                                      @PathParam("catalogId") String catalogId,
-                                      @PathParam("recordId") String recordId,
-                                      @PathParam("branchId") String branchId,
-                                      @PathParam("commitId") String commitId,
-                                      @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
-                                      @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply,
-                                      @DefaultValue("resource") @QueryParam("fileName") String fileName) {
+    public Response downloadCompiledResource(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @PathParam("branchId") String branchId,
+            @Parameter(description = "")
+            @PathParam("commitId") String commitId,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply,
+            @Parameter(description = "")
+            @DefaultValue("resource") @QueryParam("fileName") String fileName) {
         try {
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
@@ -1935,10 +2436,20 @@ public class CatalogRest {
     @POST
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
     @RolesAllowed("user")
-    @ApiOperation("Creates a InProgressCommit linked to a specific VersionedRDFRecord.")
-    public Response createInProgressCommit(@Context ContainerRequestContext context,
-                                    @PathParam("catalogId") String catalogId,
-                                    @PathParam("recordId") String recordId) {
+    @Operation(
+        summary = "Creates a InProgressCommit linked to a specific VersionedRDFRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response createInProgressCommit(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId) {
         try {
             User activeUser = getActiveUser(context, engineManager);
             InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(activeUser);
@@ -1967,11 +2478,22 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord.")
-    public Response getInProgressCommit(@Context ContainerRequestContext context,
-                                 @PathParam("catalogId") String catalogId,
-                                 @PathParam("recordId") String recordId,
-                                 @DefaultValue("jsonld") @QueryParam("format") String format) {
+    @Operation(
+        summary = "Gets the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getInProgressCommit(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String format) {
         try {
             User activeUser = getActiveUser(context, engineManager);
             InProgressCommit inProgressCommit = catalogManager.getInProgressCommit(vf.createIRI(catalogId),
@@ -2001,10 +2523,20 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord.")
-    public Response deleteInProgressCommit(@Context ContainerRequestContext context,
-                                    @PathParam("catalogId") String catalogId,
-                                    @PathParam("recordId") String recordId) {
+    @Operation(
+        summary = "Deletes the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response deleteInProgressCommit(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId) {
         try {
             User activeUser = getActiveUser(context, engineManager);
             catalogManager.removeInProgressCommit(vf.createIRI(catalogId), vf.createIRI(recordId), activeUser);
@@ -2036,14 +2568,26 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Updates the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord.")
+    @Operation(
+        summary = "Updates the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response updateInProgressCommit(@Context ContainerRequestContext context,
-                                    @PathParam("catalogId") String catalogId,
-                                    @PathParam("recordId") String recordId,
-                                    @FormDataParam("additions") String additionsJson,
-                                    @FormDataParam("deletions") String deletionsJson) {
+    public Response updateInProgressCommit(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "")
+            @FormDataParam("additions") String additionsJson,
+            @Parameter(description = "")
+            @FormDataParam("deletions") String deletionsJson) {
         try {
             User activeUser = getActiveUser(context, engineManager);
             Model additions = StringUtils.isEmpty(additionsJson) ? null : convertJsonld(additionsJson);
@@ -2067,7 +2611,14 @@ public class CatalogRest {
     @Path("record-types")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves all the available record types.")
+    @Operation(
+        summary = "Retrieves all the available record types",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     public Response getRecordTypes() {
         try {
             return Response.ok(mapper.valueToTree(getRecordFactories().keySet()).toString()).build();
@@ -2085,7 +2636,14 @@ public class CatalogRest {
     @Path("sort-options")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves all the available sorting options.")
+    @Operation(
+        summary = "Retrieves all the available sorting options",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     public Response getSortOptions() {
         try {
             return Response.ok(mapper.valueToTree(SORT_RESOURCES).toString()).build();

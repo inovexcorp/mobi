@@ -1,5 +1,5 @@
 
-Lists of 347 third-party dependencies.
+Lists of 360 third-party dependencies.
      (Revised BSD License) AntLR Parser Generator (antlr:antlr:2.7.7 - http://www.antlr.org/)
      (The Apache Software License, Version 2.0) avalon-framework (avalon-framework:avalon-framework:4.1.3 - no url defined)
      (The Apache Software License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
@@ -12,14 +12,14 @@ Lists of 347 third-party dependencies.
      (Common Development and Distribution License, Version 1.1) (GNU General Public License, Version 2 with Classpath Exception) Jersey All (Rebundled) (com.eclipsesource.jaxrs:jersey-all:2.18 - https://github.com/hstaudacher/osgi-jax-rs-connector)
      (Eclipse Public License, Version 1.0) OSGi JAX-RS Security Provider (com.eclipsesource.jaxrs:provider-security:2.2 - https://github.com/hstaudacher/osgi-jax-rs-connector)
      (The Apache Software License, Version 2.0) ClassMate (com.fasterxml:classmate:1.3.0 - http://github.com/cowtowncoder/java-classmate)
-     (The Apache Software License, Version 2.0) Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.10.3 - http://github.com/FasterXML/jackson)
-     (The Apache Software License, Version 2.0) Jackson-core (com.fasterxml.jackson.core:jackson-core:2.10.3 - https://github.com/FasterXML/jackson-core)
-     (The Apache Software License, Version 2.0) jackson-databind (com.fasterxml.jackson.core:jackson-databind:2.10.3 - http://github.com/FasterXML/jackson)
+     (The Apache Software License, Version 2.0) Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.9.8 - http://github.com/FasterXML/jackson)
+     (The Apache Software License, Version 2.0) Jackson-core (com.fasterxml.jackson.core:jackson-core:2.9.8 - https://github.com/FasterXML/jackson-core)
+     (The Apache Software License, Version 2.0) jackson-databind (com.fasterxml.jackson.core:jackson-databind:2.9.8 - http://github.com/FasterXML/jackson)
      (The Apache Software License, Version 2.0) Jackson-dataformat-YAML (com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.10.1 - https://github.com/FasterXML/jackson-dataformats-text)
      (The Apache Software License, Version 2.0) Jackson datatype: JSR310 (com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.10.1 - https://github.com/FasterXML/jackson-modules-java8/jackson-datatype-jsr310)
      (The Apache Software License, Version 2.0) Jackson-JAXRS-base (com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:2.10.1 - http://github.com/FasterXML/jackson-jaxrs-providers/jackson-jaxrs-base)
      (The Apache Software License, Version 2.0) Jackson-JAXRS-JSON (com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.10.1 - http://github.com/FasterXML/jackson-jaxrs-providers/jackson-jaxrs-json-provider)
-     (The Apache Software License, Version 2.0) Jackson module: JAXB Annotations (com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.10.3 - https://github.com/FasterXML/jackson-modules-base)
+     (The Apache Software License, Version 2.0) Jackson module: JAXB Annotations (com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.9.8 - https://github.com/FasterXML/jackson-modules-base)
      (The Apache Software License, Version 2.0) Caffeine cache (com.github.ben-manes.caffeine:caffeine:2.6.1 - https://github.com/ben-manes/caffeine)
      (Revised BSD License) JSONLD Java :: Core (com.github.jsonld-java:jsonld-java:0.12.0 - http://github.com/jsonld-java/jsonld-java/jsonld-java/)
      (Revised BSD License) JSONLD Java :: Core (com.github.jsonld-java:jsonld-java:0.12.3 - http://github.com/jsonld-java/jsonld-java/jsonld-java/)
@@ -54,15 +54,12 @@ Lists of 347 third-party dependencies.
      (Unknown license) dom4j (dom4j:dom4j:1.6.1 - http://dom4j.org)
      (GNU General Public License, version 2, with the Classpath Exception) Checker framework (edu.washington.cs.types.checker:checker-framework:1.7.5 - http://types.cs.washington.edu/checker-framework)
      (The MIT License (MIT)) ClassGraph (io.github.classgraph:classgraph:4.6.32 - https://github.com/classgraph/classgraph)
-     (The Apache Software License, Version 2.0) swagger-annotations (io.swagger:swagger-annotations:1.5.7 - https://github.com/swagger-api/swagger-core/modules/swagger-annotations)
      (The Apache Software License, Version 2.0) swagger-annotations (io.swagger.core.v3:swagger-annotations:2.1.1 - https://github.com/swagger-api/swagger-core/modules/swagger-annotations)
      (The Apache Software License, Version 2.0) swagger-core (io.swagger.core.v3:swagger-core:2.1.1 - https://github.com/swagger-api/swagger-core/modules/swagger-core)
      (The Apache Software License, Version 2.0) swagger-integration (io.swagger.core.v3:swagger-integration:2.1.1 - https://github.com/swagger-api/swagger-core/modules/swagger-integration)
      (The Apache Software License, Version 2.0) swagger-jaxrs2 (io.swagger.core.v3:swagger-jaxrs2:2.1.1 - https://github.com/swagger-api/swagger-core/modules/swagger-jaxrs2)
      (The Apache Software License, Version 2.0) swagger-jaxrs2-servlet-initializer (io.swagger.core.v3:swagger-jaxrs2-servlet-initializer:2.1.1 - https://github.com/swagger-api/swagger-core/modules/swagger-jaxrs2-servlet-initializer)
      (The Apache Software License, Version 2.0) swagger-models (io.swagger.core.v3:swagger-models:2.1.1 - https://github.com/swagger-api/swagger-core/modules/swagger-models)
-     (EDL 1.0) JavaBeans Activation Framework API jar (jakarta.activation:jakarta.activation-api:1.2.1 - https://github.com/eclipse-ee4j/jaf/jakarta.activation-api)
-     (Eclipse Distribution License - v 1.0) jakarta.xml.bind-api (jakarta.xml.bind:jakarta.xml.bind-api:2.3.2 - https://github.com/eclipse-ee4j/jaxb-api/jakarta.xml.bind-api)
      (Common Development and Distribution License (CDDL) v1.0) JavaBeans Activation Framework (JAF) (javax.activation:activation:1.1 - http://java.sun.com/products/javabeans/jaf/index.jsp)
      (Common Development and Distribution License, Version 1.1, and GNU General Public License, Version 2 with Classpath Exception) javax.annotation API (javax.annotation:javax.annotation-api:1.2 - http://jcp.org/en/jsr/detail?id=250)
      (JSR-000107 JCACHE 2.9 Public Review - Updated Specification
@@ -336,11 +333,7 @@ Lists of 347 third-party dependencies.
      (MIT License) JCL 1.1.1 implemented over SLF4J (org.slf4j:jcl-over-slf4j:1.6.6 - http://www.slf4j.org)
      (MIT License) JCL 1.1.1 implemented over SLF4J (org.slf4j:jcl-over-slf4j:1.7.22 - http://www.slf4j.org)
      (MIT License) JCL 1.2 implemented over SLF4J (org.slf4j:jcl-over-slf4j:1.7.25 - http://www.slf4j.org)
-<<<<<<< HEAD
-     (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.10 - http://www.slf4j.org)
-=======
      (MIT License) JCL 1.2 implemented over SLF4J (org.slf4j:jcl-over-slf4j:1.7.26 - http://www.slf4j.org)
->>>>>>> master
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.12 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.22 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.25 - http://www.slf4j.org)

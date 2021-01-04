@@ -98,8 +98,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import com.mobi.security.policy.api.ontologies.policy.Read;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -293,29 +291,20 @@ public class OntologyRest {
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(
             @Context ContainerRequestContext context,
-
             @Parameter(schema = @Schema(type = "string", format = "binary", description = "The ontology file to upload.", required = true))
             @FormDataParam("file") InputStream fileInputStream,
-
+            @Parameter(description = "File details")
+            @FormDataParam("file") FormDataContentDisposition fileDetail,
+            @Parameter(description = "The optional list of keyword strings for the OntologyRecord.")
+            @FormDataParam("json") String ontologyJson,
             @Parameter(schema = @Schema(type = "string", description = "The title for the OntologyRecord.", required = true))
             @FormDataParam("title") String title,
-
             @Parameter(schema = @Schema(type = "string", description = "The optional description for the OntologyRecord."))
             @FormDataParam("description") String description,
-
             @Parameter(schema = @Schema(type = "string", description = "The optional markdown abstract for the new OntologyRecord."))
             @FormDataParam("markdown") String markdown,
-
             @Parameter(schema = @Schema(type = "string", description = "The optional list of keyword strings for the OntologyRecord."))
             @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
-    public Response uploadOntology(@Context ContainerRequestContext context,
-                                   @FormDataParam("file") InputStream fileInputStream,
-                                   @FormDataParam("file") FormDataContentDisposition fileDetail,
-                                   @FormDataParam("json") String ontologyJson,
-                                   @FormDataParam("title") String title,
-                                   @FormDataParam("description") String description,
-                                   @FormDataParam("markdown") String markdown,
-                                   @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
         if (fileInputStream == null && ontologyJson == null) {
             throw ErrorUtils.sendError("The ontology data is missing.", Response.Status.BAD_REQUEST);
@@ -328,43 +317,6 @@ public class OntologyRest {
         if (keywords != null) {
             keywordSet = keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
         }
-        RecordOperationConfig config = new OperationConfig();
-        config.set(OntologyRecordCreateSettings.INPUT_STREAM, fileInputStream);
-        return createOntologyRecord(context, title, description, markdown, keywordSet, config);
-    }
-
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Uploads JSON-LD representing an ontology to the data store.",
-            description = "Uploads and imports a JSON-LD representing an ontology  to a data store and creates an " +
-                    "associated OntologyRecord using the form data. A master Branch is created and stored with an " +
-                    "initial Commit containing the data provided in the ontology JSON-LD.",
-            responses = {
-                    @ApiResponse(responseCode = "201", description = "OntologyRecord created"),
-                    @ApiResponse(responseCode = "400", description = "Publisher can't be found"),
-                    @ApiResponse(responseCode = "500", description = "Problem creating OntologyRecord")
-            },
-            // TODO: We can't generate swagger docs here because of the limitations on overloaded paths in the OpenAPI Spec
-            hidden = true
-    )
-    
-    @RolesAllowed("user")
-    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
-    @ResourceId("http://mobi.com/catalog-local")
-    public Response uploadOntologyJson(
-            @Context ContainerRequestContext context,
-            @Parameter(description = "The title for the OntologyRecord.", required = true) @QueryParam("title") String title,
-            @Parameter(description = "The optional description for the OntologyRecord.") @QueryParam("description") String description,
-            @Parameter(description = "The optional markdown abstract for the new OntologyRecord.") @QueryParam("markdown") String markdown,
-            @Parameter(description = "The optional list of keyword strings for the OntologyRecord.") @QueryParam("keywords") List<String> keywords, String ontologyJson
-    ) {
-        checkStringParam(title, "The title is missing.");
-        checkStringParam(ontologyJson, "The ontologyJson is missing.");
-        Set<String> keywordSet = Collections.emptySet();
-        if (keywords != null) {
-            keywordSet = new HashSet<>(keywords);
         if (fileInputStream != null) {
             RecordOperationConfig config = new OperationConfig();
             config.set(OntologyRecordCreateSettings.INPUT_STREAM, fileInputStream);
@@ -379,6 +331,53 @@ public class OntologyRest {
         }
     }
 
+
+//    @POST
+//    @Consumes(MediaType.APPLICATION_JSON)
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @Operation(
+//            summary = "Uploads JSON-LD representing an ontology to the data store.",
+//            description = "Uploads and imports a JSON-LD representing an ontology  to a data store and creates an " +
+//                    "associated OntologyRecord using the form data. A master Branch is created and stored with an " +
+//                    "initial Commit containing the data provided in the ontology JSON-LD.",
+//            responses = {
+//                    @ApiResponse(responseCode = "201", description = "OntologyRecord created"),
+//                    @ApiResponse(responseCode = "400", description = "Publisher can't be found"),
+//                    @ApiResponse(responseCode = "500", description = "Problem creating OntologyRecord")
+//            },
+//            // TODO: We can't generate swagger docs here because of the limitations on overloaded paths in the OpenAPI Spec
+//            hidden = true
+//    )
+    
+//    @RolesAllowed("user")
+//    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
+//    @ResourceId("http://mobi.com/catalog-local")
+//    public Response uploadOntologyJson(
+//            @Context ContainerRequestContext context,
+//            @Parameter(description = "The title for the OntologyRecord.", required = true) @QueryParam("title") String title,
+//            @Parameter(description = "The optional description for the OntologyRecord.") @QueryParam("description") String description,
+//            @Parameter(description = "The optional markdown abstract for the new OntologyRecord.") @QueryParam("markdown") String markdown,
+//            @Parameter(description = "The optional list of keyword strings for the OntologyRecord.") @QueryParam("keywords") List<String> keywords, String ontologyJson
+//    ) {
+//        checkStringParam(title, "The title is missing.");
+//        checkStringParam(ontologyJson, "The ontologyJson is missing.");
+//        Set<String> keywordSet = Collections.emptySet();
+//        if (keywords != null) {
+//            keywordSet = new HashSet<>(keywords);
+//        if (fileInputStream != null) {
+//            RecordOperationConfig config = new OperationConfig();
+//            config.set(OntologyRecordCreateSettings.INPUT_STREAM, fileInputStream);
+//            config.set(OntologyRecordCreateSettings.FILE_NAME, fileDetail.getFileName());
+//            return createOntologyRecord(context, title, description, markdown, keywordSet, config);
+//        } else {
+//            checkStringParam(ontologyJson, "The ontologyJson is missing.");
+//            RecordOperationConfig config = new OperationConfig();
+//            Model jsonModel = getModelFromJson(ontologyJson);
+//            config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonModel);
+//            return createOntologyRecord(context, title, description, markdown, keywordSet, config);
+//        }
+//    }}
+
     @GET
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
@@ -392,32 +391,25 @@ public class OntologyRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntology(
             @Context ContainerRequestContext context,
-
             @Parameter(description = "The String representing the Record Resource id. NOTE: Assumes id represents an " +
                     "IRI unless String begins with \"_:\".", required = true)
             @PathParam("recordId") String recordIdStr,
-
             @Parameter(description = "The optional String representing the Branch Resource id. NOTE: Assumes id " +
                     "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing.")
             @QueryParam("branchId") String branchIdStr,
-
             @Parameter(description = "The optional String representing the Commit Resource id. NOTE: Assumes id " +
                     "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The " +
                     "provided commitId must be on the Branch identified by the provided branchId; otherwise, nothing " +
                     "will be returned.")
             @QueryParam("commitId") String commitIdStr,
-
             @Parameter(description = "The desired RDF return format.",
                     schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "owl/xml", "turtle"}))
             @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
-
             @Parameter(description = "Whether or not the cached version of the identified Ontology should be cleared " +
                     "before retrieval.")
             @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
-
             @Parameter(description = "Whether or not the JSON-LD of the ontology should be skolemized.")
             @DefaultValue("false") @QueryParam("skolemize") boolean skolemize,
-
             @Parameter(description = "Whether or not any in progress commits by user should be applied to the return " +
                     "value.")
             @DefaultValue("true") @QueryParam("applyInProgressCommit")
@@ -454,8 +446,10 @@ public class OntologyRest {
 //    @ApiOperation("Deletes the OntologyRecord with the requested recordId.")
     @ActionId(Delete.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteOntology(@Context ContainerRequestContext context,
-                                   @PathParam("recordId") String recordIdStr) {
+    public Response deleteOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr) {
         try {
             catalogManager.deleteRecord(getActiveUser(context, engineManager), valueFactory.createIRI(recordIdStr),
                     OntologyRecord.class);
@@ -499,25 +493,20 @@ public class OntologyRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadOntologyFile(
             @Context ContainerRequestContext context,
-
             @Parameter(description = "The String representing the Record Resource id. NOTE: Assumes id represents an " +
                     "IRI unless String begins with \"_:\".", required = true)
             @PathParam("recordId") String recordIdStr,
-
             @Parameter(description = "The optional String representing the Branch Resource id. NOTE: Assumes id " +
                     "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing.")
             @QueryParam("branchId") String branchIdStr,
-
             @Parameter(description = "The optional String representing the Commit Resource id. NOTE: Assumes id " +
                     "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The " +
                     "provided commitId must be on the Branch identified by the provided branchId; otherwise, nothing " +
                     "will be returned.")
             @QueryParam("commitId") String commitIdStr,
-
             @Parameter(description = "The desired RDF return format.",
                     schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "owl/xml", "turtle"}))
             @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
-
             @Parameter(description = "the file name for the ontology file")
             @DefaultValue("ontology") @QueryParam("fileName") String fileName
     ) {
@@ -565,11 +554,16 @@ public class OntologyRest {
 //    @ApiOperation("Updates the requester's InProgressCommit with the provided entity.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response saveChangesToOntology(@Context ContainerRequestContext context,
-                                          @PathParam("recordId") String recordIdStr,
-                                          @QueryParam("branchId") String branchIdStr,
-                                          @QueryParam("commitId") String commitIdStr,
-                                          @QueryParam("entityId") String entityIdStr, String entityJson) {
+    public Response saveChangesToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "")
+            @QueryParam("entityId") String entityIdStr, String entityJson) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -611,11 +605,16 @@ public class OntologyRest {
 //    @ApiOperation("Updates the specified ontology branch and commit with the data provided.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response uploadChangesToOntology(@Context ContainerRequestContext context,
-                                            @PathParam("recordId") String recordIdStr,
-                                            @QueryParam("branchId") String branchIdStr,
-                                            @QueryParam("commitId") String commitIdStr,
-                                            @FormDataParam("file") InputStream fileInputStream) {
+    public Response uploadChangesToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "")
+            @FormDataParam("file") InputStream fileInputStream) {
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
@@ -693,9 +692,12 @@ public class OntologyRest {
             @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteOntologyBranch(@Context ContainerRequestContext context,
-                                         @PathParam("recordId") String recordIdStr,
-                                         @PathParam("branchId") String branchIdStr) {
+    public Response deleteOntologyBranch(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @PathParam("branchId") String branchIdStr) {
         try {
             ontologyManager.deleteOntologyBranch(valueFactory.createIRI(recordIdStr),
                     valueFactory.createIRI(branchIdStr));
@@ -731,10 +733,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets a JSON representation of all the SKOS vocabulary related information about the ontology")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getVocabularyStuff(@Context ContainerRequestContext context,
-                                       @PathParam("recordId") String recordIdStr,
-                                       @QueryParam("branchId") String branchIdStr,
-                                       @QueryParam("commitId") String commitIdStr) {
+    public Response getVocabularyStuff(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
             if (optionalOntology.isPresent()) {
@@ -851,11 +857,16 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets a JSON representation of all the OWL ontology related information about the ontology")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getOntologyStuff(@Context ContainerRequestContext context,
-                                     @PathParam("recordId") String recordIdStr,
-                                     @QueryParam("branchId") String branchIdStr,
-                                     @QueryParam("commitId") String commitIdStr,
-                                     @DefaultValue("false") @QueryParam("clearCache") boolean clearCache) {
+    public Response getOntologyStuff(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("clearCache") boolean clearCache) {
         try {
             if (clearCache) {
                 ontologyCache.removeFromCache(recordIdStr, commitIdStr);
@@ -1034,10 +1045,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the IRIs in the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getIRIsInOntology(@Context ContainerRequestContext context,
-                                      @PathParam("recordId") String recordIdStr,
-                                      @QueryParam("branchId") String branchIdStr,
-                                      @QueryParam("commitId") String commitIdStr) {
+    public Response getIRIsInOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs, true);
             return Response.ok(result.toString()).build();
@@ -1067,10 +1082,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the annotations in the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getAnnotationsInOntology(@Context ContainerRequestContext context,
-                                             @PathParam("recordId") String recordIdStr,
-                                             @QueryParam("branchId") String branchIdStr,
-                                             @QueryParam("commitId") String commitIdStr) {
+    public Response getAnnotationsInOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getAnnotationIRIObject, true);
@@ -1098,9 +1117,12 @@ public class OntologyRest {
 //    @ApiOperation("Adds a new annotation to the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response addAnnotationToOntology(@Context ContainerRequestContext context,
-                                            @PathParam("recordId") String recordIdStr,
-                                            String annotationJson) {
+    public Response addAnnotationToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            String annotationJson) {
         verifyJsonldType(annotationJson, OWL.ANNOTATIONPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(annotationJson));
@@ -1133,11 +1155,16 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
 //    @ApiOperation("Deletes the identified annotation from the identified ontology.")
-    public Response deleteAnnotationFromOntology(@Context ContainerRequestContext context,
-                                                 @PathParam("recordId") String recordIdStr,
-                                                 @PathParam("annotationId") String annotationIdStr,
-                                                 @QueryParam("branchId") String branchIdStr,
-                                                 @QueryParam("commitId") String commitIdStr) {
+    public Response deleteAnnotationFromOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @PathParam("annotationId") String annotationIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -1170,12 +1197,16 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the classes in the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getClassesInOntology(@Context ContainerRequestContext context,
-                                         @PathParam("recordId") String recordIdStr,
-                                         @QueryParam("branchId") String branchIdStr,
-                                         @QueryParam("commitId") String commitIdStr,
-                                         @DefaultValue("true") @QueryParam("applyInProgressCommit")
-                                                     boolean applyInProgressCommit) {
+    public Response getClassesInOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
             ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray,
                     applyInProgressCommit);
@@ -1203,9 +1234,12 @@ public class OntologyRest {
 //    @ApiOperation("Adds a new class to the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response addClassToOntology(@Context ContainerRequestContext context,
-                                       @PathParam("recordId") String recordIdStr,
-                                       String classJson) {
+    public Response addClassToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            String classJson) {
         verifyJsonldType(classJson, OWL.CLASS.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(classJson));
@@ -1238,11 +1272,16 @@ public class OntologyRest {
 //    @ApiOperation("Deletes the identified class from the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteClassFromOntology(@Context ContainerRequestContext context,
-                                            @PathParam("recordId") String recordIdStr,
-                                            @PathParam("classId") String classIdStr,
-                                            @QueryParam("branchId") String branchIdStr,
-                                            @QueryParam("commitId") String commitIdStr) {
+    public Response deleteClassFromOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @PathParam("classId") String classIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -1273,10 +1312,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the datatypes in the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getDatatypesInOntology(@Context ContainerRequestContext context,
-                                           @PathParam("recordId") String recordIdStr,
-                                           @QueryParam("branchId") String branchIdStr,
-                                           @QueryParam("commitId") String commitIdStr) {
+    public Response getDatatypesInOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getDatatypeIRIObject, true);
@@ -1304,9 +1347,12 @@ public class OntologyRest {
 //    @ApiOperation("Adds a new datatype to the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response addDatatypeToOntology(@Context ContainerRequestContext context,
-                                          @PathParam("recordId") String recordIdStr,
-                                          String datatypeJson) {
+    public Response addDatatypeToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            String datatypeJson) {
         verifyJsonldType(datatypeJson, OWL.DATATYPEPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(datatypeJson));
@@ -1339,11 +1385,16 @@ public class OntologyRest {
 //    @ApiOperation("Deletes the identified datatype from the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteDatatypeFromOntology(@Context ContainerRequestContext context,
-                                               @PathParam("recordId") String recordIdStr,
-                                               @PathParam("datatypeId") String datatypeIdStr,
-                                               @QueryParam("branchId") String branchIdStr,
-                                               @QueryParam("commitId") String commitIdStr) {
+    public Response deleteDatatypeFromOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @PathParam("datatypeId") String datatypeIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -1374,10 +1425,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the object properties in the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getObjectPropertiesInOntology(@Context ContainerRequestContext context,
-                                                  @PathParam("recordId") String recordIdStr,
-                                                  @QueryParam("branchId") String branchIdStr,
-                                                  @QueryParam("commitId") String commitIdStr) {
+    public Response getObjectPropertiesInOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getObjectPropertyArray, true);
@@ -1405,9 +1460,12 @@ public class OntologyRest {
 //    @ApiOperation("Adds a new object property to the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response addObjectPropertyToOntology(@Context ContainerRequestContext context,
-                                                @PathParam("recordId") String recordIdStr,
-                                                String objectPropertyJson) {
+    public Response addObjectPropertyToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            String objectPropertyJson) {
         verifyJsonldType(objectPropertyJson, OWL.OBJECTPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(objectPropertyJson));
@@ -1440,11 +1498,16 @@ public class OntologyRest {
 //    @ApiOperation("Deletes the identified object property from the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteObjectPropertyFromOntology(@Context ContainerRequestContext context,
-                                                     @PathParam("recordId") String recordIdStr,
-                                                     @PathParam("objectPropertyId") String objectPropertyIdStr,
-                                                     @QueryParam("branchId") String branchIdStr,
-                                                     @QueryParam("commitId") String commitIdStr) {
+    public Response deleteObjectPropertyFromOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @PathParam("objectPropertyId") String objectPropertyIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -1475,10 +1538,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the data properties from the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getDataPropertiesInOntology(@Context ContainerRequestContext context,
-                                                @PathParam("recordId") String recordIdStr,
-                                                @QueryParam("branchId") String branchIdStr,
-                                                @QueryParam("commitId") String commitIdStr) {
+    public Response getDataPropertiesInOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getDataPropertyArray, true);
@@ -1506,9 +1573,12 @@ public class OntologyRest {
 //    @ApiOperation("Adds a new data property to the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response addDataPropertyToOntology(@Context ContainerRequestContext context,
-                                              @PathParam("recordId") String recordIdStr,
-                                              String dataPropertyJson) {
+    public Response addDataPropertyToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            String dataPropertyJson) {
         verifyJsonldType(dataPropertyJson, OWL.DATATYPEPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(dataPropertyJson));
@@ -1541,11 +1611,16 @@ public class OntologyRest {
 //    @ApiOperation("Deletes the identified data property from the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteDataPropertyFromOntology(@Context ContainerRequestContext context,
-                                                   @PathParam("recordId") String recordIdStr,
-                                                   @PathParam("dataPropertyId") String dataPropertyIdStr,
-                                                   @QueryParam("branchId") String branchIdStr,
-                                                   @QueryParam("commitId") String commitIdStr) {
+    public Response deleteDataPropertyFromOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @PathParam("dataPropertyId") String dataPropertyIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -1576,10 +1651,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the individuals in the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getNamedIndividualsInOntology(@Context ContainerRequestContext context,
-                                                  @PathParam("recordId") String recordIdStr,
-                                                  @QueryParam("branchId") String branchIdStr,
-                                                  @QueryParam("commitId") String commitIdStr) {
+    public Response getNamedIndividualsInOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getNamedIndividualIRIObject, true);
@@ -1607,9 +1686,12 @@ public class OntologyRest {
 //    @ApiOperation("Adds a new individual to the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response addIndividualToOntology(@Context ContainerRequestContext context,
-                                            @PathParam("recordId") String recordIdStr,
-                                            String individualJson) {
+    public Response addIndividualToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            String individualJson) {
         verifyJsonldType(individualJson, OWL.INDIVIDUAL.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(individualJson));
@@ -1642,11 +1724,16 @@ public class OntologyRest {
 //    @ApiOperation("Deletes the identified individual from the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteIndividualFromOntology(@Context ContainerRequestContext context,
-                                                 @PathParam("recordId") String recordIdStr,
-                                                 @PathParam("individualId") String individualIdStr,
-                                                 @QueryParam("branchId") String branchIdStr,
-                                                 @QueryParam("commitId") String commitIdStr) {
+    public Response deleteIndividualFromOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @PathParam("individualId") String individualIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -1677,10 +1764,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the IRIs from the imported ontologies of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getIRIsInImportedOntologies(@Context ContainerRequestContext context,
-                                                @PathParam("recordId") String recordIdStr,
-                                                @QueryParam("branchId") String branchIdStr,
-                                                @QueryParam("commitId") String commitIdStr) {
+    public Response getIRIsInImportedOntologies(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs);
         } catch (MobiException e) {
@@ -1709,10 +1800,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the imported ontology IRIs of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getImportedOntologyIRIs(@Context ContainerRequestContext context,
-                                            @PathParam("recordId") String recordIdStr,
-                                            @QueryParam("branchId") String branchIdStr,
-                                            @QueryParam("commitId") String commitIdStr) {
+    public Response getImportedOntologyIRIs(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             ArrayNode arrayNode = mapper.createArrayNode();
             Set<String> importedOntologyIris = new HashSet<>();
@@ -1761,11 +1856,16 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Retrieves the JSON-LD of all imported ontologies.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getImportsClosure(@Context ContainerRequestContext context,
-                                      @PathParam("recordId") String recordIdStr,
-                                      @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
-                                      @QueryParam("branchId") String branchIdStr,
-                                      @QueryParam("commitId") String commitIdStr) {
+    public Response getImportsClosure(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Set<Ontology> importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr);
             ArrayNode arrayNode = mapper.createArrayNode();
@@ -1799,10 +1899,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the annotations from the imported ontologies of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getAnnotationsInImportedOntologies(@Context ContainerRequestContext context,
-                                                       @PathParam("recordId") String recordIdStr,
-                                                       @QueryParam("branchId") String branchIdStr,
-                                                       @QueryParam("commitId") String commitIdStr) {
+    public Response getAnnotationsInImportedOntologies(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getAnnotationIRIObject);
@@ -1832,10 +1936,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the classes from the imported ontologies of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getClassesInImportedOntologies(@Context ContainerRequestContext context,
-                                                   @PathParam("recordId") String recordIdStr,
-                                                   @QueryParam("branchId") String branchIdStr,
-                                                   @QueryParam("commitId") String commitIdStr) {
+    public Response getClassesInImportedOntologies(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getClassIRIArray);
         } catch (MobiException e) {
@@ -1864,10 +1972,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the datatypes from the imported ontologies of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getDatatypesInImportedOntologies(@Context ContainerRequestContext context,
-                                                     @PathParam("recordId") String recordIdStr,
-                                                     @QueryParam("branchId") String branchIdStr,
-                                                     @QueryParam("commitId") String commitIdStr) {
+    public Response getDatatypesInImportedOntologies(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getDatatypeIRIObject);
         } catch (MobiException e) {
@@ -1896,10 +2008,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the object properties from the imported ontologies of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getObjectPropertiesInImportedOntologies(@Context ContainerRequestContext context,
-                                                            @PathParam("recordId") String recordIdStr,
-                                                            @QueryParam("branchId") String branchIdStr,
-                                                            @QueryParam("commitId") String commitIdStr) {
+    public Response getObjectPropertiesInImportedOntologies(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getObjectPropertyIRIObject);
@@ -1929,10 +2045,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the data properties from the imported ontologies of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getDataPropertiesInImportedOntologies(@Context ContainerRequestContext context,
-                                                          @PathParam("recordId") String recordIdStr,
-                                                          @QueryParam("branchId") String branchIdStr,
-                                                          @QueryParam("commitId") String commitIdStr) {
+    public Response getDataPropertiesInImportedOntologies(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getDataPropertyIRIObject);
@@ -1962,10 +2082,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the named individuals from the imported ontologies of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getNamedIndividualsInImportedOntologies(@Context ContainerRequestContext context,
-                                                            @PathParam("recordId") String recordIdStr,
-                                                            @QueryParam("branchId") String branchIdStr,
-                                                            @QueryParam("commitId") String commitIdStr) {
+    public Response getNamedIndividualsInImportedOntologies(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getNamedIndividualIRIObject);
@@ -1998,11 +2122,16 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the class hierarchies for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getOntologyClassHierarchy(@Context ContainerRequestContext context,
-                                              @PathParam("recordId") String recordIdStr,
-                                              @QueryParam("branchId") String branchIdStr,
-                                              @QueryParam("commitId") String commitIdStr,
-                                              @DefaultValue("false") @QueryParam("nested") boolean nested) {
+    public Response getOntologyClassHierarchy(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2038,11 +2167,16 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the object property hierarchies for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getOntologyObjectPropertyHierarchy(@Context ContainerRequestContext context,
-                                                       @PathParam("recordId") String recordIdStr,
-                                                       @QueryParam("branchId") String branchIdStr,
-                                                       @QueryParam("commitId") String commitIdStr,
-                                                       @DefaultValue("false") @QueryParam("nested") boolean nested) {
+    public Response getOntologyObjectPropertyHierarchy(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2078,11 +2212,16 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the data property hierarchies for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getOntologyDataPropertyHierarchy(@Context ContainerRequestContext context,
-                                                     @PathParam("recordId") String recordIdStr,
-                                                     @QueryParam("branchId") String branchIdStr,
-                                                     @QueryParam("commitId") String commitIdStr,
-                                                     @DefaultValue("false") @QueryParam("nested") boolean nested) {
+    public Response getOntologyDataPropertyHierarchy(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2119,12 +2258,16 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the data property hierarchies for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getOntologyAnnotationPropertyHierarchy(@Context ContainerRequestContext context,
-                                                           @PathParam("recordId") String recordIdStr,
-                                                           @QueryParam("branchId") String branchIdStr,
-                                                           @QueryParam("commitId") String commitIdStr,
-                                                           @DefaultValue("false") @QueryParam("nested")
-                                                                       boolean nested) {
+    public Response getOntologyAnnotationPropertyHierarchy(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2159,11 +2302,16 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the concept hierarchies for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getConceptHierarchy(@Context ContainerRequestContext context,
-                                        @PathParam("recordId") String recordIdStr,
-                                        @QueryParam("branchId") String branchIdStr,
-                                        @QueryParam("commitId") String commitIdStr,
-                                        @DefaultValue("false") @QueryParam("nested") boolean nested) {
+    public Response getConceptHierarchy(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2200,11 +2348,16 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the concept hierarchies for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getConceptSchemeHierarchy(@Context ContainerRequestContext context,
-                                              @PathParam("recordId") String recordIdStr,
-                                              @QueryParam("branchId") String branchIdStr,
-                                              @QueryParam("commitId") String commitIdStr,
-                                              @DefaultValue("false") @QueryParam("nested") boolean nested) {
+    public Response getConceptSchemeHierarchy(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2238,10 +2391,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the classes with individuals in a hierarchical structure for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getClassesWithIndividuals(@Context ContainerRequestContext context,
-                                              @PathParam("recordId") String recordIdStr,
-                                              @QueryParam("branchId") String branchIdStr,
-                                              @QueryParam("commitId") String commitIdStr) {
+    public Response getClassesWithIndividuals(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2279,12 +2436,18 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the usages of the identified entity in the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getEntityUsages(@Context ContainerRequestContext context,
-                                    @PathParam("recordId") String recordIdStr,
-                                    @PathParam("entityIri") String entityIRIStr,
-                                    @QueryParam("branchId") String branchIdStr,
-                                    @QueryParam("commitId") String commitIdStr,
-                                    @DefaultValue("select") @QueryParam("queryType") String queryType) {
+    public Response getEntityUsages(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @PathParam("entityIri") String entityIRIStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "")
+            @DefaultValue("select") @QueryParam("queryType") String queryType) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2328,11 +2491,16 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the search results from the identified ontology using the provided searchText.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getSearchResults(@Context ContainerRequestContext context,
-                                     @PathParam("recordId") String recordIdStr,
-                                     @QueryParam("searchText") String searchText,
-                                     @QueryParam("branchId") String branchIdStr,
-                                     @QueryParam("commitId") String commitIdStr) {
+    public Response getSearchResults(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("searchText") String searchText,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2383,10 +2551,14 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets a list of ontology IRIs that were not imported.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getFailedImports(@Context ContainerRequestContext context,
-                                     @PathParam("recordId") String recordIdStr,
-                                     @QueryParam("branchId") String branchIdStr,
-                                     @QueryParam("commitId") String commitIdStr) {
+    public Response getFailedImports(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2422,14 +2594,22 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Retrieves the SPARQL query results of an ontology, and its import closures in the requested format.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response queryOntology(@Context ContainerRequestContext context,
-                                  @PathParam("recordId") String recordIdStr,
-                                  @QueryParam("query") String queryString,
-                                  @QueryParam("branchId") String branchIdStr,
-                                  @QueryParam("commitId") String commitIdStr,
-                                  @DefaultValue("jsonld") @QueryParam("format") String format,
-                                  @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
-                                  @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
+    public Response queryOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("query") String queryString,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String format,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         checkStringParam(queryString, "Parameter 'query' must be set.");
 
         try {
@@ -2487,16 +2667,24 @@ public class OntologyRest {
     @Path("{recordId}/entities/{entityId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the triples for a specified entity including all of is transitively attached Blank Nodes.")
+//    @ApiOperation("Retrieves the triples for a specified entity including all of is transitively attached Blank Nodes.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getEntity(@Context ContainerRequestContext context,
-                              @PathParam("recordId") String recordIdStr,
-                              @PathParam("entityId") String entityIdStr,
-                              @QueryParam("branchId") String branchIdStr,
-                              @QueryParam("commitId") String commitIdStr,
-                              @DefaultValue("jsonld") @QueryParam("format") String format,
-                              @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
-                              @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
+    public Response getEntity(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @PathParam("entityId") String entityIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String format,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit).orElseThrow(() ->
@@ -2533,17 +2721,23 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the EntityNames in the identified ontology.")
+//    @ApiOperation("Gets the EntityNames in the identified ontology.")
     @ActionId(Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getEntityNames(@Context ContainerRequestContext context,
-                                   @PathParam("recordId") String recordIdStr,
-                                   @QueryParam("branchId") String branchIdStr,
-                                   @QueryParam("commitId") String commitIdStr,
-                                   @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
-                                   @DefaultValue("true") @QueryParam("applyInProgressCommit")
-                                               boolean applyInProgressCommit,
-                                   String filterJson) {
+    public Response getEntityNames(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
+            @Parameter(description = "")
+            String filterJson) {
         try {
             StopWatch watch = new StopWatch();
             log.trace("Start entityNames");

@@ -36,8 +36,10 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.osgi.service.component.annotations.Component;
@@ -59,7 +61,6 @@ import javax.ws.rs.core.Response;
 
 @Component(service = PolicyEnforcementRest.class, immediate = true)
 @Path("/pep")
-@Api(value = "/pep")
 public class PolicyEnforcementRest {
 
     private final Logger log = LoggerFactory.getLogger(PolicyEnforcementRest.class);
@@ -102,8 +103,18 @@ public class PolicyEnforcementRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @ApiOperation("Converts user provided request into XACML and evaluates.")
-    public Response evaluateRequest(@Context ContainerRequestContext context, String jsonRequest) {
+    @Operation(
+        summary = "Converts user provided request into XACML and evaluates",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response evaluateRequest(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            String jsonRequest) {
         log.debug("Authorizing...");
         long start = System.currentTimeMillis();
 

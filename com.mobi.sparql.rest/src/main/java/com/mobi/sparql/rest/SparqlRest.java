@@ -48,8 +48,10 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.MobiWebException;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
@@ -94,7 +96,6 @@ import javax.ws.rs.core.StreamingOutput;
 @Component(service = SparqlRest.class, immediate = true, configurationPolicy = ConfigurationPolicy.OPTIONAL)
 @Designate(ocd = SparqlRestConfig.class)
 @Path("/sparql")
-@Api( value = "/sparql" )
 public class SparqlRest {
 
     public static final String XLSX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -172,12 +173,22 @@ public class SparqlRest {
     @Produces({XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE,
             JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the results of the provided SPARQL query.")
+    @Operation(
+        summary = "Retrieves the results of the provided SPARQL query",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
-    public Response queryRdf(@QueryParam("query") String queryString,
-                             @QueryParam("dataset") String datasetRecordId,
-                             @HeaderParam("accept") String acceptString) {
-
+    public Response queryRdf(
+            @Parameter(description = "")
+            @QueryParam("query") String queryString,
+            @Parameter(description = "")
+            @QueryParam("dataset") String datasetRecordId,
+            @Parameter(description = "")
+            @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
@@ -229,13 +240,26 @@ public class SparqlRest {
     @GET
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
-    @ApiOperation("Query and Download the results of the provided SPARQL query.")
+    @Operation(
+        summary = "Query and Download the results of the provided SPARQL query",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
-    public Response downloadRdfQuery(@QueryParam("query") String queryString,
-                                     @QueryParam("dataset") String datasetRecordId,
-                                     @QueryParam("fileType") String fileType,
-                                     @HeaderParam("accept") String acceptString,
-                                     @DefaultValue("results") @QueryParam("fileName") String fileName) {
+    public Response downloadRdfQuery(
+            @Parameter(description = "")
+            @QueryParam("query") String queryString,
+            @Parameter(description = "")
+            @QueryParam("dataset") String datasetRecordId,
+            @Parameter(description = "")
+            @QueryParam("fileType") String fileType,
+            @Parameter(description = "")
+            @HeaderParam("accept") String acceptString,
+            @Parameter(description = "")
+            @DefaultValue("results") @QueryParam("fileName") String fileName) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
@@ -287,11 +311,22 @@ public class SparqlRest {
     @Path("/limited-results")
     @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the limited results of the provided SPARQL query.")
+    @Operation(
+        summary = "Retrieves the limited results of the provided SPARQL query",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
-    public Response getLimitedResults(@QueryParam("query") String queryString,
-                                      @QueryParam("dataset") String datasetRecordId,
-                                      @HeaderParam("accept") String acceptString) {
+    public Response getLimitedResults(
+            @Parameter(description = "")
+            @QueryParam("query") String queryString,
+            @Parameter(description = "")
+            @QueryParam("dataset") String datasetRecordId,
+            @Parameter(description = "")
+            @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }

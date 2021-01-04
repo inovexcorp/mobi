@@ -49,8 +49,10 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -77,7 +79,6 @@ import javax.ws.rs.core.UriInfo;
 
 @Component(service = CommitRest.class, immediate = true)
 @Path("/commits")
-@Api(value = "/commits")
 public class CommitRest {
 
     private static final Logger logger = LoggerFactory.getLogger(CommitRest.class);
@@ -128,9 +129,18 @@ public class CommitRest {
     @Path("{commitId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the Commit specified by the provided ID.")
-    public Response getCommit(@PathParam("commitId") String commitId,
-                       @DefaultValue("jsonld") @QueryParam("format") String format) {
+    @Operation(
+        summary = "Retrieves the Commit specified by the provided ID",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+        }
+    )
+    public Response getCommit(
+            @Parameter(description = "")
+            @PathParam("commitId") String commitId,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
         try {
             Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(commitId));
@@ -168,13 +178,26 @@ public class CommitRest {
     @Path("{commitId}/history")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the Commit history specified by the provided ID.")
-    public Response getCommitHistory(@Context UriInfo uriInfo,
-                              @PathParam("commitId") String commitId,
-                              @QueryParam("targetId") String targetId,
-                              @QueryParam("entityId") String entityId,
-                              @QueryParam("offset") int offset,
-                              @QueryParam("limit") int limit) {
+    @Operation(
+        summary = "Retrieves the Commit history specified by the provided ID",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getCommitHistory(
+            @Context UriInfo uriInfo,
+            @Parameter(description = "")
+            @PathParam("commitId") String commitId,
+            @Parameter(description = "")
+            @QueryParam("targetId") String targetId,
+            @Parameter(description = "")
+            @QueryParam("entityId") String entityId,
+            @Parameter(description = "")
+            @QueryParam("offset") int offset,
+            @Parameter(description = "")
+            @QueryParam("limit") int limit) {
         long start = System.currentTimeMillis();
         try {
             LinksUtils.validateParams(limit, offset);
@@ -229,9 +252,19 @@ public class CommitRest {
     @Path("{commitId}/resource")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the Commit specified by the provided ID.")
-    public Response getCompiledResource(@PathParam("commitId") String commitId,
-                                 @QueryParam("entityId") String entityId) {
+    @Operation(
+        summary = "Retrieves the Commit specified by the provided ID",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getCompiledResource(
+            @Parameter(description = "")
+            @PathParam("commitId") String commitId,
+            @Parameter(description = "")
+            @QueryParam("entityId") String entityId) {
         long start = System.currentTimeMillis();
         try {
             checkStringParam(commitId, "Commit ID is required");
@@ -283,12 +316,26 @@ public class CommitRest {
     @Path("{sourceId}/difference")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the Difference of the two specified Commits.")
-    public Response getDifference(@PathParam("sourceId") String sourceId,
-                                  @QueryParam("targetId") String targetId,
-                                  @DefaultValue("-1") @QueryParam("limit") int limit,
-                                  @QueryParam("offset") int offset,
-                                  @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
+    @Operation(
+        summary = "Retrieves the Difference of the two specified Commits",
+        responses = {
+            @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response getDifference(
+            @Parameter(description = "")
+            @PathParam("sourceId") String sourceId,
+            @Parameter(description = "")
+            @QueryParam("targetId") String targetId,
+            @Parameter(description = "")
+            @DefaultValue("-1") @QueryParam("limit") int limit,
+            @Parameter(description = "")
+            @QueryParam("offset") int offset,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
         try {
             checkStringParam(sourceId, "Source commit is required");
@@ -328,6 +375,5 @@ public class CommitRest {
             logger.trace("getDifference took {}ms", System.currentTimeMillis() - start);
         }
     }
-
 
 }

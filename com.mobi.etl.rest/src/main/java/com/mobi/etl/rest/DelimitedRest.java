@@ -57,8 +57,10 @@ import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.CharsetUtils;
 import com.mobi.rest.util.ErrorUtils;
 import com.opencsv.CSVReader;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -116,7 +118,6 @@ import javax.ws.rs.core.StreamingOutput;
 
 @Component(service = DelimitedRest.class, immediate = true)
 @javax.ws.rs.Path("/delimited-files")
-@Api( value = "/delimited-files" )
 public class DelimitedRest {
     private DelimitedConverter converter;
     private MappingManager mappingManager;
@@ -188,9 +189,18 @@ public class DelimitedRest {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Upload delimited file sent as form data.")
-    public Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
-                    @FormDataParam("delimitedFile") FormDataContentDisposition fileDetail) {
+    @Operation(
+        summary = "Upload delimited file sent as form data",
+        responses = {
+            @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+        }
+    )
+    public Response upload(
+            @Parameter(description = "")
+            @FormDataParam("delimitedFile") InputStream fileInputStream,
+            @Parameter(description = "")
+            @FormDataParam("delimitedFile") FormDataContentDisposition fileDetail) {
         ByteArrayOutputStream fileOutput;
         try {
             fileOutput = toByteArrayOutputStream(fileInputStream);
@@ -219,9 +229,18 @@ public class DelimitedRest {
     @javax.ws.rs.Path("{documentName}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Replace an uploaded delimited file with another")
-    public Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
-                    @PathParam("documentName") String fileName) {
+    @Operation(
+        summary = "Replace an uploaded delimited file with another",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+        }
+    )
+    public Response upload(
+            @Parameter(description = "")
+            @FormDataParam("delimitedFile") InputStream fileInputStream,
+            @Parameter(description = "")
+            @PathParam("documentName") String fileName) {
         ByteArrayOutputStream fileOutput;
         try {
             fileOutput = toByteArrayOutputStream(fileInputStream);
@@ -252,12 +271,24 @@ public class DelimitedRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
-    @ApiOperation("ETL an uploaded delimited document using mapping JSON-LD")
-    public Response etlFilePreview(@PathParam("documentName") String fileName,
-                            @FormDataParam("jsonld") String jsonld,
-                            @DefaultValue("jsonld") @QueryParam("format") String format,
-                            @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
-                            @DefaultValue(",") @QueryParam("separator") String separator) {
+    @Operation(
+        summary = "ETL an uploaded delimited document using mapping JSON-LD",
+        responses = {
+            @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+        }
+    )
+    public Response etlFilePreview(
+            @Parameter(description = "")
+            @PathParam("documentName") String fileName,
+            @Parameter(description = "")
+            @FormDataParam("jsonld") String jsonld,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String format,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
+            @Parameter(description = "")
+            @DefaultValue(",") @QueryParam("separator") String separator) {
         checkStringParam(jsonld, "Must provide a JSON-LD string");
 
         // Convert the data
@@ -283,13 +314,26 @@ public class DelimitedRest {
     @javax.ws.rs.Path("{documentName}/map")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
-    @ApiOperation("ETL an uploaded delimited document using an uploaded Mapping file and download the data")
-    public Response etlFile(@PathParam("documentName") String fileName,
-                     @QueryParam("mappingRecordIRI") String mappingRecordIRI,
-                     @DefaultValue("jsonld") @QueryParam("format") String format,
-                     @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
-                     @DefaultValue(",") @QueryParam("separator") String separator,
-                     @QueryParam("fileName") String downloadFileName) {
+    @Operation(
+        summary = "ETL an uploaded delimited document using an uploaded Mapping file and download the data",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+        }
+    )
+    public Response etlFile(
+            @Parameter(description = "")
+            @PathParam("documentName") String fileName,
+            @Parameter(description = "")
+            @QueryParam("mappingRecordIRI") String mappingRecordIRI,
+            @Parameter(description = "")
+            @DefaultValue("jsonld") @QueryParam("format") String format,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
+            @Parameter(description = "")
+            @DefaultValue(",") @QueryParam("separator") String separator,
+            @Parameter(description = "")
+            @QueryParam("fileName") String downloadFileName) {
         checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
 
         // Convert the data
@@ -330,12 +374,24 @@ public class DelimitedRest {
     @POST
     @javax.ws.rs.Path("{documentName}/map")
     @RolesAllowed("user")
-    @ApiOperation("ETL an uploaded delimited document using an uploaded Mapping file and load data into a Dataset")
-    public Response etlFile(@PathParam("documentName") String fileName,
-                     @QueryParam("mappingRecordIRI") String mappingRecordIRI,
-                     @QueryParam("datasetRecordIRI") String datasetRecordIRI,
-                     @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
-                     @DefaultValue(",") @QueryParam("separator") String separator) {
+    @Operation(
+        summary = "ETL an uploaded delimited document using an uploaded Mapping file and load data into a Dataset",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
+    public Response etlFile(
+            @Parameter(description = "")
+            @PathParam("documentName") String fileName,
+            @Parameter(description = "")
+            @QueryParam("mappingRecordIRI") String mappingRecordIRI,
+            @Parameter(description = "")
+            @QueryParam("datasetRecordIRI") String datasetRecordIRI,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
+            @Parameter(description = "")
+            @DefaultValue(",") @QueryParam("separator") String separator) {
         checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
         checkStringParam(datasetRecordIRI, "Must provide the IRI of a dataset record");
 
@@ -375,21 +431,34 @@ public class DelimitedRest {
     @POST
     @javax.ws.rs.Path("{documentName}/map-to-ontology")
     @RolesAllowed("user")
-    @ApiOperation("ETL an uploaded delimited document using an uploaded Mapping file and commit it to an"
-            + " OntologyRecord")
+    @Operation(
+        summary = "ETL an uploaded delimited document using an uploaded Mapping file and commit it to an OntologyRecord",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "204", description = "No data committed. Possible duplicate data."),
+        }
+    )
     @ActionId(value = Modify.TYPE)
     @ActionAttributes(
             @AttributeValue(type = ValueType.QUERY, id = OntologyRecord.branch_IRI, value = "branchIRI")
     )
     @ResourceId(type = ValueType.QUERY, value = "ontologyRecordIRI")
-    public Response etlFileOntology(@Context ContainerRequestContext context,
-                             @PathParam("documentName") String fileName,
-                             @QueryParam("mappingRecordIRI") String mappingRecordIRI,
-                             @QueryParam("ontologyRecordIRI") String ontologyRecordIRI,
-                             @QueryParam("branchIRI") String branchIRI,
-                             @DefaultValue("false") @QueryParam("update") boolean update,
-                             @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
-                             @DefaultValue(",") @QueryParam("separator") String separator) {
+    public Response etlFileOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "")
+            @PathParam("documentName") String fileName,
+            @Parameter(description = "")
+            @QueryParam("mappingRecordIRI") String mappingRecordIRI,
+            @Parameter(description = "")
+            @QueryParam("ontologyRecordIRI") String ontologyRecordIRI,
+            @Parameter(description = "")
+            @QueryParam("branchIRI") String branchIRI,
+            @Parameter(description = "")
+            @DefaultValue("false") @QueryParam("update") boolean update,
+            @Parameter(description = "")
+            @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
+            @Parameter(description = "")
+            @DefaultValue(",") @QueryParam("separator") String separator) {
         checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
         checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
         checkStringParam(branchIRI, "Must provide the IRI of an ontology branch");
@@ -500,10 +569,21 @@ public class DelimitedRest {
     @javax.ws.rs.Path("{documentName}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gather rows from an uploaded delimited document.")
-    public Response getRows(@PathParam("documentName") String fileName,
-                     @DefaultValue("10") @QueryParam("rowCount") int rowEnd,
-                     @DefaultValue(",") @QueryParam("separator") String separator) {
+    @Operation(
+        summary = "Gather rows from an uploaded delimited document",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+        }
+    )
+    public Response getRows(
+            @Parameter(description = "")
+            @PathParam("documentName") String fileName,
+            @Parameter(description = "")
+            @DefaultValue("10") @QueryParam("rowCount") int rowEnd,
+            @Parameter(description = "")
+            @DefaultValue(",") @QueryParam("separator") String separator) {
         Optional<File> optFile = getUploadedFile(fileName);
         if (optFile.isPresent()) {
             File file = optFile.get();

@@ -1,5 +1,16 @@
 resourcePackages:
   - com.mobi.ontology.rest
+  - com.mobi.catalog.rest
+  - com.mobi.dataset.rest
+  - com.mobi.etl.rest
+  - com.mobi.explorable.dataset.rest
+  - com.mobi.jaas.rest
+  - com.mobi.platform.config.rest
+  - com.mobi.prov.rest
+  - com.mobi.rest.security
+  - com.mobi.rest.util
+  - com.mobi.security.policy.rest
+  - com.mobi.sparql.rest
 prettyPrint: true
 cacheTTL: 0
 openAPI:
