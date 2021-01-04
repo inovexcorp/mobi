@@ -26,7 +26,7 @@
     <parent>
         <artifactId>mobi-itests</artifactId>
         <groupId>com.mobi</groupId>
-        <version>1.17.53-SNAPSHOT</version>
+        <version>1.19.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -34,7 +34,7 @@
     <name>itests-web</name>
     <properties>
         <http-port>9081</http-port>
-        <https-port>9082</https-port>
+        <https-port>9080</https-port>
         <rmi-reg-port>1100</rmi-reg-port>
         <ssh-port>8102</ssh-port>
         <rmi-server-port></rmi-server-port>
@@ -166,7 +166,7 @@
                                                 <!-- Check for this URL to return a 200 return code .... -->
                                                 <url>https://localhost:${https-port}/mobi/index.html#/home</url>
                                             </http>
-                                            <time>60000</time>
+                                            <time>300000</time>
                                         </wait>
                                     </run>
                                 </image>

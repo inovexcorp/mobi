@@ -7,7 +7,7 @@ module.exports = function(config) {
   config.set({
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['jasmine'],
+    frameworks: ['parallel', 'jasmine'],
 
     files: [
         'target/classes/build/vendor.*.js',
@@ -30,13 +30,15 @@ module.exports = function(config) {
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
     reporters: ['progress', 'html'],
 
-    // configuration for the html reportert
+    // configuration for the html reporter
     htmlReporter: {
         outputDir: 'target',
         namedFiles: true,
         urlFriendlyName: true,
         reportName: 'specReport'
     },
+
+    browserNoActivityTimeout: 100000,
 
     // web server port
     port: 9876,
@@ -59,6 +61,11 @@ module.exports = function(config) {
         base: 'ChromeHeadless',
         flags: ['--no-sandbox']
       }
+    },
+
+    // karma-parallel configuration
+    parallelOptions: {
+        executors: (Math.ceil(require('os').cpus().length / 2))
     },
 
     // Continuous Integration mode

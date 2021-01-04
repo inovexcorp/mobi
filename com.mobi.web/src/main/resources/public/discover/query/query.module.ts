@@ -24,18 +24,15 @@ import * as angular from 'angular';
 
 import downloadQueryOverlayComponent from './components/downloadQueryOverlay/downloadQueryOverlay.component';
 import queryTabComponent from './components/queryTab/queryTab.component';
-import sparqlEditorComponent from './components/sparqlEditor/sparqlEditor.component';
-import sparqlResultBlockComponent from './components/sparqlResultBlock/sparqlResultBlock.component';
 
 /**
  * @ngdoc overview
  * @name query
  *
  * @description
- * The `query` module provides components that make up the Query submodule in the Mobi application.
+ * The `query` module provides components that make up the Query submodule of the Discover module in the Mobi
+ * application.
  */
 angular.module('query', [])
     .component('downloadQueryOverlay', downloadQueryOverlayComponent)
-    .component('queryTab', queryTabComponent)
-    .component('sparqlEditor', sparqlEditorComponent)
-    .component('sparqlResultBlock', sparqlResultBlockComponent);
+    .component('queryTab', queryTabComponent);

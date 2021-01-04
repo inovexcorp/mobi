@@ -24,9 +24,9 @@
     <div class="details-form-container w-100 row">
         <div class="col-8 offset-2">
             <div class="summary-line">
-                <strong>Branch: {{dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')}}</strong> into 
-                <strong>Branch: {{dvm.util.getDctermsValue(dvm.state.requestConfig.targetBranch, 'title')}}</strong> in 
-                <strong>{{dvm.util.getDctermsValue(dvm.state.requestConfig.record, 'title')}}</strong>
+                <p><strong> Branch: </strong> {{dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')}} </p>
+                <p><strong>into Branch: </strong> {{dvm.util.getDctermsValue(dvm.state.requestConfig.targetBranch, 'title')}} </p>
+                <p><strong>in Ontology:</strong> {{dvm.util.getDctermsValue(dvm.state.requestConfig.record, 'title')}}</p>
             </div>
             <form>
                 <text-input bind-model="dvm.state.requestConfig.title" change-event="dvm.state.requestConfig.title = value" display-text="'Title'" required="true"></text-input>
@@ -46,5 +46,12 @@
             </form>
         </div>
     </div>
-    <commit-difference-tabset difference="dvm.state.requestConfig.difference" branch-title="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')" target-id="dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head')" commit-id="dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head')"></commit-difference-tabset>
+    <commit-difference-tabset difference="dvm.state.requestConfig.difference"
+                              branch-title="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')"
+                              target-id="dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head')"
+                              commit-id="dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head')"
+                              entity-name-func="dvm.state.getEntityNameLabel"
+                              show-more-results-func="dvm.state.retrieveMoreResults(limit, offset)"
+                              start-index="dvm.state.requestConfig.startIndex"
+                              record-id="dvm.state.requestConfig.recordId"></commit-difference-tabset>
 </div>

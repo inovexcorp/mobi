@@ -91,8 +91,6 @@ import propertyHierarchyBlockComponent from './components/propertyHierarchyBlock
 import propertyTreeComponent from './components/propertyTree/propertyTree.component';
 import propertyValuesComponent from './components/propertyValues/propertyValues.component';
 import recordAccessOverlayComponent from './components/recordAccessOverlay/recordAccessOverlay.component';
-import relationshipOverlayComponent from './components/relationshipOverlay/relationshipOverlay.component';
-import relationshipsBlockComponent from './components/relationshipsBlock/relationshipsBlock.component';
 import resolveConflictsBlockComponent from './components/resolveConflictsBlock/resolveConflictsBlock.component';
 import savedChangesTabComponent from './components/savedChangesTab/savedChangesTab.component';
 import searchTabComponent from './components/searchTab/searchTab.component';
@@ -102,10 +100,10 @@ import serializationSelectComponent from './components/serializationSelect/seria
 import staticIriComponent from './components/staticIri/staticIri.component';
 import superClassSelectComponent from './components/superClassSelect/superClassSelect.component';
 import superPropertySelectComponent from './components/superPropertySelect/superPropertySelect.component';
-import topConceptOverlayComponent from './components/topConceptOverlay/topConceptOverlay.component';
 import treeItemComponent from './components/treeItem/treeItem.component';
 import uploadChangesOverlayComponent from './components/uploadChangesOverlay/uploadChangesOverlay.component';
 import uploadOntologyOverlayComponent from './components/uploadOntologyOverlay/uploadOntologyOverlay.component';
+import uploadErrorsOverlayComponent from './components/uploadErrorsOverlay/uploadErrorsOverlay.component';
 import uploadSnackbarComponent from './components/uploadSnackbar/uploadSnackbar.component';
 import usagesBlockComponent from './components/usagesBlock/usagesBlock.component';
 
@@ -186,8 +184,6 @@ angular.module('ontology-editor', [])
     .component('propertyTree', propertyTreeComponent)
     .component('propertyValues', propertyValuesComponent)
     .component('recordAccessOverlay', recordAccessOverlayComponent)
-    .component('relationshipOverlay', relationshipOverlayComponent)
-    .component('relationshipsBlock', relationshipsBlockComponent)
     .component('resolveConflictsBlock', resolveConflictsBlockComponent)
     .component('savedChangesTab', savedChangesTabComponent)
     .component('searchTab', searchTabComponent)
@@ -197,10 +193,9 @@ angular.module('ontology-editor', [])
     .component('staticIri', staticIriComponent)
     .component('superClassSelect', superClassSelectComponent)
     .component('superPropertySelect', superPropertySelectComponent)
-    .component('topConceptOverlay', topConceptOverlayComponent)
     .component('treeItem', treeItemComponent)
     .component('uploadChangesOverlay', uploadChangesOverlayComponent)
+    .component('uploadErrorsOverlay', uploadErrorsOverlayComponent)
     .component('uploadOntologyOverlay', uploadOntologyOverlayComponent)
     .component('uploadSnackbar', uploadSnackbarComponent)
     .component('usagesBlock', usagesBlockComponent);
-    

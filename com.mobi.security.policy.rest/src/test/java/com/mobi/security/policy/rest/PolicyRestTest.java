@@ -57,6 +57,7 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
@@ -80,8 +81,8 @@ public class PolicyRestTest extends MobiRestTestNg {
         MockitoAnnotations.initMocks(this);
         vf = getValueFactory();
 
-        xml = IOUtils.toString(getClass().getResourceAsStream("/policy.xml"), "UTF-8");
-        json = IOUtils.toString(getClass().getResourceAsStream("/policy.json"), "UTF-8");
+        xml = IOUtils.toString(getClass().getResourceAsStream("/policy.xml"), StandardCharsets.UTF_8);
+        json = IOUtils.toString(getClass().getResourceAsStream("/policy.json"), StandardCharsets.UTF_8);
         policy = new XACMLPolicy(xml, vf);
         policyId = vf.createIRI("http://mobi.com/policies/policy1");
 

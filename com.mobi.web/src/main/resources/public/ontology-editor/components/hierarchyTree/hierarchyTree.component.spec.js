@@ -70,8 +70,7 @@ describe('Hierarchy Tree component', function() {
         scope.index = 4;
         scope.updateSearch = jasmine.createSpy('updateSearch');
         scope.resetIndex = jasmine.createSpy('resetIndex');
-        scope.clickItem = jasmine.createSpy('clickItem');
-        this.element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy" index="index" update-search="updateSearch(value)" reset-index="resetIndex()" click-item="clickItem(iri)"></hierarchy-tree>'))(scope);
+        this.element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy" index="index" update-search="updateSearch(value)" reset-index="resetIndex()"></hierarchy-tree>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('hierarchyTree');
     });
@@ -105,10 +104,6 @@ describe('Hierarchy Tree component', function() {
             this.controller.resetIndex();
             expect(scope.resetIndex).toHaveBeenCalled();
         });
-        it('clickItem should be called in the parent scope', function() {
-            this.controller.clickItem({iri: 'iri'});
-            expect(scope.clickItem).toHaveBeenCalledWith('iri');
-        });
     });
     describe('contains the correct html', function() {
         beforeEach(function() {
@@ -129,6 +124,12 @@ describe('Hierarchy Tree component', function() {
         });
     });
     describe('controller methods', function() {
+        it('clickItem should call the correct method', function() {
+            ontologyStateSvc.getActivePage.and.returnValue({targetedSpinnerId: 'spinner'})
+            this.controller.clickItem('iri');
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, 'spinner');
+            expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
+        });
         it('toggleOpen should set the correct values', function() {
             spyOn(this.controller, 'isShown').and.returnValue(false);
             var node = {isOpened: false, path: ['a', 'b'], joinedPath: 'a.b'};
@@ -137,19 +138,6 @@ describe('Hierarchy Tree component', function() {
             expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open[node.joinedPath]).toEqual(true);
             expect(this.controller.isShown).toHaveBeenCalled();
             expect(this.controller.filteredHierarchy).toEqual([]);
-        });
-        describe('click should call the correct methods', function() {
-            it('if clickItem has been provided', function() {
-                this.controller.click('iri');
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-                expect(scope.clickItem).toHaveBeenCalledWith('iri');
-            });
-            it('if clickItem has not been provided', function() {
-                this.controller.clickItem = undefined;
-                this.controller.click('iri');
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-                expect(scope.clickItem).not.toHaveBeenCalled();
-            });
         });
         describe('matchesDropdownFilters', function() {
             beforeEach(function() {
@@ -186,16 +174,14 @@ describe('Hierarchy Tree component', function() {
         });
         describe('searchFilter', function() {
             beforeEach(function() {
-                this.filterEntity = {
-                    '@id': 'urn:id',
-                    [prefixes.dcterms + 'title']: [{'@value': 'Title'}]
-                };
                 this.filterNode = {
                     indent: 1,
                     entityIRI: 'iri',
                     hasChildren: false,
                     path: ['recordId', 'otherIri', 'iri'],
-                    entity: this.filterEntity
+                    entityInfo: {
+                        names: ['Title']
+                    }
                 };
                 this.filterNodeParent = {
                     indent: 0,
@@ -205,40 +191,27 @@ describe('Hierarchy Tree component', function() {
                 };
                 this.controller.hierarchy = [this.filterNodeParent, this.filterNode];
                 this.controller.filterText = 'ti';
-                ontologyManagerSvc.entityNameProps = [prefixes.dcterms + 'title'];
                 ontologyStateSvc.joinPath.and.callFake((path) => join(path, '.'));
             });
             describe('has filter text', function() {
-                describe('and the entity has matching search properties', function() {
-                    it('that have at least one matching text value', function() {
+                describe('and the entity names', function() {
+                    it('have at least one matching text value', function() {
                         expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
                         expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open[this.filterNode.path[0] + '.' + this.filterNode.path[1]]).toEqual(true);
                     });
-                    describe('that do not have a matching text value', function () {
+                    describe('do not have a matching text value', function () {
                         beforeEach(function () {
-                            this.filterNode.entity = {
-                                '@id': 'urn:title',
-                            };
-                            utilSvc.getBeautifulIRI.and.returnValue('id');
+                            this.filterNode.entityInfo.names = [];
                         });
-                        describe('and does not have a matching entity local name', function () {
-                            it('and the node has no children', function () {
-                                expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
-                            });
-                            it('and the node has children', function () {
-                                this.filterNode.hasChildren = true;
-                                expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
-                            });
+                        it('and does not have a matching entity local name', function () {
+                            utilSvc.getBeautifulIRI.and.returnValue('id');
+                            expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
                         });
                         it('and does have a matching entity local name', function() {
                             utilSvc.getBeautifulIRI.and.returnValue('title');
                             expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
                         });
                     });
-                });
-                it('and the entity does not have matching search properties', function() {
-                    ontologyManagerSvc.entityNameProps = [];
-                    expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
                 });
             });
             it('does not have filter text', function() {
@@ -255,10 +228,7 @@ describe('Hierarchy Tree component', function() {
                     path: ['recordId', 'otherIri', 'iri'],
                     entity: {
                         '@id': 'urn:id',
-                        [prefixes.dcterms + 'title']: [{'@value': 'Title'}],
-                        mobi: {
-                            imported: true
-                        }
+                        [prefixes.dcterms + 'title']: [{'@value': 'Title'}]
                     }
                 };
                 this.activeEntityNode = {
@@ -276,6 +246,7 @@ describe('Hierarchy Tree component', function() {
                 expect(this.controller.activeEntityFilter.filter(this.activeEntityNode)).toEqual(true);
             });
             it('does not match when an entity imported', function() {
+                ontologyStateSvc.isImported.and.returnValue(true);
                 expect(this.controller.activeEntityFilter.filter(this.importedNode)).toEqual(false);
             });
         });

@@ -80,9 +80,9 @@ function uploadOntologyOverlayComponentCtrl(ontologyManagerService, ontologyStat
     dvm.submit = function() {
         var id = 'upload-' + (uploadOffset + dvm.index);
         dvm.resolve.startUpload();
-        var promise = om.uploadFile(file, dvm.title, dvm.description, map(dvm.keywords, trim), id)
-            .then(dvm.resolve.finishUpload, errorMessage => {
-                os.addErrorToUploadItem(id, errorMessage);
+        var promise = om.uploadOntology(file, undefined, dvm.title, dvm.description, map(dvm.keywords, trim), id)
+            .then(dvm.resolve.finishUpload, errorObject => {
+                os.addErrorToUploadItem(id, errorObject);
                 dvm.resolve.finishUpload();
             });
         os.uploadList.push({title: dvm.title, id, promise, error: undefined});

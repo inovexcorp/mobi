@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { concat, map, values, trim, filter, identity, get, intersection, head, includes, has,  } from 'lodash';
+import { concat, map, values, trim, filter, find, identity, get, intersection, head, includes, has,  } from 'lodash';
 import { ANTLRInputStream, CommonTokenStream } from 'antlr4ts';
 import { ParseTreeWalker } from 'antlr4ts/tree/ParseTreeWalker'
 import { MOSLexer } from '../../vendor/antlr4/dist/MOSLexer';
@@ -28,6 +28,7 @@ import { MOSParser } from '../../vendor/antlr4/dist/MOSParser';
 import { MOSListener } from '../../vendor/antlr4/dist/MOSListener';
 import BlankNodesListener from '../../vendor/antlr4/BlankNodesListener';
 import BlankNodesErrorListener from '../../vendor/antlr4/BlankNodesErrorListener';
+import {on} from "cluster";
 
 manchesterConverterService.$inject = ['$filter', 'ontologyManagerService', 'prefixes', 'utilService'];
 
@@ -152,60 +153,82 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
         var entity = jsonld[index[id].position];
         var result = '';
         if (om.isClass(entity)) {
-            var prop = intersection(Object.keys(entity), Object.keys(expressionKeywords));
-            if (prop.length === 1) {
-                var item = head(entity[prop[0]]);
-                var keyword = expressionKeywords[prop[0]];
-                if (html && prop[0] !== prefixes.owl + 'oneOf') {
-                    keyword = surround(keyword, expressionClassName);
-                }
-                if (includes([prefixes.owl + 'unionOf', prefixes.owl + 'intersectionOf', prefixes.owl + 'oneOf'], prop[0])) {
-                    if (has(item, '@list')) {
-                        for (var i = 0; i < item['@list'].length; i++) {
-                            i == 0 ? result += getValue(item['@list'][i], jsonld, index, html) : result += keyword + getValue(item['@list'][i], jsonld, index, html);
-                        }
-                    } else {
-                        result += renderList(item['@id'], jsonld, index, html, keyword);
-                    }
-                } else {
-                    result += keyword + getValue(item, jsonld, index, html);
-                }
-                if (prop[0] === prefixes.owl + 'oneOf') {
-                    result = '{' + result + '}';
-                }
-            }
+            result = renderClass(entity, jsonld, index, html);
         } else if (om.isRestriction(entity)) {
-            var onProperty = util.getPropertyId(entity, prefixes.owl + 'onProperty');
-            var onClass = util.getPropertyId(entity, prefixes.owl + 'onClass');
-            if (onProperty) {
-                var propertyRestriction = $filter('splitIRI')(onProperty).end;
-                var classRestriction = onClass ? $filter('splitIRI')(onClass).end : undefined;
-                var prop = intersection(Object.keys(entity), Object.keys(restrictionKeywords));
-                if (prop.length === 1) {
-                    var item = head(entity[prop[0]]);
-                    var keyword = html ? surround(restrictionKeywords[prop[0]], restrictionClassName) : restrictionKeywords[prop[0]];
-                    if (has(item, '@list')) {
-                        var itemListObject = item['@list'][0];
-                        result += propertyRestriction + keyword + getValue(itemListObject, jsonld, index, html) + (classRestriction ? ' ' + classRestriction : '');
-                    } else {
-                        result += propertyRestriction + keyword + getValue(item, jsonld, index, html) + (classRestriction ? ' ' + classRestriction : '');
-                    }
-                }
-            }
+            result = renderRestriction(entity, jsonld, index, html);
         } else if (om.isDatatype(entity)) {
-            var prop = intersection(Object.keys(entity), Object.keys(datatypeKeywords));
-            if (prop.length === 1 && prop[0] === prefixes.owl + 'oneOf') {
-                var item = head(entity[prop[0]]);
-                var separator = datatypeKeywords[prop[0]];
+            result = renderDatatype(entity, jsonld, index, html);
+        }
+        return result === '' ? id : result;
+    }
+    function renderClass(entity, jsonld, index, html) {
+        var result = '';
+        var prop = intersection(Object.keys(entity), Object.keys(expressionKeywords));
+        if (prop.length === 1) {
+            var item = head(entity[prop[0]]);
+            var keyword = expressionKeywords[prop[0]];
+            if (html && prop[0] !== prefixes.owl + 'oneOf') {
+                keyword = surround(keyword, expressionClassName);
+            }
+            if (includes([prefixes.owl + 'unionOf', prefixes.owl + 'intersectionOf', prefixes.owl + 'oneOf'], prop[0])) {
                 if (has(item, '@list')) {
-                    result += getValue(item['@list'][0], jsonld, index, html, separator);
+                    for (var i = 0; i < item['@list'].length; i++) {
+                        i == 0 ? result += getValue(item['@list'][i], jsonld, index, html) : result += keyword + getValue(item['@list'][i], jsonld, index, html);
+                    }
                 } else {
-                    result += renderList(item['@id'], jsonld, index, html, separator);
+                    result += renderList(item['@id'], jsonld, index, html, keyword);
                 }
+            } else {
+                result += keyword + getValue(item, jsonld, index, html);
+            }
+            if (prop[0] === prefixes.owl + 'oneOf') {
                 result = '{' + result + '}';
             }
         }
-        return result === '' ? id : result;
+        return result;
+    }
+    function renderRestriction(entity, jsonld, index, html) {
+        var result = '';
+        var onProperty = util.getPropertyId(entity, prefixes.owl + 'onProperty');
+        var onClass = util.getPropertyId(entity, prefixes.owl + 'onClass');
+        if (onProperty) {
+            var propertyRestriction = $filter('splitIRI')(onProperty).end;
+            var classRestriction = onClass ? $filter('splitIRI')(onClass).end : undefined;
+            if (om.isBlankNodeId(onClass)) {
+                var bNodeEntity = find(jsonld, {'@id': onClass});
+                if (bNodeEntity) {
+                    var bNodeClassStr = renderClass(bNodeEntity, jsonld, index, html);
+                    classRestriction = bNodeClassStr ? '(' + bNodeClassStr + ')': classRestriction;
+                }
+            }
+            var prop = intersection(Object.keys(entity), Object.keys(restrictionKeywords));
+            if (prop.length === 1) {
+                var item = head(entity[prop[0]]);
+                var keyword = html ? surround(restrictionKeywords[prop[0]], restrictionClassName) : restrictionKeywords[prop[0]];
+                if (has(item, '@list')) {
+                    var itemListObject = item['@list'][0];
+                    result += propertyRestriction + keyword + getValue(itemListObject, jsonld, index, html) + (classRestriction ? ' ' + classRestriction : '');
+                } else {
+                    result += propertyRestriction + keyword + getValue(item, jsonld, index, html) + (classRestriction ? ' ' + classRestriction : '');
+                }
+            }
+        }
+        return result;
+    }
+    function renderDatatype(entity, jsonld, index, html) {
+        var result = '';
+        var prop = intersection(Object.keys(entity), Object.keys(datatypeKeywords));
+        if (prop.length === 1 && prop[0] === prefixes.owl + 'oneOf') {
+            var item = head(entity[prop[0]]);
+            var separator = datatypeKeywords[prop[0]];
+            if (has(item, '@list')) {
+                result += getValue(item['@list'][0], jsonld, index, html, separator);
+            } else {
+                result += renderList(item['@id'], jsonld, index, html, separator);
+            }
+            result = '{' + result + '}';
+        }
+        return result;
     }
     function getValue(item, jsonld, index, html, listKeyword = '') {
         if (has(item, '@value')) {
@@ -264,8 +287,10 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
             var rest = head(entity[prefixes.rdf + 'rest']);
             result += getValue(first, jsonld, index, html);
             if (has(rest, '@list')) {
-                result += listKeyword;
-                result += getValue(rest['@list'][0], jsonld, index, html);
+                if (rest['@list'][0]) {
+                    result += listKeyword;
+                    result += getValue(rest['@list'][0], jsonld, index, html);
+                }
                 end = true;
             } else {
                 result += listKeyword;

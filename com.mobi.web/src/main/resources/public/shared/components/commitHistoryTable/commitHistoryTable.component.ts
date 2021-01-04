@@ -45,12 +45,13 @@ const template = require('./commitHistoryTable.component.html');
  * provide a variable to bind the retrieved commits to. The directive is replaced by the content of the template.
  *
  * @param {string} commitId The IRI string of a commit in the local catalog
- * @param {string} headTitle The title to put on the top commit
+ * @param {string} [headTitle=''] headTitle The optional title to put on the top commit
  * @param {string} [targetId=''] targetId limits the commits displayed to only go as far back as this specified
  *      commit.
- * @param {Object[]} commitData A variable to bind the retrieved commits to
- * @param {Function} entityNameFunc An optional function to pass to `commitInfoOverlay` to control the display of
- * each entity's name
+ * @param {string} [entityId=''] entityId The optional IRI string of an entity whose history is to be displayed
+ * @param {string} [recordId=''] recordId The optional IRI string of an OntologyRecord associated with the commit
+ * @param {Function} [receiveCommits=undefined] receiveCommits The optional function receive more commits
+ * @param {string} graph A string that if present, shows graph data of the commits
  */
 const commitHistoryTableComponent = {
     template,
@@ -60,7 +61,7 @@ const commitHistoryTableComponent = {
         headTitle: '<?',
         targetId: '<?',
         entityId: '<?',
-        entityNameFunc: '<?',
+        recordId: '<?',
         receiveCommits: '&?',
         graph: '@'
     },
@@ -83,11 +84,9 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
     dvm.um = userManagerService;
     dvm.snap = undefined;
     dvm.colors = [];
-
+    dvm.limit = 100;
     dvm.error = '';
     dvm.commit = undefined;
-    dvm.additions = [];
-    dvm.deletions = [];
     dvm.commits = [];
     dvm.circleRadius = 5;
     dvm.circleSpacing = 48;
@@ -110,15 +109,10 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
         httpService.cancel(dvm.id);
     }
     dvm.openCommitOverlay = function(commitId) {
-        cm.getCommit(commitId)
-            .then(response => {
-                modalService.openModal('commitInfoOverlay', {
-                    commit: find(dvm.commits, {id: commitId}),
-                    additions: response.additions,
-                    deletions: response.deletions,
-                    entityNameFunc: dvm.entityNameFunc
-                }, undefined, 'lg');
-            }, errorMessage => dvm.error = errorMessage);
+        modalService.openModal('commitInfoOverlay', {
+            commit: find(dvm.commits, {id: commitId}),
+            ontRecordId: dvm.recordId
+        }, undefined, 'lg');
     }
     dvm.getCommits = function() {
         if (dvm.commitId) {
@@ -158,8 +152,8 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
         if (dvm.commits.length > 0) {
             wrapper = dvm.snap.group();
             // First draw circles in a straight line
-            forEach(dvm.commits, (commit, i) => {
-                var circle = dvm.snap.circle(0, dvm.circleSpacing/2 + (i * dvm.circleSpacing), dvm.circleRadius);
+            forEach(dvm.commits, (commit, index : number) => {
+                var circle = dvm.snap.circle(0, dvm.circleSpacing/2 + (index * dvm.circleSpacing), dvm.circleRadius);
                 var title = Snap.parse('<title>' + dvm.util.condenseCommitId(commit.id) + '</title>')
                 circle.append(title);
                 circle.click(() => dvm.openCommitOverlay(commit.id));

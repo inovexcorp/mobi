@@ -30,15 +30,19 @@ import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJsonNode;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 
+import aQute.bnd.service.diff.Diff;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.query.TupleQueryResult;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -47,6 +51,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Component;
@@ -54,6 +59,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -130,9 +136,7 @@ public class CommitRest {
             Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(commitId));
 
             if (optCommit.isPresent()) {
-                return createCommitResponse(optCommit.get(),
-                        catalogManager.getCommitDifference(optCommit.get().getResource()),
-                        format, transformer, bNodeService);
+                return createCommitResponse(optCommit.get(), transformer, bNodeService);
             } else {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
@@ -256,15 +260,23 @@ public class CommitRest {
     }
 
     /**
-     * Gets the {@link Difference} between the two specified {@link Commit}s.
+     * Gets the {@link Difference} for the specified commit or between the two specified {@link Commit}s. If a limit and
+     * offset are passed in, retrieve the differences for the paged subjects using the limit and offset. If the offset
+     * is greater than the number of subjects, the additions and deletions arrays of the response object will be empty
+     * arrays. If limit and offset are provided, a header called has-more-results will be added to the response object
+     * that indicates whether more pages of results exist.
      *
      * @param sourceId  {@link String} value of the source {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
      *                  {@link String} starts with "{@code _:}".
-     * @param targetId  {@link String} value of the target {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
-     *                  {@link String} starts with "{@code _:}".
+     * @param targetId  Optional {@link String} value of the target {@link Commit} ID. NOTE: Assumes an {@link IRI}
+     *                  unless {@link String} starts with "{@code _:}".
+     * @param limit     An optional limit of the number of subjects to retrieve the differences for. The number of subjects in the response
+     *                  object may be less than the limit due to the way some blank nodes are skolemized.
+     * @param offset    An optional integer offset of the subject to start collecting differences from.
      * @param rdfFormat {@link String} representation of the desired {@link RDFFormat}. Default value is
      *                  {@code "jsonld"}.
-     * @return A {@link Response} containing the {@link Difference} between the {@code sourceId} and {@code targetId}
+     * @return A {@link Response} containing the {@link Difference} for the specified commit or between the
+     * {@code sourceId} and {@code targetId}
      * {@link Commit}s.
      */
     @GET
@@ -273,24 +285,49 @@ public class CommitRest {
     @RolesAllowed("user")
     @ApiOperation("Retrieves the Difference of the two specified Commits.")
     public Response getDifference(@PathParam("sourceId") String sourceId,
-                           @QueryParam("targetId") String targetId,
-                           @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
+                                  @QueryParam("targetId") String targetId,
+                                  @DefaultValue("-1") @QueryParam("limit") int limit,
+                                  @QueryParam("offset") int offset,
+                                  @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
         try {
             checkStringParam(sourceId, "Source commit is required");
-            checkStringParam(targetId, "Target commit is required");
 
-            try {
-                Difference diff = catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId));
-                return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
-                        MediaType.APPLICATION_JSON).build();
-            } catch (IllegalArgumentException ex) {
-                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-            } catch (IllegalStateException | MobiException ex) {
-                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            if (StringUtils.isBlank(targetId)) {
+                Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(sourceId));
+                if (optCommit.isPresent()) {
+                    if (limit == -1) {
+                        return createCommitResponse(optCommit.get(),
+                                catalogManager.getCommitDifference(optCommit.get().getResource()),
+                                rdfFormat, transformer, bNodeService);
+                    } else {
+                        PagedDifference pagedDifference = catalogManager.getCommitDifferencePaged(optCommit.get().getResource(), limit, offset);
+                        return Response.fromResponse(createCommitResponse(optCommit.get(),
+                                pagedDifference.getDifference(),
+                                rdfFormat, transformer, bNodeService)).header("Has-More-Results", pagedDifference.hasMoreResults()).build();
+                    }
+                } else {
+                    return Response.status(Response.Status.NOT_FOUND).build();
+                }
+            } else {
+                if (limit == -1) {
+                    Difference diff = catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId));
+                    return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
+                            MediaType.APPLICATION_JSON).build();
+                } else {
+                    PagedDifference pagedDifference = catalogManager.getDifferencePaged(vf.createIRI(sourceId), vf.createIRI(targetId), limit, offset);
+                    return Response.ok(getDifferenceJsonString(pagedDifference.getDifference(), rdfFormat, transformer, bNodeService),
+                            MediaType.APPLICATION_JSON).header("Has-More-Results", pagedDifference.hasMoreResults()).build();
+                }
             }
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             logger.trace("getDifference took {}ms", System.currentTimeMillis() - start);
         }
     }
+
+
 }

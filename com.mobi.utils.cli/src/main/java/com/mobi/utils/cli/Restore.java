@@ -62,6 +62,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -86,7 +87,7 @@ public class Restore implements Action {
     private static final Logger LOGGER = LoggerFactory.getLogger(Restore.class);
 
     private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + File.separator + "restoreZip";
-    private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15", "1.16");
+    private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15", "1.16", "1.17", "1.18");
 
     // Service References
 
@@ -225,14 +226,14 @@ public class Restore implements Action {
         }
 
         Set<String> blacklistedFiles = new HashSet<>((IOUtils.readLines(getClass()
-                .getResourceAsStream("/configBlacklist.txt"), "UTF-8")));
+                .getResourceAsStream("/configBlacklist.txt"), StandardCharsets.UTF_8)));
         if (version.startsWith(mobiVersions.get(0))) {
             LOGGER.trace("1.12 Mobi version detected. Blacklisting additional files from backup.");
             // Blacklist 1.12 default Karaf config files that have changed with Karaf 4.2.x upgrade
             // Blacklist also includes VFS config file with added directory property
             // Blacklist also includes PolicyCacheConfiguration config file for change between size to number of entries
             blacklistedFiles.addAll(IOUtils.readLines(getClass().getResourceAsStream("/configBlacklist-1.12.txt"),
-                    "UTF-8"));
+                    StandardCharsets.UTF_8));
         }
 
         // Merge directories, replacing any file that already exists
@@ -261,7 +262,7 @@ public class Restore implements Action {
 
         // Verify services have started
         List<String> services = IOUtils.readLines(getClass().getResourceAsStream("/registered-services.txt"),
-                "UTF-8");
+                StandardCharsets.UTF_8);
         services.addAll(repoServices);
         for (String service : services) {
             ServiceReference<?>[] refs = bundleContext.getAllServiceReferences(null, service);

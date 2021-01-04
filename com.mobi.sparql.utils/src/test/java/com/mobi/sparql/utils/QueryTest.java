@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
@@ -222,7 +223,7 @@ public class QueryTest {
     }
 
     private String streamToString(InputStream inputStream) throws IOException {
-        return IOUtils.toString(inputStream, "UTF-8");
+        return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
     }
 
     private class DatasetListener extends Sparql11BaseListener {

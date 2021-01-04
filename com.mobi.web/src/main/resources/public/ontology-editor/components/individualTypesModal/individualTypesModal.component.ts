@@ -72,7 +72,7 @@ function individualTypesModalComponentCtrl(ontologyManagerService, ontologyState
             return;
         }
         var originalTypes = angular.copy(dvm.os.listItem.selected['@type']);
-
+        
         // Handle vocabulary stuff
         var wasConcept = dvm.ontoUtils.containsDerivedConcept(originalTypes);
         var isConcept = dvm.ontoUtils.containsDerivedConcept(dvm.types);
@@ -85,7 +85,7 @@ function individualTypesModalComponentCtrl(ontologyManagerService, ontologyState
         }
 
         dvm.os.listItem.selected['@type'] = dvm.types;
-
+        
         var addedTypes = difference(dvm.types, originalTypes);
         var removedTypes = difference(originalTypes, dvm.types);
 
@@ -99,14 +99,14 @@ function individualTypesModalComponentCtrl(ontologyManagerService, ontologyState
             var isConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(dvm.types);
 
             // Handle added types
-            forEach(addedTypes, type => {
+            forEach(addedTypes, (type:any) => {
                 var indivs = get(dvm.os.listItem.classesAndIndividuals, type, []);
                 indivs.push(dvm.os.listItem.selected['@id']);
                 dvm.os.listItem.classesAndIndividuals[type] = indivs;
             });
 
             // Handle removed types
-            forEach(removedTypes, type => {
+            forEach(removedTypes, ( type:any ) => {
                 var parentAndIndivs = get(dvm.os.listItem.classesAndIndividuals, "['" + type + "']", []);
                 if (parentAndIndivs.length) {
                     remove(parentAndIndivs, item => item === dvm.os.listItem.selected['@id']);

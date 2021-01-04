@@ -67,14 +67,15 @@ describe('Commit History Table component', function() {
         this.commitId = 'commit';
         this.entityId = 'entity';
         this.commits = [{id: this.commitId}];
+        this.recordId = 'record';
 
         scope.headTitle = 'title';
         scope.commitId = this.commitId;
         scope.targetId = this.commitId;
         scope.entityId = this.entityId;
+        scope.recordId = this.recordId;
         scope.receiveCommits = jasmine.createSpy('receiveCommits');
-        scope.entityNameFunc = jasmine.createSpy('entityNameFunc');
-        this.element = $compile(angular.element('<commit-history-table commit-id="commitId" head-title="headTitle" target-id="targetId" entity-id="entityId" receive-commits="receiveCommits(commits)" entity-name-func="entityNameFunc"></commit-history-table>'))(scope);
+        this.element = $compile(angular.element('<commit-history-table commit-id="commitId" head-title="headTitle" target-id="targetId" entity-id="entityId" record-id="recordId" receive-commits="receiveCommits(commits)"></commit-history-table>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commitHistoryTable');
     });
@@ -156,36 +157,23 @@ describe('Commit History Table component', function() {
             scope.$digest();
             expect(scope.entityId).toEqual(original);
         });
-        it('entityNameFunc should be one way bound', function() {
-            this.controller.entityNameFunc = undefined;
-            scope.$digest();
-            expect(scope.entityNameFunc).toBeDefined();
-        });
         it('receiveCommits should be called in the parent scope', function() {
             this.controller.receiveCommits({commits: []});
             expect(scope.receiveCommits).toHaveBeenCalledWith([]);
         });
+        it('recordId should be one way bound', function() {
+            this.controller.recordId = 'newId';
+            scope.$digest();
+            expect(scope.recordId).toEqual('record');
+        });
     });
     describe('controller methods', function() {
-        describe('should open the commitInfoOverlay', function() {
-            beforeEach(function() {
-                this.controller.commits = this.commits;
-            });
-            it('if getCommit resolves', function() {
-                catalogManagerSvc.getCommit.and.returnValue($q.when({additions: [], deletions: []}));
-                this.controller.openCommitOverlay(this.commitId);
-                scope.$apply();
-                expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
-                expect(modalSvc.openModal).toHaveBeenCalledWith('commitInfoOverlay', {commit: {id: this.commitId}, additions: [], deletions: [], entityNameFunc: this.controller.entityNameFunc}, undefined, 'lg');
-            });
-            it('unless getCommit rejects', function() {
-                catalogManagerSvc.getCommit.and.returnValue($q.reject('Error Message'));
-                this.controller.openCommitOverlay(this.commitId);
-                scope.$apply();
-                expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
-                expect(modalSvc.openModal).not.toHaveBeenCalled();
-                expect(this.controller.error).toEqual('Error Message');
-            });
+        it('should open the commitInfoOverlay', function() {
+            this.controller.commits = this.commits;
+            this.headers = {'has-more-results': 'false'};
+            this.controller.openCommitOverlay(this.commitId);
+            scope.$apply();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('commitInfoOverlay', {commit: {id: this.commitId}, ontRecordId: this.recordId}, undefined, 'lg');
         });
         describe('should get the list of commits', function() {
             beforeEach(function() {
@@ -193,11 +181,11 @@ describe('Commit History Table component', function() {
                 spyOn(this.controller, 'reset');
             });
             it('unless a commit has not been passed', function() {
-                catalogManagerSvc.getCommit.calls.reset();
+                catalogManagerSvc.getDifference.calls.reset();
                 scope.commitId = undefined;
                 scope.$digest();
                 this.controller.getCommits();
-                expect(catalogManagerSvc.getCommit).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
                 expect(this.controller.commits).toEqual([]);
                 expect(scope.receiveCommits).toHaveBeenCalledWith([]);
             });
@@ -343,12 +331,12 @@ describe('Commit History Table component', function() {
             expect(this.controller.getCommits).toHaveBeenCalled();
         });
     });
-    it('should call openCommitOverlay when an id is clicked', function() {
+    it('should call openModal for commitInfoOverlay when an id is clicked', function() {
         scope.$apply();
         this.controller.commits = this.commits;
         scope.$digest();
         var id = angular.element(this.element.querySelectorAll('table tr td.commit-id a')[0]);
         id.triggerHandler('click');
-        expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commits[0].id);
+        expect(modalSvc.openModal).toHaveBeenCalledWith('commitInfoOverlay', {commit: {id: this.commitId}, ontRecordId: this.recordId}, undefined, 'lg');
     });
 });

@@ -88,7 +88,8 @@ function newInstanceClassOverlayComponentCtrl($timeout, $filter, uuid, discoverS
                 merge(dvm.ds.explore.instanceDetails, es.createPagedResultsObject(response));
                 var iri;
                 if (dvm.ds.explore.instanceDetails.data.length) {
-                    var split = $filter('splitIRI')(head(dvm.ds.explore.instanceDetails.data).instanceIRI);
+                    let instanceDetails : any = head(dvm.ds.explore.instanceDetails.data);
+                    var split = $filter('splitIRI')(instanceDetails.instanceIRI);
                     iri = split.begin + split.then + uuid.v4();
                 } else {
                     var split = $filter('splitIRI')(dvm.selectedClass.id);

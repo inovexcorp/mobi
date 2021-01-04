@@ -77,10 +77,10 @@ function commitCompiledResourceComponentCtrl($q, httpService, catalogManagerServ
             httpService.cancel(dvm.id);
             cm.getCompiledResource(dvm.commitId, dvm.entityId, dvm.id)
                 .then(resources => {
-                    var resource = head(resources) || {};
+                    var resource : any = head(resources) || {};
                     dvm.types = map(get(resource, '@type', []), type => ({type}));
                     dvm.resource = omit(resource, ['@id', '@type']);
-                    return cm.getCommit(dvm.commitId);
+                    return cm.getDifference(dvm.commitId);
                 }, $q.reject)
                 .then(response => {
                     var additionsObj = find(response.additions, {'@id': dvm.entityId});
@@ -94,7 +94,7 @@ function commitCompiledResourceComponentCtrl($q, httpService, catalogManagerServ
                     var deletions = omit(deletionsObj, ['@id', '@type']);
                     forEach(additions, (values, prop) => {
                         forEach(values, value => {
-                            var resourceVal = find(dvm.resource[prop], value);
+                            var resourceVal: any = find(dvm.resource[prop], value);
                             if (resourceVal) {
                                 resourceVal.add = true;
                             }

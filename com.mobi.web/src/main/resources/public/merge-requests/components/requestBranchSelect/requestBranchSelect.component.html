@@ -22,19 +22,29 @@
   -->
 <div class="request-branch-select h-100">
     <div class="form-container">
-        <form name="dvm.form" class="branch-select-form form-inline justify-content-center" novalidate autocomplete="off">
+        <form name="dvm.form" class="branch-select-form form-horizontal justify-content-center" novalidate autocomplete="off">
             <div class="form-group">
                 <span class="form-control-static">Merge </span>
+                <branch-select class="select-branch" bind-model="dvm.state.requestConfig.sourceBranch" required="true" change-event="dvm.changeSource(value)" branches="dvm.branches"></branch-select>
             </div>
-            <branch-select class="select-branch" bind-model="dvm.state.requestConfig.sourceBranch" required="true" change-event="dvm.changeSource(value)" branches="dvm.branches"></branch-select>
-            <div class="form-group">
+
+             <div class="form-group">
                 <span class="form-control-static">into</span>
+                <branch-select class="select-branch" bind-model="dvm.state.requestConfig.targetBranch" required="true" change-event="dvm.changeTarget(value)" branches="dvm.branches"></branch-select>
             </div>
-            <branch-select class="select-branch" bind-model="dvm.state.requestConfig.targetBranch" required="true" change-event="dvm.changeTarget(value)" branches="dvm.branches"></branch-select>
+
             <div class="form-group">
                 <span class="form-control-static">in <strong>{{dvm.util.getDctermsValue(dvm.state.requestConfig.record, 'title')}}</strong></span>
             </div>
         </form>
     </div>
-    <commit-difference-tabset ng-if="dvm.state.requestConfig.difference" difference="dvm.state.requestConfig.difference" branch-title="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')" target-id="dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head')" commit-id="dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head')"></commit-difference-tabset>
+    <commit-difference-tabset ng-if="dvm.state.requestConfig.difference"
+                              difference="dvm.state.requestConfig.difference"
+                              branch-title="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')"
+                              target-id="dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head')"
+                              commit-id="dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head')"
+                              entity-name-func="dvm.state.getEntityNameLabel"
+                              show-more-results-func="dvm.state.retrieveMoreResults(limit, offset)"
+                              start-index="dvm.state.requestConfig.startIndex"
+                              record-id="dvm.state.requestConfig.recordId"></commit-difference-tabset>
 </div>

@@ -232,7 +232,7 @@ describe('Axiom Block component', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toEqual(1);
 
-            ontologyStateSvc.listItem.selected.mobi = {imported: true};
+            ontologyStateSvc.isSelectedImported.and.returnValue(true);
             scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toEqual(0);
         });

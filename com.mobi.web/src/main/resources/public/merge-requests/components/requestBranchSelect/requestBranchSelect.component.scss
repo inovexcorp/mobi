@@ -28,11 +28,13 @@
     flex-direction: column;
 
     .form-container {
-        text-align: center;
+        text-align: left;
+
 
         .branch-select-form {
             .form-control-static {
                 padding: 0;
+                word-break: break-all;
             }
             .ui-select-toggle {
                 width: 100%;
@@ -49,7 +51,8 @@
                 }
             }
             .select-branch {
-                margin: 0 5px;
+                // margin: 0 5px;
+                text-overflow: ellipsis;
             }
         }
     }

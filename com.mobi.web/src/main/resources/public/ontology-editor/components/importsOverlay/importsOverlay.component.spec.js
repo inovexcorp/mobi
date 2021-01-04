@@ -236,7 +236,7 @@ describe('Imports Overlay component', function() {
             expect(this.controller.getOntologyIRI({})).toEqual('ontology');
             expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.ontologyEditor + 'ontologyIRI');
         });
-        describe('should update the appropriate varibles if clicking the', function() {
+        describe('should update the appropriate variables if clicking the', function() {
             beforeEach(function() {
                 this.controller.ontologies = [];
                 this.controller.getOntologyConfig.searchText = 'test';
@@ -304,7 +304,7 @@ describe('Imports Overlay component', function() {
                 this.urls = ['url'];
                 ontologyStateSvc.listItem.isSaved = false;
             });
-            it('if there are duplciate values', function() {
+            it('if there are duplicate values', function() {
                 propertyManagerSvc.addId.and.returnValue(false);
                 this.controller.confirmed(this.urls, 'url');
                 _.forEach(this.urls, url => {

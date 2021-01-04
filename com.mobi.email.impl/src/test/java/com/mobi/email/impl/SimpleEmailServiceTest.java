@@ -4,28 +4,38 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 import com.dumbster.smtp.SimpleSmtpServer;
 import com.dumbster.smtp.SmtpMessage;
+import com.mobi.email.api.EmailServiceConfig;
+import com.mobi.security.api.EncryptionService;
 import com.mobi.server.api.Mobi;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.service.cm.ConfigurationAdmin;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 /*-
  * #%L
@@ -49,6 +59,8 @@ import java.util.concurrent.ExecutionException;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({FrameworkUtil.class})
 public class SimpleEmailServiceTest {
 
     private SimpleEmailService es;
@@ -62,6 +74,9 @@ public class SimpleEmailServiceTest {
     private static final String TO_EMAIL_ADDRESS = "mobiemailtestuser@gmail.com";
 
     @Mock
+    EmailServiceConfig emailServiceConfig;
+
+    @Mock
     private Mobi mobi;
 
     @Mock
@@ -70,41 +85,73 @@ public class SimpleEmailServiceTest {
     @Mock
     private BundleContext bundleContext;
 
+    @Mock
+    private EncryptionService encryptionService;
+
+    @Mock
+    private ConfigurationAdmin configurationAdmin;
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
+
+        mockStatic(FrameworkUtil.class);
+        when(FrameworkUtil.getBundle(any())).thenReturn(bundle);
         when(mobi.getHostName()).thenReturn("https://localhost:8443/");
         templatePath = SimpleEmailService.class.getResource("/emailTemplate.html");
         when(bundle.getEntry(any(String.class))).thenReturn(templatePath);
         when(bundleContext.getBundle()).thenReturn(bundle);
         URL logoResource = SimpleEmailServiceTest.class.getResource("/mobi-primary-logo-cropped.png");
         when(bundle.getResource(any())).thenReturn(logoResource);
+        when(encryptionService.isEnabled()).thenReturn(false);
 
         es = new SimpleEmailService();
         es.setMobiServer(mobi);
+        es.setEncryptionService(encryptionService);
+        es.setConfigurationAdmin(configurationAdmin);
 
         smtpServer = SimpleSmtpServer.start(SimpleSmtpServer.AUTO_SMTP_PORT);
 
-        config = new HashMap<>();
-        config.put("emailAddress", TO_EMAIL_ADDRESS);
-        config.put("emailPassword", "Don't4get");
-        config.put("port", smtpServer.getPort());
-        config.put("smtpServer", "localhost");
-        config.put("security", "");
-        config.put("imageBasePath", "https://mobi.inovexcorp.com");
-        config.put("emailTemplate", "emailTemplate.html");
+        when(emailServiceConfig.emailAddress()).thenReturn(TO_EMAIL_ADDRESS);
+        when(emailServiceConfig.emailPassword()).thenReturn("Don't4get");
+        when(emailServiceConfig.port()).thenReturn(smtpServer.getPort());
+        when(emailServiceConfig.smtpServer()).thenReturn("localhost");
+        when(emailServiceConfig.security()).thenReturn("");
+        when(emailServiceConfig.emailTemplate()).thenReturn("emailTemplate.html");
 
         System.setProperty("karaf.etc", SimpleEmailServiceTest.class.getResource("/").getPath());
 
-        Method m = es.getClass().getDeclaredMethod("activate", BundleContext.class, Map.class);
+        Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
         m.setAccessible(true);
-        m.invoke(es, bundleContext, config);
+        m.invoke(es, emailServiceConfig);
         assertNotNull(es);
     }
 
     @After
     public void tearDown() throws Exception {
         smtpServer.stop();
+    }
+
+    @Test
+    public void encryptionEnabledTest() throws Exception {
+        when(encryptionService.isEnabled()).thenReturn(true);
+        when(encryptionService.decrypt(anyString(), anyString(), any())).thenReturn("TEST_PASS");
+        Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
+        m.setAccessible(true);
+        m.invoke(es, emailServiceConfig);
+        assertNotNull(es);
+        verify(encryptionService, times(1)).decrypt(anyString(), anyString(), any());
+    }
+
+    @Test
+    public void encryptionDisabledTest() throws Exception {
+        when(encryptionService.isEnabled()).thenReturn(false);
+        when(encryptionService.decrypt(anyString(), anyString(), any())).thenReturn("TEST_PASS");
+        Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
+        m.setAccessible(true);
+        m.invoke(es, emailServiceConfig);
+        assertNotNull(es);
+        verify(encryptionService, times(0)).decrypt(anyString(), anyString(), any());
     }
 
     @Test
@@ -139,10 +186,10 @@ public class SimpleEmailServiceTest {
 
     @Test(expected = ExecutionException.class)
     public void sendSimpleEmailInvalidPortTest() throws Exception {
-        config.replace("port", 1);
-        Method m = es.getClass().getDeclaredMethod("modified", BundleContext.class, Map.class);
+        when(emailServiceConfig.port()).thenReturn(1);
+        Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
         m.setAccessible(true);
-        m.invoke(es, bundleContext, config);
+        m.invoke(es, emailServiceConfig);
 
         CompletableFuture<Set<String>> cf = es.sendSimpleEmail(SUBJECT_LINE, TEXT_MESSAGE, TO_EMAIL_ADDRESS);
         cf.get();
@@ -150,10 +197,10 @@ public class SimpleEmailServiceTest {
 
     @Test
     public void sendSimpleEmailAbsoluteTemplateTest() throws Exception {
-        config.replace("emailTemplate", URLDecoder.decode(templatePath.getPath(), "UTF-8"));
-        Method m = es.getClass().getDeclaredMethod("modified", BundleContext.class, Map.class);
+        when(emailServiceConfig.emailTemplate()).thenReturn(URLDecoder.decode(templatePath.getPath(), "UTF-8"));
+        Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
         m.setAccessible(true);
-        m.invoke(es, bundleContext, config);
+        m.invoke(es, emailServiceConfig);
 
         CompletableFuture<Set<String>> cf = es.sendSimpleEmail(SUBJECT_LINE, TEXT_MESSAGE, TO_EMAIL_ADDRESS);
         Set<String> failedEmails = cf.get();
@@ -198,10 +245,10 @@ public class SimpleEmailServiceTest {
 
     @Test(expected = ExecutionException.class)
     public void sendEmailInvalidPortTest() throws Exception {
-        config.replace("port", 1);
-        Method m = es.getClass().getDeclaredMethod("modified", BundleContext.class, Map.class);
+        when(emailServiceConfig.port()).thenReturn(1);
+        Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
         m.setAccessible(true);
-        m.invoke(es, bundleContext, config);
+        m.invoke(es, emailServiceConfig);
 
         CompletableFuture<Set<String>> cf = es.sendEmail(SUBJECT_LINE, HTML_MESSAGE, TO_EMAIL_ADDRESS);
         cf.get();

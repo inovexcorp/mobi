@@ -21,13 +21,21 @@
  * #L%
  */
 
- const template = require('./requestDetailsForm.component.html');
+import {get, noop} from "lodash";
+
+const template = require('./requestDetailsForm.component.html');
+
+import './requestDetailsForm.component.scss';
 
 /**
  * @ngdoc component
  * @name merge-requests.component:requestDetailsForm
+ * @requires $q
  * @requires shared.service:mergeRequestsStateService
+ * @requires shared.service:userManagerService
+ * @requires shared.service:catalogManagerService
  * @requires shared.service:utilService
+ * @requires shared.service:prefixes
  *
  * @description
  * `requestDetailsForm` is a component which creates a div containing a form with inputs for
@@ -42,17 +50,42 @@ const requestDetailsFormComponent = {
     controller: requestDetailsFormComponentCtrl
 }
 
-requestDetailsFormComponentCtrl.$inject = ['mergeRequestsStateService', 'userManagerService', 'utilService', 'prefixes'];
+requestDetailsFormComponentCtrl.$inject = ['$q', 'mergeRequestsStateService', 'userManagerService', 'catalogManagerService', 'utilService', 'prefixes'];
 
-function requestDetailsFormComponentCtrl(mergeRequestsStateService, userManagerService, utilService, prefixes) {
+function requestDetailsFormComponentCtrl($q, mergeRequestsStateService, userManagerService, catalogManagerService, utilService, prefixes) {
     var dvm = this;
+    var cm = catalogManagerService;
+    var catalogId = get(cm.localCatalog, '@id');
     dvm.util = utilService;
     dvm.prefixes = prefixes;
     dvm.state = mergeRequestsStateService;
     dvm.um = userManagerService;
 
     dvm.$onInit = function() {
+        dvm.state.requestConfig.entityNames = {};
+        dvm.state.requestConfig.difference = undefined;
+        dvm.state.requestConfig.previousDiffIris = [];
+        dvm.state.requestConfig.startIndex = 0;
         dvm.state.requestConfig.title = dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title');
+        cm.getRecordBranches(dvm.state.requestConfig.recordId, catalogId)
+            .then(response => {
+                dvm.state.updateRequestConfigBranch('sourceBranch', response.data);
+                dvm.state.updateRequestConfigBranch( 'targetBranch', response.data);
+                if (dvm.state.requestConfig.sourceBranch && dvm.state.requestConfig.targetBranch) {
+                    return dvm.state.updateRequestConfigDifference();
+                } else {
+                    dvm.state.createRequestStep = 1;
+                    dvm.state.requestConfig.difference = undefined;
+                    return $q.reject('Branch was deleted');
+                }
+            }, $q.reject)
+            .then(noop, dvm.util.createErrorToast);
+    }
+    dvm.$onDestroy = function() {
+        dvm.state.requestConfig.entityNames = {};
+        dvm.state.requestConfig.difference = undefined;
+        dvm.state.requestConfig.previousDiffIris = [];
+        dvm.state.requestConfig.startIndex = 0;
     }
 }
 

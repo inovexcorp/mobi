@@ -27,6 +27,8 @@ import static junit.framework.TestCase.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -39,6 +41,7 @@ import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
@@ -62,6 +65,7 @@ import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
@@ -89,9 +93,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -103,6 +109,7 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
     private final IRI recordIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#record");
     private final IRI branchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch");
     private final IRI commitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commit");
+    private final IRI inProgressCommitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/inProgressCommits#commit");
     private final IRI recordPolicyIRI = VALUE_FACTORY.createIRI("http://mobi.com/policies/record/encoded-record-policy");
 
     private DeleteActivity deleteActivity;
@@ -159,6 +166,12 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
     private Statement statement;
 
     @Mock
+    private RepositoryResult<Statement> inProgressResults;
+
+    @Mock
+    private InProgressCommit inProgressCommit;
+
+    @Mock
     private TupleQuery tupleQuery;
 
     @Mock
@@ -202,6 +215,7 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         MockitoAnnotations.initMocks(this);
 
         when(configProvider.getRepository()).thenReturn(repository);
+        when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
 
         when(repository.getConnection()).thenReturn(connection);
 
@@ -237,6 +251,15 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
 
         when(manager.createMapping(any(Model.class))).thenReturn(mappingWrapper);
         when(manager.createMapping(any(InputStream.class), any(RDFFormat.class))).thenReturn(mappingWrapper);
+
+        // InProgressCommit deletion setup
+        when(connection.getStatements(eq(null), eq(VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI)), any(IRI.class))).thenReturn(inProgressResults);
+        Set<Statement> inProgressCommitIris = new HashSet<>();
+        inProgressCommitIris.add(VALUE_FACTORY.createStatement(inProgressCommitIRI, VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI), recordIRI));
+        when(inProgressResults.iterator()).thenReturn(inProgressCommitIris.iterator());
+        doCallRealMethod().when(inProgressResults).forEach(any(Consumer.class));
+        when(utilsService.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), eq(connection))).thenReturn(inProgressCommit);
+        doNothing().when(utilsService).removeInProgressCommit(any(InProgressCommit.class), eq(connection));
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.setManager(manager);
@@ -382,6 +405,9 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         verify(provUtils).startDeleteActivity(user, recordIRI);
         verify(mergeRequestManager).deleteMergeRequestsWithRecordId(recordIRI, connection);
         verify(utilsService).removeBranch(eq(recordIRI), eq(branchIRI), any(List.class), eq(connection));
+        verify(connection).getStatements(eq(null), eq(VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI)), eq(recordIRI));
+        verify(utilsService).getInProgressCommit(eq(catalogIRI), eq(recordIRI), eq(inProgressCommitIRI), eq(connection));
+        verify(utilsService).removeInProgressCommit(eq(inProgressCommit), eq(connection));
         verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));
     }
 

@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.17.53-SNAPSHOT</version>
+        <version>1.19.0-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -112,18 +112,17 @@
         <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-module-junit4</artifactId>
-            <version>1.6.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-api-mockito</artifactId>
-            <version>1.6.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>rdf-orm-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

@@ -35,6 +35,7 @@ import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
+import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
@@ -92,6 +93,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -257,11 +259,11 @@ public class SimpleCatalogManager implements CatalogManager {
         try {
             FIND_RECORDS_QUERY = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/find-records.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             COUNT_RECORDS_QUERY = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/count-records.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -1092,6 +1094,17 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public PagedDifference getCommitDifferencePaged(Resource commitId, int limit, int offset) {
+        long start = System.currentTimeMillis();
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            return utils.getCommitDifferencePaged(commitId, conn, limit, offset);
+        } finally {
+            log.trace("getCommitDifferencePaged took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    @Override
     public void removeInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
                                        Resource inProgressCommitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -1224,6 +1237,14 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return utils.getCommitDifference(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn, true),
                     conn);
+        }
+    }
+
+    @Override
+    public PagedDifference getDifferencePaged(Resource sourceCommitId, Resource targetCommitId, int limit, int offset) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return utils.getCommitDifferencePaged(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn, true),
+                    conn, limit, offset);
         }
     }
 

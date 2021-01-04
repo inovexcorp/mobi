@@ -60,6 +60,7 @@ createObjectPropertyOverlayComponentCtrl.$inject = ['$filter', 'ontologyStateSer
 
 function createObjectPropertyOverlayComponentCtrl($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
     var dvm = this;
+    dvm.duplicateCheck = true;
     dvm.characteristics = [
         {
             checked: false,
@@ -70,6 +71,18 @@ function createObjectPropertyOverlayComponentCtrl($filter, ontologyStateService,
             checked: false,
             typeIRI: prefixes.owl + 'AsymmetricProperty',
             displayText: 'Asymmetric Property',
+        },
+        {
+            checked: false,
+            typeIRI: prefixes.owl + 'SymmetricProperty',
+            displayText: 'Symmetric Property',
+            objectOnly: true
+        },
+        {
+            checked: false,
+            typeIRI: prefixes.owl + 'TransitiveProperty',
+            displayText: 'Transitive Property',
+            objectOnly: true
         }
     ];
     dvm.prefixes = prefixes;
@@ -101,6 +114,7 @@ function createObjectPropertyOverlayComponentCtrl($filter, ontologyStateService,
         dvm.os.setCommonIriParts(iriBegin, iriThen);
     }
     dvm.create = function() {
+        dvm.duplicateCheck = false;
         if (dvm.property[prefixes.dcterms + 'description'][0]['@value'] === '') {
             unset(dvm.property, prefixes.dcterms + 'description');
         }
@@ -117,8 +131,9 @@ function createObjectPropertyOverlayComponentCtrl($filter, ontologyStateService,
         }
         dvm.ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
         dvm.os.updatePropertyIcon(dvm.property);
+        dvm.os.handleNewProperty(dvm.property);
         // add the entity to the ontology
-        dvm.os.addEntity(dvm.os.listItem, dvm.property);
+        dvm.os.addEntity(dvm.property);
         // update lists
         updateLists();
         dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);

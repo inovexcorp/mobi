@@ -112,6 +112,17 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.distributedCatalog = undefined;
 
     /**
+     * @ngdoc property
+     * @name differencePageSize
+     * @propertyOf shared.service:catalogManagerService
+     * @type {int}
+     *
+     * @description
+     * `differencePageSize` tracks the number of differences to show per page
+     */
+    self.differencePageSize = 100;
+
+    /**
      * @ngdoc method
      * @name initialize
      * @methodOf shared.service:catalogManagerService
@@ -1058,20 +1069,22 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @methodOf shared.service:catalogManagerService
      *
      * @description
-     * Calls the GET /mobirest/commits/{commitId}/difference endpoint with the passed Commit ids and returns the 
-     * Difference between the source and target Commit chains.
+     * Calls the GET /mobirest/commits/{commitId}/difference endpoint with the passed Commit id and Optional Target id
+     * and returns the Difference between the source and target Commit chains.
      * 
      * @param {string} commitId The commit id of the commit whose chain will be merged in to the target.
-     * @param {string} targetId The commit id of the commit to receive the source commits.
+     * @param {string} [targetId=''] Optional commit id of the commit to receive the source commits.
      * @param {string} [format='jsonld'] format The RDF format to return the Difference in
      * @return {Promise} A promise that resolves with the Difference of the two resulting Commit chains or 
      *      rejects with an error message
      */
-    self.getDifference = function(commitId, targetId, format='jsonld') {
+    self.getDifference = function(commitId, targetId, limit, offset, format='jsonld') {
         var config = {
-            params: { targetId, format }
+            params: { targetId, limit, offset, format }
         };
-        return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference', config)
+        return limit ? $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference', config)
+        .then(response => response, util.rejectError) : 
+        $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference', config)
             .then(response => response.data, util.rejectError);
     }
 

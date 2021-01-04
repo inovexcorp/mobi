@@ -77,10 +77,8 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         flag: false, 
         filter: function(node) {
             var match = true;
-            if (node.entity.hasOwnProperty('mobi')) {
-                if (node.entity.mobi.imported) {
-                    match = false;
-                }
+            if (dvm.os.isImported(node.entityIRI)) {
+                match = false;
             }
             return match;
         }
@@ -110,6 +108,9 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         dvm.dropdownFilterActive = false;
         dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
     }
+    dvm.clickItem = function(entityIRI) {
+        dvm.os.selectItem(entityIRI, undefined, dvm.os.listItem.editorTabStates.individuals.targetedSpinnerId);
+    }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
         dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag');
@@ -129,17 +130,17 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     dvm.matchesSearchFilter = function(node) {
         var searchMatch = false;
         // Check all possible name fields and entity fields to see if the value matches the search text
-        some(dvm.om.entityNameProps, key => some(node.entity[key], value => {
-            if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
+        some(node.entityInfo.names, name => {
+            if (name.toLowerCase().includes(dvm.filterText.toLowerCase()))
                 searchMatch = true;
-        }));
+        });
 
         if (searchMatch) {
             return true;
         }
 
         // Check if beautified entity id matches search text
-        if (dvm.util.getBeautifulIRI(node.entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+        if (dvm.util.getBeautifulIRI(node.entityIRI).toLowerCase().includes(dvm.filterText.toLowerCase())) {
             searchMatch = true;
         }
         
@@ -201,9 +202,6 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
             }
         }
         return displayNode;
-    }
-    dvm.isImported = function(entityIRI) {
-        return !has(dvm.os.listItem.index, entityIRI);
     }
 
     function update() {

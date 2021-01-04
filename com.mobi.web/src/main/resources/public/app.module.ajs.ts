@@ -42,7 +42,7 @@ import 'angular-touch';
 import 'ui-bootstrap4';
 import 'daemonite-material';
 import 'angular-ui-codemirror';
-import 'angular-ui-router';
+import '@uirouter/angular-hybrid';
 import 'angular-toastr';
 import 'angular-uuid';
 import 'angular-cookies';
@@ -67,6 +67,8 @@ import 'codemirror-minified/lib/codemirror.css';
 import './css/customMaterial.scss';
 import './css/manchestersyntax.scss';
 import './css/styles.scss';
+import '@triply/yasgui/build/yasgui.min.css';
+import './css/yasgui.scss';
 
 import './vendor/manchestersyntax.js';
 
@@ -74,7 +76,7 @@ import ariaConfig from './aria.config';
 import httpInterceptorConfig from './httpInterceptor.config';
 import ignoreUnhandledRejectionsConfig from './ignoreUnhandledRejections.config';
 import hashPrefixConfig from './hashPrefix.config';
-import routeConfig from './route.config';
+import { routeConfig, urlDeferIntercept } from './route.config';
 import themingConfig from './theming.config';
 
 import requestInterceptor from './requestInterceptor.service';
@@ -109,6 +111,7 @@ angular
         'ui.bootstrap',
         'ui.codemirror',
         'ui.router',
+        'ui.router.upgrade',
         'ui.select',
 
         /* Custom Modules */
@@ -128,6 +131,7 @@ angular
     .config(httpInterceptorConfig)
     .config(ignoreUnhandledRejectionsConfig)
     .config(routeConfig)
+    .config(urlDeferIntercept)
     .config(hashPrefixConfig)
     .config(themingConfig)
     .constant('chroma', chroma)
@@ -135,7 +139,7 @@ angular
     .constant('sparqljs', sparqljs)
     .constant('showdown', showdown)
     .constant('REGEX', {
-        'IRI': /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/i,
+        'IRI': /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?([\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.])+$/i,
         'LOCALNAME': /^[a-zA-Z0-9._\-]+$/,
         'FILENAME': /^[\w\-. ]+$/,
         'UUID': /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,

@@ -57,7 +57,7 @@ function createIndividualOverlayComponentCtrl($filter, ontologyStateService, pre
     dvm.os = ontologyStateService;
     dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.prefix = dvm.os.getDefaultPrefix();
-
+    dvm.duplicateCheck = true;
     dvm.individual = {
         '@id': dvm.prefix,
         '@type': []
@@ -74,9 +74,10 @@ function createIndividualOverlayComponentCtrl($filter, ontologyStateService, pre
         dvm.os.setCommonIriParts(iriBegin, iriThen);
     }
     dvm.create = function() {
+        dvm.duplicateCheck = false;
         // add the entity to the ontology
         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
-        dvm.os.addEntity(dvm.os.listItem, dvm.individual);
+        dvm.os.addEntity(dvm.individual);
         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.individual);
         // update relevant lists
         dvm.ontoUtils.addIndividual(dvm.individual);

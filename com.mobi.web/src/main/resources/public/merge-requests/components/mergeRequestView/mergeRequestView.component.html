@@ -34,7 +34,11 @@
                         <div class="description">
                             {{dvm.util.getDctermsValue(dvm.state.selected.jsonld, 'description') || 'No description'}}
                         </div>
-                        <div class="request-summary"><strong>{{dvm.state.selected.sourceTitle}}</strong> into <strong>{{dvm.state.selected.targetTitle ? dvm.state.selected.targetTitle : 'NO TARGET'}}</strong> in <strong>{{dvm.state.selected.recordTitle}}</strong></div>
+                        <div class="request-summary">
+                            <p><strong>Branch:</strong> {{dvm.state.selected.sourceTitle}}</p>
+                            <p><strong>Into Branch: </strong>{{dvm.state.selected.targetTitle ? dvm.state.selected.targetTitle : 'NO TARGET'}}</p>
+                            <p><strong>In Ontology: </strong>{{dvm.state.selected.recordTitle}}</p>
+                        </div>
                         <div class="assignees">
                             <span class="field-name">Assignee(s): </span>
                             <ul class="assignees">
@@ -61,7 +65,7 @@
                     <span class="fa fa-exclamation-triangle" />
                     <span>The target branch for this merge request has been deleted.</span>
                 </div>
-                <merge-request-tabset request="dvm.state.selected" updateRequest="dvm.state.select = value"></merge-request-tabset>
+                <merge-request-tabset request="dvm.state.selected" update-request="dvm.state.selected = value"></merge-request-tabset>
             </div>
             <div class="resolve-conflicts mt-2 pt-2" ng-if="dvm.resolveConflicts">
                 <error-display ng-if="dvm.resolveError">Conflict resolution failed</error-display>

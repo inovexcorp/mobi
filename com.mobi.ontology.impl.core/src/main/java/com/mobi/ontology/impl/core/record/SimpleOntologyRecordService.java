@@ -49,24 +49,22 @@ import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import org.apache.commons.io.FilenameUtils;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
-import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
-import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
-import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 @Component(
         immediate = true,
         service = { RecordService.class, SimpleOntologyRecordService.class }
 )
 public class SimpleOntologyRecordService extends AbstractOntologyRecordService<OntologyRecord> {
-
     private OntologyCache ontologyCache;
 
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyRecordService.class);
@@ -169,9 +167,9 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
     @Override
     protected void deleteRecord(OntologyRecord record, RepositoryConnection conn) {
         long start = getStartTime();
+        deleteVersionedRDFData(record, conn);
         deleteRecordObject(record, conn);
         deletePolicies(record, conn);
-        deleteVersionedRDFData(record, conn);
         clearOntologyCache(record);
         logTrace("deleteOntology(recordId)", start);
     }
@@ -179,12 +177,13 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
     @Override
     protected Model createOntologyModel(RecordOperationConfig config) {
         Model ontologyModel;
-        if (config.get(OntologyRecordCreateSettings.INPUT_STREAM) != null) {
+        String fileName = config.get(OntologyRecordCreateSettings.FILE_NAME);
+        InputStream inputStream = config.get(OntologyRecordCreateSettings.INPUT_STREAM);
+
+        if (fileName != null && inputStream != null) {
             try {
-                ontologyModel = Models.createModel(config.get(OntologyRecordCreateSettings.INPUT_STREAM),
-                        sesameTransformer, new RioFunctionalSyntaxParserFactory().getParser(),
-                        new RioManchesterSyntaxParserFactory().getParser(),
-                        new RioOWLXMLParserFactory().getParser());
+                String fileExtension = FilenameUtils.getExtension(fileName);
+                ontologyModel = Models.createModel(fileExtension, inputStream, sesameTransformer);
             } catch (IOException e) {
                 throw new MobiOntologyException("Could not parse Ontology input stream.", e);
             }

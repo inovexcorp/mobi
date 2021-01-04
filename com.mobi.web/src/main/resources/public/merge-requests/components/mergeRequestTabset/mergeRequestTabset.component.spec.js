@@ -22,8 +22,7 @@
  */
 import {
     mockComponent,
-    mockMergeRequestManager,
-    mockUtil
+    mockMergeRequestsState
 } from '../../../../../../test/js/Shared';
 
 describe('Merge Request Tabset component', function() {
@@ -31,9 +30,8 @@ describe('Merge Request Tabset component', function() {
 
     beforeEach(function() {
         angular.mock.module('merge-requests');
+        mockMergeRequestsState();
         mockComponent('merge-requests', 'mergeRequestDiscussion');
-        mockMergeRequestManager();
-        mockUtil();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -81,7 +79,7 @@ describe('Merge Request Tabset component', function() {
         it('depending on whether the request has any changes', function() {
             expect(this.element.find('info-message').length).toEqual(1);
 
-            this.controller.request.difference.additions = [{}];
+            scope.request = {difference: {additions: [{}], deletions: [{}]}};
             scope.$digest();
             expect(this.element.find('info-message').length).toEqual(0);
         });

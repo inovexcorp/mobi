@@ -54,7 +54,7 @@ function openEntitySnackbarComponentCtrl($timeout, ontologyStateService) {
     dvm.resetStateTimeout = undefined;
 
     dvm.$onInit = function() {
-        dvm.entityName = dvm.os.getEntityNameByIndex(dvm.iri);
+        dvm.entityName = dvm.os.getEntityNameByListItem(dvm.iri);
         setShow();
     }
     dvm.$onChanges = function(changesObj) {
@@ -62,7 +62,7 @@ function openEntitySnackbarComponentCtrl($timeout, ontologyStateService) {
             dvm.show = false;
             $timeout.cancel(dvm.closeTimeout);
             $timeout(() => {
-                dvm.entityName = dvm.os.getEntityNameByIndex(dvm.iri);
+                dvm.entityName = dvm.os.getEntityNameByListItem(dvm.iri);
                 setShow();
             }, 200);
         }

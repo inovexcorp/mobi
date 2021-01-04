@@ -24,30 +24,41 @@
 import {
     mockComponent,
     mockUserManager,
-    mockUtil
+    mockUtil,
+    mockCatalogManager, mockOntologyManager
 } from '../../../../../../test/js/Shared';
 
 describe('Commit Info Overlay component', function() {
-    var $compile, scope;
+    var $compile, scope, $q, catalogManagerSvc, ontologyManagerSvc, utilSvc;
 
     beforeEach(function() {
         angular.mock.module('shared');
         mockComponent('shared', 'commitChangesDisplay');
         mockUserManager();
+        mockCatalogManager();
+        mockOntologyManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _ontologyManagerService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
+            catalogManagerSvc = _catalogManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            utilSvc = _utilService_;
         });
 
         scope.resolve = {
-            commit: {},
-            additions: [],
-            deletions: []
+            commit: {}
         };
         scope.dismiss = jasmine.createSpy('dismiss');
         this.element = $compile(angular.element('<commit-info-overlay resolve="resolve" dismiss="dismiss()"></commit-info-overlay>'))(scope);
+        this.difference = {
+            additions: [],
+            deletions: []
+        };
+        this.headers = {'has-more-results': 'false'};
+        catalogManagerSvc.getDifference.and.returnValue($q.when({data: this.difference, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
         scope.$digest();
         this.controller = this.element.controller('commitInfoOverlay');
     });
@@ -55,6 +66,7 @@ describe('Commit Info Overlay component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        catalogManagerSvc = null;
         this.element.remove();
     });
 
@@ -63,9 +75,7 @@ describe('Commit Info Overlay component', function() {
             this.controller.resolve = {};
             scope.$digest();
             expect(scope.resolve).toEqual({
-                commit: {},
-                additions: [],
-                deletions: []
+                commit: {}
             });
         });
         it('dismiss should be called in the parent scope', function() {
@@ -84,13 +94,18 @@ describe('Commit Info Overlay component', function() {
             expect(this.element.querySelectorAll('.changes-container p').length).toEqual(1);
             expect(this.element.querySelectorAll('.changes-container commit-changes-display').length).toEqual(0);
 
-            scope.resolve.additions = [{}];
+            this.difference.additions = [{}];
+            this.difference.deletions = [];
+            catalogManagerSvc.getDifference.and.returnValue($q.when({data: this.difference, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
+            this.controller.$onInit();
             scope.$digest();
             expect(this.element.querySelectorAll('.changes-container p').length).toEqual(0);
             expect(this.element.querySelectorAll('.changes-container commit-changes-display').length).toEqual(1);
 
-            scope.resolve.additions = [];
-            scope.resolve.deletions = [{}];
+            this.difference.additions = [];
+            this.difference.deletions = [{}];
+            catalogManagerSvc.getDifference.and.returnValue($q.when({data: this.difference, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
+            this.controller.$onInit();
             scope.$digest();
             expect(this.element.querySelectorAll('.changes-container p').length).toEqual(0);
             expect(this.element.querySelectorAll('.changes-container commit-changes-display').length).toEqual(1);
@@ -106,6 +121,82 @@ describe('Commit Info Overlay component', function() {
             this.controller.cancel();
             scope.$digest();
             expect(scope.dismiss).toHaveBeenCalled();
+        });
+        describe('should update additions and deletions', function() {
+            describe('if getDifference resolves', function() {
+                beforeEach(function() {
+                    this.headers = {'has-more-results': 'true'};
+                    catalogManagerSvc.getDifference.and.returnValue($q.when({data: {additions: [{'@id': 'iri1'}], deletions: []}, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
+                })
+                describe('and resolve.ontRecordId is set', function() {
+                    beforeEach(function() {
+                        scope.resolve = {
+                            commit: {'id':'123'},
+                            ontRecordId: 'recordId'
+                        };
+                        scope.$digest();
+                        utilSvc.getObjIrisFromDifference.and.returnValue([]);
+                    });
+                    describe('and getOntologyEntityNames', function() {
+                        it('resolves', function() {
+                            ontologyManagerSvc.getOntologyEntityNames.and.returnValue({'iri1':{label: 'label'}});
+                            this.controller.retrieveMoreResults(100, 0);
+                            scope.$apply();
+                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
+                            expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordId', '', '123', false, false, ['iri1']);
+                            expect(this.controller.additions).toEqual([{'@id': 'iri1'}]);
+                            expect(this.controller.deletions).toEqual([]);
+                            expect(this.controller.hasMoreResults).toEqual(true);
+                            expect(this.controller.entityNames).toEqual({'iri1':{label: 'label'}});
+                        });
+                        it('rejects', function() {
+                            ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.reject('Error Message'));
+                            this.controller.retrieveMoreResults(100, 0);
+                            scope.$apply();
+                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
+                            expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordId', '', '123', false, false, ['iri1']);
+                            expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
+                        });
+                    });
+                });
+                it('and resolve.recordId is not set', function() {
+                    scope.resolve = {
+                        commit: {'id':'123'}
+                    };
+                    scope.$digest();
+                    this.controller.retrieveMoreResults(100, 0);
+                    scope.$apply();
+                    expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
+                    expect(this.controller.additions).toEqual([{'@id': 'iri1'}]);
+                    expect(this.controller.deletions).toEqual([]);
+                    expect(this.controller.hasMoreResults).toEqual(true);
+                    expect(this.controller.entityNames).toEqual({});
+                });
+            });
+            it('unless getDifference rejects', function() {
+                scope.resolve = {
+                    commit: {'id':'123'}
+                };
+                scope.$digest();
+                catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));
+                this.controller.retrieveMoreResults(100, 0);
+                scope.$apply();
+                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
+            });
+        });
+        describe('getEntityName returns when the calculated entityName', function() {
+            it('exists', function() {
+                this.controller.entityNames['iri'] = {label: 'iriLabel'};
+                expect(this.controller.getEntityName('iri')).toEqual('iriLabel');
+                expect(utilSvc.getBeautifulIRI).not.toHaveBeenCalled();
+            });
+            it('does not exist', function() {
+                this.controller.entityNames = undefined;
+                utilSvc.getBeautifulIRI.and.returnValue('beautifulIri');
+                expect(this.controller.getEntityName('iri')).toEqual('beautifulIri');
+                expect(utilSvc.getBeautifulIRI).toHaveBeenCalledWith('iri');
+            });
         });
     });
 });

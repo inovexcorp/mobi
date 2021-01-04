@@ -60,6 +60,7 @@ function createAnnotationPropertyOverlayComponentCtrl($filter, ontologyStateServ
     dvm.os = ontologyStateService;
     dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.prefix = dvm.os.getDefaultPrefix();
+    dvm.duplicateCheck = true;
     dvm.property = {
         '@id': dvm.prefix,
         '@type': [dvm.prefixes.owl + 'AnnotationProperty'],
@@ -82,13 +83,14 @@ function createAnnotationPropertyOverlayComponentCtrl($filter, ontologyStateServ
         dvm.os.setCommonIriParts(iriBegin, iriThen);
     }
     dvm.create = function() {
+        dvm.duplicateCheck = false;
         if (dvm.property[prefixes.dcterms + 'description'][0]['@value'] === '') {
             unset(dvm.property, prefixes.dcterms + 'description');
         }
         dvm.ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
         dvm.os.updatePropertyIcon(dvm.property);
         // add the entity to the ontology
-        dvm.os.addEntity(dvm.os.listItem, dvm.property);
+        dvm.os.addEntity(dvm.property);
         // update lists
         dvm.os.listItem.annotations.iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
         dvm.os.listItem.annotations.flat = dvm.os.flattenHierarchy(dvm.os.listItem.annotations);

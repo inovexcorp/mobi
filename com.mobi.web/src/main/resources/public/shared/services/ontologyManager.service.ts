@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString } from 'lodash';
+import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq } from 'lodash';
 
 ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
 
@@ -90,22 +90,23 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     }
     /**
      * @ngdoc method
-     * @name uploadFile
+     * @name uploadOntology
      * @methodOf shared.service:ontologyManagerService
      *
      * @description
      * Calls the POST /mobirest/ontologies endpoint which uploads an ontology to the Mobi repository
-     * with the file provided. This creates a new OntologyRecord associated with this ontology. Returns a
-     * promise indicating whether the ontology was persisted.
+     * with the file/JSON-LD provided. This creates a new OntologyRecord associated with this ontology. Returns a
+     * promise indicating whether the ontology was persisted. Provide either a file or JSON-LD, but not both.
      *
      * @param {File} file The ontology file.
+     * @param {Object} ontologyJson The ontology json.
      * @param {string} title The record title.
      * @param {string} description The record description.
      * @param {string} keywords The array of keywords for the record.
      * @param {string} id The identifier for this request.
      * @returns {Promise} A promise indicating whether the ontology was persisted.
      */
-    self.uploadFile = function(file, title, description, keywords, id = '') {
+    self.uploadOntology = function(file, ontologyJson, title, description, keywords, id = '') {
         var fd = new FormData(),
             config = {
                 transformRequest: identity,
@@ -113,18 +114,23 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
                     'Content-Type': undefined
                 }
             };
-        fd.append('file', file);
+        if (file != undefined) {
+            fd.append('file', file);
+        }
+        if (ontologyJson != undefined) {
+            fd.append('json', JSON.stringify(ontologyJson));
+        }
         fd.append('title', title);
         if (description) {
             fd.append('description', description);
         }
         forEach(keywords, word => fd.append('keywords', word));
         var promise = id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
-        return promise.then(response => response.data, util.rejectError);
+        return promise.then(response => response.data, util.rejectErrorObject);
     }
     /**
      * @ngdoc method
-     * @name uploadFile
+     * @name uploadChangesFile
      * @methodOf shared.service:ontologyManagerService
      *
      * @description
@@ -132,9 +138,9 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * object to be applied to the ontology.
      *
      * @param {File} file The updated ontology file.
-     * @param {string} the ontology record ID.
-     * @param {string} the ontology branch ID.
-     * @param {string} the ontology commit ID.
+     * @param {string} recordId the ontology record ID.
+     * @param {string} branchId the ontology branch ID.
+     * @param {string} commitId the ontology commit ID.
      * @returns {Promise} A promise with the new in-progress commit to be applied or error message.
      */
     self.uploadChangesFile = function(file, recordId, branchId, commitId) {
@@ -153,40 +159,6 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         fd.append('file', file);
 
         return $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
-            .then(response => response.data, util.rejectError);
-    }
-    /**
-     * @ngdoc method
-     * @name uploadJson
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the POST /mobirest/ontologies endpoint which uploads an ontology to the Mobi repository
-     * with the JSON-LD ontology string provided. Creates a new OntologyRecord for the associated ontology.
-     * Returns a promise with the entityIRI and ontologyId for the state of the newly created ontology.
-     *
-     * @param {string} ontologyJson The JSON-LD representing the ontology.
-     * @param {string} title The title for the OntologyRecord.
-     * @param {string} description The description for the OntologyRecord.
-     * @param {string} keywords The array of keywords for the OntologyRecord.
-     * @param {string} type The type (either "ontology" or "vocabulary") for the document being created.
-     * @returns {Promise} A promise with the ontologyId, recordId, branchId, and commitId for the state of the newly created
-     * ontology.
-     */
-    self.uploadJson = function(ontologyJson, title, description, keywords) {
-        var config: any = {
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            params: {title}
-        };
-        if (description) {
-            config.params.description = description;
-        }
-        if (keywords && keywords.length) {
-            config.params.keywords = keywords;
-        }
-        return $http.post(prefix, ontologyJson, config)
             .then(response => response.data, util.rejectError);
     }
     /**
@@ -313,16 +285,17 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      *
      * @description
      * Calls the GET /mobirest/ontologies/{recordId}/ontology-stuff endpoint and retrieves an object with keys
-     * corresponding to the listItem strcuture.
+     * corresponding to the listItem structure.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
+     * @param {boolean} clearCache Whether or not to clear the cache
      * @param {string} id The identifier for this request
      * @return {Promise} A Promise with an object containing listItem keys.
      */
-    self.getOntologyStuff = function(recordId, branchId, commitId, id = '') {
-        var config = { params: { branchId, commitId } };
+    self.getOntologyStuff = function(recordId, branchId, commitId, clearCache, id = '') {
+        var config = { params: { branchId, commitId, clearCache } };
         var url = prefix + '/' + encodeURIComponent(recordId) + '/ontology-stuff';
         var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then(response => response.data, util.rejectError);
@@ -618,6 +591,8 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * all ontologies imported by the ontology with the requested ontology ID.
      *
      * @param {string} recordId The record ID of the ontology you want to get from the repository.
+     * @param {string} branchId The branch ID of the ontology you want to get from the repository.
+     * @param {string} commitId The commit ID of the ontology you want to get from the repository.
      * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
      * @returns {Promise} A promise containing the list of ontologies that are imported by the requested
      * ontology.
@@ -645,6 +620,8 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * JSON SPARQL query results for all statements which have the provided entityIRI as an object.
      *
      * @param {string} recordId The record ID of the ontology you want to get from the repository.
+     * @param {string} branchId The branch ID of the ontology you want to get from the repository.
+     * @param {string} commitId The commit ID of the ontology you want to get from the repository.
      * @param {string} entityIRI The entity IRI of the entity you want the usages for from the repository.
      * @param {string} queryType The type of query you want to perform (either 'select' or 'construct').
      * @param {string} id The identifier for this request
@@ -661,6 +638,33 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
                 return response.data.results.bindings;
             }
         }, util.rejectError);
+    }
+    /**
+     * @ngdoc method
+     * @name getOntologyEntityNames
+     * @methodOf shared.service:ontologyManagerService
+     *
+     * @description
+     * Calls the POST /mobirest/ontologies/{recordId}/entity-names
+     *
+     * @param {string} recordId The record ID of the ontology to query.
+     * @param {string} branchId The branch ID of the ontology to query.
+     * @param {string} commitId The commit ID of the ontology to query.
+     * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
+     * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes.
+     * @param {string[]} [filterResources = []] The list of resources to filter the entity names query by.
+     * @param {string} [id=''] The id to link this REST call to.
+     * @return {Promise} A Promise with an object containing EntityNames.
+     */
+    self.getOntologyEntityNames = function(recordId, branchId, commitId, includeImports = true, applyInProgressCommit= true, filterResources = [], id = '') {
+        var config = { params: { branchId, commitId, includeImports, applyInProgressCommit },
+            headers: {
+                'Content-Type': 'application/json'
+            } };
+        var url = prefix + '/' + encodeURIComponent(recordId) + '/entity-names';
+        var data = {filterResources};
+        var promise = id ? httpService.post(url, data, config, id) : $http.post(url, data, config);
+        return promise.then(response => response.data, util.rejectError);
     }
     /**
      * @ngdoc method
@@ -698,16 +702,18 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @description
      * Get the results of the provided SPARQL query.
      *
-     * @param recordId The record ID of the ontology to query.
-     * @param branchId The branch ID of the ontology to query.
-     * @param commitId The commit ID of the ontology to query.
-     * @param query The SPARQL query to run against the ontology.
-     * @param format The return format of the query results.
-     * @param id The id to link this REST call to.
+     * @param {string} recordId The record ID of the ontology to query.
+     * @param {string} branchId The branch ID of the ontology to query.
+     * @param {string} commitId The commit ID of the ontology to query.
+     * @param {string} query The SPARQL query to run against the ontology.
+     * @param {string} format The return format of the query results.
+     * @param {string} [id=''] The id to link this REST call to.
+     * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
+     * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes
      * @return {Promise} A promise containing the SPARQL query results
      */
-    self.getQueryResults = function(recordId, branchId, commitId, query, format, id) {
-        var config = { params: { query, branchId, commitId, format } };
+    self.getQueryResults = function(recordId, branchId, commitId, query, format,  id = '', includeImports = true, applyInProgressCommit = false) {
+        var config = { params: { query, branchId, commitId, format, includeImports, applyInProgressCommit } };
         var url = prefix + '/' + encodeURIComponent(recordId) + '/query';
         var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then(response => response.data, util.rejectError);
@@ -729,6 +735,32 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         var config = { params: { branchId, commitId } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/failed-imports', config)
             .then(response => response.data, util.rejectError);
+    }
+    /**
+     * @ngdoc method
+     * @name getEntityAndBlankNodes
+     * @methodOf shared.service:ontologyManagerService
+     *
+     * @description
+     * Calls the GET /mobirest/ontologies/{recordId}/entities/{entityIRI} endpoint which gets the RDF of the entity with
+     * the specified IRI along with all its linked blank nodes. Accepts the RDF format to return the RDF in, whether to
+     * include imports, and whether to apply the in progress commit.
+     *
+     * @param {string} recordId The record ID of the ontology you want to get from the repository
+     * @param {string} branchId The branch ID of the ontology you want to get from the repository
+     * @param {string} commitId The commit ID of the ontology you want to get from the repository
+     * @param {string} entityId The entity IRI of the entity you want to retrieve
+     * @param {string} [format='jsonld'] The RDF format to return the results in
+     * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
+     * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes
+     * @param {string} [id=''] The id to link this REST call to
+     * @return {Promise} A promise containing the RDF of the specified entity and its blank nodes
+     */
+    self.getEntityAndBlankNodes = function(recordId, branchId, commitId, entityId, format = 'jsonld', includeImports = true, applyInProgressCommit = true, id = '')  {
+        var config = { params: { branchId, commitId, format, includeImports, applyInProgressCommit } };
+        var url = prefix + '/' + encodeURIComponent(recordId) + '/entities/' + encodeURIComponent(entityId);
+        var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        return promise.then(response => response.data, util.rejectError);
     }
     /**
      * @ngdoc method
@@ -758,6 +790,20 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.isOntology = function(entity) {
         return includes(get(entity, '@type', []), prefixes.owl + 'Ontology');
+    }
+    /**
+     * @ngdoc method
+     * @name isOntologyRecord
+     * @methodOf shared.service:ontologyManagerService
+     *
+     * @description
+     * Checks if the provided entity is an ontologyEditor:OntologyRecord entity. Returns a boolean.
+     *
+     * @param {Object} entity The entity you want to check.
+     * @returns {boolean} Returns true if it is an ontologyEditor:OntologyRecord entity, otherwise returns false.
+     */
+    self.isOntologyRecord = function(entity) {
+        return includes(get(entity, '@type', []), prefixes.ontologyEditor + 'OntologyRecord');
     }
     /**
      * @ngdoc method
@@ -801,7 +847,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getOntologyIRI = function(ontology) {
         var entity = self.getOntologyEntity(ontology);
-        return get(entity, '@id', get(entity, 'mobi.anonymous', ''));
+        return get(entity, '@id', '');
     }
     /**
      * @ngdoc method
@@ -1386,6 +1432,26 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     }
     function getPrioritizedValue(entity, prop) {
         return get(find(get(entity, "['" + prop + "']"), {'@language': 'en'}), '@value') || utilService.getPropertyValue(entity, prop);
+    }
+    /**
+     * @ngdoc method
+     * @name getEntityNames
+     * @methodOf shared.service:ontologyManagerService
+     *
+     * @description
+     * Gets the provided entity's names. These names are an array of the '@value' values for the self.entityNameProps.
+     *
+     * @param {Object} entity The entity you want the names of.
+     * @returns {string[]} The names for the self.entityNameProps.
+     */
+    self.getEntityNames = function(entity) {
+        var names = [];
+        forEach(self.entityNameProps, prop => {
+            if (has(entity, prop)) {
+                names = concat(names, map(get(entity, prop), '@value'));
+            } 
+        });
+        return uniq(names);
     }
     /**
      * @ngdoc method

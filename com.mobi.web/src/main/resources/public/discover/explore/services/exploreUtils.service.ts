@@ -272,8 +272,8 @@ function exploreUtilsService($q, sparqljs, prefixes, utilService, datasetManager
      * @returns {string[]} A list of properties that are not already set on the entity.
      */
     self.getNewProperties = function(properties, entity, text) {
-        var properties = difference(map(properties, 'propertyIRI'), Object.keys(entity));
-        return text ? filter(properties, iri => self.contains(iri.toLowerCase(), text.toLowerCase())) : properties;
+        let props = difference(map(properties, 'propertyIRI'), Object.keys(entity));
+        return text ? filter(props, iri => self.contains(iri.toLowerCase(), text.toLowerCase())) : props;
     }
     /**
      * @ngdoc method

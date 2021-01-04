@@ -62,6 +62,7 @@ function createClassOverlayComponentCtrl($filter, ontologyStateService, prefixes
     dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.prefix = dvm.os.getDefaultPrefix();
     dvm.values = [];
+    dvm.duplicateCheck = true;
     dvm.clazz = {
         '@id': dvm.prefix,
         '@type': [prefixes.owl + 'Class'],
@@ -85,12 +86,13 @@ function createClassOverlayComponentCtrl($filter, ontologyStateService, prefixes
         dvm.os.setCommonIriParts(iriBegin, iriThen);
     }
     dvm.create = function() {
+        dvm.duplicateCheck = false;
         if (isEqual(dvm.clazz[prefixes.dcterms + 'description'][0]['@value'], '')) {
             unset(dvm.clazz, prefixes.dcterms + 'description');
         }
         dvm.ontoUtils.addLanguageToNewEntity(dvm.clazz, dvm.language);
         // add the entity to the ontology
-        dvm.os.addEntity(dvm.os.listItem, dvm.clazz);
+        dvm.os.addEntity(dvm.clazz);
         // update relevant lists
         dvm.os.addToClassIRIs(dvm.os.listItem, dvm.clazz['@id']);
         if (dvm.values.length) {
@@ -98,6 +100,9 @@ function createClassOverlayComponentCtrl($filter, ontologyStateService, prefixes
             var superClassIds = map(dvm.values, '@id');
             if (dvm.ontoUtils.containsDerivedConcept(superClassIds)) {
                 dvm.os.listItem.derivedConcepts.push(dvm.clazz['@id']);
+            }
+            else if (dvm.ontoUtils.containsDerivedConceptScheme(superClassIds)) {
+                dvm.os.listItem.derivedConceptSchemes.push(dvm.clazz['@id']);
             }
             dvm.ontoUtils.setSuperClasses(dvm.clazz['@id'], superClassIds);
         } else {

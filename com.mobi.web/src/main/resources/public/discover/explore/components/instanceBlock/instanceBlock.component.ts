@@ -70,7 +70,8 @@ function instanceBlockComponentCtrl($filter, discoverStateService, exploreServic
     }
     dvm.create = function() {
         dvm.ds.explore.creating = true;
-        var split = $filter('splitIRI')(head(dvm.ds.explore.instanceDetails.data).instanceIRI);
+        let details : any = head(dvm.ds.explore.instanceDetails.data)
+        var split = $filter('splitIRI')(details.instanceIRI);
         var iri = split.begin + split.then + uuid.v4();
         dvm.ds.explore.instance.entity = [{
             '@id': iri,

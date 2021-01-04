@@ -42,19 +42,29 @@ const template = require('./datatypePropertyBlock.component.html');
  */
 const datatypePropertyBlockComponent = {
     template,
-    bindings: {},
+    bindings: {
+        selected:'<'
+    },
     controllerAs: 'dvm',
     controller: datatypePropertyBlockComponentCtrl
 };
 
-datatypePropertyBlockComponentCtrl.$inject = ['ontologyStateService', 'prefixes', 'ontologyUtilsManagerService', 'modalService'];
+datatypePropertyBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService', 'modalService'];
 
-function datatypePropertyBlockComponentCtrl(ontologyStateService, prefixes, ontologyUtilsManagerService, modalService) {
+function datatypePropertyBlockComponentCtrl($filter, ontologyStateService, prefixes, ontologyUtilsManagerService, modalService) {
     var dvm = this;
     dvm.os = ontologyStateService;
     dvm.ontoUtils = ontologyUtilsManagerService;
-    dvm.dataProperties = Object.keys(dvm.os.listItem.dataProperties.iris);
+    dvm.dataProperties = [];
+    dvm.dataPropertiesFiltered = [];
 
+    dvm.$onChanges = function (changes) { 
+        dvm.updatePropertiesFiltered();
+    }
+    dvm.updatePropertiesFiltered = function(){
+        dvm.dataProperties = Object.keys(dvm.os.listItem.dataProperties.iris);
+        dvm.dataPropertiesFiltered = $filter("orderBy")($filter("showProperties")(dvm.os.listItem.selected, dvm.dataProperties), dvm.ontoUtils.getLabelForIRI);
+    }
     dvm.openAddDataPropOverlay = function() {
         dvm.os.editingProperty = false;
         dvm.os.propertySelect = undefined;
@@ -62,7 +72,7 @@ function datatypePropertyBlockComponentCtrl(ontologyStateService, prefixes, onto
         dvm.os.propertyType = prefixes.xsd + 'string';
         dvm.os.propertyIndex = 0;
         dvm.os.propertyLanguage = 'en';
-        modalService.openModal('datatypePropertyOverlay');
+        modalService.openModal('datatypePropertyOverlay' ,{} ,dvm.updatePropertiesFiltered);
     }
     dvm.editDataProp = function(property, index) {
         var propertyObj = dvm.os.listItem.selected[property][index];
@@ -72,11 +82,12 @@ function datatypePropertyBlockComponentCtrl(ontologyStateService, prefixes, onto
         dvm.os.propertyIndex = index;
         dvm.os.propertyLanguage = get(propertyObj, '@language');
         dvm.os.propertyType = dvm.os.propertyLanguage ? prefixes.rdf + 'langString' : get(propertyObj, '@type');
-        modalService.openModal('datatypePropertyOverlay');
+        modalService.openModal('datatypePropertyOverlay', {}, dvm.updatePropertiesFiltered);
     }
     dvm.showRemovePropertyOverlay = function(key, index) {
         modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
             dvm.ontoUtils.removeProperty(key, index);
+            dvm.updatePropertiesFiltered();
         });
     }
 }

@@ -63,10 +63,11 @@ function createConceptSchemeOverlayComponentCtrl($filter, ontologyManagerService
     dvm.om = ontologyManagerService;
     dvm.os = ontologyStateService;
     dvm.util = utilService;
-    dvm.conceptIRIs = dvm.om.getConceptIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConcepts);
+    dvm.conceptIRIs = Object.keys(dvm.os.listItem.concepts.iris);
     dvm.concepts = [];
     dvm.selectedConcepts = [];
     dvm.prefix = dvm.os.getDefaultPrefix();
+    dvm.duplicateCheck = true;
     dvm.scheme = {
         '@id': dvm.prefix,
         '@type': [prefixes.owl + 'NamedIndividual', prefixes.skos + 'ConceptScheme'],
@@ -87,12 +88,13 @@ function createConceptSchemeOverlayComponentCtrl($filter, ontologyManagerService
         dvm.os.setCommonIriParts(iriBegin, iriThen);
     }
     dvm.create = function() {
+        dvm.duplicateCheck = false;
         if (dvm.selectedConcepts.length) {
             dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.selectedConcepts;
         }
         dvm.ontoUtils.addLanguageToNewEntity(dvm.scheme, dvm.language);
         // add the entity to the ontology
-        dvm.os.addEntity(dvm.os.listItem, dvm.scheme);
+        dvm.os.addEntity(dvm.scheme);
         // update relevant lists
         dvm.os.listItem.conceptSchemes.iris[dvm.scheme['@id']] = dvm.os.listItem.ontologyId;
         // Add top concepts to hierarchy if they exist
