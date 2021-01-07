@@ -48,7 +48,7 @@ public interface PreferenceService {
      * @param preferenceType The type of {@link Preference} to retrieve.
      * @return The instance of {@link Preference} for the {@link User} of the passed in type
      */
-    Optional<Preference> getPreference(User user, Resource preferenceType);
+    Optional<Preference> getUserPreference(User user, Resource preferenceType);
 
     // TODO: Talk to Megan, I switched these methods back to void because it seems like it would be better just to
     //  throw an exception if it fails

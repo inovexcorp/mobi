@@ -28,6 +28,11 @@ import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.notification.impl.ontologies.EmailNotificationPreferenceFactory;
 import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
+import com.mobi.preference.api.ontologies.Prefix;
+import com.mobi.preference.api.ontologies.PrefixFactory;
+import com.mobi.preference.api.ontologies.PrefixImpl;
+import com.mobi.preference.api.ontologies.PrefixPreference;
+import com.mobi.preference.api.ontologies.PrefixPreferenceFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
@@ -37,15 +42,20 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Component(immediate=true)
 public class SimpleNotificationService {
     private static final String PREFERENCE_GRAPH_IRI = "http://mobi.com/preferencemanagement";
+    private static final String PREFERENCE_NAMESPACE = "http://mobi.com/preference#";
+
     private Repository repository;
     private ValueFactory vf;
     private EmailNotificationPreferenceFactory emailNotificationPreferenceFactory;
+    private PrefixPreferenceFactory prefixPreferenceFactory;
     private PreferenceService preferenceService;
     private UserFactory userFactory;
+    private PrefixFactory prefixFactory;
 
     @Reference(name = "repository")
     void setRepository(Repository repository) {
@@ -68,8 +78,25 @@ public class SimpleNotificationService {
     @Reference
     void setUserFactory(UserFactory userFactory) { this.userFactory = userFactory; }
 
+    @Reference
+    void setPrefixFactory(PrefixFactory prefixFactory) { this.prefixFactory = prefixFactory; }
+
+    @Reference
+    void setPrefixPreferenceFactory(PrefixPreferenceFactory prefixPreferenceFactory) { this.prefixPreferenceFactory = prefixPreferenceFactory; }
+
     @Activate
     protected void start(Map<String, Object> props) {
+//        PrefixPreference prefixPreference = prefixPreferenceFactory.createNew(vf.createIRI("http://mobi.com/testPrefixPref"));
+//
+//        Prefix prefix = prefixFactory.createNew(vf.createIRI(PREFERENCE_NAMESPACE + UUID.randomUUID()));
+//        prefix.setHasNamespace("http://www.w3.org/2004/02/skos/core#");
+//        prefix.setHasPrefix("skos");
+//        prefixPreference.addHasObjectValue(prefix);
+//        User adminUser = userFactory.createNew(vf.createIRI("http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997"));
+//        prefixPreference.getModel().addAll(prefix.getModel());
+//
+//        preferenceService.addPreference(adminUser, prefixPreference);
+
 
 
 //        distributedCatalogIRI = vf.createIRI(config.iri() + "-distributed");
