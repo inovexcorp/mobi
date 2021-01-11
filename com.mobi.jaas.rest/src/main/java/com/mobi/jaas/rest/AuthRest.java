@@ -131,13 +131,14 @@ public class AuthRest {
         summary = "Logs in into Mobi creating a new token.",
         responses = {
             @ApiResponse(responseCode = "200", description = "A plaintext response with the newly logged in User's username"),
+            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED response"),
         }
     )
     public Response login(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "Username of user")
             @QueryParam("username") String username,
-            @Parameter(description = "")
+            @Parameter(description = "Password of user")
             @QueryParam("password") String password) {
         Optional<UserCredentials> userCredsOptional = processFormAuth(username, password);
 

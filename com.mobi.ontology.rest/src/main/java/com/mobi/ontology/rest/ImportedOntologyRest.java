@@ -53,7 +53,8 @@ public class ImportedOntologyRest {
     })
     @RolesAllowed("user")
     public Response verifyUrl(
-            @Parameter(description = "The String representing the URL to verify.", required = true) @PathParam("url") String url
+            @Parameter(description = "The String representing the URL to verify.", required = true)
+            @PathParam("url") String url
     ) {
         HttpURLConnection conn = null;
         try {

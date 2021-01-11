@@ -173,17 +173,17 @@ public class UserRest {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response createUser(
-            @Parameter(description = "")
+            @Parameter(description = "Required username of the User to create")
             @FormDataParam("username") String username,
-            @Parameter(description = "")
+            @Parameter(description = "Required password of the User to create")
             @FormDataParam("password") String password,
-            @Parameter(description = "")
+            @Parameter(description = "List of roles of the User to create")
             @FormDataParam("roles") List<FormDataBodyPart> roles,
-            @Parameter(description = "")
+            @Parameter(description = "Optional first name of the User to create")
             @FormDataParam("firstName") String firstName,
-            @Parameter(description = "")
+            @Parameter(description = "Optional last name of the User to create")
             @FormDataParam("lastName") String lastName,
-            @Parameter(description = "")
+            @Parameter(description = "Optional email of the User to create")
             @FormDataParam("email") String email) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
@@ -241,7 +241,7 @@ public class UserRest {
         }
     )
     public Response getUser(
-            @Parameter(description = "")
+            @Parameter(description = "Username of the {@link User} to retrieve")
             @PathParam("username") String username) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
@@ -279,9 +279,9 @@ public class UserRest {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateUser(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "Current username of the user to update")
             @PathParam("username") String username,
-            @Parameter(description = "")
+            @Parameter(description = "JSON-LD string representation of a User with the new information to update")
             String newUserStr) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
@@ -348,11 +348,11 @@ public class UserRest {
     )
     public Response changePassword(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "Current username of the user to update")
             @PathParam("username") String username,
-            @Parameter(description = "")
+            @Parameter(description = "Current password of the user to update")
             @QueryParam("currentPassword") String currentPassword,
-            @Parameter(description = "")
+            @Parameter(description = "N ew password for the user")
             @QueryParam("newPassword") String newPassword) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
@@ -393,9 +393,9 @@ public class UserRest {
     )
     public Response resetPassword(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "Current username of the User to update")
             @PathParam("username") String username,
-            @Parameter(description = "")
+            @Parameter(description = "New password for the User")
             @QueryParam("newPassword") String newPassword) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
@@ -429,7 +429,7 @@ public class UserRest {
     )
     public Response deleteUser(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "Username of the User to remove")
             @PathParam("username") String username) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
@@ -472,9 +472,9 @@ public class UserRest {
         }
     )
     public Response getUserRoles(
-            @Parameter(description = "")
+            @Parameter(description = "Username of the User to retrieve roles from")
             @PathParam("username") String username,
-            @Parameter(description = "")
+            @Parameter(description = "Whether or not to include roles from the User's groups")
             @DefaultValue("false") @QueryParam("includeGroups") boolean includeGroups) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
@@ -512,9 +512,9 @@ public class UserRest {
         }
     )
     public Response addUserRoles(
-            @Parameter(description = "")
+            @Parameter(description = "username of the User to add a role to")
             @PathParam("username") String username,
-            @Parameter(description = "")
+            @Parameter(description = "List of names of the roles to add to the specified User")
             @QueryParam("roles") List<String> roles) {
         if (StringUtils.isEmpty(username) || roles.isEmpty()) {
             throw ErrorUtils.sendError("Both username and roles must be provided", Response.Status.BAD_REQUEST);
@@ -552,9 +552,9 @@ public class UserRest {
         }
     )
     public Response removeUserRole(
-            @Parameter(description = "")
+            @Parameter(description = "Username of the User to remove a role from")
             @PathParam("username") String username,
-            @Parameter(description = "")
+            @Parameter(description = "Role to remove from the specified User")
             @QueryParam("role") String role) {
         if (StringUtils.isEmpty(username) || role == null) {
             throw ErrorUtils.sendError("Both username and role must be provided", Response.Status.BAD_REQUEST);
@@ -590,7 +590,7 @@ public class UserRest {
         }
     )
     public Response listUserGroups(
-            @Parameter(description = "")
+            @Parameter(description = "Username to retrieve groups from")
             @PathParam("username") String username) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
@@ -633,9 +633,9 @@ public class UserRest {
         }
     )
     public Response addUserGroup(
-            @Parameter(description = "")
+            @Parameter(description = "Username of the User to add to the group")
             @PathParam("username") String username,
-            @Parameter(description = "")
+            @Parameter(description = "Title of the group to add the specified User to")
             @QueryParam("group") String groupTitle) {
         if (StringUtils.isEmpty(username) || StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
@@ -672,9 +672,9 @@ public class UserRest {
         }
     )
     public Response removeUserGroup(
-            @Parameter(description = "")
+            @Parameter(description = "Username of the User to remove from a group")
             @PathParam("username") String username,
-            @Parameter(description = "")
+            @Parameter(description = "Title of the group to remove the specified User from")
             @QueryParam("group") String groupTitle) {
         if (StringUtils.isEmpty(username) || StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
@@ -711,7 +711,7 @@ public class UserRest {
         }
     )
     public Response getUsername(
-            @Parameter(description = "")
+            @Parameter(description = "IRI to search for")
             @QueryParam("iri") String userIri) {
         try {
             String username = engineManager.getUsername(vf.createIRI(userIri)).orElseThrow(() ->

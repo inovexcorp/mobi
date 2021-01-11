@@ -48,7 +48,6 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
@@ -168,13 +167,13 @@ public class GroupRest {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response createGroup(
-             @Parameter(description = "")
+             @Parameter(description = "title of the Group")
              @FormDataParam("title") String title,
-             @Parameter(description = "")
+             @Parameter(description = "description of the Group")
              @FormDataParam("description") String description,
-             @Parameter(description = "")
+             @Parameter(description = "List of roles of the Group")
              @FormDataParam("roles") List<FormDataBodyPart> roles,
-             @Parameter(description = "")
+             @Parameter(description = "List of members of the Group")
              @FormDataParam("members") List<FormDataBodyPart> members) {
         checkStringParam(title, "Group title is required");
         try {
@@ -227,7 +226,7 @@ public class GroupRest {
         }
     )
     public Response getGroup(
-            @Parameter(description = "")
+            @Parameter(description = "Title of the Group to retrieve")
             @PathParam("groupTitle") String groupTitle) {
         if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
@@ -264,9 +263,9 @@ public class GroupRest {
     )
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateGroup(
-            @Parameter(description = "")
+            @Parameter(description = "Title of the Group to update")
             @PathParam("groupTitle") String groupTitle,
-            @Parameter(description = "")
+            @Parameter(description = "JSON-LD string representation of a Group to replace the existing Group")
             String newGroupStr) {
         if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
@@ -328,7 +327,7 @@ public class GroupRest {
         }
     )
     public Response deleteGroup(
-            @Parameter(description = "")
+            @Parameter(description = "Title of the Group to remove")
             @PathParam("groupTitle") String groupTitle) {
         if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
@@ -364,7 +363,7 @@ public class GroupRest {
         }
     )
     public Response getGroupRoles(
-            @Parameter(description = "")
+            @Parameter(description = "Title of the Group to retrieve roles from")
             @PathParam("groupTitle") String groupTitle) {
         if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
@@ -403,9 +402,9 @@ public class GroupRest {
         }
     )
     public Response addGroupRoles(
-            @Parameter(description = "")
+            @Parameter(description = "Title of the Group to add a role to")
             @PathParam("groupTitle") String groupTitle,
-            @Parameter(description = "")
+            @Parameter(description = "Name of the roles to add to the specified Group")
             @QueryParam("roles") List<String> roles) {
         if (StringUtils.isEmpty(groupTitle) || roles.isEmpty()) {
             throw ErrorUtils.sendError("Both group title and roles must be provided", Response.Status.BAD_REQUEST);
@@ -443,9 +442,9 @@ public class GroupRest {
         }
     )
     public Response removeGroupRole(
-            @Parameter(description = "")
+            @Parameter(description = "Title of the Group to remove a role from")
             @PathParam("groupTitle") String groupTitle,
-            @Parameter(description = "")
+            @Parameter(description = "Role to remove from the specified Group")
             @QueryParam("role") String role) {
         if (StringUtils.isEmpty(groupTitle) || StringUtils.isEmpty(role)) {
             throw ErrorUtils.sendError("Both group title and role must be provided", Response.Status.BAD_REQUEST);
@@ -484,7 +483,7 @@ public class GroupRest {
         }
     )
     public Response getGroupUsers(
-            @Parameter(description = "")
+            @Parameter(description = "Title of the Group to retrieve users from")
             @PathParam("groupTitle") String groupTitle) {
         if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
@@ -533,9 +532,9 @@ public class GroupRest {
         }
     )
     public Response addGroupUser(
-            @Parameter(description = "")
+            @Parameter(description = "Title of the Group to add users to")
             @PathParam("groupTitle") String groupTitle,
-            @Parameter(description = "")
+            @Parameter(description = "List of usernames of users to add to the Group")
             @QueryParam("users") List<String> usernames) {
         if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
@@ -574,9 +573,9 @@ public class GroupRest {
         }
     )
     public Response removeGroupUser(
-            @Parameter(description = "")
+            @Parameter(description = "Title of the Group to remove a user from")
             @PathParam("groupTitle") String groupTitle,
-            @Parameter(description = "")
+            @Parameter(description = "Username of the user to remove from the Group")
             @QueryParam("user") String username) {
         if (StringUtils.isEmpty(groupTitle) || StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Both group title and username must be provided", Response.Status.BAD_REQUEST);
