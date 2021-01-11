@@ -159,9 +159,10 @@ public class ProvRest {
     )
     public Response getActivities(
             @Context UriInfo uriInfo,
-            @Parameter(schema = @Schema(type = "integer", description = "offset.", required = false))
+            @Parameter(schema = @Schema(type = "integer", description = "The URI information of the request to be used " +
+                    "in creating links to other pages of Activities", required = false))
             @DefaultValue("0") @QueryParam("offset") int offset,
-            @Parameter(schema = @Schema(type = "integer", description = "limit.", required = false))
+            @Parameter(schema = @Schema(type = "integer", description = "The offset for the page", required = false))
             @DefaultValue("50") @QueryParam("limit") int limit) {
         validateParams(limit, offset);
         List<Activity> activityList = new ArrayList<>();

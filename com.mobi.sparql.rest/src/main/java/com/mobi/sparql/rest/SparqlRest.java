@@ -176,18 +176,18 @@ public class SparqlRest {
     @Operation(
         summary = "Retrieves the results of the provided SPARQL query",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "The SPARQL 1.1 results in mime type specified by accept header"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response queryRdf(
-            @Parameter(description = "")
+            @Parameter(description = "a string representing a SPARQL query")
             @QueryParam("query") String queryString,
-            @Parameter(description = "")
+            @Parameter(description = "an optional DatasetRecord IRI representing the Dataset to query")
             @QueryParam("dataset") String datasetRecordId,
-            @Parameter(description = "")
+            @Parameter(description = "used to specify certain media types which are acceptable for the response")
             @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
@@ -233,8 +233,8 @@ public class SparqlRest {
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param fileType used to specify certain media types which are acceptable for the response
-     * @param fileName The optional file name for the download file.
      * @param acceptString used to specify certain media types which are acceptable for the response
+     * @param fileName The optional file name for the download file
      * @return The SPARQL 1.1 Response in the format of fileType query parameter
      */
     @GET
@@ -243,22 +243,22 @@ public class SparqlRest {
     @Operation(
         summary = "Query and Download the results of the provided SPARQL query",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "The SPARQL 1.1 Response in the format of fileType query parameter"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response downloadRdfQuery(
-            @Parameter(description = "")
+            @Parameter(description = "The SPARQL query to execute")
             @QueryParam("query") String queryString,
-            @Parameter(description = "")
+            @Parameter(description = "an optional DatasetRecord IRI representing the Dataset to query")
             @QueryParam("dataset") String datasetRecordId,
-            @Parameter(description = "")
+            @Parameter(description = "used to specify certain media types which are acceptable for the response")
             @QueryParam("fileType") String fileType,
-            @Parameter(description = "")
+            @Parameter(description = "used to specify certain media types which are acceptable for the response")
             @HeaderParam("accept") String acceptString,
-            @Parameter(description = "")
+            @Parameter(description = "The optional file name for the download file")
             @DefaultValue("results") @QueryParam("fileName") String fileName) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
@@ -314,18 +314,18 @@ public class SparqlRest {
     @Operation(
         summary = "Retrieves the limited results of the provided SPARQL query",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "The SPARQL 1.1 results in mime type specified by accept header"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response getLimitedResults(
-            @Parameter(description = "")
+            @Parameter(description = "The SPARQL query to execute")
             @QueryParam("query") String queryString,
-            @Parameter(description = "")
+            @Parameter(description = "an optional DatasetRecord IRI representing the Dataset to query")
             @QueryParam("dataset") String datasetRecordId,
-            @Parameter(description = "")
+            @Parameter(description = "used to specify certain media types which are acceptable for the response")
             @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);

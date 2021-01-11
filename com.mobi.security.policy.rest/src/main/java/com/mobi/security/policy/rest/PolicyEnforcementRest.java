@@ -106,14 +106,14 @@ public class PolicyEnforcementRest {
     @Operation(
         summary = "Converts user provided request into XACML and evaluates",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "the decision of the XACML request evaluation"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response evaluateRequest(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "A JSON object containing XACML required fields")
             String jsonRequest) {
         log.debug("Authorizing...");
         long start = System.currentTimeMillis();

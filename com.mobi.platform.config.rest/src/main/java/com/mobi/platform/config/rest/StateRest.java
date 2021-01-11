@@ -288,7 +288,7 @@ public class StateRest {
     @Operation(
         summary = "Deletes State as long as it belongs to the User making the request",
         responses = {
-            @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "201", description = "Response indicating the success of the request"),
             @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
             @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
@@ -296,7 +296,7 @@ public class StateRest {
     )
     public Response deleteState(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "the ID of the State to remove")
             @PathParam("stateId") String stateId) {
         String username = RestUtils.getActiveUsername(context);
         try {

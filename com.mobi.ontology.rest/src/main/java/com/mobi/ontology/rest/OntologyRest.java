@@ -331,53 +331,6 @@ public class OntologyRest {
         }
     }
 
-
-//    @POST
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @Operation(
-//            summary = "Uploads JSON-LD representing an ontology to the data store.",
-//            description = "Uploads and imports a JSON-LD representing an ontology  to a data store and creates an " +
-//                    "associated OntologyRecord using the form data. A master Branch is created and stored with an " +
-//                    "initial Commit containing the data provided in the ontology JSON-LD.",
-//            responses = {
-//                    @ApiResponse(responseCode = "201", description = "OntologyRecord created"),
-//                    @ApiResponse(responseCode = "400", description = "Publisher can't be found"),
-//                    @ApiResponse(responseCode = "500", description = "Problem creating OntologyRecord")
-//            },
-//            // TODO: We can't generate swagger docs here because of the limitations on overloaded paths in the OpenAPI Spec
-//            hidden = true
-//    )
-    
-//    @RolesAllowed("user")
-//    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
-//    @ResourceId("http://mobi.com/catalog-local")
-//    public Response uploadOntologyJson(
-//            @Context ContainerRequestContext context,
-//            @Parameter(description = "The title for the OntologyRecord.", required = true) @QueryParam("title") String title,
-//            @Parameter(description = "The optional description for the OntologyRecord.") @QueryParam("description") String description,
-//            @Parameter(description = "The optional markdown abstract for the new OntologyRecord.") @QueryParam("markdown") String markdown,
-//            @Parameter(description = "The optional list of keyword strings for the OntologyRecord.") @QueryParam("keywords") List<String> keywords, String ontologyJson
-//    ) {
-//        checkStringParam(title, "The title is missing.");
-//        checkStringParam(ontologyJson, "The ontologyJson is missing.");
-//        Set<String> keywordSet = Collections.emptySet();
-//        if (keywords != null) {
-//            keywordSet = new HashSet<>(keywords);
-//        if (fileInputStream != null) {
-//            RecordOperationConfig config = new OperationConfig();
-//            config.set(OntologyRecordCreateSettings.INPUT_STREAM, fileInputStream);
-//            config.set(OntologyRecordCreateSettings.FILE_NAME, fileDetail.getFileName());
-//            return createOntologyRecord(context, title, description, markdown, keywordSet, config);
-//        } else {
-//            checkStringParam(ontologyJson, "The ontologyJson is missing.");
-//            RecordOperationConfig config = new OperationConfig();
-//            Model jsonModel = getModelFromJson(ontologyJson);
-//            config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonModel);
-//            return createOntologyRecord(context, title, description, markdown, keywordSet, config);
-//        }
-//    }}
-
     @GET
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
@@ -443,7 +396,14 @@ public class OntologyRest {
     @DELETE
     @Path("{recordId}")
     @RolesAllowed("user")
-//    @ApiOperation("Deletes the OntologyRecord with the requested recordId.")
+    @Operation(
+        summary = "Deletes the OntologyRecord with the requested recordId",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating the success"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(Delete.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteOntology(
@@ -551,19 +511,28 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-//    @ApiOperation("Updates the requester's InProgressCommit with the provided entity.")
+    @Operation(
+        summary = "Updates the requester's InProgressCommit with the provided entity",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully updated"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response saveChangesToOntology(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the record Resource id")
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "the String representing the Branch Resource id")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "the String representing the Commit Resource id")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "")
-            @QueryParam("entityId") String entityIdStr, String entityJson) {
+            @Parameter(description = "the String representing the edited entity id")
+            @QueryParam("entityId") String entityIdStr,
+            @Parameter(description = "the String representing the edited Resource")
+            String entityJson) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -602,18 +571,25 @@ public class OntologyRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-//    @ApiOperation("Updates the specified ontology branch and commit with the data provided.")
+    @Operation(
+        summary = "Updates the specified ontology branch and commit with the data provided",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully updated"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response uploadChangesToOntology(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the record Resource id")
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch Resource id")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Commit Resource id")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "ontology file to upload")
             @FormDataParam("file") InputStream fileInputStream) {
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
