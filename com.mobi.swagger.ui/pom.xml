@@ -127,6 +127,13 @@
                 </includes>
             </resource>
             <resource>
+                <directory>target/swagger-docs/</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>**/*</include>
+                </includes>
+            </resource>
+            <resource>
                 <directory>src/main/filtered-resources</directory>
                 <filtering>true</filtering>
             </resource>
@@ -152,7 +159,7 @@
                 <version>${swagger.version}</version>
                 <configuration>
                     <outputFileName>mobi</outputFileName>
-                    <outputPath>${project.build.directory}/swagger-docs</outputPath>
+                    <outputPath>${project.build.directory}/swagger-docs/swagger</outputPath>
                     <outputFormat>YAML</outputFormat>
                     <configurationFilePath>${project.build.directory}/classes/swagger-config.yaml</configurationFilePath>
                 </configuration>
