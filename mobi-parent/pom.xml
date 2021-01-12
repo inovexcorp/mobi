@@ -617,6 +617,9 @@
                                 <include>target/generated-sources/**/*</include>
                                 <include>target/processed-source/**/*</include>
                             </includes>
+                            <excludes>
+                                <exclude>**/swagger/*</exclude>
+                            </excludes>
                         </configuration>
                     </execution>
                 </executions>

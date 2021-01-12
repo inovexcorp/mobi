@@ -158,9 +158,9 @@
                 <artifactId>swagger-maven-plugin</artifactId>
                 <version>${swagger.version}</version>
                 <configuration>
-                    <outputFileName>mobi</outputFileName>
+                    <outputFileName>mobi-swagger</outputFileName>
                     <outputPath>${project.build.directory}/swagger-docs/swagger</outputPath>
-                    <outputFormat>YAML</outputFormat>
+                    <outputFormat>JSON</outputFormat>
                     <configurationFilePath>${project.build.directory}/classes/swagger-config.yaml</configurationFilePath>
                 </configuration>
                 <executions>
