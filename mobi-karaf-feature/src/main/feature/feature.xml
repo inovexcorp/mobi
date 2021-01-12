@@ -37,6 +37,7 @@
         <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-databind/${jackson.version}</bundle>
         <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-core/${jackson.version}</bundle>
         <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-annotations/${jackson.version}</bundle>
+        <bundle start-level="80">mvn:jakarta.xml.bind/jakarta.xml.bind-api/2.3.2</bundle>
     </feature>
     <feature name="mobi-server-core" description="Mobi Server Core Bundles" version="${project.version}">
         <feature prerequisite="true">jaas</feature>
