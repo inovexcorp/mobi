@@ -2645,23 +2645,22 @@ public class OntologyRest {
     @Path("{recordId}/classes-with-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-//    @ApiOperation("Gets the classes with individuals in a hierarchical structure for the identified ontology.")
     @Operation(
-            summary = "Updates the specified ontology branch and commit with the data provided",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully updated"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-            }
+        summary = "Gets the classes with individuals in a hierarchical structure for the identified ontology",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "A JSON object that represents the classes with individuals in the ontology identified by the provided IDS"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesWithIndividuals(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the record Resource id")
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch Resource id")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Commit Resource id")
             @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
@@ -2698,27 +2697,27 @@ public class OntologyRest {
     @Path("{recordId}/entity-usages/{entityIri}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-//    @ApiOperation("Gets the usages of the identified entity in the identified ontology.")
     @Operation(
-            summary = "Updates the specified ontology branch and commit with the data provided",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully updated"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-            }
+        summary = "Gets the usages of the identified entity in the identified ontology",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "JSON-LD containing statements with the requested entity" +
+                    " IRI as the predicate or object of each statement when the queryType is \"construct\"."),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntityUsages(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the record Resource id")
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the entity Resource IRI")
             @PathParam("entityIri") String entityIRIStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch Resource id")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Commit Resource id")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String identifying whether you want to do a select or construct query")
             @DefaultValue("select") @QueryParam("queryType") String queryType) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
@@ -2761,25 +2760,27 @@ public class OntologyRest {
     @Path("{recordId}/search-results")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-//    @ApiOperation("Gets the search results from the identified ontology using the provided searchText.")
     @Operation(
-            summary = "Updates the specified ontology branch and commit with the data provided",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully updated"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-            }
+        summary = "Gets the search results from the identified ontology using the provided searchText",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "JSON String of the resulting entities sorted " +
+                    "by type from the ontology with the requested record ID " +
+                    "that have statements which contain the requested searchText in a Literal Value."),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getSearchResults(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the record Resource id")
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String for the text that is searched for in all of the Literals within the " +
+                    "ontology with the requested record ID")
             @QueryParam("searchText") String searchText,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch Resource id")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Commit Resource id")
             @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
@@ -2829,23 +2830,22 @@ public class OntologyRest {
     @Path("{recordId}/failed-imports")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-//    @ApiOperation("Gets a list of ontology IRIs that were not imported.")
     @Operation(
-            summary = "Updates the specified ontology branch and commit with the data provided",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully updated"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-            }
+        summary = "Gets a list of ontology IRIs that were not imported",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "List of ontology IRIs that were not imported"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getFailedImports(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the record Resource id")
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch Resource id")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Commit Resource id")
             @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
@@ -2873,6 +2873,7 @@ public class OntologyRest {
      *                    otherwise, nothing will be returned.
      * @param format      the specified format for the return of construct queries only.
      * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
+     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
      * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
      *      if the query is a CONSTRUCT
      */
@@ -2880,31 +2881,31 @@ public class OntologyRest {
     @Path("{recordId}/query")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
-//    @ApiOperation("Retrieves the SPARQL query results of an ontology, and its import closures in the requested format.")
     @Operation(
-            summary = "Updates the specified ontology branch and commit with the data provided",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully updated"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-            }
+        summary = "Retrieves the SPARQL query results of an ontology, and its import closures in the requested format",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "SPARQL 1.1 results in JSON format if the query is a " +
+                    "SELECT or the JSONLD serialization of the results if the query is a CONSTRUCT"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response queryOntology(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the record Resource id")
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "SPARQL Query to perform against ontology")
             @QueryParam("query") String queryString,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Commit Resource id")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch Resource id")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "Specified format for the return of construct queries only")
             @DefaultValue("jsonld") @QueryParam("format") String format,
-            @Parameter(description = "")
+            @Parameter(description = "Boolean indicating whether or not ontology imports should be included in the query")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
-            @Parameter(description = "")
+            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         checkStringParam(queryString, "Parameter 'query' must be set.");
 
@@ -2963,31 +2964,32 @@ public class OntologyRest {
     @Path("{recordId}/entities/{entityId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
-//    @ApiOperation("Retrieves the triples for a specified entity including all of is transitively attached Blank Nodes.")
     @Operation(
-            summary = "Updates the specified ontology branch and commit with the data provided",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully updated"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-            }
+        summary = "Retrieves the triples for a specified entity including all of is transitively attached Blank Node",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "RDF triples for a specified entity including all of is " +
+                    "transitively attached Blank Nodes"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntity(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the record Resource ID")
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the entity Resource ID")
             @PathParam("entityId") String entityIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "Specified format for the return data. Valid values include 'jsonld', " +
+                    "'turtle', 'rdf/xml', and 'trig'")
             @DefaultValue("jsonld") @QueryParam("format") String format,
-            @Parameter(description = "")
+            @Parameter(description = "Boolean indicating whether or not ontology imports should be included in the query")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
-            @Parameter(description = "")
+            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try {
@@ -3027,28 +3029,29 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the EntityNames in the identified ontology.")
     @Operation(
-            summary = "Updates the specified ontology branch and commit with the data provided",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully updated"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-            }
+        summary = "Updates the specified ontology branch and commit with the data provided",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "List of EntityNames for the given Ontology"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
     )
     @ActionId(Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntityNames(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the record Resource id")
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch Resource id")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Commit Resource id")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "")
+            @Parameter(description = "Boolean indicating whether or not any imports")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
-            @Parameter(description = "")
+            @Parameter(description = "Boolean indicating whether or not any in progress commits by user should be " +
+                    "applied to the return value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
-            @Parameter(description = "")
+            @Parameter(description = "Filter JSON")
             String filterJson) {
         try {
             StopWatch watch = new StopWatch();
