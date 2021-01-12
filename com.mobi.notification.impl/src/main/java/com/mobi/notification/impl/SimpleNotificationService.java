@@ -49,40 +49,26 @@ public class SimpleNotificationService {
     private static final String PREFERENCE_GRAPH_IRI = "http://mobi.com/preferencemanagement";
     private static final String PREFERENCE_NAMESPACE = "http://mobi.com/preference#";
 
-    private Repository repository;
-    private ValueFactory vf;
-    private EmailNotificationPreferenceFactory emailNotificationPreferenceFactory;
-    private PrefixPreferenceFactory prefixPreferenceFactory;
-    private PreferenceService preferenceService;
-    private UserFactory userFactory;
-    private PrefixFactory prefixFactory;
-
-    @Reference(name = "repository")
-    void setRepository(Repository repository) {
-        this.repository = repository;
-    }
+    @Reference
+    Repository repository;
 
     @Reference
-    void setValueFactory(ValueFactory valueFactory) {
-        vf = valueFactory;
-    }
+    ValueFactory vf;
 
     @Reference
-    void setEmailNotificationPreferenceFactory(EmailNotificationPreferenceFactory emailNotificationPreferenceFactory) {
-        this.emailNotificationPreferenceFactory = emailNotificationPreferenceFactory;
-    }
+    EmailNotificationPreferenceFactory emailNotificationPreferenceFactory;
 
     @Reference
-    void setPreferenceService(PreferenceService preferenceService) { this.preferenceService = preferenceService; }
+    PrefixPreferenceFactory prefixPreferenceFactory;
 
     @Reference
-    void setUserFactory(UserFactory userFactory) { this.userFactory = userFactory; }
+    PreferenceService preferenceService;
 
     @Reference
-    void setPrefixFactory(PrefixFactory prefixFactory) { this.prefixFactory = prefixFactory; }
+    UserFactory userFactory;
 
     @Reference
-    void setPrefixPreferenceFactory(PrefixPreferenceFactory prefixPreferenceFactory) { this.prefixPreferenceFactory = prefixPreferenceFactory; }
+    PrefixFactory prefixFactory;
 
     @Activate
     protected void start(Map<String, Object> props) {

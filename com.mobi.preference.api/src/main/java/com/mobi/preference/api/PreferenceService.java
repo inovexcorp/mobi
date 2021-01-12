@@ -31,6 +31,9 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface PreferenceService {
+
+    public static final String GRAPH = "http://mobi.com/preferencemanagement";
+
     /**
      * Get all instances of Preference for a particular user. Preferences will include all referenced
      * object values.

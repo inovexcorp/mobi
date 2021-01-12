@@ -12,8 +12,8 @@
 <http://mobi.com/ontologies/notification> a owl:Ontology;
     owl:versionIRI <http://mobi.com/ontologies/notification/1.0>;
     owl:imports <http://www.w3.org/ns/shacl#>, <http://mobi.com/ontologies/preference>;
-    rdfs:label "The Mobi preference ontology"@en;
-    rdfs:comment "The Mobi preference ontology describes how preferences are defined within the Mobi framework."@en;
+    rdfs:label "The Notification Preference Shape Ontology"@en;
+    rdfs:comment "The Notification Preference Shape Ontology provides the SHACL shapes relating to Notification Preferences."@en;
     dct:creator [foaf:name "Ben Greenberg"];
     foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>];
     dct:modified "2020-12-15"^^xsd:date.

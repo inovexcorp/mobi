@@ -33,10 +33,14 @@ import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
 import com.mobi.preference.api.ontologies.PreferenceFactory;
 import com.mobi.query.api.GraphQuery;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.exception.RepositoryException;
@@ -58,27 +62,23 @@ public class SimplePreferenceService implements PreferenceService {
     private static final String PREFERENCE_TYPE_BINDING = "preferenceType";
     private static final String USER_BINDING = "user";
     private static final String GET_USER_PREFERENCE;
-    private CatalogConfigProvider configProvider;
-    private ValueFactory vf;
-    private ModelFactory mf;
-    private PreferenceFactory preferenceFactory;
+
     private Resource context;
 
     @Reference
-    void setValueFactory(ValueFactory valueFactory) {
-        vf = valueFactory;
-    }
+    CatalogConfigProvider configProvider;
 
     @Reference
-    void setModelFactory(ModelFactory modelFactory) { mf = modelFactory; }
+    ValueFactory vf;
 
     @Reference
-    void setPreferenceFactory(PreferenceFactory preferenceFactory) {
-        this.preferenceFactory = preferenceFactory;
-    }
+    ModelFactory mf;
 
     @Reference
-    void setCatalogConfigProvider(CatalogConfigProvider catalogConfigProvider) {this.configProvider = catalogConfigProvider; }
+    PreferenceFactory preferenceFactory;
+
+    @Reference
+    OrmFactoryRegistry factoryRegistry;
 
     static {
         try {
@@ -92,16 +92,14 @@ public class SimplePreferenceService implements PreferenceService {
 
     @Activate
     protected void start(Map<String, Object> props) {
-        context = vf.createIRI("http://mobi.com/preferencemanagement");
+        context = vf.createIRI(PreferenceService.GRAPH);
     }
 
     @Override
     public Set<Preference> getUserPreferences(User user) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Set<Resource> userPreferenceIris = RepositoryResults.asModel(conn.getStatements(null,
-                    vf.createIRI(Preference.forUser_IRI), user.getResource(), context), mf).subjects();
-            // TODO: I didn't use preferenceFactory.getAllExisting() because the backing model for each of the resulting
-            // TODO: preferences was exactly the same for some reason. Not sure why.
+            Set<Resource> userPreferenceIris = conn.getStatements(null, vf.createIRI(Preference.forUser_IRI),
+                    user.getResource(), context).stream().map(Statement::getSubject).collect(Collectors.toSet());
             return userPreferenceIris.stream().map(userPreferenceIri -> {
                 Model preferenceModel = RepositoryResults.asModelNoContext(conn.getStatements(userPreferenceIri, null, null, context), mf);
                 Preference preference = preferenceFactory.getExisting(userPreferenceIri, preferenceModel).orElseThrow(() ->
@@ -131,11 +129,18 @@ public class SimplePreferenceService implements PreferenceService {
             } else if (preferences.isEmpty()) {
                 return Optional.empty();
             } else {
-                throw new RepositoryException("More than one preference of type " + preferenceType + " exists" +
+                throw new IllegalStateException("More than one preference of type " + preferenceType + " exists" +
                         " for user " + user.getResource());
             }
         }
     }
+
+    // TODO: I was thinking that we probably still want to limit the results to the user making the query because it
+    //  doesn't seem correct to allow user a to retrieve user b's preference. So I was going to add a second param to
+    //  the service method: getUserPreference(Resource preferenceId, User user). Does that seem like it makes sense?
+//    public Optional<Preference> getUserPreference(Resource resourceId) {
+//
+//    }
 
     /*
     // Add an instance of Preference for a particular user
@@ -148,7 +153,6 @@ public class SimplePreferenceService implements PreferenceService {
 
     // This method might not work. How would the object IRI already exist in the repo? The frontend wouldn't know how
     // to retrieve that object IRI. It would probably create a new one.
-    // TODO: Need to check if a preference exists for that type in the repo
     @Override
     public void addPreference(User user, Preference preference) {
         validatePreference(preference);
@@ -247,16 +251,23 @@ public class SimplePreferenceService implements PreferenceService {
     }
 
     private Resource getPreferenceType(Preference preference) {
-        Model tempModel = mf.createModel(preference.getModel().filter(preference.getResource(), vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null));
-        tempModel.remove(preference.getResource(), vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Preference.TYPE));
-        tempModel.remove(preference.getResource(), vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Thing.TYPE));
-        if (tempModel.objects().size() == 1) {
-            return vf.createIRI(tempModel.objects().iterator().next().stringValue());
-        } else if (tempModel.objects().size() == 0) {
-            // TODO: Is this the correct type of exception to throw?
+        List<Resource> types = mf.createModel(preference.getModel()).filter(preference.getResource(), vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null)
+                .stream()
+                .map(Statements::objectResource)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
+        List<IRI> orderedIRIs = factoryRegistry.getSortedFactoriesOfType(Preference.class)
+                .stream()
+                .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
+                .map(OrmFactory::getTypeIRI)
+                .collect(Collectors.toList());
+
+        if (orderedIRIs.size() == 0) {
             throw new IllegalArgumentException("Preference type could not be found");
-        } else {
-            throw new IllegalStateException("Preference should not have more than 3 types");
         }
+
+        return orderedIRIs.get(0);
     }
 }

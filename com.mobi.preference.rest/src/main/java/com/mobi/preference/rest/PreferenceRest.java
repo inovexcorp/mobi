@@ -45,19 +45,20 @@ import com.mobi.rest.util.RestUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Set;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -69,32 +70,20 @@ import javax.ws.rs.core.Response;
 public class PreferenceRest {
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    private PreferenceService preferenceService;
-    private SesameTransformer transformer;
-    private EngineManager engineManager;
-    private ValueFactory vf;
-    private OrmFactoryRegistry factoryRegistry;
+    @Reference
+    PreferenceService preferenceService;
 
     @Reference
-    void setPreferenceService(PreferenceService preferenceService) {
-        this.preferenceService = preferenceService;
-    }
+    SesameTransformer transformer;
 
     @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
+    EngineManager engineManager;
 
     @Reference
-    void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
+    ValueFactory vf;
 
     @Reference
-    void setValueFactory(ValueFactory valueFactory) {this.vf = valueFactory; }
-
-    @Reference
-    void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {this.factoryRegistry = factoryRegistry; }
+    OrmFactoryRegistry factoryRegistry;
 
     /**
      * Returns a JSON array of user preferences for the active user
@@ -114,19 +103,19 @@ public class PreferenceRest {
     }
 
     @PUT
-    @Produces(MediaType.MULTIPART_FORM_DATA)
+    @Path("{preferenceId}")
+    @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities")
     public Response updateUserPreference(@Context ContainerRequestContext context,
-                                                   @FormDataParam("preferenceId") String preferenceId,
-                                                   @FormDataParam("preferenceType") String preferenceType,
-                                                   @FormDataParam("newUserPreferenceJson") String newUserPreferenceJson) {
-        checkStringParam(preferenceId, "Preference ID is required");
+                                         @PathParam("preferenceId") String preferenceId,
+                                         @QueryParam("preferenceType") String preferenceType,
+                                         String json) {
         checkStringParam(preferenceType, "Preference Type is required");
-        checkStringParam(newUserPreferenceJson, "User Preference JSON is required");
+        checkStringParam(json, "User Preference JSON is required");
         User user = getActiveUser(context, engineManager);
         try {
-            Model newUserPreferenceModel = convertJsonld(newUserPreferenceJson);
+            Model newUserPreferenceModel = convertJsonld(json);
             Preference preference = getPreferenceFromModel(preferenceId, preferenceType, newUserPreferenceModel);
             preferenceService.updatePreference(user, preference);
             return Response.ok().build();
@@ -137,25 +126,21 @@ public class PreferenceRest {
         }
     }
 
-    // TODO: Technically we could strip the preferenceId and preferenceType from the newUserPreferenceJson instead of
-    // TODO: having these two FormDataParams. Should we do that instead?
     @POST
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities")
     public Response createUserPreference(@Context ContainerRequestContext context,
-                                         @FormDataParam("preferenceId") String preferenceId,
-                                         @FormDataParam("preferenceType") String preferenceType,
-                                         @FormDataParam("newUserPreferenceJson") String newUserPreferenceJson) {
-        checkStringParam(preferenceId, "Preference ID is required");
+                                         @QueryParam("preferenceType") String preferenceType,
+                                         String jsonld) {
         checkStringParam(preferenceType, "Preference Type is required");
-        checkStringParam(newUserPreferenceJson, "User Preference JSON is required");
+        checkStringParam(jsonld, "User Preference JSON is required");
         User user = getActiveUser(context, engineManager);
         try {
-            Model newUserPreferenceModel = convertJsonld(newUserPreferenceJson);
-            Preference preference = getPreferenceFromModel(preferenceId, preferenceType, newUserPreferenceModel);
+            Model newUserPreferenceModel = convertJsonld(jsonld);
+            Preference preference = getPreferenceFromModel(preferenceType, newUserPreferenceModel);
             preferenceService.addPreference(user, preference);
-            return Response.ok().build();
+            return Response.status(201).entity(preference.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -171,11 +156,23 @@ public class PreferenceRest {
         }
     }
 
+    private Preference getPreferenceFromModel(String preferenceType, Model preferenceModel) {
+        Collection<? extends Preference> preferences = getSpecificPreferenceFactory(preferenceType).getAllExisting(preferenceModel);
+        if (preferences.size() > 1) {
+            throw ErrorUtils.sendError("More than one preference of type: " + preferenceType + " found", Response.Status.BAD_REQUEST);
+        } else if (preferences.isEmpty()) {
+            throw ErrorUtils.sendError("No preference of type: " + preferenceType + " was found", Response.Status.BAD_REQUEST);
+        } else {
+            return preferences.iterator().next();
+        }
+    }
+
     private Preference getPreferenceFromModel(String preferenceId, String preferenceType, Model preferenceModel) {
         return getSpecificPreferenceFactory(preferenceType).getExisting(vf.createIRI(preferenceId),
                 preferenceModel).orElseThrow(() -> ErrorUtils.sendError("Could not parse " + preferenceType + " preference with id " +
                 preferenceId + " from request.", Response.Status.BAD_REQUEST));
     }
+
 
     private OrmFactory<? extends Preference> getSpecificPreferenceFactory(String preferenceType) {
         return (OrmFactory<? extends Preference>) factoryRegistry.getFactoryOfType(preferenceType).orElseThrow(() ->
