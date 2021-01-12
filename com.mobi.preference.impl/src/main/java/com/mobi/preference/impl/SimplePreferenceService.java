@@ -57,7 +57,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Component
+@Component(immediate = true)
 public class SimplePreferenceService implements PreferenceService {
     private static final String PREFERENCE_TYPE_BINDING = "preferenceType";
     private static final String USER_BINDING = "user";
@@ -91,7 +91,7 @@ public class SimplePreferenceService implements PreferenceService {
     }
 
     @Activate
-    protected void start(Map<String, Object> props) {
+    protected void start() {
         context = vf.createIRI(PreferenceService.GRAPH);
     }
 

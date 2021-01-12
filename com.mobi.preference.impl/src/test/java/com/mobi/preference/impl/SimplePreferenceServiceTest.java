@@ -75,6 +75,7 @@ import org.mockito.MockitoAnnotations;
 import org.osgi.service.component.annotations.Reference;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -85,7 +86,7 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
     private Repository repo;
     private SimplePreferenceService service;
     private SimpleNotificationService notificationService;
-    private OrmFactory<Preference> preferenceFactory = getRequiredOrmFactory(Preference.class);
+//    private OrmFactory<Preference> preferenceFactory = getRequiredOrmFactory(Preference.class);
     private OrmFactory<PrefixPreference> prefixPreferenceFactory = getRequiredOrmFactory(PrefixPreference.class);
     private OrmFactory<EmailNotificationPreference> emailNotificationPreferenceFactory = getRequiredOrmFactory(EmailNotificationPreference.class);
     private OrmFactory<Prefix> prefixFactory = getRequiredOrmFactory(Prefix.class);
@@ -103,6 +104,9 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private CatalogConfigProvider configProvider;
+
+    @Mock
+    PreferenceFactory preferenceFactory;
 
 
     private interface ComplexPreference extends Preference, Thing {
@@ -124,73 +128,73 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
 //    @Mock
 //    private ComplexPreference complexPreference;
 
-    public class ComplexPreferenceFactory
-            extends AbstractOrmFactory<ComplexPreference> {
-        /**
-         * Construct a new instance of an {@link AbstractOrmFactory}.
-         * Implementations will call this constructor.
-         *
-         * @param type The type we're building
-         * @param impl The implementation under the covers
-         * @throws OrmException If there is an issue constructing our {@link OrmFactory}
-         *                      instance
-         */
-        public ComplexPreferenceFactory(Class<ComplexPreference> type, Class<? extends ComplexPreference> impl) throws OrmException {
-            super(type, impl);
-        }
-
-        public ComplexPreferenceFactory() throws OrmException {
-            super(ComplexPreference.class, impl);
-        }
-
-        @Override
-        public Optional<ComplexPreference> getExisting(Resource resource, Model model, ValueFactory valueFactory,
-                                                       ValueConverterRegistry valueConverterRegistry) {
-            return Optional.empty();
-        }
-
-        @Override
-        public IRI getTypeIRI() {
-            return null;
-        }
-
-        @Override
-        public Set<IRI> getParentTypeIRIs() {
-            return null;
-        }
-    }
-
-        /**
-         * Construct a new instance of an {@link AbstractOrmFactory}.
-         * Implementations will call this constructor.
-         *
-         * @param type The type we're building
-         * @param impl The implementation under the covers
-         * @throws OrmException If there is an issue constructing our {@link OrmFactory}
-         *                      instance
-         */
-        public ComplexPreferenceFactory() throws OrmException {
-            super(ComplexPreference.class, ComplexPreferenceImpl.class);
-        }
-
-        @Override
-        public Optional<ComplexPreference> getExisting(Resource resource, Model model, ValueFactory valueFactory,
-                                                ValueConverterRegistry valueConverterRegistry) {
-            return Optional.empty();
-        }
-
-        @Override
-        public IRI getTypeIRI() {
-            return null;
-        }
-
-        @Override
-        public Set<IRI> getParentTypeIRIs() {
-            return null;
-        }
-    }
-
-    private ComplexPreferenceFactory complexPreferenceFactory;
+//    public class ComplexPreferenceFactory
+//            extends AbstractOrmFactory<ComplexPreference> {
+//        /**
+//         * Construct a new instance of an {@link AbstractOrmFactory}.
+//         * Implementations will call this constructor.
+//         *
+//         * @param type The type we're building
+//         * @param impl The implementation under the covers
+//         * @throws OrmException If there is an issue constructing our {@link OrmFactory}
+//         *                      instance
+//         */
+////        public ComplexPreferenceFactory(Class<ComplexPreference> type, Class<? extends ComplexPreference> impl) throws OrmException {
+//            super(type, impl);
+//        }
+//
+//        public ComplexPreferenceFactory() throws OrmException {
+//            super(ComplexPreference.class, impl);
+//        }
+//
+//        @Override
+//        public Optional<ComplexPreference> getExisting(Resource resource, Model model, ValueFactory valueFactory,
+//                                                       ValueConverterRegistry valueConverterRegistry) {
+//            return Optional.empty();
+//        }
+//
+//        @Override
+//        public IRI getTypeIRI() {
+//            return null;
+//        }
+//
+//        @Override
+//        public Set<IRI> getParentTypeIRIs() {
+//            return null;
+//        }
+//    }
+//
+//        /**
+//         * Construct a new instance of an {@link AbstractOrmFactory}.
+//         * Implementations will call this constructor.
+//         *
+//         * @param type The type we're building
+//         * @param impl The implementation under the covers
+//         * @throws OrmException If there is an issue constructing our {@link OrmFactory}
+//         *                      instance
+//         */
+////        public ComplexPreferenceFactory() throws OrmException {
+////            super(ComplexPreference.class, ComplexPreferenceImpl.class);
+////        }
+//
+//        @Override
+//        public Optional<ComplexPreference> getExisting(Resource resource, Model model, ValueFactory valueFactory,
+//                                                ValueConverterRegistry valueConverterRegistry) {
+//            return Optional.empty();
+//        }
+//
+//        @Override
+//        public IRI getTypeIRI() {
+//            return null;
+//        }
+//
+//        @Override
+//        public Set<IRI> getParentTypeIRIs() {
+//            return null;
+//        }
+//    }
+//
+//    private ComplexPreferenceFactory complexPreferenceFactory;
 
     @Before
     public void setUp() throws Exception {
@@ -209,13 +213,13 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         when(registry.getFactoriesOfType(PrefixPreference.class)).thenReturn(Collections.singletonList(prefixPreferenceFactory));
         when(registry.getFactoriesOfType(EmailNotificationPreference.class)).thenReturn(Collections.singletonList(emailNotificationPreferenceFactory));
         when(registry.getFactoriesOfType(Prefix.class)).thenReturn(Collections.singletonList(prefixFactory));
-        when(registry.getFactoriesOfType(ComplexPreference.class)).thenReturn((Collections.singletonList(complexPreferenceFactory)));
+//        when(registry.getFactoriesOfType(ComplexPreference.class)).thenReturn((Collections.singletonList(complexPreferenceFactory)));
 
-        when(complexPreferenceFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(ComplexPreference.TYPE));
-        when(complexPreferenceFactory.getType()).thenReturn(ComplexPreference.class);
-        doReturn(ComplexPreferenceImpl.class).when(complexPreferenceFactory).getImpl();
-        when(complexPreferenceFactory.getParentTypeIRIs()).thenReturn(Collections.emptySet());
-        when(complexPreferenceFactory.createNew(any())).thenReturn(new ComplexPreferenceImpl());
+//        when(complexPreferenceFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(ComplexPreference.TYPE));
+//        when(complexPreferenceFactory.getType()).thenReturn(ComplexPreference.class);
+//        doReturn(ComplexPreferenceImpl.class).when(complexPreferenceFactory).getImpl();
+//        when(complexPreferenceFactory.getParentTypeIRIs()).thenReturn(Collections.emptySet());
+//        when(complexPreferenceFactory.createNew(any())).thenReturn(new ComplexPreferenceImpl());
 
         when(configProvider.getRepository()).thenReturn(repo);
 
@@ -223,9 +227,12 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         injectOrmFactoryReferencesIntoService(service);
         notificationService = new SimpleNotificationService();
         injectOrmFactoryReferencesIntoService(notificationService);
-        service.setValueFactory(VALUE_FACTORY);
-        service.setModelFactory(MODEL_FACTORY);
-        service.setCatalogConfigProvider(configProvider);
+        service.vf =  VALUE_FACTORY;
+        service.mf = MODEL_FACTORY;
+        service.configProvider = configProvider;
+        service.factoryRegistry = ORM_FACTORY_REGISTRY;
+        service.preferenceFactory = preferenceFactory;
+        service.start();
     }
 
 //    @Test
@@ -312,7 +319,7 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         // Setup:
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         Prefix prefix = prefixFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/prefix"));
-        Preference preference = complexPreferenceFactory.createNew(preferenceIRI);
+        Preference preference = prefixPreferenceFactory.createNew(preferenceIRI);
         preference.getModel().addAll(prefix.getModel());
         preference.addHasObjectValue(prefix);
 
