@@ -611,15 +611,17 @@
                                 <root>target/generated-sources</root>
                                 <root>target/processed-source</root>
                             </roots>
+                            <excludes>
+                                <exclude>src/main/resources/**/*</exclude>
+                                <exclude>src/test/resources/**/*</exclude>
+                            </excludes>
                             <includes>
                                 <include>pom.xml</include>
                                 <include>src/**/*</include>
                                 <include>target/generated-sources/**/*</include>
                                 <include>target/processed-source/**/*</include>
                             </includes>
-                            <excludes>
-                                <exclude>**/swagger/*</exclude>
-                            </excludes>
+
                         </configuration>
                     </execution>
                 </executions>

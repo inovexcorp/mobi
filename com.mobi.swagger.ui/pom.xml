@@ -160,7 +160,7 @@
                 <configuration>
                     <outputFileName>mobi-swagger</outputFileName>
                     <outputPath>${project.build.directory}/swagger-docs/swagger</outputPath>
-                    <outputFormat>JSON</outputFormat>
+                    <outputFormat>YAML</outputFormat>
                     <configurationFilePath>${project.build.directory}/classes/swagger-config.yaml</configurationFilePath>
                 </configuration>
                 <executions>

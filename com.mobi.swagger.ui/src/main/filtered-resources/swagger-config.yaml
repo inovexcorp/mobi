@@ -18,3 +18,15 @@ openAPI:
     version: ${project.version}
     title: Mobi
     description: 'Mobi REST API Documentation'
+
+
+servers:
+  - url: https://localhost:8443/mobirest
+
+components:
+  securitySchemes:
+    basicAuth:     # <-- arbitrary name for the security scheme
+      type: https
+      scheme: basic
+security:
+  - basicAuth: []

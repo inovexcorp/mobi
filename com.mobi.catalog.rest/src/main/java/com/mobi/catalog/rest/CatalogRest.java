@@ -254,13 +254,13 @@ public class CatalogRest {
     @Operation(
         summary = "Retrieves the distributed and local Catalogs",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "List of Catalogs within the repository"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getCatalogs(
-            @Parameter(description = "")
+            @Parameter(description = "Type of Catalog you want back (local or distributed)", required = false)
             @QueryParam("type") String catalogType) {
         try {
             Set<Catalog> catalogs = new HashSet<>();
@@ -299,13 +299,13 @@ public class CatalogRest {
     @Operation(
         summary = "Retrieves the Catalog specified by the provided ID",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "200", description = "Specific Catalog from the repository"),
+            @ApiResponse(responseCode = "404", description = "Catalog does not exist"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getCatalog(
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId) {
         try {
             Resource catalogIri = vf.createIRI(catalogId);
@@ -336,7 +336,7 @@ public class CatalogRest {
      * @param limit The number of Records to return in one page.
      * @param asc Whether or not the list should be sorted ascending or descending.
      * @param searchText The String used to filter out Records.
-     * @return The list of Records that match the search criteria.
+     * @return List of Records that match the search criteria.
      */
     @GET
     @Path("{catalogId}/records")
@@ -345,26 +345,26 @@ public class CatalogRest {
     @Operation(
         summary = "Retrieves the Records in the Catalog",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "List of Records that match the search criteria"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getRecords(
             @Context UriInfo uriInfo,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "Field with sort order specified (MODIFIED, ISSUED, TITLE)")
             @QueryParam("sort") String sort,
-            @Parameter(description = "")
+            @Parameter(description = "The type of Records you want to get back (unversioned, versioned, ontology, mapping, or dataset)")
             @QueryParam("type") String recordType,
-            @Parameter(description = "")
+            @Parameter(description = "offset for the page")
             @QueryParam("offset") int offset,
-            @Parameter(description = "")
+            @Parameter(description = "Number of Records to return in one page")
             @QueryParam("limit") int limit,
-            @Parameter(description = "")
+            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
-            @Parameter(description = "")
+            @Parameter(description = "String used to filter out Records")
             @QueryParam("searchText") String searchText) {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
@@ -398,8 +398,7 @@ public class CatalogRest {
 
     /**
      * Creates a new Record in the repository using the passed form data. Determines the type of the new Record
-     * based on the `type` field. Requires the `title` and `identifier` fields to be set. Returns a Response with the
-     * IRI of the new Record.
+     * based on the `type` field. Requires the `title` and `identifier` fields to be set.
      *
      * @param context The context of the request.
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
@@ -421,7 +420,7 @@ public class CatalogRest {
     @Operation(
         summary = "Creates a new Record in the Catalog",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Record"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -432,19 +431,20 @@ public class CatalogRest {
     @ResourceId(value = "catalogId", type = ValueType.PATH)
     public Response createRecord(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "Required IRI of the type for the new Record. " +
+                    "Must be a valid IRI for a Record or one of its subclasses", required = true)
             @FormDataParam("type") String typeIRI,
-            @Parameter(description = "")
+            @Parameter(description = "Required title for the new Record", required = true)
             @FormDataParam("title") String title,
-            @Parameter(description = "")
+            @Parameter(description = "Required identifier for the new Record. Must be a valid IRI.")
             @FormDataParam("identifier") String identifier,
-            @Parameter(description = "")
+            @Parameter(description = "Optional description for the new Record")
             @FormDataParam("description") String description,
-            @Parameter(description = "")
+            @Parameter(description = "Optional markdown abstract for the new Record")
             @FormDataParam("markdown") String markdown,
-            @Parameter(description = "")
+            @Parameter(description = "Optional list of keywords strings for the new Record")
             @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
         checkStringParam(title, "Record title is required");
         Map<String, OrmFactory<? extends Record>> recordFactories = getRecordFactories();
@@ -486,7 +486,7 @@ public class CatalogRest {
     }
 
     /**
-     * Returns the contents of the Record’s named graph, including the Record object
+     * Returns the contents of the Record’s named graph, including the Record object.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -501,16 +501,18 @@ public class CatalogRest {
     @Operation(
         summary = "Retrieves the Catalog record by its ID",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Array with the contents of the Record’s named graph, " +
+                    "including the Record object"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "404", description = "Record could not be found"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getRecord(
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Record ID")
             @PathParam("recordId") String recordId) {
         try {
             Record record = catalogManager.getRecord(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -526,8 +528,7 @@ public class CatalogRest {
     }
 
     /**
-     * Deletes a Record from the repository. Returns a Response which indicates whether or not the requested Record was
-     * deleted.
+     * Deletes a Record from the repository.
      *
      * @param context The context of the request
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
@@ -543,7 +544,7 @@ public class CatalogRest {
     @Operation(
         summary = "Deletes the Catalog Record by its ID",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response indicating whether or not the Record was deleted"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -551,9 +552,9 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteRecord(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Record ID")
             @PathParam("recordId") String recordId) {
         User activeUser = getActiveUser(context, engineManager);
         IRI recordIri = vf.createIRI(recordId);
@@ -575,7 +576,7 @@ public class CatalogRest {
 
     /**
      * Updates a Record based on the ID contained within the provided Catalog using the modifications from the provided
-     * JSON-LD. It returns a Response indicating whether the Record was correctly updated.
+     * JSON-LD.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -592,18 +593,18 @@ public class CatalogRest {
     @Operation(
         summary = "Updates the Catalog Record by its ID using the provided Record JSON-LD",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response indicating whether or not the Record was updated"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateRecord(
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Record ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "JSON-LD of the new Record which will replace the existing Record")
             String newRecordJson) {
         try {
             Record newRecord = getNewThing(newRecordJson, vf.createIRI(recordId),
@@ -639,24 +640,25 @@ public class CatalogRest {
     @Operation(
         summary = "Retrieves the list of Distributions associated with an UnversionedRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response with a list of all the Distributions of the" +
+                    " requested UnversionedRecord"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getUnversionedDistributions(
             @Context UriInfo uriInfo,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the UnversionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "Field with sort order specified (MODIFIED, ISSUED, TITLE)")
             @QueryParam("sort") String sort,
-            @Parameter(description = "")
+            @Parameter(description = "Offset for the page")
             @DefaultValue("0") @QueryParam("offset") int offset,
-            @Parameter(description = "")
+            @Parameter(description = "Number of Distributions to return in one page")
             @DefaultValue("100") @QueryParam("limit") int limit,
-            @Parameter(description = "")
+            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc) {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
@@ -674,7 +676,7 @@ public class CatalogRest {
 
     /**
      * Creates a new Distribution for the provided UnversionedRecord using the passed form data. Requires the "title"
-     * field to be set. Returns a Response with the IRI of the new Distribution.
+     * field to be set.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -695,26 +697,26 @@ public class CatalogRest {
     @Operation(
         summary = "Creates a new Distribution for the provided UnversionedRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Distribution"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response createUnversionedDistribution(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the UnversionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "Required title for the new Distribution", required = true)
             @FormDataParam("title") String title,
-            @Parameter(description = "")
+            @Parameter(description = "Optional description for the new Distribution")
             @FormDataParam("description") String description,
-            @Parameter(description = "")
+            @Parameter(description = "Optional format string for the new Distribution. Expects a MIME type")
             @FormDataParam("format") String format,
-            @Parameter(description = "")
+            @Parameter(description = "Optional access URL for the new Distribution")
             @FormDataParam("accessURL") String accessURL,
-            @Parameter(description = "")
+            @Parameter(description = "Optional download URL for the new Distribution")
             @FormDataParam("downloadURL") String downloadURL) {
         try {
             Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL,
@@ -746,17 +748,17 @@ public class CatalogRest {
     @Operation(
         summary = "Gets a specific Distribution of an UnversionedRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Distribution that was identified by the provided IDs"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getUnversionedDistribution(
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the UnversionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Distribution ID")
             @PathParam("distributionId") String distributionId) {
         try {
             Distribution distribution = catalogManager.getUnversionedDistribution(vf.createIRI(catalogId),
@@ -773,8 +775,7 @@ public class CatalogRest {
     }
 
     /**
-     * Deletes a specific Distribution identified by the provided IDs. Returns a Response indicating whether it was
-     * successfully deleted.
+     * Deletes a specific Distribution identified by the provided IDs.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -791,17 +792,17 @@ public class CatalogRest {
     @Operation(
         summary = "Deletes a specific Distribution of an UnversionedRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response indicating if the Distribution was deleted"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response deleteUnversionedDistribution(
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the UnversionedRecord")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Distribution ID")
             @PathParam("distributionId") String distributionId) {
         try {
             catalogManager.removeUnversionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -816,7 +817,7 @@ public class CatalogRest {
 
     /**
      * Updates a specific Distribution for an UnversionedRecord identified by the provided IDs using the modifications
-     * in the provided JSON-LD. Returns a Response indicating whether it was successfully updated.
+     * in the provided JSON-LD.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -832,21 +833,22 @@ public class CatalogRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        summary = "Updates a specific Distribution of an UnversionedRecord",
+        summary = "Updates a specific Distribution for an UnversionedRecord identified by the provided IDs " +
+                "using the modifications in the provided JSON-LD",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response indicating if the Distribution was updated"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response updateUnversionedDistribution(
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the UnversionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Distribution ID")
             @PathParam("distributionId") String distributionId,
-            @Parameter(description = "")
+            @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution")
             String newDistributionJson) {
         try {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
@@ -882,7 +884,7 @@ public class CatalogRest {
     @Operation(
         summary = "Gets a list of Versions for a VersionedRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "List of all the Versions associated with a VersionedRecord"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -890,17 +892,17 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersions(
             @Context UriInfo uriInfo,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "Field with sort order specified")
             @QueryParam("sort") String sort,
-            @Parameter(description = "")
+            @Parameter(description = "Offset for the page")
             @DefaultValue("0") @QueryParam("offset") int offset,
-            @Parameter(description = "")
+            @Parameter(description = "Number of Versions to return in one page")
             @DefaultValue("100") @QueryParam("limit") int limit,
-            @Parameter(description = "")
+            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc) {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
@@ -916,8 +918,7 @@ public class CatalogRest {
 
     /**
      * Creates a Version for the identified VersionedRecord using the passed form data and stores it in the repository.
-     * This Version will become the latest Version for the identified VersionedRecord. Returns a Response with the IRI
-     * of the new Version.
+     * This Version will become the latest Version for the identified VersionedRecord.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -935,9 +936,10 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        summary = "Creates a Version for the identified VersionedRecord",
+        summary = "Creates a Version for the identified VersionedRecord using the passed form data and stores" +
+                " it in the repository. This Version will become the latest Version for the identified VersionedRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response with the IRI string of the created Version"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -946,15 +948,16 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createVersion(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "Required IRI of the type for the new Version. Must be a valid IRI for a " +
+                    "Version or one of its subclasses")
             @FormDataParam("type") String typeIRI,
-            @Parameter(description = "")
+            @Parameter(description = "Required title for the new Version")
             @FormDataParam("title") String title,
-            @Parameter(description = "")
+            @Parameter(description = "Optional description for the new Version")
             @FormDataParam("description") String description) {
         try {
             checkStringParam(title, "Version title is required");
@@ -1008,11 +1011,11 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createTag(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "Required title for the new Tag")
             @FormDataParam("title") String title,
             @Parameter(description = "")
             @FormDataParam("description") String description,
@@ -1076,7 +1079,7 @@ public class CatalogRest {
         }
     )
     public Response getLatestVersion(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "")
             @PathParam("recordId") String recordId) {
@@ -1118,9 +1121,9 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersion(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @PathParam("versionId") String versionId) {
@@ -1165,9 +1168,9 @@ public class CatalogRest {
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteVersion(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @PathParam("versionId") String versionId) {
@@ -1210,13 +1213,13 @@ public class CatalogRest {
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateVersion(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
-            @Parameter(description = "")
+            @Parameter(description = "JSON-LD of the new Version which will replace the existing Version")
             String newVersionJson) {
         try {
             Version newVersion = getNewThing(newVersionJson, vf.createIRI(versionId),
@@ -1254,26 +1257,26 @@ public class CatalogRest {
     @Operation(
         summary = "Gets the list of all Distributions for the identified Version",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "List of Distributions for the identified Version"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getVersionedDistributions(
             @Context UriInfo uriInfo,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
-            @Parameter(description = "")
+            @Parameter(description = "Field with sort order specified")
             @QueryParam("sort") String sort,
-            @Parameter(description = "")
+            @Parameter(description = "Offset for the page")
             @DefaultValue("0") @QueryParam("offset") int offset,
-            @Parameter(description = "")
+            @Parameter(description = "Number of Distributions to return in one page")
             @DefaultValue("100") @QueryParam("limit") int limit,
-            @Parameter(description = "")
+            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc) {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
@@ -1321,15 +1324,15 @@ public class CatalogRest {
     )
     public Response createVersionedDistribution(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Version ID")
             @FormDataParam("title") String title,
-            @Parameter(description = "")
+            @Parameter(description = "Required title for the new Distribution")
             @FormDataParam("description") String description,
             @Parameter(description = "")
             @FormDataParam("format") String format,
@@ -1376,11 +1379,11 @@ public class CatalogRest {
         }
     )
     public Response getVersionedDistribution(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
             @Parameter(description = "")
             @PathParam("distributionId") String distributionId) {
@@ -1425,11 +1428,11 @@ public class CatalogRest {
         }
     )
     public Response deleteVersionedDistribution(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
             @Parameter(description = "")
             @PathParam("distributionId") String distributionId) {
@@ -1473,11 +1476,11 @@ public class CatalogRest {
         }
     )
     public Response updateVersionedDistribution(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
             @Parameter(description = "")
             @PathParam("distributionId") String distributionId,
@@ -1520,11 +1523,11 @@ public class CatalogRest {
         }
     )
     public Response getVersionCommit(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
             @Parameter(description = "")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
@@ -1576,19 +1579,19 @@ public class CatalogRest {
     public Response getBranches(
             @Context ContainerRequestContext context,
             @Context UriInfo uriInfo,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "Field with sort order specified")
             @DefaultValue("http://purl.org/dc/terms/title") @QueryParam("sort") String sort,
-            @Parameter(description = "")
+            @Parameter(description = "offset for the page")
             @DefaultValue("0") @QueryParam("offset") int offset,
-            @Parameter(description = "")
+            @Parameter(description = "Number of Branches to return in one page")
             @DefaultValue("100") @QueryParam("limit") int limit,
-            @Parameter(description = "")
+            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
-            @Parameter(description = "")
+            @Parameter(description = "Whether or not the list should be filtered to Branches associated with the user making the request")
             @DefaultValue("false") @QueryParam("applyUserFilter") boolean applyUserFilter) {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
@@ -1646,9 +1649,9 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createBranch(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @FormDataParam("type") String typeIRI,
@@ -1709,7 +1712,7 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getMasterBranch(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "")
             @PathParam("recordId") String recordId) {
@@ -1749,9 +1752,9 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranch(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @PathParam("branchId") String branchId) {
@@ -1798,9 +1801,9 @@ public class CatalogRest {
             @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
     )
     public Response deleteBranch(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @PathParam("branchId") String branchId) {
@@ -1843,9 +1846,9 @@ public class CatalogRest {
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateBranch(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @PathParam("branchId") String branchId,
@@ -1895,9 +1898,9 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getCommitChain(
             @Context UriInfo uriInfo,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @PathParam("branchId") String branchId,
@@ -1968,9 +1971,9 @@ public class CatalogRest {
     )
     public Response createBranchCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @PathParam("branchId") String branchId,
@@ -2015,9 +2018,9 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getHead(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @PathParam("branchId") String branchId,
@@ -2066,9 +2069,9 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranchCommit(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @PathParam("branchId") String branchId,
@@ -2121,9 +2124,9 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDifference(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @PathParam("branchId") String branchId,
@@ -2177,9 +2180,9 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConflicts(
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @PathParam("branchId") String branchId,
@@ -2248,9 +2251,9 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response merge(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @PathParam("branchId") String sourceBranchId,
@@ -2307,9 +2310,9 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getCompiledResource(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @PathParam("branchId") String branchId,
@@ -2375,9 +2378,9 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadCompiledResource(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @PathParam("branchId") String branchId,
@@ -2446,7 +2449,7 @@ public class CatalogRest {
     )
     public Response createInProgressCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "")
             @PathParam("recordId") String recordId) {
@@ -2488,9 +2491,9 @@ public class CatalogRest {
     )
     public Response getInProgressCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
@@ -2533,7 +2536,7 @@ public class CatalogRest {
     )
     public Response deleteInProgressCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "")
             @PathParam("recordId") String recordId) {
@@ -2580,9 +2583,9 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateInProgressCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "The String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "")
             @FormDataParam("additions") String additionsJson,
