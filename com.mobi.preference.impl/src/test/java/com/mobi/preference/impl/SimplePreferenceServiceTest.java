@@ -38,7 +38,9 @@ import com.mobi.notification.impl.ontologies.EmailNotificationPreference;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
+import com.mobi.ontologies.shacl.Shape;
 import com.mobi.persistence.utils.ReadOnlyRepositoryConnection;
+import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
 import com.mobi.preference.api.ontologies.PreferenceFactory;
 import com.mobi.preference.api.ontologies.PreferenceImpl;
@@ -86,7 +88,7 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
     private Repository repo;
     private SimplePreferenceService service;
     private SimpleNotificationService notificationService;
-//    private OrmFactory<Preference> preferenceFactory = getRequiredOrmFactory(Preference.class);
+    private OrmFactory<Preference> preferenceFactory = getRequiredOrmFactory(Preference.class);
     private OrmFactory<PrefixPreference> prefixPreferenceFactory = getRequiredOrmFactory(PrefixPreference.class);
     private OrmFactory<EmailNotificationPreference> emailNotificationPreferenceFactory = getRequiredOrmFactory(EmailNotificationPreference.class);
     private OrmFactory<Prefix> prefixFactory = getRequiredOrmFactory(Prefix.class);
@@ -104,10 +106,6 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private CatalogConfigProvider configProvider;
-
-    @Mock
-    PreferenceFactory preferenceFactory;
-
 
     private interface ComplexPreference extends Preference, Thing {
         String TYPE = "http://example.com/ExampleComplexPrefererence";
@@ -208,11 +206,11 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
 
         MockitoAnnotations.initMocks(this);
 
-        when(registry.getFactoriesOfType(User.class)).thenReturn(Collections.singletonList(userFactory));
-        when(registry.getFactoriesOfType(Preference.class)).thenReturn(Collections.singletonList(preferenceFactory));
-        when(registry.getFactoriesOfType(PrefixPreference.class)).thenReturn(Collections.singletonList(prefixPreferenceFactory));
-        when(registry.getFactoriesOfType(EmailNotificationPreference.class)).thenReturn(Collections.singletonList(emailNotificationPreferenceFactory));
-        when(registry.getFactoriesOfType(Prefix.class)).thenReturn(Collections.singletonList(prefixFactory));
+//        when(registry.getFactoriesOfType(User.class)).thenReturn(Collections.singletonList(userFactory));
+//        when(registry.getFactoriesOfType(Preference.class)).thenReturn(Collections.singletonList(preferenceFactory));
+//        when(registry.getFactoriesOfType(PrefixPreference.class)).thenReturn(Collections.singletonList(prefixPreferenceFactory));
+//        when(registry.getFactoriesOfType(EmailNotificationPreference.class)).thenReturn(Collections.singletonList(emailNotificationPreferenceFactory));
+//        when(registry.getFactoriesOfType(Prefix.class)).thenReturn(Collections.singletonList(prefixFactory));
 //        when(registry.getFactoriesOfType(ComplexPreference.class)).thenReturn((Collections.singletonList(complexPreferenceFactory)));
 
 //        when(complexPreferenceFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(ComplexPreference.TYPE));
@@ -231,7 +229,6 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         service.mf = MODEL_FACTORY;
         service.configProvider = configProvider;
         service.factoryRegistry = ORM_FACTORY_REGISTRY;
-        service.preferenceFactory = preferenceFactory;
         service.start();
     }
 
@@ -316,6 +313,10 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void addPreferenceWithObjectValueTest() throws Exception {
+        EmailNotificationPreference emailNotificationPreference = emailNotificationPreferenceFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com"));
+        Set<Value> properties = emailNotificationPreference.getProperties(VALUE_FACTORY.createIRI(Shape.property_IRI));
+
+
         // Setup:
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         Prefix prefix = prefixFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/prefix"));
@@ -348,7 +349,7 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         Preference preference = emailNotificationPreferenceFactory.createNew(preferenceIRI);
         preference.setHasDataValue(VALUE_FACTORY.createLiteral(true));
-        repo.getConnection().add(preference.getModel());
+        repo.getConnection().add(preference.getModel(), VALUE_FACTORY.createIRI(PreferenceService.GRAPH));
         service.addPreference(user, preference);
     }
 

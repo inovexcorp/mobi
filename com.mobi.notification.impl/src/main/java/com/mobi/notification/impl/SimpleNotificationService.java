@@ -25,7 +25,11 @@ package com.mobi.notification.impl;
 
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
+import com.mobi.notification.impl.ontologies.EmailNotificationPreference;
 import com.mobi.notification.impl.ontologies.EmailNotificationPreferenceFactory;
+import com.mobi.notification.impl.ontologies.EmailNotificationPreferenceImpl;
+import com.mobi.ontologies.shacl.NodeShapeFactory;
+import com.mobi.ontologies.shacl.Shape;
 import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
 import com.mobi.preference.api.ontologies.Prefix;
@@ -37,6 +41,7 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.rest.util.RestUtils;
+import org.eclipse.rdf4j.sail.shacl.AST.NodeShape;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -59,6 +64,9 @@ public class SimpleNotificationService {
     EmailNotificationPreferenceFactory emailNotificationPreferenceFactory;
 
     @Reference
+    NodeShapeFactory nodeShapeFactory;
+
+    @Reference
     PrefixPreferenceFactory prefixPreferenceFactory;
 
     @Reference
@@ -72,6 +80,11 @@ public class SimpleNotificationService {
 
     @Activate
     protected void start(Map<String, Object> props) {
+        EmailNotificationPreference emailNotificationPreference = emailNotificationPreferenceFactory.createNew(vf.createIRI("http://mobi.com"));
+        emailNotificationPreference.getProperties(vf.createIRI(Shape.property_IRI));
+
+        emailNotificationPreference.
+
 //        PrefixPreference prefixPreference = prefixPreferenceFactory.createNew(vf.createIRI("http://mobi.com/testPrefixPref"));
 //
 //        Prefix prefix = prefixFactory.createNew(vf.createIRI(PREFERENCE_NAMESPACE + UUID.randomUUID()));

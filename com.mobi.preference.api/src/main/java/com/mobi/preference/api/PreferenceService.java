@@ -56,6 +56,9 @@ public interface PreferenceService {
     // TODO: Talk to Megan, I switched these methods back to void because it seems like it would be better just to
     //  throw an exception if it fails
     // Add an instance of Preference for a particular user
+
+    Optional<Preference> getUserPreference(Resource resourceId);
+
     /**
      * Get the instance of Preference for a user that is of the type of the passed
      * in preferenceNodeShapeIRI. Preference will include all referenced object values.

@@ -63,6 +63,7 @@ public class SimplePreferenceService implements PreferenceService {
     private static final String USER_BINDING = "user";
     private static final String GET_USER_PREFERENCE;
 
+    private PreferenceFactory preferenceFactory;
     private Resource context;
 
     @Reference
@@ -75,10 +76,10 @@ public class SimplePreferenceService implements PreferenceService {
     ModelFactory mf;
 
     @Reference
-    PreferenceFactory preferenceFactory;
+    OrmFactoryRegistry factoryRegistry;
 
     @Reference
-    OrmFactoryRegistry factoryRegistry;
+    private void setPreferenceFactory(PreferenceFactory preferenceFactory) {this.preferenceFactory = preferenceFactory; }
 
     static {
         try {
@@ -138,9 +139,18 @@ public class SimplePreferenceService implements PreferenceService {
     // TODO: I was thinking that we probably still want to limit the results to the user making the query because it
     //  doesn't seem correct to allow user a to retrieve user b's preference. So I was going to add a second param to
     //  the service method: getUserPreference(Resource preferenceId, User user). Does that seem like it makes sense?
-//    public Optional<Preference> getUserPreference(Resource resourceId) {
-//
-//    }
+    @Override
+    public Optional<Preference> getUserPreference(Resource resourceId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Model preferenceModel = RepositoryResults.asModelNoContext(conn.getStatements(resourceId, null, null, context), mf);
+            return preferenceFactory.getExisting(resourceId, preferenceModel).map(preference -> {
+                addEntitiesToModel(preference.getHasObjectValue_resource(), preferenceModel, conn);
+                return preference;
+            });
+        }
+    }
+
+    
 
     /*
     // Add an instance of Preference for a particular user
