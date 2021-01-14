@@ -173,19 +173,21 @@ public class DatasetRest {
         summary = "Retrieves all DatasetRecords in the local Catalog.",
         responses = {
             @ApiResponse(responseCode = "200", description = "A Response with a JSON array of DatasetRecords"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getDatasetRecords(
             @Context UriInfo uriInfo,
-            @Parameter(description = "")
+            @Parameter(description = "Offset for a page of DatasetRecords")
             @QueryParam("offset") int offset,
-            @Parameter(description = "")
+            @Parameter(description = "Number of DatasetRecords to return in one page")
             @QueryParam("limit") int limit,
-            @Parameter(description = "")
+            @Parameter(description = "IRI of the property to sort by")
             @QueryParam("sort") String sort,
-            @Parameter(description = "")
+            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
-            @Parameter(description = "")
+            @Parameter(description = "Optional search text for the query")
             @QueryParam("searchText") String searchText) {
         try {
             LinksUtils.validateParams(limit, offset);
@@ -227,8 +229,8 @@ public class DatasetRest {
      * IRI in the repository with the passed id.
      *
      * @param context The context of the request
-     * @param title The required title for the new DatasetRecord
-     * @param repositoryId The required id of a repository in Mobi
+     * @param title Required title for the new DatasetRecord
+     * @param repositoryId Required id of a repository in Mobi
      * @param datasetIRI The optional IRI for the new Dataset
      * @param description The optional description for the new DatasetRecord
      * @param markdown The optional markdown abstract for the new DatasetRecord.
@@ -244,23 +246,25 @@ public class DatasetRest {
         summary = "Creates a new DatasetRecord in the local Catalog and Dataset in the specified repository.",
         responses = {
             @ApiResponse(responseCode = "201", description = "A Response with the IRI string of the created DatasetRecord"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response createDatasetRecord(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "Required title for the new DatasetRecord", required = true)
             @FormDataParam("title") String title,
-            @Parameter(description = "")
+            @Parameter(description = "Required id of a repository in Mobi", required = true)
             @FormDataParam("repositoryId") String repositoryId,
-            @Parameter(description = "")
+            @Parameter(description = "The optional IRI for the new Dataset")
             @FormDataParam("datasetIRI") String datasetIRI,
-            @Parameter(description = "")
+            @Parameter(description = "Optional description for the new DatasetRecord")
             @FormDataParam("description") String description,
-            @Parameter(description = "")
+            @Parameter(description = "Optional list of keywords strings for the new DatasetRecord")
             @FormDataParam("markdown") String markdown,
-            @Parameter(description = "")
+            @Parameter(description = "Optional list of keywords strings for the new DatasetRecord")
             @FormDataParam("keywords") List<FormDataBodyPart> keywords,
-            @Parameter(description = "")
+            @Parameter(description = "Optional list of OntologyRecord IRI strings for the new DatasetRecord")
             @FormDataParam("ontologies") List<FormDataBodyPart> ontologies) {
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
@@ -315,10 +319,12 @@ public class DatasetRest {
     summary = "Gets a specific DatasetRecord from the local Catalog.",
         responses = {
             @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getDatasetRecord(
-            @Parameter(description = "")
+            @Parameter(description = "IRI of a DatasetRecord")
             @PathParam("datasetRecordId") String datasetRecordId) {
         Resource recordIRI = vf.createIRI(datasetRecordId);
         try {
@@ -351,13 +357,15 @@ public class DatasetRest {
         summary = "Deletes a specific DatasetRecord in the local Catalog.",
         responses = {
             @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response deleteDatasetRecord(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "IRI of a DatasetRecord")
             @PathParam("datasetRecordId") String datasetRecordId,
-            @Parameter(description = "")
+            @Parameter(description = "Whether or not the delete should be forced")
             @DefaultValue("false") @QueryParam("force") boolean force) {
         Resource recordIRI = vf.createIRI(datasetRecordId);
         User activeUser = getActiveUser(context, engineManager);
@@ -386,7 +394,7 @@ public class DatasetRest {
      *
      * @param datasetRecordId The IRI of a DatasetRecord
      * @param force Whether or not the clear should be forced
-     * @return A Response indicating the success of the request
+     * @return Response indicating the success of the request
      */
     @DELETE
     @Path("{datasetRecordId}/data")
@@ -394,13 +402,15 @@ public class DatasetRest {
     @Operation(
         summary = "Clears the data within a specific DatasetRecord in the local Catalog.",
         responses = {
-            @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),
+            @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response clearDatasetRecord(
-            @Parameter(description = "")
+            @Parameter(description = "IRI of a DatasetRecord")
             @PathParam("datasetRecordId") String datasetRecordId,
-            @Parameter(description = "")
+            @Parameter(description = "Whether or not the clear should be forced")
             @DefaultValue("false") @QueryParam("force") boolean force) {
         Resource recordIRI = vf.createIRI(datasetRecordId);
         try {
@@ -437,11 +447,11 @@ public class DatasetRest {
         }
     )
     public Response uploadData(
-            @Parameter(description = "")
+            @Parameter(description = "IRI of a DatasetRecord")
             @PathParam("datasetRecordId") String datasetRecordId,
-            @Parameter(description = "")
+            @Parameter(description = "InputStream of a RDF file passed as form data")
             @FormDataParam("file") InputStream fileInputStream,
-            @Parameter(description = "")
+            @Parameter(description = "Information about the RDF file being uploaded, including the name", hidden = true)
             @FormDataParam("file") FormDataContentDisposition fileDetail) {
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("Must provide a file", Response.Status.BAD_REQUEST);

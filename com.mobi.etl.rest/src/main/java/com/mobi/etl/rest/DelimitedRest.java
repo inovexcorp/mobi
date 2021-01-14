@@ -184,7 +184,7 @@ public class DelimitedRest {
      *
      * @param fileInputStream an InputStream of a delimited document passed as form data
      * @param fileDetail information about the file being uploaded, including the name
-     * @return a Response with the name of the file created on the server
+     * @return Response with the name of the file created on the server
      */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -192,14 +192,14 @@ public class DelimitedRest {
     @Operation(
         summary = "Upload delimited file sent as form data",
         responses = {
-            @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "201", description = "Response with the name of the file created on the server"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
         }
     )
     public Response upload(
-            @Parameter(description = "")
+            @Parameter(description = "InputStream of a delimited document passed as form data")
             @FormDataParam("delimitedFile") InputStream fileInputStream,
-            @Parameter(description = "")
+            @Parameter(description = "information about the file being uploaded, including the name", hidden = true)
             @FormDataParam("delimitedFile") FormDataContentDisposition fileDetail) {
         ByteArrayOutputStream fileOutput;
         try {
@@ -222,8 +222,8 @@ public class DelimitedRest {
      * delimited file.
      *
      * @param fileInputStream an InputStream of a delimited document passed as form data
-     * @param fileName the name of the uploaded file on the server to replace
-     * @return a Response with the name of the file replaced on the server
+     * @param fileName Name of the uploaded file on the server to replace
+     * @return Response with the name of the file replaced on the server
      */
     @PUT
     @javax.ws.rs.Path("{documentName}")
@@ -232,14 +232,14 @@ public class DelimitedRest {
     @Operation(
         summary = "Replace an uploaded delimited file with another",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response with the name of the file replaced on the server"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
         }
     )
     public Response upload(
-            @Parameter(description = "")
+            @Parameter(description = "InputStream of a delimited document passed as form data")
             @FormDataParam("delimitedFile") InputStream fileInputStream,
-            @Parameter(description = "")
+            @Parameter(description = "Name of the uploaded file on the server to replace")
             @PathParam("documentName") String fileName) {
         ByteArrayOutputStream fileOutput;
         try {
@@ -262,7 +262,7 @@ public class DelimitedRest {
      * @param jsonld a mapping in JSON-LD
      * @param format the RDF serialization to use if getting a preview
      * @param containsHeaders whether the delimited file has headers
-     * @param separator the character the columns are separated by if it is a CSV
+     * @param separator Character the columns are separated by if it is a CSV
      * @return a Response with a JSON object containing the mapping file name and a
      *      string containing the converted data in the requested format
      */
@@ -274,20 +274,21 @@ public class DelimitedRest {
     @Operation(
         summary = "ETL an uploaded delimited document using mapping JSON-LD",
         responses = {
-            @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "201", description = "Response with a JSON object containing the mapping" +
+                    " file name and a string containing the converted data in the requested format"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
         }
     )
     public Response etlFilePreview(
-            @Parameter(description = "")
+            @Parameter(description = "Name of the delimited document in the data/tmp/ directory")
             @PathParam("documentName") String fileName,
-            @Parameter(description = "")
+            @Parameter(description = "Mapping in JSON-LD")
             @FormDataParam("jsonld") String jsonld,
-            @Parameter(description = "")
+            @Parameter(description = "RDF serialization to use if getting a preview")
             @DefaultValue("jsonld") @QueryParam("format") String format,
-            @Parameter(description = "")
+            @Parameter(description = "whether the delimited file has headers")
             @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
-            @Parameter(description = "")
+            @Parameter(description = "Character the columns are separated by if it is a CSV")
             @DefaultValue(",") @QueryParam("separator") String separator) {
         checkStringParam(jsonld, "Must provide a JSON-LD string");
 
@@ -302,13 +303,13 @@ public class DelimitedRest {
      * using a MappingRecord's Mapping and downloads the result in a file with the requested
      * name. The file must be present in the data/tmp/ directory.
      *
-     * @param fileName the name of the delimited document in the data/tmp/ directory
-     * @param mappingRecordIRI the id of the MappingRecord
-     * @param format the RDF serialization to use
-     * @param containsHeaders whether the delimited file has headers
-     * @param separator the character the columns are separated by if it is a CSV
-     * @param downloadFileName the name for the downloaded file
-     * @return a Response with the converted data in the requested format to download
+     * @param fileName Name of the delimited document in the data/tmp/ directory
+     * @param mappingRecordIRI ID of  the MappingRecord
+     * @param format RDF serialization to use
+     * @param containsHeaders Whether the delimited file has headers
+     * @param separator Character the columns are separated by if it is a CSV
+     * @param downloadFileName Name for the downloaded file
+     * @return Response with the converted data in the requested format to download
      */
     @GET
     @javax.ws.rs.Path("{documentName}/map")
@@ -317,22 +318,22 @@ public class DelimitedRest {
     @Operation(
         summary = "ETL an uploaded delimited document using an uploaded Mapping file and download the data",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response with the converted data in the requested format to download"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
         }
     )
     public Response etlFile(
-            @Parameter(description = "")
+            @Parameter(description = "Name of the delimited document in the data/tmp/ directory")
             @PathParam("documentName") String fileName,
-            @Parameter(description = "")
+            @Parameter(description = "ID of the MappingRecord")
             @QueryParam("mappingRecordIRI") String mappingRecordIRI,
-            @Parameter(description = "")
+            @Parameter(description = "RDF serialization to use")
             @DefaultValue("jsonld") @QueryParam("format") String format,
-            @Parameter(description = "")
+            @Parameter(description = "Whether the delimited file has headers")
             @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
-            @Parameter(description = "")
+            @Parameter(description = "Character the columns are separated by if it is a CSV")
             @DefaultValue(",") @QueryParam("separator") String separator,
-            @Parameter(description = "")
+            @Parameter(description = "Name for the downloaded file")
             @QueryParam("fileName") String downloadFileName) {
         checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
 
@@ -364,11 +365,11 @@ public class DelimitedRest {
      * adds it to the system default named graph of the requested DatasetRecord's Dataset. The
      * file must be present in the data/tmp/ directory.
      *
-     * @param fileName the name of the delimited document in the data/tmp/ directory
-     * @param mappingRecordIRI the id of the MappingRecord
-     * @param datasetRecordIRI the id of the DatasetRecord
-     * @param containsHeaders whether the delimited file has headers
-     * @param separator the character the columns are separated by if it is a CSV
+     * @param fileName Name of the delimited document in the data/tmp/ directory
+     * @param mappingRecordIRI ID of  the MappingRecord
+     * @param datasetRecordIRI ID of  the DatasetRecord
+     * @param containsHeaders Whether the delimited file has headers
+     * @param separator Character the columns are separated by if it is a CSV
      * @return a Response indicating the success of the request
      */
     @POST
@@ -377,20 +378,20 @@ public class DelimitedRest {
     @Operation(
         summary = "ETL an uploaded delimited document using an uploaded Mapping file and load data into a Dataset",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response etlFile(
-            @Parameter(description = "")
+            @Parameter(description = "Name of the delimited document in the data/tmp/ directory")
             @PathParam("documentName") String fileName,
-            @Parameter(description = "")
+            @Parameter(description = "ID (IRI) of the MappingRecord")
             @QueryParam("mappingRecordIRI") String mappingRecordIRI,
-            @Parameter(description = "")
+            @Parameter(description = "ID (IRI) of the DatasetRecord")
             @QueryParam("datasetRecordIRI") String datasetRecordIRI,
-            @Parameter(description = "")
+            @Parameter(description = "Whether the delimited file has headers")
             @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
-            @Parameter(description = "")
+            @Parameter(description = "Character the columns are separated by if it is a CSV")
             @DefaultValue(",") @QueryParam("separator") String separator) {
         checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
         checkStringParam(datasetRecordIRI, "Must provide the IRI of a dataset record");
@@ -420,12 +421,12 @@ public class DelimitedRest {
      * adds it as a commit onto the specified OntologyRecord. The file must be present in the data/tmp/ directory.
      *
      * @param fileName the name of the delimited document in the data/tmp/ directory
-     * @param mappingRecordIRI the id of the MappingRecord
-     * @param ontologyRecordIRI the id of the DatasetRecord
-     * @param branchIRI the id of the BranchRecord
+     * @param mappingRecordIRI ID of the MappingRecord
+     * @param ontologyRecordIRI ID of the DatasetRecord
+     * @param branchIRI ID of the BranchRecord
      * @param update whether to treat the mapped data as an update or new additions
-     * @param containsHeaders whether the delimited file has headers
-     * @param separator the character the columns are separated by if it is a CSV
+     * @param containsHeaders Whether the delimited file has headers
+     * @param separator Character the columns are separated by if it is a CSV
      * @return a Response indicating the success of the request
      */
     @POST
@@ -447,17 +448,17 @@ public class DelimitedRest {
             @Context ContainerRequestContext context,
             @Parameter(description = "")
             @PathParam("documentName") String fileName,
-            @Parameter(description = "")
+            @Parameter(description = "ID of  the MappingRecord")
             @QueryParam("mappingRecordIRI") String mappingRecordIRI,
-            @Parameter(description = "")
+            @Parameter(description = "ID of the DatasetRecord")
             @QueryParam("ontologyRecordIRI") String ontologyRecordIRI,
-            @Parameter(description = "")
+            @Parameter(description = "ID of the BranchRecord")
             @QueryParam("branchIRI") String branchIRI,
-            @Parameter(description = "")
+            @Parameter(description = "whether to treat the mapped data as an update or new additions")
             @DefaultValue("false") @QueryParam("update") boolean update,
-            @Parameter(description = "")
+            @Parameter(description = "Whether the delimited file has headers")
             @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
-            @Parameter(description = "")
+            @Parameter(description = "Character the columns are separated by if it is a CSV")
             @DefaultValue(",") @QueryParam("separator") String separator) {
         checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
         checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
@@ -494,7 +495,7 @@ public class DelimitedRest {
      * @param fileName the name of the delimited document in the data/tmp/ directory
      * @param mappingSupplier the supplier for getting a mapping model
      * @param containsHeaders whether the delimited file has headers
-     * @param separator the character the columns are separated by if it is a CSV
+     * @param separator Character the columns are separated by if it is a CSV
      * @return a Mobi Model with the resulting mapped RDF data
      */
     private Model etlFile(String fileName, SupplierWithException<Model> mappingSupplier,
@@ -560,7 +561,7 @@ public class DelimitedRest {
      * @param fileName the name of the delimited document in the data/tmp/ directory
      * @param rowEnd the number of rows to retrieve from the delimited document. NOTE:
      *               the default number of rows is 10
-     * @param separator the character the columns are separated by
+     * @param separator Character the columns are separated by
      * @return a Response with a JSON array. Each element in the array is a row in the
      *         document. The row is an array of strings which are the cells in the row
      *         in the document.
@@ -648,7 +649,7 @@ public class DelimitedRest {
      *
      * @param input the CSV file to convert into JSON
      * @param numRows the number of rows from the CSV file to convert
-     * @param separator a character with the character to separate the columns by
+     * @param separator a character with Character to separate the columns by
      * @return a string with the JSON of the CSV rows
      * @throws IOException csv file could not be read
      */
