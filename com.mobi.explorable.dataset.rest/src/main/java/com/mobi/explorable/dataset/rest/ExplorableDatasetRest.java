@@ -226,8 +226,7 @@ public class ExplorableDatasetRest {
      * Retrieves all the class details associated with ontologies linked to a {@link Dataset} in the local
      * {@link Catalog} in a JSON array.
      *
-     * @param recordIRI The id of the {@link DatasetRecord} for the
-     *                  {@link Dataset} from which to retrieve the data.
+     * @param recordIRI The id of the {@link DatasetRecord} for the {@link Dataset} from which to retrieve the data.
      * @return A {@link Response} with a JSON array of ontology objects.
      */
     @GET
@@ -238,11 +237,12 @@ public class ExplorableDatasetRest {
         summary = "Retrieves all the data associated with ontology objects, from a Dataset in the local Catalog",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getClassDetails(
-            @Parameter(description = "")
+            @Parameter(description = "ID of the {DatasetRecord} for the {Dataset} from which to retrieve the data")
             @PathParam("recordIRI") String recordIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
@@ -285,17 +285,17 @@ public class ExplorableDatasetRest {
     )
     public Response getInstanceDetails(
             @Context UriInfo uriInfo,
-            @Parameter(description = "")
+            @Parameter(description = "IRI of the {@link DatasetRecord} for the {@link Dataset} to summarize")
             @PathParam("recordIRI") String recordIRI,
-            @Parameter(description = "")
+            @Parameter(description = "IRI of the class type to get")
             @PathParam("classIRI") String classIRI,
-            @Parameter(description = "")
+            @Parameter(description = "offset for a page of Dataset data")
             @QueryParam("offset") int offset,
-            @Parameter(description = "")
+            @Parameter(description = "number of data to return in one page")
             @QueryParam("limit") int limit,
-            @Parameter(description = "")
+            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
-            @Parameter(description = "")
+            @Parameter(description = "Whether or not the list should include inferred instances")
             @DefaultValue("false") @QueryParam("infer") boolean infer) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(classIRI, "The Class IRI is required.");
@@ -334,15 +334,15 @@ public class ExplorableDatasetRest {
     @Operation(
         summary = "Retrieves a list of all properties available for a class from a Dataset in the local Catalog",
         responses = {
-            @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "201", description = "Response with a JSON array"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getClassPropertyDetails(
-            @Parameter(description = "")
+            @Parameter(description = "id of the {@link DatasetRecord} for the {@link Dataset} to summarize")
             @PathParam("recordIRI") String recordIRI,
-            @Parameter(description = "")
+            @Parameter(description = "IRI of the class type to get property details for")
             @PathParam("classIRI") String classIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(classIRI, "The Class IRI is required.");
@@ -360,6 +360,7 @@ public class ExplorableDatasetRest {
      * Creates an instance owned by a {@link Dataset} in the local {@link Catalog}.
      *
      * @param recordIRI The id of the {@link DatasetRecord} for the {@link Dataset}.
+     * @param  newInstanceJson New Instance JSON
      * @return A {@link Response} with the IRI string of the created Instance.
      */
     @POST
@@ -370,15 +371,15 @@ public class ExplorableDatasetRest {
     @Operation(
         summary = "Creates an instance of a particular class type in a Dataset in the local Catalog",
         responses = {
-            @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Instance"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response createInstance(
-            @Parameter(description = "")
+            @Parameter(description = "id of the {@link DatasetRecord} for the {@link Dataset}")
             @PathParam("recordIRI") String recordIRI,
-            @Parameter(description = "")
+            @Parameter(description = "New Instance JSON")
             String newInstanceJson) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(newInstanceJson, "The Instance's JSON-LD is required.");
@@ -416,15 +417,15 @@ public class ExplorableDatasetRest {
     @Operation(
         summary = "Retrieves an instance of a particular class type from a Dataset in the local Catalog",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response with a JSON-LD serialization of the desired instance"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getInstance(
-            @Parameter(description = "")
+            @Parameter(description = "IRI of the {@link DatasetRecord} for the {@link Dataset} to summarize")
             @PathParam("recordIRI") String recordIRI,
-            @Parameter(description = "")
+            @Parameter(description = "IRI of the instance to get")
             @PathParam("instanceIRI") String instanceIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(instanceIRI, "The Instance IRI is required.");
@@ -458,17 +459,18 @@ public class ExplorableDatasetRest {
     @Operation(
         summary = "Updates an instance of a particular class type from a Dataset in the local Catalog",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response indicating whether or not the " +
+                    "Instance was updated"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response updateInstance(
-            @Parameter(description = "")
+            @Parameter(description = "id of the {@link DatasetRecord} for the {@link Dataset} to summarize.")
             @PathParam("recordIRI") String recordIRI,
-            @Parameter(description = "")
+            @Parameter(description = "IRI of the instance to update")
             @PathParam("instanceIRI") String instanceIRI,
-            @Parameter(description = "")
+            @Parameter(description = "Instance JSON-LD")
             String json) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(instanceIRI, "The Instance IRI is required.");
@@ -510,15 +512,15 @@ public class ExplorableDatasetRest {
     @Operation(
         summary = "Deletes an instance by its ID",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response indicating whether or not the Record was deleted"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response deleteInstance(
-            @Parameter(description = "")
+            @Parameter(description = "IRI of the {@link DatasetRecord} for the {@link Dataset}")
             @PathParam("recordIRI") String recordIRI,
-            @Parameter(description = "")
+            @Parameter(description = "IRI of the instance to delete")
             @PathParam("instanceIRI") String instanceIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(instanceIRI, "The Instance IRI is required.");

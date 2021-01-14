@@ -296,7 +296,7 @@ public class StateRest {
     )
     public Response deleteState(
             @Context ContainerRequestContext context,
-            @Parameter(description = "the ID of the State to remove")
+            @Parameter(description = "ID of the State to remove")
             @PathParam("stateId") String stateId) {
         String username = RestUtils.getActiveUsername(context);
         try {

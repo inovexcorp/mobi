@@ -323,9 +323,9 @@ public class SparqlRest {
     public Response getLimitedResults(
             @Parameter(description = "The SPARQL query to execute")
             @QueryParam("query") String queryString,
-            @Parameter(description = "an optional DatasetRecord IRI representing the Dataset to query")
+            @Parameter(description = "Optional DatasetRecord IRI representing the Dataset to query")
             @QueryParam("dataset") String datasetRecordId,
-            @Parameter(description = "used to specify certain media types which are acceptable for the response")
+            @Parameter(description = "Specify certain media types which are acceptable for the response")
             @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);

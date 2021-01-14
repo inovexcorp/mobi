@@ -136,9 +136,9 @@ public class AuthRest {
     )
     public Response login(
             @Context ContainerRequestContext context,
-            @Parameter(description = "Username of user")
+            @Parameter(description = "Username of user", required = true)
             @QueryParam("username") String username,
-            @Parameter(description = "Password of user")
+            @Parameter(description = "password of user", schema = @Schema(type="string", format="password"), required = true)
             @QueryParam("password") String password) {
         Optional<UserCredentials> userCredsOptional = processFormAuth(username, password);
 
