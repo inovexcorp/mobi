@@ -23,13 +23,21 @@ package com.mobi.notification.impl;
  * #L%
  */
 
+import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.notification.impl.ontologies.EmailNotificationPreference;
 import com.mobi.notification.impl.ontologies.EmailNotificationPreferenceFactory;
 import com.mobi.notification.impl.ontologies.EmailNotificationPreferenceImpl;
+import com.mobi.ontologies.shacl.NodeShape;
 import com.mobi.ontologies.shacl.NodeShapeFactory;
+import com.mobi.ontologies.shacl.PropertyShape;
 import com.mobi.ontologies.shacl.Shape;
+import com.mobi.persistence.utils.Models;
+import com.mobi.persistence.utils.QueryResults;
+import com.mobi.persistence.utils.RepositoryResults;
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
 import com.mobi.preference.api.ontologies.Prefix;
@@ -37,107 +45,71 @@ import com.mobi.preference.api.ontologies.PrefixFactory;
 import com.mobi.preference.api.ontologies.PrefixImpl;
 import com.mobi.preference.api.ontologies.PrefixPreference;
 import com.mobi.preference.api.ontologies.PrefixPreferenceFactory;
+import com.mobi.query.api.GraphQuery;
+import com.mobi.rdf.api.BNode;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.rest.util.RestUtils;
-import org.eclipse.rdf4j.sail.shacl.AST.NodeShape;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 
 @Component(immediate=true)
 public class SimpleNotificationService {
-    private static final String PREFERENCE_GRAPH_IRI = "http://mobi.com/preferencemanagement";
-    private static final String PREFERENCE_NAMESPACE = "http://mobi.com/preference#";
+    private static final String NOTIFICATION_ONTOLOGY_NAME = "http://mobi.com/ontologies/notification";
+    private static final InputStream NOTIFICATION_ONTOLOGY;
+
+    static {
+        NOTIFICATION_ONTOLOGY = SimpleNotificationService.class.getResourceAsStream("/notification.ttl");
+    }
 
     @Reference
-    Repository repository;
+    CatalogConfigProvider configProvider;
 
     @Reference
     ValueFactory vf;
 
     @Reference
-    EmailNotificationPreferenceFactory emailNotificationPreferenceFactory;
-
-    @Reference
-    NodeShapeFactory nodeShapeFactory;
-
-    @Reference
-    PrefixPreferenceFactory prefixPreferenceFactory;
-
-    @Reference
-    PreferenceService preferenceService;
-
-    @Reference
-    UserFactory userFactory;
-
-    @Reference
-    PrefixFactory prefixFactory;
+    SesameTransformer transformer;
 
     @Activate
-    protected void start(Map<String, Object> props) {
-        EmailNotificationPreference emailNotificationPreference = emailNotificationPreferenceFactory.createNew(vf.createIRI("http://mobi.com"));
-        emailNotificationPreference.getProperties(vf.createIRI(Shape.property_IRI));
+    protected void start() {
+        Model ontologyModel;
+        try {
+            ontologyModel = Models.createModel("ttl", NOTIFICATION_ONTOLOGY, transformer);
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
 
-        emailNotificationPreference.
+        removeFully(ontologyModel, vf.createIRI(NOTIFICATION_ONTOLOGY_NAME));
 
-//        PrefixPreference prefixPreference = prefixPreferenceFactory.createNew(vf.createIRI("http://mobi.com/testPrefixPref"));
-//
-//        Prefix prefix = prefixFactory.createNew(vf.createIRI(PREFERENCE_NAMESPACE + UUID.randomUUID()));
-//        prefix.setHasNamespace("http://www.w3.org/2004/02/skos/core#");
-//        prefix.setHasPrefix("skos");
-//        prefixPreference.addHasObjectValue(prefix);
-//        User adminUser = userFactory.createNew(vf.createIRI("http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997"));
-//        prefixPreference.getModel().addAll(prefix.getModel());
-//
-//        preferenceService.addPreference(adminUser, prefixPreference);
-
-
-
-//        distributedCatalogIRI = vf.createIRI(config.iri() + "-distributed");
-//        localCatalogIRI = vf.createIRI(config.iri() + "-local");
-
-//
-//        try (RepositoryConnection conn = repository.getConnection()) {
-//            IRI typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
-//            if (!conn.contains(vf.createIRI(EmailNotificationPreference.TYPE), typeIRI, vf.createIRI(NodeShape.TYPE))) {
-//                log.debug("Initializing Email Notification Preference.");
-//                EmailNotificationPreference emailNotificationPreference = emailNotificationPreferenceFactory.createNew(vf.createIRI(EmailNotificationPreference.TYPE));
-//                emailNotificationPreference.setProperty()
-//            }
-//                if (!conn.contains(distributedCatalogIRI, typeIRI, vf.createIRI(Catalog.TYPE))) {
-//                    log.debug("Initializing the distributed Mobi Catalog.");
-//                    addCatalogToRepo(distributedCatalogIRI, config.title() + " (Distributed)", config.description(), conn);
-//                }
-//
-//            if (!conn.contains(localCatalogIRI, typeIRI, vf.createIRI(Catalog.TYPE))) {
-//                log.debug("Initializing the local Mobi Catalog.");
-//                addCatalogToRepo(localCatalogIRI, config.title() + " (Local)", config.description(), conn);
-//            }
-//        }
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            conn.add(ontologyModel, vf.createIRI(PreferenceService.GRAPH));
+        }
     }
 
-    /**
-     * Adds the model for a Catalog to the repository which contains the provided metadata using the provided Resource
-     * as the context.
-     *
-     * @param catalogId   The Resource identifying the Catalog you wish you create.
-     * @param title       The title text.
-     * @param description The description text.
-     */
-//    private void addCatalogToRepo(Resource catalogId, String title, String description, RepositoryConnection conn) {
-//        OffsetDateTime now = OffsetDateTime.now();
-//
-//        Catalog catalog = catalogFactory.createNew(catalogId);
-//        catalog.setProperty(vf.createLiteral(title), vf.createIRI(_Thing.title_IRI));
-//        catalog.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI));
-//        catalog.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
-//        catalog.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
-//
-//        conn.add(catalog.getModel(), catalogId);
-//    }
+    public void removeAttachedBNodes(Model model, Resource subject) {
+        model.filter(subject, null, null).forEach(stmt -> {
+            if (stmt.getObject() instanceof BNode) {
+                model.remove(vf.createBNode(((BNode) stmt.getObject()).getID()), null, null);
+            }
+        });
+    }
+
+    public void removeFully(Model model, Resource subject) {
+        removeAttachedBNodes(model, subject);
+        model.remove(subject, null, null);
+    }
 }

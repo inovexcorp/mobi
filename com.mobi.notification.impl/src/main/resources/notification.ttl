@@ -18,7 +18,7 @@
     foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>];
     dct:modified "2020-12-15"^^xsd:date.
 
-:EmailNotificationPreference a owl:Class
+:EmailNotificationPreference a owl:Class, sh:NodeShape;
     rdfs:subClassOf pref:Preference;
     rdfs:label "Email Notification Preference"@en;
     rdfs:comment "A preference that a user can have within the Mobi framework that signifies whether they want to receive email notifications."@en;

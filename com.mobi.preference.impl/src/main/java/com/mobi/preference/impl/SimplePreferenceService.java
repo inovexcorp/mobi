@@ -150,7 +150,7 @@ public class SimplePreferenceService implements PreferenceService {
         }
     }
 
-    
+
 
     /*
     // Add an instance of Preference for a particular user
@@ -245,7 +245,7 @@ public class SimplePreferenceService implements PreferenceService {
         }
     }
 
-    private List<Resource> getReferencedEntityIRIs(Resource preferenceIRI, String propIRI, RepositoryConnection conn) {
+    public List<Resource> getReferencedEntityIRIs(Resource preferenceIRI, String propIRI, RepositoryConnection conn) {
         return RepositoryResults.asList(conn.getStatements(preferenceIRI, vf.createIRI(propIRI), null, context)).stream()
                 .map(Statements::objectResource)
                 .filter(Optional::isPresent)
