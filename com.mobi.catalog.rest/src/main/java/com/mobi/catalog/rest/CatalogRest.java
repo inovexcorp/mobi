@@ -288,7 +288,7 @@ public class CatalogRest {
     /**
      * Retrieves the specified Catalog based on the provided ID.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @return The specific Catalog from the repository.
      */
@@ -327,7 +327,7 @@ public class CatalogRest {
      * Retrieves a list of all the Records in the Catalog. An optional type parameter filters the returned Records.
      * Parameters can be passed to control paging.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param sort The field with sort order specified.
      * @param recordType The type of Records you want to get back (unversioned, versioned, ontology, mapping, or
@@ -352,13 +352,13 @@ public class CatalogRest {
     )
     public Response getRecords(
             @Context UriInfo uriInfo,
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "Field with sort order specified (MODIFIED, ISSUED, TITLE)")
             @QueryParam("sort") String sort,
             @Parameter(description = "The type of Records you want to get back (unversioned, versioned, ontology, mapping, or dataset)")
             @QueryParam("type") String recordType,
-            @Parameter(description = "offset for the page")
+            @Parameter(description = "Offset for the page")
             @QueryParam("offset") int offset,
             @Parameter(description = "Number of Records to return in one page")
             @QueryParam("limit") int limit,
@@ -400,8 +400,8 @@ public class CatalogRest {
      * Creates a new Record in the repository using the passed form data. Determines the type of the new Record
      * based on the `type` field. Requires the `title` and `identifier` fields to be set.
      *
-     * @param context The context of the request.
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param context Context of the request.
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param typeIRI The required IRI of the type for the new Record. Must be a valid IRI for a Record or one of its
      *                subclasses.
@@ -410,7 +410,7 @@ public class CatalogRest {
      * @param description The optional description for the new Record.
      * @param markdown The optional markdown abstract for the new Record.
      * @param keywords The optional list of keywords strings for the new Record.
-     * @return A Response with the IRI string of the created Record.
+     * @return Response with the IRI string of the created Record.
      */
     @POST
     @Path("{catalogId}/records")
@@ -488,9 +488,9 @@ public class CatalogRest {
     /**
      * Returns the contents of the Record’s named graph, including the Record object.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param recordId String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
      * @return An array with the contents of the Record’s named graph, including the Record object
      */
@@ -530,10 +530,10 @@ public class CatalogRest {
     /**
      * Deletes a Record from the repository.
      *
-     * @param context The context of the request
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param context Context of the request
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param recordId String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
      * @return A Response indicating whether or not the Record was deleted.
      */
@@ -578,9 +578,9 @@ public class CatalogRest {
      * Updates a Record based on the ID contained within the provided Catalog using the modifications from the provided
      * JSON-LD.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param recordId String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
      * @param newRecordJson The JSON-LD of the new Record which will replace the existing Record.
      * @return A Response indicating whether or not the Record was updated.
@@ -623,15 +623,15 @@ public class CatalogRest {
      * to control paging.
      *
      * @param uriInfo The URI information of the request to be used in creating links to other pages of distributions
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
      * @param sort The field with sort order specified.
      * @param offset The offset for the page.
      * @param limit The number of Distributions to return in one page.
      * @param asc Whether or not the list should be sorted ascending or descending.
-     * @return A Response with a list of all the Distributions of the requested UnversionedRecord.
+     * @return Response with a list of all the Distributions of the requested UnversionedRecord.
      */
     @GET
     @Path("{catalogId}/records/{recordId}/distributions")
@@ -678,16 +678,16 @@ public class CatalogRest {
      * Creates a new Distribution for the provided UnversionedRecord using the passed form data. Requires the "title"
      * field to be set.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
      * @param title The required title for the new Distribution.
      * @param description The optional description for the new Distribution.
      * @param format The optional format string for the new Distribution. Expects a MIME type.
      * @param accessURL The optional access URL for the new Distribution.
      * @param downloadURL The optional download URL for the new Distribution.
-     * @return A Response with the IRI string of the created Distribution.
+     * @return Response with the IRI string of the created Distribution.
      */
     @POST
     @Path("{catalogId}/records/{recordId}/distributions")
@@ -733,11 +733,11 @@ public class CatalogRest {
     /**
      * Returns the Distribution of the UnversionedRecord identified using the provided IDs.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param distributionId The String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
+     * @param distributionId String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @return The Distribution that was identified by the provided IDs.
      */
@@ -777,11 +777,11 @@ public class CatalogRest {
     /**
      * Deletes a specific Distribution identified by the provided IDs.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param distributionId The String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
+     * @param distributionId String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @return A Response indicating if the Distribution was deleted.
      */
@@ -819,11 +819,11 @@ public class CatalogRest {
      * Updates a specific Distribution for an UnversionedRecord identified by the provided IDs using the modifications
      * in the provided JSON-LD.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param distributionId The String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
+     * @param distributionId String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @param newDistributionJson The JSON-LD of the new Distribution which will replace the existing Distribution.
      * @return A Response indicating if the Distribution was updated.
@@ -867,9 +867,9 @@ public class CatalogRest {
      * Gets a list of all Versions for a VersionedRecord. Parameters can be passed to control paging.
      *
      * @param uriInfo The URI information of the request to be used in creating links to other pages of versions
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
      * @param sort The field with sort order specified.
      * @param offset The offset for the page.
@@ -920,15 +920,15 @@ public class CatalogRest {
      * Creates a Version for the identified VersionedRecord using the passed form data and stores it in the repository.
      * This Version will become the latest Version for the identified VersionedRecord.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
      * @param typeIRI The required IRI of the type for the new Version. Must be a valid IRI for a Version or one of its
      *                subclasses.
      * @param title The required title for the new Version.
      * @param description The optional description for the new Version.
-     * @return A Response with the IRI string of the created Version.
+     * @return Response with the IRI string of the created Version.
      */
     @POST
     @Path("{catalogId}/records/{recordId}/versions")
@@ -939,7 +939,7 @@ public class CatalogRest {
         summary = "Creates a Version for the identified VersionedRecord using the passed form data and stores" +
                 " it in the repository. This Version will become the latest Version for the identified VersionedRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response with the IRI string of the created Version"),
+            @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Version"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -953,11 +953,11 @@ public class CatalogRest {
             @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "Required IRI of the type for the new Version. Must be a valid IRI for a " +
-                    "Version or one of its subclasses")
+                    "Version or one of its subclasses", required = true)
             @FormDataParam("type") String typeIRI,
-            @Parameter(description = "Required title for the new Version")
+            @Parameter(description = "Required title for the new Version", required = true)
             @FormDataParam("title") String title,
-            @Parameter(description = "Optional description for the new Version")
+            @Parameter(description = "Optional description for the new Version", required = false)
             @FormDataParam("description") String description) {
         try {
             checkStringParam(title, "Version title is required");
@@ -981,18 +981,18 @@ public class CatalogRest {
     /**
      * Creates a Tag for the identified VersionedRecord on the identified Commit using the passed form data and stores
      * it in the repository. Requires the IRI for the Tag and the IRI of the Commit to attach it to. This Tag will
-     * become the latest Version for the identified VersionedRecord. Returns a Response with the IRI of the new Tag.
+     * become the latest Version for the identified VersionedRecord
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
      * @param title The required title for the new Tag.
      * @param description The optional description for the new Tag.
      * @param iri The required IRI for the new Tag. Must be unique in the repository.
      * @param commitId The required String representing the Commit ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @return A Response with the IRI string of the created Tag.
+     * @return Response with the IRI string of the created Tag.
      */
     @POST
     @Path("{catalogId}/records/{recordId}/tags")
@@ -1002,8 +1002,8 @@ public class CatalogRest {
     @Operation(
         summary = "Creates a Tag for the identified VersionedRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Tag"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST, likely to be parameter is not set"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
@@ -1017,11 +1017,11 @@ public class CatalogRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "Required title for the new Tag")
             @FormDataParam("title") String title,
-            @Parameter(description = "")
+            @Parameter(description = "optional description for the new Tag")
             @FormDataParam("description") String description,
-            @Parameter(description = "")
+            @Parameter(description = "required IRI for the new Tag. Must be unique in the repository")
             @FormDataParam("iri") String iri,
-            @Parameter(description = "")
+            @Parameter(description = "required String representing the Commit ID")
             @FormDataParam("commit") String commitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(iri, "Tag iri is required");
@@ -1060,9 +1060,9 @@ public class CatalogRest {
     /**
      * Gets the latest Version of a VersionedRecord identified by the provided IDs.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
      * @return The latest Version for the identified VersionedRecord.
      */
@@ -1071,17 +1071,17 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        summary = "Gets the latest Version of a VersionedRecord",
+        summary = "Gets the latest Version of a VersionedRecord identified by the provided IDs",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Latest Version for the identified VersionedRecord"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getLatestVersion(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId) {
         try {
             Version version = catalogManager.getLatestVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -1099,11 +1099,11 @@ public class CatalogRest {
     /**
      * Gets a specific Version identified by the provided IDs.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @return The requested Version.
      */
@@ -1114,18 +1114,18 @@ public class CatalogRest {
     @Operation(
         summary = "Gets a specific Version for the identified VersionedRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Requested Version"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersion(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("versionId") String versionId) {
         try {
             Version version = catalogManager.getVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -1142,14 +1142,13 @@ public class CatalogRest {
 
     /**
      * Removes a specific Version from a VersionedRecord. If that Version happens to be the latest Version, the latest
-     * Version will be updated to be the previous Version. Returns a Response identifying whether the Version was
-     * deleted.
+     * Version will be updated to be the previous Version.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @return A Response indicating whether the Version was deleted.
      */
@@ -1158,9 +1157,10 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        summary = "Deletes a specific Version from the identified VersionedRecord",
+        summary = "Removes a specific Version from a VersionedRecord. If that Version happens to be the latest Version," +
+                " the latest Version will be updated to be the previous Version",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response indicating whether the Version was deleted"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -1168,11 +1168,11 @@ public class CatalogRest {
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteVersion(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("versionId") String versionId) {
         try {
             catalogManager.removeVersion(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(versionId));
@@ -1185,14 +1185,13 @@ public class CatalogRest {
     }
 
     /**
-     * Updates the Version identified by the provided IDs using the modifications in the provided JSON-LD. Returns a
-     * Response identifying whether the Version was updated.
+     * Updates the Version identified by the provided IDs using the modifications in the provided JSON-LD.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param newVersionJson The JSON-LD of the new Version which will replace the existing Version.
      * @return A Response indicating whether the Version was updated.
@@ -1203,9 +1202,9 @@ public class CatalogRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        summary = "Updates a specific Version of the identified VersionedRecord",
+        summary = "Updates the Version identified by the provided IDs using the modifications in the provided JSON-LD",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response indicating whether the Version was updated"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -1213,9 +1212,9 @@ public class CatalogRest {
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateVersion(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
@@ -1238,11 +1237,11 @@ public class CatalogRest {
      * paging.
      *
      * @param uriInfo The URI information of the request to be used in creating links to other pages of distributions
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param sort The field with sort order specified.
      * @param offset The offset for the page.
@@ -1264,9 +1263,9 @@ public class CatalogRest {
     )
     public Response getVersionedDistributions(
             @Context UriInfo uriInfo,
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
@@ -1293,21 +1292,20 @@ public class CatalogRest {
     }
 
     /**
-     * Creates a new Distribution for the identified Version using the passed form data. Returns a Response with the
-     * IRI of the new Distribution.
+     * Creates a new Distribution for the identified Version using the passed form data.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param title The required title for the new Distribution.
      * @param description The optional description for the new Distribution.
      * @param format The optional format string for the new Distribution. Expects a MIME type.
      * @param accessURL The optional access URL for the new Distribution.
      * @param downloadURL The optional download URL for the new Distribution.
-     * @return A Response with the IRI string of the created Distribution.
+     * @return Response with the IRI string of the created Distribution.
      */
     @POST
     @Path("{catalogId}/records/{recordId}/versions/{versionId}/distributions")
@@ -1317,28 +1315,28 @@ public class CatalogRest {
     @Operation(
         summary = "Creates a Distribution for the identified Version",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Distribution"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response createVersionedDistribution(
             @Context ContainerRequestContext context,
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
             @Parameter(description = "String representing the Version ID")
             @FormDataParam("title") String title,
-            @Parameter(description = "Required title for the new Distribution")
+            @Parameter(description = "Required title for the new Distribution", required = true)
             @FormDataParam("description") String description,
-            @Parameter(description = "")
+            @Parameter(description = "Optional format string for the new Distribution. Expects a MIME type")
             @FormDataParam("format") String format,
-            @Parameter(description = "")
+            @Parameter(description = "Optional access URL for the new Distribution")
             @FormDataParam("accessURL") String accessURL,
-            @Parameter(description = "")
+            @Parameter(description = "Optional download URL for the new Distribution")
             @FormDataParam("downloadURL") String downloadURL) {
         try {
             Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL,
@@ -1356,13 +1354,13 @@ public class CatalogRest {
     /**
      * Gets a specific Distribution for the Version identified by the IDs.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param distributionId The String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
+     * @param distributionId String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @return The Distribution for the Version identified by the IDs.
      */
@@ -1371,21 +1369,21 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        summary = "Gets a specific Distribution for the identified Version",
+        summary = "Gets a specific Distribution for the Version identified by the IDs",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Distribution for the Version identified by the IDs"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getVersionedDistribution(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Distribution ID")
             @PathParam("distributionId") String distributionId) {
         try {
             Distribution distribution = catalogManager.getVersionedDistribution(vf.createIRI(catalogId),
@@ -1402,16 +1400,15 @@ public class CatalogRest {
     }
 
     /**
-     * Deletes the Distribution from the Version identified by the IDs. Returns a Response identifying whether the
-     * Distribution was deleted.
+     * Deletes the Distribution from the Version identified by the IDs.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param distributionId The String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
+     * @param distributionId String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @return A Response identifying whether the Distribution was deleted.
      */
@@ -1422,19 +1419,19 @@ public class CatalogRest {
     @Operation(
         summary = "Deletes a specific Distribution of the identified Version",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response identifying whether the Distribution was deleted"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response deleteVersionedDistribution(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Distribution ID")
             @PathParam("distributionId") String distributionId) {
         try {
             catalogManager.removeVersionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -1448,16 +1445,15 @@ public class CatalogRest {
     }
 
     /**
-     * Updates the specified Distribution with the modifications in the provided newDistribution. Returns a Response
-     * identifying whether the Distribution was updated or not.
+     * Updates the specified Distribution with the modifications in the provided newDistribution.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param distributionId The String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
+     * @param distributionId String representing the Distribution ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @param newDistributionJson The JSON-LD of the new Distribution which will replace the existing Distribution.
      * @return A Response identifying whether the Distribution was updated.
@@ -1468,23 +1464,24 @@ public class CatalogRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        summary = "Updates a specific Distribution of the identified Version",
+        summary = "Updates a specific Distribution of the identified Version with the modifications in the " +
+                "provided newDistribution",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response identifying whether the Distribution was updated"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response updateVersionedDistribution(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Distribution ID")
             @PathParam("distributionId") String distributionId,
-            @Parameter(description = "")
+            @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution")
             String newDistributionJson) {
         try {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
@@ -1502,11 +1499,11 @@ public class CatalogRest {
     /**
      * Gets the Commit associated with the identified Version using the provided IDs.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param versionId The String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param versionId String representing the Version ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @return The Commit associated with the identified Version.
      */
@@ -1515,21 +1512,21 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        summary = "Gets the Commit associated with the identified Version",
+        summary = "Gets the Commit associated with the identified Version using the provided IDs",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Commit associated with the identified Version"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getVersionCommit(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
-            @Parameter(description = "")
+            @Parameter(description = "Optional format string")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
         try {
@@ -1549,11 +1546,11 @@ public class CatalogRest {
     /**
      * Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs.
      *
-     * @param context The context of the request.
+     * @param context Context of the request.
      * @param uriInfo The URI information of the request to be used in creating links to other pages of branches
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
      * @param sort The field with sort order specified.
      * @param offset The offset for the page.
@@ -1568,9 +1565,9 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        summary = "Gets list of Branches associated with a specific VersionedRDFRecord",
+        summary = "Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "List of Branches for the identified VersionedRDFRecord"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -1579,9 +1576,9 @@ public class CatalogRest {
     public Response getBranches(
             @Context ContainerRequestContext context,
             @Context UriInfo uriInfo,
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "Field with sort order specified")
             @DefaultValue("http://purl.org/dc/terms/title") @QueryParam("sort") String sort,
@@ -1591,7 +1588,8 @@ public class CatalogRest {
             @DefaultValue("100") @QueryParam("limit") int limit,
             @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
-            @Parameter(description = "Whether or not the list should be filtered to Branches associated with the user making the request")
+            @Parameter(description = "Whether or not the list should be filtered to Branches associated with the user " +
+                    "making the request")
             @DefaultValue("false") @QueryParam("applyUserFilter") boolean applyUserFilter) {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
@@ -1619,18 +1617,19 @@ public class CatalogRest {
     }
 
     /**
-     * Creates a Branch for a VersionedRDFRecord identified by the IDs using the passed form data. Returns a Response
-     * with the IRI of the new Branch.
+     * Creates a Branch for a VersionedRDFRecord identified by the IDs using the passed form data.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
      * @param typeIRI The required IRI of the type for the new Branch. Must be a valid IRI for a Branch or one of its
      *                subclasses.
      * @param title The required title for the new Branch.
      * @param description The optional description for the new Branch.
-     * @return A Response with the IRI string of the created Branch.
+     * @param commitId String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @return Response with the IRI string of the created Branch.
      */
     @POST
     @Path("{catalogId}/records/{recordId}/branches")
@@ -1638,9 +1637,9 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        summary = "Creates a branch for a specific VersionedRDFRecord",
+        summary = "Creates a Branch for a VersionedRDFRecord identified by the IDs using the passed form data",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Branch"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -1649,17 +1648,17 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createBranch(
             @Context ContainerRequestContext context,
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "Required IRI of the type for the new Branch")
             @FormDataParam("type") String typeIRI,
-            @Parameter(description = "")
+            @Parameter(description = "Required title for the new Branch")
             @FormDataParam("title") String title,
-            @Parameter(description = "")
+            @Parameter(description = "Optional description for the new Branch")
             @FormDataParam("description") String description,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Commit ID")
             @FormDataParam("commitId") String commitId) {
         try ( RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(title, "Branch title is required");
@@ -1692,9 +1691,9 @@ public class CatalogRest {
     /**
      * Gets the master Branch of a VersionedRDFRecord identified by the provided IDs.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
      * @return The master Branch for the identified VersionedRDFRecord.
      */
@@ -1703,18 +1702,18 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        summary = "Gets the master Branch of a VersionedRDFRecord",
+        summary = "Gets the master Branch of a VersionedRDFRecord identified by the provided IDs",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Master Branch for the identified VersionedRDFRecord"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getMasterBranch(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the VersionedRDFRecord ID")
             @PathParam("recordId") String recordId) {
         try {
             Branch masterBranch = catalogManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId));
@@ -1730,11 +1729,11 @@ public class CatalogRest {
     /**
      * Gets a specific Branch of a VersionedRDFRecord identified by the provided IDs.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
      * @return The identified Branch for the specific VersionedRDFRecord.
      */
@@ -1745,18 +1744,18 @@ public class CatalogRest {
     @Operation(
         summary = "Get a specific Branch for a specific VersionedRDFRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Identified Branch for the specific VersionedRDFRecord"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranch(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch ID")
             @PathParam("branchId") String branchId) {
         try {
             Branch branch = catalogManager.getBranch(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -1772,14 +1771,13 @@ public class CatalogRest {
     }
 
     /**
-     * Deletes a specific Branch of a VersionedRDFRecord. Returns a Response identifying whether the Branch was
-     * successfully deleted.
+     * Deletes a specific Branch of a VersionedRDFRecord.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
      * @return A Response identifying whether the Branch was deleted.
      */
@@ -1790,7 +1788,7 @@ public class CatalogRest {
     @Operation(
         summary = "Deletes a specific Branch for a specific VersionedRDFRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response identifying whether the Branch was deleted"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -1801,11 +1799,11 @@ public class CatalogRest {
             @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
     )
     public Response deleteBranch(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch ID")
             @PathParam("branchId") String branchId) {
         try {
             catalogManager.removeBranch(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(branchId));
@@ -1818,14 +1816,13 @@ public class CatalogRest {
     }
 
     /**
-     * Updates the specified Branch using the modifications in the provided newBranch. Returns a Response identifying
-     * whether the Branch was updated or not.
+     * Updates the specified Branch using the modifications in the provided newBranch for a specific VersionedRDFRecord.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
      * @param newBranchJson The JSON-LD of the new Branch which will replace the existing Branch.
      * @return A Response identifying whether the Branch was successfully updated.
@@ -1836,9 +1833,11 @@ public class CatalogRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        summary = "Updates a specific Branch for a specific VersionedRDFRecord",
+        summary = "Updates the specified Branch using the modifications in the provided newBranch for a " +
+                "specific VersionedRDFRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response identifying whether the Branch was " +
+                    "successfully updated"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -1846,13 +1845,13 @@ public class CatalogRest {
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateBranch(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the VersionedRDFRecord ID")
             @PathParam("branchId") String branchId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch ID")
             String newBranchJson) {
         try {
             Branch newBranch = getNewThing(newBranchJson, vf.createIRI(branchId),
@@ -1871,13 +1870,13 @@ public class CatalogRest {
      * chain for that Branch. If a limit is passed which is greater than zero, will paginate the results. If a
      * targetId is passed, then only commits between the HEAD commits of the branchId and targetId will be returned.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @param targetId The String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
+     * @param targetId String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
      * @param offset An optional offset for the results.
      * @param limit An optional limit for the results.
@@ -1888,9 +1887,13 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        summary = "Gets the Commit chain for a specific Branch",
+        summary = "Gets a list of Commits associated with the Branch identified by the provided IDs which represents " +
+                "the Commit chain for that Branch. If a limit is passed which is greater than zero, will paginate the " +
+                "results. If a targetId is passed, then only commits between the HEAD commits of the branchId and " +
+                "targetId will be returned.",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "List of Commits for the identified Branch which represents" +
+                    " the Commit chain"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -1898,17 +1901,17 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getCommitChain(
             @Context UriInfo uriInfo,
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch ID")
             @PathParam("branchId") String branchId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the target Branch ID")
             @QueryParam("targetId") String targetId,
-            @Parameter(description = "")
+            @Parameter(description = "Optional offset for the results")
             @QueryParam("offset") int offset,
-            @Parameter(description = "")
+            @Parameter(description = "Optional limit for the results")
             @QueryParam("limit") int limit) {
         LinksUtils.validateParams(limit, offset);
 
@@ -1939,27 +1942,28 @@ public class CatalogRest {
 
     /**
      * Creates a new Commit in the repository for a specific Branch using the InProgressCommit associated with the user
-     * making this request. The HEAD Commit is updated to be this new Commit. Returns a Response with the IRI of the
-     * new Commit.
+     * making this request. The HEAD Commit is updated to be this new Commit.
      *
-     * @param context The context of the request.
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param context Context of the request.
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @param message The message for the new Commit.
-     * @return A Response with the IRI of the new Commit added to the Branch.
+     * @param message Message for the new Commit.
+     * @return Response with the IRI of the new Commit added to the Branch.
      */
     @POST
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits")
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @Operation(
-        summary = "Creates a Commit for a specific Branch and sets it to be the new HEAD Commit",
+        summary = "Creates a new Commit in the repository for a specific Branch using the InProgressCommit " +
+                "associated with the user making this request. The HEAD Commit is updated to be this new Commit",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "201", description = "Response with the IRI of the new Commit added to the " +
+                    "Branch"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -1971,13 +1975,13 @@ public class CatalogRest {
     )
     public Response createBranchCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch ID")
             @PathParam("branchId") String branchId,
-            @Parameter(description = "")
+            @Parameter(description = "Message for the new Commit")
             @QueryParam("message") String message) {
         try {
             checkStringParam(message, "Commit message is required");
@@ -1995,14 +1999,14 @@ public class CatalogRest {
     /**
      * Gets the HEAD Commit associated with a Branch.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @param format the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @return A Response with the Commit which is the HEAD of the identified Branch.
+     * @param format Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @return Response with the Commit which is the HEAD of the identified Branch.
      */
     @GET
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/head")
@@ -2011,20 +2015,21 @@ public class CatalogRest {
     @Operation(
         summary = "Gets the HEAD Commit for a specific Branch",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response with the Commit which is the HEAD of the " +
+                    "identified Branch"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getHead(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch I")
             @PathParam("branchId") String branchId,
-            @Parameter(description = "")
+            @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
         try {
@@ -2044,40 +2049,41 @@ public class CatalogRest {
     /**
      * Gets the Commit identified by the provided IDs.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param commitId String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @param format the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @return A Response with the Commit identified by the provided IDs.
+     * @param format Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @return Response with the Commit identified by the provided IDs.
      */
     @GET
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        summary = "Gets a specific Commit on a specific Branch",
+        summary = "Gets the Commit identified by the provided IDs",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response with the Commit identified by the provided IDs"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "404", description = "Commit could not be found"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranchCommit(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch ID")
             @PathParam("branchId") String branchId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Commit ID")
             @PathParam("commitId") String commitId,
-            @Parameter(description = "")
+            @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
         try {
@@ -2100,39 +2106,42 @@ public class CatalogRest {
      * HEAD Commit of the Branch identified by the query parameter. For this comparison to be done, the Commits must
      * have an ancestor Commit in common.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param branchId The String representing the source Branch ID. NOTE: Assumes ID represents an IRI unless String
+     * @param branchId String representing the source Branch ID. NOTE: Assumes ID represents an IRI unless String
      *                 begins with "_:".
-     * @param targetBranchId The String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
+     * @param targetBranchId String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
-     * @param rdfFormat The desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @return A Response with the Difference between the identified Branches' HEAD Commits as a JSON object.
+     * @param rdfFormat Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @return Response with the Difference between the identified Branches' HEAD Commits as a JSON object.
      */
     @GET
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/difference")
     @RolesAllowed("user")
     @Operation(
-        summary = "Gets the difference between the two provided Branches' HEAD Commits",
+        summary = "Gets the Difference between the HEAD Commit of the Branch identified by the provided IDs in the " +
+                "path and the HEAD Commit of the Branch identified by the query parameter. For this comparison " +
+                "to be done, the Commits must have an ancestor Commit in common.",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response with the Difference between the identified" +
+                    " Branches' HEAD Commits as a JSON object"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDifference(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the source Branch ID")
             @PathParam("branchId") String branchId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the target Branch ID")
             @QueryParam("targetId") String targetBranchId,
-            @Parameter(description = "")
+            @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         try {
             checkStringParam(targetBranchId, "Target branch is required");
@@ -2155,40 +2164,43 @@ public class CatalogRest {
      * HEAD Commit of the Branch identified by the query parameter. For this comparison to be done, the Commits must
      * have an ancestor Commit in common.
      *
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param branchId The String representing the source Branch ID. NOTE: Assumes ID represents an IRI unless String
+     * @param branchId String representing the source Branch ID. NOTE: Assumes ID represents an IRI unless String
      *                 begins with "_:".
-     * @param targetBranchId The String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
+     * @param targetBranchId String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
-     * @param rdfFormat The desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @return A Response with the list of Conflicts between the identified Branches' HEAD Commits.
+     * @param rdfFormat Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @return Response with the list of Conflicts between the identified Branches' HEAD Commits.
      */
     @GET
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/conflicts")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        summary = "Gets a list of Conflicts found between the two provided Branches' HEAD Commits",
+        summary = "Gets the Conflicts between the HEAD Commit of the Branch identified by the provided IDs in the " +
+                "path and the HEAD Commit of the Branch identified by the query parameter. For this comparison to " +
+                "be done, the Commits must have an ancestor Commit in common",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response with the list of Conflicts between the " +
+                    "identified Branches' HEAD Commits"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConflicts(
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the VersionedRDFRecord ID")
             @PathParam("branchId") String branchId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the target Branch ID")
             @QueryParam("targetId") String targetBranchId,
-            @Parameter(description = "")
+            @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
         try {
@@ -2215,20 +2227,19 @@ public class CatalogRest {
     /**
      * Performs a merge between the two Branches identified by the provided IDs. The addition and deletion statements
      * that are required to resolve any conflicts will be used to create the merged Commit. The target Branch will
-     * point to the new merge commit, but the source Branch will still point to the original head commit. Returns a
-     * Response indicating whether the Branches were merged successfully.
+     * point to the new merge commit, but the source Branch will still point to the original head commit.
      *
-     * @param context The context of the request.
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param context Context of the request.
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param sourceBranchId The String representing the source Branch ID. NOTE: Assumes ID represents an IRI unless
+     * @param sourceBranchId String representing the source Branch ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
-     * @param targetBranchId The String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
+     * @param targetBranchId String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
-     * @param additionsJson The String of JSON-LD that corresponds to the statements that were added to the entity.
-     * @param deletionsJson The String of JSON-LD that corresponds to the statements that were deleted in the entity.
+     * @param additionsJson String of JSON-LD that corresponds to the statements that were added to the entity.
+     * @param deletionsJson String of JSON-LD that corresponds to the statements that were deleted in the entity.
      * @return A Response indicating whether the Commits were successfully merged.
      */
     @POST
@@ -2237,9 +2248,13 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        summary = "Merges the two commits identified by the provided IDs",
+        summary = "Performs a merge between the two Branches identified by the provided IDs. The addition and " +
+                "deletion statements that are required to resolve any conflicts will be used to create the " +
+                "merged Commit. The target Branch will point to the new merge commit, but the source Branch will " +
+                "still point to the original head commit. ",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response indicating whether the Commits were" +
+                    " successfully merged"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -2251,17 +2266,17 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response merge(
             @Context ContainerRequestContext context,
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the VersionedRDFRecord ID")
             @PathParam("branchId") String sourceBranchId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the target Branch ID")
             @QueryParam("targetId") String targetBranchId,
-            @Parameter(description = "")
+            @Parameter(description = "String of JSON-LD that corresponds to the statements that were added to the entity")
             @FormDataParam("additions") String additionsJson,
-            @Parameter(description = "")
+            @Parameter(description = "String of JSON-LD that corresponds to the statements that were deleted in the entity")
             @FormDataParam("deletions") String deletionsJson) {
         try {
             User activeUser = getActiveUser(context, engineManager);
@@ -2281,17 +2296,17 @@ public class CatalogRest {
      * Gets the Commit identified by the provided IDs and returns the compiled Resource following the Commit chain
      * which terminates at the identified Commit.
      *
-     * @param context The context of the request.
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param context Context of the request.
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param commitId String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @param rdfFormat The desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @param apply A boolean value identifying whether the InProgressCommit associated with identified Record should be
+     * @param rdfFormat Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param apply Boolean value identifying whether the InProgressCommit associated with identified Record should be
      *              applied to the result.
      * @return A Response the compiled Resource for the entity at the specific Commit.
      */
@@ -2300,9 +2315,11 @@ public class CatalogRest {
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
     @Operation(
-        summary = "Gets the compiled resource for a the entity identified by a specific Commit",
+        summary = "Gets the Commit identified by the provided IDs and returns the compiled Resource " +
+                "following the Commit chain which terminates at the identified Commit",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response the compiled Resource for the entity at " +
+                    "the specific Commit"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -2310,17 +2327,18 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getCompiledResource(
             @Context ContainerRequestContext context,
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch ID")
             @PathParam("branchId") String branchId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Commit ID")
             @PathParam("commitId") String commitId,
-            @Parameter(description = "")
+            @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
-            @Parameter(description = "")
+            @Parameter(description = "Boolean value identifying whether the InProgressCommit associated with " +
+                    "identified Record should be  applied to the result")
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply) {
         try {
             Resource catalogIRI = vf.createIRI(catalogId);
@@ -2348,20 +2366,20 @@ public class CatalogRest {
      * Gets the Commit identified by the provided IDs and creates an OutputStream of the compiled Resource following the
      * Commit chain which terminates at the identified Commit.
      *
-     * @param context The context of the request.
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param context Context of the request.
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param commitId String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @param rdfFormat The desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @param apply A boolean value identifying whether the InProgressCommit associated with the identified Record and
+     * @param rdfFormat Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param apply Boolean value identifying whether the InProgressCommit associated with the identified Record and
      *              User making the request should be applied to the result.
-     * @param fileName The desired name of the generated file. NOTE: Optional param - defaults to "resource".
-     * @return A Response with the compiled Resource for the entity at the specific Commit to download.
+     * @param fileName The Desired name of the generated file. NOTE: Optional param - defaults to "resource".
+     * @return Response with the compiled Resource for the entity at the specific Commit to download.
      */
     @GET
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource")
@@ -2370,7 +2388,8 @@ public class CatalogRest {
     @Operation(
         summary = "Gets the compiled resource for a the entity identified by a specific Commit",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response with the compiled Resource for the entity" +
+                    " at the specific Commit to download"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -2378,19 +2397,21 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadCompiledResource(
             @Context ContainerRequestContext context,
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Branch ID")
             @PathParam("branchId") String branchId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the Commit ID")
             @PathParam("commitId") String commitId,
-            @Parameter(description = "")
+            @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
-            @Parameter(description = "")
+            @Parameter(description = "Boolean value identifying whether the InProgressCommit associated with " +
+                    "the identified Record and User making the request should be applied to the result")
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply,
-            @Parameter(description = "")
+            @Parameter(description = "Desired name of the generated file. " +
+                    "NOTE: Optional param - defaults to \"resource\"")
             @DefaultValue("resource") @QueryParam("fileName") String fileName) {
         try {
             Resource catalogIRI = vf.createIRI(catalogId);
@@ -2426,15 +2447,14 @@ public class CatalogRest {
     }
 
     /**
-     * Creates a new InProgressCommit in the repository for the User making this request. Returns a Response indicating
-     * whether it was created successfully.
+     * Creates a new InProgressCommit in the repository for the User making this request.
      *
-     * @param context The context of the request.
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param context Context of the request.
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @return A Response indicating whether the InProgressCommit was created successfully.
+     * @return Response indicating whether the InProgressCommit was created successfully.
      */
     @POST
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
@@ -2442,16 +2462,17 @@ public class CatalogRest {
     @Operation(
         summary = "Creates a InProgressCommit linked to a specific VersionedRDFRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response indicating whether the InProgressCommit" +
+                    " was created successfully"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response createInProgressCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "String representing the VersionedRDFRecord ID")
             @PathParam("recordId") String recordId) {
         try {
             User activeUser = getActiveUser(context, engineManager);
@@ -2469,13 +2490,13 @@ public class CatalogRest {
      * Retrieves the current changes the user making the request has made in the InProgressCommit identified by the
      * provided IDs.
      *
-     * @param context The context of the request.
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param context Context of the request.
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param format the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @return A Response with the changes from the specific InProgressCommit.
+     * @param format Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @return Response with the changes from the specific InProgressCommit.
      */
     @GET
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
@@ -2484,18 +2505,18 @@ public class CatalogRest {
     @Operation(
         summary = "Gets the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response with the changes from the specific InProgressCommit"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getInProgressCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         try {
             User activeUser = getActiveUser(context, engineManager);
@@ -2513,12 +2534,12 @@ public class CatalogRest {
 
     /**
      * Deletes the InProgressCommit identified by the provided IDs and associated with the User making the request from
-     * the repository. Returns a Response which indicates whether or not the requested InProgressCommit was deleted.
+     * the repository.
      *
-     * @param context The context of the request.
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param context Context of the request.
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
      * @return A Response indicating whether the InProgressCommit was deleted successfully.
      */
@@ -2529,16 +2550,17 @@ public class CatalogRest {
     @Operation(
         summary = "Deletes the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "RResponse indicating whether the InProgressCommit " +
+                    "was deleted successfully"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response deleteInProgressCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "")
+            @Parameter(description = "tring representing the VersionedRDFRecord ID")
             @PathParam("recordId") String recordId) {
         try {
             User activeUser = getActiveUser(context, engineManager);
@@ -2550,20 +2572,18 @@ public class CatalogRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
-
     
     /**
      * Updates the InProgressCommit for a user identified by the provided IDs using the statements found in the provided
-     * form data. Returns a Response indicating whether it was successfully updated. If the user does not have an
-     * InProgressCommit, one will be created with the provided data.
+     * form data. If the user does not have an InProgressCommit, one will be created with the provided data.
      *
-     * @param context The context of the request.
-     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param context Context of the request.
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param additionsJson The String of JSON-LD that corresponds to the statements that were added to the entity.
-     * @param deletionsJson The String of JSON-LD that corresponds to the statements that were deleted in the entity.
+     * @param additionsJson String of JSON-LD that corresponds to the statements that were added to the entity.
+     * @param deletionsJson String of JSON-LD that corresponds to the statements that were deleted in the entity.
      * @return A Response indicating whether or not the InProgressCommit was updated.
      */
     @PUT
@@ -2572,9 +2592,12 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        summary = "Updates the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord",
+        summary = "Updates the InProgressCommit for a user identified by the provided IDs using the statements " +
+                "found in the provided form data. If the user does not have an InProgressCommit, one will be" +
+                " created with the provided data.",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "Response indicating whether or not the " +
+                    "InProgressCommit was updated"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -2583,13 +2606,13 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateInProgressCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "The String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "The String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "")
+            @Parameter(description = "String of JSON-LD that corresponds to the statements that were added to the entity")
             @FormDataParam("additions") String additionsJson,
-            @Parameter(description = "")
+            @Parameter(description = "String of JSON-LD that corresponds to the statements that were deleted in the entity")
             @FormDataParam("deletions") String deletionsJson) {
         try {
             User activeUser = getActiveUser(context, engineManager);
@@ -2617,7 +2640,7 @@ public class CatalogRest {
     @Operation(
         summary = "Retrieves all the available record types",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "All the available record types"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -2633,7 +2656,7 @@ public class CatalogRest {
     /**
      * Returns all the available sorting options for both Catalogs.
      *
-     * @return all the available sorting options.
+     * @return All the available sorting options.
      */
     @GET
     @Path("sort-options")
@@ -2642,7 +2665,7 @@ public class CatalogRest {
     @Operation(
         summary = "Retrieves all the available sorting options",
         responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "200", description = "All the available sorting options"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -2780,7 +2803,7 @@ public class CatalogRest {
     /**
      * Converts a JSON-LD string into a Model.
      *
-     * @param jsonld The string of JSON-LD to convert.
+     * @param jsonld String of JSON-LD to convert.
      *
      * @return A Model containing the statements from the JSON-LD string.
      */
