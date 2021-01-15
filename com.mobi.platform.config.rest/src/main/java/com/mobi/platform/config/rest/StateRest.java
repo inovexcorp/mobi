@@ -115,9 +115,9 @@ public class StateRest {
     )
     public Response getStates(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "ID of the Application to filter State by")
             @QueryParam("application") String applicationId,
-            @Parameter(description = "")
+            @Parameter(description = "List of all the IDs of resources that should be associated with the States")
             @QueryParam("subjects") List<String> subjectIds) {
         String username = RestUtils.getActiveUsername(context);
         Set<Resource> subjects = subjectIds.stream()
@@ -161,9 +161,9 @@ public class StateRest {
     )
     public Response createState(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "ID of the Application to associate the new State with")
             @QueryParam("application") String applicationId,
-            @Parameter(description = "")
+            @Parameter(description = "JSON-LD of all resources to be linked to the new State")
             String stateJson) {
         String username = RestUtils.getActiveUsername(context);
         try {
@@ -207,7 +207,7 @@ public class StateRest {
     )
     public Response getState(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "ID of the State to retrieve")
             @PathParam("stateId") String stateId) {
         String username = RestUtils.getActiveUsername(context);
         try {
@@ -248,9 +248,9 @@ public class StateRest {
     )
     public Response updateState(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "ID of the State to update")
             @PathParam("stateId") String stateId,
-            @Parameter(description = "")
+            @Parameter(description = "JSON-LD serialization of the new resources to associate with the State")
             String newStateJson) {
         String username = RestUtils.getActiveUsername(context);
         try {

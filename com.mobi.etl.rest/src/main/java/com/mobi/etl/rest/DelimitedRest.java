@@ -446,7 +446,7 @@ public class DelimitedRest {
     @ResourceId(type = ValueType.QUERY, value = "ontologyRecordIRI")
     public Response etlFileOntology(
             @Context ContainerRequestContext context,
-            @Parameter(description = "")
+            @Parameter(description = "name of the delimited document in the data/tmp/ directory")
             @PathParam("documentName") String fileName,
             @Parameter(description = "ID of  the MappingRecord")
             @QueryParam("mappingRecordIRI") String mappingRecordIRI,
@@ -579,11 +579,11 @@ public class DelimitedRest {
         }
     )
     public Response getRows(
-            @Parameter(description = "")
+            @Parameter(description = "name of the delimited document in the data/tmp/ directory")
             @PathParam("documentName") String fileName,
-            @Parameter(description = "")
+            @Parameter(description = "number of rows to retrieve from the delimited document")
             @DefaultValue("10") @QueryParam("rowCount") int rowEnd,
-            @Parameter(description = "")
+            @Parameter(description = "Character the columns are separated by")
             @DefaultValue(",") @QueryParam("separator") String separator) {
         Optional<File> optFile = getUploadedFile(fileName);
         if (optFile.isPresent()) {
