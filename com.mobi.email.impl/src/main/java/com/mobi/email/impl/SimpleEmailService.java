@@ -79,7 +79,7 @@ public class SimpleEmailService implements EmailService {
     private int port;
     private String security;
 
-    @Reference(updated = "")
+    @Reference
     void setEncryptionService(EncryptionService encryptionService) {
         this.encryptionService = encryptionService;
     }
