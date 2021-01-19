@@ -93,7 +93,6 @@ public class PreferenceRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities")
     public Response getUserPreferences(@Context ContainerRequestContext context) {
         User user = getActiveUser(context, engineManager);
         Set<Preference> userPreferences = preferenceService.getUserPreferences(user);
@@ -106,7 +105,6 @@ public class PreferenceRest {
     @Path("{preferenceId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities")
     public Response updateUserPreference(@Context ContainerRequestContext context,
                                          @PathParam("preferenceId") String preferenceId,
                                          @QueryParam("preferenceType") String preferenceType,
@@ -129,7 +127,6 @@ public class PreferenceRest {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities")
     public Response createUserPreference(@Context ContainerRequestContext context,
                                          @QueryParam("preferenceType") String preferenceType,
                                          String jsonld) {
@@ -159,9 +156,9 @@ public class PreferenceRest {
     private Preference getPreferenceFromModel(String preferenceType, Model preferenceModel) {
         Collection<? extends Preference> preferences = getSpecificPreferenceFactory(preferenceType).getAllExisting(preferenceModel);
         if (preferences.size() > 1) {
-            throw ErrorUtils.sendError("More than one preference of type: " + preferenceType + " found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("More than one preference of type: " + preferenceType + " found in request.", Response.Status.BAD_REQUEST);
         } else if (preferences.isEmpty()) {
-            throw ErrorUtils.sendError("No preference of type: " + preferenceType + " was found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("No preference of type: " + preferenceType + " was found in request.", Response.Status.BAD_REQUEST);
         } else {
             return preferences.iterator().next();
         }

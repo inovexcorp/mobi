@@ -1,8 +1,16 @@
 PREFIX pref: <http://mobi.com/ontologies/preference#>
 
-CONSTRUCT { ?userPreference ?p ?o }
+CONSTRUCT {
+    ?userPreference ?p ?o .
+    ?objectValue ?attachedPred ?attachedObj .
+}
 WHERE {
     ?userPreference pref:forUser ?user ;
         a ?preferenceType ;
         ?p ?o .
+
+    OPTIONAL {
+        ?userPreference pref:hasObjectValue ?objectValue .
+        ?objectValue ?attachedPred ?attachedObj .
+    }
 }

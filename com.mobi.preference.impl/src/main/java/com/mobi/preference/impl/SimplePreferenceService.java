@@ -48,9 +48,12 @@ import org.apache.commons.io.IOUtils;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,6 +65,7 @@ public class SimplePreferenceService implements PreferenceService {
     private static final String PREFERENCE_TYPE_BINDING = "preferenceType";
     private static final String USER_BINDING = "user";
     private static final String GET_USER_PREFERENCE;
+    private static final Logger LOG = LoggerFactory.getLogger(SimplePreferenceService.class);
 
     private PreferenceFactory preferenceFactory;
     private Resource context;
@@ -119,12 +123,8 @@ public class SimplePreferenceService implements PreferenceService {
             query.setBinding(PREFERENCE_TYPE_BINDING, preferenceType);
             Model userPreferenceModel = QueryResults.asModel(query.evaluate(), mf);
             // Using getAllExisting should be fine in this case because there should be a maximum of 1 preference
-            Set<Preference> preferences =
-                    preferenceFactory.getAllExisting(userPreferenceModel).stream().map(preference -> {
-                        // Retrieve all entities connected by hasObjectValue
-                        addEntitiesToModel(preference.getHasObjectValue_resource(), userPreferenceModel, conn);
-                        return preference;
-                    }).collect(Collectors.toSet());
+            Collection<Preference> preferences =
+                    preferenceFactory.getAllExisting(userPreferenceModel);
             if (preferences.size() == 1) {
                 return Optional.of(preferences.iterator().next());
             } else if (preferences.isEmpty()) {
@@ -149,8 +149,6 @@ public class SimplePreferenceService implements PreferenceService {
             });
         }
     }
-
-
 
     /*
     // Add an instance of Preference for a particular user
@@ -189,6 +187,16 @@ public class SimplePreferenceService implements PreferenceService {
     SimpleProvenanceService)
     Remove all triples with a subject of the existingPreference IRI
      */
+    @Override
+    public void deletePreference(User user, Resource preferenceType) {
+        Optional<Preference> existingPreference = getUserPreference(user, preferenceType);
+        if (existingPreference.isPresent()) {
+            deletePreference(existingPreference.get().getResource());
+        } else {
+            LOG.debug("No preference of type " + preferenceType + " exists for user. No action will be taken.");
+        }
+    }
+
     @Override
     public void deletePreference(Resource preferenceIRI) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -260,7 +268,7 @@ public class SimplePreferenceService implements PreferenceService {
         });
     }
 
-    private Resource getPreferenceType(Preference preference) {
+    public Resource getPreferenceType(Preference preference) {
         List<Resource> types = mf.createModel(preference.getModel()).filter(preference.getResource(), vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null)
                 .stream()
                 .map(Statements::objectResource)
@@ -270,6 +278,7 @@ public class SimplePreferenceService implements PreferenceService {
 
         List<IRI> orderedIRIs = factoryRegistry.getSortedFactoriesOfType(Preference.class)
                 .stream()
+                .filter(ormFactory -> !ormFactory.getTypeIRI().stringValue().equals(Preference.TYPE))
                 .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
                 .map(OrmFactory::getTypeIRI)
                 .collect(Collectors.toList());

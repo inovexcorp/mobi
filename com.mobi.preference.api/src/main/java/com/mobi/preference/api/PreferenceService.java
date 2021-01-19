@@ -69,6 +69,15 @@ public interface PreferenceService {
      */
     void addPreference(User user, Preference preference);
 
+    /*
+    Query the repo for the list of IRIs connected to the existingPreference IRI.
+    Remove all triples in the namedgraph with a subject of those IRIs if they aren't
+    referenced elsewhere (look at removeIfNotReferenced() method in the
+    SimpleProvenanceService)
+    Remove all triples with a subject of the existingPreference IRI
+     */
+    void deletePreference(User user, Resource preferenceType);
+
     void deletePreference(Resource preferenceIRI);
 
     void updatePreference(User user, Preference preference);
