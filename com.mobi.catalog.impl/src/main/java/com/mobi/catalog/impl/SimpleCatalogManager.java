@@ -1094,6 +1094,17 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public Difference getCommitDifferenceForSubject(IRI subjectId, Resource commitId) {
+        long start = System.currentTimeMillis();
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            return utils.getCommitDifferenceForSubject(subjectId, commitId, conn);
+        } finally {
+            log.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    @Override
     public PagedDifference getCommitDifferencePaged(Resource commitId, int limit, int offset) {
         long start = System.currentTimeMillis();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {

@@ -1090,6 +1090,27 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
 
     /**
      * @ngdoc method
+     * @name getDifferenceForSubject
+     * @methodOf shared.service:catalogManagerService
+     *
+     * @description
+     * Calls the GET /mobirest/commits/{commitId}/difference/{subjectId} endpoint with the passed Commit id and Subject Id
+     * and returns the Difference between the source and target Commit chains for the specified entity.
+     * 
+     * @param {string} commitId The commit id of the commit whose chain will be merged in to the target.
+     * @param {string} subjectId Id of the entity to receive the source commits.
+     * @param {string} [format='jsonld'] format The RDF format to return the Difference in
+     * @return {Promise} A promise that resolves with the Difference of the two resulting Commit chains or 
+     *      rejects with an error message
+     */
+    self.getDifferenceForSubject = function(subjectId, commitId, format='jsonld') {
+        var config = { params: { format } };
+        return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference' + '/' + encodeURIComponent(subjectId), config)
+            .then(response => response.data, util.rejectError);
+    }
+
+    /**
+     * @ngdoc method
      * @name getBranchCommits
      * @methodOf shared.service:catalogManagerService
      *

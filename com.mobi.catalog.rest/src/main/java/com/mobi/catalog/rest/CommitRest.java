@@ -329,5 +329,32 @@ public class CommitRest {
         }
     }
 
+    @GET
+    @Path("{sourceId}/difference/{subjectId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the Difference in the specified commit for the specified subject.")
+    public Response getDifference(@PathParam("sourceId") String sourceId,
+                                  @PathParam("subjectId") String subjectId,
+                                  @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
+        long start = System.currentTimeMillis();
+        try {
+            checkStringParam(sourceId, "Source commit is required");
+            Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(sourceId));
+            if (optCommit.isPresent()) {
+                    return createCommitResponse(optCommit.get(),
+                            catalogManager.getCommitDifferenceForSubject(vf.createIRI(subjectId), optCommit.get().getResource()),
+                            rdfFormat, transformer, bNodeService);
 
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            logger.trace("getDifference took {}ms", System.currentTimeMillis() - start);
+        }
+    }
 }
