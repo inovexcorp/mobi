@@ -1255,6 +1255,37 @@ describe('Catalog Manager service', function() {
             flushAndVerify($httpBackend);
         });
     });
+    describe('should get the difference for a specific entity on a commit', function() {
+        beforeEach(function() {
+            this.config = {
+                format: 'jsonld'
+            };
+            this.url = '/mobirest/commits/' + encodeURIComponent(this.commitId) + '/difference/' + encodeURI(this.entityId);
+        });
+        it('unless an error occurs', function() {
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getDifferenceForSubject(this.entityId, this.commitId, 'jsonld')
+                .then(() => fail('Promise should have rejected'), response =>  expect(response).toEqual('Error Message'));
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+        });
+        it('with a format', function() {
+            this.config.format = 'turtle';
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getDifferenceForSubject(this.entityId, this.commitId, 'turtle')
+                .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
+            flushAndVerify($httpBackend);
+        });
+        it('without a format', function() {
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getDifferenceForSubject(this.commitId, this.commitId)
+                .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
+            flushAndVerify($httpBackend);
+        });
+    });
     describe('should get the difference between two Branches', function() {
         beforeEach(function() {
             this.config = {

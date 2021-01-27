@@ -334,7 +334,7 @@ public class CommitRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves the Difference in the specified commit for the specified subject.")
-    public Response getDifference(@PathParam("sourceId") String sourceId,
+    public Response getDifferenceForSubject(@PathParam("sourceId") String sourceId,
                                   @PathParam("subjectId") String subjectId,
                                   @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
