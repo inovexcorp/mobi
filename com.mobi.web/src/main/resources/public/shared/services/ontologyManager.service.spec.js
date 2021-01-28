@@ -1767,10 +1767,10 @@ describe('Ontology Manager service', function() {
         });
     });
     describe('isIndividual should return', function() {
-        it('true if the entity does not contains any OWL type', function() {
+        it('true if the entity does not contain any OWL type', function() {
             expect(ontologyManagerSvc.isIndividual({'@type': ['urn:test']})).toBe(true);
         });
-        it('false if the entity does not contain any OWL type', function() {
+        it('false if the entity does contain OWL type', function() {
             [
                 prefixes.owl + 'Class',
                 prefixes.owl + 'DatatypeProperty',
