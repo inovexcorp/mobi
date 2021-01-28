@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { noop } from 'lodash';
 import {
     mockPrefixes,
     mockCatalogManager,
@@ -77,7 +78,7 @@ describe('Ontology Manager service', function() {
         this.objectPropertyId = 'objectPropertyId';
         this.dataPropertyId = 'dataPropertyId';
         this.annotationId = 'annotationId';
-        this.individualId = 'individualId'
+        this.individualId = 'individualId';
         this.restrictionId = 'restrictionId';
         this.blankNodeId = '_:genid0';
         this.blankNodeObj = {
@@ -419,7 +420,7 @@ describe('Ontology Manager service', function() {
         it('successfully', function() {
             $httpBackend.expectDELETE('/mobirest/ontologies/' + encodeURIComponent(this.recordId)).respond(200);
             ontologyManagerSvc.deleteOntology(this.recordId)
-                .then(_.noop, () => {
+                .then(noop, () => {
                     fail('Promise should have resolved');
                 });
             flushAndVerify($httpBackend);
@@ -512,7 +513,7 @@ describe('Ontology Manager service', function() {
         it('successfully', function() {
             $httpBackend.expectDELETE('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId)).respond(200);
             ontologyManagerSvc.deleteOntologyBranch(this.recordId, this.branchId)
-                .then(_.noop, () => {
+                .then(noop, () => {
                     fail('Promise should have resolved');
                 });
             flushAndVerify($httpBackend);
@@ -1055,7 +1056,7 @@ describe('Ontology Manager service', function() {
                     commitId: this.commitId,
                     queryType: 'select'
                 }
-            }
+            };
         });
         describe('when get succeeds', function() {
             describe('with no id set', function() {
@@ -1149,7 +1150,7 @@ describe('Ontology Manager service', function() {
         it('successfully', function() {
             $httpBackend.expectPOST('/mobirest/ontologies/' + this.recordId + '/entity-names?' + this.params,
                 () => {
-                    return {'filterResources' : []};
+                    return {'filterResources': []};
                 },
                 function(headers) {
                     return headers['Content-Type'] === 'application/json';
@@ -1165,7 +1166,7 @@ describe('Ontology Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPOST('/mobirest/ontologies/' + this.recordId + '/entity-names?' + this.params,
                 () =>  {
-                    return {'filterResources' : []};
+                    return {'filterResources': []};
                 }, function(headers) {
                     return headers['Content-Type'] === 'application/json';
                 }).respond(400, null, null, this.error);
@@ -1757,12 +1758,29 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getAnnotationIRIs([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
         });
     });
-    describe('isIndividual should return', function() {
+    describe('isNamedIndividual should return', function() {
         it('true if the entity contains the named individual type', function() {
-            expect(ontologyManagerSvc.isIndividual(this.individualObj)).toBe(true);
+            expect(ontologyManagerSvc.isNamedIndividual(this.individualObj)).toBe(true);
         });
         it('false if the entity does not contain the named individual type', function() {
-            expect(ontologyManagerSvc.isIndividual({})).toBe(false);
+            expect(ontologyManagerSvc.isNamedIndividual({})).toBe(false);
+        });
+    });
+    describe('isIndividual should return', function() {
+        it('true if the entity does not contains any OWL type', function() {
+            expect(ontologyManagerSvc.isIndividual({'@type': ['urn:test']})).toBe(true);
+        });
+        it('false if the entity does not contain any OWL type', function() {
+            [
+                prefixes.owl + 'Class',
+                prefixes.owl + 'DatatypeProperty',
+                prefixes.owl + 'ObjectProperty',
+                prefixes.owl + 'AnnotationProperty',
+                prefixes.owl + 'Datatype',
+                prefixes.owl + 'Ontology'
+            ].forEach(type => {
+                expect(ontologyManagerSvc.isIndividual({'@type': [type]})).toBe(false);
+            });
         });
     });
     describe('hasIndividuals should return', function() {
@@ -1801,7 +1819,7 @@ describe('Ontology Manager service', function() {
             var diffIndividualObj = {
                 '@id': this.individualId,
                 '@type': [prefixes.owl + 'NamedIndividual']
-            }
+            };
             expect(ontologyManagerSvc.hasNoTypeIndividuals([[diffIndividualObj, this.ontologyObj]])).toBe(true);
         });
         it('false if there are no individuals in the ontology with no other @type', function() {
@@ -1816,14 +1834,14 @@ describe('Ontology Manager service', function() {
             var diffIndividualObj = {
                 '@id': this.individualId,
                 '@type': [prefixes.owl + 'NamedIndividual']
-            }
+            };
             expect(ontologyManagerSvc.getNoTypeIndividuals([[diffIndividualObj, this.ontologyObj]])).toEqual([diffIndividualObj]);
         });
         it('correct individual objects if there are duplicates', function() {
             var diffIndividualObj = {
                 '@id': this.individualId,
                 '@type': [prefixes.owl + 'NamedIndividual']
-            }
+            };
             expect(ontologyManagerSvc.getNoTypeIndividuals([[diffIndividualObj, this.ontologyObj], [diffIndividualObj, this.importedOntObj]])).toEqual([diffIndividualObj]);
         });
         it('undefined if there are no individuals in the ontology with no other @type', function() {
@@ -1895,7 +1913,7 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.isBlankNodeId('http://mobi.com/.well-known/genid/')).toBe(true);
         });
         it('false if the id is not a blank node id', function() {
-            _.forEach(['', [], {}, true, false, undefined, null, 0, 1], function(test) {
+            ['', [], {}, true, false, undefined, null, 0, 1].forEach((test) => {
                 expect(ontologyManagerSvc.isBlankNodeId(test)).toBe(false);
             });
         });
@@ -2250,7 +2268,7 @@ describe('Ontology Manager service', function() {
                     return headers['Content-Type'] === undefined;
                 }).respond(200, { additions: [], deletions: [] });
             ontologyManagerSvc.uploadChangesFile(this.file, this.recordId, this.branchId, this.commitId)
-                .then(_.noop, () => {
+                .then(noop, () => {
                     fail('Promise should have resolved');
                 });
             flushAndVerify($httpBackend);
@@ -2264,7 +2282,7 @@ describe('Ontology Manager service', function() {
                     return headers['Content-Type'] === undefined;
                 }).respond(200, { additions: [], deletions: [] });
             ontologyManagerSvc.uploadChangesFile(this.file, this.recordId, undefined, this.commitId)
-                .then(_.noop, () => {
+                .then(noop, () => {
                     fail('Promise should have resolved');
                 });
             flushAndVerify($httpBackend);
