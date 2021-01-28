@@ -709,12 +709,12 @@ public interface CatalogUtilsService {
      * uad. That is, tracked triples will have no context and tracked quads will have a context that matches the data
      * named graph.
      *
+     * @param subjectId The Resource representing the subject to retrieve additions and deletions for.
      * @param commitId The Resource identifying the Commit to retrieve the Difference from.
-     * @param subjectId The IRI representing the subject to retrieve additions and deletions for.
      * @param conn     The RepositoryConnection which contains the requested Commit.
      * @return A Difference object containing the addition and deletion statements for an entity of a Commit.
      */
-    Difference getCommitDifferenceForSubject(IRI subjectId, Resource commitId, RepositoryConnection conn);
+    Difference getCommitDifferenceForSubject(Resource subjectId, Resource commitId, RepositoryConnection conn);
 
     /**
      * Gets the addition and deletion statements of a Commit identified by the provided Resource as a PagedDifference.

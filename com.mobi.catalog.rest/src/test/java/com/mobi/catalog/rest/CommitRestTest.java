@@ -31,6 +31,7 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReference
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -532,12 +533,13 @@ public class CommitRestTest extends MobiRestTestNg {
         }
     }
 
-    // GET commits/{commitId}/difference
+    // GET commits/{commitId}/difference/{subjectId}
     @Test
     public void getDifferenceForSubjectTest() {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
         assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
         verify(catalogManager).getCommitDifferenceForSubject(vf.createIRI(SUBJECT_IRI[0]), vf.createIRI(COMMIT_IRIS[1]));
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
@@ -554,17 +556,34 @@ public class CommitRestTest extends MobiRestTestNg {
         doThrow(new IllegalArgumentException()).when(catalogManager).getCommitDifferenceForSubject(vf.createIRI(SUBJECT_IRI[0]), vf.createIRI(COMMIT_IRIS[1]));
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
+        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
         assertEquals(response.getStatus(), 400);
 
         doThrow(new MobiException()).when(catalogManager).getCommitDifferenceForSubject(vf.createIRI(SUBJECT_IRI[0]), vf.createIRI(COMMIT_IRIS[1]));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
+        verify(catalogManager, times(2)).getCommit(vf.createIRI(COMMIT_IRIS[1]));
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).getCommitDifferenceForSubject(vf.createIRI(SUBJECT_IRI[0]), vf.createIRI(COMMIT_IRIS[1]));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
+        verify(catalogManager, times(3)).getCommit(vf.createIRI(COMMIT_IRIS[1]));
         assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void getDifferenceForSubjectWithMissingSourceTest() {
+        // Setup:
+        when(catalogManager.getCommit(any())).thenReturn(Optional.empty());
+
+        // When:
+        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
+                .request().get();
+
+        // Then:
+        assertEquals(response.getStatus(), 404);
+        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
     }
 
     // GET commits/{commitId}/history?entityId

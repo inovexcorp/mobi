@@ -345,9 +345,8 @@ public class CommitRest {
                     return createCommitResponse(optCommit.get(),
                             catalogManager.getCommitDifferenceForSubject(vf.createIRI(subjectId), optCommit.get().getResource()),
                             rdfFormat, transformer, bNodeService);
-
             } else {
-                return Response.status(Response.Status.NOT_FOUND).build();
+                throw ErrorUtils.sendError("Commit " + sourceId + " could not be found", Response.Status.NOT_FOUND);
             }
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);

@@ -1069,7 +1069,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public Difference getCommitDifferenceForSubject(IRI subjectId, Resource commitId, RepositoryConnection conn) {
+    public Difference getCommitDifferenceForSubject(Resource subjectId, Resource commitId, RepositoryConnection conn) {
         Revision revision = getRevision(commitId, conn);
 
         Model addModel = mf.createModel();

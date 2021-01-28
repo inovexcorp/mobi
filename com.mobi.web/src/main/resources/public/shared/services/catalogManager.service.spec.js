@@ -1281,7 +1281,7 @@ describe('Catalog Manager service', function() {
         it('without a format', function() {
             var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
-            catalogManagerSvc.getDifferenceForSubject(this.commitId, this.commitId)
+            catalogManagerSvc.getDifferenceForSubject(this.entityId, this.commitId)
                 .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });

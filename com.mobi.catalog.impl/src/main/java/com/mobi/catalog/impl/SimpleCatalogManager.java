@@ -1094,7 +1094,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Difference getCommitDifferenceForSubject(IRI subjectId, Resource commitId) {
+    public Difference getCommitDifferenceForSubject(Resource subjectId, Resource commitId) {
         long start = System.currentTimeMillis();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
