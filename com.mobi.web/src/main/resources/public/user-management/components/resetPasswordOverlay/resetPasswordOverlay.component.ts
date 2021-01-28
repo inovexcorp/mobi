@@ -51,20 +51,21 @@ const resetPasswordOverlayComponent = {
 resetPasswordOverlayComponentCtrl.$inject = ['userStateService', 'userManagerService'];
 
 function resetPasswordOverlayComponentCtrl(userStateService, userManagerService) {
-    var dvm = this;
+    const dvm = this;
     dvm.state = userStateService;
     dvm.um = userManagerService;
+    dvm.showPassword = false;
 
     dvm.set = function() {
         dvm.um.resetPassword(dvm.state.selectedUser.username, dvm.password)
-            .then(response => {
+            .then(() => {
                 dvm.errorMessage = '';
                 dvm.close();
             }, error => dvm.errorMessage = error);
-    }
+    };
     dvm.cancel = function() {
         dvm.dismiss();
-    }
+    };
 }
 
 export default resetPasswordOverlayComponent;
