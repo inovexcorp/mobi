@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { some } from 'lodash';
 import {
     mockComponent,
     mockOntologyManager,
@@ -44,7 +45,7 @@ describe('Individual Types Modal component', function() {
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             ontoUtils = _ontologyUtilsManagerService_;
-            prefixes = _prefixes_
+            prefixes = _prefixes_;
         });
 
         this.iri = 'id';
@@ -101,17 +102,18 @@ describe('Individual Types Modal component', function() {
         });
     });
     describe('controller methods', function() {
-        it('should determine whether an IRI is owl:NamedIndividual', function() {
-            expect(this.controller.isNamedIndividual('test')).toEqual(false);
-            expect(this.controller.isNamedIndividual(prefixes.owl + 'NamedIndividual')).toEqual(true);
-        });
         describe('should update the individual types', function() {
             beforeEach(function() {
                 ontologyStateSvc.getIndividualsParentPath.and.returnValue(['type1']);
                 ontologyStateSvc.createFlatIndividualTree.and.returnValue(['type1']);
                 ontologyStateSvc.flattenHierarchy.and.returnValue([this.iri]);
-                ontoUtils.containsDerivedConcept.and.callFake(arr => _.some(arr, iri => _.includes(iri, 'concept')));
-                ontoUtils.containsDerivedConceptScheme.and.callFake(arr => _.some(arr, iri => _.includes(iri, 'scheme')));
+                ontoUtils.containsDerivedConcept.and.callFake(arr => some(arr, iri => iri.includes('concept')));
+                ontoUtils.containsDerivedConceptScheme.and.callFake(arr => some(arr, iri => iri.includes('scheme')));
+                ontologyStateSvc.listItem.classes.iris = {
+                    'new': '',
+                    'type1': '',
+                    'type2': ''
+                };
             });
             it('if a type was added', function() {
                 this.controller.types.push('new');
@@ -154,7 +156,7 @@ describe('Individual Types Modal component', function() {
             });
             describe('if the individual is no longer a concept', function() {
                 beforeEach(function() {
-                    ontologyStateSvc.listItem.selected['@type'] = [prefixes.owl + 'NamedIndividual', 'type1', 'concept']
+                    ontologyStateSvc.listItem.selected['@type'] = [prefixes.owl + 'NamedIndividual', 'type1', 'concept'];
                     this.controller.types = [prefixes.owl + 'NamedIndividual', 'type1'];
                     ontologyStateSvc.listItem.concepts.flat = [this.iri];
                     ontologyStateSvc.listItem.concepts.iris = {[this.iri]: ''};
@@ -245,7 +247,7 @@ describe('Individual Types Modal component', function() {
             });
             describe('if the individual is no longer a scheme', function() {
                 beforeEach(function() {
-                    ontologyStateSvc.listItem.selected['@type'] = [prefixes.owl + 'NamedIndividual', 'type1', 'scheme']
+                    ontologyStateSvc.listItem.selected['@type'] = [prefixes.owl + 'NamedIndividual', 'type1', 'scheme'];
                     this.controller.types = [prefixes.owl + 'NamedIndividual', 'type1'];
                     ontologyStateSvc.listItem.conceptSchemes.flat = [this.iri];
                     ontologyStateSvc.listItem.concepts.iris = {[this.iri]: ''};
@@ -287,7 +289,7 @@ describe('Individual Types Modal component', function() {
                     expect(ontologyStateSvc.unSelectItem).not.toHaveBeenCalled();
                 });
             });
-            it('unless all types were removed except NamedIndividual', function() {
+            it('unless the new types do not include any defined classes', function() {
                 this.controller.types = [prefixes.owl + 'NamedIndividual'];
                 this.controller.submit();
                 expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2']);
@@ -296,8 +298,7 @@ describe('Individual Types Modal component', function() {
                 expect(scope.close).not.toHaveBeenCalled();
             });
             it('unless the individual is now both a scheme and a concept', function() {
-                this.controller.types.push('scheme');
-                this.controller.types.push('concept');
+                this.controller.types = ['type1', 'scheme', 'concept'];
                 this.controller.submit();
                 expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2']);
                 expect(this.controller.error).toBeTruthy();

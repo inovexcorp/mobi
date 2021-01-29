@@ -47,9 +47,10 @@ describe('Ontology Class Select component', function() {
         });
 
         scope.bindModel = [];
+        scope.extraOptions = [];
         scope.lockChoice = jasmine.createSpy('lockChoice');
         scope.changeEvent = jasmine.createSpy('changeEvent');
-        this.element = $compile(angular.element('<ontology-class-select bind-model="bindModel" lock-choice="lockChoice(iri)" change-event="changeEvent(values)"></ontology-class-select>'))(scope);
+        this.element = $compile(angular.element('<ontology-class-select bind-model="bindModel" extra-options="extraOptions" lock-choice="lockChoice(iri)" change-event="changeEvent(values)"></ontology-class-select>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('ontologyClassSelect');
     });
@@ -68,6 +69,11 @@ describe('Ontology Class Select component', function() {
             scope.$apply();
             expect(scope.bindModel).toEqual([]);
         });
+        it('extraOptions should be one way bound', function() {
+            this.controller.extraOptions = ['different'];
+            scope.$apply();
+            expect(scope.extraOptions).toEqual([]);
+        });
         it('lockChoice should be called in parent scope', function() {
             this.controller.lockChoice({iri: 'iri'});
             expect(scope.lockChoice).toHaveBeenCalledWith('iri');
@@ -83,24 +89,34 @@ describe('Ontology Class Select component', function() {
             expect(this.element.querySelectorAll('.ontology-class-select').length).toEqual(1);
             expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
         });
-        _.forEach(['custom-label', 'ui-select', 'ui-select-match', 'ui-select-choices'], el => {
+        ['custom-label', 'ui-select', 'ui-select-match', 'ui-select-choices'].forEach(el => {
             it('with a ' + el, function() {
                 expect(this.element.find(el).length).toEqual(1);
             });
         });
-        _.forEach(['span[title]', 'div[title]'], sel => {
+        ['span[title]', 'div[title]'].forEach(sel => {
             it('with a ' + sel, function() {
                 expect(this.element.querySelectorAll(sel).length).toEqual(1);
             });
         });
     });
     describe('controller methods', function() {
-        it('getValues should call the correct method', function() {
-            ontologyStateSvc.listItem.classes.iris = { classA: 'ontologyId' };
-            ontoUtils.getSelectList.and.returnValue(['list']);
-            this.controller.getValues('text');
-            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['classA'], 'text', ontoUtils.getDropDownText);
-            expect(this.controller.array).toEqual(['list']);
+        describe('getValues should call the correct method', function() {
+            beforeEach(function() {
+                ontologyStateSvc.listItem.classes.iris = { classA: 'ontologyId' };
+                ontoUtils.getSelectList.and.returnValue(['list']);
+            });
+            it('with extra options', function() {
+                this.controller.extraOptions = ['other'];
+                this.controller.getValues('text');
+                expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['classA', 'other'], 'text', ontoUtils.getDropDownText);
+                expect(this.controller.array).toEqual(['list']);
+            });
+            it('without extra options', function() {
+                this.controller.getValues('text');
+                expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['classA'], 'text', ontoUtils.getDropDownText);
+                expect(this.controller.array).toEqual(['list']);
+            });
         });
         it('onChange should call changeEvent', function() {
             this.controller.onChange();
