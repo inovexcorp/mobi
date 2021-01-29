@@ -35,7 +35,7 @@ const template = require('./ontologyClassSelect.component.html');
  * `ontologyClassSelect` is a component that creates a Bootstrap `form-group` with a `ui-select` of the IRIs of
  * all the classes in the current {@link shared.service:ontologyStateService selected ontology} and its
  * imports. The value of the select is bound to `bindModel`, but only one way. The provided `changeEvent`
- * function is expected to update the value of `bindModel`. CCan also optionally provide more IRIs to be included on top
+ * function is expected to update the value of `bindModel`. Can also optionally provide more IRIs to be included on top
  * of the list of class IRIs
  *
  * @param {Object[]} bindModel The variable to bind the selected class IRIs to
