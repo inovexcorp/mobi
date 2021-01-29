@@ -54,7 +54,6 @@ function passwordTabComponentCtrl(userManagerService, loginManagerService, utilS
     dvm.um = userManagerService;
     dvm.lm = loginManagerService;
     dvm.currentUser = undefined;
-    dvm.showPassword = false;
 
     dvm.$onInit = function() {
         dvm.currentUser = angular.copy(find(dvm.um.users, {username: dvm.lm.currentUser}));
@@ -66,7 +65,6 @@ function passwordTabComponentCtrl(userManagerService, loginManagerService, utilS
                 util.createSuccessToast('Password successfully saved');
                 dvm.currentPassword = '';
                 dvm.password = '';
-                dvm.confirmedPassword = '';
                 dvm.form.$setPristine();
             }, error => dvm.errorMessage = error);
     };

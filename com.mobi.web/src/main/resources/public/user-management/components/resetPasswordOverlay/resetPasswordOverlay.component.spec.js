@@ -101,8 +101,8 @@ describe('Reset Password Overlay component', function() {
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
-        it('with a .form-group', function() {
-            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
+        it('with an unmask-password', function() {
+            expect(this.element.find('unmask-password').length).toEqual(1);
         });
         it('depending on the form validity', function() {
             this.controller.password = 'abc';

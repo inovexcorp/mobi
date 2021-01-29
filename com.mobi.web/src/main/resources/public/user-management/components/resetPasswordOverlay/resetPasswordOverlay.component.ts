@@ -54,7 +54,6 @@ function resetPasswordOverlayComponentCtrl(userStateService, userManagerService)
     const dvm = this;
     dvm.state = userStateService;
     dvm.um = userManagerService;
-    dvm.showPassword = false;
 
     dvm.set = function() {
         dvm.um.resetPassword(dvm.state.selectedUser.username, dvm.password)

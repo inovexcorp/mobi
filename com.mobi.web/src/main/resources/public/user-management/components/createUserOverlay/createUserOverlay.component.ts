@@ -65,7 +65,6 @@ function createUserOverlayComponentCtrl(userStateService, userManagerService, RE
         lastName: '',
         email: ''
     };
-    dvm.showPassword = false;
 
     dvm.getUsernames = function() {
         return map(dvm.um.users, 'username');

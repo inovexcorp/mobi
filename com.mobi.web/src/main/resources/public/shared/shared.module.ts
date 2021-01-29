@@ -59,7 +59,6 @@ import markdownEditorComponent from './components/markdownEditor/markdownEditor.
 import materialTabComponent from './components/materialTab/materialTab.component';
 import materialTabsetComponent from './components/materialTabset/materialTabset.component';
 import pagingComponent from './components/paging/paging.component';
-import passwordConfirmInputComponent from './components/passwordConfirmInput/passwordConfirmInput.component';
 import radioButtonComponent from './components/radioButton/radioButton.component';
 import rdfVisualizationComponent from './components/rdfVisualization/rdfVisualization.component';
 import recordKeywordsComponent from './components/recordKeywords/recordKeywords.component';
@@ -72,6 +71,7 @@ import statementDisplayComponent from './components/statementDisplay/statementDi
 import stepProgressBarComponent from './components/stepProgressBar/stepProgressBar.component';
 import textAreaComponent from './components/textArea/textArea.component';
 import textInputComponent from './components/textInput/textInput.component';
+import unmaskPasswordComponent from './components/unmaskPassword/unmaskPassword.component';
 import userAccessControlsComponent from './components/userAccessControls/userAccessControls.component';
 import valueDisplayComponent from './components/valueDisplay/valueDisplay.component';
 
@@ -80,7 +80,6 @@ import aDisabled from './directives/aDisabled/aDisabled.directive';
 import buttonHoverText from './directives/buttonHoverText/buttonHoverText.directive';
 import clickAnywhereButHere from './directives/clickAnywhereButHere/clickAnywhereButHere.directive';
 import clickToCopy from './directives/clickToCopy/clickToCopy.directive';
-import compareTo from './directives/compareTo/compareTo.directive';
 import disableAnimate from './directives/disableAnimate/disableAnimate.directive';
 import dragFile from './directives/dragFile/dragFile.directive';
 import dragMe from './directives/dragMe/dragMe.directive';
@@ -222,7 +221,6 @@ angular.module('shared', [])
     .component('materialTab', materialTabComponent)
     .component('materialTabset', materialTabsetComponent)
     .component('paging', pagingComponent)
-    .component('passwordConfirmInput', passwordConfirmInputComponent)
     .component('radioButton', radioButtonComponent)
     .component('rdfVisualization', rdfVisualizationComponent)
     .component('recordKeywords', recordKeywordsComponent)
@@ -235,6 +233,7 @@ angular.module('shared', [])
     .component('stepProgressBar', stepProgressBarComponent)
     .component('textArea', textAreaComponent)
     .component('textInput', textInputComponent)
+    .component('unmaskPassword', unmaskPasswordComponent)
     .component('userAccessControls', userAccessControlsComponent)
     .component('valueDisplay', valueDisplayComponent)
     .directive('emailIri', emailIri)
@@ -242,7 +241,6 @@ angular.module('shared', [])
     .directive('buttonHoverText', buttonHoverText)
     .directive('clickAnywhereButHere', clickAnywhereButHere)    
     .directive('clickToCopy', clickToCopy)
-    .directive('compareTo', compareTo)
     .directive('disableAnimate', disableAnimate)
     .directive('dragFile', dragFile)
     .directive('dragMe', dragMe)

@@ -87,7 +87,6 @@ describe('Password Tab component', function() {
                 expect(this.controller.errorMessage).toEqual('');
                 expect(this.controller.currentPassword).toEqual('');
                 expect(this.controller.password).toEqual('');
-                expect(this.controller.confirmedPassword).toEqual('');
             });
         });
     });
@@ -99,13 +98,10 @@ describe('Password Tab component', function() {
             expect(this.element.querySelectorAll('.col-6').length).toEqual(1);
             expect(this.element.querySelectorAll('.offset-3').length).toEqual(1);
         });
-        ['block', 'block-content', 'block-footer'].forEach(test => {
+        ['block', 'block-content', 'block-footer', 'unmask-password', '.form-group'].forEach(test => {
             it('with a ' + test, function() {
-                expect(this.element.find(test).length).toEqual(1);
+                expect(this.element.querySelectorAll(test).length).toEqual(1);
             });
-        });
-        it('with .form-groups', function() {
-            expect(this.element.querySelectorAll('.form-group').length).toEqual(2);
         });
         it('depending on whether an error has occurred', function() {
             expect(this.element.find('error-display').length).toEqual(0);
