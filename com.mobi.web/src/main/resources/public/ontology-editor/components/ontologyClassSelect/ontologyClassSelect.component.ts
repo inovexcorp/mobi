@@ -35,9 +35,11 @@ const template = require('./ontologyClassSelect.component.html');
  * `ontologyClassSelect` is a component that creates a Bootstrap `form-group` with a `ui-select` of the IRIs of
  * all the classes in the current {@link shared.service:ontologyStateService selected ontology} and its
  * imports. The value of the select is bound to `bindModel`, but only one way. The provided `changeEvent`
- * function is expected to update the value of `bindModel`.
+ * function is expected to update the value of `bindModel`. CCan also optionally provide more IRIs to be included on top
+ * of the list of class IRIs
  *
  * @param {Object[]} bindModel The variable to bind the selected class IRIs to
+ * @param {string[]} extraOptions Any extra IRIs to be included in the dropdown options
  * @param {Function} changeEvent A function that will be called when the value of the `ui-select` changes. Should
  * update the value of `bindModel`. Expects an argument called `values`.
  * @param {Function} lockChoice An optional expression to determine whether a selected class should be locked
@@ -46,6 +48,7 @@ const ontologyClassSelectComponent = {
     template,
     bindings: {
         bindModel: '<',
+        extraOptions: '<',
         lockChoice: '&',
         changeEvent: '&'
     },
@@ -56,18 +59,22 @@ const ontologyClassSelectComponent = {
 ontologyClassSelectComponentCtrl.$inject = ['ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
 
 function ontologyClassSelectComponentCtrl(ontologyStateService, utilService, ontologyUtilsManagerService) {
-    var dvm = this;
-    var os = ontologyStateService;
+    const dvm = this;
+    const os = ontologyStateService;
     dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.util = utilService;
     dvm.array = [];
 
     dvm.getValues = function(searchText) {
-        dvm.array =  dvm.ontoUtils.getSelectList(Object.keys(os.listItem.classes.iris), searchText, dvm.ontoUtils.getDropDownText);
-    }
+        let iris = Object.keys(os.listItem.classes.iris);
+        if (dvm.extraOptions && dvm.extraOptions.length) {
+            iris = iris.concat(dvm.extraOptions);
+        }
+        dvm.array =  dvm.ontoUtils.getSelectList(iris, searchText, dvm.ontoUtils.getDropDownText);
+    };
     dvm.onChange = function() {
         dvm.changeEvent({values: dvm.bindModel});
-    }
+    };
 }
 
 export default ontologyClassSelectComponent;
