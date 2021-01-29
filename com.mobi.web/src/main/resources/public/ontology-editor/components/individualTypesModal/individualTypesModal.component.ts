@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import { difference, forEach, get, remove, set, pull, unset } from 'lodash';
+import { difference, forEach, get, remove, set, pull, unset, some } from 'lodash';
 
 const template = require('./individualTypesModal.component.html');
 
@@ -54,30 +54,29 @@ const individualTypesModalComponent = {
 individualTypesModalComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'prefixes'];
 
 function individualTypesModalComponentCtrl(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes) {
-    var dvm = this;
+    const dvm = this;
     dvm.os = ontologyStateService;
     dvm.om = ontologyManagerService;
     dvm.ontoUtils = ontologyUtilsManagerService;
+    dvm.prefixes = prefixes;
     dvm.types = [];
 
     dvm.$onInit = function() {
         dvm.types = angular.copy(dvm.os.listItem.selected['@type']);
-    }
-    dvm.isNamedIndividual = function(iri) {
-        return iri === prefixes.owl + 'NamedIndividual';
-    }
+    };
     dvm.submit = function() {
-        if (dvm.types.length < 2) {
-            dvm.error = 'Individual must have a type other than Named Individual';
+        // Ensure the Individual has at least type that's an actual class so it doesn't disappear from the UI
+        if (!some(dvm.types, type => type in dvm.os.listItem.classes.iris)) {
+            dvm.error = 'Types must include at least one defined Class';
             return;
         }
-        var originalTypes = angular.copy(dvm.os.listItem.selected['@type']);
+        const originalTypes = angular.copy(dvm.os.listItem.selected['@type']);
         
         // Handle vocabulary stuff
-        var wasConcept = dvm.ontoUtils.containsDerivedConcept(originalTypes);
-        var isConcept = dvm.ontoUtils.containsDerivedConcept(dvm.types);
-        var wasConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(originalTypes);
-        var isConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(dvm.types);
+        let wasConcept = dvm.ontoUtils.containsDerivedConcept(originalTypes);
+        let isConcept = dvm.ontoUtils.containsDerivedConcept(dvm.types);
+        let wasConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(originalTypes);
+        let isConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(dvm.types);
 
         if (isConcept && isConceptScheme) {
             dvm.error = 'Individual cannot be both a Concept and Concept Scheme';
@@ -86,28 +85,28 @@ function individualTypesModalComponentCtrl(ontologyManagerService, ontologyState
 
         dvm.os.listItem.selected['@type'] = dvm.types;
         
-        var addedTypes = difference(dvm.types, originalTypes);
-        var removedTypes = difference(originalTypes, dvm.types);
+        const addedTypes = difference(dvm.types, originalTypes);
+        const removedTypes = difference(originalTypes, dvm.types);
 
         if (addedTypes.length || removedTypes.length) {
-            var unselect = false;
+            let unselect = false;
 
             // Handle vocabulary stuff
-            var wasConcept = dvm.ontoUtils.containsDerivedConcept(originalTypes);
-            var isConcept = dvm.ontoUtils.containsDerivedConcept(dvm.types);
-            var wasConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(originalTypes);
-            var isConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(dvm.types);
+            wasConcept = dvm.ontoUtils.containsDerivedConcept(originalTypes);
+            isConcept = dvm.ontoUtils.containsDerivedConcept(dvm.types);
+            wasConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(originalTypes);
+            isConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(dvm.types);
 
             // Handle added types
             forEach(addedTypes, (type:any) => {
-                var indivs = get(dvm.os.listItem.classesAndIndividuals, type, []);
+                const indivs = get(dvm.os.listItem.classesAndIndividuals, type, []);
                 indivs.push(dvm.os.listItem.selected['@id']);
                 dvm.os.listItem.classesAndIndividuals[type] = indivs;
             });
 
             // Handle removed types
             forEach(removedTypes, ( type:any ) => {
-                var parentAndIndivs = get(dvm.os.listItem.classesAndIndividuals, "['" + type + "']", []);
+                const parentAndIndivs = get(dvm.os.listItem.classesAndIndividuals, '[\'' + type + '\']', []);
                 if (parentAndIndivs.length) {
                     remove(parentAndIndivs, item => item === dvm.os.listItem.selected['@id']);
                     if (!parentAndIndivs.length) {
@@ -183,10 +182,10 @@ function individualTypesModalComponentCtrl(ontologyManagerService, ontologyState
         } else {
             dvm.close();
         }
-    }
+    };
     dvm.cancel = function() {
         dvm.dismiss();
-    }
+    };
 }
 
 export default individualTypesModalComponent;
