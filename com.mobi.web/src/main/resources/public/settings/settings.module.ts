@@ -23,7 +23,7 @@
 import * as angular from 'angular';
 import { NgModule } from '@angular/core';
 import { downgradeComponent } from '@angular/upgrade/static';
-import { MatTabsModule } from '@angular/material/tabs';
+import { MatTabsModule, MatFormFieldModule, MatInputModule, MatButtonModule } from '@angular/material';
 
 import { SharedModule } from '../shared/shared.module';
 
@@ -35,7 +35,10 @@ import { SettingsPageComponent } from './components/settingsPage/settingsPage.co
 @NgModule({
     imports: [
         SharedModule,
-        MatTabsModule
+        MatTabsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule
     ],
     declarations: [
         SettingsPageComponent,

@@ -28,20 +28,20 @@
             <p *ngIf="success && profileForm.pristine" class="text-success">
                 <i class="fa fa-check fa-fw"></i><span>Profile successfully saved</span>
             </p>
-            <!-- TODO: Switch back to textInput when upgraded -->
-            <div class="form-group">
-                <label class="control-label admin-label" for="firstName">First Name <small class="text-muted">(Optional)</small></label>
-                <input type="text" name="firstName" class="form-control admin-input" formControlName="firstName">
-            </div>
-            <div class="form-group">
-                <label class="control-label admin-label" for="lastName">Last Name <small class="text-muted">(Optional)</small></label>
-                <input type="text" name="lastName" class="form-control admin-input" formControlName="lastName">
-            </div>
-            <div class="form-group">
-                <label class="control-label admin-label" for="email">Email <small class="text-muted">(Optional)</small></label>
-                <input type="text" name="email" class="form-control admin-input" [ngClass]="{'is-invalid': profileForm.controls.email.dirty && profileForm.controls.email.invalid, 'is-valid': profileForm.controls.email.dirty && profileForm.controls.email.valid}" formControlName="email">
-            </div>
-            <button class="btn btn-primary" type="submit" [disabled]="profileForm.pristine || profileForm.invalid || currentUser.external">Save</button>
+            <mat-form-field class="w-100">
+                <mat-label>First Name <small class="text-muted">(Optional)</small></mat-label>
+                <input matInput name="firstName" formControlName="firstName">
+            </mat-form-field>
+            <mat-form-field class="w-100">
+                <mat-label>Last Name <small class="text-muted">(Optional)</small></mat-label>
+                <input matInput name="lastName" formControlName="lastName">
+            </mat-form-field>
+            <mat-form-field class="w-100">
+                <mat-label>Email <small class="text-muted">(Optional)</small></mat-label>
+                <input matInput name="email" formControlName="email">
+                <mat-error *ngIf="profileForm.controls.email.invalid">Not a valid email</mat-error>
+            </mat-form-field>
+            <button mat-raised-button color="primary" type="submit" [disabled]="profileForm.pristine || profileForm.invalid || currentUser.external">Save</button>
         </form>
     </div>
 </div>
