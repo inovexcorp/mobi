@@ -7,7 +7,7 @@ stages:
 
 variables:
   GIT_DEPTH: 10 #Sets git depth to a lower number to optimize speed
-  ARTIFACTORY_BASE_URL: "https://artifactory.inovexcorp.com/artifactory/"
+  NEXUS_URL: "http://nexus.inovexcorp.com/nexus"
   # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log. `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
   MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
   MAVEN_CLI_OPTS: "--batch-mode --errors --show-version"
@@ -95,8 +95,8 @@ artifactory_release:
     - branches
   script:
     - mvn $MAVEN_CLI_OPTS clean install -P release-build -DproductId=$GA_KEY
-    - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "$ARTIFACTORY_BASE_URL/mobi-binaries/win/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip
-    - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "$ARTIFACTORY_BASE_URL/mobi-binaries/nix/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz
+    - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz $NEXUS_URL/repository/mobicommunity-raw-prod-hosted/nix/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz
+    - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip $NEXUS_URL/repository/mobicommunity-raw-prod-hosted/win/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip
   artifacts:
     paths:
       - mobi-distribution/target/mobi-distribution-$VERSION* 

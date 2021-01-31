@@ -1069,6 +1069,43 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public Difference getCommitDifferenceForSubject(Resource subjectId, Resource commitId, RepositoryConnection conn) {
+        Revision revision = getRevision(commitId, conn);
+
+        Model addModel = mf.createModel();
+        Model deleteModel = mf.createModel();
+
+        IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
+                new IllegalStateException("Additions not set on Commit " + commitId));
+        IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
+                new IllegalStateException("Deletions not set on Commit " + commitId));
+
+        conn.getStatements(subjectId, null, null, additionsGraph).forEach(statement ->
+                addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        conn.getStatements(subjectId, null, null, deletionsGraph).forEach(statement ->
+                deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+
+        revision.getGraphRevision().forEach(graphRevision -> {
+            Resource graph = graphRevision.getRevisionedGraph().orElseThrow(() ->
+                    new IllegalStateException("GraphRevision missing Revisioned Graph."));
+            IRI adds = graphRevision.getAdditions().orElseThrow(() ->
+                    new IllegalStateException("Additions not set on Commit " + commitId));
+            IRI dels = graphRevision.getDeletions().orElseThrow(() ->
+                    new IllegalStateException("Deletions not set on Commit " + commitId));
+
+            conn.getStatements(subjectId, null, null, adds).forEach(statement ->
+                    addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
+            conn.getStatements(subjectId, null, null, dels).forEach(statement ->
+                    deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
+        });
+
+        return new Difference.Builder()
+                .additions(addModel)
+                .deletions(deleteModel)
+                .build();
+    }
+
+    @Override
     public Model getCompiledResource(Resource commitId, RepositoryConnection conn) {
         return getCompiledResource(getCommitChain(commitId, true, conn), conn);
     }

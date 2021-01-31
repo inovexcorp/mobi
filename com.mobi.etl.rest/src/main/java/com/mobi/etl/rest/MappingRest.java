@@ -252,8 +252,7 @@ public class MappingRest {
             String mappingJsonld = groupedModelToString(mapping.getModel(), rdfFormat, transformer);
             StreamingOutput stream = os -> {
                 Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-                writer.write(format.equalsIgnoreCase("jsonld") ? getObjectFromJsonld(mappingJsonld).toString() :
-                        mappingJsonld);
+                writer.write(mappingJsonld);
                 writer.flush();
                 writer.close();
             };

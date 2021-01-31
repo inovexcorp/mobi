@@ -38,7 +38,7 @@ catalogManagerService.$inject = ['$http', '$httpParamSerializer', 'httpService',
  * that are returned.
  */
 function catalogManagerService($http, $httpParamSerializer, httpService, $q, prefixes, utilService, REST_PREFIX) {
-    var self = this,
+    const self = this,
         util = utilService,
         prefix = REST_PREFIX + 'catalogs',
         commitsPrefix = REST_PREFIX + 'commits';
@@ -149,7 +149,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
                 }
                 self.recordTypes = responses[0];
                 forEach(responses[1], option => {
-                    var label = util.getBeautifulIRI(option);
+                    const label = util.getBeautifulIRI(option);
                     if (!find(self.sortOptions, {field: option})) {
                         self.sortOptions.push({
                             field: option,
@@ -163,7 +163,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
                     }
                 });
             }, () => $q.reject('Error in catalogManager initialization'));
-    }
+    };
 
     /**
      * @ngdoc method
@@ -179,7 +179,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.getRecordTypes = function() {
         return $http.get(prefix + '/record-types').then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -195,7 +195,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.getSortOptions = function() {
         return $http.get(prefix + '/sort-options').then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -214,7 +214,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.getResultsPage = function(url) {
         return $http.get(url).then($q.resolve, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -240,7 +240,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * with a error message
      */
     self.getRecords = function(catalogId, paginatedConfig, id = '') {
-        var config = {
+        const config = {
             params: util.paginatedConfigToParams(paginatedConfig)
         };
         setDefaultSort(config.params);
@@ -250,10 +250,10 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         if (get(paginatedConfig, 'recordType')) {
             config.params.type = paginatedConfig.recordType;
         }
-        var url = prefix + '/' + encodeURIComponent(catalogId) + '/records';
-        var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        const url = prefix + '/' + encodeURIComponent(catalogId) + '/records';
+        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then($q.resolve, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -272,7 +272,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.getRecord = function(recordId, catalogId) {
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId))
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -295,7 +295,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * message
      */
     self.createRecord = function(catalogId, recordConfig) {
-        var fd = new FormData(),
+        const fd = new FormData(),
             config = {
                 transformRequest: identity,
                 headers: {
@@ -310,7 +310,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         forEach(get(recordConfig, 'keywords', []), word => fd.append('keywords', word));
         return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records', fd, config)
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -329,7 +329,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.updateRecord = function(recordId, catalogId, newRecord) {
         return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId), angular.toJson(newRecord))
             .then(response => recordId, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -347,7 +347,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.deleteRecord = function(recordId, catalogId) {
         return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId))
             .then(response => $q.resolve(), util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -371,13 +371,13 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * with a error message
      */
     self.getRecordDistributions = function(recordId, catalogId, paginatedConfig) {
-        var config = {
+        const config = {
             params: util.paginatedConfigToParams(paginatedConfig)
         };
         setDefaultSort(config.params);
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', config)
             .then($q.resolve, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -397,7 +397,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.getRecordDistribution = function(distributionId, recordId, catalogId) {
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId))
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -421,7 +421,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * message
      */
     self.createRecordDistribution = function(recordId, catalogId, distributionConfig) {
-        var fd = new FormData(),
+        const fd = new FormData(),
             config = {
                 transformRequest: identity,
                 headers: {
@@ -443,7 +443,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         }
         return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', fd, config)
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -464,7 +464,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.updateRecordDistribution = function(distributionId, recordId, catalogId, newDistribution) {
         return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId), angular.toJson(newDistribution))
             .then(response => distributionId, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -484,7 +484,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.deleteRecordDistribution = function(distributionId, recordId, catalogId) {
         return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId))
             .then(response => $q.resolve(), util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -508,13 +508,13 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * with a error message
      */
     self.getRecordVersions = function(recordId, catalogId, paginatedConfig) {
-        var config = {
+        const config = {
             params: util.paginatedConfigToParams(paginatedConfig)
         };
         setDefaultSort(config.params);
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', config)
             .then($q.resolve, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -532,7 +532,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.getRecordLatestVersion = function(recordId, catalogId) {
         return getRecordVersion('latest', recordId, catalogId);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -551,8 +551,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.getRecordVersion = function(versionId, recordId, catalogId) {
         return getRecordVersion(encodeURIComponent(versionId), recordId, catalogId);
-    }
-
+    };
 
     /**
      * @ngdoc method
@@ -575,7 +574,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.createRecordVersion = function(recordId, catalogId, versionConfig) {
         versionConfig.type = prefixes.catalog + 'Version';
         return createVersion(recordId, catalogId, versionConfig);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -599,7 +598,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * message
      */
     self.createRecordTag = function(recordId, catalogId, tagConfig) {
-        var fd = new FormData(),
+        const fd = new FormData(),
             config = {
                 transformRequest: identity,
                 headers: {
@@ -614,7 +613,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         }
         return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/tags', fd, config)
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -635,7 +634,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.updateRecordVersion = function(versionId, recordId, catalogId, newVersion) {
         return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId), angular.toJson(newVersion))
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -655,7 +654,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.deleteRecordVersion = function(versionId, recordId, catalogId) {
         return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId))
             .then(response => $q.resolve(), util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -674,10 +673,10 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {Promise} A promise that resolves to the Version's Commit if found or rejects with an error message
      */
     self.getVersionCommit = function(versionId, recordId, catalogId, format = 'jsonld') {
-        var config = { params: {format} };
+        const config = { params: {format} };
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -702,13 +701,13 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * with a error message
      */
     self.getVersionDistributions = function(versionId, recordId, catalogId, paginatedConfig) {
-        var config = {
+        const config = {
             params: util.paginatedConfigToParams(paginatedConfig)
         };
         setDefaultSort(config.params);
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', config)
             .then($q.resolve, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -729,7 +728,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.getVersionDistribution = function(distributionId, versionId, recordId, catalogId) {
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId))
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -755,7 +754,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * message
      */
     self.createVersionDistribution = function(versionId, recordId, catalogId, distributionConfig) {
-        var fd = new FormData(),
+        const fd = new FormData(),
             config = {
                 transformRequest: identity,
                 headers: {
@@ -777,7 +776,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         }
         return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', fd, config)
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -799,7 +798,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.updateVersionDistribution = function(distributionId, versionId, recordId, catalogId, newDistribution) {
         return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId), angular.toJson(newDistribution))
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -820,7 +819,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.deleteVersionDistribution = function(distributionId, versionId, recordId, catalogId) {
         return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId))
             .then(response => $q.resolve(), util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -846,14 +845,14 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * with a error message
      */
     self.getRecordBranches = function(recordId, catalogId, paginatedConfig, applyUserFilter = false) {
-        var config = {
+        const config = {
             params: util.paginatedConfigToParams(paginatedConfig)
         };
         setDefaultSort(config.params);
         config.params.applyUserFilter = applyUserFilter;
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', config)
             .then($q.resolve, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -871,7 +870,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.getRecordMasterBranch = function(recordId, catalogId) {
         return getRecordBranch('master', recordId, catalogId);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -890,7 +889,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.getRecordBranch = function(branchId, recordId, catalogId) {
         return getRecordBranch(encodeURIComponent(branchId), recordId, catalogId);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -914,7 +913,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.createRecordBranch = function(recordId, catalogId, branchConfig, commitId) {
         branchConfig.type = prefixes.catalog + 'Branch';
         return createBranch(recordId, catalogId, branchConfig, commitId);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -945,7 +944,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
                 branch[prefixes.catalog + 'createdFrom'] = [{'@id': parentBranchId}];
                 return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
             }, $q.reject);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -967,7 +966,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.updateRecordBranch = function(branchId, recordId, catalogId, newBranch) {
         return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId), angular.toJson(newBranch))
             .then(response => branchId, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -987,7 +986,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.deleteRecordBranch = function(branchId, recordId, catalogId) {
         return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId))
             .then(response => $q.resolve(), util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1002,13 +1001,13 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {Promise} A promise that resolves with the Commit or rejects with an error message
      */
     self.getCommit = function(commitId, format = 'jsonld') {
-        var config = {
+        const config = {
             params: { format }
         };
 
         return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId), config)
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1028,15 +1027,15 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {Promise} A promise that resolves with the list of Commits or rejects with an error message
      */
     self.getCommitHistory = function(commitId, targetId, entityId, id = '') {
-        var config = {
+        const config = {
             params: { targetId, entityId }
         };
 
-        var url = commitsPrefix + '/' + encodeURIComponent(commitId) + '/history';
-        var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        const url = commitsPrefix + '/' + encodeURIComponent(commitId) + '/history';
+        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
 
         return promise.then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1053,15 +1052,15 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      *      message.
      */
     self.getCompiledResource = function(commitId, entityId, id = '') {
-        var config = {
+        const config = {
             params: { entityId }
         };
 
-        var url = commitsPrefix + '/' + encodeURIComponent(commitId) + '/resource';
-        var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        const url = commitsPrefix + '/' + encodeURIComponent(commitId) + '/resource';
+        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
 
         return promise.then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1079,14 +1078,35 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      *      rejects with an error message
      */
     self.getDifference = function(commitId, targetId, limit, offset, format='jsonld') {
-        var config = {
+        const config = {
             params: { targetId, limit, offset, format }
         };
         return limit ? $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference', config)
         .then(response => response, util.rejectError) : 
         $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
+
+    /**
+     * @ngdoc method
+     * @name getDifferenceForSubject
+     * @methodOf shared.service:catalogManagerService
+     *
+     * @description
+     * Calls the GET /mobirest/commits/{commitId}/difference/{subjectId} endpoint with the passed Commit id and Subject Id
+     * and returns the Difference between the source and target Commit chains for the specified entity.
+     * 
+     * @param {string} subjectId Id of the entity to receive the source commits.
+     * @param {string} commitId The commit id of the commit whose chain will be merged in to the target.
+     * @param {string} [format='jsonld'] format The RDF format to return the Difference in
+     * @return {Promise} A promise that resolves with the Difference of the two resulting Commit chains or 
+     *      rejects with an error message
+     */
+    self.getDifferenceForSubject = function(subjectId, commitId, format='jsonld') {
+        const config = { params: { format } };
+        return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference' + '/' + encodeURIComponent(subjectId), config)
+            .then(response => response.data, util.rejectError);
+    };
 
     /**
      * @ngdoc method
@@ -1105,13 +1125,13 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {Promise} A promise that resolves with the list of Branch Commits or rejects with an error message
      */
     self.getBranchCommits = function(branchId, recordId, catalogId, targetId) {
-        var config = {
+        const config = {
             params: { targetId }
         };
 
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1130,10 +1150,10 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {Promise} A promise that resolves to the if of the new Commit or rejects with an error message
      */
     self.createBranchCommit = function(branchId, recordId, catalogId, message) {
-        var config = { params: {message} };
+        const config = { params: {message} };
         return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits', null, config)
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1151,10 +1171,10 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {Promise} A promise that resolves to the Commit if found or rejects with an error message
      */
     self.getBranchHeadCommit = function(branchId, recordId, catalogId, format = 'jsonld') {
-        var config = { params: {format} };
+        const config = { params: {format} };
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1173,10 +1193,10 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {Promise} A promise that resolves to the Commit if found or rejects with an error message
      */
     self.getBranchCommit = function(commitId, branchId, recordId, catalogId, format = 'jsonld') {
-        var config = { params: {format} };
+        const config = { params: {format} };
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId), config)
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1197,10 +1217,10 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * with an error message.
      */
     self.getBranchDifference = function(sourceId, targetId, recordId, catalogId, format = 'jsonld') {
-        var config = { params: { format, targetId } };
+        const config = { params: { format, targetId } };
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/difference', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1220,7 +1240,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {Promise} A promise that resolves to the array of Conflict objects or rejects with an error message
      */
     self.getBranchConflicts = function(sourceId, targetId, recordId, catalogId, format = 'jsonld') {
-        var config = {
+        const config = {
             params: {
                 format,
                 targetId
@@ -1228,7 +1248,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         };
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1251,7 +1271,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * message
      */
     self.mergeBranches = function(sourceId, targetId, recordId, catalogId, differenceObj) {
-        var fd = new FormData(),
+        const fd = new FormData(),
             config = {
                 transformRequest: identity,
                 headers: {
@@ -1263,7 +1283,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         fd.append('deletions', has(differenceObj, 'deletions') ? JSON.stringify(differenceObj.deletions) : '[]');
         return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts/resolution', fd, config)
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1284,7 +1304,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {Promise} A promise that resolves to the compiled resource or rejects with an error message.
      */
     self.getResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld') {
-        var config = {
+        const config = {
             headers: {
                 'Content-Type': undefined,
                 'Accept': 'text/plain'
@@ -1296,7 +1316,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         };
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1317,13 +1337,13 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @param {String} format The RDF format to return the compiled resource in
      */
     self.downloadResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld', fileName = 'resource') {
-        var params = $httpParamSerializer({
+        const params = $httpParamSerializer({
             applyInProgressCommit: !!applyInProgressCommit,
             format: format || 'jsonld',
             fileName: fileName || 'resource'
         });
         util.startDownload(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?' + params);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1341,7 +1361,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.createInProgressCommit = function(recordId, catalogId) {
         return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
             .then(response => $q.resolve(), util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1359,7 +1379,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.getInProgressCommit = function(recordId, catalogId) {
         return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
             .then(response => response.data, $q.reject);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1379,7 +1399,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
      */
     self.updateInProgressCommit = function(recordId, catalogId, differenceObj) {
-        var fd = new FormData(),
+        const fd = new FormData(),
             config = {
                 transformRequest: identity,
                 headers: {
@@ -1394,7 +1414,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         }
         return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit', fd, config)
             .then(response => $q.resolve(), util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1412,7 +1432,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.deleteInProgressCommit = function(recordId, catalogId) {
         return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
             .then(response => $q.resolve(), util.rejectError);
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1427,7 +1447,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.getEntityName = function(entity) {
         return util.getDctermsValue(entity, 'title') || '(Anonymous)';
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1442,7 +1462,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.isRecord = function(entity) {
         return includes(get(entity, '@type', []), prefixes.catalog + 'Record');
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1457,7 +1477,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.isVersionedRDFRecord = function(entity) {
         return includes(get(entity, '@type', []), prefixes.catalog + 'VersionedRDFRecord');
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1472,7 +1492,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.isDistribution = function(entity) {
         return includes(get(entity, '@type', []), prefixes.catalog + 'Distribution');
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1487,7 +1507,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.isBranch = function(entity) {
         return includes(get(entity, '@type', []), prefixes.catalog + 'Branch');
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1502,7 +1522,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.isUserBranch = function(entity) {
         return includes(get(entity, '@type', []), prefixes.catalog + 'UserBranch');
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1517,7 +1537,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.isVersion = function(entity) {
         return includes(get(entity, '@type', []), prefixes.catalog + 'Version');
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1532,7 +1552,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.isTag = function(entity) {
         return includes(get(entity, '@type', []), prefixes.catalog + 'Tag');
-    }
+    };
 
     /**
      * @ngdoc method
@@ -1547,10 +1567,10 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.isCommit = function(entity) {
         return includes(get(entity, '@type', []), prefixes.catalog + 'Commit');
-    }
+    };
 
     function createVersion(recordId, catalogId, versionConfig) {
-        var fd = new FormData(),
+        const fd = new FormData(),
             config = {
                 transformRequest: identity,
                 headers: {
@@ -1567,7 +1587,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     }
 
     function createBranch(recordId, catalogId, branchConfig, commitId) {
-        var fd = new FormData(),
+        const fd = new FormData(),
             config = {
                 transformRequest: identity,
                 headers: {
