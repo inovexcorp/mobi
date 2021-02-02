@@ -385,7 +385,14 @@ public class CommitRest {
     @Path("{sourceId}/difference/{subjectId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the Difference in the specified commit for the specified subject.")
+    @Operation(
+            summary = "Retrieves the Difference in the specified commit for the specified subject",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     public Response getDifferenceForSubject(@PathParam("sourceId") String sourceId,
                                   @PathParam("subjectId") String subjectId,
                                   @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
