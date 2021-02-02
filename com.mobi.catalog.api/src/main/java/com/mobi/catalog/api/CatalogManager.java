@@ -38,6 +38,7 @@ import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
@@ -719,6 +720,20 @@ public interface CatalogManager {
      * @throws IllegalStateException    Thrown if the Commit does not have the additions/deletions set.
      */
     Difference getCommitDifference(Resource commitId);
+
+    /**
+     * Gets the addition and deletion statements for a specific entity of a Commit identified by the provided Resource as a
+     * Difference. The statements contained in the returned Difference will have a context that matches the tracked quad.
+     * That is, tracked triples will have no context and tracked quads will have a context that matches the data named
+     * graph.
+     *
+     * @param subjectId The Resource representing the subject to retrieve additions and deletions for.
+     * @param commitId The Resource identifying the Commit to retrieve the Difference from.
+     * @return A Difference object containing the addition and deletion statements for an entity of a Commit.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found
+     * @throws IllegalStateException    Thrown if the Commit does not have the additions/deletions set.
+     */
+    Difference getCommitDifferenceForSubject(Resource subjectId, Resource commitId);
 
     /**
      * Gets the addition and deletion statements of a Commit identified by the provided Resource as a PagedDifference.

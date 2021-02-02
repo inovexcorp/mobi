@@ -38,11 +38,11 @@ ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerServ
  * various entities within the ontology.
  */
 function ontologyManagerService($http, $q, prefixes, catalogManagerService, utilService, $httpParamSerializer, httpService, REST_PREFIX) {
-    var self = this;
-    var prefix = REST_PREFIX + 'ontologies';
-    var cm = catalogManagerService;
-    var util = utilService;
-    var catalogId = '';
+    const self = this;
+    const prefix = REST_PREFIX + 'ontologies';
+    const cm = catalogManagerService;
+    const util = utilService;
+    let catalogId = '';
 
     /**
      * @ngdoc property
@@ -76,7 +76,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.reset = function() {
         self.ontologyRecords = [];
-    }
+    };
     /**
      * @ngdoc method
      * @name initialize
@@ -87,7 +87,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.initialize = function() {
         catalogId = get(cm.localCatalog, '@id', '');
-    }
+    };
     /**
      * @ngdoc method
      * @name uploadOntology
@@ -107,17 +107,17 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @returns {Promise} A promise indicating whether the ontology was persisted.
      */
     self.uploadOntology = function(file, ontologyJson, title, description, keywords, id = '') {
-        var fd = new FormData(),
-            config = {
-                transformRequest: identity,
-                headers: {
-                    'Content-Type': undefined
-                }
-            };
-        if (file != undefined) {
+        const fd = new FormData();
+        const config = {
+            transformRequest: identity,
+            headers: {
+                'Content-Type': undefined
+            }
+        };
+        if (file !== undefined) {
             fd.append('file', file);
         }
-        if (ontologyJson != undefined) {
+        if (ontologyJson !== undefined) {
             fd.append('json', JSON.stringify(ontologyJson));
         }
         fd.append('title', title);
@@ -125,9 +125,9 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
             fd.append('description', description);
         }
         forEach(keywords, word => fd.append('keywords', word));
-        var promise = id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
+        const promise = id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
         return promise.then(response => response.data, util.rejectErrorObject);
-    }
+    };
     /**
      * @ngdoc method
      * @name uploadChangesFile
@@ -144,23 +144,23 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @returns {Promise} A promise with the new in-progress commit to be applied or error message.
      */
     self.uploadChangesFile = function(file, recordId, branchId, commitId) {
-            var fd = new FormData(),
-            config = {
-                transformRequest: identity,
-                headers: {
-                    'Content-Type': undefined,
-                    'Accept': 'application/json'
-                },
-                params: {
-                    branchId,
-                    commitId
-                }
-            };
+        const fd = new FormData();
+        const config = {
+            transformRequest: identity,
+            headers: {
+                'Content-Type': undefined,
+                'Accept': 'application/json'
+            },
+            params: {
+                branchId,
+                commitId
+            }
+        };
         fd.append('file', file);
 
         return $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
             .then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getOntology
@@ -182,7 +182,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @return {Promise} A promise with the ontology at the specified commit in the specified RDF format
      */
     self.getOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', clearCache = false, preview = false, applyInProgressCommit = true) {
-        var config = {
+        const config = {
             headers: {
                 'Accept': 'text/plain'
             },
@@ -197,7 +197,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         };
         return $http.get(prefix + '/' + encodeURIComponent(recordId), config)
             .then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name deleteOntology
@@ -212,7 +212,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     self.deleteOntology = function(recordId) {
         return $http.delete(prefix + '/' + encodeURIComponent(recordId))
             .then(noop, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name downloadOntology
@@ -229,14 +229,14 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param {string} [fileName='ontology'] The name given to the downloaded file
      */
     self.downloadOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', fileName = 'ontology') {
-        var params = $httpParamSerializer({
+        const params = $httpParamSerializer({
             branchId,
             commitId,
             rdfFormat: rdfFormat || 'jsonld',
             fileName: fileName || 'ontology'
         });
         util.startDownload(prefix + '/' + encodeURIComponent(recordId) + '?' + params);
-    }
+    };
     /**
      * @ngdoc method
      * @name deleteOntologyBranch
@@ -254,7 +254,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         return $http.delete(prefix + '/' + encodeURIComponent(recordId) + '/branches/'
             + encodeURIComponent(branchId))
             .then(noop, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getVocabularyStuff
@@ -273,11 +273,11 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * "concepts.hierarchy", "concepts.index", "conceptSchemes.hierarchy", and "conceptSchemes.index".
      */
     self.getVocabularyStuff = function(recordId, branchId, commitId, id = '') {
-        var config = { params: { branchId, commitId } };
-        var url = prefix + '/' + encodeURIComponent(recordId) + '/vocabulary-stuff';
-        var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        const config = { params: { branchId, commitId } };
+        const url = prefix + '/' + encodeURIComponent(recordId) + '/vocabulary-stuff';
+        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getOntologyStuff
@@ -295,11 +295,11 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @return {Promise} A Promise with an object containing listItem keys.
      */
     self.getOntologyStuff = function(recordId, branchId, commitId, clearCache, id = '') {
-        var config = { params: { branchId, commitId, clearCache } };
-        var url = prefix + '/' + encodeURIComponent(recordId) + '/ontology-stuff';
-        var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        const config = { params: { branchId, commitId, clearCache } };
+        const url = prefix + '/' + encodeURIComponent(recordId) + '/ontology-stuff';
+        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getIris
@@ -316,10 +316,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * of arrays of IRI strings
      */
     self.getIris = function(recordId, branchId, commitId) {
-        var config = { params: { branchId, commitId } };
+        const config = { params: { branchId, commitId } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/iris', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getImportedIris
@@ -336,10 +336,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * ontology and values of arrays of IRI strings
      */
     self.getImportedIris = function(recordId, branchId, commitId) {
-        var config = { params: { branchId, commitId } };
+        const config = { params: { branchId, commitId } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-iris', config)
             .then(response => get(response, 'status') === 200 ? response.data : [], util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getClassHierarchies
@@ -356,10 +356,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @return {Promise} A promise with an object containing the class hierarchy and an index of IRIs to parent IRIs
      */
     self.getClassHierarchies = function(recordId, branchId, commitId) {
-        var config = { params: { branchId, commitId } };
+        const config = { params: { branchId, commitId } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/class-hierarchies', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getOntologyClasses
@@ -377,10 +377,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @return {Promise} A promise with an array containing a list of classes
      */
     self.getOntologyClasses = function(recordId, branchId, commitId, applyInProgressCommit = true) {
-        var config = { params: { branchId, commitId, applyInProgressCommit} };
+        const config = { params: { branchId, commitId, applyInProgressCommit} };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/classes', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getDataProperties
@@ -396,10 +396,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @return {Promise} A promise with an array containing a list of data properties.
      */
     self.getDataProperties = function(recordId, branchId, commitId) {
-        var config = { params: { branchId, commitId } };
+        const config = { params: { branchId, commitId } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/data-properties', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getObjProperties
@@ -415,10 +415,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @return {Promise} A promise with an array containing a list of object properties.
      */
     self.getObjProperties = function(recordId, branchId, commitId) {
-        var config = { params: { branchId, commitId } };
+        const config = { params: { branchId, commitId } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/object-properties', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getClassesWithIndividuals
@@ -436,10 +436,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * of IRIs to parent IRIs
      */
     self.getClassesWithIndividuals = function(recordId, branchId, commitId) {
-        var config = { params: { branchId, commitId } };
+        const config = { params: { branchId, commitId } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/classes-with-individuals', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getDataPropertyHierarchies
@@ -457,10 +457,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * parent IRIs
      */
     self.getDataPropertyHierarchies = function(recordId, branchId, commitId) {
-        var config = { params: { branchId, commitId } };
+        const config = { params: { branchId, commitId } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/data-property-hierarchies', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getObjectPropertyHierarchies
@@ -478,10 +478,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * parent IRIs
      */
     self.getObjectPropertyHierarchies = function(recordId, branchId, commitId) {
-        var config = { params: { branchId, commitId } };
+        const config = { params: { branchId, commitId } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/object-property-hierarchies', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getAnnotationPropertyHierarchies
@@ -499,10 +499,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * IRIs to parent IRIs
      */
     self.getAnnotationPropertyHierarchies = function(recordId, branchId, commitId) {
-        var config = { params: { branchId, commitId } };
+        const config = { params: { branchId, commitId } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/annotation-property-hierarchies', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name createAnnotation
@@ -520,9 +520,9 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      *      rejects with an error message
      */
     self.createAnnotation = function(recordId, annotationIRIs, iri) {
-        var annotationJSON = {'@id': iri, '@type': [prefixes.owl + 'AnnotationProperty']};
+        const annotationJSON = {'@id': iri, '@type': [prefixes.owl + 'AnnotationProperty']};
         if (indexOf(annotationIRIs, iri) === -1) {
-            var config = {
+            const config = {
                 params: {
                     annotationjson: annotationJSON
                 }
@@ -538,7 +538,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         } else {
             return $q.reject('This ontology already has an OWL Annotation declared with that IRI.');
         }
-    }
+    };
     /**
      * @ngdoc method
      * @name getConceptHierarchies
@@ -556,10 +556,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * parent IRIs
      */
     self.getConceptHierarchies = function(recordId, branchId, commitId) {
-        var config = { params: { branchId, commitId } };
+        const config = { params: { branchId, commitId } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-hierarchies', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getConceptSchemeHierarchies
@@ -577,10 +577,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * parent IRIs
      */
     self.getConceptSchemeHierarchies = function(recordId, branchId, commitId) {
-        var config = { params: { branchId, commitId } };
+        const config = { params: { branchId, commitId } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-scheme-hierarchies', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getImportedOntologies
@@ -598,7 +598,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * ontology.
      */
     self.getImportedOntologies = function(recordId, branchId, commitId, rdfFormat = 'jsonld') {
-        var config = {params: {rdfFormat, branchId, commitId}};
+        const config = {params: {rdfFormat, branchId, commitId}};
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-ontologies', config)
             .then(response => {
                 if (get(response, 'status') === 200) {
@@ -609,7 +609,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
                     return util.rejectError(response);
                 }
             }, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getEntityUsages
@@ -628,9 +628,9 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @returns {Promise} A promise containing the JSON SPARQL query results bindings.
      */
     self.getEntityUsages = function(recordId, branchId, commitId, entityIRI, queryType = 'select', id = '') {
-        var config = {params: {branchId, commitId, queryType}};
-        var url = prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(entityIRI);
-        var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        const config = {params: {branchId, commitId, queryType}};
+        const url = prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(entityIRI);
+        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then(response => {
             if (queryType === 'construct') {
                 return response.data;
@@ -638,7 +638,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
                 return response.data.results.bindings;
             }
         }, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getOntologyEntityNames
@@ -657,15 +657,15 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @return {Promise} A Promise with an object containing EntityNames.
      */
     self.getOntologyEntityNames = function(recordId, branchId, commitId, includeImports = true, applyInProgressCommit= true, filterResources = [], id = '') {
-        var config = { params: { branchId, commitId, includeImports, applyInProgressCommit },
+        const config = { params: { branchId, commitId, includeImports, applyInProgressCommit },
             headers: {
                 'Content-Type': 'application/json'
             } };
-        var url = prefix + '/' + encodeURIComponent(recordId) + '/entity-names';
-        var data = {filterResources};
-        var promise = id ? httpService.post(url, data, config, id) : $http.post(url, data, config);
+        const url = prefix + '/' + encodeURIComponent(recordId) + '/entity-names';
+        const data = {filterResources};
+        const promise = id ? httpService.post(url, data, config, id) : $http.post(url, data, config);
         return promise.then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getSearchResults
@@ -682,8 +682,8 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @returns {Promise} A promise containing the SPARQL query results.
      */
     self.getSearchResults = function(recordId, branchId, commitId, searchText, id) {
-        var defaultErrorMessage = 'An error has occurred with your search.';
-        var config = { params: { searchText, branchId, commitId } };
+        const defaultErrorMessage = 'An error has occurred with your search.';
+        const config = { params: { searchText, branchId, commitId } };
         return httpService.get(prefix + '/' + encodeURIComponent(recordId) + '/search-results', config, id)
             .then(response => {
                 if (get(response, 'status') === 200) {
@@ -694,7 +694,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
                     return $q.reject(defaultErrorMessage);
                 }
             }, response => util.rejectError(response, defaultErrorMessage));
-    }
+    };
     /**
      * @ngdoc method
      * @name getQueryResults
@@ -713,11 +713,11 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @return {Promise} A promise containing the SPARQL query results
      */
     self.getQueryResults = function(recordId, branchId, commitId, query, format,  id = '', includeImports = true, applyInProgressCommit = false) {
-        var config = { params: { query, branchId, commitId, format, includeImports, applyInProgressCommit } };
-        var url = prefix + '/' + encodeURIComponent(recordId) + '/query';
-        var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        const config = { params: { query, branchId, commitId, format, includeImports, applyInProgressCommit } };
+        const url = prefix + '/' + encodeURIComponent(recordId) + '/query';
+        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getFailedImports
@@ -732,10 +732,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @return {Promise} A promise containing the list of imported ontology IRIs that failed to resolve.
      */
     self.getFailedImports = function(recordId, branchId, commitId) {
-        var config = { params: { branchId, commitId } };
+        const config = { params: { branchId, commitId } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/failed-imports', config)
             .then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name getEntityAndBlankNodes
@@ -757,11 +757,11 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @return {Promise} A promise containing the RDF of the specified entity and its blank nodes
      */
     self.getEntityAndBlankNodes = function(recordId, branchId, commitId, entityId, format = 'jsonld', includeImports = true, applyInProgressCommit = true, id = '')  {
-        var config = { params: { branchId, commitId, format, includeImports, applyInProgressCommit } };
-        var url = prefix + '/' + encodeURIComponent(recordId) + '/entities/' + encodeURIComponent(entityId);
-        var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        const config = { params: { branchId, commitId, format, includeImports, applyInProgressCommit } };
+        const url = prefix + '/' + encodeURIComponent(recordId) + '/entities/' + encodeURIComponent(entityId);
+        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then(response => response.data, util.rejectError);
-    }
+    };
     /**
      * @ngdoc method
      * @name isDeprecated
@@ -774,9 +774,9 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @return {boolean} Returns true if the owl:deprecated value is "true" or "1", otherwise returns false.
      */
     self.isDeprecated = function(entity) {
-        var deprecated = util.getPropertyValue(entity, prefixes.owl + 'deprecated');
+        const deprecated = util.getPropertyValue(entity, prefixes.owl + 'deprecated');
         return deprecated === 'true' || deprecated === '1';
-    }
+    };
     /**
      * @ngdoc method
      * @name isOntology
@@ -790,7 +790,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.isOntology = function(entity) {
         return includes(get(entity, '@type', []), prefixes.owl + 'Ontology');
-    }
+    };
     /**
      * @ngdoc method
      * @name isOntologyRecord
@@ -804,7 +804,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.isOntologyRecord = function(entity) {
         return includes(get(entity, '@type', []), prefixes.ontologyEditor + 'OntologyRecord');
-    }
+    };
     /**
      * @ngdoc method
      * @name hasOntologyEntity
@@ -819,7 +819,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.hasOntologyEntity = function(ontology) {
         return some(ontology, entity => self.isOntology(entity));
-    }
+    };
     /**
      * @ngdoc method
      * @name getOntologyEntity
@@ -833,7 +833,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getOntologyEntity = function(ontology) {
         return find(ontology, entity => self.isOntology(entity));
-    }
+    };
     /**
      * @ngdoc method
      * @name getOntologyIRI
@@ -846,9 +846,9 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @returns {Object} Returns the ontology entity IRI.
      */
     self.getOntologyIRI = function(ontology) {
-        var entity = self.getOntologyEntity(ontology);
+        const entity = self.getOntologyEntity(ontology);
         return get(entity, '@id', '');
-    }
+    };
     /**
      * @ngdoc method
      * @name isDatatype
@@ -862,7 +862,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         */
     self.isDatatype = function(entity) {
         return includes(get(entity, '@type', []), prefixes.rdfs + 'Datatype');
-    }
+    };
     /**
      * @ngdoc method
      * @name isClass
@@ -876,7 +876,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.isClass = function(entity) {
         return includes(get(entity, '@type', []), prefixes.owl + 'Class');
-    }
+    };
     /**
      * @ngdoc method
      * @name hasClasses
@@ -891,7 +891,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.hasClasses = function(ontologies) {
         return some(ontologies, ont => some(ont, entity => self.isClass(entity) && !self.isBlankNode(entity)));
-    }
+    };
     /**
      * @ngdoc method
      * @name getClasses
@@ -906,7 +906,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getClasses = function(ontologies) {
         return collectThings(ontologies, entity => self.isClass(entity) && !self.isBlankNode(entity));
-    }
+    };
     /**
      * @ngdoc method
      * @name getClassIRIs
@@ -921,7 +921,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getClassIRIs = function(ontologies) {
         return map(self.getClasses(ontologies), '@id');
-    }
+    };
     /**
      * @ngdoc method
      * @name hasClassProperties
@@ -937,7 +937,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.hasClassProperties = function(ontologies, classIRI) {
         return some(ontologies, ont => some(ont, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]}));
-    }
+    };
     /**
      * @ngdoc method
      * @name getClassProperties
@@ -953,7 +953,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getClassProperties = function(ontologies, classIRI) {
         return collectThings(ontologies, entity => isMatch(entity, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]}));
-    }
+    };
     /**
      * @ngdoc method
      * @name getClassProperties
@@ -969,7 +969,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getClassPropertyIRIs = function(ontologies, classIRI) {
         return map(self.getClassProperties(ontologies, classIRI), '@id');
-    }
+    };
     /**
      * @ngdoc method
      * @name isObjectProperty
@@ -983,7 +983,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.isObjectProperty = function(entity) {
         return includes(get(entity, '@type', []), prefixes.owl + 'ObjectProperty');
-    }
+    };
     /**
      * @ngdoc method
      * @name hasObjectProperties
@@ -998,7 +998,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.hasObjectProperties = function(ontologies) {
         return some(ontologies, ont => some(ont, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity)));
-    }
+    };
     /**
      * @ngdoc method
      * @name getObjectProperties
@@ -1013,7 +1013,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getObjectProperties = function(ontologies) {
         return collectThings(ontologies, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity));
-    }
+    };
     /**
      * @ngdoc method
      * @name getObjectPropertyIRIs
@@ -1028,7 +1028,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getObjectPropertyIRIs = function(ontologies) {
         return map(self.getObjectProperties(ontologies), '@id');
-    }
+    };
     /**
      * @ngdoc method
      * @name isDataTypeProperty
@@ -1041,10 +1041,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @returns {boolean} Returns true if it is an owl:DatatypeProperty entity, otherwise returns false.
      */
     self.isDataTypeProperty = function(entity) {
-        var types = get(entity, '@type', []);
+        const types = get(entity, '@type', []);
         return includes(types, prefixes.owl + 'DatatypeProperty')
             || includes(types, prefixes.owl + 'DataTypeProperty');
-    }
+    };
     /**
      * @ngdoc method
      * @name hasDataTypeProperties
@@ -1059,7 +1059,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.hasDataTypeProperties = function(ontologies) {
         return some(ontologies, ont => some(ont, entity => self.isDataTypeProperty(entity)));
-    }
+    };
     /**
      * @ngdoc method
      * @name getDataTypeProperties
@@ -1074,7 +1074,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getDataTypeProperties = function(ontologies) {
         return collectThings(ontologies, entity => self.isDataTypeProperty(entity) && !self.isBlankNode(entity));
-    }
+    };
     /**
      * @ngdoc method
      * @name getDataTypePropertyIRIs
@@ -1089,7 +1089,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getDataTypePropertyIRIs = function(ontologies) {
         return map(self.getDataTypeProperties(ontologies),'@id');
-    }
+    };
     /**
      * @ngdoc method
      * @name isProperty
@@ -1104,7 +1104,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.isProperty = function(entity) {
         return self.isObjectProperty(entity) || self.isDataTypeProperty(entity);
-    }
+    };
     /**
      * @ngdoc method
      * @name hasNoDomainProperties
@@ -1121,7 +1121,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     self.hasNoDomainProperties = function(ontologies) {
         return some(ontologies, ont =>
                     some(ont, entity => self.isProperty(entity) && !has(entity, prefixes.rdfs + 'domain')));
-    }
+    };
     /**
      * @ngdoc method
      * @name getNoDomainProperties
@@ -1136,7 +1136,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getNoDomainProperties = function(ontologies) {
         return collectThings(ontologies, entity => self.isProperty(entity) && !has(entity, prefixes.rdfs + 'domain'));
-    }
+    };
     /**
      * @ngdoc method
      * @name getNoDomainPropertyIRIs
@@ -1151,7 +1151,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getNoDomainPropertyIRIs = function(ontologies) {
         return map(self.getNoDomainProperties(ontologies), '@id');
-    }
+    };
     /**
      * @ngdoc method
      * @name isAnnotation
@@ -1165,7 +1165,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.isAnnotation = function(entity) {
         return includes(get(entity, '@type', []), prefixes.owl + 'AnnotationProperty');
-    }
+    };
     /**
      * @ngdoc method
      * @name hasAnnotations
@@ -1181,7 +1181,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     self.hasAnnotations = function(ontologies) {
         return some(ontologies, ont =>
                     some(ont, entity => self.isAnnotation(entity) && !self.isBlankNode(entity)));
-    }
+    };
     /**
      * @ngdoc method
      * @name getAnnotations
@@ -1195,7 +1195,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getAnnotations = function(ontologies) {
         return collectThings(ontologies, entity => self.isAnnotation(entity) && !self.isBlankNode(entity));
-    }
+    };
     /**
      * @ngdoc method
      * @name getAnnotationIRIs
@@ -1210,10 +1210,10 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getAnnotationIRIs = function(ontologies) {
         return map(self.getAnnotations(ontologies), '@id');
-    }
+    };
     /**
      * @ngdoc method
-     * @name isIndividual
+     * @name isNamedIndividual
      * @methodOf shared.service:ontologyManagerService
      *
      * @description
@@ -1222,9 +1222,30 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param {Object} entity The entity you want to check.
      * @returns {boolean} Returns true if it is an owl:NamedIndividual entity, otherwise returns false.
      */
-    self.isIndividual = function(entity) {
+    self.isNamedIndividual = function(entity) {
         return includes(get(entity, '@type', []), prefixes.owl + 'NamedIndividual');
-    }
+    };
+    /**
+     * @ngdoc method
+     * @name isIndividual
+     * @methodOf shared.service:ontologyManagerService
+     *
+     * @description
+     * Checks if the provided entity is an individual (i.e. not a standard owl: type). Returns a boolean.
+     *
+     * @param {Object} entity The entity you want to check.
+     * @returns {boolean} Returns true if it is an individual, otherwise returns false.
+     */
+    self.isIndividual = function(entity) {
+        return intersection(get(entity, '@type', []), [
+            prefixes.owl + 'Class',
+            prefixes.owl + 'DatatypeProperty',
+            prefixes.owl + 'ObjectProperty',
+            prefixes.owl + 'AnnotationProperty',
+            prefixes.owl + 'Datatype',
+            prefixes.owl + 'Ontology'
+        ]).length === 0;
+    };
     /**
      * @ngdoc method
      * @name hasIndividuals
@@ -1239,7 +1260,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.hasIndividuals = function(ontologies) {
         return some(ontologies, ont => some(ont, entity => self.isIndividual(entity)));
-    }
+    };
     /**
      * @ngdoc method
      * @name getIndividuals
@@ -1253,7 +1274,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getIndividuals = function(ontologies) {
         return collectThings(ontologies, entity => self.isIndividual(entity));
-    }
+    };
     /**
      * @ngdoc method
      * @name hasNoTypeIndividuals
@@ -1269,7 +1290,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     self.hasNoTypeIndividuals = function(ontologies) {
         return some(ontologies, ont =>
                     some(ont, entity => self.isIndividual(entity) && entity['@type'].length === 1));
-    }
+    };
     /**
      * @ngdoc method
      * @name getNoTypeIndividuals
@@ -1284,7 +1305,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getNoTypeIndividuals = function(ontologies) {
         return collectThings(ontologies, entity => self.isIndividual(entity) && entity['@type'].length === 1);
-    }
+    };
     /**
      * @ngdoc method
      * @name hasClassIndividuals
@@ -1300,7 +1321,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.hasClassIndividuals = function(ontologies, classIRI) {
         return some(self.getIndividuals(ontologies), {'@type': [classIRI]});
-    }
+    };
     /**
      * @ngdoc method
      * @name getClassIndividuals
@@ -1316,7 +1337,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getClassIndividuals = function(ontologies, classIRI) {
         return filter(self.getIndividuals(ontologies), {'@type': [classIRI]});
-    }
+    };
     /**
      * @ngdoc method
      * @name isRestriction
@@ -1330,7 +1351,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.isRestriction = function(entity) {
         return includes(get(entity, '@type', []), prefixes.owl + 'Restriction');
-    }
+    };
     /**
      * @ngdoc method
      * @name getRestrictions
@@ -1344,7 +1365,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getRestrictions = function(ontologies) {
         return collectThings(ontologies, entity => self.isRestriction(entity));
-    }
+    };
     /**
      * @ngdoc method
      * @name isBlankNode
@@ -1358,7 +1379,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.isBlankNode = function(entity) {
         return self.isBlankNodeId(get(entity, '@id', ''));
-    }
+    };
     /**
      * @ngdoc method
      * @name isBlankNodeId
@@ -1372,7 +1393,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.isBlankNodeId = function(id) {
         return isString(id) && (includes(id, '/.well-known/genid/') || includes(id, '_:genid') || includes(id, '_:b'));
-    }
+    };
     /**
      * @ngdoc method
      * @name getBlankNodes
@@ -1386,7 +1407,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getBlankNodes = function(ontologies) {
         return collectThings(ontologies, entity => self.isBlankNode(entity));
-    }
+    };
     /**
      * @ngdoc method
      * @name getEntity
@@ -1401,15 +1422,15 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @returns {Object} An Object which represents the requested entity.
      */
     self.getEntity = function(ontologies, entityIRI) {
-        var retValue;
+        let retValue;
         forEach(ontologies, ont => {
             retValue = find(ont, {'@id': entityIRI});
-            if (retValue != null) {
+            if (retValue !== null) {
                 return false; //This breaks the loop. It is NOT the entire function's return value!
             }
         });
         return retValue;
-    }
+    };
     /**
      * @ngdoc method
      * @name getEntityName
@@ -1424,14 +1445,14 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @returns {string} The beautified IRI string.
      */
     self.getEntityName = function(entity) {
-        var result = reduce(self.entityNameProps, (tempResult, prop) => tempResult || getPrioritizedValue(entity, prop), '');
+        let result = reduce(self.entityNameProps, (tempResult, prop) => tempResult || getPrioritizedValue(entity, prop), '');
         if (!result && has(entity, '@id')) {
             result = utilService.getBeautifulIRI(entity['@id']);
         }
         return result;
-    }
+    };
     function getPrioritizedValue(entity, prop) {
-        return get(find(get(entity, "['" + prop + "']"), {'@language': 'en'}), '@value') || utilService.getPropertyValue(entity, prop);
+        return get(find(get(entity, '[\'' + prop + '\']'), {'@language': 'en'}), '@value') || utilService.getPropertyValue(entity, prop);
     }
     /**
      * @ngdoc method
@@ -1445,14 +1466,14 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @returns {string[]} The names for the self.entityNameProps.
      */
     self.getEntityNames = function(entity) {
-        var names = [];
+        let names = [];
         forEach(self.entityNameProps, prop => {
             if (has(entity, prop)) {
                 names = concat(names, map(get(entity, prop), '@value'));
             } 
         });
         return uniq(names);
-    }
+    };
     /**
      * @ngdoc method
      * @name getEntityDescription
@@ -1469,7 +1490,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         return utilService.getPropertyValue(entity, prefixes.rdfs + 'comment')
             || utilService.getDctermsValue(entity, 'description')
             || utilService.getPropertyValue(entity, prefixes.dc + 'description');
-    }
+    };
     /**
      * @ngdoc method
      * @name isConcept
@@ -1485,7 +1506,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     self.isConcept = function(entity, derivedConcepts = []) {
             return (includes(get(entity, '@type', []), prefixes.skos + 'Concept')
                 || intersection(get(entity, '@type', []), derivedConcepts).length > 0);
-    }
+    };
     /**
      * @ngdoc method
      * @name hasConcepts
@@ -1502,7 +1523,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     self.hasConcepts = function(ontologies, derivedConcepts) {
         return some(ontologies, ont =>
                     some(ont, entity => self.isConcept(entity, derivedConcepts) && !self.isBlankNode(entity)));
-    }
+    };
     /**
      * @ngdoc method
      * @name getConcepts
@@ -1518,7 +1539,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getConcepts = function(ontologies, derivedConcepts) {
         return collectThings(ontologies, entity => self.isConcept(entity, derivedConcepts) && !self.isBlankNode(entity));
-    }
+    };
     /**
      * @ngdoc method
      * @name getConceptIRIs
@@ -1534,7 +1555,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getConceptIRIs = function(ontologies, derivedConcepts) {
         return map(self.getConcepts(ontologies, derivedConcepts), '@id');
-    }
+    };
     /**
      * @ngdoc method
      * @name isConceptScheme
@@ -1550,7 +1571,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     self.isConceptScheme = function(entity, derivedConceptSchemes = []) {
             return (includes(get(entity, '@type', []), prefixes.skos + 'ConceptScheme')
                 || intersection(get(entity, '@type', []), derivedConceptSchemes).length > 0);
-    }
+    };
     /**
      * @ngdoc method
      * @name hasConceptSchemes
@@ -1567,7 +1588,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     self.hasConceptSchemes = function(ontologies, derivedConceptSchemes) {
         return some(ontologies, ont =>
                     some(ont, entity => self.isConceptScheme(entity, derivedConceptSchemes) && !self.isBlankNode(entity)));
-    }
+    };
     /**
      * @ngdoc method
      * @name getConceptSchemes
@@ -1583,7 +1604,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getConceptSchemes = function(ontologies, derivedConceptSchemes) {
         return collectThings(ontologies, entity => self.isConceptScheme(entity, derivedConceptSchemes) && !self.isBlankNode(entity));
-    }
+    };
     /**
      * @ngdoc method
      * @name getConceptSchemeIRIs
@@ -1599,11 +1620,11 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getConceptSchemeIRIs = function(ontologies, derivedConceptSchemes) {
         return map(self.getConceptSchemes(ontologies, derivedConceptSchemes), '@id');
-    }
+    };
 
     function collectThings(ontologies, filterFunc) {
-        var things = [];
-        var iris = [];
+        const things = [];
+        const iris = [];
         forEach(ontologies, ont => {
             forEach(filter(ont, entity => !includes(iris, get(entity, '@id')) && filterFunc(entity)), entity => {
                 things.push(entity);

@@ -980,6 +980,7 @@ export function mockCatalogManager() {
             this.getCommitHistory = jasmine.createSpy('getCommitHistory').and.returnValue($q.when([]));
             this.getCompiledResource = jasmine.createSpy('getCompiledResource').and.returnValue($q.when([]));
             this.getDifference = jasmine.createSpy('getDifference').and.returnValue($q.when([]));
+            this.getDifferenceForSubject = jasmine.createSpy('getDifferenceForSubject').and.returnValue($q.when([]));
             this.getBranchCommits = jasmine.createSpy('getBranchCommits').and.returnValue($q.when([]));
             this.createBranchCommit = jasmine.createSpy('createBranchCommit').and.returnValue($q.when());
             this.getBranchHeadCommit = jasmine.createSpy('getBranchHeadCommit').and.returnValue($q.when({}));
