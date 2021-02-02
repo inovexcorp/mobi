@@ -60,7 +60,7 @@ const commitInfoOverlayComponent = {
     controller: commitInfoOverlayComponentCtrl
 };
 
-commitInfoOverlayComponentCtrl.$inject = ['$q', 'utilService', 'userManagerService', 'catalogManagerService', 'ontologyManagerService']
+commitInfoOverlayComponentCtrl.$inject = ['$q', 'utilService', 'userManagerService', 'catalogManagerService', 'ontologyManagerService'];
 
 function commitInfoOverlayComponentCtrl($q, utilService, userManagerService, catalogManagerService, ontologyManagerService) {
     var dvm = this;
