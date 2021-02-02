@@ -108,7 +108,7 @@ public class SimplePreferenceService implements PreferenceService {
             return userPreferenceIris.stream().map(userPreferenceIri -> {
                 Model preferenceModel = RepositoryResults.asModelNoContext(conn.getStatements(userPreferenceIri, null, null, context), mf);
                 Preference preference = preferenceFactory.getExisting(userPreferenceIri, preferenceModel).orElseThrow(() ->
-                        new IllegalStateException("Preference " + userPreferenceIri + " could not be found"));
+                        new IllegalStateException("Resource " + userPreferenceIri + " could not be parsed as a Preference"));
                 addEntitiesToModel(preference.getHasObjectValue_resource(), preferenceModel, conn);
                 return preference;
             }).collect(Collectors.toSet());
@@ -193,7 +193,7 @@ public class SimplePreferenceService implements PreferenceService {
         if (existingPreference.isPresent()) {
             deletePreference(existingPreference.get().getResource());
         } else {
-            LOG.debug("No preference of type " + preferenceType + " exists for user. No action will be taken.");
+            throw new IllegalArgumentException("Preference of type" + preferenceType.stringValue() + " does not exist for user");
         }
     }
 

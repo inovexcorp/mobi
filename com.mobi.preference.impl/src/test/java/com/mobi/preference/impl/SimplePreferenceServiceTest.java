@@ -37,6 +37,7 @@ import com.mobi.preference.api.ontologies.Prefix;
 import com.mobi.preference.api.ontologies.PrefixPreference;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
@@ -46,6 +47,7 @@ import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -130,6 +132,8 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         service.start();
     }
 
+    // addPreference
+
     @Test
     public void addPreferenceWithObjectValueTest() throws Exception {
         // Setup:
@@ -191,6 +195,7 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
 
     // TODO: Add test where it prevents user injection
 
+    // validatePreference
 
     @Test
     public void validatePreferenceTest() throws Exception {
@@ -218,6 +223,8 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
 
         service.validatePreference(preference);
     }
+
+    // getUserPreference
 
     @Test
     public void getUserPreferenceTest() throws Exception {
@@ -247,6 +254,8 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
     }
 
     // TODO: test for Preference when multiple preferences of the same type exist in the repo. Assert RepositoryException
+
+    // getUserPreferences
 
     @Test
     public void getUserPreferencesTest() throws Exception {
@@ -286,5 +295,125 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         combinedModel.addAll(firstPreference.getModel());
         combinedModel.addAll(secondPreference.getModel());
         combinedModel.forEach(statement -> assertTrue(retrievedPreferencesModel.contains(statement)));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void getUserPreferencesCorruptPreferenceTest() throws Exception {
+        User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
+        InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
+        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+
+        service.addPreference(user, firstPreference);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.remove((Resource) null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(TestComplexPreference.TYPE));
+            conn.remove((Resource) null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Preference.TYPE));
+        }
+
+        service.getUserPreferences(user);
+    }
+
+    @Test
+    public void deleteUserPreferenceTest() throws Exception {
+        User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
+        InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
+        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+
+        service.addPreference(user, firstPreference);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+
+        service.deletePreference(user, VALUE_FACTORY.createIRI(TestComplexPreference.TYPE));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            firstPreference.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test
+    public void deleteUserPreferenceTestByResource() throws Exception {
+        User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
+        InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
+        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+
+        service.addPreference(user, firstPreference);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+
+        service.deletePreference(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            firstPreference.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void deleteUserPreferenceTypeDoesNotExistTest() throws Exception {
+        User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
+        InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
+        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+
+        service.addPreference(user, firstPreference);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+
+        service.deletePreference(user, VALUE_FACTORY.createIRI(TestSimplePreference.TYPE));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void deleteUserPreferenceResourceDoesNotExistTest() throws Exception {
+        User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
+        InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
+        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+
+        service.addPreference(user, firstPreference);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+
+        service.deletePreference(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            firstPreference.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test
+    public void updatePreferenceTest() throws Exception {
+        // Setup:
+        User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
+        InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
+        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+
+        service.addPreference(user, preference);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+
+        InputStream secondInputStream = getClass().getResourceAsStream("/updatedComplexPreference.ttl");
+        Model secondTestDataModel = Values.mobiModel(Rio.parse(secondInputStream, "", RDFFormat.TURTLE));
+        Preference secondPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), secondTestDataModel).get();
+
+        service.updatePreference(user, secondPreference);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            secondPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+        
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.contains(null, null, preference.getHasObjectValue_resource().iterator().next()));
+            assertFalse(conn.contains(preference.getHasObjectValue_resource().iterator().next(), null, null));
+        }
     }
 }
