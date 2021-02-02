@@ -30,6 +30,7 @@ import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -96,9 +97,12 @@ public class PreferenceRest {
     public Response getUserPreferences(@Context ContainerRequestContext context) {
         User user = getActiveUser(context, engineManager);
         Set<Preference> userPreferences = preferenceService.getUserPreferences(user);
-        ArrayNode preferencesArray = mapper.createArrayNode();
-        userPreferences.stream().map(pref -> getPreferenceAsJsonNode(pref)).forEach(preferencesArray::add);
-        return Response.ok(preferencesArray.toString()).build();
+        ObjectNode result = mapper.createObjectNode();
+        userPreferences.stream().forEach(pref -> {
+            JsonNode jsonNode = getPreferenceAsJsonNode(pref);
+            result.set(pref.getResource().stringValue(), jsonNode);
+        });
+        return Response.ok(result.toString()).build();
     }
 
     @PUT
@@ -108,19 +112,17 @@ public class PreferenceRest {
     public Response updateUserPreference(@Context ContainerRequestContext context,
                                          @PathParam("preferenceId") String preferenceId,
                                          @QueryParam("preferenceType") String preferenceType,
-                                         String json) {
+                                         String jsonld) {
         checkStringParam(preferenceType, "Preference Type is required");
-        checkStringParam(json, "User Preference JSON is required");
+        checkStringParam(jsonld, "User Preference JSON-LD is required");
         User user = getActiveUser(context, engineManager);
         try {
-            Model newUserPreferenceModel = convertJsonld(json);
+            Model newUserPreferenceModel = jsonldToModel(jsonld, transformer);
             Preference preference = getPreferenceFromModel(preferenceId, preferenceType, newUserPreferenceModel);
             preferenceService.updatePreference(user, preference);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -134,14 +136,12 @@ public class PreferenceRest {
         checkStringParam(jsonld, "User Preference JSON is required");
         User user = getActiveUser(context, engineManager);
         try {
-            Model newUserPreferenceModel = convertJsonld(jsonld);
+            Model newUserPreferenceModel = jsonldToModel(jsonld, transformer);
             Preference preference = getPreferenceFromModel(preferenceType, newUserPreferenceModel);
             preferenceService.addPreference(user, preference);
             return Response.status(201).entity(preference.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -153,7 +153,7 @@ public class PreferenceRest {
         }
     }
 
-    private Preference getPreferenceFromModel(String preferenceType, Model preferenceModel) {
+    protected Preference getPreferenceFromModel(String preferenceType, Model preferenceModel) {
         Collection<? extends Preference> preferences = getSpecificPreferenceFactory(preferenceType).getAllExisting(preferenceModel);
         if (preferences.size() > 1) {
             throw ErrorUtils.sendError("More than one preference of type: " + preferenceType + " found in request.", Response.Status.BAD_REQUEST);
@@ -164,19 +164,15 @@ public class PreferenceRest {
         }
     }
 
-    private Preference getPreferenceFromModel(String preferenceId, String preferenceType, Model preferenceModel) {
+    protected Preference getPreferenceFromModel(String preferenceId, String preferenceType, Model preferenceModel) {
         return getSpecificPreferenceFactory(preferenceType).getExisting(vf.createIRI(preferenceId),
                 preferenceModel).orElseThrow(() -> ErrorUtils.sendError("Could not parse " + preferenceType + " preference with id " +
                 preferenceId + " from request.", Response.Status.BAD_REQUEST));
     }
 
 
-    private OrmFactory<? extends Preference> getSpecificPreferenceFactory(String preferenceType) {
+    protected OrmFactory<? extends Preference> getSpecificPreferenceFactory(String preferenceType) {
         return (OrmFactory<? extends Preference>) factoryRegistry.getFactoryOfType(preferenceType).orElseThrow(() ->
                 ErrorUtils.sendError("Unknown preference type: " + preferenceType, Response.Status.BAD_REQUEST));
-    }
-
-    private Model convertJsonld(String jsonld) {
-        return jsonldToModel(jsonld, transformer);
     }
 }

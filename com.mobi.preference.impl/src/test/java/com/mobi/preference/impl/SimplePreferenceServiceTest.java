@@ -96,7 +96,7 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
     private OrmFactory<TestComplexPreference> testComplexPreferenceFactory;
 
     @Mock
-    private OrmFactory<TestComplexPreference> testSimplePreferenceFactory;
+    private OrmFactory<TestSimplePreference> testSimplePreferenceFactory;
 
     @Mock
     private CatalogConfigProvider configProvider;
