@@ -26,7 +26,7 @@
 </div>
 <div class="modal-body">
     <form name="dvm.form">
-        <h5>{{dvm.util.condenseCommitId(dvm.resolve.commit.id)}}</h5>
+        <h5><span click-to-copy="dvm.resolve.commit.id" title="Copy Commit IRI" tooltip-append-to-body="false">{{dvm.util.condenseCommitId(dvm.resolve.commit.id)}}</span></h5>
         <div><span class="field-name">Date: </span>{{dvm.util.getDate(dvm.resolve.commit.date, 'short')}}</div>
         <div><span class="field-name">Creator: </span>{{dvm.um.getUserDisplay(dvm.resolve.commit.creator)}}</div>
         <p>{{dvm.resolve.commit.message}}</p>
