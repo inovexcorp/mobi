@@ -29,7 +29,6 @@ import static com.mobi.rest.util.RestUtils.jsonldToModel;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -44,7 +43,6 @@ import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
