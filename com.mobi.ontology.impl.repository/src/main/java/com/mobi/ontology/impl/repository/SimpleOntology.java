@@ -23,7 +23,6 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
-import com.google.common.collect.Iterables;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -1029,8 +1028,7 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     * Uses the provided TupleQueryResult to construct a hierarchy of the entities provided. Each BindingSet in the Set
-     * must have the parent set as the first binding and the child set as the second binding.
+     * Uses the provided TupleQueryResult to construct a hierarchy of the entities provided.
      *
      * @param tupleQueryResult the TupleQueryResult that contains the parent-child relationships for creating the
      *                         hierarchy.
@@ -1039,8 +1037,9 @@ public class SimpleOntology implements Ontology {
     private Hierarchy getHierarchy(TupleQueryResult tupleQueryResult) {
         Hierarchy hierarchy = new Hierarchy(vf, mf);
         tupleQueryResult.forEach(queryResult -> {
-            Value key = Iterables.get(queryResult, 0).getValue();
-            Binding value = Iterables.get(queryResult, 1, null);
+            Value key = queryResult.getBinding("parent").orElseThrow(
+                    () -> new RuntimeException("Parent binding must be present for hierarchy")).getValue();
+            Binding value = queryResult.getBinding("child").orElse(null);
             if (!(key instanceof BNode) && key instanceof IRI) {
                 hierarchy.addIRI((IRI) key);
                 if (value != null && !(value.getValue() instanceof BNode) && value.getValue() instanceof IRI

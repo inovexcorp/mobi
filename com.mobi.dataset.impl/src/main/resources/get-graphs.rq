@@ -4,10 +4,16 @@ SELECT
     DISTINCT ?graph
 WHERE {
     {
-        ?dataset dataset:defaultNamedGraph ?graph
+        GRAPH ?g {
+            ?dataset dataset:defaultNamedGraph ?graph
+        }
     } UNION {
-        ?dataset dataset:namedGraph ?graph
+        GRAPH ?g {
+            ?dataset dataset:namedGraph ?graph
+        }
     } UNION {
-        ?dataset dataset:systemDefaultNamedGraph ?graph
+        GRAPH ?g {
+            ?dataset dataset:systemDefaultNamedGraph ?graph
+        }
     }
 }

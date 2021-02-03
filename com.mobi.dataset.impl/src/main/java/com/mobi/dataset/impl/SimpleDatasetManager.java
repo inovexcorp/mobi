@@ -75,7 +75,6 @@ public class SimpleDatasetManager implements DatasetManager {
     private RepositoryManager repoManager;
 
     private static final String FIND_DATASETS_QUERY;
-    private static final String FIND_DATASET_RECORDS_QUERY;
     private static final String CATALOG_BINDING = "catalog";
     private static final String REPOSITORY_BINDING = "repository";
     private static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
@@ -84,10 +83,6 @@ public class SimpleDatasetManager implements DatasetManager {
         try {
             FIND_DATASETS_QUERY = IOUtils.toString(
                     SimpleDatasetManager.class.getResourceAsStream("/find-datasets.rq"),
-                    StandardCharsets.UTF_8
-            );
-            FIND_DATASET_RECORDS_QUERY = IOUtils.toString(
-                    SimpleDatasetManager.class.getResourceAsStream("/find-dataset-records.rq"),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {

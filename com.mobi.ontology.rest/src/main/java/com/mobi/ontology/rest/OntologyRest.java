@@ -76,6 +76,7 @@ import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.Binding;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -2599,15 +2600,18 @@ public class OntologyRest {
      */
     private void writeEntityNamesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
         Map<String, EntityNames> entityNamesMap = new HashMap<>();
-        String entityBinding = "entity";
-        String enPrefNamesBinding = "en_pref_names_array";
-        String prefNamesBinding = "pref_names_array";
-        String namesBinding = "names_array";
+        String entityBindingName = "entity";
+        String enPrefNamesBindingName = "en_pref_names_array";
+        String prefNamesBindingName = "pref_names_array";
+        String namesBindingName = "names_array";
         tupleQueryResults.forEach(bindings -> {
-            String entity = Bindings.requiredResource(bindings, entityBinding).stringValue();
-            String enlabelsString = Bindings.requiredLiteral(bindings, enPrefNamesBinding).stringValue();
-            String labelsString = Bindings.requiredLiteral(bindings, prefNamesBinding).stringValue();
-            String namesString = Bindings.requiredLiteral(bindings, namesBinding).stringValue();
+            String entity = Bindings.requiredResource(bindings, entityBindingName).stringValue();
+            Optional<Binding> enlabelsBinding = bindings.getBinding(enPrefNamesBindingName);
+            Optional<Binding> labelsBinding = bindings.getBinding(prefNamesBindingName);
+            Optional<Binding> namesBinding = bindings.getBinding(namesBindingName);
+            String enlabelsString = enlabelsBinding.isPresent() ? enlabelsBinding.get().getValue().stringValue() : "";
+            String labelsString = labelsBinding.isPresent() ? labelsBinding.get().getValue().stringValue() : "";
+            String namesString = namesBinding.isPresent() ? namesBinding.get().getValue().stringValue() : "";
             EntityNames entityNames = new EntityNames();
 
             String[] enLabels = StringUtils.split(enlabelsString, NAME_SPLITTER);
