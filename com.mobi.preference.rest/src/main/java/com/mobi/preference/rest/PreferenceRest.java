@@ -170,7 +170,6 @@ public class PreferenceRest {
                 preferenceId + " from request.", Response.Status.BAD_REQUEST));
     }
 
-
     protected OrmFactory<? extends Preference> getSpecificPreferenceFactory(String preferenceType) {
         return (OrmFactory<? extends Preference>) factoryRegistry.getFactoryOfType(preferenceType).orElseThrow(() ->
                 ErrorUtils.sendError("Unknown preference type: " + preferenceType, Response.Status.BAD_REQUEST));

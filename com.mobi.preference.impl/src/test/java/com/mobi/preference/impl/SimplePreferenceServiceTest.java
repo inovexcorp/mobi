@@ -434,6 +434,28 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         }
     }
 
+
+    @Test(expected = IllegalArgumentException.class)
+    public void updatePreferenceForDifferentUserTest() throws Exception {
+        // Setup:
+        User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
+        InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
+        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+
+        service.addPreference(user, preference);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+
+        InputStream secondInputStream = getClass().getResourceAsStream("/updatedComplexPreference.ttl");
+        Model secondTestDataModel = Values.mobiModel(Rio.parse(secondInputStream, "", RDFFormat.TURTLE));
+        Preference secondPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), secondTestDataModel).get();
+
+        User differentUser = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/differentUser"));
+        service.updatePreference(differentUser, secondPreference);
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void updatePreferenceDoesNotExistTest() throws Exception {
         // Setup:

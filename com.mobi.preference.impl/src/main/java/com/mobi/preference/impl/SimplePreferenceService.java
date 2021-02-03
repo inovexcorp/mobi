@@ -41,21 +41,16 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.exception.RepositoryException;
 import org.apache.commons.io.IOUtils;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -65,7 +60,6 @@ public class SimplePreferenceService implements PreferenceService {
     private static final String PREFERENCE_TYPE_BINDING = "preferenceType";
     private static final String USER_BINDING = "user";
     private static final String GET_USER_PREFERENCE;
-    private static final Logger LOG = LoggerFactory.getLogger(SimplePreferenceService.class);
 
     private PreferenceFactory preferenceFactory;
     private Resource context;
@@ -83,7 +77,9 @@ public class SimplePreferenceService implements PreferenceService {
     OrmFactoryRegistry factoryRegistry;
 
     @Reference
-    private void setPreferenceFactory(PreferenceFactory preferenceFactory) {this.preferenceFactory = preferenceFactory; }
+    private void setPreferenceFactory(PreferenceFactory preferenceFactory) {
+        this.preferenceFactory = preferenceFactory;
+    }
 
     static {
         try {
@@ -136,9 +132,6 @@ public class SimplePreferenceService implements PreferenceService {
         }
     }
 
-    // TODO: I was thinking that we probably still want to limit the results to the user making the query because it
-    //  doesn't seem correct to allow user a to retrieve user b's preference. So I was going to add a second param to
-    //  the service method: getUserPreference(Resource preferenceId, User user). Does that seem like it makes sense?
     @Override
     public Optional<Preference> getUserPreference(Resource resourceId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -150,17 +143,8 @@ public class SimplePreferenceService implements PreferenceService {
         }
     }
 
-    /*
-    // Add an instance of Preference for a particular user
-    void addPreference(User user, Preference preference) {
-    Add the associated preference instance to the repo. Also check to see
-    if the instance that hasObjectValue points to exists in the repo, if it does
-    do not add it to the repo. If it doesn't, add it to the repo.
-    }
-     */
-
-    // This method might not work. How would the object IRI already exist in the repo? The frontend wouldn't know how
-    // to retrieve that object IRI. It would probably create a new one.
+    // I'm a bit concerned that this will allow random triples to be injected into the repo.
+    // Do you know of a good way to defend against that?
     @Override
     public void addPreference(User user, Preference preference) {
         validatePreference(preference);
@@ -180,13 +164,6 @@ public class SimplePreferenceService implements PreferenceService {
         }
     }
 
-    /*
-    Query the repo for the list of IRIs connected to the existingPreference IRI.
-    Remove all triples in the namedgraph with a subject of those IRIs if they aren't
-    referenced elsewhere (look at removeIfNotReferenced() method in the
-    SimpleProvenanceService)
-    Remove all triples with a subject of the existingPreference IRI
-     */
     @Override
     public void deletePreference(User user, Resource preferenceType) {
         Optional<Preference> existingPreference = getUserPreference(user, preferenceType);
@@ -219,6 +196,11 @@ public class SimplePreferenceService implements PreferenceService {
             if (!conn.contains(newPreference.getResource(), null, null, context)) {
                 throw new IllegalArgumentException("Preference " + newPreference.getResource() + " does not exist");
             }
+            if (!conn.contains(newPreference.getResource(), vf.createIRI(newPreference.forUser_IRI),
+                    user.getResource(), context)) {
+                throw new IllegalArgumentException("Preference " + newPreference.getResource() + " does not " +
+                        "belong to user " + user.getResource());
+            }
             conn.begin();
             List<Resource> hasValue = getReferencedEntityIRIs(newPreference.getResource(), Preference.hasObjectValue_IRI, conn);
             conn.remove(newPreference.getResource(), null, null, context);
@@ -228,11 +210,6 @@ public class SimplePreferenceService implements PreferenceService {
             conn.add(newPreference.getModel(), context);
             conn.commit();
         }
-    }
-
-    @Override
-    public boolean isSimplePreference(Preference preference) {
-        return preference.getHasObjectValue().isEmpty();
     }
 
     private void removeIfNotReferenced(Resource iri, RepositoryConnection conn) {
@@ -253,7 +230,7 @@ public class SimplePreferenceService implements PreferenceService {
         }
     }
 
-    public List<Resource> getReferencedEntityIRIs(Resource preferenceIRI, String propIRI, RepositoryConnection conn) {
+    private List<Resource> getReferencedEntityIRIs(Resource preferenceIRI, String propIRI, RepositoryConnection conn) {
         return RepositoryResults.asList(conn.getStatements(preferenceIRI, vf.createIRI(propIRI), null, context)).stream()
                 .map(Statements::objectResource)
                 .filter(Optional::isPresent)
@@ -268,7 +245,7 @@ public class SimplePreferenceService implements PreferenceService {
         });
     }
 
-    public Resource getPreferenceType(Preference preference) {
+    private Resource getPreferenceType(Preference preference) {
         List<Resource> types = mf.createModel(preference.getModel()).filter(preference.getResource(), vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null)
                 .stream()
                 .map(Statements::objectResource)

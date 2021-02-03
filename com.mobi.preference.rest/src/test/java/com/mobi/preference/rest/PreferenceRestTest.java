@@ -9,6 +9,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.SesameTransformer;
@@ -276,7 +277,7 @@ public class PreferenceRestTest extends MobiRestTestNg {
     }
 
     @Test
-    public void updateUserInvalidPreferenceType() throws Exception {
+    public void updateUserPreferenceInvalidType() throws Exception {
         when(factoryRegistry.getFactoryOfType(Thing.TYPE)).thenReturn(Optional.empty());
         JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
         Response response = target().path("preference/" + encode("http://example.com/MySimplePreference"))
