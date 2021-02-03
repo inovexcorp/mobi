@@ -67,18 +67,3 @@
 # Define FormField
 
 # Define TextInput, TextAreaInput, Checkbox, Radio instances of FormField class
-
-# Below triples can be removed. !Stash it somewhere!
-
-:Prefix a owl:Class;
-    rdfs:label "Prefix"@en.
-
-:hasPrefix a owl:DatatypeProperty, owl:FunctionalProperty;
-   rdfs:label "Has Prefix"@en;
-   rdfs:domain :Prefix;
-   rdfs:range xsd:string .
-
-:hasNamespace a owl:DatatypeProperty, owl:FunctionalProperty;
-   rdfs:label "Has Namespace"@en;
-   rdfs:domain :Prefix;
-   rdfs:range xsd:string .
