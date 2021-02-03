@@ -25,46 +25,20 @@ package com.mobi.notification.impl;
 
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
-import com.mobi.notification.impl.ontologies.EmailNotificationPreference;
-import com.mobi.notification.impl.ontologies.EmailNotificationPreferenceFactory;
-import com.mobi.notification.impl.ontologies.EmailNotificationPreferenceImpl;
-import com.mobi.ontologies.shacl.NodeShape;
-import com.mobi.ontologies.shacl.NodeShapeFactory;
-import com.mobi.ontologies.shacl.PropertyShape;
-import com.mobi.ontologies.shacl.Shape;
 import com.mobi.persistence.utils.Models;
-import com.mobi.persistence.utils.QueryResults;
-import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.preference.api.PreferenceService;
-import com.mobi.preference.api.ontologies.Preference;
-import com.mobi.preference.api.ontologies.Prefix;
-import com.mobi.preference.api.ontologies.PrefixFactory;
-import com.mobi.preference.api.ontologies.PrefixImpl;
-import com.mobi.preference.api.ontologies.PrefixPreference;
-import com.mobi.preference.api.ontologies.PrefixPreferenceFactory;
-import com.mobi.query.api.GraphQuery;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.rest.util.RestUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.UUID;
 
 @Component(immediate=true)
 public class SimpleNotificationService {
