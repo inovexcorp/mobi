@@ -33,8 +33,6 @@ import com.mobi.notification.impl.SimpleNotificationService;
 import com.mobi.notification.impl.ontologies.EmailNotificationPreference;
 import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
-import com.mobi.preference.api.ontologies.Prefix;
-import com.mobi.preference.api.ontologies.PrefixPreference;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
