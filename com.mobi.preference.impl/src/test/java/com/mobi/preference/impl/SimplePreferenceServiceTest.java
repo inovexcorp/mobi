@@ -264,7 +264,7 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
     @Test
     public void getUserPreferenceThatDoesNotExistTest() throws Exception {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
-        Optional<Preference> retrievedPreference = service.getUserPreference(user, VALUE_FACTORY.createIRI(EmailNotificationPreference.TYPE));
+        Optional<Preference> retrievedPreference = service.getUserPreference(user, VALUE_FACTORY.createIRI(TestComplexPreference.TYPE));
         assertFalse(retrievedPreference.isPresent());
     }
 
