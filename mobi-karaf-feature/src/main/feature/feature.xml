@@ -150,6 +150,7 @@
         <bundle start-level="80">mvn:com.mobi/ontology.utils/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/persistence.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/persistence.utils/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/persistence.utils.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/rdf.impl.sesame/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/repository.impl.core/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/repository.impl.sesame/${project.version}</bundle>
