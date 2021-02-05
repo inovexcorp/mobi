@@ -1,3 +1,5 @@
+import preferenceGroupComponent from "../../settings/components/preferenceGroup/preferenceGroup.component";
+
 /*-
  * #%L
  * com.mobi.web
@@ -98,6 +100,17 @@ function preferenceManagerService($http, $q, REST_PREFIX, utilService, prefixes,
         var promise = id ? httpService.get(prefix, id) : $http.get(prefix);
         return promise.then($q.when, util.rejectError);
     };
+
+    self.getPreferenceGroups = function(id = '') {
+        var promise = id ? httpService.get(prefix + '/groups', id) : $http.get(prefix + '/groups');
+        return promise.then($q.when, util.rejectError);
+    };
+
+    self.getPreferenceDefinitions = function(preferenceGroup, id = '') {
+        var promise = id ? httpService.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup), id) 
+            : $http.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup));
+        return promise.then($q.when, util.rejectError);
+    }
 }
 
 export default preferenceManagerService;

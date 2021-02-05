@@ -106,15 +106,17 @@ public class PreferenceRest {
     }
 
     @GET
+    @Path("groups/{preferenceGroup}/definitions")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     public Response getPreferenceDefinitions(@Context ContainerRequestContext context,
-                                             @QueryParam("preferenceGroup") String preferenceGroup) {
+                                             @PathParam("preferenceGroup") String preferenceGroup) {
         Model preferenceDefinitions = preferenceService.getPreferenceDefinitions(vf.createIRI(preferenceGroup));
         return Response.ok(RestUtils.modelToJsonld(preferenceDefinitions, transformer)).build();
     }
 
     @GET
+    @Path("groups")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     public Response getPreferenceGroups(@Context ContainerRequestContext context) {
