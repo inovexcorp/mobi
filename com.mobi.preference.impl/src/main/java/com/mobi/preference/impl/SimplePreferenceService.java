@@ -32,7 +32,9 @@ import com.mobi.persistence.utils.Statements;
 import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
 import com.mobi.preference.api.ontologies.PreferenceFactory;
+import com.mobi.preference.api.ontologies.PreferenceGroup;
 import com.mobi.query.api.GraphQuery;
+import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
@@ -60,6 +62,7 @@ public class SimplePreferenceService implements PreferenceService {
     private static final String PREFERENCE_TYPE_BINDING = "preferenceType";
     private static final String USER_BINDING = "user";
     private static final String GET_USER_PREFERENCE;
+    private static final String GET_PREFERENCE_DEFINITIONS;
 
     private PreferenceFactory preferenceFactory;
     private Resource context;
@@ -85,6 +88,9 @@ public class SimplePreferenceService implements PreferenceService {
         try {
             GET_USER_PREFERENCE = IOUtils.toString(
                     SimplePreferenceService.class.getResourceAsStream("/get-user-preference.rq"), StandardCharsets.UTF_8
+            );
+            GET_PREFERENCE_DEFINITIONS = IOUtils.toString(
+                    SimplePreferenceService.class.getResourceAsStream("/get-preference-definitions.rq"), StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -213,9 +219,19 @@ public class SimplePreferenceService implements PreferenceService {
     }
 
     @Override
-    public void getPreferenceDefinitions() {
+    public Model getPreferenceDefinitions(Resource preferenceGroup) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            String queryString = GET_PREFERENCE_DEFINITIONS.replace("%GROUP%", "<" + preferenceGroup.stringValue() + ">");
+            GraphQuery query = conn.prepareGraphQuery(queryString);
+            return QueryResults.asModel(query.evaluate(), mf);
+        }
+    }
 
+    @Override
+    public List<Resource> getPreferenceGroups() {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return RepositoryResults.asList(conn.getStatements(null, null, vf.createIRI(PreferenceGroup.TYPE)))
+                    .stream().map(Statement::getSubject).collect(Collectors.toList());
         }
     }
 

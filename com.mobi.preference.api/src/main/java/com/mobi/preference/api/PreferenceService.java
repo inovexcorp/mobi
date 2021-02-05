@@ -25,8 +25,10 @@ package com.mobi.preference.api;
 
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.preference.api.ontologies.Preference;
+import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -96,5 +98,7 @@ public interface PreferenceService {
      */
     void updatePreference(User user, Preference preference);
 
-    void getPreferenceDefinitions();
+    Model getPreferenceDefinitions(Resource preferenceGroup);
+
+    List<Resource> getPreferenceGroups();
 }

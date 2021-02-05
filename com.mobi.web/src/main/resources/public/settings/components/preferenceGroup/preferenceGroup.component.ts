@@ -22,10 +22,9 @@
  */
 import { forEach, isEqual } from 'lodash';
 
-import './preferencesTab.component.scss';
 import utilService from '../../../shared/services/util.service';
 
-const template = require('./preferencesTab.component.html');
+const template = require('./preferenceGroup.component.html');
 
 /**
  * @ngdoc component
@@ -38,66 +37,30 @@ const template = require('./preferencesTab.component.html');
  * {@link settings.component:preferencesContainer preferencesContainer} and several
  * {@link settings.component:customPreference customPreference}.
  */
-const preferencesTabComponent = {
+const preferenceGroupComponent = {
     template,
-    bindings: {},
+    bindings: {
+        group: '<'
+    },
     controllerAs: 'dvm',
-    controller: preferencesTabComponentCtrl
+    controller: preferenceGroupComponentCtrl
 };
 
-preferencesTabComponentCtrl.$inject = ['utilService', 'preferenceManagerService', 'settingsManagerService'];
+preferenceGroupComponentCtrl.$inject = ['utilService', 'preferenceManagerService', 'settingsManagerService'];
 
-function preferencesTabComponentCtrl(utilService, preferenceManagerService, settingsManagerService) {
+function preferenceGroupComponentCtrl(utilService, preferenceManagerService, settingsManagerService) {
     var dvm = this;
     var pm = preferenceManagerService;
     var util = utilService;
-    dvm.tabs = [];
-    dvm.preferenceGroups = [];
-    dvm.notificationTab = {
-       heading: 'Notification',
-       active: false
-    };
-    dvm.prefixTab = {
-        heading: 'Prefix',
-        active: false
-    };
     
     dvm.$onInit = function() {
-        dvm.tabs.push(dvm.notificationTab);
-        dvm.tabs.push(dvm.prefixTab);
-        pm.getPreferenceGroups()
+        pm.getPreferenceDefinitions(dvm.group)
             .then(response => {
                 dvm.errorMessage = '';
-                util.createSuccessToast('Preference Groups retrieved successfully');
-                forEach(response.data, preferenceGroup => {
-                    dvm.addTab(preferenceGroup);
-                })
+                util.createSuccessToast('Preference Definition retrieved successfully');
+                dvm.preferenceDefinitions = response.data;
             }, error => dvm.errorMessage = error);
-    };
-
-    dvm.addTab = function(preferenceGroup) {
-        dvm.tabs.push({
-            type: preferenceGroup['@id'],
-            heading: util.getBeautifulIRI(preferenceGroup['@id']),
-            active: false
-        });
-    }
-
-    dvm.select = function(selectedTab) {
-        forEach(dvm.tabs, tab => {
-            if (tab.active && !isEqual(tab, selectedTab)) {
-                tab.active = false;
-            }
-        });
-        selectedTab.active = true;
-    }
-
-    dvm.sm = settingsManagerService;
-    dvm.settings = dvm.sm.getSettings();
-
-    dvm.save = function() {
-        dvm.sm.setSettings(dvm.settings);
     };
 }
 
-export default preferencesTabComponent;
+export default preferenceGroupComponent;

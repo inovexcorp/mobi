@@ -37,6 +37,7 @@ import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
@@ -49,6 +50,7 @@ import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
@@ -106,15 +108,18 @@ public class PreferenceRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    public Response getPreferenceDefinitions(@Context ContainerRequestContext context) {
-        User user = getActiveUser(context, engineManager);
-        Set<Preference> userPreferences = preferenceService.getUserPreferences(user);
-        ObjectNode result = mapper.createObjectNode();
-        userPreferences.stream().forEach(pref -> {
-            JsonNode jsonNode = getPreferenceAsJsonNode(pref);
-            result.set(pref.getResource().stringValue(), jsonNode);
-        });
-        return Response.ok(result.toString()).build();
+    public Response getPreferenceDefinitions(@Context ContainerRequestContext context,
+                                             @QueryParam("preferenceGroup") String preferenceGroup) {
+        Model preferenceDefinitions = preferenceService.getPreferenceDefinitions(vf.createIRI(preferenceGroup));
+        return Response.ok(RestUtils.modelToJsonld(preferenceDefinitions, transformer)).build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    public Response getPreferenceGroups(@Context ContainerRequestContext context) {
+        List<Resource> userPreferences = preferenceService.getPreferenceGroups();
+        return Response.status(200).entity(userPreferences).build();
     }
 
     @PUT

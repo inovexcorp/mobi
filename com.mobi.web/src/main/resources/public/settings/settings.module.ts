@@ -29,6 +29,7 @@ import preferencesContainerComponent from './components/preferencesContainer/pre
 import preferencesTabComponent from './components/preferencesTab/preferencesTab.component';
 import profileTabComponent from './components/profileTab/profileTab.component';
 import settingsPageComponent from './components/settingsPage/settingsPage.component';
+import preferenceGroupComponent from './components/preferenceGroup/preferenceGroup.component';
 
 /**
  * @ngdoc overview
@@ -43,5 +44,6 @@ angular.module('settings', [])
     .component('passwordTab', passwordTabComponent)
     .component('preferencesContainer', preferencesContainerComponent)
     .component('preferencesTab', preferencesTabComponent)
+    .component('preferenceGroup', preferenceGroupComponent)
     .component('profileTab', profileTabComponent)
     .component('settingsPage', settingsPageComponent);

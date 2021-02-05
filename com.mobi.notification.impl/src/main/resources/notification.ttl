@@ -41,6 +41,8 @@
     sh:property :PrefixPreferencePropertyShape;
     :inGroup :PrefixPreferenceGroup .
 
+:PrefixPreferenceGroup a pref:PreferenceGroup .
+
 :PrefixPreferencePropertyShape a sh:PropertyShape;
     sh:node :PrefixNodeShape;
     sh:path :hasObjectValue .
