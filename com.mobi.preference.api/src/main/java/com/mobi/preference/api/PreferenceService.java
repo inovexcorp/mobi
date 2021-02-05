@@ -95,4 +95,6 @@ public interface PreferenceService {
      * @param preference The new {@link Preference} for the {@link User}
      */
     void updatePreference(User user, Preference preference);
+
+    void getPreferenceDefinitions();
 }

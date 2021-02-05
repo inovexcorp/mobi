@@ -212,6 +212,13 @@ public class SimplePreferenceService implements PreferenceService {
         }
     }
 
+    @Override
+    public void getPreferenceDefinitions() {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+
+        }
+    }
+
     private void removeIfNotReferenced(Resource iri, RepositoryConnection conn) {
         if (!conn.contains(null, null, iri)) {
             conn.remove(iri, null, null);

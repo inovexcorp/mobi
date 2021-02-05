@@ -20,7 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { forEach, isEqual } from 'lodash';
+
 import './preferencesTab.component.scss';
+import utilService from '../../../shared/services/util.service';
 
 const template = require('./preferencesTab.component.html');
 
@@ -42,16 +45,49 @@ const preferencesTabComponent = {
     controller: preferencesTabComponentCtrl
 };
 
-preferencesTabComponentCtrl.$inject = ['settingsManagerService'];
+preferencesTabComponentCtrl.$inject = ['utilService', 'preferenceManagerService', 'settingsManagerService'];
 
-function preferencesTabComponentCtrl(settingsManagerService) {
+function preferencesTabComponentCtrl(utilService, preferenceManagerService, settingsManagerService) {
     var dvm = this;
+    var pm = preferenceManagerService;
+    var util = utilService;
+    dvm.tabs = [];
+    dvm.userPreferences = {};
+    dvm.notificationTab = {
+       heading: 'Notification',
+       active: false
+    };
+    dvm.prefixTab = {
+        heading: 'Prefix',
+        active: false
+    };
+    
+    dvm.$onInit = function() {
+        dvm.tabs.push(dvm.notificationTab);
+        dvm.tabs.push(dvm.prefixTab);
+        pm.getUserPreferences()
+            .then(response => {
+                dvm.errorMessage = '';
+                util.createSuccessToast('User Preferences retrieved successfully');
+                dvm.userPreferences = response.data;
+            }, error => dvm.errorMessage = error);
+    };
+
+    dvm.select = function(selectedTab) {
+        forEach(dvm.tabs, tab => {
+            if (tab.active && !isEqual(tab, selectedTab)) {
+                tab.active = false;
+            }
+        });
+        selectedTab.active = true;
+    }
+
     dvm.sm = settingsManagerService;
     dvm.settings = dvm.sm.getSettings();
 
     dvm.save = function() {
         dvm.sm.setSettings(dvm.settings);
-    }
+    };
 }
 
 export default preferencesTabComponent;

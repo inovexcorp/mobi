@@ -103,6 +103,20 @@ public class PreferenceRest {
         return Response.ok(result.toString()).build();
     }
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    public Response getPreferenceDefinitions(@Context ContainerRequestContext context) {
+        User user = getActiveUser(context, engineManager);
+        Set<Preference> userPreferences = preferenceService.getUserPreferences(user);
+        ObjectNode result = mapper.createObjectNode();
+        userPreferences.stream().forEach(pref -> {
+            JsonNode jsonNode = getPreferenceAsJsonNode(pref);
+            result.set(pref.getResource().stringValue(), jsonNode);
+        });
+        return Response.ok(result.toString()).build();
+    }
+
     @PUT
     @Path("{preferenceId}")
     @Produces(MediaType.APPLICATION_JSON)

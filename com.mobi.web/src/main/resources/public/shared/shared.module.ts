@@ -123,6 +123,7 @@ import ontologyManagerService from './services/ontologyManager.service';
 import ontologyStateService from './services/ontologyState.service';
 import policyEnforcementService from './services/policyEnforcement.service';
 import policyManagerService from './services/policyManager.service';
+import preferenceManagerService from './services/preferenceManager.service';
 import prefixes from './services/prefixes.service';
 import propertyManagerService from './services/propertyManager.service';
 import provManagerService from './services/provManager.service';
@@ -282,6 +283,7 @@ angular.module('shared', [])
     .service('ontologyStateService', ontologyStateService)
     .service('policyEnforcementService', policyEnforcementService)
     .service('policyManagerService', policyManagerService)
+    .service('preferenceManagerService', preferenceManagerService)
     .service('prefixes', prefixes)
     .service('propertyManagerService', propertyManagerService)
     .service('provManagerService', provManagerService)

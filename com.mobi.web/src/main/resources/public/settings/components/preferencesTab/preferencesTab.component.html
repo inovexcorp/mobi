@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="preferences-tab row h-100 py-2">
+<!-- <div class="preferences-tab row h-100 py-2">
     <div class="col-6 offset-3">
         <block class="h-100">
             <block-content>
@@ -41,4 +41,53 @@
             </block-footer>
         </block>
     </div>
-</div>
+</div> -->
+<div class="preferences-tab row h-100 py-2">
+    <div class="col-6 offset-3">
+        <block class="h-100">
+            <block-content>
+                <div class="row">
+                    <div class="col-4">
+                        <div class="material-tabset h-100 d-flex flex-column">
+                            <ul>
+                                <li ng-repeat="tab in dvm.tabs">
+                                    <a ng-class="{'active': tab.active}" ng-click="dvm.select(tab)">
+                                        <span ng-bind-html="tab.heading | trusted" class="ng-binding">Profile</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>                 
+                    <div class="col-8">
+                        <div ng-repeat="tab in dvm.tabs">
+                            <div ng-if="tab.active">{{tab.heading}}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                    <!-- <md-sidenav class="md-sidenav-left md-open">
+                
+                      <md-toolbar class="md-theme-indigo">
+                        <h1 class="md-toolbar-tools">Sidenav Left</h1>
+                      </md-toolbar>
+                      <md-content>
+                        <p>
+                          This sidenav is locked open on your device. To go back to the default behavior,
+                          narrow your display.
+                        </p>
+                      </md-content>
+                
+                    </md-sidenav>
+                
+                    <md-content>
+                        <p>
+                        The left sidenav will 'lock open' on a medium (>=960px wide) device.
+                        </p>
+                        <p>
+                        The right sidenav will focus on a specific child element.
+                        </p>
+                    </md-content> -->
+            </block-content>
+        </block>
+    </div>
+  </div>
