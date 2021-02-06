@@ -1271,21 +1271,25 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Difference getDiff(Model original, Model changed) {
-        Model originalCopy = mf.createModel(original);
-        Model changedCopy = mf.createModel(changed);
+        Model additions = mf.createModel();
+        Model deletions = mf.createModel();
+
         original.forEach(statement -> {
-            Resource subject = statement.getSubject();
-            IRI predicate = statement.getPredicate();
-            Value object = statement.getObject();
-            if (changedCopy.contains(subject, predicate, object)) {
-                originalCopy.remove(subject, predicate, object);
-                changedCopy.remove(subject, predicate, object);
+            // TODO: Previously we only checked s,p,o and not the named graph. Why?
+            if (!changed.contains(statement)) {
+                deletions.add(statement);
+            }
+        });
+
+        changed.forEach(statement -> {
+            if(!original.contains(statement)) {
+                additions.add(statement);
             }
         });
 
         return new Difference.Builder()
-                .additions(changedCopy)
-                .deletions(originalCopy)
+                .additions(additions)
+                .deletions(deletions)
                 .build();
     }
 

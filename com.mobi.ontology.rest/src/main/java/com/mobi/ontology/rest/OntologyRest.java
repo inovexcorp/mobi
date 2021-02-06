@@ -546,18 +546,10 @@ public class OntologyRest {
                 }
             }
 
-            Model changedOnt = Models.createModel(fileInputStream, sesameTransformer,
-                    new RioFunctionalSyntaxParserFactory().getParser(),
-                    new RioManchesterSyntaxParserFactory().getParser(),
-                    new RioOWLXMLParserFactory().getParser());
-            Model currentOnt = catalogManager.getCompiledResource(recordId, branchId, commitId);
-            if (!OntologyModels.findFirstOntologyIRI(changedOnt, valueFactory).isPresent()) {
-                OntologyModels.findFirstOntologyIRI(changedOnt, valueFactory)
-                        .ifPresent(iri -> changedOnt.add(iri, valueFactory.createIRI(RDF.TYPE.stringValue()),
-                                valueFactory.createIRI(OWL.ONTOLOGY.stringValue())));
-            }
+            final Model uploadedModel = getUploadedModel(fileInputStream);
+            final Model currentModel = getCurrentModel(recordId, branchId, commitId);
 
-            Difference diff = catalogManager.getDiff(currentOnt, changedOnt);
+            Difference diff = catalogManager.getDiff(currentModel, uploadedModel);
 
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
             catalogManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
@@ -569,6 +561,28 @@ public class OntologyRest {
         } finally {
             IOUtils.closeQuietly(fileInputStream);
         }
+    }
+
+    private Model getUploadedModel(InputStream fileInputStream) throws IOException {
+        // Load uploaded ontology into a skolemized model
+        final Model changedOnt = bNodeService.deterministicSkolemize(Models.createModel(fileInputStream, sesameTransformer,
+                new RioFunctionalSyntaxParserFactory().getParser(),
+                new RioManchesterSyntaxParserFactory().getParser(),
+                new RioOWLXMLParserFactory().getParser()));
+        // TODO: I don't understand this
+        if (!OntologyModels.findFirstOntologyIRI(changedOnt, valueFactory).isPresent()) {
+            OntologyModels.findFirstOntologyIRI(changedOnt, valueFactory)
+                    .ifPresent(iri -> changedOnt.add(iri, valueFactory.createIRI(RDF.TYPE.stringValue()),
+                            valueFactory.createIRI(OWL.ONTOLOGY.stringValue())));
+        }
+
+        return changedOnt;
+    }
+
+    private Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId) {
+        // Load existing ontology into a skolemized model
+        return bNodeService.deterministicSkolemize(
+                catalogManager.getCompiledResource(recordId, branchId, commitId));
     }
 
     /**
