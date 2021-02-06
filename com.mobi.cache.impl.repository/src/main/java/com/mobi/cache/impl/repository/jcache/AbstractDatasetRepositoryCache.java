@@ -26,7 +26,9 @@ package com.mobi.cache.impl.repository.jcache;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.DatasetFactory;
+import com.mobi.exception.MobiException;
 import com.mobi.ontology.utils.cache.repository.OntologyDatasets;
+import com.mobi.query.api.Update;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ModelFactory;
@@ -34,9 +36,12 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import javax.cache.Cache;
 
@@ -50,13 +55,26 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
     protected DatasetFactory datasetFactory;
     protected DatasetManager datasetManager;
 
+    protected static final String UPDATE_TIMESTAMP_QUERY;
+
+    static {
+        try {
+            UPDATE_TIMESTAMP_QUERY = IOUtils.toString(
+                    AbstractDatasetRepositoryCache.class.getResourceAsStream("/update-timestamp.rq"),
+                    StandardCharsets.UTF_8
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
+
     protected DatasetConnection getDatasetConnection(Resource datasetIRI, boolean createNotExists) {
         LOG.debug("Retrieving cache dataset connection for " + datasetIRI.stringValue());
         try (RepositoryConnection conn = repository.getConnection()) {
-            if (!conn.getStatements(datasetIRI, null, null).hasNext()) {
+            if (!conn.getStatements(datasetIRI, null, null, datasetIRI).hasNext()) {
                 if (createNotExists) {
                     LOG.debug("Creating cache dataset " + datasetIRI.stringValue());
-                    datasetManager.createDataset(datasetIRI.stringValue(), repository.getConfig().id());
+                    datasetManager.createDataset(datasetIRI.stringValue(), conn);
                 } else {
                     LOG.trace("The dataset " + datasetIRI + " does not exist in the specified repository.");
                     throw new IllegalArgumentException("The dataset " + datasetIRI
@@ -64,17 +82,20 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
                 }
             }
         }
-        DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false);
+        DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false, false);
         updateDatasetTimestamp(conn);
         return conn;
     }
 
-    protected void updateDatasetTimestamp(Resource datasetIRI) {
-        DatasetConnection conn = getDatasetConnection(datasetIRI, false);
-        updateDatasetTimestamp(conn);
-    }
-
     protected void updateDatasetTimestamp(DatasetConnection conn) {
+//        Literal timestamp = vf.createLiteral(OffsetDateTime.now());
+//
+//        Resource dataset = conn.getDataset();
+//        LOG.debug("Updating cache dataset last accessed property for " + dataset);
+//        Update update = conn.prepareUpdate(UPDATE_TIMESTAMP_QUERY);
+//        update.setBinding("dataset", dataset);
+//        update.setBinding("now", timestamp);
+//        update.execute();
         IRI pred = vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING);
         Literal timestamp = vf.createLiteral(OffsetDateTime.now());
 

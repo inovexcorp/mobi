@@ -28,6 +28,7 @@ import com.mobi.dataset.pagination.DatasetPaginatedSearchParams;
 import com.mobi.dataset.api.builder.DatasetRecordConfig;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.rdf.api.Resource;
+import com.mobi.repository.api.RepositoryConnection;
 
 import java.util.Optional;
 import java.util.Set;
@@ -96,6 +97,19 @@ public interface DatasetManager {
      * @throws IllegalStateException if the target dataset already exists in the target repository.
      */
     boolean createDataset(String dataset, String repositoryId);
+
+    /**
+     * Creates a dataset according to the specified configuration. Initial dataset structure is created in the specified
+     * repository. No DatasetRecord is created.
+     *
+     * @param dataset The String representation of the Dataset IRI.
+     * @param conn An active connection to the repository to add dataset statements.
+     * @return A boolean indicating the success of the dataset creation.
+     * @throws IllegalArgumentException if the target dataset repository does not exist.
+     * @throws IllegalStateException if the target dataset already exists in the target repository.
+     */
+    boolean createDataset(String dataset, RepositoryConnection conn);
+
 
     /**
      * Deletes the DatasetRecord, Dataset, and data graphs associated with the Dataset Resource. Note: This method
@@ -218,6 +232,21 @@ public interface DatasetManager {
      * @throws IllegalStateException if the DatasetRecord does not point to a Dataset or a repository
      */
     DatasetConnection getConnection(Resource dataset, String repositoryId, boolean datasetRecord);
+
+    /**
+     * Returns a DatasetConnection for the specified Dataset in the specified repository.
+     *
+     * @param dataset The Resource of the Dataset for which to return a DatasetConnection.
+     * @param repositoryId The ID of the Repository where the Dataset is stored.
+     * @param datasetRecord Whether or not the Resource IRI has a DatasetRecord associated with it.
+     * @param setSystemDefaultNG Boolean whether to initially set the system default named graph on the connection.
+     * @return A DatasetConnection for the specified Dataset.
+     * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog with this
+     *      Dataset/Repository combination.
+     * @throws IllegalStateException if the DatasetRecord does not point to a Dataset or a repository
+     */
+    DatasetConnection getConnection(Resource dataset, String repositoryId, boolean datasetRecord,
+                                    boolean setSystemDefaultNG);
 
     /**
      * Returns a DatasetConnection for the specified DatasetRecord. The DatasetConnection is associated with the

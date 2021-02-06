@@ -306,6 +306,18 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
     Resource getSystemDefaultNamedGraph();
 
     /**
+     * TODO:
+     * @return
+     */
+    Resource getAndSetSystemDefaultNamedGraph();
+
+    /**
+     * TODO:
+     * @return
+     */
+    void setSystemDefaultNamedGraph(Resource systemDefaultNamedGraph);
+
+    /**
      * Adds a named graph to the dataset.
      *
      * @param graph the Resource representing the named graph to add to the dataset.

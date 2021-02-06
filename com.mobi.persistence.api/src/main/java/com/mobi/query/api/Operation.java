@@ -28,10 +28,6 @@ import com.mobi.query.api.processor.OperationProcessor;
 import com.mobi.query.exception.QueryInterruptedException;
 import com.mobi.query.exception.UpdateInterruptedException;
 import com.mobi.rdf.api.Value;
-import com.mobi.query.api.processor.OperationProcessor;
-import com.mobi.query.exception.QueryInterruptedException;
-import com.mobi.query.exception.UpdateInterruptedException;
-import com.mobi.rdf.api.Value;
 
 import java.util.List;
 
@@ -73,6 +69,17 @@ public interface Operation {
      * @see #setBinding(String, Value)
      */
     BindingSet getBindings();
+
+//    /**
+//     * Specifies the dataset against which to execute an operation, overriding any dataset that is specified in the
+//     * operation itself.
+//     */
+//    public void setDataset(Dataset dataset);
+//
+//    /**
+//     * Gets the dataset that has been set using {@link #setDataset(com.mobi.query.api.Dataset)}, if any.
+//     */
+//    public Dataset getDataset();
 
     /**
      * Determine whether evaluation results of this operation should include

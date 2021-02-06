@@ -35,6 +35,7 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
@@ -161,9 +162,29 @@ public class Query implements Action {
     }
 
     private void executeTupleQuery(Repository repository, String queryString) {
+        long connTime = 0;
+        long prepTime = 0;
+        long execTime = 0;
+        long printTime = 0;
+        StopWatch watch = new StopWatch();
+        watch.start();
+
         try (RepositoryConnection conn = repository.getConnection()) {
+            watch.stop();
+            connTime = watch.getTime();
+            watch.reset();
+
+            watch.start();
             TupleQuery query = conn.prepareTupleQuery(queryString);
-            TupleQueryResult result = query.evaluate();
+            watch.stop();
+            prepTime = watch.getTime();
+            watch.reset();
+            watch.start();
+            TupleQueryResult result = query.evaluateAndReturn();
+            watch.stop();
+            execTime = watch.getTime();
+            watch.reset();
+            watch.start();
 
             List<String> bindingNames = result.getBindingNames();
 
@@ -182,9 +203,16 @@ public class Query implements Action {
 
                 table.addRow().addContent(content);
             });
+            watch.stop();
+            printTime = watch.getTime();
+            watch.reset();
 
             table.print(System.out);
         }
+        System.out.println("Conn time : " + connTime);
+        System.out.println("Prep time : " + prepTime);
+        System.out.println("Exec time : " + execTime);
+        System.out.println("Print time: " + printTime);
     }
 
     private void executeGraphQuery(Repository repository, String queryString) {

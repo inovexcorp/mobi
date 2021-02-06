@@ -1905,12 +1905,33 @@ public class OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            // TODO: remove log
+            log.debug("************************************ Loaded ontology into cache ************************************");
             Hierarchy hierarchy = ontology.getSubClassesOf(valueFactory, modelFactory);
             return Response.ok(getHierarchyStream(hierarchy, nested, getClassIRIs(ontology))).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GET
+    @Path("{recordId}/load")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the class hierarchies for the identified ontology.")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response loadIntoCache(@Context ContainerRequestContext context,
+                                              @PathParam("recordId") String recordIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, "", "", true).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            log.debug("************************************ Loaded ontology into cache ************************************");
+            return Response.ok().build();
+        } catch (MobiException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
     /**
      * Returns the object property hierarchy for the ontology identified by the provided IDs as a JSON object with keys
@@ -2670,26 +2691,20 @@ public class OntologyRest {
         String key = ontologyCache.generateKey(recordIdStr, commitIdStr);
 
         try {
-            if (cache.isPresent() && cache.get().containsKey(key)) {
-                log.trace("cache hit");
-                optionalOntology = Optional.of(cache.get().get(key));
-            } else {
-                log.trace("cache miss");
-                Resource recordId = valueFactory.createIRI(recordIdStr);
+            Resource recordId = valueFactory.createIRI(recordIdStr);
 
-                if (StringUtils.isNotBlank(commitIdStr)) {
-                    if (StringUtils.isNotBlank(branchIdStr)) {
-                        optionalOntology = ontologyManager.retrieveOntology(recordId,
-                                valueFactory.createIRI(branchIdStr), valueFactory.createIRI(commitIdStr));
-                    } else {
-                        optionalOntology = ontologyManager.retrieveOntologyByCommit(recordId,
-                                valueFactory.createIRI(commitIdStr));
-                    }
-                } else if (StringUtils.isNotBlank(branchIdStr)) {
-                    optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
+            if (StringUtils.isNotBlank(commitIdStr)) {
+                if (StringUtils.isNotBlank(branchIdStr)) {
+                    optionalOntology = ontologyManager.retrieveOntology(recordId,
+                            valueFactory.createIRI(branchIdStr), valueFactory.createIRI(commitIdStr));
                 } else {
-                    optionalOntology = ontologyManager.retrieveOntology(recordId);
+                    optionalOntology = ontologyManager.retrieveOntologyByCommit(recordId,
+                            valueFactory.createIRI(commitIdStr));
                 }
+            } else if (StringUtils.isNotBlank(branchIdStr)) {
+                optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
+            } else {
+                optionalOntology = ontologyManager.retrieveOntology(recordId);
             }
 
             if (optionalOntology.isPresent() && applyInProgressCommit) {

@@ -209,13 +209,27 @@ public class SimpleDatasetManager implements DatasetManager {
             if (conn.getStatements(null, null, null, datasetIRI).hasNext()) {
                 throw new IllegalArgumentException("The dataset already exists in the specified repository.");
             }
-        }
-        Dataset newDataset = dsFactory.createNew(datasetIRI);
-        newDataset.setSystemDefaultNamedGraph(sdgIRI);
 
-        try (RepositoryConnection conn = dsRepo.getConnection()) {
+            Dataset newDataset = dsFactory.createNew(datasetIRI);
+            newDataset.setSystemDefaultNamedGraph(sdgIRI);
             conn.add(newDataset.getModel(), datasetIRI);
         }
+
+        return true;
+    }
+
+    @Override
+    public boolean createDataset(String dataset, RepositoryConnection conn) {
+        IRI datasetIRI = vf.createIRI(dataset);
+        IRI sdgIRI = vf.createIRI(dataset + SYSTEM_DEFAULT_NG_SUFFIX);
+
+        if (conn.getStatements(null, null, null, datasetIRI).hasNext()) {
+            throw new IllegalArgumentException("The dataset already exists in the specified repository.");
+        }
+
+        Dataset newDataset = dsFactory.createNew(datasetIRI);
+        newDataset.setSystemDefaultNamedGraph(sdgIRI);
+        conn.add(newDataset.getModel(), datasetIRI);
 
         return true;
     }
@@ -334,6 +348,16 @@ public class SimpleDatasetManager implements DatasetManager {
         return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf);
     }
 
+    private DatasetConnection getConnectionNoSystemDefaultNG(Resource dataset, String repositoryId) {
+        if (!getRecordResource(dataset, repositoryId).isPresent()) {
+            throw new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog with this "
+                    + "dataset/repository combination.");
+        }
+        Repository dsRepo = getDatasetRepo(repositoryId);
+
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf);
+    }
+
     @Override
     public DatasetConnection getConnection(Resource dataset, String repositoryId, boolean datasetRecord) {
         if (datasetRecord) {
@@ -341,6 +365,24 @@ public class SimpleDatasetManager implements DatasetManager {
         }
         Repository dsRepo = getDatasetRepo(repositoryId);
         return getConnection(dataset, repositoryId, dsRepo);
+    }
+
+    @Override
+    public DatasetConnection getConnection(Resource dataset, String repositoryId, boolean datasetRecord,
+                                           boolean setSystemDefaultNG) {
+        if (datasetRecord) {
+            if (setSystemDefaultNG) {
+                return getConnection(dataset, repositoryId);
+            } else {
+                return getConnectionNoSystemDefaultNG(dataset, repositoryId);
+            }
+        }
+        Repository dsRepo = getDatasetRepo(repositoryId);
+        if (setSystemDefaultNG) {
+            return getConnection(dataset, repositoryId, dsRepo);
+        } else {
+            return getConnectionNoSystemDefaultNG(dataset, repositoryId, dsRepo);
+        }
     }
 
     @Override
@@ -358,6 +400,10 @@ public class SimpleDatasetManager implements DatasetManager {
 
     private DatasetConnection getConnection(Resource dataset, String repoId, Repository dsRepo) {
         return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repoId, vf);
+    }
+
+    private DatasetConnection getConnectionNoSystemDefaultNG(Resource dataset, String repoId, Repository dsRepo) {
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repoId, vf, false);
     }
 
     /**

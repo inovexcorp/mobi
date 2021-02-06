@@ -65,7 +65,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapper implements DatasetConnection {
-
     private Resource dataset;
     private String repositoryId;
     private ValueFactory valueFactory;
@@ -110,7 +109,16 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         this.dataset = dataset;
         this.repositoryId = repositoryId;
         this.valueFactory = valueFactory;
-        this.systemDefaultNG = getSystemDefaultNG();
+        getAndSetSystemDefaultNamedGraph();
+    }
+
+    public SimpleDatasetRepositoryConnection(RepositoryConnection delegate, Resource dataset, String repositoryId,
+                                             ValueFactory valueFactory, boolean setSystemDefaultNG) {
+        setDelegate(delegate);
+        this.dataset = dataset;
+        this.repositoryId = repositoryId;
+        this.valueFactory = valueFactory;
+        this.systemDefaultNG = setSystemDefaultNG ? getAndSetSystemDefaultNamedGraph() : null;
     }
 
     public SimpleDatasetRepositoryConnection(RepositoryConnection delegate, Resource dataset, String repositoryId,
@@ -119,7 +127,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         this.dataset = dataset;
         this.repositoryId = repositoryId;
         this.valueFactory = valueFactory;
-        this.systemDefaultNG = getSystemDefaultNG();
+        getAndSetSystemDefaultNamedGraph();
         this.batchSize = batchSize;
     }
 
@@ -402,6 +410,25 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
+    public Resource getAndSetSystemDefaultNamedGraph() {
+        RepositoryResult<Statement> statements = getDelegate()
+                .getStatements(dataset, valueFactory.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
+
+        if (statements.hasNext()) {
+            this.systemDefaultNG = Statements.objectResource(statements.next())
+                    .orElseThrow(() -> new MobiException("Could not retrieve systemDefaultNamedGraph for dataset"));
+            return systemDefaultNG;
+        } else {
+            throw new MobiException("Could not retrieve systemDefaultNamedGraph for dataset");
+        }
+    }
+
+    @Override
+    public void setSystemDefaultNamedGraph(Resource systemDefaultNamedGraph) {
+        this.systemDefaultNG = systemDefaultNamedGraph;
+    }
+
+    @Override
     public Resource getDataset() {
         return dataset;
     }
@@ -418,18 +445,6 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     private void getGraphs(Set<Resource> graphs, String predString) {
         getDelegate().getStatements(getDataset(), valueFactory.createIRI(predString), null)
                 .forEach(stmt -> Statements.objectResource(stmt).ifPresent(graphs::add));
-    }
-
-    private Resource getSystemDefaultNG() {
-        RepositoryResult<Statement> statements = getDelegate()
-                .getStatements(dataset, valueFactory.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
-
-        if (statements.hasNext()) {
-            return Statements.objectResource(statements.next())
-                    .orElseThrow(() -> new MobiException("Could not retrieve systemDefaultNamedGraph for dataset"));
-        } else {
-            throw new MobiException("Could not retrieve systemDefaultNamedGraph for dataset");
-        }
     }
 
     /**
@@ -600,6 +615,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
      * @return A String representing the query rewritten with dataset clauses appropriate for this dataset.
      */
     private String rewriteQuery(String query, Resource... contexts) {
+        long start = System.currentTimeMillis();
         Sparql11Parser parser = Query.getParser(query);
         Sparql11Parser.QueryContext queryContext = parser.query();
         TokenStreamRewriter rewriter = new TokenStreamRewriter(parser.getTokenStream());
@@ -616,7 +632,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
         String processedQuery = rewriter.getText();
         log.debug("Dataset Processed Query: \n" + processedQuery);
-
+        log.debug("Rewrite query complete in {} ms", System.currentTimeMillis() - start);
         return processedQuery;
     }
 
@@ -649,6 +665,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     private class DatasetListener extends Sparql11BaseListener {
+
         private TokenStreamRewriter rewriter;
         private String datasetClause;
         private Set<Resource> contexts;
