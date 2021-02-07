@@ -104,7 +104,7 @@ public class SimpleBNodeService implements BNodeService {
     public Model deterministicSkolemize(Model model) {
         final Model result = mf.createModel();
         final Map<BNode, IRI> skolemizedBNodes = new HashMap<>();
-        final Map<Integer, Integer> hashCount = new HashMap<>();
+        final Map<Long, Integer> hashCount = new HashMap<>();
 
         // Process every blank node chain that begins with an IRI
         model.subjects().stream()
@@ -150,7 +150,7 @@ public class SimpleBNodeService implements BNodeService {
      * @param skolemizedBNodes The Map tracking previously skolemized BNodes.
      * @return The Model containing all skolemized statements for the bNode and any attached BNode chains.
      */
-    private Model deterministicSkolemize(BNode bNode, Model model, Map<BNode, IRI> skolemizedBNodes, Map<Integer, Integer> hashCount) {
+    private Model deterministicSkolemize(BNode bNode, Model model, Map<BNode, IRI> skolemizedBNodes, Map<Long, Integer> hashCount) {
         Model result = mf.createModel();
 
         List<String> valuesToHash = new ArrayList<>();
@@ -172,7 +172,7 @@ public class SimpleBNodeService implements BNodeService {
                     }
                 });
         Collections.sort(valuesToHash);
-        int idHash = String.join("", valuesToHash).hashCode();
+        long idHash = hash(String.join("", valuesToHash));
 
         String hashString;
         if (hashCount.containsKey(idHash)) {
@@ -196,6 +196,17 @@ public class SimpleBNodeService implements BNodeService {
         });
         skolemizedBNodes.put(bNode, skolemizedIRI);
         return result;
+    }
+
+    // adapted from String.hashCode()
+    public long hash(String string) {
+        long h = 1125899906842597L; // prime
+        int len = string.length();
+
+        for (int i = 0; i < len; i++) {
+            h = 31*h + string.charAt(i);
+        }
+        return h;
     }
 
     @Override
