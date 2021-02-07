@@ -314,7 +314,18 @@ public class SimpleBNodeServiceTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void skolemizeWithDuplicatedBNodes() throws Exception {
+    public void skolemizeDetachedBlankNode_08() throws Exception {
+        Model modelA = getModelFromFile("/deterministicSkolemize/08-A.ttl");
+        Model modelB = getModelFromFile("/deterministicSkolemize/08-B.ttl");
+
+        modelA = service.deterministicSkolemize(modelA);
+        modelB = service.deterministicSkolemize(modelB);
+
+        Model mA = MODEL_FACTORY.createModel(modelA);
+        mA.removeAll(modelB);
+        modelB.removeAll(modelA);
+
+        assertTrue(modelA.containsAll(modelB));
     }
 
     private Model getModelFromFile(String file) throws IOException {

@@ -172,7 +172,7 @@ public class SimpleBNodeService implements BNodeService {
                     }
                 });
         Collections.sort(valuesToHash);
-        int idHash = Objects.hash(valuesToHash.toArray());
+        int idHash = String.join("", valuesToHash).hashCode();
 
         String hashString;
         if (hashCount.containsKey(idHash)) {
