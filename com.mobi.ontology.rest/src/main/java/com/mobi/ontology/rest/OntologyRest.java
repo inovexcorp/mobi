@@ -565,10 +565,10 @@ public class OntologyRest {
 
     private Model getUploadedModel(InputStream fileInputStream) throws IOException {
         // Load uploaded ontology into a skolemized model
-        final Model changedOnt = bNodeService.deterministicSkolemize(Models.createModel(fileInputStream, sesameTransformer,
+        final Model changedOnt = Models.createSkolemizedModel(fileInputStream, modelFactory, sesameTransformer, bNodeService,
                 new RioFunctionalSyntaxParserFactory().getParser(),
                 new RioManchesterSyntaxParserFactory().getParser(),
-                new RioOWLXMLParserFactory().getParser()));
+                new RioOWLXMLParserFactory().getParser());
         // TODO: I don't understand this
         if (!OntologyModels.findFirstOntologyIRI(changedOnt, valueFactory).isPresent()) {
             OntologyModels.findFirstOntologyIRI(changedOnt, valueFactory)
@@ -581,8 +581,7 @@ public class OntologyRest {
 
     private Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId) {
         // Load existing ontology into a skolemized model
-        return bNodeService.deterministicSkolemize(
-                catalogManager.getCompiledResource(recordId, branchId, commitId));
+        return bNodeService.deterministicSkolemize(catalogManager.getCompiledResource(recordId, branchId, commitId));
     }
 
     /**
