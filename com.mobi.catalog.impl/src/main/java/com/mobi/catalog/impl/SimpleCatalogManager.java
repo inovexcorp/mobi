@@ -1275,14 +1275,13 @@ public class SimpleCatalogManager implements CatalogManager {
         Model deletions = mf.createModel();
 
         original.forEach(statement -> {
-            // TODO: Previously we only checked s,p,o and not the named graph. Why?
-            if (!changed.contains(statement)) {
+            if (!changed.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())) {
                 deletions.add(statement);
             }
         });
 
         changed.forEach(statement -> {
-            if(!original.contains(statement)) {
+            if(!original.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())) {
                 additions.add(statement);
             }
         });
