@@ -107,8 +107,8 @@ function preferenceManagerService($http, $q, REST_PREFIX, utilService, prefixes,
     };
 
     self.getPreferenceDefinitions = function(preferenceGroup, id = '') {
-        var promise = id ? httpService.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup), id) 
-            : $http.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup));
+        var promise = id ? httpService.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup) + '/definitions', id) 
+            : $http.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup) + '/definitions');
         return promise.then($q.when, util.rejectError);
     }
 }

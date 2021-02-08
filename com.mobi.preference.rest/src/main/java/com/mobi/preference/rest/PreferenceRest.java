@@ -120,8 +120,8 @@ public class PreferenceRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     public Response getPreferenceGroups(@Context ContainerRequestContext context) {
-        List<Resource> userPreferences = preferenceService.getPreferenceGroups();
-        return Response.status(200).entity(userPreferences).build();
+        List<String> userPreferences = preferenceService.getPreferenceGroups();
+        return Response.ok(userPreferences).build();
     }
 
     @PUT

@@ -228,10 +228,10 @@ public class SimplePreferenceService implements PreferenceService {
     }
 
     @Override
-    public List<Resource> getPreferenceGroups() {
+    public List<String> getPreferenceGroups() {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return RepositoryResults.asList(conn.getStatements(null, null, vf.createIRI(PreferenceGroup.TYPE)))
-                    .stream().map(Statement::getSubject).collect(Collectors.toList());
+                    .stream().map(Statement::getSubject).map(Resource::stringValue).collect(Collectors.toList());
         }
     }
 

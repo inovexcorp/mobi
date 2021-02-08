@@ -35,22 +35,36 @@
 :NotificationPreferenceGroup a pref:PreferenceGroup .
 
 :PrefixPreference a owl:Class, sh:NodeShape;
-    rdfs:subClassOf :Preference;
+    rdfs:subClassOf pref:Preference;
     rdfs:label "Prefix Preference"@en;
     rdfs:comment "A preference that a user can have within the Mobi framework that signifies the prefixes they want defined."@en;
     sh:property :PrefixPreferencePropertyShape;
-    :inGroup :PrefixPreferenceGroup .
+    pref:inGroup :PrefixPreferenceGroup .
 
 :PrefixPreferenceGroup a pref:PreferenceGroup .
 
 :PrefixPreferencePropertyShape a sh:PropertyShape;
     sh:node :PrefixNodeShape;
-    sh:path :hasObjectValue .
+    sh:path pref:hasObjectValue .
 
 :PrefixNodeShape a sh:NodeShape;
     sh:property :PrefixPropertyShape;
     sh:property :NamespacePropertyShape;
     sh:targetClass :Prefix .
+
+:PrefixPropertyShape a sh:PropertyShape ;
+    sh:path :hasPrefix ;
+    sh:datatype xsd:string ;
+    sh:order 0 ;
+    sh:minCount 1 ;
+    sh:maxCount 1 .
+
+:NamespacePropertyShape a sh:PropertyShape ;
+    sh:path :hasNamespace ;
+    sh:datatype xsd:string ;
+    sh:order 1 ;
+    sh:minCount 1 ;
+    sh:maxCount 1 .
 
 :Prefix a owl:Class;
     rdfs:label "Prefix"@en.

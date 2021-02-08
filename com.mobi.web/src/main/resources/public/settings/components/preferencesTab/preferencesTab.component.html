@@ -60,7 +60,7 @@
                     </div>                 
                     <div class="col-8">
                         <div ng-repeat="tab in dvm.tabs">
-                            <preference-group ng-if="tab.active" group="tab.type"></preference-group>
+                            <preference-group user-preferences="dvm.userPreferences" ng-if="tab.active" group="tab.type"></preference-group>
                         </div>
                     </div>
                 </div>

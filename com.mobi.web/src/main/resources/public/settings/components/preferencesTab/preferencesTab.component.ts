@@ -53,18 +53,8 @@ function preferencesTabComponentCtrl(utilService, preferenceManagerService, sett
     var util = utilService;
     dvm.tabs = [];
     dvm.preferenceGroups = [];
-    dvm.notificationTab = {
-       heading: 'Notification',
-       active: false
-    };
-    dvm.prefixTab = {
-        heading: 'Prefix',
-        active: false
-    };
     
     dvm.$onInit = function() {
-        dvm.tabs.push(dvm.notificationTab);
-        dvm.tabs.push(dvm.prefixTab);
         pm.getPreferenceGroups()
             .then(response => {
                 dvm.errorMessage = '';
@@ -73,12 +63,18 @@ function preferencesTabComponentCtrl(utilService, preferenceManagerService, sett
                     dvm.addTab(preferenceGroup);
                 })
             }, error => dvm.errorMessage = error);
+        pm.getUserPreferences()
+            .then(response => {
+                dvm.errorMessage = '';
+                util.createSuccessToast('Preference Groups retrieved successfully');
+                dvm.userPreferences = response.data;
+            })
     };
 
     dvm.addTab = function(preferenceGroup) {
         dvm.tabs.push({
-            type: preferenceGroup['@id'],
-            heading: util.getBeautifulIRI(preferenceGroup['@id']),
+            type: preferenceGroup,
+            heading: util.getBeautifulIRI(preferenceGroup),
             active: false
         });
     }

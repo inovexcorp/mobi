@@ -40,7 +40,8 @@ const template = require('./preferenceGroup.component.html');
 const preferenceGroupComponent = {
     template,
     bindings: {
-        group: '<'
+        group: '<',
+        userPreferences: '<'
     },
     controllerAs: 'dvm',
     controller: preferenceGroupComponentCtrl
@@ -51,14 +52,33 @@ preferenceGroupComponentCtrl.$inject = ['utilService', 'preferenceManagerService
 function preferenceGroupComponentCtrl(utilService, preferenceManagerService, settingsManagerService) {
     var dvm = this;
     var pm = preferenceManagerService;
-    var util = utilService;
+    dvm.util = utilService;
+    dvm.preferences = [];
+    dvm.preferenceDefinitions = {};
     
     dvm.$onInit = function() {
         pm.getPreferenceDefinitions(dvm.group)
             .then(response => {
                 dvm.errorMessage = '';
-                util.createSuccessToast('Preference Definition retrieved successfully');
-                dvm.preferenceDefinitions = response.data;
+                dvm.util.createSuccessToast('Preference Definition retrieved successfully');
+                forEach(response.data, result => {
+                    dvm.preferenceDefinitions[result['@id']] = result; // Maybe this means I should return a json object instead of array
+                    if (result['http://mobi.com/ontologies/preference#inGroup']) {
+                        // verify that it has only one value for sh:property, otherwise show error toast
+                        dvm.preferences.push(result);
+                    }
+                });
+                forEach(dvm.preferences, preference => {
+                    var requiredPropertyShape = dvm.preferenceDefinitions[preference['http://www.w3.org/ns/shacl#property'][0]['@id']];
+                    if (requiredPropertyShape['http://www.w3.org/ns/shacl#node']) {
+                        var attachedNode = dvm.preferenceDefinitions[requiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
+                        var finalObjects = attachedNode['http://www.w3.org/ns/shacl#property'].map(finalProperty => {
+                            return dvm.preferenceDefinitions[finalProperty['@id']];
+                        });
+                        preference['formFields'] = finalObjects;
+                    }
+                });
+                
             }, error => dvm.errorMessage = error);
     };
 }
