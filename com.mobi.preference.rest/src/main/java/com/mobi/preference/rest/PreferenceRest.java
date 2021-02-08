@@ -100,7 +100,7 @@ public class PreferenceRest {
         ObjectNode result = mapper.createObjectNode();
         userPreferences.stream().forEach(pref -> {
             JsonNode jsonNode = getPreferenceAsJsonNode(pref);
-            result.set(pref.getResource().stringValue(), jsonNode);
+            result.set(preferenceService.getPreferenceType(pref).stringValue(), jsonNode);
         });
         return Response.ok(result.toString()).build();
     }

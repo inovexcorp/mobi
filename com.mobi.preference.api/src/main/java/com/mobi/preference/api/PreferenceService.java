@@ -90,6 +90,8 @@ public interface PreferenceService {
      */
     void deletePreference(Resource preferenceIRI);
 
+    Resource getPreferenceType(Preference preference);
+
     /**
      * Updates the Preference for a user identified by the IRI of the passed in preference.
      *

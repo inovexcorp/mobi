@@ -268,7 +268,7 @@ public class SimplePreferenceService implements PreferenceService {
         });
     }
 
-    private Resource getPreferenceType(Preference preference) {
+    public Resource getPreferenceType(Preference preference) {
         List<Resource> types = mf.createModel(preference.getModel()).filter(preference.getResource(), vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null)
                 .stream()
                 .map(Statements::objectResource)

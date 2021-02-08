@@ -78,7 +78,6 @@ function preferenceGroupComponentCtrl(utilService, preferenceManagerService, set
                         preference['formFields'] = finalObjects;
                     }
                 });
-                
             }, error => dvm.errorMessage = error);
     };
 }

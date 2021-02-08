@@ -175,6 +175,8 @@ public class PreferenceRestTest extends MobiRestTestNg {
         complexPreferenceJson = IOUtils.toString(getClass().getResourceAsStream("/complexPreference.json"), StandardCharsets.UTF_8);
 
         when(preferenceService.getUserPreferences(any())).thenReturn(preferenceSet);
+        when(preferenceService.getPreferenceType(simplePreference)).thenReturn(vf.createIRI(simplePreference.TYPE));
+        when(preferenceService.getPreferenceType(complexPreference)).thenReturn(vf.createIRI(complexPreference.TYPE));
         when(testComplexPreferenceFactory.getTypeIRI()).thenReturn(vf.createIRI(TestComplexPreference.TYPE));
         when(testComplexPreferenceFactory.getExisting(complexPreference.getResource(), complexPrefModel)).thenReturn(Optional.of(complexPreference));
         when(testComplexPreferenceFactory.getExisting(simplePreference.getResource(), simplePrefModel)).thenReturn(Optional.empty());
@@ -224,8 +226,8 @@ public class PreferenceRestTest extends MobiRestTestNg {
         assertEquals(200, response.getStatus());
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
         assertEquals(2, result.size());
-        assertEquals(1, result.getJSONArray("http://example.com/MySimplePreference").size());
-        assertEquals(2, result.getJSONArray("http://example.com/MyComplexPreference").size());
+        assertEquals(1, result.getJSONArray(TestSimplePreference.TYPE).size());
+        assertEquals(2, result.getJSONArray(TestComplexPreference.TYPE).size());
     }
 
     @Test
