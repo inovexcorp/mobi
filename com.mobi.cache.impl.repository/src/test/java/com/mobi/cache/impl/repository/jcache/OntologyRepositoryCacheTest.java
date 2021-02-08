@@ -60,6 +60,7 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.query.SesameOperationDatasetFactory;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.Before;
@@ -88,6 +89,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
     private Repository repo;
     private OntologyRepositoryCache cache;
     private OrmFactory<Dataset> datasetFactory = getRequiredOrmFactory(Dataset.class);
+    private SesameOperationDatasetFactory operationDatasetFactory = new SesameOperationDatasetFactory();
 
     private IRI timestampIRI;
     private Model ontNoImportsModel;
@@ -252,7 +254,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         when(ontologyManager.retrieveOntologyByCommit(vf.createIRI("urn:record3"), vf.createIRI("urn:commit1"))).thenReturn(Optional.of(ontMultipleImports));
 
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
-        when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), repositoryConfig.id(), vf));
+        when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), repositoryConfig.id(), vf, operationDatasetFactory));
         doNothing().when(datasetManager).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
         ArgumentCaptor<String> datasetIRIStr = ArgumentCaptor.forClass(String.class);
         when(datasetManager.createDataset(datasetIRIStr.capture(), anyString())).thenAnswer(invocation -> {

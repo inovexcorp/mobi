@@ -29,9 +29,12 @@ import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.Statements;
 import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.Binding;
 import com.mobi.query.api.BooleanQuery;
 import com.mobi.query.api.GraphQuery;
 import com.mobi.query.api.Operation;
+import com.mobi.query.api.OperationDataset;
+import com.mobi.query.api.OperationDatasetFactory;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.query.api.Update;
 import com.mobi.query.exception.MalformedQueryException;
@@ -61,26 +64,25 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapper implements DatasetConnection {
-    private Resource dataset;
+    private Resource datasetResource;
     private String repositoryId;
     private ValueFactory valueFactory;
     private Resource systemDefaultNG;
+    private OperationDatasetFactory operationDatasetFactory;
 
     private long batchSize = 10000;
 
     private static final String GET_GRAPHS_QUERY;
     private static final String GET_NAMED_GRAPHS_QUERY;
     private static final String GET_DEFAULT_NAMED_GRAPHS_QUERY;
+    private static final String GET_OPERATION_DATASET_GRAPHS;
     private static final String DATSET_BINDING = "dataset";
     private static final String GRAPH_BINDING = "graph";
-
-    private static final String FROM = "FROM <";
-    private static final String FROM_NAMED = "FROM NAMED <";
-    private static final String GREATER = ">";
 
     private static final Logger log = LoggerFactory.getLogger(SimpleDatasetRepositoryConnection.class);
 
@@ -98,35 +100,45 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
                     SimpleDatasetManager.class.getResourceAsStream("/get-default-named-graphs.rq"),
                     StandardCharsets.UTF_8
             );
+            GET_OPERATION_DATASET_GRAPHS = IOUtils.toString(
+                    SimpleDatasetManager.class.getResourceAsStream("/get-operation-dataset-graphs.rq"),
+                    StandardCharsets.UTF_8
+            );
         } catch (IOException e) {
             throw new MobiException(e);
         }
     }
 
     public SimpleDatasetRepositoryConnection(RepositoryConnection delegate, Resource dataset, String repositoryId,
-                                             ValueFactory valueFactory) {
+                                             ValueFactory valueFactory,
+                                             OperationDatasetFactory operationDatasetFactory) {
         setDelegate(delegate);
-        this.dataset = dataset;
+        this.datasetResource = dataset;
         this.repositoryId = repositoryId;
         this.valueFactory = valueFactory;
+        this.operationDatasetFactory = operationDatasetFactory;
         getAndSetSystemDefaultNamedGraph();
     }
 
     public SimpleDatasetRepositoryConnection(RepositoryConnection delegate, Resource dataset, String repositoryId,
-                                             ValueFactory valueFactory, boolean setSystemDefaultNG) {
+                                             ValueFactory valueFactory, OperationDatasetFactory operationDatasetFactory,
+                                             boolean setSystemDefaultNG) {
         setDelegate(delegate);
-        this.dataset = dataset;
+        this.datasetResource = dataset;
         this.repositoryId = repositoryId;
         this.valueFactory = valueFactory;
+        this.operationDatasetFactory = operationDatasetFactory;
         this.systemDefaultNG = setSystemDefaultNG ? getAndSetSystemDefaultNamedGraph() : null;
     }
 
     public SimpleDatasetRepositoryConnection(RepositoryConnection delegate, Resource dataset, String repositoryId,
-                                             ValueFactory valueFactory, long batchSize) {
+                                             ValueFactory valueFactory, OperationDatasetFactory operationDatasetFactory,
+                                             long batchSize) {
         setDelegate(delegate);
-        this.dataset = dataset;
+        this.datasetResource = dataset;
         this.repositoryId = repositoryId;
         this.valueFactory = valueFactory;
+        this.operationDatasetFactory = operationDatasetFactory;
         getAndSetSystemDefaultNamedGraph();
         this.batchSize = batchSize;
     }
@@ -167,14 +179,12 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         // Start a transaction if not currently in one
         boolean startedTransaction = startTransaction();
 
-        Set<Resource> graphs = new HashSet<>();
+        Set<Resource> graphs = getGraphsSet();
         graphs.add(systemDefaultNG);
-        getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
-        getGraphs(graphs, Dataset.namedGraph_IRI);
 
         if (varargsPresent(contexts)) {
             graphs.retainAll(Arrays.asList(contexts));
-            getDelegate().remove(stmt, graphs.toArray(new Resource[graphs.size()]));
+            getDelegate().remove(stmt, graphs.toArray(new Resource[0]));
         } else {
             removeSingleStatement(stmt, graphs);
         }
@@ -190,14 +200,12 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         // Start a transaction if not currently in one
         boolean startedTransaction = startTransaction();
 
-        Set<Resource> graphs = new HashSet<>();
+        Set<Resource> graphs = getGraphsSet();
         graphs.add(systemDefaultNG);
-        getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
-        getGraphs(graphs, Dataset.namedGraph_IRI);
 
         if (varargsPresent(contexts)) {
             graphs.retainAll(Arrays.asList(contexts));
-            getDelegate().remove(statements, graphs.toArray(new Resource[graphs.size()]));
+            getDelegate().remove(statements, graphs.toArray(new Resource[0]));
         } else {
             statements.forEach(stmt -> removeSingleStatement(stmt, graphs));
         }
@@ -212,14 +220,10 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         // Start a transaction if not currently in one
         boolean startedTransaction = startTransaction();
 
-        Set<Resource> graphs = new HashSet<>();
-        graphs.add(systemDefaultNG);
-        getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
-        getGraphs(graphs, Dataset.namedGraph_IRI);
-
+        Set<Resource> graphs = getGraphsSet();
         if (varargsPresent(contexts)) {
             graphs.retainAll(Arrays.asList(contexts));
-            getDelegate().remove(subject, predicate, object, graphs.toArray(new Resource[graphs.size()]));
+            getDelegate().remove(subject, predicate, object, graphs.toArray(new Resource[0]));
         } else {
             getDelegate().remove(subject, predicate, object, getSystemDefaultNamedGraph());
         }
@@ -247,13 +251,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public long size(Resource... contexts) throws RepositoryException {
-        // TODO: Would this be more efficient with a sparql query? I probably wouldn't need a value factory.
-        // TODO: Trivial Implementation
-        Set<Resource> graphs = new HashSet<>();
-        graphs.add(systemDefaultNG);
-        getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
-        getGraphs(graphs, Dataset.namedGraph_IRI);
-
+        Set<Resource> graphs = getGraphsSet();
         if (varargsPresent(contexts)) {
             graphs.retainAll(Arrays.asList(contexts));
         }
@@ -261,7 +259,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         if (graphs.size() == 0) {
             return 0;
         }
-        return getDelegate().size(graphs.toArray(new Resource[graphs.size()]));
+        return getDelegate().size(graphs.toArray(new Resource[0]));
     }
 
     @Override
@@ -306,18 +304,12 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     @Override
     public RepositoryResult<Statement> getStatements(Resource subject, IRI predicate, Value object,
                                                      Resource... contexts) throws RepositoryException {
-        // TODO: Trivial Implementation
-        // Maybe I can wrap a query result like in the getContextIDs impl
-        Set<Resource> graphs = new HashSet<>();
-        graphs.add(systemDefaultNG);
-        getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
-        getGraphs(graphs, Dataset.namedGraph_IRI);
-
+        Set<Resource> graphs = getGraphsSet();
         if (varargsPresent(contexts)) {
             graphs.retainAll(Arrays.asList(contexts));
         }
 
-        return getDelegate().getStatements(subject, predicate, object, graphs.toArray(new Resource[graphs.size()]));
+        return getDelegate().getStatements(subject, predicate, object, graphs.toArray(new Resource[0]));
     }
 
     @Override
@@ -356,36 +348,58 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public TupleQuery prepareTupleQuery(String query) throws RepositoryException, MalformedQueryException {
-        return getDelegate().prepareTupleQuery(rewriteQuery(query));
+        TupleQuery tupleQuery = getDelegate().prepareTupleQuery(query);
+        tupleQuery.setDataset(getOperationDataset());
+        return tupleQuery;
     }
 
     @Override
     public TupleQuery prepareTupleQuery(String query, String baseURI) throws RepositoryException,
             MalformedQueryException {
-        return getDelegate().prepareTupleQuery(rewriteQuery(query), baseURI);
+        TupleQuery tupleQuery = getDelegate().prepareTupleQuery(query, baseURI);
+        tupleQuery.setDataset(getOperationDataset());
+        return tupleQuery;
     }
 
     @Override
     public TupleQuery prepareTupleQuery(String query, Resource... contexts) throws RepositoryException,
             MalformedQueryException {
-        return getDelegate().prepareTupleQuery(rewriteQuery(query, contexts));
+        TupleQuery tupleQuery = getDelegate().prepareTupleQuery(query);
+        if (varargsPresent(contexts)) {
+            OperationDataset operationDataset = operationDatasetFactory.createOperationDataset();
+            Arrays.stream(contexts).forEach(context -> operationDataset.addDefaultGraph((IRI) context));
+            Arrays.stream(contexts).forEach(context -> operationDataset.addNamedGraph((IRI) context));
+            tupleQuery.setDataset(getOperationDataset());
+        }
+        return tupleQuery;
     }
 
     @Override
     public GraphQuery prepareGraphQuery(String query) throws RepositoryException, MalformedQueryException {
-        return getDelegate().prepareGraphQuery(rewriteQuery(query));
+        GraphQuery graphQuery = getDelegate().prepareGraphQuery(query);
+        graphQuery.setDataset(getOperationDataset());
+        return graphQuery;
     }
 
     @Override
     public GraphQuery prepareGraphQuery(String query, String baseURI) throws RepositoryException,
             MalformedQueryException {
-        return getDelegate().prepareGraphQuery(rewriteQuery(query), baseURI);
+        GraphQuery graphQuery = getDelegate().prepareGraphQuery(query, baseURI);
+        graphQuery.setDataset(getOperationDataset());
+        return graphQuery;
     }
 
     @Override
     public GraphQuery prepareGraphQuery(String query, Resource... contexts) throws RepositoryException,
             MalformedQueryException {
-        return getDelegate().prepareGraphQuery(rewriteQuery(query, contexts));
+        GraphQuery graphQuery = getDelegate().prepareGraphQuery(query);
+        if (varargsPresent(contexts)) {
+            OperationDataset operationDataset = operationDatasetFactory.createOperationDataset();
+            Arrays.stream(contexts).forEach(context -> operationDataset.addDefaultGraph((IRI) context));
+            Arrays.stream(contexts).forEach(context -> operationDataset.addNamedGraph((IRI) context));
+            graphQuery.setDataset(getOperationDataset());
+        }
+        return graphQuery;
     }
 
     @Override
@@ -412,7 +426,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     @Override
     public Resource getAndSetSystemDefaultNamedGraph() {
         RepositoryResult<Statement> statements = getDelegate()
-                .getStatements(dataset, valueFactory.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
+                .getStatements(datasetResource, valueFactory.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
 
         if (statements.hasNext()) {
             this.systemDefaultNG = Statements.objectResource(statements.next())
@@ -430,7 +444,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public Resource getDataset() {
-        return dataset;
+        return datasetResource;
     }
 
     @Override
@@ -438,13 +452,44 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         return repositoryId;
     }
 
-    private boolean varargsPresent(Object[] varargs) {
-        return !(varargs == null || varargs.length == 0 || varargs[0] == null);
+    private OperationDataset getOperationDataset() {
+        OperationDataset operationDataset = operationDatasetFactory.createOperationDataset();
+
+        TupleQueryResult result = getGraphs();
+        result.forEach(bindings -> {
+            Optional<Binding> namedGraphBinding = bindings.getBinding("namedGraph");
+            namedGraphBinding.ifPresent(binding -> operationDataset.addNamedGraph((IRI) binding.getValue()));
+
+            Optional<Binding> defaultGraphBinding = bindings.getBinding("defaultGraph");
+            defaultGraphBinding.ifPresent(binding -> operationDataset.addDefaultGraph((IRI) binding.getValue()));
+        });
+        return operationDataset;
     }
 
-    private void getGraphs(Set<Resource> graphs, String predString) {
-        getDelegate().getStatements(getDataset(), valueFactory.createIRI(predString), null)
-                .forEach(stmt -> Statements.objectResource(stmt).ifPresent(graphs::add));
+    private TupleQueryResult getGraphs() {
+        TupleQuery query = getDelegate().prepareTupleQuery(GET_OPERATION_DATASET_GRAPHS);
+        query.setBinding(DATSET_BINDING, getDataset());
+        return query.evaluate();
+    }
+
+    private Set<Resource> getGraphsSet() {
+        Set<Resource> graphSet = new HashSet<>();
+        TupleQueryResult result = getGraphs();
+        result.forEach(bindings -> {
+            Optional<Binding> namedGraphBinding = bindings.getBinding("namedGraph");
+            namedGraphBinding.ifPresent(binding -> graphSet.add((Resource) binding.getValue()));
+
+            Optional<Binding> defaultGraphBinding = bindings.getBinding("defaultGraph");
+            defaultGraphBinding.ifPresent(binding -> graphSet.add((Resource) binding.getValue()));
+        });
+        if (systemDefaultNG != null) {
+            graphSet.add(systemDefaultNG);
+        }
+        return graphSet;
+    }
+
+    private boolean varargsPresent(Object[] varargs) {
+        return !(varargs == null || varargs.length == 0 || varargs[0] == null);
     }
 
     /**
@@ -563,8 +608,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
      */
     private void addGraphStatements(String predicate, Resource... contexts) {
         for (Resource context : contexts) {
-            if (!context.equals(dataset)) {
-                getDelegate().add(dataset, valueFactory.createIRI(predicate), context, dataset);
+            if (!context.equals(datasetResource)) {
+                getDelegate().add(datasetResource, valueFactory.createIRI(predicate), context, datasetResource);
             }
         }
     }
@@ -608,34 +653,6 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         );
     }
 
-    /**
-     * Rewrites a SPARQL query replacing the dataset clauses with appropriate dataset clauses for this dataset.
-     *
-     * @param query The query to rewrite.
-     * @return A String representing the query rewritten with dataset clauses appropriate for this dataset.
-     */
-    private String rewriteQuery(String query, Resource... contexts) {
-        long start = System.currentTimeMillis();
-        Sparql11Parser parser = Query.getParser(query);
-        Sparql11Parser.QueryContext queryContext = parser.query();
-        TokenStreamRewriter rewriter = new TokenStreamRewriter(parser.getTokenStream());
-        ParseTreeWalker walker = new ParseTreeWalker();
-
-        DatasetListener listener;
-        if (varargsPresent(contexts)) {
-            listener = new DatasetListener(rewriter, Arrays.asList(contexts));
-        } else {
-            listener = new DatasetListener(rewriter);
-        }
-
-        walker.walk(listener, queryContext);
-
-        String processedQuery = rewriter.getText();
-        log.debug("Dataset Processed Query: \n" + processedQuery);
-        log.debug("Rewrite query complete in {} ms", System.currentTimeMillis() - start);
-        return processedQuery;
-    }
-
     private static class DatasetGraphResultWrapper extends RepositoryResult<Resource> {
 
         private TupleQueryResult queryResult;
@@ -661,99 +678,6 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         @Override
         public Resource next() {
             return Bindings.requiredResource(queryResult.next(), GRAPH_BINDING);
-        }
-    }
-
-    private class DatasetListener extends Sparql11BaseListener {
-
-        private TokenStreamRewriter rewriter;
-        private String datasetClause;
-        private Set<Resource> contexts;
-        private boolean constructWhere = false;
-
-        DatasetListener(TokenStreamRewriter rewriter) {
-            this.rewriter = rewriter;
-        }
-
-        DatasetListener(TokenStreamRewriter rewriter, Collection<Resource> contexts) {
-            this.rewriter = rewriter;
-            this.contexts = new HashSet<>(contexts);
-        }
-
-        @Override
-        public void enterDatasetClause(Sparql11Parser.DatasetClauseContext ctx) {
-            rewriter.delete(ctx.getStart(), ctx.getStop());
-            // If short CONSTRUCT WHERE {...} case, insert dataset clause
-            if (constructWhere) {
-                rewriter.insertBefore(ctx.getStart(), getDatasetClause());
-            }
-        }
-
-        @Override
-        public void enterWhereClause(Sparql11Parser.WhereClauseContext ctx) {
-            // Only add a dataset clause to the root select query, not a subselect
-            if (ctx.getParent() instanceof Sparql11Parser.SelectQueryContext
-                    || ctx.getParent() instanceof Sparql11Parser.ConstructQueryContext) {
-                rewriter.insertBefore(ctx.getStart(), getDatasetClause());
-            }
-        }
-
-        @Override
-        public void enterConstructQuery(Sparql11Parser.ConstructQueryContext ctx) {
-            // Handle short CONSTRUCT WHERE {...} case
-            if (ctx.constructTemplate() == null) {
-                constructWhere = true;
-                // If there is no dataset clause, insert
-                if (ctx.datasetClause() == null || ctx.datasetClause().size() == 0) {
-                    rewriter.insertBefore(((TerminalNodeImpl) ctx.getChild(1)).getSymbol(), getDatasetClause());
-                }
-            }
-        }
-
-        private String getDatasetClause() {
-            if (datasetClause == null) {
-                StringBuilder stringBuilder = new StringBuilder();
-                getFilteredDefaultGraphs().forEach(resource -> {
-                    stringBuilder.append(FROM);
-                    stringBuilder.append(resource.stringValue());
-                    stringBuilder.append(GREATER);
-                });
-                getFilteredNamedGraphs().forEach(resource -> {
-                    stringBuilder.append(FROM_NAMED);
-                    stringBuilder.append(resource.stringValue());
-                    stringBuilder.append(GREATER);
-                });
-                this.datasetClause = stringBuilder.toString();
-            }
-            return datasetClause;
-        }
-
-        private Set<Resource> getFilteredDefaultGraphs() {
-            Set<Resource> defaultGraphs = new HashSet<>();
-
-            if (contexts == null || contexts.contains(getSystemDefaultNamedGraph())) {
-                defaultGraphs.add(getSystemDefaultNamedGraph());
-            }
-
-            getDefaultNamedGraphs().forEach(resource -> {
-                if (contexts == null || contexts.contains(resource)) {
-                    defaultGraphs.add(resource);
-                }
-            });
-
-            return defaultGraphs;
-        }
-
-        private Set<Resource> getFilteredNamedGraphs() {
-            Set<Resource> namedGraphs = new HashSet<>();
-
-            getNamedGraphs().forEach(resource -> {
-                if (contexts == null || contexts.contains(resource)) {
-                    namedGraphs.add(resource);
-                }
-            });
-
-            return namedGraphs;
         }
     }
 }

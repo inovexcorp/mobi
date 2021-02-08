@@ -1,0 +1,13 @@
+PREFIX dataset: <http://mobi.com/ontologies/dataset#>
+
+SELECT ?defaultGraph ?namedGraph
+WHERE {
+    GRAPH ?g1 {
+        OPTIONAL {
+            ?dataset dataset:defaultNamedGraph ?defaultGraph .
+        }
+        OPTIONAL {
+            ?dataset dataset:namedGraph ?namedGraph .
+        }
+    }
+}

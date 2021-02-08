@@ -2687,9 +2687,6 @@ public class OntologyRest {
                                            String commitIdStr, boolean applyInProgressCommit) {
         checkStringParam(recordIdStr, "The recordIdStr is missing.");
         Optional<Ontology> optionalOntology;
-        Optional<Cache<String, Ontology>> cache = ontologyCache.getOntologyCache();
-        String key = ontologyCache.generateKey(recordIdStr, commitIdStr);
-
         try {
             Resource recordId = valueFactory.createIRI(recordIdStr);
 

@@ -77,6 +77,7 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
+import com.mobi.repository.impl.sesame.query.SesameOperationDatasetFactory;
 import com.mobi.vocabularies.xsd.XSD;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Statement;
@@ -125,6 +126,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     private Ontology onlyDeclared;
     private Repository repo;
     private OrmFactory<Dataset> datasetFactory = getRequiredOrmFactory(Dataset.class);
+    private SesameOperationDatasetFactory operationDatasetFactory = new SesameOperationDatasetFactory();
 
     private static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
 
@@ -221,7 +223,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
         when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> {
             datasetManager.createDataset(resource.getValue().stringValue(), "ontologyCache");
-            return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY);
+            return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY, operationDatasetFactory);
         });
 
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");

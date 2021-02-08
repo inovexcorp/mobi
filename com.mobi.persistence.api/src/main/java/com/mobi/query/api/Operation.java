@@ -70,16 +70,16 @@ public interface Operation {
      */
     BindingSet getBindings();
 
-//    /**
-//     * Specifies the dataset against which to execute an operation, overriding any dataset that is specified in the
-//     * operation itself.
-//     */
-//    public void setDataset(Dataset dataset);
-//
-//    /**
-//     * Gets the dataset that has been set using {@link #setDataset(com.mobi.query.api.Dataset)}, if any.
-//     */
-//    public Dataset getDataset();
+    /**
+     * Specifies the dataset against which to execute an operation, overriding any dataset that is specified in the
+     * operation itself.
+     */
+    void setDataset(OperationDataset dataset);
+
+    /**
+     * Gets the dataset that has been set using {@link #setDataset(com.mobi.query.api.OperationDataset)}, if any.
+     */
+    OperationDataset getDataset();
 
     /**
      * Determine whether evaluation results of this operation should include

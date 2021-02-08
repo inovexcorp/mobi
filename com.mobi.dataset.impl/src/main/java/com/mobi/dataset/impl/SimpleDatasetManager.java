@@ -32,6 +32,7 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.Dataset;
+import com.mobi.query.api.OperationDatasetFactory;
 import org.apache.commons.io.IOUtils;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.PaginatedSearchResults;
@@ -70,6 +71,7 @@ public class SimpleDatasetManager implements DatasetManager {
     private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private ValueFactory vf;
+    private OperationDatasetFactory operationDatasetFactory;
     private DatasetRecordFactory dsRecFactory;
     private DatasetFactory dsFactory;
     private RepositoryManager repoManager;
@@ -103,6 +105,11 @@ public class SimpleDatasetManager implements DatasetManager {
     @Reference
     void setValueFactory(ValueFactory valueFactory) {
         this.vf = valueFactory;
+    }
+
+    @Reference
+    void setOperationDatasetFactory(OperationDatasetFactory operationDatasetFactory) {
+        this.operationDatasetFactory = operationDatasetFactory;
     }
 
     @Reference
@@ -345,7 +352,8 @@ public class SimpleDatasetManager implements DatasetManager {
         }
         Repository dsRepo = getDatasetRepo(repositoryId);
 
-        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf);
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf,
+                operationDatasetFactory);
     }
 
     private DatasetConnection getConnectionNoSystemDefaultNG(Resource dataset, String repositoryId) {
@@ -355,7 +363,8 @@ public class SimpleDatasetManager implements DatasetManager {
         }
         Repository dsRepo = getDatasetRepo(repositoryId);
 
-        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf);
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf,
+                operationDatasetFactory);
     }
 
     @Override
@@ -399,11 +408,13 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     private DatasetConnection getConnection(Resource dataset, String repoId, Repository dsRepo) {
-        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repoId, vf);
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repoId, vf,
+                operationDatasetFactory);
     }
 
     private DatasetConnection getConnectionNoSystemDefaultNG(Resource dataset, String repoId, Repository dsRepo) {
-        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repoId, vf, false);
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repoId, vf,
+                operationDatasetFactory, false);
     }
 
     /**

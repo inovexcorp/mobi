@@ -27,76 +27,76 @@ import com.mobi.rdf.api.IRI;
 
 import java.util.Set;
 
-public interface Dataset {
+public interface OperationDataset {
     /**
      * Gets the default remove graph URIs of this dataset. An empty set indicates the the store's default behaviour
      * should be used, if not otherwise indicated in the operation.
      */
-    public Set<IRI> getDefaultRemoveGraphs();
+    Set<IRI> getDefaultRemoveGraphs();
 
     /**
      * Adds a graph URI to the set of default remove graph URIs.
      */
-    public void addDefaultRemoveGraph(IRI graphURI);
+    void addDefaultRemoveGraph(IRI graphURI);
 
     /**
      * Removes a graph URI from the set of default remove graph URIs.
      *
      * @return <tt>true</tt> if the URI was removed from the set, <tt>false</tt> if the set did not contain the URI.
      */
-    public boolean removeDefaultRemoveGraph(IRI graphURI);
+    boolean removeDefaultRemoveGraph(IRI graphURI);
 
     /**
      * Gets the default insert graph URI of this dataset. An null value indicates that the store's default behaviour
      * should be used, if not otherwise indicated in the operation.
      */
-    public IRI getDefaultInsertGraph();
+    IRI getDefaultInsertGraph();
 
     /**
      * Adds a graph URI to the set of default graph URIs.
      */
-    public void addDefaultGraph(IRI graphURI);
+    void addDefaultGraph(IRI graphURI);
 
     /**
      * Removes a graph URI from the set of default graph URIs.
      *
      * @return <tt>true</tt> if the URI was removed from the set, <tt>false</tt> if the set did not contain the URI.
      */
-    public boolean removeDefaultGraph(IRI graphURI);
+    boolean removeDefaultGraph(IRI graphURI);
 
     /**
      * @param defaultInsertGraph The default insert graph to used.
      */
-    public void setDefaultInsertGraph(IRI defaultInsertGraph);
+    void setDefaultInsertGraph(IRI defaultInsertGraph);
 
     /**
      * Gets the default graph URIs of this dataset. An empty default graph set and a non-empty named graph set indicates
      * that the default graph is an empty graph. However, if both the default graph set and the named graph set are
      * empty, that indicates that the store's default behaviour should be used.
      */
-    public Set<IRI> getDefaultGraphs();
+    Set<IRI> getDefaultGraphs();
 
     /**
      * Gets the named graph URIs of this dataset. An empty named graph set and a non-empty default graph set indicates
      * that there are no named graphs. However, if both the default graph set and the named graph set are empty, that
      * indicates that the store's default behaviour should be used.
      */
-    public Set<IRI> getNamedGraphs();
+    Set<IRI> getNamedGraphs();
 
     /**
      * Adds a graph URI to the set of named graph URIs.
      */
-    public void addNamedGraph(IRI graphURI);
+    void addNamedGraph(IRI graphURI);
 
     /**
      * Removes a graph URI from the set of named graph URIs.
      *
      * @return <tt>true</tt> if the URI was removed from the set, <tt>false</tt> if the set did not contain the URI.
      */
-    public boolean removeNamedGraph(IRI graphURI);
+    boolean removeNamedGraph(IRI graphURI);
 
     /**
      * Removes all graph URIs (both default and named) from this dataset.
      */
-    public void clear();
+    void clear();
 }
