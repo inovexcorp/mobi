@@ -24,7 +24,7 @@ import { forEach, isEqual, filter } from 'lodash';
 
 import utilService from '../../../shared/services/util.service';
 
-const template = require('./preferenceGroup.component.html');
+const template = require('./preferenceForm.component.html');
 
 /**
  * @ngdoc component
@@ -37,19 +37,19 @@ const template = require('./preferenceGroup.component.html');
  * {@link settings.component:preferencesContainer preferencesContainer} and several
  * {@link settings.component:customPreference customPreference}.
  */
-const preferenceGroupComponent = {
+const preferenceFormComponent = {
     template,
     bindings: {
-        group: '<',
-        userPreferences: '<'
+        fields: '<',
+        values: '<'
     },
     controllerAs: 'dvm',
-    controller: preferenceGroupComponentCtrl
+    controller: preferenceFormComponentCtrl
 };
 
-preferenceGroupComponentCtrl.$inject = ['utilService', 'preferenceManagerService', 'settingsManagerService'];
+preferenceFormComponentCtrl.$inject = ['utilService', 'preferenceManagerService', 'settingsManagerService'];
 
-function preferenceGroupComponentCtrl(utilService, preferenceManagerService, settingsManagerService) {
+function preferenceFormComponentCtrl(utilService, preferenceManagerService, settingsManagerService) {
     var dvm = this;
     var pm = preferenceManagerService;
     dvm.util = utilService;
@@ -57,6 +57,7 @@ function preferenceGroupComponentCtrl(utilService, preferenceManagerService, set
     dvm.preferenceDefinitions = {};
     
     dvm.$onChanges = function() {
+        
         pm.getPreferenceDefinitions(dvm.group)
             .then(response => {
                 dvm.errorMessage = '';
@@ -66,7 +67,6 @@ function preferenceGroupComponentCtrl(utilService, preferenceManagerService, set
                     if (result['http://mobi.com/ontologies/preference#inGroup']) {
                         // verify that it has only one value for sh:property, otherwise show error toast
                         dvm.preferences[result['@id']] = result;
-                        dvm.preferences[result['@id']].values = [];
                     }
                 });
                 forEach(dvm.preferences, (preference, type) => {
@@ -85,9 +85,8 @@ function preferenceGroupComponentCtrl(utilService, preferenceManagerService, set
                         formFields.push(formField['http://www.w3.org/ns/shacl#path'][0]['@id']);
                     });
                     prefDef['values'] = filter(dvm.userPreferences[prefDefType], formFields[0]);
-                }
             }, error => dvm.errorMessage = error);
     };
 }
 
-export default preferenceGroupComponent;
+export default preferenceFormComponent;

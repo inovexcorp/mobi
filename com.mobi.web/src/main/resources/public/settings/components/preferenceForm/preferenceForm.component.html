@@ -1,0 +1,5 @@
+<form action="" class="form-inline">
+    <div ng-repeat="field in dvm.fields">
+        <input type="text" class="form-control" placeholder="{{dvm.util.getBeautifulIRI(field['http://www.w3.org/ns/shacl#path'][0]['@id'])}}" value="dvm.values[field['http://www.w3.org/ns/shacl#path'][0]['@id']]">
+    </div>
+</form>
