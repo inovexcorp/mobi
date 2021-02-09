@@ -51,8 +51,8 @@ const preferenceGroupComponent = {
 preferenceGroupComponentCtrl.$inject = ['utilService', 'preferenceManagerService', 'uuid'];
 
 function preferenceGroupComponentCtrl(utilService, preferenceManagerService, uuid) {
-    var dvm = this;
-    var pm = preferenceManagerService;
+    const dvm = this;
+    const pm = preferenceManagerService;
     dvm.util = utilService;
     dvm.preferences = {};
     dvm.preferenceDefinitions = {};
@@ -76,12 +76,12 @@ function preferenceGroupComponentCtrl(utilService, preferenceManagerService, uui
                                 dvm.preferences[result['@id']].values = [];
                             }
                         });
-                        forEach(dvm.preferences, (preference, type) => {
-                            var requiredPropertyShape = dvm.preferenceDefinitions[preference['http://www.w3.org/ns/shacl#property'][0]['@id']];
+                        forEach(dvm.preferences, (preference) => {
+                            const requiredPropertyShape = dvm.preferenceDefinitions[preference['http://www.w3.org/ns/shacl#property'][0]['@id']];
                             if (requiredPropertyShape['http://www.w3.org/ns/shacl#node']) {
-                                var attachedNode = dvm.preferenceDefinitions[requiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
+                                const attachedNode = dvm.preferenceDefinitions[requiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
                                 preference['targetClass'] = attachedNode['http://www.w3.org/ns/shacl#targetClass'][0]['@id'];
-                                var finalObjects = attachedNode['http://www.w3.org/ns/shacl#property'].map(finalProperty => {
+                                const finalObjects = attachedNode['http://www.w3.org/ns/shacl#property'].map(finalProperty => {
                                     return dvm.preferenceDefinitions[finalProperty['@id']];
                                 });
                                 preference['formFields'] = finalObjects;
@@ -90,7 +90,7 @@ function preferenceGroupComponentCtrl(utilService, preferenceManagerService, uui
                             }
                         });
                         forEach(dvm.preferences, (prefDef, prefDefType) => {
-                            var formFields = [];
+                            const formFields = [];
                             forEach(prefDef['formFields'], formField => {
                                 formFields.push(formField['http://www.w3.org/ns/shacl#path'][0]['@id']);
                             });
@@ -106,7 +106,7 @@ function preferenceGroupComponentCtrl(utilService, preferenceManagerService, uui
     dvm.updateUserPreference = function(type, preference) {
         if (preference['hasId']) {
             pm.updateUserPreference(preference['hasId'], type, dvm.userPreferences[type])
-                .then(response => {
+                .then(() => {
                     dvm.errorMessage = '';
                     dvm.util.createSuccessToast('User Preference updated successfully');
                     pm.getUserPreferences()
@@ -119,7 +119,7 @@ function preferenceGroupComponentCtrl(utilService, preferenceManagerService, uui
         } else {
             const userPreference = dvm.buildUserPreferenceJson(preference, type);
             pm.createUserPreference(type, userPreference)
-                .then(response => {
+                .then(() => {
                     dvm.errorMessage = '';
                     dvm.util.createSuccessToast('User Preference created successfully');
                     pm.getUserPreferences()
@@ -133,8 +133,8 @@ function preferenceGroupComponentCtrl(utilService, preferenceManagerService, uui
     };
 
     dvm.buildUserPreferenceJson = function(preference, type) {
-        let userPreferenceJson = [];
-        let newPreference = {
+        const userPreferenceJson = [];
+        const newPreference = {
             '@id': 'http://mobi.com/preference#' + uuid.v4(),
             '@type': [
                 type,

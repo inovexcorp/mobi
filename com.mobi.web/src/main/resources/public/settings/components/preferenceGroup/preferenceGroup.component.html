@@ -20,28 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<!-- <div class="preferences-tab row h-100 py-2">
-    <div class="col-6 offset-3">
-        <block class="h-100">
-            <block-content>
-                <preferences-container header="'Ontology Editor'">
-                    <custom-preference header="'Drop Down Tooltip Display'" question="'What do you want displayed when you hover over the items in the dropdown?'">
-                        <radio-button bind-model="vm.settings.tooltipDisplay" change-event="vm.settings.tooltipDisplay = value" display-text="'Full IRI'" value="'@id'"></radio-button>
-                        <radio-button bind-model="vm.settings.tooltipDisplay" change-event="vm.settings.tooltipDisplay = value" display-text="'RDFS Label/DC Title'" value="'label'"></radio-button>
-                        <radio-button bind-model="vm.settings.tooltipDisplay" change-event="vm.settings.tooltipDisplay = value" display-text="'RDFS Comment/DC Description'" value="'comment'"></radio-button>
-                    </custom-preference>
-                    <custom-preference header="'Tree Item Display'" question="'What do you want displayed in the tree?'">
-                        <radio-button bind-model="vm.settings.treeDisplay" change-event="vm.settings.treeDisplay = value" display-text="'Pretty Print'" value="'pretty'"></radio-button>
-                        <radio-button bind-model="vm.settings.treeDisplay" change-event="vm.settings.treeDisplay = value" display-text="'Full IRI'" value="'@id'"></radio-button>
-                    </custom-preference>
-                </preferences-container>
-            </block-content>
-            <block-footer>
-                <button type="button" class="btn btn-primary float-right" ng-click="dvm.save()">Save</button>
-            </block-footer>
-        </block>
-    </div>
-</div> -->
 <div ng-repeat="preference in dvm.preferences">
     <preference-form update-event="dvm.updateUserPreference(type, preference)" preference="preference"></preference-form>
 </div>
