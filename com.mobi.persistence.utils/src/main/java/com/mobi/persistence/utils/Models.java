@@ -25,6 +25,7 @@ package com.mobi.persistence.utils;
 
 import static java.util.Arrays.asList;
 
+import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
@@ -33,6 +34,7 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.rio.ParserConfig;
@@ -64,18 +66,29 @@ import org.semanticweb.owlapi.rio.RioRenderer;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.zip.InflaterInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
+import java.io.BufferedInputStream;
 
 public class Models {
     public static final LinkedHashMap<String, List<RDFParser>> preferredExtensionParsers;
@@ -270,9 +283,43 @@ public class Models {
     public static Model createModel(String preferredExtension,
                                     InputStream inputStream,
                                     SesameTransformer transformer) throws IOException {
+
+        ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
+        String fileExtension = preferredExtension.toLowerCase();
+        String ext = "zip";
+        Model  model = null;
+
+        if (fileExtension.equals(ext)) {
+            try (BufferedInputStream bis = new BufferedInputStream(rdfData);
+                 ZipInputStream zis = new ZipInputStream(bis)) {
+                ZipEntry ze;
+                int counter = 0;
+                while ((ze = zis.getNextEntry()) != null) {
+                    String fileName = ze.getName();
+                    Path p1 = Paths.get(fileName);
+                    if (ze.isDirectory() == false && !p1.startsWith("__MACOSX")) {
+                        counter++;
+                        if (counter > 1) {
+                            throw new MobiException("Zip file has multiple entries.");
+                        }
+                        preferredExtension = FilenameUtils.getExtension(fileName);
+                        rdfData = toByteArrayInputStream(zis);
+                        model = buildModel(preferredExtension, rdfData, transformer);
+                    }
+                }
+            }
+            return model;
+        } else {
+            return buildModel(preferredExtension, rdfData, transformer);
+        }
+    }
+
+    public static Model buildModel(String preferredExtension,
+                                   ByteArrayInputStream rdfData,
+                                   SesameTransformer transformer) {
+
         List<String> triedRDFFormats =  new ArrayList<>();
         org.eclipse.rdf4j.model.Model model = new LinkedHashModel();
-        ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
         RDFParseException rdfParseException = null;
 
         try {
@@ -463,7 +510,6 @@ public class Models {
 
         return new ByteArrayInputStream(data);
     }
-
 //    public static boolean isomorphic(Iterable<? extends Statement> model1,
 //                                     Iterable<? extends Statement> model2) {
 //          }
