@@ -53,22 +53,11 @@ function preferencesTabComponentCtrl(utilService, preferenceManagerService, sett
     var util = utilService;
     dvm.tabs = [];
     dvm.preferenceGroups = [];
+    dvm.sm = settingsManagerService;
+    dvm.settings = dvm.sm.getSettings();
     
     dvm.$onInit = function() {
-        pm.getPreferenceGroups()
-            .then(response => {
-                dvm.errorMessage = '';
-                util.createSuccessToast('Preference Groups retrieved successfully');
-                forEach(response.data, preferenceGroup => {
-                    dvm.addTab(preferenceGroup);
-                })
-            }, error => dvm.errorMessage = error);
-        pm.getUserPreferences()
-            .then(response => {
-                dvm.errorMessage = '';
-                util.createSuccessToast('Preference Groups retrieved successfully');
-                dvm.userPreferences = response.data;
-            })
+        dvm.setPreferenceTabs();
     };
 
     dvm.addTab = function(preferenceGroup) {
@@ -86,10 +75,19 @@ function preferencesTabComponentCtrl(utilService, preferenceManagerService, sett
             }
         });
         selectedTab.active = true;
-    }
+    };
 
-    dvm.sm = settingsManagerService;
-    dvm.settings = dvm.sm.getSettings();
+    dvm.setPreferenceTabs = function() {
+        pm.getPreferenceGroups()
+        .then(response => {
+            dvm.tabs = [];
+            dvm.errorMessage = '';
+            util.createSuccessToast('Preference Groups retrieved successfully');
+            forEach(response.data, preferenceGroup => {
+                dvm.addTab(preferenceGroup);
+            });
+        }, error => dvm.errorMessage = error);
+    };
 
     dvm.save = function() {
         dvm.sm.setSettings(dvm.settings);

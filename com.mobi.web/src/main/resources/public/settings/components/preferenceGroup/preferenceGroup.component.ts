@@ -40,8 +40,7 @@ const template = require('./preferenceGroup.component.html');
 const preferenceGroupComponent = {
     template,
     bindings: {
-        group: '<',
-        userPreferences: '<'
+        group: '<'
     },
     controllerAs: 'dvm',
     controller: preferenceGroupComponentCtrl
@@ -55,37 +54,61 @@ function preferenceGroupComponentCtrl(utilService, preferenceManagerService, set
     dvm.util = utilService;
     dvm.preferences = {};
     dvm.preferenceDefinitions = {};
+    dvm.userPreferences = {};
     
     dvm.$onChanges = function() {
-        pm.getPreferenceDefinitions(dvm.group)
+        pm.getUserPreferences()
             .then(response => {
                 dvm.errorMessage = '';
-                dvm.util.createSuccessToast('Preference Definition retrieved successfully');
-                forEach(response.data, result => {
-                    dvm.preferenceDefinitions[result['@id']] = result; // Maybe this means I should return a json object instead of array
-                    if (result['http://mobi.com/ontologies/preference#inGroup']) {
-                        // verify that it has only one value for sh:property, otherwise show error toast
-                        dvm.preferences[result['@id']] = result;
-                        dvm.preferences[result['@id']].values = [];
-                    }
-                });
-                forEach(dvm.preferences, (preference, type) => {
-                    var requiredPropertyShape = dvm.preferenceDefinitions[preference['http://www.w3.org/ns/shacl#property'][0]['@id']];
-                    if (requiredPropertyShape['http://www.w3.org/ns/shacl#node']) {
-                        var attachedNode = dvm.preferenceDefinitions[requiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
-                        var finalObjects = attachedNode['http://www.w3.org/ns/shacl#property'].map(finalProperty => {
-                            return dvm.preferenceDefinitions[finalProperty['@id']];
+                dvm.util.createSuccessToast('User Preferences retrieved successfully');
+                dvm.userPreferences = response.data;
+                pm.getPreferenceDefinitions(dvm.group)
+                    .then(response => {
+                        dvm.errorMessage = '';
+                        dvm.util.createSuccessToast('Preference Definition retrieved successfully');
+                        forEach(response.data, result => {
+                            dvm.preferenceDefinitions[result['@id']] = result; // Maybe this means I should return a json object instead of array
+                            if (result['http://mobi.com/ontologies/preference#inGroup']) {
+                                // verify that it has only one value for sh:property, otherwise show error toast
+                                dvm.preferences[result['@id']] = result;
+                                dvm.preferences[result['@id']].values = [];
+                            }
                         });
-                        preference['formFields'] = finalObjects;
-                    }
-                });
-                forEach(dvm.preferences, (prefDef, prefDefType) => {
-                    var formFields = [];
-                    forEach(prefDef['formFields'], formField => {
-                        formFields.push(formField['http://www.w3.org/ns/shacl#path'][0]['@id']);
-                    });
-                    prefDef['values'] = filter(dvm.userPreferences[prefDefType], formFields[0]);
-                }
+                        forEach(dvm.preferences, (preference, type) => {
+                            var requiredPropertyShape = dvm.preferenceDefinitions[preference['http://www.w3.org/ns/shacl#property'][0]['@id']];
+                            if (requiredPropertyShape['http://www.w3.org/ns/shacl#node']) {
+                                var attachedNode = dvm.preferenceDefinitions[requiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
+                                var finalObjects = attachedNode['http://www.w3.org/ns/shacl#property'].map(finalProperty => {
+                                    return dvm.preferenceDefinitions[finalProperty['@id']];
+                                });
+                                preference['formFields'] = finalObjects;
+                            }
+                        });
+                        forEach(dvm.preferences, (prefDef, prefDefType) => {
+                            var formFields = [];
+                            forEach(prefDef['formFields'], formField => {
+                                formFields.push(formField['http://www.w3.org/ns/shacl#path'][0]['@id']);
+                            });
+                            prefDef['values'] = filter(dvm.userPreferences[prefDefType], formFields[0]); // This will return only those subjects that have one of the "end property shape fields". Should I check that it has all fields?
+                            prefDef['hasId'] = filter(dvm.userPreferences[prefDefType], result => { 
+                                return result['@type'].includes('http://mobi.com/ontologies/preference#Preference');
+                            })[0]['@id'];
+                        });
+                    }, error => dvm.errorMessage = error);
+            }, error => dvm.errorMessage = error);
+    };
+    
+    dvm.updateUserPreference = function(type, preference) {
+        pm.updateUserPreference(preference['hasId'], type, dvm.userPreferences[type])
+            .then(response => {
+                dvm.errorMessage = '';
+                dvm.util.createSuccessToast('User Preference updated successfully');
+                pm.getUserPreferences()
+                    .then(response => {
+                        dvm.errorMessage = '';
+                        dvm.util.createSuccessToast('User Preferences retrieved successfully');
+                        dvm.userPreferences = response.data;
+                    }, error => dvm.errorMessage = error);
             }, error => dvm.errorMessage = error);
     };
 }

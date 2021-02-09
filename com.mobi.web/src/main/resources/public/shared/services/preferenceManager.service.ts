@@ -97,17 +97,27 @@ function preferenceManagerService($http, $q, REST_PREFIX, utilService, prefixes,
      * error message
      */
     self.getUserPreferences = function(id = '') {
-        var promise = id ? httpService.get(prefix, id) : $http.get(prefix);
+        const promise = id ? httpService.get(prefix, id) : $http.get(prefix);
         return promise.then($q.when, util.rejectError);
     };
 
+
+    // return $http.put(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId), angular.toJson(json))
+    //         .then(response => $q.when(), util.rejectError);
+    self.updateUserPreference = function(preferenceId, preferenceType, userPreference, id = '') {
+        const config = { params: { preferenceType } };
+        const promise = id ? httpService.put(prefix + '/' + encodeURIComponent(preferenceId), userPreference, config, id) 
+            : $http.put(prefix + '/' + encodeURIComponent(preferenceId), userPreference, config);
+        return promise.then($q.when, util.rejectError);
+    }
+
     self.getPreferenceGroups = function(id = '') {
-        var promise = id ? httpService.get(prefix + '/groups', id) : $http.get(prefix + '/groups');
+        const promise = id ? httpService.get(prefix + '/groups', id) : $http.get(prefix + '/groups');
         return promise.then($q.when, util.rejectError);
     };
 
     self.getPreferenceDefinitions = function(preferenceGroup, id = '') {
-        var promise = id ? httpService.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup) + '/definitions', id) 
+        const promise = id ? httpService.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup) + '/definitions', id) 
             : $http.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup) + '/definitions');
         return promise.then($q.when, util.rejectError);
     }

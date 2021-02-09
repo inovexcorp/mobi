@@ -43,9 +43,5 @@
     </div>
 </div> -->
 <div ng-repeat="preference in dvm.preferences">
-    <h2>{{dvm.util.getBeautifulIRI(preference['@id'])}}</h2>
-    <preference-form form-fields="preference['formFields']" values="preference['values']"></preference-form>
-    <div ng-repeat="formField in preference['formFields']">
-        <p>{{formField['http://www.w3.org/ns/shacl#path'][0]['@id']}} of type {{formField["http://www.w3.org/ns/shacl#datatype"][0]['@id']}} with values {{dvm.userPreferences[preference['@id']][formField['http://www.w3.org/ns/shacl#path'][0]['@id']]}}</p>
-    </div>
+    <preference-form update-event="dvm.updateUserPreference(type, preference)" preference="preference"></preference-form>
 </div>

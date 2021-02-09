@@ -40,8 +40,8 @@ const template = require('./preferenceForm.component.html');
 const preferenceFormComponent = {
     template,
     bindings: {
-        fields: '<',
-        values: '<'
+        preference: '<',
+        updateEvent: '&'
     },
     controllerAs: 'dvm',
     controller: preferenceFormComponentCtrl
@@ -49,44 +49,19 @@ const preferenceFormComponent = {
 
 preferenceFormComponentCtrl.$inject = ['utilService', 'preferenceManagerService', 'settingsManagerService'];
 
-function preferenceFormComponentCtrl(utilService, preferenceManagerService, settingsManagerService) {
-    var dvm = this;
-    var pm = preferenceManagerService;
+function preferenceFormComponentCtrl(utilService, preferenceManagerService) {
+    const dvm = this;
+    const pm = preferenceManagerService;
     dvm.util = utilService;
-    dvm.preferences = {};
-    dvm.preferenceDefinitions = {};
-    
     dvm.$onChanges = function() {
-        
-        pm.getPreferenceDefinitions(dvm.group)
-            .then(response => {
-                dvm.errorMessage = '';
-                dvm.util.createSuccessToast('Preference Definition retrieved successfully');
-                forEach(response.data, result => {
-                    dvm.preferenceDefinitions[result['@id']] = result; // Maybe this means I should return a json object instead of array
-                    if (result['http://mobi.com/ontologies/preference#inGroup']) {
-                        // verify that it has only one value for sh:property, otherwise show error toast
-                        dvm.preferences[result['@id']] = result;
-                    }
-                });
-                forEach(dvm.preferences, (preference, type) => {
-                    var requiredPropertyShape = dvm.preferenceDefinitions[preference['http://www.w3.org/ns/shacl#property'][0]['@id']];
-                    if (requiredPropertyShape['http://www.w3.org/ns/shacl#node']) {
-                        var attachedNode = dvm.preferenceDefinitions[requiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
-                        var finalObjects = attachedNode['http://www.w3.org/ns/shacl#property'].map(finalProperty => {
-                            return dvm.preferenceDefinitions[finalProperty['@id']];
-                        });
-                        preference['formFields'] = finalObjects;
-                    }
-                });
-                forEach(dvm.preferences, (prefDef, prefDefType) => {
-                    var formFields = [];
-                    forEach(prefDef['formFields'], formField => {
-                        formFields.push(formField['http://www.w3.org/ns/shacl#path'][0]['@id']);
-                    });
-                    prefDef['values'] = filter(dvm.userPreferences[prefDefType], formFields[0]);
-            }, error => dvm.errorMessage = error);
-    };
+        console.log('hit onChanges');
+        dvm.type = dvm.preference['@id'];
+        dvm.fields = dvm.preference['formFields'];
+        dvm.values = dvm.preference['values'];
+    }
+    dvm.update = function() {
+        dvm.updateEvent({type: dvm.type, preference: dvm.preference});
+    }
 }
 
 export default preferenceFormComponent;

@@ -30,6 +30,7 @@ import preferencesTabComponent from './components/preferencesTab/preferencesTab.
 import profileTabComponent from './components/profileTab/profileTab.component';
 import settingsPageComponent from './components/settingsPage/settingsPage.component';
 import preferenceGroupComponent from './components/preferenceGroup/preferenceGroup.component';
+import preferenceFormComponent from './components/preferenceForm/preferenceForm.component';
 
 /**
  * @ngdoc overview
@@ -46,4 +47,5 @@ angular.module('settings', [])
     .component('preferencesTab', preferencesTabComponent)
     .component('preferenceGroup', preferenceGroupComponent)
     .component('profileTab', profileTabComponent)
-    .component('settingsPage', settingsPageComponent);
+    .component('settingsPage', settingsPageComponent)
+    .component('preferenceForm', preferenceFormComponent);
