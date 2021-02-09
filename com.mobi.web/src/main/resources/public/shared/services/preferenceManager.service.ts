@@ -109,7 +109,14 @@ function preferenceManagerService($http, $q, REST_PREFIX, utilService, prefixes,
         const promise = id ? httpService.put(prefix + '/' + encodeURIComponent(preferenceId), userPreference, config, id) 
             : $http.put(prefix + '/' + encodeURIComponent(preferenceId), userPreference, config);
         return promise.then($q.when, util.rejectError);
-    }
+    };
+
+    self.createUserPreference = function(preferenceType, userPreference, id = '') {
+        const config = { params: { preferenceType } };
+        const promise = id ? httpService.post(prefix, userPreference, config, id) 
+            : $http.post(prefix, userPreference, config);
+        return promise.then($q.when, util.rejectError);
+    };
 
     self.getPreferenceGroups = function(id = '') {
         const promise = id ? httpService.get(prefix + '/groups', id) : $http.get(prefix + '/groups');

@@ -20,9 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import * as angular from 'angular';
 import { forEach, isEqual, filter } from 'lodash';
 
 import utilService from '../../../shared/services/util.service';
+import { UUID } from 'antlr4ts/misc/UUID';
 
 const template = require('./preferenceGroup.component.html');
 
@@ -46,9 +48,9 @@ const preferenceGroupComponent = {
     controller: preferenceGroupComponentCtrl
 };
 
-preferenceGroupComponentCtrl.$inject = ['utilService', 'preferenceManagerService', 'settingsManagerService'];
+preferenceGroupComponentCtrl.$inject = ['utilService', 'preferenceManagerService', 'uuid'];
 
-function preferenceGroupComponentCtrl(utilService, preferenceManagerService, settingsManagerService) {
+function preferenceGroupComponentCtrl(utilService, preferenceManagerService, uuid) {
     var dvm = this;
     var pm = preferenceManagerService;
     dvm.util = utilService;
@@ -78,10 +80,13 @@ function preferenceGroupComponentCtrl(utilService, preferenceManagerService, set
                             var requiredPropertyShape = dvm.preferenceDefinitions[preference['http://www.w3.org/ns/shacl#property'][0]['@id']];
                             if (requiredPropertyShape['http://www.w3.org/ns/shacl#node']) {
                                 var attachedNode = dvm.preferenceDefinitions[requiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
+                                preference['targetClass'] = attachedNode['http://www.w3.org/ns/shacl#targetClass'][0]['@id'];
                                 var finalObjects = attachedNode['http://www.w3.org/ns/shacl#property'].map(finalProperty => {
                                     return dvm.preferenceDefinitions[finalProperty['@id']];
                                 });
                                 preference['formFields'] = finalObjects;
+                            } else {
+                                preference['formFields'] = [requiredPropertyShape];
                             }
                         });
                         forEach(dvm.preferences, (prefDef, prefDefType) => {
@@ -99,17 +104,60 @@ function preferenceGroupComponentCtrl(utilService, preferenceManagerService, set
     };
     
     dvm.updateUserPreference = function(type, preference) {
-        pm.updateUserPreference(preference['hasId'], type, dvm.userPreferences[type])
-            .then(response => {
-                dvm.errorMessage = '';
-                dvm.util.createSuccessToast('User Preference updated successfully');
-                pm.getUserPreferences()
-                    .then(response => {
-                        dvm.errorMessage = '';
-                        dvm.util.createSuccessToast('User Preferences retrieved successfully');
-                        dvm.userPreferences = response.data;
-                    }, error => dvm.errorMessage = error);
-            }, error => dvm.errorMessage = error);
+        if (preference['hasId']) {
+            pm.updateUserPreference(preference['hasId'], type, dvm.userPreferences[type])
+                .then(response => {
+                    dvm.errorMessage = '';
+                    dvm.util.createSuccessToast('User Preference updated successfully');
+                    pm.getUserPreferences()
+                        .then(response => {
+                            dvm.errorMessage = '';
+                            dvm.util.createSuccessToast('User Preferences retrieved successfully');
+                            dvm.userPreferences = response.data;
+                        }, error => dvm.errorMessage = error);
+                }, error => dvm.errorMessage = error);
+        } else {
+            const userPreference = dvm.buildUserPreferenceJson(preference, type);
+            pm.createUserPreference(type, userPreference)
+                .then(response => {
+                    dvm.errorMessage = '';
+                    dvm.util.createSuccessToast('User Preference created successfully');
+                    pm.getUserPreferences()
+                        .then(response => {
+                            dvm.errorMessage = '';
+                            dvm.util.createSuccessToast('User Preferences retrieved successfully');
+                            dvm.userPreferences = response.data;
+                        }, error => dvm.errorMessage = error);
+                }, error => dvm.errorMessage = error);
+        }
+    };
+
+    dvm.buildUserPreferenceJson = function(preference, type) {
+        let userPreferenceJson = [];
+        let newPreference = {
+            '@id': 'http://mobi.com/preference#' + uuid.v4(),
+            '@type': [
+                type,
+                'http://mobi.com/ontologies/preference#Preference',
+                'http://www.w3.org/2002/07/owl#Thing'
+            ]
+        };
+        if (preference.targetClass) {
+            newPreference['http://mobi.com/ontologies/preference#hasObjectValue'] = [
+                {
+                    '@id': 'http://mobi.com/preference#' + uuid.v4()
+                }
+            ];
+            let objectValues = preference.values;
+            // NOT FINISHED YET!!!
+        } else {
+            // THIS NEEDS TO WORK FOR MULTIPLE DATA VALUES!!!! FIX!!
+            const dataValues = angular.copy(preference.values[0]['http://mobi.com/ontologies/preference#hasDataValue'][0]);
+            dataValues['@type'] = preference['formFields'][0]['http://www.w3.org/ns/shacl#datatype'][0]['@id'];
+            newPreference['http://mobi.com/ontologies/preference#hasDataValue'] = [dataValues];
+        }
+        userPreferenceJson.push(newPreference);
+        return userPreferenceJson;
     };
 }
 
