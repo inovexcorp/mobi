@@ -300,7 +300,7 @@ public class Models {
                     if (ze.isDirectory() == false && !p1.startsWith("__MACOSX")) {
                         counter++;
                         if (counter > 1) {
-                            throw new MobiException("Zip file has multiple entries.");
+                            throw new MobiException("Compressed upload must only contain a single file.");
                         }
                         preferredExtension = FilenameUtils.getExtension(fileName);
                         rdfData = toByteArrayInputStream(zis);
