@@ -58,9 +58,12 @@ function preferenceFormComponentCtrl(utilService, preferenceManagerService) {
         dvm.type = dvm.preference['@id'];
         dvm.fields = dvm.preference['formFields'];
         dvm.values = dvm.preference['values'];
-    }
+    };
     dvm.update = function() {
         dvm.updateEvent({type: dvm.type, preference: dvm.preference});
+    };
+    dvm.addFormFields = function() {
+        dvm.values.push({});
     }
 }
 

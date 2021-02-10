@@ -21,9 +21,9 @@
   #L%
   -->
 <h2>{{dvm.util.getBeautifulIRI(dvm.type)}}</h2>
-<form action="" class="form-inline">
+<form ng-repeat="value in dvm.values" action="" class="form-inline">
     <div ng-repeat="field in dvm.fields">
-        {{dvm.util.getBeautifulIRI(field['http://www.w3.org/ns/shacl#path'][0]['@id'])}}: <input style="width: 300px;" type="text" class="form-control" ng-model="dvm.values[0][field['http://www.w3.org/ns/shacl#path'][0]['@id']][0]['@value']">
+        {{dvm.util.getBeautifulIRI(field['http://www.w3.org/ns/shacl#path'][0]['@id'])}}: <input style="width: 300px;" type="text" class="form-control" ng-model="value[field['http://www.w3.org/ns/shacl#path'][0]['@id']][0]['@value']">
     </div>
     <button ng-click="dvm.update()" class="btn btn-primary mb-2">Submit</button>
     <button class="btn btn-link" ng-click="dvm.addFormFields()"><i class="fa fa-plus"></i></button>
