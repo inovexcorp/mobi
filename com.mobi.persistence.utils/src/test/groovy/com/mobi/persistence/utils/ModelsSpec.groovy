@@ -22,6 +22,7 @@
  */
 package com.mobi.persistence.utils
 
+import com.mobi.exception.MobiException
 import com.mobi.persistence.utils.api.SesameTransformer
 import com.mobi.rdf.api.*
 import org.eclipse.rdf4j.rio.RDFParseException
@@ -380,4 +381,15 @@ class ModelsSpec extends Specification{
         thrown(RDFParseException.class)
     }
 
+    def "createModel with multiple compressed file (.zip) throws an Exception"() {
+        setup:
+        def input = getClass().getResourceAsStream("/archive.zip")
+        def transformer = Mock(SesameTransformer)
+
+        when:
+        Models.createModel('owl', input, transformer)
+
+        then:
+        thrown(RDFParseException.class)
+    }
 }
