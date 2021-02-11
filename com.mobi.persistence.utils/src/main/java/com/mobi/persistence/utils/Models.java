@@ -283,11 +283,9 @@ public class Models {
                                     SesameTransformer transformer) throws IOException {
 
         ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
-        String fileExtension = preferredExtension.toLowerCase();
-        String ext = "zip";
         Model  model = null;
 
-        if (fileExtension.equals(ext)) {
+        if (preferredExtension.equalsIgnoreCase("zip")) {
             try (BufferedInputStream bis = new BufferedInputStream(rdfData);
                  ZipInputStream zis = new ZipInputStream(bis)) {
                 ZipEntry ze;
