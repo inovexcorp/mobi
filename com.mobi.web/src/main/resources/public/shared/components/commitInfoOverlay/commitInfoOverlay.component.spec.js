@@ -25,7 +25,7 @@ import {
     mockComponent,
     mockUserManager,
     mockUtil,
-    mockCatalogManager, mockOntologyManager
+    mockCatalogManager, mockOntologyManager, mockToastr
 } from '../../../../../../test/js/Shared';
 
 describe('Commit Info Overlay component', function() {
@@ -38,6 +38,7 @@ describe('Commit Info Overlay component', function() {
         mockCatalogManager();
         mockOntologyManager();
         mockUtil();
+        mockToastr();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _ontologyManagerService_, _utilService_) {
             $compile = _$compile_;

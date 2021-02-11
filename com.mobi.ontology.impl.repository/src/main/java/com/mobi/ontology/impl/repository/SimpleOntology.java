@@ -1100,7 +1100,11 @@ public class SimpleOntology implements Ontology {
     private Set<IRI> getIRISet(TupleQueryResult tupleQueryResult) {
         Set<IRI> iris = new HashSet<>();
         tupleQueryResult.forEach(r -> r.getBinding("s")
-                .ifPresent(b -> iris.add(vf.createIRI(b.getValue().stringValue()))));
+                .ifPresent(b -> {
+                    if (!(b.getValue() instanceof BNode)) {
+                        iris.add(vf.createIRI(b.getValue().stringValue()));
+                    }
+                }));
         return iris;
     }
 
