@@ -387,7 +387,7 @@ class ModelsSpec extends Specification{
         def transformer = Mock(SesameTransformer)
 
         when:
-        Models.createModel('owl', input, transformer)
+        Models.createModel('.zip', input, transformer)
 
         then:
         thrown(RDFParseException.class)
