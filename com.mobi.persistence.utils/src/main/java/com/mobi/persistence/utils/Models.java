@@ -46,7 +46,6 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.eclipse.rdf4j.rio.helpers.ParseErrorLogger;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
-import org.jetbrains.annotations.NotNull;
 import org.obolibrary.obo2owl.OWLAPIObo2Owl;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.parser.OBOFormatParser;
@@ -62,22 +61,17 @@ import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.semanticweb.owlapi.rio.RioRenderer;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -283,7 +277,6 @@ public class Models {
                                     SesameTransformer transformer) throws IOException {
 
         ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
-        Model  model = null;
 
         if (preferredExtension.equalsIgnoreCase("zip")) {
             try (BufferedInputStream bis = new BufferedInputStream(rdfData);
@@ -292,22 +285,18 @@ public class Models {
                 int counter = 0;
                 while ((ze = zis.getNextEntry()) != null) {
                     String fileName = ze.getName();
-                    Path p1 = Paths.get(fileName);
-                    if (ze.isDirectory() == false && !p1.startsWith("__MACOSX")) {
+                    if (ze.isDirectory() == false && !Paths.get(fileName).startsWith("__MACOSX")) {
                         counter++;
                         if (counter > 1) {
                             throw new MobiException("Compressed upload must only contain a single file.");
                         }
                         preferredExtension = FilenameUtils.getExtension(fileName);
                         rdfData = toByteArrayInputStream(zis);
-                        model = buildModel(preferredExtension, rdfData, transformer);
                     }
                 }
             }
-            return model;
-        } else {
-            return buildModel(preferredExtension, rdfData, transformer);
         }
+        return buildModel(preferredExtension, rdfData, transformer);
     }
 
     public static Model buildModel(String preferredExtension,
