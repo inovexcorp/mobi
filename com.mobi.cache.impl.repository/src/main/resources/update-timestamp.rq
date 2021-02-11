@@ -1,15 +1,9 @@
 DELETE {
-    GRAPH ?dataset {
-        ?dataset <http://mobi.com/ontologies/graph#lastAccessed> ?lastAccessed
-    }
+    ?dataset <http://mobi.com/ontologies/graph#lastAccessed> ?lastAccessed
 }
 INSERT {
-    GRAPH ?dataset {
-        ?dataset <http://mobi.com/ontologies/graph#lastAccessed> ?now
-    }
+    ?dataset <http://mobi.com/ontologies/graph#lastAccessed> ?now
 }
 WHERE {
-    GRAPH ?dataset {
-        ?dataset <http://mobi.com/ontologies/graph#lastAccessed> ?lastAccessed
-    }
+    ?dataset <http://mobi.com/ontologies/graph#lastAccessed> ?lastAccessed
 }

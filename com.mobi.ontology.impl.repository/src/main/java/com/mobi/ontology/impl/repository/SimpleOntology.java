@@ -55,6 +55,7 @@ import com.mobi.persistence.utils.rio.SkolemizeHandler;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.query.api.GraphQuery;
+import com.mobi.query.api.OperationDataset;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
@@ -115,6 +116,8 @@ public class SimpleOntology implements Ontology {
     private Set<Resource> importsClosure;
     private Set<Resource> unresolvedImports;
     private Difference difference;
+    private OperationDataset operationDataset;
+    private boolean refreshOperationDataset = false;
 
     private static final String GET_SUB_CLASSES_OF;
     private static final String GET_CLASSES_FOR;
@@ -136,6 +139,7 @@ public class SimpleOntology implements Ontology {
     private static final String GET_ALL_NO_DOMAIN_OBJECT_PROPERTIES;
     private static final String GET_ALL_NO_DOMAIN_DATA_PROPERTIES;
     private static final String GET_ALL_INDIVIDUALS;
+    private static final String GET_ONTOLOGY_ID;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
 
@@ -222,6 +226,10 @@ public class SimpleOntology implements Ontology {
             );
             GET_ALL_INDIVIDUALS = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-all-individuals.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_ONTOLOGY_ID = IOUtils.toString(
+                    SimpleOntology.class.getResourceAsStream("/get-ontology-id.rq"),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -438,6 +446,7 @@ public class SimpleOntology implements Ontology {
      */
     public void setDifference(Difference difference) {
         this.difference = difference;
+        this.refreshOperationDataset = true;
     }
 
     @Override
@@ -529,11 +538,7 @@ public class SimpleOntology implements Ontology {
     public OntologyId getOntologyId() {
         try (DatasetConnection conn = getDatasetConnection()) {
             long start = getStartTime();
-            Model iris = RepositoryResults.asModelNoContext(
-                    conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()),
-                            vf.createIRI(OWL.ONTOLOGY.stringValue()), this.datasetSdng), mf);
-            iris.addAll(RepositoryResults.asModelNoContext(
-                    conn.getStatements(null, vf.createIRI(OWL.VERSIONIRI.stringValue()), null, this.datasetSdng), mf));
+            Model iris = runGraphQueryOnOntology(GET_ONTOLOGY_ID, null, "getOntologyId()", false, mf);
             OntologyId id = ontologyManager.createOntologyId(iris);
             undoApplyDifferenceIfPresent(conn);
             logTrace("getOntologyId()", start);
@@ -645,6 +650,7 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<OClass> getAllClasses() {
         try (DatasetConnection conn = getDatasetConnection()) {
+            // TODO change to a single query
             long start = getStartTime();
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
                     vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()), this.datasetSdng));
@@ -1251,6 +1257,12 @@ public class SimpleOntology implements Ontology {
         long start = getStartTime();
         DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false, false);
         applyDifferenceIfPresent(conn);
+        if (refreshOperationDataset || operationDataset == null) {
+            operationDataset = conn.getOperationDataset(true);
+            refreshOperationDataset = false;
+        } else {
+            conn.setOperationDataset(operationDataset);
+        }
         logTrace("getDatasetConnection()", start);
         return conn;
     }

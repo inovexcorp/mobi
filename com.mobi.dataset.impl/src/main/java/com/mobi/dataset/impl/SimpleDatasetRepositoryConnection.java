@@ -77,6 +77,18 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     private long batchSize = 10000;
 
+    /**
+     * Boolean to track if an update (add/remove) has occurred. If the connection is "dirty" the operationDataset is
+     * recalculated.
+     */
+    private boolean dirty = true;
+
+    /**
+     * The {@link OperationDataset} to add to queries. Represents the namedGraphs/defaultGraphs to query from in this
+     * DatasetConnection.
+     */
+    private OperationDataset opDataset;
+
     private static final String GET_GRAPHS_QUERY;
     private static final String GET_NAMED_GRAPHS_QUERY;
     private static final String GET_DEFAULT_NAMED_GRAPHS_QUERY;
@@ -192,6 +204,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         if (startedTransaction) {
             commit();
         }
+        dirty = true;
     }
 
     @Override
@@ -213,6 +226,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         if (startedTransaction) {
             commit();
         }
+        dirty = true;
     }
 
     @Override
@@ -231,6 +245,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         if (startedTransaction) {
             commit();
         }
+        dirty = true;
     }
 
     @Override
@@ -247,6 +262,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             getDelegate().clear(getSystemDefaultNamedGraph());
             deleteDatasetGraph(null);
         }
+        dirty = true;
     }
 
     @Override
@@ -349,7 +365,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     @Override
     public TupleQuery prepareTupleQuery(String query) throws RepositoryException, MalformedQueryException {
         TupleQuery tupleQuery = getDelegate().prepareTupleQuery(query);
-        tupleQuery.setDataset(getOperationDataset());
+        tupleQuery.setDataset(getOperationDataset(false));
         return tupleQuery;
     }
 
@@ -357,7 +373,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     public TupleQuery prepareTupleQuery(String query, String baseURI) throws RepositoryException,
             MalformedQueryException {
         TupleQuery tupleQuery = getDelegate().prepareTupleQuery(query, baseURI);
-        tupleQuery.setDataset(getOperationDataset());
+        tupleQuery.setDataset(getOperationDataset(false));
         return tupleQuery;
     }
 
@@ -369,7 +385,9 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             OperationDataset operationDataset = operationDatasetFactory.createOperationDataset();
             Arrays.stream(contexts).forEach(context -> operationDataset.addDefaultGraph((IRI) context));
             Arrays.stream(contexts).forEach(context -> operationDataset.addNamedGraph((IRI) context));
-            tupleQuery.setDataset(getOperationDataset());
+            tupleQuery.setDataset(operationDataset);
+        } else {
+            tupleQuery.setDataset(getOperationDataset(false));
         }
         return tupleQuery;
     }
@@ -377,7 +395,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     @Override
     public GraphQuery prepareGraphQuery(String query) throws RepositoryException, MalformedQueryException {
         GraphQuery graphQuery = getDelegate().prepareGraphQuery(query);
-        graphQuery.setDataset(getOperationDataset());
+        graphQuery.setDataset(getOperationDataset(false));
         return graphQuery;
     }
 
@@ -385,7 +403,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     public GraphQuery prepareGraphQuery(String query, String baseURI) throws RepositoryException,
             MalformedQueryException {
         GraphQuery graphQuery = getDelegate().prepareGraphQuery(query, baseURI);
-        graphQuery.setDataset(getOperationDataset());
+        graphQuery.setDataset(getOperationDataset(false));
         return graphQuery;
     }
 
@@ -397,7 +415,9 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             OperationDataset operationDataset = operationDatasetFactory.createOperationDataset();
             Arrays.stream(contexts).forEach(context -> operationDataset.addDefaultGraph((IRI) context));
             Arrays.stream(contexts).forEach(context -> operationDataset.addNamedGraph((IRI) context));
-            graphQuery.setDataset(getOperationDataset());
+            graphQuery.setDataset(operationDataset);
+        } else {
+            graphQuery.setDataset(getOperationDataset(false));
         }
         return graphQuery;
     }
@@ -421,6 +441,34 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     @Override
     public Update prepareUpdate(String update, String baseURI) throws RepositoryException, MalformedQueryException {
         throw new NotImplementedException("Not yet implemented.");
+    }
+
+    @Override
+    public Update prepareUpdate(String query, Resource insertGraph, Resource deleteGraph, Resource... contexts) {
+        Update update = getDelegate().prepareUpdate(query);
+        if (query.toUpperCase().contains("INSERT") && insertGraph == null) {
+            throw new MobiException("Update query with INSERT must provide a graph to insert statements into.");
+        }
+        if (query.toUpperCase().contains("DELETE") && deleteGraph == null) {
+            throw new MobiException("Update query with DELETE must provide a graph to delete statements from.");
+        }
+        OperationDataset operationDataset;
+        if (varargsPresent(contexts)) {
+            operationDataset = operationDatasetFactory.createOperationDataset();
+            Arrays.stream(contexts).forEach(context -> operationDataset.addDefaultGraph((IRI) context));
+            Arrays.stream(contexts).forEach(context -> operationDataset.addNamedGraph((IRI) context));
+        } else {
+            operationDataset = getOperationDataset(false);
+        }
+        if (insertGraph != null) {
+            operationDataset.setDefaultInsertGraph((IRI) insertGraph);
+        }
+        if (deleteGraph != null) {
+            operationDataset.addDefaultRemoveGraph((IRI) deleteGraph);
+        }
+        update.setDataset(operationDataset);
+        dirty = true;
+        return update;
     }
 
     @Override
@@ -452,18 +500,28 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         return repositoryId;
     }
 
-    private OperationDataset getOperationDataset() {
-        OperationDataset operationDataset = operationDatasetFactory.createOperationDataset();
+    @Override
+    public OperationDataset getOperationDataset(boolean force) {
+        if (dirty || force) {
+            OperationDataset operationDataset = operationDatasetFactory.createOperationDataset();
+            TupleQueryResult result = getGraphs();
+            result.forEach(bindings -> {
+                Optional<Binding> namedGraphBinding = bindings.getBinding("namedGraph");
+                namedGraphBinding.ifPresent(binding -> operationDataset.addNamedGraph((IRI) binding.getValue()));
 
-        TupleQueryResult result = getGraphs();
-        result.forEach(bindings -> {
-            Optional<Binding> namedGraphBinding = bindings.getBinding("namedGraph");
-            namedGraphBinding.ifPresent(binding -> operationDataset.addNamedGraph((IRI) binding.getValue()));
+                Optional<Binding> defaultGraphBinding = bindings.getBinding("defaultGraph");
+                defaultGraphBinding.ifPresent(binding -> operationDataset.addDefaultGraph((IRI) binding.getValue()));
+            });
+            opDataset = operationDataset;
+            dirty = false;
+        }
+        return opDataset;
+    }
 
-            Optional<Binding> defaultGraphBinding = bindings.getBinding("defaultGraph");
-            defaultGraphBinding.ifPresent(binding -> operationDataset.addDefaultGraph((IRI) binding.getValue()));
-        });
-        return operationDataset;
+    @Override
+    public void setOperationDataset(OperationDataset operationDataset) {
+        this.opDataset = operationDataset;
+        dirty = false;
     }
 
     private TupleQueryResult getGraphs() {
@@ -474,14 +532,9 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     private Set<Resource> getGraphsSet() {
         Set<Resource> graphSet = new HashSet<>();
-        TupleQueryResult result = getGraphs();
-        result.forEach(bindings -> {
-            Optional<Binding> namedGraphBinding = bindings.getBinding("namedGraph");
-            namedGraphBinding.ifPresent(binding -> graphSet.add((Resource) binding.getValue()));
-
-            Optional<Binding> defaultGraphBinding = bindings.getBinding("defaultGraph");
-            defaultGraphBinding.ifPresent(binding -> graphSet.add((Resource) binding.getValue()));
-        });
+        OperationDataset operationDataset = getOperationDataset(false);
+        graphSet.addAll(operationDataset.getDefaultGraphs());
+        graphSet.addAll(operationDataset.getNamedGraphs());
         if (systemDefaultNG != null) {
             graphSet.add(systemDefaultNG);
         }
@@ -567,6 +620,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         if (startedTransaction) {
             commit();
         }
+        dirty = true;
     }
 
     /**
@@ -583,6 +637,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         } else {
             getDelegate().add(statement, systemDefaultNG);
         }
+        dirty = true;
     }
 
     /**
@@ -598,6 +653,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         } else {
             getDelegate().remove(statement, systemDefaultNG);
         }
+        dirty = true;
     }
 
     /**
@@ -612,6 +668,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
                 getDelegate().add(datasetResource, valueFactory.createIRI(predicate), context, datasetResource);
             }
         }
+        dirty = true;
     }
 
     /**
@@ -651,6 +708,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
                     getDelegate().clear(context);
                 })
         );
+        dirty = true;
     }
 
     private static class DatasetGraphResultWrapper extends RepositoryResult<Resource> {

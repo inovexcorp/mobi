@@ -777,9 +777,10 @@ public class OntologyRest {
         return outputStream -> {
             StopWatch watch = new StopWatch();
 
+            OntologyId ontologyId = ontology.getOntologyId();
             outputStream.write("{ \"ontologyIRI\": ".getBytes());
-            outputStream.write(ontology.getOntologyId().getOntologyIRI().isPresent() ?
-                    ("\"" + ontology.getOntologyId().getOntologyIRI().get().toString() + "\"").getBytes() : "".getBytes());
+            outputStream.write(ontologyId.getOntologyIRI().isPresent() ?
+                    ("\"" + ontologyId.getOntologyIRI().get().toString() + "\"").getBytes() : "".getBytes());
 
             log.trace("Start iriList");
             watch.start();
@@ -2799,7 +2800,7 @@ public class OntologyRest {
         Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
         if (optionalOntology.isPresent()) {
             Ontology baseOntology = optionalOntology.get();
-            return OntologyUtils.getImportedOntologies(baseOntology.getImportsClosure(), baseOntology.getOntologyId());
+            return OntologyUtils.getImportedOntologies(baseOntology.getImportsClosure(), baseOntology);
         } else {
             throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
         }
