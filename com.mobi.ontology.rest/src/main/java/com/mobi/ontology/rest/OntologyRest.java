@@ -580,7 +580,7 @@ public class OntologyRest {
 
             Difference diff = catalogManager.getDiff(currentModel, uploadedModel);
 
-            log.trace("uploadChangesToOntology getDiff took" + (System.currentTimeMillis() - startTime));
+            log.trace("uploadChangesToOntology getDiff took " + (System.currentTimeMillis() - startTime));
 
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
             catalogManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
