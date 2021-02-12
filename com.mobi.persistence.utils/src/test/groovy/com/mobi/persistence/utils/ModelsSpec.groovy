@@ -383,7 +383,7 @@ class ModelsSpec extends Specification{
 
     def "createModel with multiple compressed file (.zip) throws an Exception"() {
         setup:
-        def input = getClass().getResourceAsStream("/archive.zip")
+        def input = getClass().getResourceAsStream("/Archive.zip")
         def transformer = Mock(SesameTransformer)
 
         when:
