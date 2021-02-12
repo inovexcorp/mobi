@@ -115,7 +115,14 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
             }
         };
         if (file !== undefined) {
-            fd.append('file', file);
+            const titleInfo = getFileTitleInfo(title);
+            if (titleInfo.ext === 'zip') {
+                const compressedFile = self.compressFile(file,titleInfo);
+                fd.append('file', compressedFile);
+            } else {
+                fd.append('file', file);
+            }
+            
         }
         if (ontologyJson !== undefined) {
             fd.append('json', JSON.stringify(ontologyJson));
@@ -1621,6 +1628,25 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     self.getConceptSchemeIRIs = function(ontologies, derivedConceptSchemes) {
         return map(self.getConceptSchemes(ontologies, derivedConceptSchemes), '@id');
     };
+
+    self.compressFile = function(file, fileName) {
+        
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                const result = evt.target.result;
+                const compressedData = pako.gzip(result,{level: 1});
+                const blob = new Blob([compressedData]);
+            };
+        return 
+    }
+
+    function getFileTitleInfo(title) {
+        const fileName = title.toLowerCase().split();
+        return {
+            name: fileName.slice(0,1),
+            ext: fileName.slice(-1)
+        };
+    }
 
     function collectThings(ontologies, filterFunc) {
         const things = [];
