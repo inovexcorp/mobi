@@ -22,6 +22,8 @@
  */
 package com.mobi.dataset.impl
 
+import com.mobi.persistence.utils.RepositoryResults
+
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory
@@ -543,6 +545,102 @@ class SimpleDatasetManagerSpec extends Specification {
         1 * repoManagerMock.getRepository("test") >> Optional.empty()
         0 * catalogManagerMock.createRecord(*_)
         0 * catalogManagerMock.addRecord(*_)
+        thrown(IllegalArgumentException)
+    }
+
+    def "createDataset adds the Dataset model to the repo using the provided repo"() {
+        setup:
+        IRI datasetIRI = vf.createIRI("http://test.com/dataset1")
+        def dataset = dsFactory.createNew(datasetIRI)
+        def testRepo = Mock(Repository)
+
+        when:
+        service.createDataset("http://test.com/dataset1", "test")
+
+        then:
+        1 * repoManagerMock.getRepository("test") >> Optional.of(testRepo)
+        1 * testRepo.getConnection() >> connMock
+        1 * connMock.add(_ as Model, datasetIRI) >> { args ->
+            Model model = args[0]
+            model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
+            model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
+        }
+    }
+
+    def "createDataset throws an exception when using the provided repo that doesn't exist"() {
+        setup:
+        IRI datasetIRI = vf.createIRI("http://test.com/dataset1")
+        def dataset = dsFactory.createNew(datasetIRI)
+        def testRepo = Mock(Repository)
+
+        when:
+        service.createDataset("http://test.com/dataset1", "test")
+
+        then:
+        1 * repoManagerMock.getRepository("test") >> Optional.empty()
+        0 * testRepo.getConnection() >> connMock
+        0 * connMock.add(_ as Model, datasetIRI) >> { args ->
+            Model model = args[0]
+            model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
+            model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
+        }
+        thrown(IllegalArgumentException)
+    }
+
+    def "createDataset throws an exception when using the provided repo but dataset already exists"() {
+        setup:
+        IRI datasetIRI = vf.createIRI("http://test.com/dataset1")
+        def dataset = dsFactory.createNew(datasetIRI)
+        def testRepo = Mock(Repository)
+
+        when:
+        service.createDataset("http://test.com/dataset1", "test")
+
+        then:
+        1 * repoManagerMock.getRepository("test") >> Optional.of(testRepo)
+        1 * testRepo.getConnection() >> connMock
+        1 * connMock.getStatements(null, null, null, datasetIRI) >> resultsMock
+        1 * resultsMock.hasNext() >> true
+        0 * connMock.add(_ as Model, datasetIRI) >> { args ->
+            Model model = args[0]
+            model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
+            model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
+        }
+        thrown(IllegalArgumentException)
+    }
+
+    def "createDataset adds the Dataset model to the repo using the provided connection"() {
+        setup:
+        IRI datasetIRI = vf.createIRI("http://test.com/dataset1")
+        def dataset = dsFactory.createNew(datasetIRI)
+
+        when:
+        service.createDataset("http://test.com/dataset1", connMock)
+
+        then:
+        1 * connMock.add(_ as Model, datasetIRI) >> { args ->
+            Model model = args[0]
+            model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
+            model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
+        }
+    }
+
+    def "createDataset throws an exception when using the provided connection but dataset already exists"() {
+        setup:
+        IRI datasetIRI = vf.createIRI("http://test.com/dataset1")
+        def dataset = dsFactory.createNew(datasetIRI)
+
+        when:
+        service.createDataset("http://test.com/dataset1", connMock)
+
+        then:
+        1 * connMock.getStatements(null, null, null, datasetIRI) >> resultsMock
+        1 * resultsMock.hasNext() >> true
+        0 * connMock.add(_ as Model, datasetIRI) >> { args ->
+            Model model = args[0]
+            model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
+            model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
+        }
         thrown(IllegalArgumentException)
     }
 

@@ -222,11 +222,11 @@
             <artifactId>dataset.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>sparql.utils</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.mobi</groupId>-->
+<!--            <artifactId>sparql.utils</artifactId>-->
+<!--            <version>${project.version}</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>cache</artifactId>

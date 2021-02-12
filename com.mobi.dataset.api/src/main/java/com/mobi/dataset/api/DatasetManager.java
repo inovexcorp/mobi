@@ -110,7 +110,6 @@ public interface DatasetManager {
      */
     boolean createDataset(String dataset, RepositoryConnection conn);
 
-
     /**
      * Deletes the DatasetRecord, Dataset, and data graphs associated with the Dataset Resource. Note: This method
      * removes all graphs from the specified dataset even if they are associated with other datasets.

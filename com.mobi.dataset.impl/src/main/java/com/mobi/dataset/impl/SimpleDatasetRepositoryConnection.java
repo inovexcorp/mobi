@@ -47,12 +47,6 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryConnectionWrapper;
 import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.exception.RepositoryException;
-import com.mobi.sparql.utils.Query;
-import com.mobi.sparql.utils.Sparql11BaseListener;
-import com.mobi.sparql.utils.Sparql11Parser;
-import org.antlr.v4.runtime.TokenStreamRewriter;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
@@ -61,11 +55,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapper implements DatasetConnection {
@@ -382,10 +378,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             MalformedQueryException {
         TupleQuery tupleQuery = getDelegate().prepareTupleQuery(query);
         if (varargsPresent(contexts)) {
-            OperationDataset operationDataset = operationDatasetFactory.createOperationDataset();
-            Arrays.stream(contexts).forEach(context -> operationDataset.addDefaultGraph((IRI) context));
-            Arrays.stream(contexts).forEach(context -> operationDataset.addNamedGraph((IRI) context));
-            tupleQuery.setDataset(operationDataset);
+            tupleQuery.setDataset(getFilteredOperationDataset(contexts));
         } else {
             tupleQuery.setDataset(getOperationDataset(false));
         }
@@ -412,10 +405,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             MalformedQueryException {
         GraphQuery graphQuery = getDelegate().prepareGraphQuery(query);
         if (varargsPresent(contexts)) {
-            OperationDataset operationDataset = operationDatasetFactory.createOperationDataset();
-            Arrays.stream(contexts).forEach(context -> operationDataset.addDefaultGraph((IRI) context));
-            Arrays.stream(contexts).forEach(context -> operationDataset.addNamedGraph((IRI) context));
-            graphQuery.setDataset(operationDataset);
+            graphQuery.setDataset(getFilteredOperationDataset(contexts));
         } else {
             graphQuery.setDataset(getOperationDataset(false));
         }
@@ -514,6 +504,11 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             });
             opDataset = operationDataset;
             dirty = false;
+
+            if (systemDefaultNG == null) {
+                getAndSetSystemDefaultNamedGraph();
+            }
+            operationDataset.addDefaultGraph((IRI) systemDefaultNG);
         }
         return opDataset;
     }
@@ -522,6 +517,25 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     public void setOperationDataset(OperationDataset operationDataset) {
         this.opDataset = operationDataset;
         dirty = false;
+    }
+
+    private OperationDataset getFilteredOperationDataset(Resource... contexts) {
+        OperationDataset operationDataset = operationDatasetFactory.createOperationDataset();
+        List<Resource> contextList = Arrays.asList(contexts);
+        if (opDataset == null) {
+            getOperationDataset(true);
+        }
+        Set<Resource> namedGraphs = opDataset.getNamedGraphs()
+                .stream()
+                .filter(contextList::contains)
+                .collect(Collectors.toSet());
+        Set<Resource> defaultGraphs = opDataset.getDefaultGraphs()
+                .stream()
+                .filter(contextList::contains)
+                .collect(Collectors.toSet());
+        namedGraphs.forEach(resource -> operationDataset.addNamedGraph((IRI) resource));
+        defaultGraphs.forEach(resource -> operationDataset.addDefaultGraph((IRI) resource));
+        return operationDataset;
     }
 
     private TupleQueryResult getGraphs() {
@@ -535,9 +549,10 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         OperationDataset operationDataset = getOperationDataset(false);
         graphSet.addAll(operationDataset.getDefaultGraphs());
         graphSet.addAll(operationDataset.getNamedGraphs());
-        if (systemDefaultNG != null) {
-            graphSet.add(systemDefaultNG);
+        if (systemDefaultNG == null) {
+            getAndSetSystemDefaultNamedGraph();
         }
+        graphSet.add(systemDefaultNG);
         return graphSet;
     }
 

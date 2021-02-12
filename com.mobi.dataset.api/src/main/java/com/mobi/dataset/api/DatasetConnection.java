@@ -326,28 +326,37 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
     Resource getSystemDefaultNamedGraph();
 
     /**
-     * TODO:
-     * @return
+     * Retrieves the system default named graph from the repository, sets it on the connection, and returns the newly
+     * set Resource value.
+     *
+     * @return the Resource representing the system default named graph.
      */
     Resource getAndSetSystemDefaultNamedGraph();
 
     /**
-     * TODO:
+     * Sets the system default named graph for the DatasetConnection. Used in cases where the DatasetConnection defers
+     * initializing the system default named graph.
+     *
+     * @param systemDefaultNamedGraph the Resource representing the system default named graph.
+     */
+    void setSystemDefaultNamedGraph(Resource systemDefaultNamedGraph);
+
+    /**
+     * Retrieves the {@link OperationDataset} that maintains the named graphs and default graphs used in the dataset.
+     *
+     * @param force a boolean indicating whether or not to re-retrieve the graphs sets from the repository. If true,
+     *              re-queries the repository. If false, returns the cached OperationDataset stored on the connection.
      * @return
      */
     OperationDataset getOperationDataset(boolean force);
 
     /**
-     * TODO:
-     * @return
+     * Sets the {@link OperationDataset} that represents the named graphs and default graphs of the Dataset on the
+     * DatasetConnection.
+     *
+     * @param operationDataset the OperationDataset to set on the connection.
      */
     void setOperationDataset(OperationDataset operationDataset);
-
-    /**
-     * TODO:
-     * @return
-     */
-    void setSystemDefaultNamedGraph(Resource systemDefaultNamedGraph);
 
     /**
      * Adds a named graph to the dataset.

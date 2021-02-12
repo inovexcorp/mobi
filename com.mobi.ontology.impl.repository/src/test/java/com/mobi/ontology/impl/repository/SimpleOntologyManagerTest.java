@@ -250,6 +250,10 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
             datasetManager.createDataset(resource.getValue().stringValue(), "ontologyCache");
             return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY, operationDatasetFactory);
         });
+        when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean(), anyBoolean())).thenAnswer(invocation -> {
+            datasetManager.createDataset(resource.getValue().stringValue(), "ontologyCache");
+            return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY, operationDatasetFactory);
+        });
 
         manager = Mockito.spy(new SimpleOntologyManager());
         injectOrmFactoryReferencesIntoService(manager);
@@ -573,7 +577,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         assertNotNull(optionalOntology.get());
         assertNotEquals(ontology, optionalOntology.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
-        verify(mockCache, times(2)).containsKey(eq(key));
+        verify(mockCache).containsKey(eq(key));
     }
 
     @Test
@@ -584,12 +588,9 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
         when(mockCache.containsKey(key)).thenReturn(true);
-        when(mockCache.get(key)).thenReturn(ontology);
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
         assertTrue(optionalOntology.isPresent());
-        assertEquals(ontology, optionalOntology.get());
-        verify(mockCache).get(eq(key));
         verify(mockCache, times(0)).put(eq(key), eq(optionalOntology.get()));
     }
 

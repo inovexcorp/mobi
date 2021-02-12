@@ -131,6 +131,7 @@ public class SimpleOntology implements Ontology {
     private static final String GET_CONCEPT_SCHEME_RELATIONSHIPS;
     private static final String GET_SEARCH_RESULTS;
     private static final String GET_SUB_ANNOTATION_PROPERTIES_OF;
+    private static final String GET_ALL_CLASSES;
     private static final String GET_CLASS_DATA_PROPERTIES;
     private static final String GET_CLASS_OBJECT_PROPERTIES;
     private static final String GET_ALL_ANNOTATIONS;
@@ -194,6 +195,10 @@ public class SimpleOntology implements Ontology {
             );
             GET_SUB_ANNOTATION_PROPERTIES_OF = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-sub-annotation-properties-of.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_ALL_CLASSES = IOUtils.toString(
+                    SimpleOntology.class.getResourceAsStream("/get-all-classes.rq"),
                     StandardCharsets.UTF_8
             );
             GET_CLASS_DATA_PROPERTIES = IOUtils.toString(
@@ -650,25 +655,10 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<OClass> getAllClasses() {
         try (DatasetConnection conn = getDatasetConnection()) {
-            // TODO change to a single query
-            long start = getStartTime();
-            List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
-                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()), this.datasetSdng));
-            Set<OClass> owlClasses = statements.stream()
-                    .map(Statement::getSubject)
-                    .filter(subject -> subject instanceof IRI)
-                    .map(subject -> new SimpleClass((IRI) subject))
+            Set<OClass> owlClasses = getIRISet(runQueryOnOntology(GET_ALL_CLASSES, null, "getAllClasses()", false))
+                    .stream()
+                    .map(SimpleClass::new)
                     .collect(Collectors.toSet());
-            statements = RepositoryResults.asList(conn.getStatements(null,
-                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(RDFS.CLASS.stringValue()), this.datasetSdng));
-            Set<OClass> rdfsClasses = statements.stream()
-                    .map(Statement::getSubject)
-                    .filter(subject -> subject instanceof IRI)
-                    .map(subject -> new SimpleClass((IRI) subject))
-                    .collect(Collectors.toSet());
-            owlClasses.addAll(rdfsClasses);
-            undoApplyDifferenceIfPresent(conn);
-            logTrace("getAllClasses()", start);
             return owlClasses;
         }
     }
@@ -1056,7 +1046,8 @@ public class SimpleOntology implements Ontology {
         tupleQueryResult.forEach(queryResult -> {
             Value key = queryResult.getBinding("parent").orElseThrow(
                     () -> new RuntimeException("Parent binding must be present for hierarchy")).getValue();
-            Binding value = queryResult.getBinding("child").orElse(null);
+            Binding value = queryResult.getBinding("child")
+                    .orElse(queryResult.getBinding("individual").orElse(null));
             if (!(key instanceof BNode) && key instanceof IRI) {
                 hierarchy.addIRI((IRI) key);
                 if (value != null && !(value.getValue() instanceof BNode) && value.getValue() instanceof IRI

@@ -201,6 +201,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         when(ontologyId.getVersionIRI()).thenReturn(Optional.of(versionIRI));
         when(ontologyManager.createOntologyId(any(IRI.class), any(IRI.class))).thenReturn(ontologyId);
         when(ontologyManager.createOntologyId(any(IRI.class))).thenReturn(ontologyId);
+        when(ontologyManager.createOntologyId(any(Model.class))).thenReturn(ontologyId);
         when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
         when(ontologyId.getOntologyIdentifier()).thenReturn(vf.createIRI("https://mobi.com/ontology-id"));
 
@@ -222,6 +223,10 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         });
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
         when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> {
+            datasetManager.createDataset(resource.getValue().stringValue(), "ontologyCache");
+            return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY, operationDatasetFactory);
+        });
+        when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean(), anyBoolean())).thenAnswer(invocation -> {
             datasetManager.createDataset(resource.getValue().stringValue(), "ontologyCache");
             return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY, operationDatasetFactory);
         });
@@ -271,10 +276,16 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         queryOntology = new SimpleOntology(Models.createModel(streamQueryOntology, transformer), repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf);
 
         InputStream streamQueryVocabulary = this.getClass().getResourceAsStream("/test-vocabulary.ttl");
-        queryVocabulary= new SimpleOntology(Models.createModel(streamQueryVocabulary, transformer), repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf);
+        queryVocabulary = new SimpleOntology(Models.createModel(streamQueryVocabulary, transformer), repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf);
 
         InputStream streamOnlyDeclared = this.getClass().getResourceAsStream("/only-declared.ttl");
         onlyDeclared = new SimpleOntology(Models.createModel(streamOnlyDeclared, transformer), repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf);
+    }
+
+    @Test
+    public void getOntologyId() throws Exception {
+        OntologyId id = ont1.getOntologyId();
+        assertEquals(vf.createIRI("https://mobi.com/ontology-id"), id.getOntologyIdentifier());
     }
 
     @Test
