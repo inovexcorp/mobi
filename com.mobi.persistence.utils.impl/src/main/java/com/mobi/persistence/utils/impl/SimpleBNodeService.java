@@ -41,7 +41,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Component(provide = BNodeService.class)
 public class SimpleBNodeService implements BNodeService {
@@ -148,6 +147,7 @@ public class SimpleBNodeService implements BNodeService {
      * @param bNode The BNode to skolemize.
      * @param model The Model containing data for the BNode and any attached BNode chain.
      * @param skolemizedBNodes The Map tracking previously skolemized BNodes.
+     * @param hashCount The Map tracking the usage count of hashes to handle equal (but distinct) BNodes
      * @return The Model containing all skolemized statements for the bNode and any attached BNode chains.
      */
     private Model deterministicSkolemize(BNode bNode, Model model, Map<BNode, IRI> skolemizedBNodes, Map<Long, Integer> hashCount) {
@@ -196,17 +196,6 @@ public class SimpleBNodeService implements BNodeService {
         });
         skolemizedBNodes.put(bNode, skolemizedIRI);
         return result;
-    }
-
-    // adapted from String.hashCode()
-    public long hash(String string) {
-        long h = 1125899906842597L; // prime
-        int len = string.length();
-
-        for (int i = 0; i < len; i++) {
-            h = 31*h + string.charAt(i);
-        }
-        return h;
     }
 
     @Override
@@ -258,7 +247,7 @@ public class SimpleBNodeService implements BNodeService {
     }
 
     /**
-     * A comparator that sorts statements based on predicate and object values ignoring blank nodes
+     * A comparator that sorts statements based on predicate and object values and attached blank nodes
      */
     private static class ModelStatementComparator implements Comparator<Statement>{
         private Model model;
@@ -273,12 +262,19 @@ public class SimpleBNodeService implements BNodeService {
         }
 
         public int compare(Statement o1, Statement o2) {
-            int o1Score = scoreValue(o1.getObject());
-            int o2Score = scoreValue(o2.getObject());
-            return Integer.compare(o1Score, o2Score);
+            long o1Score = scoreValue(o1.getObject());
+            long o2Score = scoreValue(o2.getObject());
+            return Long.compare(o1Score, o2Score);
         }
 
-        private int scoreValue(Value value) {
+        /**
+         * Returns a long representing the comparator score for the Value. Score value is based on the hash of
+         * the String value of the Value or on the hash of all the non-blank node triples of an attached blank node.
+         *
+         * @param value the v
+         * @return the long representing the comparator score for the Value.
+         */
+        private long scoreValue(Value value) {
             if (value instanceof BNode) {
                 List<String> o1Values = new ArrayList<>();
                 model.filter((BNode) value, null, null, (Resource) null).forEach(statement -> {
@@ -290,11 +286,24 @@ public class SimpleBNodeService implements BNodeService {
                     }
                 });
                 Collections.sort(o1Values);
-                int o1Hash = Objects.hash(o1Values.toArray());
-                return o1Hash;
+                return hash(String.join("", o1Values));
             } else {
-                return value.stringValue().hashCode();
+                return hash(value.stringValue());
             }
         }
+    }
+
+    /**
+     * Hashing algorithm for strings adapted from String.hashCode(). Uses a 64-bit hash (long) rather than the
+     * standard 32-bit hash (int).
+     */
+    private static long hash(String string) {
+        long h = 1125899906842597L; // prime
+        int len = string.length();
+
+        for (int i = 0; i < len; i++) {
+            h = 31*h + string.charAt(i);
+        }
+        return h;
     }
 }
