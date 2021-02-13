@@ -286,11 +286,9 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
 
     /**
      * Prepares SPARQL queries against the specified contexts that modify RDF graphs, that is, SPARQL INSERT/DELETE
-     * queries.
+     * queries. If the query string contains an INSERT and/or DELETE, the operation will occur on the dataset graph.
      *
      * @param query The query string, in SPARQL syntax.
-     * @param insertGraph The graph to insert statements to. Must be specified if query contains INSERT.
-     * @param deleteGraph The graph to delete statements from. Must be specified if query contains DELETE.
      * @param contexts The context(s) to query. Note that this parameter is a vararg and as such is optional. If no
      *                 contexts are supplied the method operates on the entire dataset.
      * @return a {@link GraphQuery} ready to be evaluated on this {@link DatasetConnection}.
@@ -299,7 +297,7 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      * @throws RepositoryException - If the query could not be run against the repository, for example because
      *      the repository is not readable.
      */
-    Update prepareUpdate(String query, Resource insertGraph, Resource deleteGraph, Resource... contexts)
+    Update prepareUpdate(String query, Resource... contexts)
             throws RepositoryException, MalformedQueryException;
 
     /**

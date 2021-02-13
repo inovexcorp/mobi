@@ -188,7 +188,6 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         boolean startedTransaction = startTransaction();
 
         Set<Resource> graphs = getGraphsSet();
-        graphs.add(systemDefaultNG);
 
         if (varargsPresent(contexts)) {
             graphs.retainAll(Arrays.asList(contexts));
@@ -294,6 +293,9 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public Resource getSystemDefaultNamedGraph() {
+        if (systemDefaultNG == null) {
+            return getAndSetSystemDefaultNamedGraph();
+        }
         return systemDefaultNG;
     }
 
@@ -377,11 +379,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     public TupleQuery prepareTupleQuery(String query, Resource... contexts) throws RepositoryException,
             MalformedQueryException {
         TupleQuery tupleQuery = getDelegate().prepareTupleQuery(query);
-        if (varargsPresent(contexts)) {
-            tupleQuery.setDataset(getFilteredOperationDataset(contexts));
-        } else {
-            tupleQuery.setDataset(getOperationDataset(false));
-        }
+        tupleQuery.setDataset(getFilteredOperationDataset(contexts));
         return tupleQuery;
     }
 
@@ -404,11 +402,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     public GraphQuery prepareGraphQuery(String query, Resource... contexts) throws RepositoryException,
             MalformedQueryException {
         GraphQuery graphQuery = getDelegate().prepareGraphQuery(query);
-        if (varargsPresent(contexts)) {
-            graphQuery.setDataset(getFilteredOperationDataset(contexts));
-        } else {
-            graphQuery.setDataset(getOperationDataset(false));
-        }
+        graphQuery.setDataset(getFilteredOperationDataset(contexts));
         return graphQuery;
     }
 
@@ -434,27 +428,19 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public Update prepareUpdate(String query, Resource insertGraph, Resource deleteGraph, Resource... contexts) {
+    public Update prepareUpdate(String query, Resource... contexts) {
         Update update = getDelegate().prepareUpdate(query);
-        if (query.toUpperCase().contains("INSERT") && insertGraph == null) {
-            throw new MobiException("Update query with INSERT must provide a graph to insert statements into.");
+        boolean insert = query.toUpperCase().contains("INSERT");
+        boolean delete = query.toUpperCase().contains("DELETE");
+        if (!insert && !delete) {
+            throw new MobiException("Update query must contain an INSERT/DELETE clause");
         }
-        if (query.toUpperCase().contains("DELETE") && deleteGraph == null) {
-            throw new MobiException("Update query with DELETE must provide a graph to delete statements from.");
+        OperationDataset operationDataset = getFilteredOperationDataset(contexts);
+        if (insert) {
+            operationDataset.setDefaultInsertGraph((IRI) getSystemDefaultNamedGraph());
         }
-        OperationDataset operationDataset;
-        if (varargsPresent(contexts)) {
-            operationDataset = operationDatasetFactory.createOperationDataset();
-            Arrays.stream(contexts).forEach(context -> operationDataset.addDefaultGraph((IRI) context));
-            Arrays.stream(contexts).forEach(context -> operationDataset.addNamedGraph((IRI) context));
-        } else {
-            operationDataset = getOperationDataset(false);
-        }
-        if (insertGraph != null) {
-            operationDataset.setDefaultInsertGraph((IRI) insertGraph);
-        }
-        if (deleteGraph != null) {
-            operationDataset.addDefaultRemoveGraph((IRI) deleteGraph);
+        if (delete) {
+            operationDataset.addDefaultRemoveGraph((IRI) getSystemDefaultNamedGraph());
         }
         update.setDataset(operationDataset);
         dirty = true;
@@ -520,23 +506,25 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     private OperationDataset getFilteredOperationDataset(Resource... contexts) {
-        OperationDataset operationDataset = operationDatasetFactory.createOperationDataset();
-        List<Resource> contextList = Arrays.asList(contexts);
-        if (opDataset == null) {
-            getOperationDataset(true);
+        if (varargsPresent(contexts)) {
+            OperationDataset opDataset = getOperationDataset(false);
+            OperationDataset filteredOpDataset = operationDatasetFactory.createOperationDataset();
+
+            List<Resource> contextList = Arrays.asList(contexts);
+            opDataset.getNamedGraphs()
+                    .stream()
+                    .filter(contextList::contains)
+                    .forEach(filteredOpDataset::addNamedGraph);
+            opDataset.getDefaultGraphs()
+                    .stream()
+                    .filter(contextList::contains)
+                    .forEach(filteredOpDataset::addDefaultGraph);
+            return filteredOpDataset;
+        } else {
+            return getOperationDataset(false);
         }
-        Set<Resource> namedGraphs = opDataset.getNamedGraphs()
-                .stream()
-                .filter(contextList::contains)
-                .collect(Collectors.toSet());
-        Set<Resource> defaultGraphs = opDataset.getDefaultGraphs()
-                .stream()
-                .filter(contextList::contains)
-                .collect(Collectors.toSet());
-        namedGraphs.forEach(resource -> operationDataset.addNamedGraph((IRI) resource));
-        defaultGraphs.forEach(resource -> operationDataset.addDefaultGraph((IRI) resource));
-        return operationDataset;
     }
+
 
     private TupleQueryResult getGraphs() {
         TupleQuery query = getDelegate().prepareTupleQuery(GET_OPERATION_DATASET_GRAPHS);

@@ -1057,42 +1057,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     // Test download ontology file
 
     @Test
-    public void testGetOntologyCacheHit() {
-        when(mockCache.containsKey(anyString())).thenReturn(true);
-        when(mockCache.get(anyString())).thenReturn(ontology);
-
-        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
-                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
-                .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
-
-        assertEquals(response.getStatus(), 200);
-        assertGetOntology(true);
-        assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
-        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
-        verify(mockCache).containsKey(anyString());
-        verify(mockCache).get(anyString());
-        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
-    }
-
-    @Test
-    public void testGetOntologyCacheMiss() {
-        when(mockCache.containsKey(anyString())).thenReturn(false);
-
-        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
-                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
-                .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
-
-        assertEquals(response.getStatus(), 200);
-        assertGetOntology(true);
-        assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
-        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
-        verify(mockCache).containsKey(anyString());
-        verify(mockCache, times(0)).get(anyString());
-        // OntologyManger will handle caching the ontology
-        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
-    }
-
-    @Test
     public void testGetOntologyClearCache() {
         when(mockCache.containsKey(anyString())).thenReturn(false);
 
@@ -1104,8 +1068,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
         verify(ontologyCache).removeFromCache(recordId.stringValue(), commitId.stringValue());
-        verify(mockCache).containsKey(anyString());
-        verify(mockCache, times(0)).get(anyString());
         // OntologyManger will handle caching the ontology
         verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
     }

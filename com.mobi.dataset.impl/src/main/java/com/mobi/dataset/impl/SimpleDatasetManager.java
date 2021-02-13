@@ -364,7 +364,7 @@ public class SimpleDatasetManager implements DatasetManager {
         Repository dsRepo = getDatasetRepo(repositoryId);
 
         return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf,
-                operationDatasetFactory);
+                operationDatasetFactory, false);
     }
 
     @Override

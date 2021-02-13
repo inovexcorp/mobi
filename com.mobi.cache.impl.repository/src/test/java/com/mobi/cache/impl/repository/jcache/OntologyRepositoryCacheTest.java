@@ -254,10 +254,11 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         when(ontologyManager.retrieveOntologyByCommit(vf.createIRI("urn:record3"), vf.createIRI("urn:commit1"))).thenReturn(Optional.of(ontMultipleImports));
 
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
-        when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), repositoryConfig.id(), vf, operationDatasetFactory));
+        ArgumentCaptor<Boolean> setSdNg = ArgumentCaptor.forClass(Boolean.class);
+        when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean(), setSdNg.capture())).thenAnswer(invocation -> new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), repositoryConfig.id(), vf, operationDatasetFactory, setSdNg.getValue()));
         doNothing().when(datasetManager).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
         ArgumentCaptor<String> datasetIRIStr = ArgumentCaptor.forClass(String.class);
-        when(datasetManager.createDataset(datasetIRIStr.capture(), anyString())).thenAnswer(invocation -> {
+        when(datasetManager.createDataset(datasetIRIStr.capture(), any(RepositoryConnection.class))).thenAnswer(invocation -> {
             try (RepositoryConnection conn = repo.getConnection()) {
                 Resource datasetIRI = vf.createIRI(datasetIRIStr.getValue());
                 Dataset dataset = datasetFactory.createNew(datasetIRI);

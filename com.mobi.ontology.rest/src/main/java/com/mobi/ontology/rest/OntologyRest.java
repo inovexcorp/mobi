@@ -1906,8 +1906,6 @@ public class OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            // TODO: remove log
-            log.debug("************************************ Loaded ontology into cache ************************************");
             Hierarchy hierarchy = ontology.getSubClassesOf(valueFactory, modelFactory);
             return Response.ok(getHierarchyStream(hierarchy, nested, getClassIRIs(ontology))).build();
         } catch (MobiException e) {

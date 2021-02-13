@@ -91,7 +91,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
         Literal timestamp = vf.createLiteral(OffsetDateTime.now());
         Resource dataset = conn.getDataset();
         LOG.debug("Updating cache dataset last accessed property for " + dataset);
-        Update update = conn.prepareUpdate(UPDATE_TIMESTAMP_QUERY, dataset, dataset, dataset);
+        Update update = conn.prepareUpdate(UPDATE_TIMESTAMP_QUERY, dataset);
         update.setBinding("dataset", dataset);
         update.setBinding("now", timestamp);
         update.execute();
