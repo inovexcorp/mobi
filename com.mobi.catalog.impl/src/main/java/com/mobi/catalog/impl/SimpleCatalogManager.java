@@ -1281,7 +1281,7 @@ public class SimpleCatalogManager implements CatalogManager {
         });
 
         changed.forEach(statement -> {
-            if(!original.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())) {
+            if (!original.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())) {
                 additions.add(statement);
             }
         });
