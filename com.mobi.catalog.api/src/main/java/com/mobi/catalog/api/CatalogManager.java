@@ -43,6 +43,7 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
 
+import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -891,6 +892,13 @@ public interface CatalogManager {
     Model getCompiledResource(Resource commitId);
 
     /**
+     * TODO:
+     * @param commitId
+     * @return
+     */
+    File getCompiledResourceFile(Resource commitId);
+
+    /**
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Commit List
      * to construct a List of Resources.
      *
@@ -912,6 +920,15 @@ public interface CatalogManager {
      * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */
     Model getCompiledResource(Resource versionedRDFRecordId, Resource branchId, Resource commitId);
+
+    /**
+     * TODO:
+     * @param versionedRDFRecordId
+     * @param branchId
+     * @param commitId
+     * @return
+     */
+    File getCompiledResourceFile(Resource versionedRDFRecordId, Resource branchId, Resource commitId);
 
     /**
      * Gets the Difference between the Commits identified by the two provided Resources. Essentially returns the

@@ -2073,6 +2073,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             expected.add(classStmt);
 
             Model result = service.getCompiledResource(commits, conn);
+            assertEquals(expected.size(), result.size());
             result.forEach(statement -> assertTrue(expected.contains(statement)));
         }
     }

@@ -34,6 +34,7 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
+import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
@@ -60,6 +61,7 @@ import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
@@ -78,6 +80,7 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
     private DatasetManager datasetManager;
     private ImportsResolver importsResolver;
     private BNodeService bNodeService;
+    private RDFImportService importService;
 
 
     public SimpleOntologyManager() {
@@ -151,6 +154,11 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
         this.bNodeService = bNodeService;
     }
 
+    @Reference
+    public void setRDFImportService(RDFImportService importService) {
+        this.importService = importService;
+    }
+
     /**
      * Activate method required in order to have config file service.ranking property used.
      */
@@ -191,16 +199,16 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
         return new SimpleOntology(model, repository, this, catalogManager, configProvider, datasetManager,
-                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory);
+                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, importService);
     }
 
-    private Ontology createOntology(Model model, Resource recordId, Resource commitId) {
+    private Ontology createOntology(File ontologyFile, Resource recordId, Resource commitId) {
         Repository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
         String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
-        return new SimpleOntology(key, model, repository, this, catalogManager, configProvider, datasetManager,
-                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory);
+        return new SimpleOntology(key, ontologyFile, repository, this, catalogManager, configProvider, datasetManager,
+                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, importService);
     }
 
     private Ontology createOntology(Resource recordId, Resource commitId) {
@@ -209,7 +217,7 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
 
         String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
         return new SimpleOntology(key, repository, this, catalogManager, configProvider, datasetManager,
-                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory);
+                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, importService);
     }
 
     @Override
@@ -275,7 +283,7 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
      * @return an Ontology built at the time identified by the Commit.
      */
     private Ontology createOntologyFromCommit(Resource recordId, Resource commitId) {
-        Model ontologyModel = catalogManager.getCompiledResource(commitId);
-        return createOntology(ontologyModel, recordId, commitId);
+        File ontologyFile = catalogManager.getCompiledResourceFile(commitId);
+        return createOntology(ontologyFile, recordId, commitId);
     }
 }

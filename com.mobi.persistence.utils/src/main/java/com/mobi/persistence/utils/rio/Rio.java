@@ -59,6 +59,15 @@ public class Rio {
         writer.endRDF();
     }
 
+    public static void write(Statement statement, RDFHandler writer, SesameTransformer transformer,
+                             StatementHandler... statementHandlers) {
+        for (StatementHandler statementHandler : statementHandlers) {
+            statement = statementHandler.handleStatement(statement);
+        }
+        org.eclipse.rdf4j.model.Statement sesameStatement = transformer.sesameStatement(statement);
+        writer.handleStatement(sesameStatement);
+    }
+
     /**
      * Writes the given statements to the given {@link RDFHandler}.
      *

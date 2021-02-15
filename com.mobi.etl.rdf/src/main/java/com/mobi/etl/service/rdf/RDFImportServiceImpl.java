@@ -28,9 +28,11 @@ import aQute.bnd.annotation.component.Reference;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.rdf.RDFImportService;
+import com.mobi.persistence.utils.BatchGraphInserter;
 import com.mobi.persistence.utils.BatchInserter;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.DelegatingRepository;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
@@ -86,6 +88,12 @@ public class RDFImportServiceImpl implements RDFImportService {
     }
 
     @Override
+    public void importFile(ImportServiceConfig config, @Nonnull File file, Resource graph) throws IOException {
+        checkFileExists(file);
+        importFileWithConfig(config, file, getFileFormat(config, file), graph);
+    }
+
+    @Override
     public void importModel(ImportServiceConfig config, Model model) {
         try (RepositoryConnection conn = getConnection(config)) {
             conn.add(model);
@@ -104,7 +112,7 @@ public class RDFImportServiceImpl implements RDFImportService {
             throw new IllegalArgumentException("Config must contain a format if importing an InputStream");
         }
         try (RepositoryConnection conn = getConnection(config)) {
-            importInputStream(conn, config, stream, config.getFormat());
+            importInputStream(conn, config, stream, config.getFormat(), null);
         }
     }
 
@@ -149,13 +157,25 @@ public class RDFImportServiceImpl implements RDFImportService {
         }
     }
 
+    private void importFileWithConfig(ImportServiceConfig config, File file, RDFFormat format, Resource graph)
+            throws IOException {
+        try (RepositoryConnection conn = getConnection(config)) {
+            importFile(conn, config, file, format, graph);
+        }
+    }
+
     private void importFile(RepositoryConnection conn, ImportServiceConfig config, @Nonnull File file,
                             @Nonnull RDFFormat format) throws IOException {
-        importInputStream(conn, config, new FileInputStream(file), format);
+        importInputStream(conn, config, new FileInputStream(file), format, null);
+    }
+
+    private void importFile(RepositoryConnection conn, ImportServiceConfig config, @Nonnull File file,
+                            @Nonnull RDFFormat format, Resource graph) throws IOException {
+        importInputStream(conn, config, new FileInputStream(file), format, graph);
     }
 
     private void importInputStream(RepositoryConnection conn, ImportServiceConfig config, @Nonnull InputStream stream,
-                                   @Nonnull RDFFormat format) throws IOException {
+                                   @Nonnull RDFFormat format, Resource graph) throws IOException {
         RDFParser parser = Rio.createParser(format);
         ParserConfig parserConfig = new ParserConfig();
         if (config.getContinueOnError()) {
@@ -164,14 +184,23 @@ public class RDFImportServiceImpl implements RDFImportService {
             parserConfig.addNonFatalError(BasicParserSettings.NORMALIZE_DATATYPE_VALUES);
         }
         parserConfig.addNonFatalError(BasicParserSettings.VERIFY_URI_SYNTAX);
-        parser.setParserConfig(parserConfig);
-        BatchInserter inserter = new BatchInserter(conn, transformer, config.getBatchSize());
+        BatchInserter inserter;
+        if (graph == null) {
+            inserter = new BatchInserter(conn, transformer, config.getBatchSize());
+        } else {
+            parserConfig.set(BasicParserSettings.VERIFY_LANGUAGE_TAGS, false);
+            parserConfig.set(BasicParserSettings.VERIFY_RELATIVE_URIS, false);
+            parserConfig.set(BasicParserSettings.VERIFY_DATATYPE_VALUES, false);
+            parserConfig.set(BasicParserSettings.VERIFY_URI_SYNTAX, false);
+            inserter = new BatchGraphInserter(conn, transformer, config.getBatchSize(), graph);
+        }
         if (config.getLogOutput()) {
             inserter.setLogger(LOGGER);
         }
         if (config.getPrintOutput()) {
             inserter.setPrintToSystem(true);
         }
+        parser.setParserConfig(parserConfig);
         parser.setRDFHandler(inserter);
         parser.parse(stream, "");
     }

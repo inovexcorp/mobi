@@ -33,13 +33,7 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.repository.base.RepositoryResult;
-import com.mobi.query.api.*;
-import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.exception.RepositoryException;
 
 public interface RepositoryConnection extends AutoCloseable {
@@ -217,6 +211,14 @@ public interface RepositoryConnection extends AutoCloseable {
      * @throws RepositoryException when a problem occurs starting the transaction
      */
     void begin() throws RepositoryException;
+
+    /**
+     * Begins a transaction requiring commit() or rollback() to be called to end the transaction.
+     *
+     * @param isolationLevel The isolationLevel of the transaction
+     * @throws RepositoryException when a problem occurs starting the transaction
+     */
+    void begin(IsolationLevels isolationLevel) throws RepositoryException;
 
     /**
      * Commits the active transaction.

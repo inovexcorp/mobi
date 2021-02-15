@@ -25,6 +25,7 @@ package com.mobi.etl.api.rdf;
 
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
 import com.mobi.repository.exception.RepositoryException;
 import org.eclipse.rdf4j.rio.RDFParseException;
 
@@ -46,6 +47,14 @@ public interface RDFImportService {
      * @throws IllegalArgumentException thrown if the Repository or DatasetRecord does not exist
      */
     void importFile(ImportServiceConfig config, File file) throws IOException;
+
+    /**
+     * TODO:
+     * @param config
+     * @param file
+     * @throws IOException
+     */
+    void importFile(ImportServiceConfig config, File file, Resource graph) throws IOException;
 
     /**
      * Imports a Model into a specific Repository or DatasetRecord depending on the provided configuration.

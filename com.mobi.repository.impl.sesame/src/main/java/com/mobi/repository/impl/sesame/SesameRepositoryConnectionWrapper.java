@@ -38,6 +38,7 @@ import com.mobi.rdf.core.impl.sesame.factory.ResourceValueFactory;
 import com.mobi.rdf.core.impl.sesame.factory.StatementValueFactory;
 import com.mobi.rdf.core.utils.SesameStatementIterable;
 import com.mobi.rdf.core.utils.Values;
+import com.mobi.repository.api.IsolationLevels;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.exception.RepositoryException;
@@ -231,6 +232,32 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             sesameConn.begin();
         } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
+        }
+    }
+
+    @Override
+    public void begin(IsolationLevels isolationLevel) throws RepositoryException {
+        switch (isolationLevel){
+            case NONE:
+                sesameConn.begin(org.eclipse.rdf4j.IsolationLevels.NONE);
+                return;
+            case READ_UNCOMMITTED:
+                sesameConn.begin(org.eclipse.rdf4j.IsolationLevels.READ_UNCOMMITTED);
+                return;
+            case READ_COMMITTED:
+                sesameConn.begin(org.eclipse.rdf4j.IsolationLevels.READ_COMMITTED);
+                return;
+            case SNAPSHOT_READ:
+                sesameConn.begin(org.eclipse.rdf4j.IsolationLevels.SNAPSHOT_READ);
+                return;
+            case SNAPSHOT:
+                sesameConn.begin(org.eclipse.rdf4j.IsolationLevels.SNAPSHOT);
+                return;
+            case SERIALIZABLE:
+                sesameConn.begin(org.eclipse.rdf4j.IsolationLevels.SERIALIZABLE);
+                return;
+            default:
+                sesameConn.begin();
         }
     }
 

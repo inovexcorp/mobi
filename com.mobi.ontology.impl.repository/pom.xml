@@ -79,6 +79,11 @@
             <artifactId>ontology.utils</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>etl.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
