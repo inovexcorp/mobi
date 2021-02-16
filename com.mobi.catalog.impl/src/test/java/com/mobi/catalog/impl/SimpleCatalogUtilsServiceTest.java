@@ -65,6 +65,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -154,6 +155,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
@@ -172,7 +174,9 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         when(transformer.sesameStatement(any(Statement.class)))
                 .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
 
+
         service = new SimpleCatalogUtilsService();
+        service.setSesameTransformer(transformer);
         injectOrmFactoryReferencesIntoService(service);
         service.setMf(MODEL_FACTORY);
         service.setVf(VALUE_FACTORY);
@@ -2095,6 +2099,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             File file = service.getCompiledResourceFile(commitId, conn);
             Model model = Models.createModel(new FileInputStream(file), transformer);
             model.forEach(statement -> assertTrue(expected.contains(statement)));
+            file.delete();
         }
     }
 
@@ -2134,6 +2139,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             Model model = Models.createModel(new FileInputStream(file), transformer);
             assertEquals(expected.size(), model.size());
             model.forEach(statement -> assertTrue(expected.contains(statement)));
+            file.delete();
         }
     }
 
