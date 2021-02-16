@@ -1279,6 +1279,7 @@ public class SimpleOntology implements Ontology {
                     .logOutput(true)
                     .printOutput(false)
                     .batchSize(50000)
+                    .format(RDFFormat.TRIG)
                     .repository(repoId);
             importService.importFile(builder.build(), ontologyFile, graph);
             ontologyFile.delete();
