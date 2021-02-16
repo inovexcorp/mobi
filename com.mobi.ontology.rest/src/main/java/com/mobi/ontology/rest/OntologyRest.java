@@ -575,6 +575,12 @@ public class OntologyRest {
 
             Model currentModel = currentModelFuture.get();
             Model uploadedModel = uploadedModelFuture.get();
+            
+            if (!OntologyModels.findFirstOntologyIRI(uploadedModel, valueFactory).isPresent()) {
+                OntologyModels.findFirstOntologyIRI(currentModel, valueFactory)
+                        .ifPresent(iri -> uploadedModel.add(iri, valueFactory.createIRI(RDF.TYPE.stringValue()),
+                                valueFactory.createIRI(OWL.ONTOLOGY.stringValue())));
+            }
 
             log.trace("uploadChangesToOntology futures completion took " + (System.currentTimeMillis() - startTime));
 
@@ -613,12 +619,7 @@ public class OntologyRest {
                 new RioFunctionalSyntaxParserFactory().getParser(),
                 new RioManchesterSyntaxParserFactory().getParser(),
                 new RioOWLXMLParserFactory().getParser());
-        // TODO: I don't understand this
-        if (!OntologyModels.findFirstOntologyIRI(changedOnt, valueFactory).isPresent()) {
-            OntologyModels.findFirstOntologyIRI(changedOnt, valueFactory)
-                    .ifPresent(iri -> changedOnt.add(iri, valueFactory.createIRI(RDF.TYPE.stringValue()),
-                            valueFactory.createIRI(OWL.ONTOLOGY.stringValue())));
-        }
+
 
         return changedOnt;
     }
