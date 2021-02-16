@@ -615,7 +615,7 @@ public interface CatalogUtilsService {
      * the provided List using previous Commit data to construct it.
      *
      * @param commits The ordered List of Resource identifying the Commits to create a compiled resource from
-     * @return File which represents the resource at the Commit's point in history.
+     * @return A {@link File} which represents the resource at the Commit's point in history.
      */
     File getCompiledResourceFile(List<Resource> commits, RepositoryConnection conn);
 
@@ -635,7 +635,7 @@ public interface CatalogUtilsService {
      *
      * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
      *                 to retrieve.
-     * @return File which represents the resource at the Commit's point in history.
+     * @return A {@link File} which represents the resource at the Commit's point in history.
      */
     File getCompiledResourceFile(Resource commitId, RepositoryConnection conn);
 

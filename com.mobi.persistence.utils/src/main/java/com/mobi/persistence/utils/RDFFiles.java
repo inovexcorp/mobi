@@ -32,11 +32,23 @@ import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
+import org.obolibrary.obo2owl.OWLAPIObo2Owl;
+import org.obolibrary.oboformat.model.OBODoc;
+import org.obolibrary.oboformat.parser.OBOFormatParser;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.OWLDocumentFormat;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OntologyConfigurator;
+import org.semanticweb.owlapi.rio.RioRenderer;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,7 +84,7 @@ public class RDFFiles {
             IOUtils.closeQuietly(inputStream);
             IOUtils.closeQuietly(outStream);
             return tmpFile.toFile();
-        } catch (IOException e) {
+        } catch (IOException | NullPointerException e) {
             throw new MobiException("Could not write stream to temp file.", e);
         }
     }
@@ -87,12 +99,13 @@ public class RDFFiles {
      * @param parsers The optional list of additional parsers to use when default formats cannot parse.
      * @return An {@link Optional} of the resulting file. If unsuccessful, returns empty Optional.
      */
-    public static Optional<File> parseFileToFileFormat(File tempFile, RDFFormat destFormat, RDFParser... parsers) {
+    public static Optional<File> parseFileToFileFormat(File tempFile, RDFFormat destFormat, RDFParser... parsers) throws FileNotFoundException {
         try {
             Set<RDFFormat> formats = new HashSet<>(asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
                     RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS));
             String tmpDir = System.getProperty("java.io.tmpdir");
-            Path path = Paths.get(tmpDir + File.separator + UUID.randomUUID() + "." + destFormat.getName());
+            Path path = Paths.get(tmpDir + File.separator + UUID.randomUUID() + "." +
+                    destFormat.getDefaultFileExtension());
             for (RDFFormat format : formats) {
                 RDFParser rdfParser = Rio.createParser(format);
                 boolean success = tryParse(tempFile, rdfParser, destFormat, path);
@@ -106,7 +119,9 @@ public class RDFFiles {
                     return Optional.of(path.toFile());
                 }
             }
-            // TODO: OBOFORMAT
+            if (tryParseObo(tempFile, destFormat, path)) {
+                return Optional.of(path.toFile());
+            }
             return Optional.empty();
         } finally {
             tempFile.delete();
@@ -135,6 +150,42 @@ public class RDFFiles {
             } catch (IOException ex) {
                 throw new MobiException("Could not delete file " + path.toString(), ex);
             }
+            return false;
+        }
+    }
+
+    /**
+     * Attempts to parse as OBO. Not performant as it loads file into memory.
+     *
+     * @param tempFile The temporary {@link File} to parse.
+     * @param destFormat The desired {@link RDFFormat} of the destination file.
+     * @param path The {@link Path} to write the destination file to.
+     * @return A boolean indicating the success of the parse operation.
+     */
+    private static boolean tryParseObo(File tempFile, RDFFormat destFormat, Path path) {
+        OBOFormatParser parser = new OBOFormatParser();
+        OBODoc obodoc;
+        // Parse into an OBODoc
+        try (InputStreamReader isReader = new InputStreamReader(new FileInputStream(tempFile));
+             BufferedReader bufferedReader = new BufferedReader(isReader)) {
+            parser.setReader(new BufferedReader(bufferedReader));
+            obodoc = new OBODoc();
+            parser.parseOBODoc(obodoc);
+
+            // Convert to an OWLOntology
+            OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+            manager.setOntologyConfigurator(new OntologyConfigurator());
+            OWLAPIObo2Owl bridge = new OWLAPIObo2Owl(manager);
+            OWLOntology ontology = bridge.convert(obodoc);
+            OWLDocumentFormat format = ontology.getFormat();
+            format.setAddMissingTypes(false);
+
+            Path filePath = Files.createFile(path);
+            RDFWriter rdfWriter = Rio.createWriter(destFormat, Files.newOutputStream(filePath));
+            RioRenderer renderer = new RioRenderer(ontology, rdfWriter, format);
+            renderer.render();
+            return true;
+        } catch (Exception e) {
             return false;
         }
     }

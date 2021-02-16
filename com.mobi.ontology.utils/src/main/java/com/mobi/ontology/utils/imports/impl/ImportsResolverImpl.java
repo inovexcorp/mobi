@@ -117,20 +117,21 @@ public class ImportsResolverImpl implements ImportsResolver {
                 new RioOWLXMLParserFactory().getParser()};
         Model model = mf.createModel();
         String urlStr = resource.stringValue();
-
-        try {
-            Optional<Model> modelOpt = getModel(urlStr, parsers);
-            if (modelOpt.isPresent()) {
-                model = modelOpt.get();
-            }
-        } catch (IOException | IllegalArgumentException e) {
-            log.debug("Could not retrieve resource " + resource.stringValue() + " from web");
-            model = mf.createModel();
+        Optional<Model> modelOpt = getModel(urlStr, parsers);
+        if (modelOpt.isPresent()) {
+            model = modelOpt.get();
         }
         logDebug("Retrieving " + resource + " from web", startTime);
         return model.size() > 0 ? Optional.of(model) : Optional.empty();
     }
 
+    /**
+     * Retrieves the {@link InputStream} for the provided urlStr.
+     *
+     * @param urlStr The String representation of a URL.
+     * @return A {@link InputStream} of the Ontology from the web.
+     * @throws IOException if there is an error connecting to the online resource.
+     */
     private InputStream getWebInputStream(String urlStr) throws IOException {
         String actualUrlStr = urlStr.endsWith("/") ? urlStr.substring(0, urlStr.lastIndexOf("/")) : urlStr;
         URL url = new URL(actualUrlStr);
@@ -160,7 +161,14 @@ public class ImportsResolverImpl implements ImportsResolver {
         return conn.getInputStream();
     }
 
-    private Optional<Model> getModel(String urlStr, RDFParser... parsers) throws IOException {
+    /**
+     * Attempts to build a {@link Model} from the urlStr representing a web resource.
+     *
+     * @param urlStr The String representation of a URL.
+     * @param parsers An optional list of {@link RDFParser}s to use to try to parse the resource contents.
+     * @return An {@link Optional} of the {@link Model} if resolved and parsed. Otherwise, an empty {@link Optional}.
+     */
+    private Optional<Model> getModel(String urlStr, RDFParser... parsers) {
         Model model = mf.createModel();
         try {
             model = Models.createModel(getWebInputStream(urlStr), transformer,

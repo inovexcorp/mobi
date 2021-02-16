@@ -26,6 +26,8 @@ package com.mobi.catalog.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.builder.Conflict;
@@ -43,7 +45,9 @@ import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.ontologies.dcterms._Thing;
+import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.RepositoryResults;
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.*;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
@@ -60,7 +64,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mock;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -139,6 +146,9 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     private static final IRI DELETIONS_CATALOG_IRI = VALUE_FACTORY.createIRI(Revision.deletions_IRI);
     private static final IRI LATEST_VERSION_CATALOG_IRI = VALUE_FACTORY.createIRI(VersionedRecord.latestVersion_IRI);
 
+    @Mock
+    SesameTransformer transformer;
+
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
@@ -151,6 +161,16 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
             conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
         }
+
+        // mock sesameTransformer
+        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
+                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
+        when(transformer.mobiIRI(any(org.eclipse.rdf4j.model.IRI.class)))
+                .thenAnswer(i -> Values.mobiIRI(i.getArgumentAt(0, org.eclipse.rdf4j.model.IRI.class)));
+        when(transformer.sesameModel(any(Model.class)))
+                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
+        when(transformer.sesameStatement(any(Statement.class)))
+                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
 
         service = new SimpleCatalogUtilsService();
         injectOrmFactoryReferencesIntoService(service);
@@ -2041,7 +2061,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         }
     }
 
-    /* getCompiledResource(List<Resource>, RepositoryConnection) */
+    /* getCompiledResource(Resource, RepositoryConnection) */
 
     @Test
     public void getCompiledResourceWithListTest() {
@@ -2059,7 +2079,26 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         }
     }
 
-    /* getCompiledResource(Resource, RepositoryConnection) */
+    /* getCompiledResourceFile(Resource, RepositoryConnection) */
+
+    @Test
+    public void getCompiledResourceFileWithListTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1");
+            Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+            expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test 1 Title"));
+            expected.add(VALUE_FACTORY.createIRI("http://mobi.com/test/class0"), typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
+
+            File file = service.getCompiledResourceFile(commitId, conn);
+            Model model = Models.createModel(new FileInputStream(file), transformer);
+            model.forEach(statement -> assertTrue(expected.contains(statement)));
+        }
+    }
+
+    /* getCompiledResource(List<Resource>, RepositoryConnection) */
 
     @Test
     public void getCompiledResourceWithIdTest() {
@@ -2075,6 +2114,26 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             Model result = service.getCompiledResource(commits, conn);
             assertEquals(expected.size(), result.size());
             result.forEach(statement -> assertTrue(expected.contains(statement)));
+        }
+    }
+
+    /* getCompiledResourceFile(List<Resource>, RepositoryConnection) */
+
+    @Test
+    public void getCompiledResourceFileWithIdTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1")).collect(Collectors.toList());
+            Model expected = MODEL_FACTORY.createModel(Collections.singleton(
+                    VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"))));
+            Statement classStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
+                    VALUE_FACTORY.createLiteral("Class Title 2"));
+            expected.add(classStmt);
+
+            File file = service.getCompiledResourceFile(commits, conn);
+            Model model = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(expected.size(), model.size());
+            model.forEach(statement -> assertTrue(expected.contains(statement)));
         }
     }
 

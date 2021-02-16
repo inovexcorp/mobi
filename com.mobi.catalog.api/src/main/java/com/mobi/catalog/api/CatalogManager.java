@@ -896,7 +896,7 @@ public interface CatalogManager {
      *
      * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
      *                 to retrieve.
-     * @return File which represents the resource at the Commit's point in history.
+     * @return A {@link File} which represents the resource at the Commit's point in history.
      * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */
     File getCompiledResourceFile(Resource commitId);
@@ -932,7 +932,7 @@ public interface CatalogManager {
      *                             you wish to retrieve.
      * @param branchId             The Resource identifying the Branch from where the Commit should originate.
      * @param versionedRDFRecordId The Resource identifying the Record from where the Branch should originate.
-     * @return File which represents the resource at the Commit's point in history.
+     * @return A {@link File} which represents the resource at the Commit's point in history.
      * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */
     File getCompiledResourceFile(Resource versionedRDFRecordId, Resource branchId, Resource commitId);

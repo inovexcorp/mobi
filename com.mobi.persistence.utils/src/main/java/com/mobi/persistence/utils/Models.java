@@ -68,7 +68,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -329,7 +328,8 @@ public class Models {
                         break;
                     } catch (RDFParseException e) {
                         String template = "Error parsing %s format based on %s extension ;;; %s";
-                        rdfParseException = new RDFParseException(String.format(template, parser.getRDFFormat().getName(), preferredExtension,  e.getMessage()));
+                        rdfParseException = new RDFParseException(String.format(template,
+                                parser.getRDFFormat().getName(), preferredExtension,  e.getMessage()));
                         rdfData.reset();
                     } catch (Exception e) {
                         rdfData.reset();
@@ -356,7 +356,8 @@ public class Models {
                         } catch (RDFParseException e) {
                             String parserName = parser.getRDFFormat().getName();
                             triedRDFFormats.add(parserName);
-                            String template = "File was tried against all formats. No extension provided ;;; Formats: %s";
+                            String template = "File was tried against all formats. No extension provided ;;; " +
+                                    "Formats: %s";
                             rdfParseException = new RDFParseException(String.format(template, triedRDFFormats));
                             rdfData.reset();
                         } catch (Exception e) {
@@ -376,7 +377,8 @@ public class Models {
         return transformer.mobiModel(model);
     }
 
-    public static org.eclipse.rdf4j.model.Model parse(ByteArrayInputStream rdfData, RDFParser parser) throws RDFParseException, IOException {
+    public static org.eclipse.rdf4j.model.Model parse(ByteArrayInputStream rdfData, RDFParser parser)
+            throws RDFParseException, IOException {
         final StatementCollector collector = new StatementCollector();
         parser.setRDFHandler(collector);
         parser.setParseErrorListener(new ParseErrorLogger());
@@ -395,7 +397,8 @@ public class Models {
      * @return a Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
-    public static Model createModel(InputStream inputStream, SesameTransformer transformer, RDFParser... parsers) throws IOException {
+    public static Model createModel(InputStream inputStream, SesameTransformer transformer, RDFParser... parsers)
+            throws IOException {
         org.eclipse.rdf4j.model.Model model = new LinkedHashModel();
 
         Set<RDFFormat> formats = new HashSet<>(asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
@@ -448,7 +451,8 @@ public class Models {
         return transformer.mobiModel(model);
     }
 
-    private static org.eclipse.rdf4j.model.Model parseOBO(org.eclipse.rdf4j.model.Model model, ByteArrayInputStream rdfData) throws IOException {
+    private static org.eclipse.rdf4j.model.Model parseOBO(org.eclipse.rdf4j.model.Model model,
+                                                          ByteArrayInputStream rdfData) throws IOException {
         OBOFormatParser parser = new OBOFormatParser();
         OBODoc obodoc;
         // Parse into an OBODoc
@@ -496,45 +500,4 @@ public class Models {
 
         return new ByteArrayInputStream(data);
     }
-//    public static boolean isomorphic(Iterable<? extends Statement> model1,
-//                                     Iterable<? extends Statement> model2) {
-//          }
-//
-//    public static boolean isSubset(Iterable<? extends Statement> model1,
-//                                   Iterable<? extends Statement> model2) {
-//        //TODO Implement
-//        return false;
-//    }
-//
-//    public static boolean isSubset(Set<? extends Statement> model1, Set<? extends Statement> model2) {
-//        //TODO Implement
-//        return false;
-//    }
-//
-//    private static boolean isSubsetInternal(Set<? extends Statement> model1, Set<? extends Statement> model2) {
-//        //TODO Implement
-//        return false;
-//    }
-//
-//    private static boolean matchModels(Set<? extends Statement> model1, Set<? extends Statement> model2) {
-//        //TODO Implement
-//        return false;
-//    }
-//
-//    private static boolean matchModels(List<? extends Statement> model1, Iterable<? extends Statement> model2,
-//                                       Map<BNode, BNode> bNodeMapping, int idx) {
-//        //TODO Implement
-//        return false;
-//    }
-//
-//    private static List<Statement> findMatchingStatements(Statement st, Iterable<? extends Statement> model,
-//                                                          Map<BNode, BNode> bNodeMapping) {
-//        //TODO Implement
-//        return new ArrayList<Statement>();
-//    }
-//
-//    private static boolean statementsMatch(Statement st1, Statement st2, Map<BNode, BNode> bNodeMapping) {
-//        //TODO Implement
-//        return false;
-//    }
 }
