@@ -40,9 +40,7 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFParser;
-import org.eclipse.rdf4j.rio.Rio;
 import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
@@ -52,16 +50,11 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -191,8 +184,8 @@ public class ImportsResolverImpl implements ImportsResolver {
                 return RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.TRIG, parsers);
             } catch (IOException e) {
                 log.error("Error opening InputStream from web ontology", e);
-                return Optional.empty();
             }
+            return Optional.empty();
         } finally {
             logDebug("Retrieving ontology File from web", startTime);
         }

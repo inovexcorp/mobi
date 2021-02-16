@@ -49,10 +49,14 @@ public interface RDFImportService {
     void importFile(ImportServiceConfig config, File file) throws IOException;
 
     /**
-     * TODO:
-     * @param config
-     * @param file
-     * @throws IOException
+     * Imports an RDF File to a specific Repository. Imports statements directly into the provided graph.
+     *
+     * @param config The configuration for the import specifying the target
+     * @param file An RDF file to import
+     * @param graph The Resource representing the named graph to insert statements into
+     * @throws RDFParseException thrown if there is a problem parsing the RDF file
+     * @throws IOException thrown if there is a problem reading the File or the File could not be found
+     * @throws IllegalArgumentException thrown if the Repository or DatasetRecord does not exist
      */
     void importFile(ImportServiceConfig config, File file, Resource graph) throws IOException;
 

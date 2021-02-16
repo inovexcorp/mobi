@@ -25,8 +25,6 @@ package com.mobi.persistence.utils;
 
 import com.mobi.exception.MobiException;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.rdf4j.model.impl.LinkedHashModel;
-import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
@@ -34,10 +32,6 @@ import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
-import org.eclipse.rdf4j.rio.helpers.ParseErrorLogger;
-import org.eclipse.rdf4j.rio.helpers.StatementCollector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -54,6 +48,9 @@ import java.util.UUID;
 
 import static java.util.Arrays.asList;
 
+/**
+ * Utility class for handling InputStreams of RDF and creating files.
+ */
 public class RDFFiles {
 
     /**
@@ -94,9 +91,8 @@ public class RDFFiles {
         try {
             Set<RDFFormat> formats = new HashSet<>(asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
                     RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS));
-            // TODO: keep in tmp?
             String tmpDir = System.getProperty("java.io.tmpdir");
-            Path path = Paths.get(tmpDir + File.separator + UUID.randomUUID());
+            Path path = Paths.get(tmpDir + File.separator + UUID.randomUUID() + "." + destFormat.getName());
             for (RDFFormat format : formats) {
                 RDFParser rdfParser = Rio.createParser(format);
                 boolean success = tryParse(tempFile, rdfParser, destFormat, path);

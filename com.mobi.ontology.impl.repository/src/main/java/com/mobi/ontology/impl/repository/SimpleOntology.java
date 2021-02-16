@@ -51,7 +51,6 @@ import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.rio.RemoveContextHandler;
@@ -60,7 +59,6 @@ import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.query.api.GraphQuery;
 import com.mobi.query.api.TupleQuery;
-import com.mobi.query.api.Update;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -74,7 +72,6 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -242,7 +239,7 @@ public class SimpleOntology implements Ontology {
      * don't exist in the cache yet.
      *
      * @param recordCommitKey The key used to retrieve the Ontology from the cache
-     * TODO
+     * @param ontologyFile    The {@link File} of RDF to load into cache
      * @param cacheRepo       The {@link Repository} to use as a cache
      * @param ontologyManager The {@link OntologyManager} used to retrieve Ontology information
      * @param catalogManager  The {@link CatalogManager} used to retrieve Record information
@@ -273,7 +270,7 @@ public class SimpleOntology implements Ontology {
         this.bNodeService = bNodeService;
         this.importService = importService;
 
-        Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile, repository, ontologyManager);
+        Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile);
         this.importsClosure = imports.get(CLOSURE_KEY);
         this.unresolvedImports = imports.get(UNRESOLVED_KEY);
         logTrace("SimpleOntology constructor specific commit in catalog but not in cache", startTime);
@@ -341,7 +338,7 @@ public class SimpleOntology implements Ontology {
      * @param vf              The {@link ValueFactory} used to create Statements
      * @param mf              The {@link ModelFactory} used to create Models
      */
-    private SimpleOntology(IRI datasetIRI, Repository cacheRepo, OntologyManager ontologyManager,
+    protected SimpleOntology(IRI datasetIRI, Repository cacheRepo, OntologyManager ontologyManager,
                            CatalogManager catalogManager, CatalogConfigProvider configProvider,
                            DatasetManager datasetManager, ImportsResolver importsResolver,
                            SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf,
@@ -365,12 +362,7 @@ public class SimpleOntology implements Ontology {
 
         try (RepositoryConnection conn = cacheRepo.getConnection()) {
             if (!conn.containsContext(datasetIRI)) {
-//                // Create dataset for web import. Will automatically link to loaded web system default named graph
-//                datasetManager.createDataset(datasetIRI.stringValue(), cacheRepo.getConfig().id());
-//                // Recurse down to get imports closure
-//                List<IRI> imports = getDirectImports(datasetIRI, OntologyDatasets.createSystemDefaultNamedGraphIRI(datasetIRI, vf), conn);
-
-                Map<String, Set<IRI>> imports = loadOntologyIntoCache(null, repository, ontologyManager);
+                Map<String, Set<IRI>> imports = loadOntologyIntoCache(null);
                 this.importsClosure = imports.get(CLOSURE_KEY);
                 this.unresolvedImports = imports.get(UNRESOLVED_KEY);
             } else {
@@ -390,28 +382,26 @@ public class SimpleOntology implements Ontology {
                         .forEach(unresolvedImports::add);
             }
         }
-
         logTrace("SimpleOntology constructor from import in cache", startTime);
     }
 
     /**
-     * TODO:
+     * Creates an SimpleOntology object that represents an Ontology that was resolved from the web.
      *
-     * @param datasetIRI
-     * @param ontologyFile
-     * @param cacheRepo
-     * @param ontologyManager
-     * @param catalogManager
-     * @param configProvider
-     * @param datasetManager
-     * @param importsResolver
-     * @param transformer
-     * @param bNodeService
-     * @param vf
-     * @param mf
-     * @param importService
+     * @param datasetIRI      The {@link IRI} of the datasetIRI of the imported Ontology
+     * @param ontologyFile    The {@link File} of RDF to load into cache
+     * @param cacheRepo       The {@link Repository} to use as a cache
+     * @param ontologyManager The {@link OntologyManager} used to retrieve Ontology information
+     * @param catalogManager  The {@link CatalogManager} used to retrieve Record information
+     * @param configProvider  The {@link CatalogConfigProvider} used to retrieve the local catalog IRI
+     * @param datasetManager  The {@link DatasetManager} used to manage Ontology Datasets
+     * @param importsResolver The {@link ImportsResolver} used to resolve imports from local catalog and from the web
+     * @param transformer     The {@link SesameTransformer} used to convert RDF4J models to Mobi Models
+     * @param bNodeService    The {@link BNodeService} used to skolemize Models
+     * @param vf              The {@link ValueFactory} used to create Statements
+     * @param mf              The {@link ModelFactory} used to create Models
      */
-    private SimpleOntology(IRI datasetIRI, File ontologyFile, Repository cacheRepo, OntologyManager ontologyManager,
+    protected SimpleOntology(IRI datasetIRI, File ontologyFile, Repository cacheRepo, OntologyManager ontologyManager,
                            CatalogManager catalogManager, CatalogConfigProvider configProvider,
                            DatasetManager datasetManager, ImportsResolver importsResolver,
                            SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf,
@@ -430,7 +420,7 @@ public class SimpleOntology implements Ontology {
         this.bNodeService = bNodeService;
         this.importService = importService;
 
-        Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile, repository, ontologyManager);
+        Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile);
         this.importsClosure = imports.get(CLOSURE_KEY);
         this.unresolvedImports = imports.get(UNRESOLVED_KEY);
         logTrace("SimpleOntology constructor from web import", startTime);
@@ -497,12 +487,30 @@ public class SimpleOntology implements Ontology {
         return getOntologyOutputStream(skolemize, false, RDFFormat.JSONLD, outputStream);
     }
 
+    /**
+     * Generates an {@link OutputStream} of the Ontology in the provided RDFFormat.
+     *
+     * @param skolemize A boolean indicating if blank nodes should be skolemized.
+     * @param prettyPrint A boolean indicating if the result should be pretty printed.
+     * @param format The {@link RDFFormat} to write to the OutputStream.
+     * @return An {@link OutputStream} of the RDF data.
+     */
     private OutputStream getOntologyOutputStream(boolean skolemize, boolean prettyPrint, RDFFormat format) {
         OutputStream outputStream = new ByteArrayOutputStream();
         return getOntologyOutputStream(skolemize, prettyPrint, format, outputStream);
     }
 
-    private OutputStream getOntologyOutputStream(boolean skolemize, boolean prettyPrint, RDFFormat format, OutputStream outputStream) {
+    /**
+     * Writes to the provided {@link OutputStream} of the Ontology in the provided RDFFormat.
+     *
+     * @param skolemize A boolean indicating if blank nodes should be skolemized.
+     * @param prettyPrint A boolean indicating if the result should be pretty printed.
+     * @param format The {@link RDFFormat} to write to the OutputStream.
+     * @param outputStream The {@link} OutputStream to write to.
+     * @return The modified {@link OutputStream}.
+     */
+    private OutputStream getOntologyOutputStream(boolean skolemize, boolean prettyPrint, RDFFormat format,
+                                                 OutputStream outputStream) {
         long startTime = getStartTime();
         try (DatasetConnection conn = getDatasetConnection()) {
             RepositoryResult<Statement> statements = conn.getStatements(null, null, null,
@@ -518,7 +526,8 @@ public class SimpleOntology implements Ontology {
             RemoveContextHandler removeContextSH = new RemoveContextHandler(vf);
             if (skolemize) {
                 SkolemizeHandler skolemizeSH = new SkolemizeHandler(bNodeService);
-                com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, transformer, skolemizeSH, removeContextSH);
+                com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, transformer, skolemizeSH,
+                        removeContextSH);
             } else {
                 com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, transformer, removeContextSH);
             }
@@ -1127,20 +1136,21 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     * TODO:
-     * @param ontologyFile
-     * @param cacheRepo
-     * @param ontologyManager
-     * @return
+     * Loads the provided ontologyFile into the cacheRepo. Loads any imports into their own SdNg if they don't
+     * exist in the cache repo yet. Attempts to resolve any imports that are not in the catalog from the web. Generates
+     * the dataset representing an Ontology. If an ontologyFile is not present, indicates the SdNg has already been
+     * loaded into the cache (i.e, a web import) and generates the managing dataset graph for the datasetIRI.
+     *
+     * @param ontologyFile An optional {@link File} that contains ontology RDF if present
+     * @return A {@link Map} of two {@link Set}s of {@link IRI}s of the unresolvedImports and the importsClosure
      */
-    private Map<String, Set<IRI>> loadOntologyIntoCache(@Nullable File ontologyFile, Repository cacheRepo,
-                                                             OntologyManager ontologyManager) {
+    private Map<String, Set<IRI>> loadOntologyIntoCache(@Nullable File ontologyFile) {
         Set<IRI> unresolvedImports = new HashSet<>();
         Set<IRI> processedImports = new HashSet<>();
         List<IRI> importsToProcess = new ArrayList<>();
-        String repoId = cacheRepo.getConfig().id();
+        String repoId = repository.getConfig().id();
 
-        try (RepositoryConnection conn = cacheRepo.getConnection()) {
+        try (RepositoryConnection conn = repository.getConnection()) {
             if (!conn.containsContext(datasetIRI)) {
                 datasetManager.createDataset(datasetIRI.stringValue(), repoId);
             }
@@ -1162,7 +1172,7 @@ public class SimpleOntology implements Ontology {
 
                 // Import exists in the ontologyCache already
                 if (conn.containsContext(iri) || conn.containsContext(sdngIRI)) {
-                    updateImportTrackers(importIRI, getDirectImports(iri, sdngIRI, conn), processedImports,
+                    updateImportTrackers(importIRI, getDirectImports(importIRI, sdngIRI, conn), processedImports,
                             importsToProcess);
                     conn.add(datasetIRI, vf.createIRI(Dataset.defaultNamedGraph_IRI), sdngIRI, datasetIRI);
                     continue;
@@ -1224,8 +1234,20 @@ public class SimpleOntology implements Ontology {
         return imports;
     }
 
-    private void addOntologyToRepo(File ontologyFile, IRI datasetIRI, IRI ontologyIRI, RepositoryConnection conn,
-                                  String repoId, boolean addTimestamp) {
+    /**
+     * Adds the provided ontologyFile into the specified datasetIRI graph if the file is not null and the system default
+     * named graph doesn't already exist in the cache. Sets the system default named graph of the dataset to the SdNg
+     * generated from the ontologyIRI. If the Adds a timestamp to the datasetIRI graph if specified.
+     *
+     * @param ontologyFile An optional {@link File} of RDF data if present.
+     * @param datasetIRI The {@link IRI} of the dataset graph.
+     * @param ontologyIRI The {@link IRI} to generate the system default named graph from.
+     * @param conn The {@link RepositoryConnection} to add data to.
+     * @param repoId The Id of the {@link Repository}.
+     * @param addTimestamp A boolean indicating if a timestamp should be added to the datasetIRI graph.
+     */
+    private void addOntologyToRepo(@Nullable File ontologyFile, IRI datasetIRI, IRI ontologyIRI,
+                                   RepositoryConnection conn, String repoId, boolean addTimestamp) {
         IRI ontologySdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(ontologyIRI, vf);
         // If SdNg exists already, the file is already loaded. When a null ontologyFile is passed, it indicates a web
         // import that has already been loaded into the cache.
@@ -1236,12 +1258,20 @@ public class SimpleOntology implements Ontology {
             dsConn.addDefaultNamedGraph(ontologySdNg);
             if (addTimestamp) {
                 dsConn.remove(datasetIRI, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), null, datasetIRI);
-                dsConn.addDefault(datasetIRI, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now()), datasetIRI);
+                dsConn.addDefault(datasetIRI, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING),
+                        vf.createLiteral(OffsetDateTime.now()), datasetIRI);
             }
         }
     }
 
-    private void loadOntologyFile(File ontologyFile, Resource tempGraph, String repoId) {
+    /**
+     * Loads the provided ontologyFile into the provided named graph in the repository identified by the repoId.
+     *
+     * @param ontologyFile The RDF {@link File} of an Ontology to bulk load.
+     * @param graph The {@link Resource} specifying what graph to load the ontologyFile into.
+     * @param repoId The Id of the {@link Repository} to load data into.
+     */
+    private void loadOntologyFile(File ontologyFile, Resource graph, String repoId) {
         long importTimeStart = System.currentTimeMillis();
         try {
             ImportServiceConfig.Builder builder = new ImportServiceConfig.Builder()
@@ -1249,9 +1279,8 @@ public class SimpleOntology implements Ontology {
                     .logOutput(true)
                     .printOutput(false)
                     .batchSize(50000)
-                    .format(RDFFormat.TRIG)
                     .repository(repoId);
-            importService.importFile(builder.build(), ontologyFile, tempGraph);
+            importService.importFile(builder.build(), ontologyFile, graph);
             ontologyFile.delete();
         } catch (IOException e) {
             throw new MobiException("Error writing file to repo or deleting file.", e);
@@ -1291,8 +1320,8 @@ public class SimpleOntology implements Ontology {
      * @param ontologyIRI The {@link IRI} of the ontology to query for import statements.
      * @param ontologySdNg The {@link IRI} of the system default named graph the provided ontologyIRI has been loaded
      *                     into.
-     * @param conn The {@link RepositoryConnection} to the ontologyCache
-     * @return
+     * @param conn The {@link RepositoryConnection} to the ontologyCache.
+     * @return A {@link List} of {@link IRI}s of the imports directly on the provided ontologyIRI.
      */
     private List<IRI> getDirectImports(IRI ontologyIRI, IRI ontologySdNg, RepositoryConnection conn) {
         return conn.getStatements(ontologyIRI, vf.createIRI(OWL.IMPORTS.stringValue()), null, ontologySdNg)
@@ -1304,9 +1333,10 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     * TODO:
-     * @param conn
-     * @return
+     * Retrieves the OntologyIRI from the system default named graph associated with the datasetIRI.
+     *
+     * @param conn A {@link RepositoryConnection} to query from.
+     * @return A {@link IRI} of the Ontology.
      */
     private IRI getOntologyIRI(RepositoryConnection conn) {
         Model ontologyDefModel = RepositoryResults.asModel(
@@ -1314,7 +1344,7 @@ public class SimpleOntology implements Ontology {
                         vf.createIRI(OWL.ONTOLOGY.stringValue()),
                         OntologyDatasets.createSystemDefaultNamedGraphIRI(datasetIRI, vf)), mf);
         return OntologyModels.findFirstOntologyIRI(ontologyDefModel, vf).orElseThrow(
-                () -> new IllegalStateException("OntologyIRI must exist for dataset" + datasetIRI.stringValue()));
+                () -> new IllegalStateException("OntologyIRI must exist for dataset " + datasetIRI.stringValue()));
     }
 
     /**
@@ -1338,12 +1368,25 @@ public class SimpleOntology implements Ontology {
         return ontologyIRI;
     }
 
+    /**
+     * Retrieves the {@link DatasetConnection} for the Ontology in cache identified by the datasetIRI.
+     *
+     * @return A {@link DatasetConnection} for the datasetIRI.
+     */
     private DatasetConnection getDatasetConnection() {
         DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false);
         applyDifferenceIfPresent(conn);
         return conn;
     }
 
+    /**
+     * Applies the {@link Difference} to the connection. Starts a transaction for the Difference that represents an
+     * {@link com.mobi.catalog.api.ontologies.mcat.InProgressCommit} that is rolled back after, so that the cache is
+     * preserved. If imports are added within the Difference, they are resolved using the {@link ImportsResolver} if not
+     * present in the cache already.
+     *
+     * @param conn The {@link DatasetConnection} to perform the transaction on.
+     */
     private void applyDifferenceIfPresent(DatasetConnection conn) {
         if (difference != null) {
             long start = getStartTime();
@@ -1399,29 +1442,62 @@ public class SimpleOntology implements Ontology {
         }
     }
 
+    /**
+     * Loads the import of an Ontology that exists in the catalog into the cache.
+     *
+     * @param importedDatasetIRI The datasetIRI of the catalog record at the HEAD of MASTER.
+     * @param ontologyFile The {@link File} of the compiled resource of an ontology to load.
+     * @param conn The {@link DatasetConnection} used to update the dataset graph with the new import.
+     */
     private void createTempImportExistsInCatalog(IRI importedDatasetIRI, File ontologyFile, DatasetConnection conn) {
-        LOG.trace("Adding import for inProgressCommit for dataset in catalog but not loaded in cache " +
-                importedDatasetIRI.stringValue());
-
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Adding import for inProgressCommit for dataset in catalog but not loaded in cache " +
+                    importedDatasetIRI.stringValue());
+        }
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI.stringValue(), ontologyFile, repository,
                 ontologyManager, catalogManager, configProvider, datasetManager, importsResolver, transformer,
                 bNodeService, vf, mf, importService);
         updateImportStatements(importedDatasetIRI, conn);
     }
 
+    /**
+     * Loads the import of an Ontology retrieved from the web into the cache.
+     *
+     * @param importedDatasetIRI The datasetIRI of the web import.
+     * @param ontologyFile The {@link File} of web resolved ontology to load.
+     * @param conn The {@link DatasetConnection} used to update the dataset graph with the new import.
+     */
     private void createTempImportWebNotInCache(IRI importedDatasetIRI, File ontologyFile, DatasetConnection conn) {
-        LOG.trace("Adding import for inProgressCommit for dataset not in cache " + importedDatasetIRI.stringValue());
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Adding import for inProgressCommit for dataset not in cache " +
+                    importedDatasetIRI.stringValue());
+        }
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI, ontologyFile, repository,
                 ontologyManager, catalogManager, configProvider, datasetManager, importsResolver, transformer,
                 bNodeService, vf, mf, importService);
         updateImportStatements(importedDatasetIRI, conn);
     }
 
+    /**
+     * Adds the import of an Ontology that exists the cache to the dataset graph.
+     *
+     * @param importedDatasetIRI The datasetIRI of the catalog record at the HEAD of MASTER.
+     * @param conn The {@link DatasetConnection} used to update the dataset graph with the new import.
+     */
     private void createTempImportExistsInCache(IRI importedDatasetIRI, DatasetConnection conn) {
-        LOG.trace("Adding import for inProgressCommit for dataset exists in cache " + importedDatasetIRI.stringValue());
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Adding import for inProgressCommit for dataset exists in cache " +
+                    importedDatasetIRI.stringValue());
+        }
         updateImportStatements(importedDatasetIRI, conn);
     }
 
+    /**
+     * Updates the dataset graph identified by the datasetIRI with a new import statement for the importedDatasetIRI.
+     *
+     * @param importedDatasetIRI The {@link IRI} to add to the dataset graphs imports.
+     * @param conn The {@link DatasetConnection} to add the import statement to.
+     */
     private void updateImportStatements(IRI importedDatasetIRI, DatasetConnection conn) {
         Set<IRI> failedImportStatements = RepositoryResults.asList(conn.getStatements(
                 importedDatasetIRI, vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), null, importedDatasetIRI))
@@ -1447,16 +1523,32 @@ public class SimpleOntology implements Ontology {
                 -> conn.add(datasetIRI, vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), importIRI, datasetIRI));
     }
 
+    /**
+     * Rolls back a transaction if a {@link Difference} is present.
+     *
+     * @param conn The {@link RepositoryConnection} to use if rolling back the transaction.
+     */
     private void undoApplyDifferenceIfPresent(RepositoryConnection conn) {
         if (difference != null) {
             conn.rollback();
         }
     }
 
+    /**
+     * Gets the System currentTimeMillis if log TRACE is enabled.
+     *
+     * @return A long representing the system time in milliseconds if log trace is enabled. Otherwise 0L.
+     */
     private long getStartTime() {
         return LOG.isTraceEnabled() ? System.currentTimeMillis() : 0L;
     }
 
+    /**
+     * Logs the methodName and time it took to run if log TRACE is enabled.
+     *
+     * @param methodName The name of the method to log.
+     * @param start A long of the system time in milliseconds from when the method was first started.
+     */
     private void logTrace(String methodName, Long start) {
         if (LOG.isTraceEnabled()) {
             LOG.trace(String.format(methodName + " complete in %d ms", System.currentTimeMillis() - start));

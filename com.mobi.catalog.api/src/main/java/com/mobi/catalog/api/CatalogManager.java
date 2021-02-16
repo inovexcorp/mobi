@@ -38,7 +38,6 @@ import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
@@ -892,9 +891,13 @@ public interface CatalogManager {
     Model getCompiledResource(Resource commitId);
 
     /**
-     * TODO:
-     * @param commitId
-     * @return
+     * Gets the File which represents the entity at the instance of the Commit identified by the provided Resource
+     * using previous Commit data to construct it.
+     *
+     * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
+     *                 to retrieve.
+     * @return File which represents the resource at the Commit's point in history.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */
     File getCompiledResourceFile(Resource commitId);
 
@@ -922,11 +925,15 @@ public interface CatalogManager {
     Model getCompiledResource(Resource versionedRDFRecordId, Resource branchId, Resource commitId);
 
     /**
-     * TODO:
-     * @param versionedRDFRecordId
-     * @param branchId
-     * @param commitId
-     * @return
+     * Gets the File which represents the entity at the instance of the Commit identified by the provided Resource
+     * using previous Commit data to construct it.
+     *
+     * @param commitId             The Resource identifying the Commit identifying the spot in the entity's history that
+     *                             you wish to retrieve.
+     * @param branchId             The Resource identifying the Branch from where the Commit should originate.
+     * @param versionedRDFRecordId The Resource identifying the Record from where the Branch should originate.
+     * @return File which represents the resource at the Commit's point in history.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */
     File getCompiledResourceFile(Resource versionedRDFRecordId, Resource branchId, Resource commitId);
 

@@ -611,10 +611,11 @@ public interface CatalogUtilsService {
     Model getCompiledResource(List<Resource> commits, RepositoryConnection conn);
 
     /**
-     * TODO:
-     * @param commits
-     * @param conn
-     * @return
+     * Gets the File which represents the entity at the instance of theCommit identified by the first Resource in
+     * the provided List using previous Commit data to construct it.
+     *
+     * @param commits The ordered List of Resource identifying the Commits to create a compiled resource from
+     * @return File which represents the resource at the Commit's point in history.
      */
     File getCompiledResourceFile(List<Resource> commits, RepositoryConnection conn);
 
@@ -629,10 +630,12 @@ public interface CatalogUtilsService {
     Model getCompiledResource(Resource commitId, RepositoryConnection conn);
 
     /**
-     * TODO:
-     * @param commitId
-     * @param conn
-     * @return
+     * Gets the File which represents the entity at the instance of the Commit identified by the provided Resource
+     * using previous Commit data to construct it.
+     *
+     * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
+     *                 to retrieve.
+     * @return File which represents the resource at the Commit's point in history.
      */
     File getCompiledResourceFile(Resource commitId, RepositoryConnection conn);
 

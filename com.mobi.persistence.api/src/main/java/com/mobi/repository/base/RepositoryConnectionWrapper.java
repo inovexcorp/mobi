@@ -24,7 +24,9 @@ package com.mobi.repository.base;
  */
 
 import com.mobi.repository.api.DelegatingRepositoryConnection;
-import com.mobi.repository.api.IsolationLevels;
+import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.exception.RepositoryException;
+import com.mobi.repository.api.DelegatingRepositoryConnection;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.exception.RepositoryException;
 
@@ -57,32 +59,6 @@ public abstract class RepositoryConnectionWrapper implements DelegatingRepositor
     @Override
     public void begin() throws RepositoryException {
         getDelegate().begin();
-    }
-
-    @Override
-    public void begin(IsolationLevels isolationLevel) throws RepositoryException {
-        switch (isolationLevel){
-            case NONE:
-                getDelegate().begin(IsolationLevels.NONE);
-                return;
-            case READ_UNCOMMITTED:
-                getDelegate().begin(IsolationLevels.READ_UNCOMMITTED);
-                return;
-            case READ_COMMITTED:
-                getDelegate().begin(IsolationLevels.READ_COMMITTED);
-                return;
-            case SNAPSHOT_READ:
-                getDelegate().begin(IsolationLevels.SNAPSHOT_READ);
-                return;
-            case SNAPSHOT:
-                getDelegate().begin(IsolationLevels.SNAPSHOT);
-                return;
-            case SERIALIZABLE:
-                getDelegate().begin(IsolationLevels.SERIALIZABLE);
-                return;
-            default:
-                getDelegate().begin();
-        }
     }
 
     @Override

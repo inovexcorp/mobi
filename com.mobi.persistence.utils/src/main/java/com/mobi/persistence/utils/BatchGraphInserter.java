@@ -24,8 +24,6 @@ package com.mobi.persistence.utils;
  */
 
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.repository.api.IsolationLevels;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.exception.RepositoryException;
 import org.eclipse.rdf4j.model.Resource;

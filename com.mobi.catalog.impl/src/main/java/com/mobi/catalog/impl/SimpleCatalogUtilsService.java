@@ -59,12 +59,8 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.persistence.utils.rio.AddContextHandler;
-import com.mobi.persistence.utils.rio.StatementHandler;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.query.api.BindingSet;
@@ -83,8 +79,6 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.eclipse.rdf4j.model.vocabulary.OWL;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.Rio;
@@ -100,14 +94,22 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import java.util.zip.GZIPOutputStream;
 import javax.annotation.Nullable;
 
 @Component(immediate = true)
@@ -1162,7 +1164,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Model getCompiledResource(Resource commitId, RepositoryConnection conn) {
-        // TODO: HERE
         return getCompiledResource(getCommitChain(commitId, true, conn), conn);
     }
 
@@ -1189,8 +1190,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             if (commits.size() == 0) {
                 throw new IllegalArgumentException("List of commits must contain at least one Resource");
             }
-            // TODO: use KARAF data dir subdirectory
-            // TODO: Compress file and fix RDF4j parsing for gz
             String tmpDir = System.getProperty("java.io.tmpdir");
             Path tmpFile = Files.createFile(Paths.get(tmpDir + File.separator + UUID.randomUUID()));
             try (OutputStream outputStream = Files.newOutputStream(tmpFile)) {
@@ -1210,6 +1209,14 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         }
     }
 
+    /**
+     * Runs queries to calculate the compiled resource. Uses the provided {@link Consumer} to handle the resulting
+     * {@link Statement} that gets generated as part of the compiled resource.
+     *
+     * @param commits The {@link List} of Commits {@link Resource}s.
+     * @param conn The {@link RepositoryConnection} to use to query the repository.
+     * @param consumer The {@link Consumer} to handle the generated {@link Statement}.
+     */
     private void buildCompiledResource(List<Resource> commits, RepositoryConnection conn,
                                        Consumer<Statement> consumer) {
         // Get all subjects in deletions graphs for provided commits
@@ -1473,11 +1480,18 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     /**
-     * TODO:
-     * @param additions
-     * @param deletions
-     * @param commitId
-     * @param conn
+     * Updates the supplied Maps of addition and deletions statements with statements from the additions/deletions
+     * associated with the supplied Commit resource. These additions/deletions are filtered to only include statements
+     * that whose subjects are contained in the provided subjects Set. Addition statements are added to the
+     * additions map if not present. If present, the counter of the times the statement has been added is incremented.
+     * Deletion statements are removed from the additions map if only one exists, if more than one exists the counter is
+     * decremented, otherwise the statements are added to the deletions list.
+     *
+     * @param additions The Map of Statements added to update.
+     * @param deletions The Map of Statements deleted to update.
+     * @param commitId  The Resource identifying the Commit.
+     * @param subjects  The Set of Subject IRIs to filter the additions/deletions with.
+     * @param conn      The RepositoryConnection to query the repository.
      */
     private void aggregateDifferences(Map<Statement, Integer> additions, Map<Statement, Integer> deletions,
                                       Resource commitId, Set<Resource> subjects, RepositoryConnection conn) {
@@ -1485,6 +1499,16 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         getDeletions(commitId, subjects, conn).forEach(statement -> updateModels(statement, deletions, additions));
     }
 
+    /**
+     * Retrieves the additions for provided commitId whose subjects are in the given subjects Set. Returns a
+     * {@link FilteredRevisionResult}, an iterator that transforms the results from the repository into
+     * Statements.
+     *
+     * @param commitId The Resource of the Commit to query for additions.
+     * @param subjects The Set of Resources to retrieve from the additions graph.
+     * @param conn     The RepositoryConnection to query the repository.
+     * @return A {@link FilteredRevisionResult} iterator of Statements returned from the query.
+     */
     private FilteredRevisionResult getAdditions(Resource commitId, Set<Resource> subjects, RepositoryConnection conn) {
         String subjectsStr = "<" + StringUtils.join(subjects, "> <") + ">";
         TupleQuery additionsQuery = conn.prepareTupleQuery(
@@ -1493,6 +1517,16 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         return new FilteredRevisionResult(additionsQuery.evaluate(), vf);
     }
 
+    /**
+     * Retrieves the deletions for provided commitId whose subjects are in the given subjects Set. Returns a
+     * {@link FilteredRevisionResult}, an iterator that transforms the results from the repository into
+     * Statements.
+     *
+     * @param commitId The Resource of the Commit to query for deletions.
+     * @param subjects The Set of Resources to retrieve from the deletions graph.
+     * @param conn     The RepositoryConnection to query the repository.
+     * @return A {@link FilteredRevisionResult} iterator of Statements returned from the query.
+     */
     private FilteredRevisionResult getDeletions(Resource commitId, Set<Resource> subjects, RepositoryConnection conn) {
         String subjectsStr = "<" + StringUtils.join(subjects, "> <") + ">";
         TupleQuery deletionsQuery = conn.prepareTupleQuery(
@@ -1554,7 +1588,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     /**
-     * TODO:
+     * Wraps the TupleQueryResult and provides an iterator that transforms the query results into {@link Statement}s.
      */
     private class FilteredRevisionResult extends RepositoryResult<Statement> {
 
