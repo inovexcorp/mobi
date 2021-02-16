@@ -102,6 +102,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -1175,6 +1177,41 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         if (commits.size() == 0) {
             return compiledResource;
         }
+        Consumer<Statement> consumer = statement -> compiledResource.add(statement);
+        buildCompiledResource(commits, conn, consumer);
+        return compiledResource;
+    }
+
+    @Override
+    public File getCompiledResourceFile(List<Resource> commits, RepositoryConnection conn) {
+        try {
+            long writeTimeStart = System.currentTimeMillis();
+            if (commits.size() == 0) {
+                throw new IllegalArgumentException("List of commits must contain at least one Resource");
+            }
+            // TODO: use KARAF data dir subdirectory
+            // TODO: Compress file and fix RDF4j parsing for gz
+            String tmpDir = System.getProperty("java.io.tmpdir");
+            Path tmpFile = Files.createFile(Paths.get(tmpDir + File.separator + UUID.randomUUID()));
+            try (OutputStream outputStream = Files.newOutputStream(tmpFile)) {
+                RDFHandler writer = Rio.createWriter(RDFFormat.TRIG, outputStream);
+                writer.startRDF();
+                Consumer<Statement> consumer = statement ->
+                        com.mobi.persistence.utils.rio.Rio.write(statement, writer, sesameTransformer);
+                buildCompiledResource(commits, conn, consumer);
+                writer.endRDF();
+            }
+            if (log.isTraceEnabled()) {
+                log.trace("Write statements to file in {} ms", System.currentTimeMillis() - writeTimeStart);
+            }
+            return tmpFile.toFile();
+        } catch (IOException e) {
+            throw new MobiException("Error creating compiled resource file", e);
+        }
+    }
+
+    private void buildCompiledResource(List<Resource> commits, RepositoryConnection conn,
+                                       Consumer<Statement> consumer) {
         // Get all subjects in deletions graphs for provided commits
         String commitsStr = "<" + StringUtils.join(commits, "> <") + ">";
         TupleQuery subjectsQuery = conn.prepareTupleQuery(
@@ -1202,16 +1239,17 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                             .replace("%COMMITLIST%", commitsOfInterestStr));
             TupleQueryResult additionsQueryResult = additionsQuery.evaluate();
             additionsQueryResult.forEach(bindingSet -> {
-                compiledResource.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"),
+                Statement statement = vf.createStatement(Bindings.requiredResource(bindingSet, "s"),
                         Bindings.getRequired(bindingSet, "p", IRI.class),
-                        Bindings.getRequired(bindingSet, "o", Value.class)));
+                        Bindings.getRequired(bindingSet, "o", Value.class));
+                consumer.accept(statement);
             });
 
 
             Map<Statement, Integer> additions = new HashMap<>();
             Map<Statement, Integer> deletions = new HashMap<>();
             commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, deletionSubjects, conn));
-            compiledResource.addAll(additions.keySet());
+            additions.keySet().forEach(consumer::accept);
         }
 
         // Write any commit that has additions that do not contain any subject in a deletions graph
@@ -1225,131 +1263,11 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                     GET_ADDITIONS_IN_COMMIT.replace("%COMMITLIST%", commitsAdditionsOnlyStr));
             TupleQueryResult additionsQueryResult = additionsQuery.evaluate();
             additionsQueryResult.forEach(bindingSet -> {
-                compiledResource.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"),
+                Statement statement = vf.createStatement(Bindings.requiredResource(bindingSet, "s"),
                         Bindings.getRequired(bindingSet, "p", IRI.class),
-                        Bindings.getRequired(bindingSet, "o", Value.class)));
+                        Bindings.getRequired(bindingSet, "o", Value.class));
+                consumer.accept(statement);
             });
-        }
-        return compiledResource;
-    }
-
-    @Override
-    public File getCompiledResourceFile(List<Resource> commits, RepositoryConnection conn) {
-        try {
-            long writeTimeStart = System.currentTimeMillis();
-//            Path tmpFile = Files.createTempFile(null, ".nq.gz");
-//            try (final GZIPOutputStream outputStream = new GZIPOutputStream(Files.newOutputStream(tmpFile))) {
-//                RDFHandler writer = Rio.createWriter(RDFFormat.NQUADS, outputStream);
-            Set<Resource> ontIris = new HashSet<>();
-            IRI type = vf.createIRI(RDF.TYPE.stringValue());
-            IRI ontology = vf.createIRI(OWL.ONTOLOGY.stringValue());
-//            Path tmpFile = Files.createTempFile(null, ".trig");
-            String tmpDir = System.getProperty("java.io.tmpdir");
-            Path tmpFile = Files.createFile(Paths.get(tmpDir + File.separator + UUID.randomUUID()));
-            try (OutputStream outputStream = Files.newOutputStream(tmpFile)) {
-                RDFHandler writer = Rio.createWriter(RDFFormat.TRIG, outputStream);
-                writer.startRDF();
-
-                // TODO: extract out into common methods
-                if (commits.size() == 0) {
-                    throw new IllegalArgumentException("List of commits must contain at least one Resource");
-                }
-                // Get all subjects in deletions graphs for provided commits
-                String commitsStr = "<" + StringUtils.join(commits, "> <") + ">";
-                TupleQuery subjectsQuery = conn.prepareTupleQuery(
-                        GET_SUBJECTS_WITH_DELETIONS.replace("%COMMITLIST%", commitsStr));
-                TupleQueryResult subjectsQueryResult = subjectsQuery.evaluate();
-                Set<Resource> deletionSubjects = new HashSet<>();
-                subjectsQueryResult.forEach(bindingSet -> deletionSubjects.add(Bindings.requiredResource(bindingSet, "s")));
-
-                Set<Resource> commitsOfInterest = new HashSet<>();
-                if (deletionSubjects.size() > 0) {
-                    // Find all commits with the subjects in additions or deletions graphs. These are the commits of interest
-                    // for comparing changes
-                    String subjectsStr = "<" + StringUtils.join(deletionSubjects, "> <") + ">";
-                    TupleQuery commitsQuery = conn.prepareTupleQuery(
-                            GET_COMMITS_WITH_SUBJECT.replace("%SUBJECTLIST%", subjectsStr)
-                                    .replace("%COMMITLIST%", commitsStr));
-                    TupleQueryResult commitsQueryResult = commitsQuery.evaluate();
-                    commitsQueryResult.forEach(bindingSet ->
-                            commitsOfInterest.add(Bindings.requiredResource(bindingSet, "commit")));
-
-                    // Write any addition statement in commitsOfInterest whose subject is NOT a deletionsSubject
-                    String commitsOfInterestStr = "<" + StringUtils.join(commitsOfInterest, "> <") + ">";
-                    TupleQuery additionsQuery = conn.prepareTupleQuery(
-                            GET_NON_DELETIONS_SUBJECT_ADDITIONS.replace("%SUBJECTLIST%", subjectsStr)
-                                    .replace("%COMMITLIST%", commitsOfInterestStr));
-                    TupleQueryResult additionsQueryResult = additionsQuery.evaluate();
-                    additionsQueryResult.forEach(bindingSet -> {
-                        Statement statement = vf.createStatement(Bindings.requiredResource(bindingSet, "s"),
-                                Bindings.getRequired(bindingSet, "p", IRI.class),
-                                Bindings.getRequired(bindingSet, "o", Value.class));
-                        if (statement.getPredicate().equals(type) && statement.getObject().equals(ontology)) {
-                            ontIris.add(statement.getSubject());
-                        }
-                        com.mobi.persistence.utils.rio.Rio.write(statement, writer, sesameTransformer);
-                    });
-
-
-                    Map<Statement, Integer> additions = new HashMap<>();
-                    Map<Statement, Integer> deletions = new HashMap<>();
-                    commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, deletionSubjects, conn));
-                    additions.keySet().forEach(statement -> {
-                        if (statement.getPredicate().equals(type) && statement.getObject().equals(ontology)) {
-                            ontIris.add(statement.getSubject());
-                        }
-                        com.mobi.persistence.utils.rio.Rio.write(statement, writer, sesameTransformer);
-                    });
-                }
-
-                // Write any commit that has additions that do not contain any subject in a deletions graph
-                List<Resource> commitsAdditionsOnly = commits.stream()
-                        .filter(commit -> !commitsOfInterest.contains(commit))
-                        .collect(Collectors.toList());
-                if (commitsAdditionsOnly.size() > 0) {
-                    // Write any addition statement in commitsOfInterest whose subject is NOT a deletionsSubject
-                    String commitsAdditionsOnlyStr = "<" + StringUtils.join(commitsAdditionsOnly, "> <") + ">";
-                    TupleQuery additionsQuery = conn.prepareTupleQuery(
-                            GET_ADDITIONS_IN_COMMIT.replace("%COMMITLIST%", commitsAdditionsOnlyStr));
-                    TupleQueryResult additionsQueryResult = additionsQuery.evaluate();
-                    additionsQueryResult.forEach(bindingSet -> {
-                        Statement statement = vf.createStatement(Bindings.requiredResource(bindingSet, "s"),
-                                Bindings.getRequired(bindingSet, "p", IRI.class),
-                                Bindings.getRequired(bindingSet, "o", Value.class));
-                        if (statement.getPredicate().equals(type) && statement.getObject().equals(ontology)) {
-                            ontIris.add(statement.getSubject());
-                        }
-                        com.mobi.persistence.utils.rio.Rio.write(statement, writer, sesameTransformer);
-                    });
-                }
-
-                writer.endRDF();
-            }
-            if (log.isTraceEnabled()) {
-                log.trace("Write statements to file in {} ms", System.currentTimeMillis() - writeTimeStart);
-            }
-
-            if (commits.size() > 0) {
-                String filename = commits.get(commits.size() - 1).stringValue();
-                if (ontIris.size() > 0) {
-                    try {
-                        // Can't set User Attribute on files on OSX until Java 17
-                        // Files.setAttribute(tmpFile, "user:ontologyId", ontIris.iterator().next().stringValue());
-
-                        // Could potentially rename the file to have the ontologyId, but it then links catalogUtils with Ontology :(
-                        filename = filename + "_" + ontIris.iterator().next().stringValue() + ".trig";
-                        Path dest = tmpFile.resolveSibling(ResourceUtils.encode(filename));
-                        Files.move(tmpFile, dest);
-                        return dest.toFile();
-                    } catch (Exception e) {
-                        //TODO:
-                        log.error("Error", e);
-                    }
-                }
-            }
-            return tmpFile.toFile();
-        } catch (IOException e) {
-            throw new MobiException("Error creating compiled resource file", e);
         }
     }
 

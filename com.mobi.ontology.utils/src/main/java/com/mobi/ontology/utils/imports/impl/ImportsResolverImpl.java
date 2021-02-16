@@ -34,23 +34,34 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.ontology.utils.imports.ImportsResolverConfig;
 import com.mobi.persistence.utils.Models;
+import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFParser;
+import org.eclipse.rdf4j.rio.Rio;
 import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -127,7 +138,7 @@ public class ImportsResolverImpl implements ImportsResolver {
         return model.size() > 0 ? Optional.of(model) : Optional.empty();
     }
 
-    private Optional<Model> getModel(String urlStr, RDFParser... parsers) throws IOException {
+    private InputStream getWebInputStream(String urlStr) throws IOException {
         String actualUrlStr = urlStr.endsWith("/") ? urlStr.substring(0, urlStr.lastIndexOf("/")) : urlStr;
         URL url = new URL(actualUrlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -136,7 +147,6 @@ public class ImportsResolverImpl implements ImportsResolver {
         conn.setRequestProperty("Accept", ACCEPT_HEADERS);
         conn.connect();
 
-        Model model = mf.createModel();
         String originalProtocol = url.getProtocol();
         int status = conn.getResponseCode();
         if (status == HttpURLConnection.HTTP_MOVED_TEMP
@@ -154,14 +164,38 @@ public class ImportsResolverImpl implements ImportsResolver {
                 conn.setConnectTimeout(3000);
             }
         }
+        return conn.getInputStream();
+    }
+
+    private Optional<Model> getModel(String urlStr, RDFParser... parsers) throws IOException {
+        Model model = mf.createModel();
         try {
-            model = Models.createModel(conn.getInputStream(), transformer,
+            model = Models.createModel(getWebInputStream(urlStr), transformer,
                     parsers);
         } catch (IOException | IllegalArgumentException e) {
-            log.debug("Could not parse inputstream to model from URL: " + urlStr);
+            log.debug("Could not parse InputStream to model from URL: " + urlStr);
         }
-
         return model.isEmpty() ? Optional.empty() : Optional.of(model);
+    }
+
+    @Override
+    public Optional<File> retrieveOntologyFromWebFile(Resource resource) {
+        long startTime = getStartTime();
+        try {
+            RDFParser[] parsers = {new RioFunctionalSyntaxParserFactory().getParser(),
+                    new RioManchesterSyntaxParserFactory().getParser(),
+                    new RioOWLXMLParserFactory().getParser()};
+            String urlStr = resource.stringValue();
+            try {
+                File tempFile = RDFFiles.writeStreamToTempFile(getWebInputStream(urlStr));
+                return RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.TRIG, parsers);
+            } catch (IOException e) {
+                log.error("Error opening InputStream from web ontology", e);
+                return Optional.empty();
+            }
+        } finally {
+            logDebug("Retrieving ontology File from web", startTime);
+        }
     }
 
     @Override
@@ -179,6 +213,26 @@ public class ImportsResolverImpl implements ImportsResolver {
         }
         logDebug("Retrieving ontology from local catalog", startTime);
         return model.size() > 0 ? Optional.of(model) : Optional.empty();
+    }
+
+    @Override
+    public Optional<File> retrieveOntologyLocalFile(Resource ontologyIRI, OntologyManager ontologyManager) {
+        Long startTime = getStartTime();
+        try {
+            Optional<Resource> recordIRIOpt = ontologyManager.getOntologyRecordResource(ontologyIRI);
+            if (recordIRIOpt.isPresent()) {
+                Resource recordIRI = recordIRIOpt.get();
+                Optional<Resource> masterHead = catalogManager.getMasterBranch(
+                        catalogConfigProvider.getLocalCatalogIRI(), recordIRI).getHead_resource();
+                if (masterHead.isPresent()) {
+                    File file = catalogManager.getCompiledResourceFile(masterHead.get());
+                    return Optional.of(file);
+                }
+            }
+            return Optional.empty();
+        } finally {
+            logDebug("Retrieving ontology from local catalog", startTime);
+        }
     }
 
     private Long getStartTime() {

@@ -176,6 +176,7 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
 
     @Override
     public Ontology createOntology(InputStream inputStream, boolean resolveImports) {
+        // TODO: Only use in OntologyRest test...
         try {
             Model model = Models.createModel(inputStream, sesameTransformer,
                     new RioFunctionalSyntaxParserFactory().getParser(),
@@ -195,29 +196,13 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
 
     @Override
     public Ontology createOntology(Model model) {
+        // TODO: only used above, OntologyRest, and OWLAPI version......
         Repository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
-        return new SimpleOntology(model, repository, this, catalogManager, configProvider, datasetManager,
-                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, importService);
-    }
-
-    private Ontology createOntology(File ontologyFile, Resource recordId, Resource commitId) {
-        Repository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
-                () -> new IllegalStateException("ontologyCache repository does not exist"));
-
-        String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
-        return new SimpleOntology(key, ontologyFile, repository, this, catalogManager, configProvider, datasetManager,
-                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, importService);
-    }
-
-    private Ontology createOntology(Resource recordId, Resource commitId) {
-        Repository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
-                () -> new IllegalStateException("ontologyCache repository does not exist"));
-
-        String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
-        return new SimpleOntology(key, repository, this, catalogManager, configProvider, datasetManager,
-                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, importService);
+        return null;
+//        return new SimpleOntology(model, repository, this, catalogManager, configProvider, datasetManager,
+//                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, importService);
     }
 
     @Override
@@ -227,8 +212,7 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
             simpleOntology.setDifference(difference);
             return simpleOntology;
         } else {
-            Model changedOntologyModel = utilsService.applyDifference(ontology.asModel(modelFactory), difference);
-            return createOntology(changedOntologyModel);
+            throw new MobiException("Ontology must be a " + SimpleOntology.class.toString());
         }
     }
 
@@ -285,5 +269,30 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
     private Ontology createOntologyFromCommit(Resource recordId, Resource commitId) {
         File ontologyFile = catalogManager.getCompiledResourceFile(commitId);
         return createOntology(ontologyFile, recordId, commitId);
+    }
+
+    /**
+     * Creates an Ontology using the provided File.
+     * @param ontologyFile
+     * @param recordId
+     * @param commitId
+     * @return
+     */
+    private Ontology createOntology(File ontologyFile, Resource recordId, Resource commitId) {
+        Repository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
+                () -> new IllegalStateException("ontologyCache repository does not exist"));
+
+        String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
+        return new SimpleOntology(key, ontologyFile, repository, this, catalogManager, configProvider, datasetManager,
+                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, importService);
+    }
+
+    private Ontology createOntology(Resource recordId, Resource commitId) {
+        Repository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
+                () -> new IllegalStateException("ontologyCache repository does not exist"));
+
+        String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
+        return new SimpleOntology(key, repository, this, catalogManager, configProvider, datasetManager,
+                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, importService);
     }
 }

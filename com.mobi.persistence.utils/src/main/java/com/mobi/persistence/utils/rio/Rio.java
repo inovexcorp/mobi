@@ -59,6 +59,13 @@ public class Rio {
         writer.endRDF();
     }
 
+    /**
+     * TODO:
+     * @param statement
+     * @param writer
+     * @param transformer
+     * @param statementHandlers
+     */
     public static void write(Statement statement, RDFHandler writer, SesameTransformer transformer,
                              StatementHandler... statementHandlers) {
         for (StatementHandler statementHandler : statementHandlers) {

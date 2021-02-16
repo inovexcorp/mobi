@@ -359,6 +359,7 @@ public class Models {
      *
      * @param inputStream the InputStream to parse
      * @param transformer the SesameTransformer to convert a SesameModel to a Mobi Model
+     * @param parsers the array of additional parsers to use when parsing the InputStream
      * @return a Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
