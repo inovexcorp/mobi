@@ -594,8 +594,8 @@ public class OntologyRest {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
-            log.debug("uploadChangesToOntology took " + (System.currentTimeMillis() - startTime));
-            log.debug("uploadChangesToOntology getGarbageCollectionTime " + (getGarbageCollectionTime()));
+            log.trace("uploadChangesToOntology took " + (System.currentTimeMillis() - startTime));
+            log.trace("uploadChangesToOntology getGarbageCollectionTime " + (getGarbageCollectionTime()));
         }
     }
     
