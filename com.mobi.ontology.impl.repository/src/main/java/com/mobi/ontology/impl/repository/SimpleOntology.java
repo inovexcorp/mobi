@@ -361,11 +361,12 @@ public class SimpleOntology implements Ontology {
         unresolvedImports = new HashSet<>();
 
         try (RepositoryConnection conn = cacheRepo.getConnection()) {
-            if (!conn.containsContext(datasetIRI)) {
-                Map<String, Set<IRI>> imports = loadOntologyIntoCache(null);
-                this.importsClosure = imports.get(CLOSURE_KEY);
-                this.unresolvedImports = imports.get(UNRESOLVED_KEY);
-            } else {
+            boolean datasetIriExists = conn.containsContext(datasetIRI);
+            boolean datasetSdNgExists = conn.containsContext(
+                    OntologyDatasets.createSystemDefaultNamedGraphIRI(datasetIRI, vf));
+
+            // Fully loaded ontology dataset and SdNg
+            if (datasetIriExists) {
                 this.importsClosure = new HashSet<>();
                 this.unresolvedImports = new HashSet<>();
                 RepositoryResults.asList(conn.getStatements(datasetIRI,
@@ -380,6 +381,20 @@ public class SimpleOntology implements Ontology {
                         .map(Statement::getObject)
                         .map(imported -> (IRI) imported)
                         .forEach(unresolvedImports::add);
+            }
+            // Web import that has yet to have dataset graph created for it, but SdNg exists.
+            else if (datasetSdNgExists) {
+                Map<String, Set<IRI>> imports = loadOntologyIntoCache(null);
+                this.importsClosure = imports.get(CLOSURE_KEY);
+                this.unresolvedImports = imports.get(UNRESOLVED_KEY);
+            }
+            // Import was updated with Catalog version while web versioned exists incache
+            else {
+                IRI commitIri = OntologyDatasets.getCommitFromDatasetIRI(datasetIRI, vf);
+                File ontologyFile = this.catalogManager.getCompiledResourceFile(commitIri);
+                Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile);
+                this.importsClosure = imports.get(CLOSURE_KEY);
+                this.unresolvedImports = imports.get(UNRESOLVED_KEY);
             }
         }
         logTrace("SimpleOntology constructor from import in cache", startTime);
