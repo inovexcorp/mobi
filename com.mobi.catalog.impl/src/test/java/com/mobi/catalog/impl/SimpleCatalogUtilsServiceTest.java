@@ -69,6 +69,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -2120,6 +2121,24 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         }
     }
 
+    @Test
+    public void getCompiledResourceFileWithIdChangeEntityTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename1");
+            Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+            expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
+
+            File file = service.getCompiledResourceFile(commitId, conn);
+            Model model = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(expected.size(), model.size());
+            expected.forEach(statement -> assertTrue(model.contains(statement)));
+            file.delete();
+        }
+    }
+
     /* getCompiledResource(List<Resource>, RepositoryConnection) */
 
     @Test
@@ -2139,6 +2158,22 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         }
     }
 
+    @Test
+    public void getCompiledResourceWithListChangeEntityTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename0")).collect(Collectors.toList());
+            Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+            expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
+
+            Model result = service.getCompiledResource(commits, conn);
+            assertEquals(expected.size(), result.size());
+            expected.forEach(statement -> assertTrue(result.contains(statement)));
+        }
+    }
+
     /* getCompiledResourceFile(List<Resource>, RepositoryConnection) */
 
     @Test
@@ -2151,6 +2186,24 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             Statement classStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
                     VALUE_FACTORY.createLiteral("Class Title 2"));
             expected.add(classStmt);
+
+            File file = service.getCompiledResourceFile(commits, conn);
+            Model model = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(expected.size(), model.size());
+            expected.forEach(statement -> assertTrue(model.contains(statement)));
+            file.delete();
+        }
+    }
+
+    @Test
+    public void getCompiledResourceFileWithListChangeEntityTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename0")).collect(Collectors.toList());
+            Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+            expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
 
             File file = service.getCompiledResourceFile(commits, conn);
             Model model = Models.createModel(new FileInputStream(file), transformer);
