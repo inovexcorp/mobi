@@ -517,6 +517,46 @@ GRAPH additions:testLoner {
 GRAPH deletions:testLoner {
 }
 
+# Test changing entity IRI
+
+GRAPH commits:testRename0 {
+    commits:testRename0 a mcat:Commit ;
+        dc:title "Commit Test Rename 0" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:revision0 .
+
+    revisions:testRename0 a mcat:Revision ;
+        mcat:additions additions:testRename0 ;
+        mcat:deletions deletions:testRename0 .
+}
+
+GRAPH additions:testRename0 {
+    <http://mobi.com/test/ontology> a owl:Ontology ;
+        dc:title "Test Rename 0 Title" .
+}
+
+GRAPH commits:testRename1 {
+    commits:testRename1 a mcat:Commit ;
+        dc:title "Commit Test Rename 1" ;
+        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:testRename0 ;
+        prov:generated revisions:testRename1 .
+
+    revisions:testRename1 a mcat:Revision ;
+        mcat:additions additions:testRename1 ;
+        mcat:deletions deletions:testRename1 .
+}
+
+GRAPH additions:testRename1 {
+    <http://mobi.com/test/ontology1> a owl:Ontology ;
+        dc:title "Test Rename 0 Title" .
+}
+
+GRAPH deletions:testRename1 {
+    <http://mobi.com/test/ontology> a owl:Ontology ;
+        dc:title "Test Rename 0 Title" .
+}
+
 # Complex Commit History Deletion Test
 
 GRAPH records:complex-record {

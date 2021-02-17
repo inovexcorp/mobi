@@ -1241,9 +1241,26 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
             // Write any addition statement in commitsOfInterest whose subject is NOT a deletionsSubject
             String commitsOfInterestStr = "<" + StringUtils.join(commitsOfInterest, "> <") + ">";
-            TupleQuery additionsQuery = conn.prepareTupleQuery(
-                    GET_NON_DELETIONS_SUBJECT_ADDITIONS.replace("%SUBJECTLIST%", subjectsStr)
-                            .replace("%COMMITLIST%", commitsOfInterestStr));
+            String filterClause;
+            if (deletionSubjects.size() == 0) {
+                filterClause = "?s != ?filterSub";
+            } else {
+                List<Resource> subjectsList = new ArrayList<>(deletionSubjects);
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < subjectsList.size(); i++) {
+                    sb.append("?s != <");
+                    sb.append(subjectsList.get(i));
+                    sb.append("> ");
+                    if (i != subjectsList.size() - 1) {
+                        sb.append("&& ");
+                    }
+                }
+                filterClause = sb.toString();
+            }
+            TupleQuery additionsQuery = conn.prepareTupleQuery(GET_NON_DELETIONS_SUBJECT_ADDITIONS
+                    .replace("%SUBJECTLIST%", subjectsStr)
+                    .replace("%COMMITLIST%", commitsOfInterestStr)
+                    .replace("%FILTER%", filterClause));
             TupleQueryResult additionsQueryResult = additionsQuery.evaluate();
             additionsQueryResult.forEach(bindingSet -> {
                 Statement statement = vf.createStatement(Bindings.requiredResource(bindingSet, "s"),

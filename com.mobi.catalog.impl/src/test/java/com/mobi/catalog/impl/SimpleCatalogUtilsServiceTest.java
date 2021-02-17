@@ -2068,7 +2068,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     /* getCompiledResource(Resource, RepositoryConnection) */
 
     @Test
-    public void getCompiledResourceWithListTest() {
+    public void getCompiledResourceWithIdTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1");
@@ -2079,14 +2079,30 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             expected.add(VALUE_FACTORY.createIRI("http://mobi.com/test/class0"), typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
 
             Model result = service.getCompiledResource(commitId, conn);
-            result.forEach(statement -> assertTrue(expected.contains(statement)));
+            expected.forEach(statement -> assertTrue(result.contains(statement)));
+        }
+    }
+
+    @Test
+    public void getCompiledResourceWithIdChangeEntityTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename1");
+            Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+            expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
+
+            Model result = service.getCompiledResource(commitId, conn);
+            expected.forEach(statement -> assertTrue(result.contains(statement)));
+            assertEquals(expected.size(), result.size());
         }
     }
 
     /* getCompiledResourceFile(Resource, RepositoryConnection) */
 
     @Test
-    public void getCompiledResourceFileWithListTest() throws Exception {
+    public void getCompiledResourceFileWithIdTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1");
@@ -2098,7 +2114,8 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
 
             File file = service.getCompiledResourceFile(commitId, conn);
             Model model = Models.createModel(new FileInputStream(file), transformer);
-            model.forEach(statement -> assertTrue(expected.contains(statement)));
+            assertEquals(expected.size(), model.size());
+            expected.forEach(statement -> assertTrue(model.contains(statement)));
             file.delete();
         }
     }
@@ -2106,7 +2123,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     /* getCompiledResource(List<Resource>, RepositoryConnection) */
 
     @Test
-    public void getCompiledResourceWithIdTest() {
+    public void getCompiledResourceWithListTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1")).collect(Collectors.toList());
@@ -2118,14 +2135,14 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
 
             Model result = service.getCompiledResource(commits, conn);
             assertEquals(expected.size(), result.size());
-            result.forEach(statement -> assertTrue(expected.contains(statement)));
+            expected.forEach(statement -> assertTrue(result.contains(statement)));
         }
     }
 
     /* getCompiledResourceFile(List<Resource>, RepositoryConnection) */
 
     @Test
-    public void getCompiledResourceFileWithIdTest() throws Exception {
+    public void getCompiledResourceFileWithListTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1")).collect(Collectors.toList());
@@ -2138,7 +2155,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             File file = service.getCompiledResourceFile(commits, conn);
             Model model = Models.createModel(new FileInputStream(file), transformer);
             assertEquals(expected.size(), model.size());
-            model.forEach(statement -> assertTrue(expected.contains(statement)));
+            expected.forEach(statement -> assertTrue(model.contains(statement)));
             file.delete();
         }
     }
