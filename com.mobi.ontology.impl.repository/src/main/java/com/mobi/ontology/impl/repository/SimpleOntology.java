@@ -316,9 +316,29 @@ public class SimpleOntology implements Ontology {
             List<Statement> imports = RepositoryResults.asList(conn.getStatements(datasetIRI,
                     vf.createIRI(OWL.IMPORTS.stringValue()), null, datasetIRI));
             imports.forEach(imported -> importsClosure.add((IRI) imported.getObject()));
-            imports = RepositoryResults.asList(conn.getStatements(datasetIRI,
-                    vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), null, datasetIRI));
-            imports.forEach(imported -> unresolvedImports.add((IRI) imported.getObject()));
+
+            // Check if the datasetIri/SdNg of an import has changed since last open. This indicates that the import
+            // was modified (ie, web import is now in the system, master was updated on an import). Auto refresh the
+            // the loaded ontology.
+            boolean refresh = false;
+            List<Resource> defaultGraphs = RepositoryResults.asList(conn.getDefaultNamedGraphs());
+            for (IRI importIri : importsClosure) {
+                IRI importSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(getDatasetIRI(importIri), vf);
+                if (!defaultGraphs.contains(importSdNg)) {
+                    refresh = true;
+                    break;
+                }
+            }
+            if (refresh) {
+                defaultGraphs.forEach(conn::removeGraph);
+                Map<String, Set<IRI>> importsMap = loadOntologyIntoCache(null);
+                this.importsClosure = importsMap.get(CLOSURE_KEY);
+                this.unresolvedImports = importsMap.get(UNRESOLVED_KEY);
+            } else {
+                List<Statement> unresolved = RepositoryResults.asList(conn.getStatements(datasetIRI,
+                        vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), null, datasetIRI));
+                unresolved.forEach(unresolvedImport -> unresolvedImports.add((IRI) unresolvedImport.getObject()));
+            }
         }
         logTrace("SimpleOntology constructor from cache with recordCommitKey", startTime);
     }
@@ -388,7 +408,7 @@ public class SimpleOntology implements Ontology {
                 this.importsClosure = imports.get(CLOSURE_KEY);
                 this.unresolvedImports = imports.get(UNRESOLVED_KEY);
             }
-            // Import was updated with Catalog version while web versioned exists incache
+            // Import was updated with Catalog version while web versioned exists in cache
             else {
                 IRI commitIri = OntologyDatasets.getCommitFromDatasetIRI(datasetIRI, vf);
                 File ontologyFile = this.catalogManager.getCompiledResourceFile(commitIri);
@@ -435,9 +455,9 @@ public class SimpleOntology implements Ontology {
         this.bNodeService = bNodeService;
         this.importService = importService;
 
-        Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile);
-        this.importsClosure = imports.get(CLOSURE_KEY);
-        this.unresolvedImports = imports.get(UNRESOLVED_KEY);
+        Map<String, Set<IRI>> importsMap = loadOntologyIntoCache(ontologyFile);
+        this.importsClosure = importsMap.get(CLOSURE_KEY);
+        this.unresolvedImports = importsMap.get(UNRESOLVED_KEY);
         logTrace("SimpleOntology constructor from web import", startTime);
     }
 

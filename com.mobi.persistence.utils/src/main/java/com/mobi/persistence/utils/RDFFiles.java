@@ -99,7 +99,7 @@ public class RDFFiles {
      * @param parsers The optional list of additional parsers to use when default formats cannot parse.
      * @return An {@link Optional} of the resulting file. If unsuccessful, returns empty Optional.
      */
-    public static Optional<File> parseFileToFileFormat(File tempFile, RDFFormat destFormat, RDFParser... parsers) throws FileNotFoundException {
+    public static Optional<File> parseFileToFileFormat(File tempFile, RDFFormat destFormat, RDFParser... parsers) {
         try {
             Set<RDFFormat> formats = new HashSet<>(asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
                     RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS));
