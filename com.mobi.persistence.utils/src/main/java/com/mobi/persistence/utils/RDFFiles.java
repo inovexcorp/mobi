@@ -144,7 +144,7 @@ public class RDFFiles {
             rdfParser.setRDFHandler(rdfWriter);
             rdfParser.parse(new FileInputStream(tempFile), "");
             return true;
-        } catch (RDFParseException | RDFHandlerException | UnsupportedRDFormatException | IOException e) {
+        } catch (Exception e) {
             try {
                 Files.delete(path);
             } catch (IOException ex) {

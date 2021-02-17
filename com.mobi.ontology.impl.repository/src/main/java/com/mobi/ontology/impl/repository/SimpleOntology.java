@@ -1233,7 +1233,6 @@ public class SimpleOntology implements Ontology {
                         Optional<File> webFileOpt = importsResolver.retrieveOntologyFromWebFile(importIRI);
                         if (webFileOpt.isPresent()) {
                             addOntologyToRepo(webFileOpt.get(), datasetIRI, iri, conn, repoId, false);
-
                         } else {
                             unresolvedImports.add(importIRI);
                             processedImports.add(importIRI);
@@ -1646,9 +1645,9 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     * Returns the internal Set of unsresolved import IRIs.
+     * Returns the internal Set of unresolved import IRIs.
      *
-     * @return the internal Set of unsresolved import IRIs.
+     * @return the internal Set of unresolved import IRIs.
      */
     protected Set<IRI> getUnresolvedImportsIRIs() {
         return unresolvedImports;
