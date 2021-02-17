@@ -2,12 +2,12 @@ PREFIX catalog: <http://mobi.com/ontologies/catalog#>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 
 SELECT ?s ?p ?o WHERE {
-  VALUES ?filterSub { <https://mobi.com/ontologies/2/2021/A> }
+  VALUES ?filterSub { %SUBJECTLIST% }
   FILTER(?s != ?filterSub)
   {
 	select ?s ?p ?o
     where {
-      VALUES ?commit { <https://mobi.com/commits#f82951b6c4b992c95eb072a68b4b0e9226efc9ec> <https://mobi.com/commits#244a1d62426f6904a8a166da8e154b9811902a4e> }
+      VALUES ?commit { %COMMITLIST% }
       GRAPH ?commit {
         ?commit prov:generated ?revision .
         ?revision catalog:additions ?additionsGraph .
