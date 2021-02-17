@@ -20,8 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq } from 'lodash';
-
+import { async } from '@angular/core/testing';
+import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq, fromPairs } from 'lodash';
+import pako from 'pako';
 ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
 
 /**
@@ -106,24 +107,25 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param {string} id The identifier for this request.
      * @returns {Promise} A promise indicating whether the ontology was persisted.
      */
-    self.uploadOntology = function(file, ontologyJson, title, description, keywords, id = '') {
+    self.uploadOntology = async function(file, ontologyJson, title, description, keywords, id = '') {
         const fd = new FormData();
         const config = {
-            transformRequest: identity,
+            transformRequest: identity, 
             headers: {
                 'Content-Type': undefined
             }
         };
+
         if (file !== undefined) {
             const titleInfo = getFileTitleInfo(title);
-            if (titleInfo.ext === 'zip') {
-                const compressedFile = self.compressFile(file,titleInfo);
-                fd.append('file', compressedFile);
+            if (titleInfo.ext !== 'zip') {
+                const blob = await self.compressFile(file);
+                fd.append('file', blob, titleInfo.name+'.zip');  
             } else {
                 fd.append('file', file);
             }
-            
         }
+       
         if (ontologyJson !== undefined) {
             fd.append('json', JSON.stringify(ontologyJson));
         }
@@ -135,6 +137,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         const promise = id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
         return promise.then(response => response.data, util.rejectErrorObject);
     };
+
     /**
      * @ngdoc method
      * @name uploadChangesFile
@@ -1629,19 +1632,27 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         return map(self.getConceptSchemes(ontologies, derivedConceptSchemes), '@id');
     };
 
-    self.compressFile = function(file, fileName) {
-        
+    self.compressFile = function(file) {
+        return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (evt) => {
-                const result = evt.target.result;
-                const compressedData = pako.gzip(result,{level: 1});
-                const blob = new Blob([compressedData]);
+                try {
+                    const result = evt.target.result;
+                    console.log(pako);
+                    const compressedData = pako.deflate(result,{level: 1});
+                    const blob = new Blob([compressedData]);
+                    resolve(blob);
+                } catch (error) {
+                   reject(error);
+                }
             };
-        return 
-    }
+            reader.readAsArrayBuffer(file); 
+        });
+        
+    };
 
     function getFileTitleInfo(title) {
-        const fileName = title.toLowerCase().split();
+        const fileName = title.toLowerCase().split('.');
         return {
             name: fileName.slice(0,1),
             ext: fileName.slice(-1)
