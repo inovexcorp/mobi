@@ -1461,7 +1461,8 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     * Loads the import of an Ontology retrieved from the web into the cache.
+     * Loads the import of an Ontology retrieved from the web into the cache. Updates import statements on datasetIRI
+     * graph.
      *
      * @param importedDatasetIRI The datasetIRI of the import.
      * @param importedDatasetSdNg The datasetSdNg of the import.
@@ -1478,15 +1479,11 @@ public class SimpleOntology implements Ontology {
                 ontologyManager, catalogManager, configProvider, datasetManager, importsResolver, transformer,
                 bNodeService, vf, mf, importService);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
-        importedOntology.getImportedOntologyIRIs().forEach(importIri -> {
-            IRI importsImportDatasetIRI = getDatasetIRI(importIri);
-            IRI importsImportSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(importsImportDatasetIRI, vf);
-            updateImportStatements(importIri, importsImportSdNg, conn);
-        });
     }
 
     /**
-     * Adds the import of an Ontology that exists the cache to the dataset graph.
+     * Adds the import of an Ontology that exists the cache to the dataset graph. Updates import statements on
+     * datasetIRI graph.
      *
      * @param importedDatasetIRI The datasetIRI of the import.
      * @param importedDatasetSdNg The datasetSdNg of the import.
@@ -1502,17 +1499,13 @@ public class SimpleOntology implements Ontology {
                 ontologyManager, catalogManager, configProvider, datasetManager, importsResolver, transformer,
                 bNodeService, vf, mf, importService);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
-        importedOntology.getImportedOntologyIRIs().forEach(importIri -> {
-            IRI importsImportDatasetIRI = getDatasetIRI(importIri);
-            IRI importsImportSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(importsImportDatasetIRI, vf);
-            updateImportStatements(importIri, importsImportSdNg, conn);
-        });
     }
 
     /**
      * Updates the dataset graph identified by the datasetIRI with a new import statement for the importedDatasetIRI.
      *
      * @param importedDatasetIRI The {@link IRI} to add to the dataset graphs imports.
+     * @param importedDatasetSdNg The {@link IRI} to add as a default graph to the datasetIRI graph.
      * @param conn The {@link DatasetConnection} to add the import statement to.
      */
     private void updateImportStatements(IRI importedDatasetIRI, IRI importedDatasetSdNg, DatasetConnection conn) {
