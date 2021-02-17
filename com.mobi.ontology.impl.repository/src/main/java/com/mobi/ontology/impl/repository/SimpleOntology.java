@@ -634,17 +634,27 @@ public class SimpleOntology implements Ontology {
     public Set<IRI> getImportedOntologyIRIs() {
         try (DatasetConnection conn = getDatasetConnection()) {
             long start = getStartTime();
-            List<Statement> importStatements = RepositoryResults.asList(conn.getStatements(null,
-                    vf.createIRI(OWL.IMPORTS.stringValue()), null, conn.getSystemDefaultNamedGraph()));
-            Set<IRI> imports = importStatements.stream()
-                    .map(Statement::getObject)
-                    .filter(iri -> iri instanceof IRI)
-                    .map(iri -> (IRI) iri)
-                    .collect(Collectors.toSet());
+            Set<IRI> imports = getImportedOntologyIRIs(conn);
             undoApplyDifferenceIfPresent(conn);
             logTrace("getImportedOntologyIRIs()", start);
             return imports;
         }
+    }
+
+    /**
+     * Gets the imported ontology IRIs directory on this ontology.
+     *
+     * @param conn A {@link DatasetConnection} to query the repo.
+     * @return A {@link Set} of {@link IRI}s of direct imports.
+     */
+    protected Set<IRI> getImportedOntologyIRIs(DatasetConnection conn) {
+        List<Statement> importStatements = RepositoryResults.asList(conn.getStatements(null,
+                vf.createIRI(OWL.IMPORTS.stringValue()), null, conn.getSystemDefaultNamedGraph()));
+        return importStatements.stream()
+                .map(Statement::getObject)
+                .filter(iri -> iri instanceof IRI)
+                .map(iri -> (IRI) iri)
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -1426,57 +1436,118 @@ public class SimpleOntology implements Ontology {
     private void applyDifferenceIfPresent(DatasetConnection conn) {
         if (difference != null) {
             long start = getStartTime();
+            // Start transaction that will be rolled back in #undoApplyDifferenceIfPresent()
             conn.begin();
             conn.add(difference.getAdditions(), conn.getSystemDefaultNamedGraph());
             conn.remove(difference.getDeletions(), conn.getSystemDefaultNamedGraph());
+            addTemporaryImports(conn);
+            removeImports(conn);
+            logTrace("applyDifferenceIfPresent()", start);
+        }
+    }
 
-            List<IRI> addedImports = difference.getAdditions()
-                    .filter(null, vf.createIRI(OWL.IMPORTS.stringValue()), null)
-                    .stream()
-                    .map(Statement::getObject)
-                    .filter(iri -> iri instanceof IRI)
-                    .map(iri -> (IRI) iri)
-                    .collect(Collectors.toList());
-            try (RepositoryConnection repoConn = repository.getConnection()) {
-                addedImports.forEach(imported -> {
-                    IRI importedDatasetIRI = getDatasetIRI(imported);
-                    IRI importedDatasetSdNgIRI =
-                            OntologyDatasets.createSystemDefaultNamedGraphIRI(importedDatasetIRI, vf);
-                    if (repoConn.containsContext(importedDatasetSdNgIRI)) {
-                        createTempImportExistsInCache(importedDatasetIRI, importedDatasetSdNgIRI, conn);
+    /**
+     * Handles adding temporary imports into the cache. Will check if the import is the cache and if not, will retrieve
+     * from catalog or the web if possible. Updates the datasetIRI graph with the new imports statements and
+     * default graphs statements.
+     *
+     * @param conn A {@link DatasetConnection} to add the imports.
+     */
+    private void addTemporaryImports(DatasetConnection conn) {
+        // Gather all the added imports
+        List<IRI> addedImports = difference.getAdditions()
+                .filter(null, vf.createIRI(OWL.IMPORTS.stringValue()), null)
+                .stream()
+                .map(Statement::getObject)
+                .filter(iri -> iri instanceof IRI)
+                .map(iri -> (IRI) iri)
+                .collect(Collectors.toList());
+        try (RepositoryConnection repoConn = repository.getConnection()) {
+            // Check the cache for each import. If not there, check catalog, next resolve from web, if unresolvable,
+            // add unresolved triple to datasetIRI graph
+            addedImports.forEach(imported -> {
+                IRI importedDatasetIRI = getDatasetIRI(imported);
+                IRI importedDatasetSdNgIRI =
+                        OntologyDatasets.createSystemDefaultNamedGraphIRI(importedDatasetIRI, vf);
+                if (repoConn.containsContext(importedDatasetSdNgIRI)) {
+                    createTempImportExistsInCache(importedDatasetIRI, importedDatasetSdNgIRI, conn);
+                } else {
+                    Optional<File> localFile = importsResolver.retrieveOntologyLocalFile(imported, ontologyManager);
+                    if (localFile.isPresent()) {
+                        createTempImportNotInCache(importedDatasetIRI, importedDatasetSdNgIRI, localFile.get(), conn);
                     } else {
-                        Optional<File> localFile = importsResolver.retrieveOntologyLocalFile(imported, ontologyManager);
-                        if (localFile.isPresent()) {
-                            createTempImportNotInCache(importedDatasetIRI, importedDatasetSdNgIRI, localFile.get(),
-                                    conn);
+                        Optional<File> webFile = importsResolver.retrieveOntologyFromWebFile(imported);
+                        if (webFile.isPresent()) {
+                            createTempImportNotInCache(importedDatasetIRI, importedDatasetSdNgIRI, webFile.get(), conn);
                         } else {
-                            Optional<File> webFile = importsResolver.retrieveOntologyFromWebFile(imported);
-                            if (webFile.isPresent()) {
-                                createTempImportNotInCache(importedDatasetIRI, importedDatasetSdNgIRI, webFile.get(),
-                                        conn);
-                            } else {
-                                conn.add(datasetIRI, vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), imported,
-                                        datasetIRI);
-                            }
+                            conn.add(datasetIRI, vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), imported,
+                                    datasetIRI);
                         }
                     }
-                });
-            }
+                }
+            });
+        }
+    }
 
-            List<IRI> removedImports = difference.getDeletions().filter(null, vf.createIRI(OWL.IMPORTS.stringValue()),
-                    null)
-                    .stream()
-                    .map(Statement::getObject)
+    /**
+     * Handles temporarily removing imports. Will calculate the new imports closure and update the datasetIRI graph
+     * accordingly. Will also update the datasetIRI graph to reflect the appropriate default graphs.
+     *
+     * @param conn A {@link DatasetConnection} to add the imports.
+     */
+    private void removeImports(DatasetConnection conn) {
+        // Get the removed imports list
+        List<IRI> removedImports = difference.getDeletions().filter(null, vf.createIRI(OWL.IMPORTS.stringValue()),
+                null)
+                .stream()
+                .map(Statement::getObject)
+                .filter(iri -> iri instanceof IRI)
+                .map(iri -> (IRI) iri)
+                .collect(Collectors.toList());
+        if (removedImports.size() > 0) {
+            // Get all the imports directly on the ontology
+            Set<IRI> directImports = this.getImportedOntologyIRIs(conn);
+            Set<IRI> importClosureIris = new HashSet<>();
+            Set<IRI> unresolved = new HashSet<>();
+
+            // Add the ontologyIRI of this to the imports closure
+            conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()),
+                    vf.createIRI(OWL.ONTOLOGY.stringValue()), conn.getSystemDefaultNamedGraph())
+                    .stream().map(Statement::getSubject)
                     .filter(iri -> iri instanceof IRI)
                     .map(iri -> (IRI) iri)
-                    .collect(Collectors.toList());
-            removedImports.forEach(imported -> {
-                IRI importDatasetIRI = OntologyDatasets.createSystemDefaultNamedGraphIRI(
-                        getDatasetIRI(imported), vf);
-                conn.removeGraph(importDatasetIRI);
-                conn.remove(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), imported);
+                    .forEach(importClosureIris::add);
+
+            // Get each imports closure for direct imports on this
+            directImports.forEach(importIri -> {
+                IRI importDatasetIRI = getDatasetIRI(importIri);
+                SimpleOntology importedOnt = new SimpleOntology(importDatasetIRI, repository, ontologyManager,
+                        catalogManager, configProvider, datasetManager, importsResolver, transformer, bNodeService,
+                        vf, mf, importService);
+                Set<Ontology> ontClosure = importedOnt.getImportsClosure();
+
+                // Add all internal importsClosure IRIs and unresolved IRIs to appropriate sets
+                ontClosure.forEach(closureOnt -> {
+                    SimpleOntology ont = (SimpleOntology) closureOnt;
+                    importClosureIris.addAll(ont.getImportsClosureIRIs());
+                    unresolved.addAll(ont.getUnresolvedImportsIRIs());
+                });
             });
-            logTrace("applyDifferenceIfPresent()", start);
+
+            // Clear existing imports closure and default graphs on the datasetIRI graph
+            conn.remove(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), null, datasetIRI);
+            conn.remove(datasetIRI, vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), null, datasetIRI);
+            conn.remove(datasetIRI, vf.createIRI(Dataset.defaultNamedGraph_IRI), null, datasetIRI);
+
+            // Add the default graphs and imports statements for the updated closure
+            importClosureIris.forEach(iri -> {
+                IRI importDatasetIRI = OntologyDatasets.createSystemDefaultNamedGraphIRI(getDatasetIRI(iri), vf);
+                conn.addDefaultNamedGraph(importDatasetIRI);
+                conn.add(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), iri, datasetIRI);
+            });
+            // Add the unresolved statements for the updated closure
+            unresolved.forEach(iri ->
+                    conn.add(datasetIRI, vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), iri, datasetIRI));
         }
     }
 
@@ -1563,6 +1634,24 @@ public class SimpleOntology implements Ontology {
         if (difference != null) {
             conn.rollback();
         }
+    }
+
+    /**
+     * Returns the internal Set of imports closure IRIs.
+     *
+     * @return the internal Set of imports closure IRIs.
+     */
+    protected Set<IRI> getImportsClosureIRIs() {
+        return importsClosure;
+    }
+
+    /**
+     * Returns the internal Set of unsresolved import IRIs.
+     *
+     * @return the internal Set of unsresolved import IRIs.
+     */
+    protected Set<IRI> getUnresolvedImportsIRIs() {
+        return unresolvedImports;
     }
 
     /**
