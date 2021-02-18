@@ -1,25 +1,3 @@
-package com.mobi.persistence.utils
-
-import com.mobi.exception.MobiException
-import org.eclipse.rdf4j.rio.RDFFormat
-import spock.lang.Specification
-
-class RDFFilesSpec extends Specification {
-
-    def "writeStreamToTempFile creates a temporary file"() {
-        when:
-        def input = getClass().getResourceAsStream("/bfo.owl")
-        File tempFile = RDFFiles.writeStreamToTempFile(input)
-        tempFile.deleteOnExit()
-
-        then:
-        assert tempFile.exists()
-    }
-
-    def "writeStreamToTempFile throws exception with empty steam"() {
-        when:
-        def input;
-
 /*-
  * #%L
  * com.mobi.persistence.utils
@@ -42,6 +20,28 @@ class RDFFilesSpec extends Specification {
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+package com.mobi.persistence.utils
+
+import com.mobi.exception.MobiException
+import org.eclipse.rdf4j.rio.RDFFormat
+import spock.lang.Specification
+
+class RDFFilesSpec extends Specification {
+
+    def "writeStreamToTempFile creates a temporary file"() {
+        when:
+        def input = getClass().getResourceAsStream("/bfo.owl")
+        File tempFile = RDFFiles.writeStreamToTempFile(input)
+        tempFile.deleteOnExit()
+
+        then:
+        assert tempFile.exists()
+    }
+
+    def "writeStreamToTempFile throws exception with empty steam"() {
+        when:
+        def input;
+
         File tempFile = RDFFiles.writeStreamToTempFile(input)
         tempFile.deleteOnExit()
 

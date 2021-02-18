@@ -266,7 +266,6 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         ontology = new SimpleOntology(ontologyKey, ontologyFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
 
 
-        // TODO: this was returning the above ontology model.....
         Model ont3Model = Models.createModel(this.getClass().getResourceAsStream("/test-local-imports-3.ttl"), transformer);
         Path ont3Path = Files.createTempFile(null, null);
         Rio.write(Values.sesameModel(ont3Model), Files.newOutputStream(ont3Path), RDFFormat.TRIG);
@@ -333,8 +332,6 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
             return null;
         }).when(importService).importFile(any(ImportServiceConfig.class), eq(dctFile), any(Resource.class));
         Ontology dcterms = new SimpleOntology(dctermsIRI, dctFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
-//        when(ontologyManager.getOntologyRecordResource(dctermsIRI)).thenReturn(Optional.of(dctermsRecordIRI));
-//        when(ontologyManager.retrieveOntology(dctermsRecordIRI)).thenReturn(Optional.of(dcterms));
 
         Model ont1Model = Models.createModel( this.getClass().getResourceAsStream("/test-local-imports-1.ttl"), transformer);
         Path ont1Path = Files.createTempFile(null, null);
