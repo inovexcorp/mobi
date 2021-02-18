@@ -316,6 +316,9 @@ public class SimpleOntology implements Ontology {
             List<Statement> imports = RepositoryResults.asList(conn.getStatements(datasetIRI,
                     vf.createIRI(OWL.IMPORTS.stringValue()), null, datasetIRI));
             imports.forEach(imported -> importsClosure.add((IRI) imported.getObject()));
+            List<Statement> unresolved = RepositoryResults.asList(conn.getStatements(datasetIRI,
+                    vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), null, datasetIRI));
+            unresolved.forEach(unresolvedImport -> unresolvedImports.add((IRI) unresolvedImport.getObject()));
 
             // Check if the datasetIri/SdNg of an import has changed since last open. This indicates that the import
             // was modified (ie, web import is now in the system, master was updated on an import). Auto refresh the
@@ -324,7 +327,7 @@ public class SimpleOntology implements Ontology {
             List<Resource> defaultGraphs = RepositoryResults.asList(conn.getDefaultNamedGraphs());
             for (IRI importIri : importsClosure) {
                 IRI importSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(getDatasetIRI(importIri), vf);
-                if (!defaultGraphs.contains(importSdNg)) {
+                if (!defaultGraphs.contains(importSdNg) && !unresolvedImports.contains(importIri)) {
                     refresh = true;
                     break;
                 }
@@ -334,10 +337,6 @@ public class SimpleOntology implements Ontology {
                 Map<String, Set<IRI>> importsMap = loadOntologyIntoCache(null);
                 this.importsClosure = importsMap.get(CLOSURE_KEY);
                 this.unresolvedImports = importsMap.get(UNRESOLVED_KEY);
-            } else {
-                List<Statement> unresolved = RepositoryResults.asList(conn.getStatements(datasetIRI,
-                        vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), null, datasetIRI));
-                unresolved.forEach(unresolvedImport -> unresolvedImports.add((IRI) unresolvedImport.getObject()));
             }
         }
         logTrace("SimpleOntology constructor from cache with recordCommitKey", startTime);
@@ -1388,8 +1387,7 @@ public class SimpleOntology implements Ontology {
                 conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()),
                         vf.createIRI(OWL.ONTOLOGY.stringValue()),
                         OntologyDatasets.createSystemDefaultNamedGraphIRI(datasetIRI, vf)), mf);
-        return OntologyModels.findFirstOntologyIRI(ontologyDefModel, vf).orElseThrow(
-                () -> new IllegalStateException("OntologyIRI must exist for dataset " + datasetIRI.stringValue()));
+        return OntologyModels.findFirstOntologyIRI(ontologyDefModel, vf).orElse(datasetIRI);
     }
 
     /**
