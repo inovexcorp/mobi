@@ -270,7 +270,7 @@ public class SimpleOntology implements Ontology {
         this.bNodeService = bNodeService;
         this.importService = importService;
 
-        Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile);
+        Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile, false);
         this.importsClosure = imports.get(CLOSURE_KEY);
         this.unresolvedImports = imports.get(UNRESOLVED_KEY);
         logTrace("SimpleOntology constructor specific commit in catalog but not in cache", startTime);
@@ -334,7 +334,7 @@ public class SimpleOntology implements Ontology {
             }
             if (refresh) {
                 defaultGraphs.forEach(conn::removeGraph);
-                Map<String, Set<IRI>> importsMap = loadOntologyIntoCache(null);
+                Map<String, Set<IRI>> importsMap = loadOntologyIntoCache(null, false);
                 this.importsClosure = importsMap.get(CLOSURE_KEY);
                 this.unresolvedImports = importsMap.get(UNRESOLVED_KEY);
             }
@@ -403,7 +403,7 @@ public class SimpleOntology implements Ontology {
             }
             // Web import that has yet to have dataset graph created for it, but SdNg exists.
             else if (datasetSdNgExists) {
-                Map<String, Set<IRI>> imports = loadOntologyIntoCache(null);
+                Map<String, Set<IRI>> imports = loadOntologyIntoCache(null, true);
                 this.importsClosure = imports.get(CLOSURE_KEY);
                 this.unresolvedImports = imports.get(UNRESOLVED_KEY);
             }
@@ -411,7 +411,7 @@ public class SimpleOntology implements Ontology {
             else {
                 IRI commitIri = OntologyDatasets.getCommitFromDatasetIRI(datasetIRI, vf);
                 File ontologyFile = this.catalogManager.getCompiledResourceFile(commitIri);
-                Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile);
+                Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile, false);
                 this.importsClosure = imports.get(CLOSURE_KEY);
                 this.unresolvedImports = imports.get(UNRESOLVED_KEY);
             }
@@ -454,7 +454,7 @@ public class SimpleOntology implements Ontology {
         this.bNodeService = bNodeService;
         this.importService = importService;
 
-        Map<String, Set<IRI>> importsMap = loadOntologyIntoCache(ontologyFile);
+        Map<String, Set<IRI>> importsMap = loadOntologyIntoCache(ontologyFile, true);
         this.importsClosure = importsMap.get(CLOSURE_KEY);
         this.unresolvedImports = importsMap.get(UNRESOLVED_KEY);
         logTrace("SimpleOntology constructor from web import", startTime);
@@ -1186,9 +1186,10 @@ public class SimpleOntology implements Ontology {
      * loaded into the cache (i.e, a web import) and generates the managing dataset graph for the datasetIRI.
      *
      * @param ontologyFile An optional {@link File} that contains ontology RDF if present
+     * @param webImport A boolean indicating if the ontology was resolved from the web
      * @return A {@link Map} of two {@link Set}s of {@link IRI}s of the unresolvedImports and the importsClosure
      */
-    private Map<String, Set<IRI>> loadOntologyIntoCache(@Nullable File ontologyFile) {
+    private Map<String, Set<IRI>> loadOntologyIntoCache(@Nullable File ontologyFile, boolean webImport) {
         Set<IRI> unresolvedImports = new HashSet<>();
         Set<IRI> processedImports = new HashSet<>();
         List<IRI> importsToProcess = new ArrayList<>();
@@ -1200,7 +1201,7 @@ public class SimpleOntology implements Ontology {
             }
             addOntologyToRepo(ontologyFile, datasetIRI, datasetIRI, conn, repoId, true);
 
-            IRI ontologyIRI = getOntologyIRI(conn);
+            IRI ontologyIRI = webImport ? datasetIRI : getOntologyIRI(conn);
             IRI datasetSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(datasetIRI, vf);
 
             // Get all direct imports and begin to process them sequentially, adding each ones direct imports to the
