@@ -195,6 +195,11 @@
     <owl:NamedIndividual rdf:about="http://test.com/ontology1#IndividualD">
         <rdf:type rdf:resource="http://test.com/ontology1#TestClassD"/>
     </owl:NamedIndividual>
+
+
+    <rdf:Description>
+        <rdf:type rdf:resource="http://test.com/ontology1#TestClassD"/>
+    </rdf:Description>
 </rdf:RDF>
 
 

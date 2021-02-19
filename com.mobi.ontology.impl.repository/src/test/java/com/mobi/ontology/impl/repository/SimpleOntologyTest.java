@@ -518,6 +518,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test
     public void getAllIndividualsTest() throws Exception {
         // Setup:
+        // Ensures a blank node declared as a defined class is not included
         Set<String> expectedIndividuals = Stream.of("http://test.com/ontology1#IndividualD", "http://test.com/ontology1#IndividualA").collect(Collectors.toSet());
 
         Set<Individual> individuals = ontology.getAllIndividuals();
