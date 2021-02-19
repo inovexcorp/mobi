@@ -39,9 +39,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Set;
 
 @Component(provide = BNodeService.class)
 public class SimpleBNodeService implements BNodeService {
@@ -118,7 +119,9 @@ public class SimpleBNodeService implements BNodeService {
                         if (statement.getObject() instanceof BNode) {
                             // If object is a BNode
                             if (!skolemizedBNodes.containsKey(statement.getObject())) {
-                                result.addAll(deterministicSkolemize((BNode) statement.getObject(), model, skolemizedBNodes, hashCount));
+                                Set<BNode> visited = new HashSet<>();
+                                Model cycleStmts = mf.createModel();
+                                result.addAll(deterministicSkolemize((BNode) statement.getObject(), model, skolemizedBNodes, hashCount, visited, cycleStmts));
                             }
                             if (statement.getContext().isPresent()) {
                                 result.add(statement.getSubject(), statement.getPredicate(), skolemizedBNodes.get(statement.getObject()), statement.getContext().get());
@@ -136,7 +139,9 @@ public class SimpleBNodeService implements BNodeService {
         model.subjects().stream()
                 .filter(resource -> resource instanceof BNode && !skolemizedBNodes.containsKey(resource))
                 .forEach(resource -> {
-                    result.addAll(deterministicSkolemize((BNode) resource, model, skolemizedBNodes, hashCount));
+                    Set<BNode> visited = new HashSet<>();
+                    Model cycleStmts = mf.createModel();
+                    result.addAll(deterministicSkolemize((BNode) resource, model, skolemizedBNodes, hashCount, visited, cycleStmts));
                 });
 
         return result;
@@ -148,27 +153,38 @@ public class SimpleBNodeService implements BNodeService {
      * @param bNode The BNode to skolemize.
      * @param model The Model containing data for the BNode and any attached BNode chain.
      * @param skolemizedBNodes The Map tracking previously skolemized BNodes.
+     * @param hashCount The Map tracking the usage count of hashes to handle equal (but distinct) BNodes
      * @return The Model containing all skolemized statements for the bNode and any attached BNode chains.
      */
-    private Model deterministicSkolemize(BNode bNode, Model model, Map<BNode, IRI> skolemizedBNodes, Map<Long, Integer> hashCount) {
+    private Model deterministicSkolemize(BNode bNode, Model model, Map<BNode, IRI> skolemizedBNodes,
+                                         Map<Long, Integer> hashCount, Set<BNode> visited, Model cycleStmts) {
         Model result = mf.createModel();
+        visited.add(bNode);
 
         List<String> valuesToHash = new ArrayList<>();
         model.filter(bNode, null, null, (Resource) null).stream()
                 // Sort attached nodes to handle attached blank nodes pointing to isomorphic blank nodes
                 .sorted(new ModelStatementComparator(model))
                 .forEach(statement -> {
-                    if (statement.getObject() instanceof BNode) {
+                    IRI predicate = statement.getPredicate();
+                    Value value = statement.getObject();
+                    if (value instanceof BNode) {
                         // If object is a BNode
-                        if (!skolemizedBNodes.containsKey(statement.getObject())) {
-                            result.addAll(deterministicSkolemize((BNode) statement.getObject(), model, skolemizedBNodes, hashCount));
+                        if (visited.contains(value)) {
+                            // Cycle detected
+                            cycleStmts.add(statement);
+                        } else {
+                            // No cycle
+                            if (!skolemizedBNodes.containsKey(value)) {
+                                result.addAll(deterministicSkolemize((BNode) value, model, skolemizedBNodes, hashCount, visited, cycleStmts));
+                            }
+                            valuesToHash.add(predicate.stringValue());
+                            valuesToHash.add(skolemizedBNodes.get(value).stringValue());
                         }
-                        valuesToHash.add(statement.getPredicate().stringValue());
-                        valuesToHash.add(skolemizedBNodes.get(statement.getObject()).stringValue());
                     } else {
                         // Else object is an IRI or Literal
-                        valuesToHash.add(statement.getPredicate().stringValue());
-                        valuesToHash.add(statement.getObject().stringValue());
+                        valuesToHash.add(predicate.stringValue());
+                        valuesToHash.add(value.stringValue());
                     }
                 });
         Collections.sort(valuesToHash);
@@ -186,27 +202,29 @@ public class SimpleBNodeService implements BNodeService {
 
         IRI skolemizedIRI = vf.createIRI(SKOLEMIZED_NAMESPACE, hashString);
 
-        model.filter(bNode, null, null, (Resource) null).forEach(statement -> {
-            Value value = statement.getObject() instanceof BNode ? skolemizedBNodes.get(statement.getObject()) : statement.getObject();
+        // Add skolemized statements
+        model.filter(bNode, null, null, (Resource) null).stream()
+                .filter(statement -> !cycleStmts.contains(statement))
+                .forEach(statement -> {
+                    Value value = statement.getObject() instanceof BNode ? skolemizedBNodes.get(statement.getObject()) : statement.getObject();
+                    if (statement.getContext().isPresent()) {
+                        result.add(skolemizedIRI, statement.getPredicate(), value, statement.getContext().get());
+                    } else {
+                        result.add(skolemizedIRI, statement.getPredicate(), value);
+                    }
+        });
+
+        // Add cycles targeting this node
+        cycleStmts.filter(null, null, bNode, (Resource) null).forEach(statement -> {
             if (statement.getContext().isPresent()) {
-                result.add(skolemizedIRI, statement.getPredicate(), value, statement.getContext().get());
+                result.add(skolemizedBNodes.get(statement.getSubject()), statement.getPredicate(), skolemizedIRI, statement.getContext().get());
             } else {
-                result.add(skolemizedIRI, statement.getPredicate(), value);
+                result.add(skolemizedBNodes.get(statement.getSubject()), statement.getPredicate(), skolemizedIRI);
             }
         });
+
         skolemizedBNodes.put(bNode, skolemizedIRI);
         return result;
-    }
-
-    // adapted from String.hashCode()
-    public long hash(String string) {
-        long h = 1125899906842597L; // prime
-        int len = string.length();
-
-        for (int i = 0; i < len; i++) {
-            h = 31*h + string.charAt(i);
-        }
-        return h;
     }
 
     @Override
@@ -258,7 +276,7 @@ public class SimpleBNodeService implements BNodeService {
     }
 
     /**
-     * A comparator that sorts statements based on predicate and object values ignoring blank nodes
+     * A comparator that sorts statements based on predicate and object values and attached blank nodes
      */
     private static class ModelStatementComparator implements Comparator<Statement>{
         private Model model;
@@ -273,12 +291,19 @@ public class SimpleBNodeService implements BNodeService {
         }
 
         public int compare(Statement o1, Statement o2) {
-            int o1Score = scoreValue(o1.getObject());
-            int o2Score = scoreValue(o2.getObject());
-            return Integer.compare(o1Score, o2Score);
+            long o1Score = scoreValue(o1.getObject());
+            long o2Score = scoreValue(o2.getObject());
+            return Long.compare(o1Score, o2Score);
         }
 
-        private int scoreValue(Value value) {
+        /**
+         * Returns a long representing the comparator score for the Value. Score value is based on the hash of
+         * the String value of the Value or on the hash of all the non-blank node triples of an attached blank node.
+         *
+         * @param value the v
+         * @return the long representing the comparator score for the Value.
+         */
+        private long scoreValue(Value value) {
             if (value instanceof BNode) {
                 List<String> o1Values = new ArrayList<>();
                 model.filter((BNode) value, null, null, (Resource) null).forEach(statement -> {
@@ -290,11 +315,24 @@ public class SimpleBNodeService implements BNodeService {
                     }
                 });
                 Collections.sort(o1Values);
-                int o1Hash = Objects.hash(o1Values.toArray());
-                return o1Hash;
+                return hash(String.join("", o1Values));
             } else {
-                return value.stringValue().hashCode();
+                return hash(value.stringValue());
             }
         }
+    }
+
+    /**
+     * Hashing algorithm for strings adapted from String.hashCode(). Uses a 64-bit hash (long) rather than the
+     * standard 32-bit hash (int).
+     */
+    private static long hash(String string) {
+        long h = 1125899906842597L; // prime
+        int len = string.length();
+
+        for (int i = 0; i < len; i++) {
+            h = 31*h + string.charAt(i);
+        }
+        return h;
     }
 }

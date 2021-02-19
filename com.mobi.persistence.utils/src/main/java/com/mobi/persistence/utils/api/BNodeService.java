@@ -69,7 +69,6 @@ public interface BNodeService {
      * deterministic and consistent BNode IDs. NOTE: This method:
      * <li>does not skolemize BNode named graph identifiers</li>
      * <li>does not skolemize BNode chains that do not begin with IRIs</li>
-     * <li>does not support BNode chains that include cycles</li>
      *
      * @param model Model to search for BNodes to skolemize.
      * @return Model which contains the skolemized BNodes.

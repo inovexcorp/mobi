@@ -328,6 +328,15 @@ public class SimpleBNodeServiceTest extends OrmEnabledTestCase {
         assertTrue(modelA.containsAll(modelB));
     }
 
+    @Test
+    public void skolemizeCycles_09() throws Exception {
+        Model modelA = getModelFromFile("/deterministicSkolemize/09.ttl");
+
+        modelA = service.deterministicSkolemize(modelA);
+
+        assertEquals(12, modelA.size());
+    }
+
     private Model getModelFromFile(String file) throws IOException {
         InputStream streamA = getClass().getResourceAsStream(file);
         return transformer.mobiModel(Rio.parse(streamA, "", RDFFormat.TURTLE));
