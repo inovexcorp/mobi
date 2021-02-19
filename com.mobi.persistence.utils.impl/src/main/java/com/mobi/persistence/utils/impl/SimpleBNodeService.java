@@ -158,7 +158,6 @@ public class SimpleBNodeService implements BNodeService {
      */
     private Model deterministicSkolemize(BNode bNode, Model model, Map<BNode, IRI> skolemizedBNodes,
                                          Map<Long, Integer> hashCount, Set<BNode> visited, Model cycleStmts) {
-        System.out.println("Skolemizing: " + bNode.stringValue() + " --- Depth: " + visited.size());
         Model result = mf.createModel();
         visited.add(bNode);
 
