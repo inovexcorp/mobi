@@ -192,6 +192,7 @@ public class RDFImportServiceImpl implements RDFImportService {
             parserConfig.set(BasicParserSettings.VERIFY_RELATIVE_URIS, false);
             parserConfig.set(BasicParserSettings.VERIFY_DATATYPE_VALUES, false);
             parserConfig.set(BasicParserSettings.VERIFY_URI_SYNTAX, false);
+            parserConfig.set(BasicParserSettings.PRESERVE_BNODE_IDS, true);
             inserter = new BatchGraphInserter(conn, transformer, config.getBatchSize(), graph);
         }
         if (config.getLogOutput()) {

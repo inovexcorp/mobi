@@ -82,8 +82,9 @@ import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFHandler;
+import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1194,7 +1195,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             String tmpDir = System.getProperty("java.io.tmpdir");
             Path tmpFile = Files.createFile(Paths.get(tmpDir + File.separator + UUID.randomUUID()));
             try (OutputStream outputStream = Files.newOutputStream(tmpFile)) {
-                RDFHandler writer = Rio.createWriter(RDFFormat.TRIG, outputStream);
+                RDFWriter writer = Rio.createWriter(RDFFormat.TRIG, outputStream);
+                writer.getWriterConfig().set(BasicParserSettings.PRESERVE_BNODE_IDS, true);
                 writer.startRDF();
                 Consumer<Statement> consumer = statement ->
                         com.mobi.persistence.utils.rio.Rio.write(statement, writer, sesameTransformer);
