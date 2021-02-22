@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  com.mobi.sparql.rest
+  com.mobi.persistence.utils.impl
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -33,38 +33,11 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>sparql.rest</artifactId>
+    <artifactId>persistence.utils.impl</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
     <dependencies>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.service.component.annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.annotation</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.service.metatype.annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>dataset.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>rest.util</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>rest.security</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>persistence.api</artifactId>
@@ -76,51 +49,23 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.servicemix.bundles</groupId>
-            <artifactId>org.apache.servicemix.bundles.json-lib</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.servicemix.bundles</groupId>
-            <artifactId>org.apache.servicemix.bundles.poi</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.glassfish.jersey.test-framework.providers</groupId>
-            <artifactId>jersey-test-framework-provider-jdk-http</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>repository.impl.sesame</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>persistence.utils.impl</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
+            <artifactId>rdf-orm-test</artifactId>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -130,10 +75,10 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>Mobi SPARQL Endpoint</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
+                        <Import-Package>*</Import-Package>
                         <Export-Package>
-                            com.mobi.sparql.rest
+                            com.mobi.persistence.utils.api; provide:=true
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
