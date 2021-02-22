@@ -1,0 +1,11 @@
+@prefix : <http://test.com#> .
+
+:A :pred1 "A" .
+
+_:genid001 :pred1 "001" ;
+    :pred2 :001 .
+
+:B :pred1 "B" .
+
+_:genid002 :pred1 "002" ;
+    :pred2 :002 .

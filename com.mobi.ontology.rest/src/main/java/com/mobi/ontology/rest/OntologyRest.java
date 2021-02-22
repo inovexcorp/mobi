@@ -100,6 +100,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.eclipse.rdf4j.model.impl.TreeModel;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
@@ -129,6 +130,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -140,6 +143,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -514,6 +520,7 @@ public class OntologyRest {
                                             @QueryParam("branchId") String branchIdStr,
                                             @QueryParam("commitId") String commitIdStr,
                                             @FormDataParam("file") InputStream fileInputStream) {
+        long startTime = System.currentTimeMillis();
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
@@ -546,29 +553,80 @@ public class OntologyRest {
                 }
             }
 
-            Model changedOnt = Models.createModel(fileInputStream, sesameTransformer,
-                    new RioFunctionalSyntaxParserFactory().getParser(),
-                    new RioManchesterSyntaxParserFactory().getParser(),
-                    new RioOWLXMLParserFactory().getParser());
-            Model currentOnt = catalogManager.getCompiledResource(recordId, branchId, commitId);
-            if (!OntologyModels.findFirstOntologyIRI(changedOnt, valueFactory).isPresent()) {
-                OntologyModels.findFirstOntologyIRI(changedOnt, valueFactory)
-                        .ifPresent(iri -> changedOnt.add(iri, valueFactory.createIRI(RDF.TYPE.stringValue()),
+            final CompletableFuture<Model> uploadedModelFuture = CompletableFuture.supplyAsync(() -> {
+                try {
+                    long startTimeF = System.currentTimeMillis();
+                    Model temp = getUploadedModel(fileInputStream);
+                    log.trace("uploadedModelFuture took " + (System.currentTimeMillis() - startTimeF));
+                    return temp;
+                } catch (IOException e) {
+                    throw new CompletionException(e);
+                }
+            });
+
+            final CompletableFuture<Model> currentModelFuture = CompletableFuture.supplyAsync(() -> {
+                long startTimeF = System.currentTimeMillis();
+                Model temp = getCurrentModel(recordId, branchId, commitId);
+                log.trace("currentModelFuture took " + (System.currentTimeMillis() - startTimeF));
+                return temp;
+            });
+
+            log.trace("uploadChangesToOntology futures creation took " + (System.currentTimeMillis() - startTime));
+
+            Model currentModel = currentModelFuture.get();
+            Model uploadedModel = uploadedModelFuture.get();
+            
+            if (!OntologyModels.findFirstOntologyIRI(uploadedModel, valueFactory).isPresent()) {
+                OntologyModels.findFirstOntologyIRI(currentModel, valueFactory)
+                        .ifPresent(iri -> uploadedModel.add(iri, valueFactory.createIRI(RDF.TYPE.stringValue()),
                                 valueFactory.createIRI(OWL.ONTOLOGY.stringValue())));
             }
 
-            Difference diff = catalogManager.getDiff(currentOnt, changedOnt);
+            log.trace("uploadChangesToOntology futures completion took " + (System.currentTimeMillis() - startTime));
+
+            Difference diff = catalogManager.getDiff(currentModel, uploadedModel);
+
+            log.trace("uploadChangesToOntology getDiff took " + (System.currentTimeMillis() - startTime));
 
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
             catalogManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
                     diff.getAdditions(), diff.getDeletions());
+
+            log.trace("uploadChangesToOntology getInProgressCommitIRI took " + (System.currentTimeMillis() - startTime));
             return Response.ok().build();
 
-        } catch (IllegalArgumentException | MobiException | IOException e) {
+        } catch (IllegalArgumentException | MobiException | ExecutionException |
+                InterruptedException | CompletionException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
+            log.trace("uploadChangesToOntology took " + (System.currentTimeMillis() - startTime));
+            log.trace("uploadChangesToOntology getGarbageCollectionTime " + (getGarbageCollectionTime()));
         }
+    }
+    
+    private static long getGarbageCollectionTime() {
+        long collectionTime = 0;
+        for (GarbageCollectorMXBean garbageCollectorMXBean : ManagementFactory.getGarbageCollectorMXBeans()) {
+            collectionTime += garbageCollectorMXBean.getCollectionTime();
+        }
+        return collectionTime;
+    }
+
+    private Model getUploadedModel(InputStream fileInputStream) throws IOException {
+        // Load uploaded ontology into a skolemized model
+        final Model changedOnt = Models.createSkolemizedModel(fileInputStream, modelFactory, sesameTransformer, bNodeService,
+                new RioFunctionalSyntaxParserFactory().getParser(),
+                new RioManchesterSyntaxParserFactory().getParser(),
+                new RioOWLXMLParserFactory().getParser());
+
+
+        return changedOnt;
+    }
+
+    private Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId) {
+        // Load existing ontology into a skolemized model
+        return bNodeService.deterministicSkolemize(catalogManager.getCompiledResource(recordId, branchId, commitId));
     }
 
     /**
