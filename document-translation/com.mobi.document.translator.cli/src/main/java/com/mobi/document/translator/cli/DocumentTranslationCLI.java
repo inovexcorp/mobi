@@ -138,7 +138,7 @@ public class DocumentTranslationCLI implements Action {
                 // Find the first matching the above filter predicate.
                 .findFirst()
                 // Or else throw an exception.
-                .orElseThrow(() -> new UnsupportedOperationException("No JSON translator was found in the system"));
+                .orElseThrow(() -> new UnsupportedOperationException("No translator was found in the system for that file type"));
     }
 
     private static void validateOutputLocation(File loc) throws IOException {
