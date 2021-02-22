@@ -1538,9 +1538,16 @@ public class SimpleOntology implements Ontology {
             conn.remove(datasetIRI, vf.createIRI(Dataset.defaultNamedGraph_IRI), null, datasetIRI);
 
             // Add the default graphs and imports statements for the updated closure
+            IRI ontologyIRI = getOntologyIRI(conn);
             importClosureIris.forEach(iri -> {
-                IRI importDatasetIRI = OntologyDatasets.createSystemDefaultNamedGraphIRI(getDatasetIRI(iri), vf);
-                conn.addDefaultNamedGraph(importDatasetIRI);
+                IRI importDatasetIRI = getDatasetIRI(iri);
+                if (importDatasetIRI.equals(ontologyIRI)) {
+                    // DatasetIRI doesn't exist for newly updated ontologyIRI
+                    conn.addDefaultNamedGraph(conn.getSystemDefaultNamedGraph());
+                } else {
+                    IRI importDatasetSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(importDatasetIRI, vf);
+                    conn.addDefaultNamedGraph(importDatasetSdNg);
+                }
                 conn.add(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), iri, datasetIRI);
             });
             // Add the unresolved statements for the updated closure

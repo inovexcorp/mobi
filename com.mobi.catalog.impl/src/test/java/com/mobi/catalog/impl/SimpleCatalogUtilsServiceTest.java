@@ -2100,6 +2100,26 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         }
     }
 
+    @Test
+    public void getCompiledResourceWithIdBlankNodeTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank1");
+            Resource blankNode = VALUE_FACTORY.createBNode("genid1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(blankNode, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
+            expected.add(blankNode, titleIRI, VALUE_FACTORY.createLiteral("Test Blank 1 Title"));
+
+            Model model = service.getCompiledResource(commitId, conn);
+            model.forEach(statement -> {
+                assertTrue(statement.getSubject() instanceof BNode);
+                Statement temp = VALUE_FACTORY.createStatement(blankNode, statement.getPredicate(), statement.getObject());
+                assertTrue(expected.contains(temp));
+            });
+            assertEquals(expected.size(), model.size());
+        }
+    }
+
     /* getCompiledResourceFile(Resource, RepositoryConnection) */
 
     @Test
@@ -2139,6 +2159,27 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         }
     }
 
+    @Test
+    public void getCompiledResourceFileWithIdBlankNodeTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank1");
+            Resource blankNode = VALUE_FACTORY.createBNode("genid1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(blankNode, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
+            expected.add(blankNode, titleIRI, VALUE_FACTORY.createLiteral("Test Blank 1 Title"));
+
+            File file = service.getCompiledResourceFile(commitId, conn);
+            Model model = Models.createModel(new FileInputStream(file), transformer);
+            model.forEach(statement -> {
+                assertTrue(statement.getSubject() instanceof BNode);
+                Statement temp = VALUE_FACTORY.createStatement(blankNode, statement.getPredicate(), statement.getObject());
+                assertTrue(expected.contains(temp));
+            });
+            assertEquals(expected.size(), model.size());
+        }
+    }
+
     /* getCompiledResource(List<Resource>, RepositoryConnection) */
 
     @Test
@@ -2171,6 +2212,26 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             Model result = service.getCompiledResource(commits, conn);
             assertEquals(expected.size(), result.size());
             expected.forEach(statement -> assertTrue(result.contains(statement)));
+        }
+    }
+
+    @Test
+    public void getCompiledResourceWithListBlankNodeTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank0")).collect(Collectors.toList());
+            Resource blankNode = VALUE_FACTORY.createBNode("genid1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(blankNode, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
+            expected.add(blankNode, titleIRI, VALUE_FACTORY.createLiteral("Test Blank 1 Title"));
+
+            Model model = service.getCompiledResource(commits, conn);
+            model.forEach(statement -> {
+                assertTrue(statement.getSubject() instanceof BNode);
+                Statement temp = VALUE_FACTORY.createStatement(blankNode, statement.getPredicate(), statement.getObject());
+                assertTrue(expected.contains(temp));
+            });
+            assertEquals(expected.size(), model.size());
         }
     }
 
@@ -2210,6 +2271,27 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             assertEquals(expected.size(), model.size());
             expected.forEach(statement -> assertTrue(model.contains(statement)));
             file.delete();
+        }
+    }
+
+    @Test
+    public void getCompiledResourceFileWithListBlankNodeTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank0")).collect(Collectors.toList());
+            Resource blankNode = VALUE_FACTORY.createBNode("genid1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(blankNode, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
+            expected.add(blankNode, titleIRI, VALUE_FACTORY.createLiteral("Test Blank 1 Title"));
+
+            File file = service.getCompiledResourceFile(commits, conn);
+            Model model = Models.createModel(new FileInputStream(file), transformer);
+            model.forEach(statement -> {
+                assertTrue(statement.getSubject() instanceof BNode);
+                Statement temp = VALUE_FACTORY.createStatement(blankNode, statement.getPredicate(), statement.getObject());
+                assertTrue(expected.contains(temp));
+            });
+            assertEquals(expected.size(), model.size());
         }
     }
 
