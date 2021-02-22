@@ -38,7 +38,6 @@ import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
@@ -953,12 +952,13 @@ public interface CatalogManager {
     Set<Conflict> getConflicts(Resource leftId, Resource rightId);
 
     /**
-     * Gets the Difference, consisting of Models of additions and deletions, made between the original and the changed
-     * Model.
+     * Gets the Difference, consisting of Models of additions and deletions, made by comparing the provided original
+     * and changed Models. The Difference is created regardless of statement context, meaning only triples are compared.
+     * The resulting Difference retains the original statement contexts.
      *
      * @param original The original Model.
      * @param changed  The changed Model.
-     * @return The Difference between the two Models.
+     * @return The Difference between the two Models regardless of statement context.
      */
     Difference getDiff(Model original, Model changed);
 
