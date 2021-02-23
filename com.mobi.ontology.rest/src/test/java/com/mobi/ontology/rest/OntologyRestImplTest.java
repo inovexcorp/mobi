@@ -4798,7 +4798,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testUploadChangesToOntologyWithoutCommitId() {
-        when(catalogManager.getCompiledResource(eq(commitId), eq(branchId), eq(recordId)))
+        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(ontologyModel);
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
                 any(User.class))).thenReturn(Optional.empty());

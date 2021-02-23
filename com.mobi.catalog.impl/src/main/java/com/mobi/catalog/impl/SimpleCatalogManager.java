@@ -1094,6 +1094,17 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public Difference getCommitDifferenceForSubject(Resource subjectId, Resource commitId) {
+        long start = System.currentTimeMillis();
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            return utils.getCommitDifferenceForSubject(subjectId, commitId, conn);
+        } finally {
+            log.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    @Override
     public PagedDifference getCommitDifferencePaged(Resource commitId, int limit, int offset) {
         long start = System.currentTimeMillis();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -1260,21 +1271,24 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Difference getDiff(Model original, Model changed) {
-        Model originalCopy = mf.createModel(original);
-        Model changedCopy = mf.createModel(changed);
+        Model additions = mf.createModel();
+        Model deletions = mf.createModel();
+
         original.forEach(statement -> {
-            Resource subject = statement.getSubject();
-            IRI predicate = statement.getPredicate();
-            Value object = statement.getObject();
-            if (changedCopy.contains(subject, predicate, object)) {
-                originalCopy.remove(subject, predicate, object);
-                changedCopy.remove(subject, predicate, object);
+            if (!changed.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())) {
+                deletions.add(statement);
+            }
+        });
+
+        changed.forEach(statement -> {
+            if (!original.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())) {
+                additions.add(statement);
             }
         });
 
         return new Difference.Builder()
-                .additions(changedCopy)
-                .deletions(originalCopy)
+                .additions(additions)
+                .deletions(deletions)
                 .build();
     }
 

@@ -721,6 +721,20 @@ public interface CatalogManager {
     Difference getCommitDifference(Resource commitId);
 
     /**
+     * Gets the addition and deletion statements for a specific entity of a Commit identified by the provided Resource as a
+     * Difference. The statements contained in the returned Difference will have a context that matches the tracked quad.
+     * That is, tracked triples will have no context and tracked quads will have a context that matches the data named
+     * graph.
+     *
+     * @param subjectId The Resource representing the subject to retrieve additions and deletions for.
+     * @param commitId The Resource identifying the Commit to retrieve the Difference from.
+     * @return A Difference object containing the addition and deletion statements for an entity of a Commit.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found
+     * @throws IllegalStateException    Thrown if the Commit does not have the additions/deletions set.
+     */
+    Difference getCommitDifferenceForSubject(Resource subjectId, Resource commitId);
+
+    /**
      * Gets the addition and deletion statements of a Commit identified by the provided Resource as a PagedDifference.
      * The statements returned will be paged by subject using the provided limit and offset. The statements contained in
      * the returned Difference will have a context that matches the tracked quad. That is, tracked triples will have no
@@ -938,12 +952,13 @@ public interface CatalogManager {
     Set<Conflict> getConflicts(Resource leftId, Resource rightId);
 
     /**
-     * Gets the Difference, consisting of Models of additions and deletions, made between the original and the changed
-     * Model.
+     * Gets the Difference, consisting of Models of additions and deletions, made by comparing the provided original
+     * and changed Models. The Difference is created regardless of statement context, meaning only triples are compared.
+     * The resulting Difference retains the original statement contexts.
      *
      * @param original The original Model.
      * @param changed  The changed Model.
-     * @return The Difference between the two Models.
+     * @return The Difference between the two Models regardless of statement context.
      */
     Difference getDiff(Model original, Model changed);
 
