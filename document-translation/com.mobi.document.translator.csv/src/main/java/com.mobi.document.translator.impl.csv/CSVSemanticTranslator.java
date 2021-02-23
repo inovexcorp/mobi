@@ -25,11 +25,8 @@ package com.mobi.document.translator.impl.csv;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import com.mobi.document.translator.AbstractSemanticTranslator;
+import com.mobi.document.translator.expression.context.impl.DefaultClassIriExpressionContext;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
@@ -42,12 +39,8 @@ import com.mobi.document.translator.expression.IriExpressionProcessor;
 import com.mobi.document.translator.ontology.ExtractedClass;
 import com.mobi.document.translator.ontology.ExtractedDatatypeProperty;
 import com.mobi.document.translator.ontology.ExtractedOntology;
-import com.mobi.document.translator.stack.AbstractStackingSemanticTranslator;
-import com.mobi.document.translator.stack.StackingSemanticTranslator;
-import com.opencsv.CSVParser;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
-import com.opencsv.CSVReaderHeaderAware;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +50,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import org.apache.commons.io.FilenameUtils;
 import java.util.Map;
 import java.util.Optional;
 
@@ -64,6 +58,12 @@ import java.util.Optional;
 public class CSVSemanticTranslator extends AbstractSemanticTranslator {
 
     private static final Logger LOG = LoggerFactory.getLogger(CSVSemanticTranslator.class);
+    private FilenameUtils Util =  new FilenameUtils();
+
+    private static final String DEFAULT_CLASS_IRI_EXPRESSION = "getOntologyIri().concat('#').concat(getName())";
+    private static final String DEFAULT_PROPERTY_IRI_EXPRESSION = "getOntologyIri().concat('#_').concat(getName())";
+
+
 
     @Reference
     public void setModelFactory(ModelFactory modelFactory) {
@@ -74,7 +74,13 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
 
     @Override
     public Model translate(Path rawFile, ExtractedOntology managedOntology) throws SemanticTranslationException {
+        final Model result = modelFactory.createModel();
+
         try (final InputStream is = new FileInputStream(rawFile.toFile())) {
+            String className = Util.removeExtension(rawFile.getFileName().toString());
+            final IRI ClassIRI = generateClassIri(managedOntology, className, className);
+            result.add(ClassIRI, getRdfType(), ClassIRI.get);
+
             return translate(is, rawFile.toAbsolutePath().toString(), managedOntology);
         } catch (IOException e) {
             throw new SemanticTranslationException("Issue reading specified file to extract meaning", e);
@@ -83,7 +89,7 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
 
     @Override
     public Model translate(InputStream dataStream, String entityIdentifier, ExtractedOntology managedOntology) throws SemanticTranslationException {
-        final Model result = modelFactory.createModel();
+
 
         try {
             String[] values;
@@ -92,7 +98,8 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
             String[] headers = reader.readNext();
 
             for (String header: headers){
-                System.out.println(header);
+
+
             }
 
         } catch (IOException e) {
@@ -102,8 +109,11 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
         return result;
     }
 
-    private void convertFile(){
-
+    protected IRI generateClassIri(final ExtractedOntology managedOntology, final String name, final String address)
+            throws SemanticTranslationException {
+        final String expression = managedOntology.getSpelClassUri().orElse(DEFAULT_CLASS_IRI_EXPRESSION);
+        return this.expressionProcessor.processExpression(expression,
+                new DefaultClassIriExpressionContext(managedOntology, name, address));
     }
 
 }
