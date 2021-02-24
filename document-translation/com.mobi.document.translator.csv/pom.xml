@@ -75,11 +75,11 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>Mobi CSV Document Translator</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package>
-                            com.mobi.document.translator; provide:=true
-                            com.mobi.document.translator.stack; provide:=true
-
-                        </Export-Package>
+                        <Import-Package>com.mobi.document.translator.expression,</Import-Package>
+<!--                        <Export-Package>-->
+<!--                            com.mobi.document.translator; provide:=true-->
+<!--                            com.mobi.document.translator.stack; provide:=true-->
+<!--                        </Export-Package>-->
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
