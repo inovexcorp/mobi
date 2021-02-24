@@ -20,55 +20,61 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { find } from 'lodash';
+import { find, cloneDeep } from 'lodash';
+import { OnInit, Component, Inject } from '@angular/core';
+import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 
-import './passwordTab.component.scss';
-
-const template = require('./passwordTab.component.html');
+import { checkPasswords } from '../../../shared/validators/checkPasswords.validator';
 
 /**
- * @ngdoc component
- * @name settings.component:passwordTab
- * @requires shared.service:userManagerService
- * @requires shared.service:loginManagerService
+ * @name settings.PasswordTabComponent
  *
- * @description
- * `passwordTab` is a component that creates a Bootstrap `row` with a {@link shared.component:block block} containing a
- * form allowing the current user to change their password. The user must enter their current password in order to make
- * a change. The new password is confirmed within a
- * {@link shared.component:passwordConfirmInput passwordConfirmInput}.
+ * `passwordTab` is a component that creates a Bootstrap `row` with a form allowing the current user to change their
+ * password. The user must enter their current password in order to make a change. The new password is confirmed within
+ * a separate input.
  */
-const passwordTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: passwordTabComponentCtrl
-};
+@Component({
+    selector: 'password-tab',
+    templateUrl: './passwordTab.component.html'
+})
+export class PasswordTabComponent implements OnInit {
+    currentUser: any = {};
+    errorMessage: string;
+    passwordForm = this.fb.group({
+        currentPassword: ['', [Validators.required]],
+        newPassword: this.fb.group({
+            password: ['', [Validators.required]],
+            confirmPassword: ['', {updateOn: 'blur', validators: [Validators.required]}]
+        }, { validator: checkPasswords })
+    });
+   
+    constructor(@Inject('userManagerService') private um, @Inject('loginManagerService') private lm,
+        @Inject('utilService') private util, private fb: FormBuilder) {}
 
-passwordTabComponentCtrl.$inject = ['userManagerService', 'loginManagerService', 'utilService'];
-
-function passwordTabComponentCtrl(userManagerService, loginManagerService, utilService) {
-    var dvm = this;
-    var util = utilService;
-    dvm.um = userManagerService;
-    dvm.lm = loginManagerService;
-    dvm.currentUser = undefined;
-
-    dvm.$onInit = function() {
-        dvm.currentUser = angular.copy(find(dvm.um.users, {username: dvm.lm.currentUser}));
+    ngOnInit(): void {
+        this.currentUser = cloneDeep(find(this.um.users, { username: this.lm.currentUser }));
+        if (this.currentUser.external) {
+            this.disableAllFields(this.passwordForm);
+        }
     }
-    dvm.save = function() {
-        dvm.um.changePassword(dvm.lm.currentUser, dvm.currentPassword, dvm.password)
-            .then(response => {
-                dvm.errorMessage = '';
-                util.createSuccessToast('Password successfully saved');
-                dvm.currentPassword = '';
-                dvm.password = '';
-                dvm.confirmedPassword = '';
-                dvm.form.$setPristine();
-            }, error => dvm.errorMessage = error);
+
+    save(): void {
+        this.um.changePassword(this.lm.currentUser, this.passwordForm.controls.currentPassword.value, this.passwordForm.get('newPassword.password').value)
+            .then(() => {
+                this.errorMessage = '';
+                this.util.createSuccessToast('Password successfully saved');
+                this.passwordForm.reset();
+            }, error => this.errorMessage = error);
+    }
+
+    disableAllFields(formGroup: FormGroup): void {
+        Object.keys(formGroup.controls).forEach(controlName => {
+            let temp = formGroup.get(controlName)
+            if (temp instanceof FormGroup) {
+                this.disableAllFields(temp);
+            } else {
+                temp.disable();
+            }
+        });
     }
 }
-
-export default passwordTabComponent;

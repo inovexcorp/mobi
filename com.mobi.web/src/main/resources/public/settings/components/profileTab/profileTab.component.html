@@ -21,23 +21,27 @@
   #L%
   -->
 <div class="profile-tab row h-100 py-2">
-    <div class="col-6 offset-3">
-        <block class="h-100">
-            <block-content>
-                <h1>{{dvm.currentUser.username}}</h1>
-                <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-                <p ng-if="dvm.success && dvm.form.$pristine" class="text-success">
-                    <i class="fa fa-check fa-fw"></i><span>Profile successfully saved</span>
-                </p>
-                <form name="dvm.form">
-                    <text-input bind-model="dvm.currentUser.firstName" change-event="dvm.currentUser.firstName = value" input-name="'firstName'" display-text="'First Name'" muted-text="'(Optional)'" is-valid="dvm.form.firstName.$dirty && dvm.form.firstName.$valid" is-invalid="dvm.form.firstName.$dirty && dvm.form.firstName.$invalid" is-disabled-when="dvm.currentUser.external"></text-input>
-                    <text-input bind-model="dvm.currentUser.lastName" change-event="dvm.currentUser.lastName = value" input-name="'lastName'" display-text="'Last Name'" muted-text="'(Optional)'" is-valid="dvm.form.lastName.$dirty && dvm.form.lastName.$valid" is-invalid="dvm.form.lastName.$dirty && dvm.form.lastName.$invalid" is-disabled-when="dvm.currentUser.external"></text-input>
-                    <email-input bind-model="dvm.currentUser.email" change-event="dvm.currentUser.email = value" input-name="'email'" is-valid="dvm.form.email.$dirty && dvm.form.email.$valid" is-invalid="dvm.form.email.$dirty && dvm.form.email.$invalid" muted-text="'(Optional)'" is-disabled-when="dvm.currentUser.external"></email-input>
-                </form>
-            </block-content>
-            <block-footer>
-                <button class="btn btn-primary" ng-click="dvm.save()" ng-disabled="dvm.form.$pristine || dvm.form.$invalid || dvm.currentUser.external">Save</button>
-            </block-footer>
-        </block>
+    <div class="col-6 offset-3 mat-elevation-z4 tab-box">
+        <h1 class="admin-top">{{currentUser.username}}</h1>
+        <form [formGroup]="profileForm" (ngSubmit)="save()">
+            <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+            <p *ngIf="success && profileForm.pristine" class="text-success">
+                <i class="fa fa-check fa-fw"></i><span>Profile successfully saved</span>
+            </p>
+            <mat-form-field class="w-100">
+                <mat-label>First Name <small class="text-muted">(Optional)</small></mat-label>
+                <input matInput name="firstName" formControlName="firstName">
+            </mat-form-field>
+            <mat-form-field class="w-100">
+                <mat-label>Last Name <small class="text-muted">(Optional)</small></mat-label>
+                <input matInput name="lastName" formControlName="lastName">
+            </mat-form-field>
+            <mat-form-field class="w-100">
+                <mat-label>Email <small class="text-muted">(Optional)</small></mat-label>
+                <input matInput name="email" formControlName="email">
+                <mat-error *ngIf="profileForm.controls.email.invalid">Not a valid email</mat-error>
+            </mat-form-field>
+            <button mat-raised-button color="primary" type="submit" [disabled]="profileForm.pristine || profileForm.invalid || currentUser.external">Save</button>
+        </form>
     </div>
 </div>

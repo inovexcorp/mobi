@@ -49,7 +49,6 @@ import emailInputComponent from './components/emailInput/emailInput.component';
 import entityDatesComponent from './components/entityDates/entityDates.component';
 import entityDescriptionComponent from './components/entityDescription/entityDescription.component';
 import fileInputComponent from './components/fileInput/fileInput.component';
-import infoMessageComponent from './components/infoMessage/infoMessage.component';
 import warningMessageComponent from './components/warningMessage/warningMessage.component';
 import inlineEditComponent from './components/inlineEdit/inlineEdit.component';
 import iriSelectComponent from './components/iriSelect/iriSelect.component';
@@ -150,6 +149,7 @@ import {
 } from '../ajs.upgradedProviders';
 
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
+import { InfoMessageComponent } from './components/infoMessage/infoMessage.component';
 import { WindowRef } from "./services/windowRef.service";
 
 /**
@@ -165,16 +165,19 @@ import { WindowRef } from "./services/windowRef.service";
         ReactiveFormsModule
     ],
     declarations: [
-        ErrorDisplayComponent
+        ErrorDisplayComponent,
+        InfoMessageComponent
     ],
     entryComponents: [
-        ErrorDisplayComponent
+        ErrorDisplayComponent,
+        InfoMessageComponent
     ],
     exports: [
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
         ErrorDisplayComponent,
+        InfoMessageComponent
     ],
     providers: [
         loginManagerServiceProvider,
@@ -213,7 +216,6 @@ angular.module('shared', [])
     .component('entityDates', entityDatesComponent)
     .component('entityDescription', entityDescriptionComponent)
     .component('fileInput', fileInputComponent)
-    .component('infoMessage', infoMessageComponent)
     .component('warningMessage', warningMessageComponent)
     .component('inlineEdit', inlineEditComponent)
     .component('iriSelect', iriSelectComponent)
@@ -297,4 +299,5 @@ angular.module('shared', [])
     .service('utilService', utilService)
     .factory('clickAnywhereButHereService', clickAnywhereButHereService)
     .service('yasguiService',yasguiService)
-    .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory);
+    .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory)
+    .directive('infoMessage', downgradeComponent({component: InfoMessageComponent}) as angular.IDirectiveFactory);

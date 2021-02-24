@@ -20,35 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import './settingsPage.component.scss';
+import { Component } from '@angular/core';
 
-const template = require('./settingsPage.component.html');
+import './settingsPage.component.scss';
 
 /**
  * @ngdoc component
  * @name settings.component:settingsPage
  *
  * @description
- * `settingsPage` is a component which creates a {@link shared.component:tabset tabset} with
- * {@link shared.component:tab tabs} for different settings pertaining to the current user. The tabs are
- * {@link settings.component:profileTab profileTab}, {@link settings.component:passwordTab passwordTab}, and the
- * {@link settings.component:preferencesTab preferencesTab}.
+ * `settingsPage` is a component which creates a `mat-tab-group` with tabs for different settings pertaining to the
+ * current user. The tabs are {@link settings.component:profileTab profileTab},
+ * {@link settings.component:passwordTab passwordTab}, and the {@link settings.component:preferencesTab preferencesTab}.
  */
-const settingsPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: settingsPageComponentCtrl
-};
-
-function settingsPageComponentCtrl() {
-    var dvm = this;
-    dvm.tabs = {
-        profile: true,
-        group: false,
-        password: false,
-        preferences: false
-    };
+@Component({
+    selector: 'settings-page',
+    templateUrl: './settingsPage.component.html'
+})
+export class SettingsPageComponent {
+    constructor() {}
 }
-
-export default settingsPageComponent;

@@ -21,24 +21,18 @@
  * #L%
  */
 
-const template = require('./infoMessage.component.html');
+import { Component } from "@angular/core";
 
 /**
- * @ngdoc component
- * @name shared.component:infoMessage
+ * @name shared.InfoMessageComponent
  *
- * @description
  * `infoMessage` is a component that creates a styled message for displaying informative messages from the
  * transcluded content. The content will have blue colored text and will be next to an (i) icon.
  */
-const infoMessageComponent = {
-    template,
-    transclude: true,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: infoMessageComponentCtrl
-};
-
-function infoMessageComponentCtrl() {}
-
-export default infoMessageComponent;
+@Component({
+    selector: 'info-message',
+    templateUrl: './infoMessage.component.html'
+})
+export class InfoMessageComponent {
+    constructor() {}
+}

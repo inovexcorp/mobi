@@ -21,38 +21,27 @@
  * #L%
  */
 import { filter, includes } from 'lodash';
-
-import './groupTab.component.scss';
-
-const template = require('./groupTab.component.html');
+import { Component, Inject, OnInit } from '@angular/core';
 
 /**
- * @ngdoc component
- * @name settings.component:groupTab
- * @requires shared.service:userManagerService
- * @requires shared.service:loginManagerService
+ * @name settings.GroupTabComponent
  *
- * @description
  * `groupTab` is a component which creates a Bootstrap list of groups a user is in.
  */
-const groupTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: groupTabComponentCtrl
-};
+@Component({
+    selector: 'group-tab',
+    templateUrl: './groupTab.component.html'
+})
+export class GroupTabComponent implements OnInit {
+    groups = [];
 
-groupTabComponentCtrl.$inject = ['userManagerService', 'loginManagerService'];
+    constructor(@Inject('userManagerService') private um, @Inject('loginManagerService') private lm) {}
 
-function groupTabComponentCtrl(userManagerService, loginManagerService) {
-    var dvm = this;
-    dvm.um = userManagerService;
-    dvm.lm = loginManagerService;
-    dvm.groups = [];
+    ngOnInit(): void {
+        this.groups = filter(this.um.groups, group => includes(group.members, this.lm.currentUser));
+    }
 
-    dvm.$onInit = function() {
-        dvm.groups = filter(dvm.um.groups, group => includes(group.members, dvm.lm.currentUser));
+    trackByFn(group): string {
+        return group.title;
     }
 }
-
-export default groupTabComponent;

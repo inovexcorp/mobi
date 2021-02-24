@@ -24,5 +24,35 @@
 @import "../../../css/variables";
 
 .settings-page {
-    background-color: var(--light);
+    .mat-tab-group {
+        height: 100%;
+
+        .mat-tab-labels {
+            justify-content: center;
+        }
+        .mat-tab-header {
+            background-color: white;
+        }
+        .mat-tab-body-wrapper {
+            flex: 1;
+            min-height: 0;
+            background-color: rgb(245, 245, 245);
+        }
+        .tab-box {
+            background-color: white;
+
+            .admin-top {
+                margin-top: 15px;
+            }
+            .admin-label {
+                font-size: 16px;
+            }
+            .admin-input {
+                font-size: 20px;
+            }
+        }
+        mat-form-field.mat-form-field {
+            font-size: 16px;
+        }
+    }
 }
