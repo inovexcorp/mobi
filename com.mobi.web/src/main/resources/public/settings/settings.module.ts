@@ -70,4 +70,4 @@ angular.module('settings', [])
     .directive('settingsPage', downgradeComponent({component: SettingsPageComponent}) as angular.IDirectiveFactory)
     .directive('preferencesTab', downgradeComponent({component: PreferencesTabComponent}) as angular.IDirectiveFactory)
     .directive('preferenceGroup', downgradeComponent({component: PreferenceGroupComponent}) as angular.IDirectiveFactory)
-    .directive('preferenceForm', downgradeComponent({component: PreferenceFormComponent}) as angular.IDirectiveFactory)
+    .directive('preferenceForm', downgradeComponent({component: PreferenceFormComponent}) as angular.IDirectiveFactory);
