@@ -26,12 +26,10 @@ package com.mobi.document.translator.impl.csv;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.document.translator.AbstractSemanticTranslator;
+import com.mobi.document.translator.expression.IriExpressionProcessor;
 import com.mobi.document.translator.expression.context.impl.DefaultClassIriExpressionContext;
 import com.mobi.document.translator.expression.context.impl.DefaultPropertyIriExpressionContext;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Value;
+import com.mobi.rdf.api.*;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.document.translator.SemanticTranslationException;
@@ -53,7 +51,7 @@ import java.nio.file.Path;
 import org.apache.commons.io.FilenameUtils;
 
 
-@Component(immediate = true, provide = {SemanticTranslator.class, DefaultClassIriExpressionContext.class, DefaultPropertyIriExpressionContext.class})
+@Component(immediate = true, provide = {SemanticTranslator.class})
 public class CSVSemanticTranslator extends AbstractSemanticTranslator {
 
     private static final Logger LOG = LoggerFactory.getLogger(CSVSemanticTranslator.class);
@@ -62,9 +60,10 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
     private static final String DEFAULT_CLASS_IRI_EXPRESSION = "getOntologyIri().concat('#').concat(getName())";
     private static final String DEFAULT_PROPERTY_IRI_EXPRESSION = "getOntologyIri().concat('#_').concat(getName())";
 
-    final Model result = modelFactory.createModel();
-    private IRI classIRI;
-
+    @Reference
+    public void setValueFactory(ValueFactory valueFactory) {
+        super.valueFactory = valueFactory;
+    }
 
     @Reference
     public void setModelFactory(ModelFactory modelFactory) {
@@ -76,10 +75,18 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
         super.ormFactoryRegistry = ormFactoryRegistry;
     }
 
+    @Reference
+    public void setExpressionProcessor(IriExpressionProcessor expressionProcessor) {
+        super.expressionProcessor = expressionProcessor;
+    }
+
     private <X extends Thing> OrmFactory<X> factory(Class<X> clazz) throws SemanticTranslationException {
         return ormFactoryRegistry.getFactoryOfType(clazz)
                 .orElseThrow(() -> new SemanticTranslationException("ORM services not initialized correctly!"));
     }
+
+    protected IRI classIRI;
+    protected Model result;
 
     public CSVSemanticTranslator() {
         super("csv", ".csv");
@@ -87,14 +94,15 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
 
     @Override
     public Model translate(Path rawFile, ExtractedOntology managedOntology) throws SemanticTranslationException {
+        final Model result = modelFactory.createModel();
+        this.result = result;
 
         try (final InputStream is = new FileInputStream(rawFile.toFile())) {
-
             String className = Util.removeExtension(rawFile.getFileName().toString());
-//            classIRI = generateClassIri(managedOntology, className);
-//            final ExtractedClass classInstance = getOrCreateClass(managedOntology, classIRI, className);
-//
-//            result.add(classIRI, getRdfType(), classInstance.getResource());
+            classIRI = generateClassIri(managedOntology, className);
+            final ExtractedClass classInstance = getOrCreateClass(managedOntology, classIRI, className);
+
+            result.add(classIRI, getRdfType(), classInstance.getResource());
 
             return translate(is, rawFile.toAbsolutePath().toString(), managedOntology);
         } catch (IOException e) {
@@ -104,13 +112,14 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
 
     @Override
     public Model translate(InputStream dataStream, String entityIdentifier, ExtractedOntology managedOntology) throws SemanticTranslationException {
+
         try {
 
             CSVReader reader = new CSVReaderBuilder(new InputStreamReader(dataStream)).withMultilineLimit(1).build();
             String[] headers = reader.readNext();
 
             for (String header : headers) {
-//                addDatatypeProperty(managedOntology, header, valueFactory.createLiteral(header));
+                addDatatypeProperty(managedOntology, header, valueFactory.createLiteral(header));
             }
 
         } catch (IOException e) {
@@ -121,12 +130,12 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
         return result;
     }
 
-//    protected IRI generateClassIri(final ExtractedOntology managedOntology, final String name)
-//            throws SemanticTranslationException {
-//        final String expression = managedOntology.getSpelClassUri().orElse(DEFAULT_CLASS_IRI_EXPRESSION);
-//        return this.expressionProcessor.processExpression(expression,
-//                new DefaultClassIriExpressionContext(managedOntology, name, name + "instance."));
-//    }
+    protected IRI generateClassIri(final ExtractedOntology managedOntology, final String name)
+            throws SemanticTranslationException {
+        final String expression = managedOntology.getSpelClassUri().orElse(DEFAULT_CLASS_IRI_EXPRESSION);
+        return this.expressionProcessor.processExpression(expression,
+                new DefaultClassIriExpressionContext(managedOntology, name, name + "instance."));
+    }
 
     protected ExtractedClass getOrCreateClass(ExtractedOntology managedOntology, IRI classIri, String name)
             throws SemanticTranslationException {
@@ -140,42 +149,40 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
                 });
         return extractedClass;
     }
-}
 
-//    private void addDatatypeProperty(final ExtractedOntology managedOntology, final String propertyName, final Value value)
-//            throws SemanticTranslationException {
-//
-//        getOrCreateDatatypeProperty(managedOntology, classIRI, getDatatypeRange(), propertyName);
-////        item.getProperties().add((IRI) datatypeProperty.getResource(), value);
-//    }
-//
-//    private void getOrCreateDatatypeProperty(ExtractedOntology managedOntology, IRI domain, IRI range, String name)
-//            throws SemanticTranslationException {
-//        getOrCreateProperty(managedOntology, domain, range, name);
-//    }
-//
-//    private void getOrCreateProperty(ExtractedOntology managedOntology, IRI domain, IRI range, String name) throws SemanticTranslationException {
-//        final OrmFactory<ExtractedDatatypeProperty> factory = factory(ExtractedDatatypeProperty.class);
-//        final String expression = managedOntology.getSpelPropertyUri().orElse(DEFAULT_PROPERTY_IRI_EXPRESSION);
-//        final IRI iri = this.expressionProcessor.processExpression(expression,
-//                new DefaultPropertyIriExpressionContext(managedOntology, name, name + " instance", domain, range));
-//
-//        final ExtractedDatatypeProperty prop = factory.getExisting(iri, managedOntology.getModel())
-//                .orElseGet(() -> {
-//                    LOG.debug("Creating new property {}", iri);
-//                    ExtractedDatatypeProperty val = factory.createNew(iri, managedOntology.getModel());
-//                    val.addProperty(valueFactory.createLiteral(name), getLabelIri());
-//                    return val;
-//                });
-//        // Add domain/range/comment.
-//        prop.addProperty(domain, getDomainIri());
-//        prop.addProperty(range, getRangeIri());
-//        prop.addProperty(valueFactory.createLiteral(name + " instance"), getCommentIri());
-//
-//        result.add(iri, getRdfType(), prop.getResource());
-//    }
-//
-//    private IRI getDatatypeRange() throws SemanticTranslationException {
-//        return xsdString();
-//    }
-//}
+    private void addDatatypeProperty(final ExtractedOntology managedOntology, final String propertyName, final Value value)
+            throws SemanticTranslationException {
+
+        getOrCreateDatatypeProperty(managedOntology, classIRI, getDatatypeRange(), propertyName);
+    }
+
+    private void getOrCreateDatatypeProperty(ExtractedOntology managedOntology, IRI domain, IRI range, String name)
+            throws SemanticTranslationException {
+        getOrCreateProperty(managedOntology, domain, range, name);
+    }
+
+    private void getOrCreateProperty(ExtractedOntology managedOntology, IRI domain, IRI range, String name) throws SemanticTranslationException {
+        final OrmFactory<ExtractedDatatypeProperty> factory = factory(ExtractedDatatypeProperty.class);
+        final String expression = managedOntology.getSpelPropertyUri().orElse(DEFAULT_PROPERTY_IRI_EXPRESSION);
+        final IRI iri = this.expressionProcessor.processExpression(expression,
+                new DefaultPropertyIriExpressionContext(managedOntology, name, name + " instance", domain, range));
+
+        final ExtractedDatatypeProperty prop = factory.getExisting(iri, managedOntology.getModel())
+                .orElseGet(() -> {
+                    LOG.debug("Creating new property {}", iri);
+                    ExtractedDatatypeProperty val = factory.createNew(iri, managedOntology.getModel());
+                    val.addProperty(valueFactory.createLiteral(name), getLabelIri());
+                    return val;
+                });
+        // Add domain/range/comment.
+        prop.addProperty(domain, getDomainIri());
+        prop.addProperty(range, getRangeIri());
+        prop.addProperty(valueFactory.createLiteral(name + " instance"), getCommentIri());
+
+        result.add(iri, getRdfType(), prop.getResource());
+    }
+
+    private IRI getDatatypeRange() throws SemanticTranslationException {
+        return xsdString();
+    }
+}
