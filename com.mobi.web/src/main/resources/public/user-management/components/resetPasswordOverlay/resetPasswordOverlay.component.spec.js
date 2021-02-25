@@ -101,11 +101,11 @@ describe('Reset Password Overlay component', function() {
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
-        it('with a password confirm input', function() {
-            expect(this.element.find('password-confirm-input').length).toEqual(1);
+        it('with an unmask-password', function() {
+            expect(this.element.find('unmask-password').length).toEqual(1);
         });
         it('depending on the form validity', function() {
-            this.controller.currentPassword = 'abc';
+            this.controller.password = 'abc';
             scope.$digest();
             var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
