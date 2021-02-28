@@ -58,7 +58,6 @@ import markdownEditorComponent from './components/markdownEditor/markdownEditor.
 import materialTabComponent from './components/materialTab/materialTab.component';
 import materialTabsetComponent from './components/materialTabset/materialTabset.component';
 import pagingComponent from './components/paging/paging.component';
-import passwordConfirmInputComponent from './components/passwordConfirmInput/passwordConfirmInput.component';
 import radioButtonComponent from './components/radioButton/radioButton.component';
 import rdfVisualizationComponent from './components/rdfVisualization/rdfVisualization.component';
 import recordKeywordsComponent from './components/recordKeywords/recordKeywords.component';
@@ -71,6 +70,7 @@ import statementDisplayComponent from './components/statementDisplay/statementDi
 import stepProgressBarComponent from './components/stepProgressBar/stepProgressBar.component';
 import textAreaComponent from './components/textArea/textArea.component';
 import textInputComponent from './components/textInput/textInput.component';
+import unmaskPasswordComponent from './components/unmaskPassword/unmaskPassword.component.ajs';
 import userAccessControlsComponent from './components/userAccessControls/userAccessControls.component';
 import valueDisplayComponent from './components/valueDisplay/valueDisplay.component';
 
@@ -79,7 +79,6 @@ import aDisabled from './directives/aDisabled/aDisabled.directive';
 import buttonHoverText from './directives/buttonHoverText/buttonHoverText.directive';
 import clickAnywhereButHere from './directives/clickAnywhereButHere/clickAnywhereButHere.directive';
 import clickToCopy from './directives/clickToCopy/clickToCopy.directive';
-import compareTo from './directives/compareTo/compareTo.directive';
 import disableAnimate from './directives/disableAnimate/disableAnimate.directive';
 import dragFile from './directives/dragFile/dragFile.directive';
 import dragMe from './directives/dragMe/dragMe.directive';
@@ -149,6 +148,7 @@ import {
 
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from './components/infoMessage/infoMessage.component';
+import { UnmaskPasswordComponent } from './components/unmaskPassword/unmaskPassword.component';
 import { WindowRef } from "./services/windowRef.service";
 
 /**
@@ -165,18 +165,21 @@ import { WindowRef } from "./services/windowRef.service";
     ],
     declarations: [
         ErrorDisplayComponent,
-        InfoMessageComponent
+        InfoMessageComponent,
+        UnmaskPasswordComponent
     ],
     entryComponents: [
         ErrorDisplayComponent,
-        InfoMessageComponent
+        InfoMessageComponent,
+        UnmaskPasswordComponent
     ],
     exports: [
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
         ErrorDisplayComponent,
-        InfoMessageComponent
+        InfoMessageComponent,
+        UnmaskPasswordComponent
     ],
     providers: [
         loginManagerServiceProvider,
@@ -224,7 +227,6 @@ angular.module('shared', [])
     .component('materialTab', materialTabComponent)
     .component('materialTabset', materialTabsetComponent)
     .component('paging', pagingComponent)
-    .component('passwordConfirmInput', passwordConfirmInputComponent)
     .component('radioButton', radioButtonComponent)
     .component('rdfVisualization', rdfVisualizationComponent)
     .component('recordKeywords', recordKeywordsComponent)
@@ -237,6 +239,7 @@ angular.module('shared', [])
     .component('stepProgressBar', stepProgressBarComponent)
     .component('textArea', textAreaComponent)
     .component('textInput', textInputComponent)
+    .component('unmaskPasswordAjs', unmaskPasswordComponent)
     .component('userAccessControls', userAccessControlsComponent)
     .component('valueDisplay', valueDisplayComponent)
     .directive('emailIri', emailIri)
@@ -244,7 +247,6 @@ angular.module('shared', [])
     .directive('buttonHoverText', buttonHoverText)
     .directive('clickAnywhereButHere', clickAnywhereButHere)    
     .directive('clickToCopy', clickToCopy)
-    .directive('compareTo', compareTo)
     .directive('disableAnimate', disableAnimate)
     .directive('dragFile', dragFile)
     .directive('dragMe', dragMe)
@@ -298,4 +300,5 @@ angular.module('shared', [])
     .factory('clickAnywhereButHereService', clickAnywhereButHereService)
     .service('yasguiService',yasguiService)
     .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory)
-    .directive('infoMessage', downgradeComponent({component: InfoMessageComponent}) as angular.IDirectiveFactory);
+    .directive('infoMessage', downgradeComponent({component: InfoMessageComponent}) as angular.IDirectiveFactory)
+    .directive('unmaskPassword', downgradeComponent({component: UnmaskPasswordComponent}) as angular.IDirectiveFactory);

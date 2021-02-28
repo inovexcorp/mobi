@@ -24,8 +24,6 @@ import { find, cloneDeep } from 'lodash';
 import { OnInit, Component, Inject } from '@angular/core';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 
-import { checkPasswords } from '../../../shared/validators/checkPasswords.validator';
-
 /**
  * @name settings.PasswordTabComponent
  *
@@ -42,10 +40,7 @@ export class PasswordTabComponent implements OnInit {
     errorMessage: string;
     passwordForm = this.fb.group({
         currentPassword: ['', [Validators.required]],
-        newPassword: this.fb.group({
-            password: ['', [Validators.required]],
-            confirmPassword: ['', {updateOn: 'blur', validators: [Validators.required]}]
-        }, { validator: checkPasswords })
+        newPassword: ['', [Validators.required]]
     });
    
     constructor(@Inject('userManagerService') private um, @Inject('loginManagerService') private lm,
@@ -59,7 +54,7 @@ export class PasswordTabComponent implements OnInit {
     }
 
     save(): void {
-        this.um.changePassword(this.lm.currentUser, this.passwordForm.controls.currentPassword.value, this.passwordForm.get('newPassword.password').value)
+        this.um.changePassword(this.lm.currentUser, this.passwordForm.controls.currentPassword.value, this.passwordForm.controls.newPassword.value)
             .then(() => {
                 this.errorMessage = '';
                 this.util.createSuccessToast('Password successfully saved');

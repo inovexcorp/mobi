@@ -149,6 +149,7 @@ describe('Password Tab component', function() {
             expect(currentPassword.classes['is-invalid']).toBeTruthy();
             expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeTruthy();
         });
+        // TODO: Change test to unmask component
         it('depending on the new password field values', function() {
             let password = element.query(By.css('.password input'));
             let confirmPassword = element.query(By.css('.confirm-password input'));

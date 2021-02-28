@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,47 +20,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-const template = require('./passwordConfirmInput.component.html');
+const template = require('./unmaskPassword.component.ajs.html');
 
 /**
  * @ngdoc component
- * @name shared.component:passwordConfirmInput
+ * @name shared.component:unmaskPassword
  *
  * @description
- * `passwordConfirmInput` is a component that creates two password inputs with validation to make sure the values of
- * the inputs match each other. The second input is required if the first input has a value, but the first can also
- * be optionally set to required as well. The value of the first input is bound to `password`, but only one way. The
- * provided `changeEvent` function is expected to update the value of `password`. The second input can be optionally
- * bound to the provided `confirmedPassword` variable. This is mainly done for clearing the form after a
- * "submission" event. 
+ * `unmask-password` is a component which creates password input with a button to unmask the value for a user to
+ * validate their entry before submitting the parent form.
  *
- * @param {string} password The value to bind to the first password input
- * @param {string} confirmedPassword The optional variable to bind the value of the confirm password field to
+ * @param {string} password The value to bind to the password input
+ * @param {string} [inputName=''] The name to give the password input
  * @param {Function} changeEvent A function to be called when the value of the password field is changed. Should
  * update the value of `password`. Expects an argument called `value`.
  * @param {string} label The label for the first password input
+ * @param {boolean} [isInvalid=false] Whether the password input is invalid
+ * @param {boolean} [isValid=false] Whether the password input is valid
  * @param {boolean} required Whether the password field is required
- * @param {boolean} [isDisabledWhen=false] When the inputs should be disabled
+ * @param {boolean} [isDisabledWhen=false] When the input should be disabled
  */
-const passwordConfirmInputComponent = {
+const unmaskPasswordComponent = {
     template,
     require: {
         form: '^form'
     },
     bindings: {
         password: '<',
-        confirmedPassword: '<',
+        inputName: '<',
         changeEvent: '&',
         label: '<',
         required: '@',
+        isInvalid: '<',
+        isValid: '<',
         isDisabledWhen: '<'
     },
     controllerAs: 'dvm',
-    controller: passwordConfirmInputComponentCtrl
+    controller: unmaskPasswordComponentCtrl
 };
 
-function passwordConfirmInputComponentCtrl() {
+function unmaskPasswordComponentCtrl() {
     var dvm = this;
 
     dvm.$onInit = function() {
@@ -68,4 +67,4 @@ function passwordConfirmInputComponentCtrl() {
     }
 }
 
-export default passwordConfirmInputComponent;
+export default unmaskPasswordComponent;
