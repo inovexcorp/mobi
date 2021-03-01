@@ -17,6 +17,7 @@ before_script:
   # Sets Version variables for use in job steps and updates pom to correct version for run
   - REGEX="^v([0-9]+)\.([0-9]+)\.([0-9]+)" #Uses bash regex
   - DEPLOY_REPO=http://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/
+  - mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout  #print version 
   - |- 
     if [[ $CI_COMMIT_TAG =~ $REGEX ]]; then
       VERSION=`echo $CI_COMMIT_TAG | sed -e "s/^v//"`
@@ -74,44 +75,34 @@ full_test:
       - mobi-itests/itests-web/target/nightwatch-screenshots #in the event that the functional tests fail, screenshots of failures are stored in the directory
 
 # Happens after commit to master
-deploy_artifacts:
+deploy_dev:
   stage: deploy
   only:
     - master
-    - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
   except:
     variables:
       - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/
   script:
     - mvn $MAVEN_CLI_OPTS deploy -DaltDeploymentRepository=central::default::$DEPLOY_REPO #TODO Skip unit tests and build - Future work to decrease duplication and increase the speed of execution
+    - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$VERSION.tar.gz $NEXUS_URL/repository/mobicommunity-raw-dev-hosted/nix/mobi-distribution-$VERSION.tar.gz
+    - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$VERSION.zip $NEXUS_URL/repository/mobicommunity-raw-dev-hosted/win/mobi-distribution-$VERSION.zip
     - cd rdf-orm/rdf-orm-gradle-plugin
     - ./gradlew publish -Pversion=$VERSION -PnexusUsername=$INOVEX_USERNAME -PnexusPassword=$INOVEX_PASSWORD
 
-artifactory_release:
+deploy_prod:
   stage: deploy
   only:
     - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
   except:
     - branches
   script:
-    - mvn $MAVEN_CLI_OPTS clean install -P release-build -DproductId=$GA_KEY
-    - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz $NEXUS_URL/repository/mobicommunity-raw-prod-hosted/nix/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz
-    - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip $NEXUS_URL/repository/mobicommunity-raw-prod-hosted/win/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip
-  artifacts:
-    paths:
-      - mobi-distribution/target/mobi-distribution-$VERSION* 
-      - mobi-distribution/target/assembly/docker #Required for docker_release
-
-# build and push the docker image, per instructions in mobi-distribution README
-# tag used to specify we want this job to happen w/ the docker builder runner
-docker_release:
-  stage: deploy-docker
-  only:
-    - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
-  except:
-    - branches
-  script:
-    - cd mobi-distribution
+    - mvn $MAVEN_CLI_OPTS deploy -DaltDeploymentRepository=central::default::$DEPLOY_REPO -P release-build -DproductId=$GA_KEY
+    - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$VERSION.tar.gz $NEXUS_URL/repository/mobicommunity-raw-prod-hosted/nix/mobi-distribution-$VERSION.tar.gz
+    - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$VERSION.zip $NEXUS_URL/repository/mobicommunity-raw-prod-hosted/win/mobi-distribution-$VERSION.zip
+    - cd rdf-orm/rdf-orm-gradle-plugin
+    - ./gradlew publish -Pversion=$VERSION -PnexusUsername=$INOVEX_USERNAME -PnexusPassword=$INOVEX_PASSWORD
+    # build and push the docker image, per instructions in mobi-distribution README
+    - cd ../../mobi-distribution
     - mvn $MAVEN_CLI_OPTS docker:build -DpushImageTag
 
 increment_minor_version:
@@ -167,7 +158,7 @@ support_branch_increment_micro_version:
     - git config --global user.email 'gitlab.runner@inovexcorp.com'
     - git config --global user.name 'Gitlab Runner'
     # Set working branch
-    - $BRANCH="support/$MAJOR.$MICRO"
+    - $BRANCH="support/$MAJOR.$MINOR"
     # Ensure working on latest commit on branch
     - git fetch
     - git pull origin $BRANCH
