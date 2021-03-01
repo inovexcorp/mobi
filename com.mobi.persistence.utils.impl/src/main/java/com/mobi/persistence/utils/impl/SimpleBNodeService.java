@@ -103,8 +103,13 @@ public class SimpleBNodeService implements BNodeService {
 
     @Override
     public Model deterministicSkolemize(Model model) {
+        Map<BNode, IRI> skolemizedBNodes = new HashMap<>();
+        return deterministicSkolemize(model, skolemizedBNodes);
+    }
+
+    @Override
+    public Model deterministicSkolemize(Model model, Map<BNode, IRI> skolemizedBNodes) {
         final Model result = mf.createModel();
-        final Map<BNode, IRI> skolemizedBNodes = new HashMap<>();
         final Map<Long, Integer> hashCount = new HashMap<>();
 
         // Process every blank node chain that begins with an IRI

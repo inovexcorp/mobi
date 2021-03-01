@@ -76,6 +76,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -400,8 +401,10 @@ public class Models {
 
     public static Model createSkolemizedModel(InputStream inputStream, ModelFactory modelFactory,
                                               SesameTransformer transformer, BNodeService bNodeService,
+                                              Map<BNode, IRI> skolemizedBNodes,
                                               RDFParser... parsers) throws IOException {
-        StatementCollector stmtCollector = new SkolemizedStatementCollector(modelFactory, transformer, bNodeService);
+        StatementCollector stmtCollector = new SkolemizedStatementCollector(modelFactory, transformer, bNodeService,
+                skolemizedBNodes);
         return createModel(inputStream, transformer, stmtCollector, parsers);
     }
 

@@ -29,6 +29,8 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 
+import java.util.Map;
+
 public interface BNodeService {
 
     /**
@@ -74,6 +76,18 @@ public interface BNodeService {
      * @return Model which contains the skolemized BNodes.
      */
     Model deterministicSkolemize(Model model);
+
+    /**
+     * Skolemizes all BNodes found in every Statement within the provided Model using
+     * deterministic and consistent BNode IDs. NOTE: This method:
+     * <li>does not skolemize BNode named graph identifiers</li>
+     * <li>does not skolemize BNode chains that do not begin with IRIs</li>
+     *
+     * @param model Model to search for BNodes to skolemize.
+     * @param skolemizedBNodes Map of BNodes to their corresponding deterministic IRI.
+     * @return Model which contains the skolemized BNodes.
+     */
+    Model deterministicSkolemize(Model model, Map<BNode, IRI> skolemizedBNodes);
 
     /**
      * Deskolemizes the provided IRI.
