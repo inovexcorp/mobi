@@ -61,7 +61,6 @@ module.exports = {
             .useCss()
             .setValue('input[name=username]', newUsername )
             .setValue('input[name=password]', newUserPassword )
-            .setValue('input[name=confirmPassword]', newUserPassword )
             .setValue('input[name=firstName]', '' + newName )
             .setValue('input[name=lastName]', 'testerly')
             .setValue('input[name=email]', 'test@gmail.com')

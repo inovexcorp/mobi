@@ -1,0 +1,24 @@
+@prefix : <http://purl.obolibrary.org/obo/ncit.owl#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ncit: <http://purl.obolibrary.org/obo/ncit#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix terms: <http://purl.org/dc/terms/> .
+@prefix protege: <http://protege.stanford.edu/plugins/owl/protege#> .
+@prefix oboInOwl: <http://www.geneontology.org/formats/oboInOwl#> .
+
+_:node1etk19p60x234313 a owl:Axiom ;
+	owl:annotatedSource obo:NCIT_C132098 ;
+	owl:annotatedProperty oboInOwl:hasExactSynonym ;
+	owl:annotatedTarget "WISE" ;
+	obo:NCIT_P383 "SY" ;
+	obo:NCIT_P384 "NCI" .
+
+_:node1etk19p60x601081 a owl:Axiom ;
+	owl:annotatedSource obo:NCIT_C4532 ;
+	owl:annotatedProperty obo:IAO_0000115 ;
+	owl:annotatedTarget "A benign neoplasm arising from the accessory urethral glands." ;
+	obo:NCIT_P378 "NCI" .
