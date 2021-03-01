@@ -27,7 +27,7 @@ public class CSV_range_item {
     private String type = null;
 
     public void checkTokenType(String token) {
-        if ((token.toLowerCase() == "false" || token.toLowerCase() == "true")) {
+        if ((token.toLowerCase().equals("false") || token.toLowerCase().equals("true"))) {
             compareTypes("boolean");
         } else if (checkNumber(token) == false) {
             compareTypes("string");
@@ -38,12 +38,12 @@ public class CSV_range_item {
         return this.type;
     }
 
-    private void compareTypes(String currentType){
+    private void compareTypes(String currentType) {
         if (this.type == null) {
             this.type = currentType;
-        } else if ((this.type == "integer" && currentType == "double") || (this.type == "double" && currentType == "integer")){
+        } else if ((this.type == "integer" && currentType == "double") || (this.type == "double" && currentType == "integer")) {
             this.type = "double";
-        } else if ((this.type != currentType)){
+        } else if ((this.type != currentType)) {
             this.type = "string";
         }
     }
