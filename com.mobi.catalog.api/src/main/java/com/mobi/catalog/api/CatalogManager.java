@@ -915,10 +915,10 @@ public interface CatalogManager {
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource
      * using previous Commit data to construct it.
      *
+     * @param versionedRDFRecordId The Resource identifying the Record from where the Branch should originate.
      * @param commitId             The Resource identifying the Commit identifying the spot in the entity's history that
      *                             you wish to retrieve.
      * @param branchId             The Resource identifying the Branch from where the Commit should originate.
-     * @param versionedRDFRecordId The Resource identifying the Record from where the Branch should originate.
      * @return Model which represents the resource at the Commit's point in history.
      * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */
@@ -926,12 +926,12 @@ public interface CatalogManager {
 
     /**
      * Gets the File which represents the entity at the instance of the Commit identified by the provided Resource
-     * using previous Commit data to construct it.
+     * using previous Commit data to construct it. The File is a temporary file stored in the java.io.tmpdir directory.
      *
+     * @param versionedRDFRecordId The Resource identifying the Record from where the Branch should originate.
      * @param commitId             The Resource identifying the Commit identifying the spot in the entity's history that
      *                             you wish to retrieve.
      * @param branchId             The Resource identifying the Branch from where the Commit should originate.
-     * @param versionedRDFRecordId The Resource identifying the Record from where the Branch should originate.
      * @return A {@link File} which represents the resource at the Commit's point in history.
      * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */

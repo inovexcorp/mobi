@@ -1468,7 +1468,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     /**
      * Updates the supplied Maps of addition and deletions statements with statements from the additions/deletions
      * associated with the supplied Commit resource. These additions/deletions are filtered to only include statements
-     * that whose subjects are Subjects of Deletions from the provided List of Commits. Addition statements are added to the
+     * whose subjects are Subjects of Deletions from the provided List of Commits. Addition statements are added to the
      * additions map if not present. If present, the counter of the times the statement has been added is incremented.
      * Deletion statements are removed from the additions map if only one exists, if more than one exists the counter is
      * decremented, otherwise the statements are added to the deletions list.
