@@ -48,12 +48,20 @@ module.exports = {
     'semi': ['error', 'always'],
     // opening curly brace of a block is placed on the same line as its corresponding statement or declaration
     'brace-style': 2,
-    'no-empty-function': 'off',
+    // Allow empty functions
+    // 'no-empty-function': 'off',
+    // '@typescript-eslint/no-empty-function': ['error'],
+    'no-empty-function': {
+        'allow': ['constructors', 'arrowFunctions']
+    },
+    '@typescript-eslint/no-empty-function': {
+        'allow': ['constructors', 'arrowFunctions']
+    },
     '@typescript-eslint/no-this-alias': [
       'error',
       {
         'allowDestructuring': true, // Allow `const { props, state } = this`; false by default
-        'allowedNames': ['self'] // Allow `const self = this`; `[]` by default
+        'allowedNames': ['self', 'dvm'] // Allow `const self = this`; `[]` by default
       }
     ]
 
