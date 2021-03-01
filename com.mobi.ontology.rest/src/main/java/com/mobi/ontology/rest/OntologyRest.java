@@ -595,7 +595,7 @@ public class OntologyRest {
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
             startTime = System.currentTimeMillis();
             catalogManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
-                    diff.getAdditions(), diff.getDeletions());
+                    bNodeService.deskolemize(diff.getAdditions()), bNodeService.deskolemize(diff.getDeletions()));
             log.trace("uploadChangesToOntology getInProgressCommitIRI took {} ms",
                     System.currentTimeMillis() - startTime);
 
@@ -609,7 +609,12 @@ public class OntologyRest {
             log.trace("uploadChangesToOntology getGarbageCollectionTime {} ms", getGarbageCollectionTime());
         }
     }
-    
+
+    /**
+     * Calculates the garbage collection time in milliseconds.
+     *
+     * @return The total garbage collection time.
+     */
     private static long getGarbageCollectionTime() {
         long collectionTime = 0;
         for (GarbageCollectorMXBean garbageCollectorMXBean : ManagementFactory.getGarbageCollectorMXBeans()) {
@@ -618,17 +623,30 @@ public class OntologyRest {
         return collectionTime;
     }
 
+    /**
+     * Gets a {@link Model} of the provided {@link InputStream}. Deterministically skolemizes any BNode in the model.
+     *
+     * @param fileInputStream The {@link InputStream} to process.
+     * @return A {@link Model} with deterministically skolemized BNodes.
+     * @throws IOException When an error occurs processing the {@link InputStream}
+     */
     private Model getUploadedModel(InputStream fileInputStream) throws IOException {
         // Load uploaded ontology into a skolemized model
-        final Model changedOnt = Models.createSkolemizedModel(fileInputStream, modelFactory, sesameTransformer, bNodeService,
+        return Models.createSkolemizedModel(fileInputStream, modelFactory, sesameTransformer, bNodeService,
                 new RioFunctionalSyntaxParserFactory().getParser(),
                 new RioManchesterSyntaxParserFactory().getParser(),
                 new RioOWLXMLParserFactory().getParser());
-
-
-        return changedOnt;
     }
 
+    /**
+     * Gets a {@link Model} from the provided Record/Branch/Commit in the Catalog. Deterministically skolemizes any
+     * BNode in the model.
+     *
+     * @param recordId The {@link Resource} of the recordId.
+     * @param branchId The {@link Resource} of the branchId.
+     * @param commitId The {@link Resource} of the commitId.
+     * @return A {@link Model} with deterministically skolemized BNodes.
+     */
     private Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId) {
         // Load existing ontology into a skolemized model
         return bNodeService.deterministicSkolemize(catalogManager.getCompiledResource(recordId, branchId, commitId));

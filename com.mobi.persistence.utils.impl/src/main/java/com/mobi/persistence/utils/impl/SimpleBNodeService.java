@@ -192,7 +192,7 @@ public class SimpleBNodeService implements BNodeService {
 
         String hashString;
         if (hashCount.containsKey(idHash)) {
-            int nextValue = hashCount.get(idHash)+1;
+            int nextValue = hashCount.get(idHash) + 1;
             hashString = idHash + "-" + nextValue;
             hashCount.put(idHash, nextValue);
         } else {
@@ -200,7 +200,7 @@ public class SimpleBNodeService implements BNodeService {
             hashCount.put(idHash, 1);
         }
 
-        IRI skolemizedIRI = vf.createIRI(SKOLEMIZED_NAMESPACE, hashString);
+        IRI skolemizedIRI = vf.createIRI(SKOLEMIZED_NAMESPACE + hashString + "/", bNode.getID());
 
         // Add skolemized statements
         model.filter(bNode, null, null, (Resource) null).stream()
