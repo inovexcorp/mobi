@@ -24,54 +24,43 @@ package com.mobi.document.translator.impl.csv;
  */
 
 public class CSV_range_item {
-    private int strings = 0;
-    private int integers = 0;
-    private int doubles = 0;
-    private int booleans = 0;
+    private String type = null;
 
-    public CSV_range_item(String token){
-        if (token.toLowerCase() == "false" || token.toLowerCase() == "true") {
-            booleans++;
-        } else if ( isInteger(token) != 0) {
-            integers++;
-        } else if ( isDouble(token) != 0) {
-            doubles++;
-        } else {strings++;}
+    public void checkTokenType(String token) {
+        if ((token.toLowerCase() == "false" || token.toLowerCase() == "true")) {
+            compareTypes("boolean");
+        } else if (checkNumber(token) == false) {
+            compareTypes("string");
+        }
     }
 
     public String getRangeType() {
-        String type;
-
-        if ((integers > strings) && (integers > doubles) && (integers > booleans)) {
-            type = "integer";
-        } else if ((doubles > integers) && (doubles > strings) && (doubles > booleans)) {
-            type = "double";
-        } else if ((booleans > integers) && (booleans > doubles) && (booleans > strings)) {
-            type = "boolean";
-        } else { type = "string";}
-
-        return type;
+        return this.type;
     }
 
-    private int isInteger(String input) {
-        int number;
-        try {
-            number = Integer.parseInt(input);
-            return number;
-        } catch (NumberFormatException e) {
-            number = 0;
-            return number;
+    private void compareTypes(String currentType){
+        if (this.type == null) {
+            this.type = currentType;
+        } else if ((this.type == "integer" && currentType == "double") || (this.type == "double" && currentType == "integer")){
+            this.type = "double";
+        } else if ((this.type != currentType)){
+            this.type = "string";
         }
     }
 
-    private double isDouble(String input) {
-        double number;
+    private boolean checkNumber(String token) {
         try {
-            number = Double.parseDouble(input);
-            return number;
+            double doubleCheck = Double.parseDouble(token);
+
+            if (doubleCheck % 1 != 0) {
+                compareTypes("double");
+            } else {
+                compareTypes("integer");
+            }
+            return true;
         } catch (NumberFormatException e) {
-            number = 0;
-            return number;
+            return false;
         }
     }
+
 }

@@ -28,6 +28,7 @@ import aQute.bnd.annotation.component.Reference;
 import com.mobi.document.translator.AbstractSemanticTranslator;
 import com.mobi.document.translator.expression.IriExpressionProcessor;
 import com.mobi.document.translator.expression.context.impl.DefaultClassIriExpressionContext;
+import com.mobi.document.translator.expression.context.impl.DefaultInstanceIriExpressionContext;
 import com.mobi.document.translator.expression.context.impl.DefaultPropertyIriExpressionContext;
 import com.mobi.rdf.api.*;
 import com.mobi.rdf.orm.OrmFactory;
@@ -39,12 +40,14 @@ import com.mobi.document.translator.ontology.ExtractedDatatypeProperty;
 import com.mobi.document.translator.ontology.ExtractedOntology;
 import com.mobi.rdf.orm.Thing;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URLEncoder;
 import java.nio.file.Path;
+import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -55,8 +58,11 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
     private static final Logger LOG = LoggerFactory.getLogger(CSVSemanticTranslator.class);
     private FilenameUtils Util = new FilenameUtils();
 
+    private static final String ONTOLOGY_IRI = "getOntologyIri()";
+    private static final String DEFAULT_ONTOLOGY_TITLE = "CSV Extracted Ontology";
     private static final String DEFAULT_CLASS_IRI_EXPRESSION = "getOntologyIri().concat('#').concat(getName())";
     private static final String DEFAULT_PROPERTY_IRI_EXPRESSION = "getOntologyIri().concat('#_').concat(getName())";
+    private static final String DEFAULT_INSTANCE_IRI_EXPRESSION = "classIri().replace('#','/').concat('/').concat(uuid())";
 
     @Reference
     public void setValueFactory(ValueFactory valueFactory) {
@@ -83,8 +89,10 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
                 .orElseThrow(() -> new SemanticTranslationException("ORM services not initialized correctly!"));
     }
 
-    protected IRI classIRI;
-    protected Model result;
+    private IRI classIRI;
+    private Model result;
+    private ExtractedClass classInstance;
+    private ArrayList<IRI> propertyIRIs = new ArrayList<>();
 
     public CSVSemanticTranslator() {
         super("csv", ".csv");
@@ -94,11 +102,14 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
     public Model translate(Path rawFile, ExtractedOntology managedOntology) throws SemanticTranslationException {
         final Model result = modelFactory.createModel();
         this.result = result;
+        int size = (int)rawFile.toFile().length();
 
-        try (final InputStream is = new FileInputStream(rawFile.toFile())) {
+        try (final BufferedInputStream is = new BufferedInputStream(new FileInputStream(rawFile.toFile()))) {
+            is.mark(size+1);
+            generateOntologyTitle(managedOntology);
             String className = Util.removeExtension(rawFile.getFileName().toString());
             classIRI = generateClassIri(managedOntology, className);
-            final ExtractedClass classInstance = getOrCreateClass(managedOntology, classIRI, className);
+            classInstance = getOrCreateClass(managedOntology, classIRI, className);
 
             result.add(classIRI, getRdfType(), classInstance.getResource());
 
@@ -111,15 +122,31 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
     @Override
     public Model translate(InputStream dataStream, String entityIdentifier, ExtractedOntology managedOntology)
             throws SemanticTranslationException {
+
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("How many rows in the csv would you like to check for property ranges?");
+        int desired_rows = scanner.nextInt();
+
         try {
             CSVReader reader = new CSVReader(new InputStreamReader(dataStream));
             String[] headers = reader.readNext();
-            int current_index = 0;
+            Map<String, CSV_range_item> properties = new LinkedHashMap<>();
 
             for (String header : headers) {
-                addDatatypeProperty(managedOntology, header, getDatatypeRange(reader, current_index));
-                current_index++;
+                properties.put(header, new CSV_range_item());
             }
+
+            setPropertyRanges(reader, properties, desired_rows);
+
+            for (Map.Entry<String, CSV_range_item> property : properties.entrySet()) {
+                IRI range = getPropertyRange(property.getValue());
+                addDatatypeProperty(managedOntology, property.getKey(), range);
+            }
+
+            dataStream.reset();
+            generateClassInstances(dataStream, managedOntology);
+
         } catch (IOException e) {
             throw new SemanticTranslationException("Issue reading incoming stream to extract meaning from "
                     + entityIdentifier, e);
@@ -146,6 +173,18 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
                     return clazz;
                 });
         return extractedClass;
+    }
+
+    private void generateOntologyTitle(ExtractedOntology ontology) throws SemanticTranslationException{
+        final OrmFactory<ExtractedOntology> factory = factory(ExtractedOntology.class);
+        IRI ont_iri = this.expressionProcessor.processExpression(ONTOLOGY_IRI,
+                new DefaultClassIriExpressionContext(ontology, DEFAULT_ONTOLOGY_TITLE, DEFAULT_ONTOLOGY_TITLE + " ontology"));
+
+        ExtractedOntology holisticOntology = factory.getExisting(ont_iri, ontology.getModel())
+                .orElseGet(() -> {
+                    return null;
+                });
+        holisticOntology.addProperty(valueFactory.createLiteral(DEFAULT_ONTOLOGY_TITLE), getLabelIri());
     }
 
     private void addDatatypeProperty(final ExtractedOntology managedOntology, final String propertyName, final IRI range)
@@ -176,6 +215,8 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
                     val.addProperty(valueFactory.createLiteral(name), getLabelIri());
                     return val;
                 });
+        // Add property iri to arraylist for later use
+        propertyIRIs.add(iri);
         // Add domain/range/comment.
         prop.addProperty(domain, getDomainIri());
         prop.addProperty(range, getRangeIri());
@@ -184,18 +225,26 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
         result.add(iri, getRdfType(), prop.getResource());
     }
 
-    private IRI getDatatypeRange(CSVReader reader, int index) throws SemanticTranslationException {
+    private void setPropertyRanges(CSVReader reader, Map<String, CSV_range_item> properties, int desired_rows) throws SemanticTranslationException {
+        try {
+            for (int count = 0; count < desired_rows; count++) {
+                int index = 0;
+                String[] row = reader.readNext();
+                for (Map.Entry<String, CSV_range_item> property : properties.entrySet()) {
+                    property.getValue().checkTokenType(row[index]);
+                    index++;
+                }
+            }
+        } catch (IOException e) {
+            throw new SemanticTranslationException("Issue reading type of datatype property");
+        }
+    }
+
+    private IRI getPropertyRange(CSV_range_item property) {
         String most_common = "";
         IRI datatype;
 
-        try {
-            for (int count = 0; count < 12; count++) {
-                String row = reader.readNext()[index];
-                most_common = new CSV_range_item(row).getRangeType();
-            }
-        } catch (IOException e){
-            throw new SemanticTranslationException("Issue reading type of datatype property");
-        }
+        most_common = property.getRangeType();
 
         switch (most_common) {
             case "integer":
@@ -212,5 +261,34 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
                 break;
         }
         return datatype;
+    }
+
+    private void generateClassInstances(InputStream stream, ExtractedOntology managedOntology) throws SemanticTranslationException {
+        CSVReader instances = new CSVReaderBuilder(new InputStreamReader(stream)).withSkipLines(1).build();
+
+        try {
+            String[] nextLine;
+            while ((nextLine = instances.readNext()) != null) {
+                int index = 0;
+                final IRI instance = generateInstanceIri(classInstance, managedOntology);
+                // Create instance.
+                result.add(instance, getRdfType(), classInstance.getResource());
+                // Add properties.
+                for (IRI property: propertyIRIs) {
+                    result.add(instance, property, valueFactory.createLiteral(nextLine[index]));
+                    index++;
+                }
+            }
+        } catch (IOException e) {
+            throw new SemanticTranslationException("Issue reading type of datatype property");
+        }
+
+    }
+
+    private IRI generateInstanceIri(ExtractedClass instanceClass, ExtractedOntology managedOntology)
+            throws SemanticTranslationException {
+        final String expression = instanceClass.getSpelInstanceUri().orElse(DEFAULT_INSTANCE_IRI_EXPRESSION);
+        return this.expressionProcessor.processExpression(expression,
+                new DefaultInstanceIriExpressionContext(managedOntology, classInstance,null, this.valueFactory));
     }
 }
