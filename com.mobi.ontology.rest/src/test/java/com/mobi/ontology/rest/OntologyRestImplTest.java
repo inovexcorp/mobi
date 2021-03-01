@@ -4843,7 +4843,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .thenReturn(ontologyModel);
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
                 any(User.class))).thenReturn(Optional.empty());
-        Difference difference = new Difference.Builder().build();
+        Difference difference = new Difference.Builder().additions(mf.createModel()).deletions(mf.createModel()).build();
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
 
         FormDataMultiPart fd = new FormDataMultiPart();
@@ -4855,7 +4855,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .request()
                 .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
         assertGetUserFromContext();
         verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
         verify(catalogManager).getDiff(any(Model.class), any(Model.class));

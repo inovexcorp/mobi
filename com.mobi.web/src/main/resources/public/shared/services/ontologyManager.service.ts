@@ -159,7 +159,13 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         fd.append('file', file);
 
         return $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
-            .then(response => response.data, util.rejectError);
+            .then(response => {
+                if (get(response, 'status') === 204) {
+                    return $q.reject('Uploaded file is identical to current branch.');
+                } else {
+                    return response.data;
+                }
+            }, util.rejectError);
     };
     /**
      * @ngdoc method

@@ -589,7 +589,7 @@ public class OntologyRest {
             log.trace("uploadChangesToOntology getDiff took {} ms", System.currentTimeMillis() - startTime);
 
             if (diff.getAdditions().size() == 0 && diff.getDeletions().size() == 0) {
-                throw new MobiException("Uploaded file is identical to current branch.");
+                return Response.noContent().build();
             }
 
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
