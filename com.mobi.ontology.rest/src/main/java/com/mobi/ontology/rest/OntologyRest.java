@@ -520,7 +520,7 @@ public class OntologyRest {
                                             @QueryParam("branchId") String branchIdStr,
                                             @QueryParam("commitId") String commitIdStr,
                                             @FormDataParam("file") InputStream fileInputStream) {
-        long startTime = System.currentTimeMillis();
+        long totalTime = System.currentTimeMillis();
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
@@ -553,11 +553,12 @@ public class OntologyRest {
                 }
             }
 
+            long startTime = System.currentTimeMillis();
             final CompletableFuture<Model> uploadedModelFuture = CompletableFuture.supplyAsync(() -> {
                 try {
                     long startTimeF = System.currentTimeMillis();
                     Model temp = getUploadedModel(fileInputStream);
-                    log.trace("uploadedModelFuture took " + (System.currentTimeMillis() - startTimeF));
+                    log.trace("uploadedModelFuture took {} ms", System.currentTimeMillis() - startTimeF);
                     return temp;
                 } catch (IOException e) {
                     throw new CompletionException(e);
@@ -570,38 +571,42 @@ public class OntologyRest {
                 log.trace("currentModelFuture took " + (System.currentTimeMillis() - startTimeF));
                 return temp;
             });
-
-            log.trace("uploadChangesToOntology futures creation took " + (System.currentTimeMillis() - startTime));
+            log.trace("uploadChangesToOntology futures creation took {} ms", System.currentTimeMillis() - startTime);
 
             Model currentModel = currentModelFuture.get();
             Model uploadedModel = uploadedModelFuture.get();
-            
+
+            startTime = System.currentTimeMillis();
             if (!OntologyModels.findFirstOntologyIRI(uploadedModel, valueFactory).isPresent()) {
                 OntologyModels.findFirstOntologyIRI(currentModel, valueFactory)
                         .ifPresent(iri -> uploadedModel.add(iri, valueFactory.createIRI(RDF.TYPE.stringValue()),
                                 valueFactory.createIRI(OWL.ONTOLOGY.stringValue())));
             }
+            log.trace("uploadChangesToOntology futures completion took {} ms", System.currentTimeMillis() - startTime);
 
-            log.trace("uploadChangesToOntology futures completion took " + (System.currentTimeMillis() - startTime));
-
+            startTime = System.currentTimeMillis();
             Difference diff = catalogManager.getDiff(currentModel, uploadedModel);
+            log.trace("uploadChangesToOntology getDiff took {} ms", System.currentTimeMillis() - startTime);
 
-            log.trace("uploadChangesToOntology getDiff took " + (System.currentTimeMillis() - startTime));
+            if (diff.getAdditions().size() == 0 && diff.getDeletions().size() == 0) {
+                throw new MobiException("Uploaded file is identical to current branch.");
+            }
 
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
+            startTime = System.currentTimeMillis();
             catalogManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
                     diff.getAdditions(), diff.getDeletions());
+            log.trace("uploadChangesToOntology getInProgressCommitIRI took {} ms",
+                    System.currentTimeMillis() - startTime);
 
-            log.trace("uploadChangesToOntology getInProgressCommitIRI took " + (System.currentTimeMillis() - startTime));
             return Response.ok().build();
-
         } catch (IllegalArgumentException | MobiException | ExecutionException |
                 InterruptedException | CompletionException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
-            log.trace("uploadChangesToOntology took " + (System.currentTimeMillis() - startTime));
-            log.trace("uploadChangesToOntology getGarbageCollectionTime " + (getGarbageCollectionTime()));
+            log.trace("uploadChangesToOntology took " + (System.currentTimeMillis() - totalTime));
+            log.trace("uploadChangesToOntology getGarbageCollectionTime {} ms", getGarbageCollectionTime());
         }
     }
     
