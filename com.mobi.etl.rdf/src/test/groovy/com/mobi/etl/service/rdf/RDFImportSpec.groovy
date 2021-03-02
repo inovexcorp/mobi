@@ -230,4 +230,28 @@ class RDFImportSpec extends Specification {
         then:
         thrown IOException
     }
+
+    def "Imports trig file to graph in repository without format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).build()
+        def graph = vf.createIRI("urn:graph");
+
+        when:
+        service.importFile(config, file, graph)
+
+        then:
+        (1.._) * conn.add(*_)
+    }
+
+    def "Imports trig file to graph in repository with format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).format(RDFFormat.TRIG).build()
+        def graph = vf.createIRI("urn:graph");
+
+        when:
+        service.importFile(config, file, graph)
+
+        then:
+        (1.._) * conn.add(*_)
+    }
 }
