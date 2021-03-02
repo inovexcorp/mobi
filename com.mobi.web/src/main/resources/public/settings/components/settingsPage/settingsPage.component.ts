@@ -20,7 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
+import { MatTabChangeEvent } from '@angular/material/tabs';
+import { PasswordTabComponent } from '../passwordTab/passwordTab.component';
+import { ProfileTabComponent } from '../profileTab/profileTab.component';
 
 import './settingsPage.component.scss';
 
@@ -38,5 +41,16 @@ import './settingsPage.component.scss';
     templateUrl: './settingsPage.component.html'
 })
 export class SettingsPageComponent {
+    @ViewChild(ProfileTabComponent) profileTab: ProfileTabComponent;
+    @ViewChild(PasswordTabComponent) passwordTab: PasswordTabComponent;
+
     constructor() {}
+
+    onTabChanged(event: MatTabChangeEvent) {
+        if (event.index === 0) {
+            this.profileTab.reset();
+        } else if (event.index === 2) {
+            this.passwordTab.reset();
+        }
+    }
 }

@@ -42,7 +42,7 @@
     "karma-sourcemap-loader": "^0.3.7",
     "karma-webpack": "^3.0.5",
     "ng-bullet": "^1.0.3",
-    "ng-mocks": "^5.3.0",
+    "ng-mocks": "^11.9.0",
     "node-sass": "^4.11.0",
     "optimize-css-assets-webpack-plugin": "^3.2.0",
     "postcss-loader": "^3.0.0",

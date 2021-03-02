@@ -21,8 +21,8 @@
   #L%
   -->
 <div class="profile-tab row h-100 py-2">
-    <div class="col-6 offset-3 mat-elevation-z4 tab-box">
-        <h1 class="admin-top">{{currentUser.username}}</h1>
+    <div class="col-6 offset-3">
+        <h1>{{currentUser.username}}</h1>
         <form [formGroup]="profileForm" (ngSubmit)="save()">
             <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
             <p *ngIf="success && profileForm.pristine" class="text-success">

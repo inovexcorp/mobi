@@ -25,6 +25,8 @@ import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
+import { MatFormFieldModule, MatInputModule } from '@angular/material';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import {
     mockUserManager,
@@ -46,7 +48,12 @@ describe('Profile Tab component', function() {
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [
+                SharedModule,
+                MatFormFieldModule,
+                MatInputModule,
+                NoopAnimationsModule
+            ],
             declarations: [
                 ProfileTabComponent
             ],
@@ -109,6 +116,18 @@ describe('Profile Tab component', function() {
         });
     });
     describe('controller methods', function() {
+        it('should reset the form', function() {
+            Object.keys(component.profileForm.controls).forEach(key => {
+                component.profileForm.get(key).markAsDirty();
+            });
+            Object.keys(component.profileForm.controls).forEach(key => {
+                expect(component.profileForm.get(key).dirty).toBeTrue();
+            });
+            component.reset();
+            Object.keys(component.profileForm.controls).forEach(key => {
+                expect(component.profileForm.get(key).dirty).toBeFalse();
+            });
+        });
         describe('should save changes to the user profile', function() {
             beforeEach(function() {
                 component.currentUser = userManagerStub.users[0];

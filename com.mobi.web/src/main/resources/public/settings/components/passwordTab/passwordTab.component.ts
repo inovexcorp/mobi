@@ -39,8 +39,8 @@ export class PasswordTabComponent implements OnInit {
     currentUser: any = {};
     errorMessage: string;
     passwordForm = this.fb.group({
-        currentPassword: ['', [Validators.required]],
-        newPassword: ['', [Validators.required]]
+        currentPassword: [{value: '', disabled: this.currentUser.external}, [Validators.required]],
+        unmaskPassword: [{value: '', disabled: this.currentUser.external}, [Validators.required]]
     });
    
     constructor(@Inject('userManagerService') private um, @Inject('loginManagerService') private lm,
@@ -53,8 +53,12 @@ export class PasswordTabComponent implements OnInit {
         }
     }
 
+    reset(): void {
+        this.passwordForm.reset();
+    }
+
     save(): void {
-        this.um.changePassword(this.lm.currentUser, this.passwordForm.controls.currentPassword.value, this.passwordForm.controls.newPassword.value)
+        this.um.changePassword(this.lm.currentUser, this.passwordForm.controls.currentPassword.value, this.passwordForm.controls.unmaskPassword.value)
             .then(() => {
                 this.errorMessage = '';
                 this.util.createSuccessToast('Password successfully saved');

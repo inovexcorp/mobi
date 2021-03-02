@@ -21,7 +21,9 @@
   #L%
   -->
 <div class="settings-page h-100">
-    <mat-tab-group dynamicHeight="true">
+    <!-- NOTE: Loads each tab content eagerly, i.e. right away. Starting with Angular Material 6, we can switch this to
+        lazy loading (with manual destroy) which will be critical for modules like the Ontology Editor -->
+    <mat-tab-group dynamicHeight="true" (selectedTabChange)="onTabChanged($event)">
         <mat-tab label="Profile">
             <profile-tab></profile-tab>
         </mat-tab>

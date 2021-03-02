@@ -23,6 +23,7 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
+import { By } from '@angular/platform-browser';
 
 import {
     mockUserManager,
@@ -31,7 +32,6 @@ import {
 } from '../../../../../../test/ts/Shared';
 import { SharedModule } from '../../../shared/shared.module';
 import { GroupTabComponent } from './groupTab.component';
-import { By } from '@angular/platform-browser';
 
 describe('Group Tab component', function() {
     let component: GroupTabComponent;

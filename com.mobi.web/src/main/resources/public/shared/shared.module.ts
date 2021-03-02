@@ -150,6 +150,7 @@ import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.co
 import { InfoMessageComponent } from './components/infoMessage/infoMessage.component';
 import { UnmaskPasswordComponent } from './components/unmaskPassword/unmaskPassword.component';
 import { WindowRef } from "./services/windowRef.service";
+import { MatFormFieldModule, MatInputModule, MatButtonModule } from '@angular/material';
 
 /**
  * @namespace shared
@@ -161,7 +162,10 @@ import { WindowRef } from "./services/windowRef.service";
     imports: [
         CommonModule,
         FormsModule,
-        ReactiveFormsModule
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule
     ],
     declarations: [
         ErrorDisplayComponent,

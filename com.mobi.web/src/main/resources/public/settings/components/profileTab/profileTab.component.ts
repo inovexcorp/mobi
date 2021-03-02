@@ -63,6 +63,10 @@ export class ProfileTabComponent implements OnInit {
             });
         }
     }
+
+    reset(): void {
+        this.profileForm.markAsPristine();
+    }
     
     save(): void {
         if (this.profileForm.controls.firstName.value) {

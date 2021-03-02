@@ -28,12 +28,11 @@ import { FormBuilder, FormGroup } from "@angular/forms";
  *
  * @description
  * `unmask-password` is a component which creates password input with a button to unmask the value for a user to
- * validate their entry before submitting the parent form.
+ * validate their entry before submitting the parent form. The input is bound to a form control with name
+ * "unmaskPassword".
  *
  * @param {FormGroup} parentForm The FormGroup of the parent form to associate the inner input with
  * @param {string} label The label for the first password input
- * @param {boolean} [required=false] Whether the password field is required
- * @param {boolean} [isDisabledWhen=false] When the input should be disabled
  */
 @Component({
     selector: 'unmask-password',
@@ -42,8 +41,6 @@ import { FormBuilder, FormGroup } from "@angular/forms";
 export class UnmaskPasswordComponent {
     @Input() parentForm: FormGroup;
     @Input() label: string;
-    @Input() isDisabledWhen: boolean;
-    @Input() required: boolean;
 
     showPassword = false;
 
