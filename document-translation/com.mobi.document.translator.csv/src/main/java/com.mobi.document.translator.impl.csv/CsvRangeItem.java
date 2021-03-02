@@ -41,7 +41,7 @@ public class CsvRangeItem {
     private void compareTypes(String currentType) {
         if (this.type == null) {
             this.type = currentType;
-        } else if ((this.type == "integer" && currentType == "double") || (this.type == "double" && currentType == "integer")) {
+        } else if ((this.type.equals("integer") && currentType.equals("double")) || (this.type.equals("double") && currentType.equals("integer"))) {
             this.type = "double";
         } else if (this.type != currentType) {
             this.type = "string";
