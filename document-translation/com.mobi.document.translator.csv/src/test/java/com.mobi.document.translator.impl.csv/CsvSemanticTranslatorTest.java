@@ -28,56 +28,48 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-import com.mobi.document.translator.SemanticTranslationException;
 import com.mobi.document.translator.expression.DefaultIriExpressionProcessor;
 import com.mobi.document.translator.expression.IriExpressionProcessor;
 import com.mobi.document.translator.ontology.ExtractedClass;
 import com.mobi.document.translator.ontology.ExtractedDatatypeProperty;
 import com.mobi.document.translator.ontology.ExtractedOntology;
-import com.mobi.document.translator.ontology.ExtractedProperty;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-import static org.mockito.Mockito.when;
 
 import java.nio.file.Paths;
-import java.io.*;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.*;
 import java.lang.*;
-import java.math.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CSVSemanticTranslatorTest extends OrmEnabledTestCase {
+public class CsvSemanticTranslatorTest extends OrmEnabledTestCase {
 
     private static final String ONT_URI = "urn://test.ontology";
 
     private final File simpleTestFile = new File("src/test/resources/100_Sales_Records.csv");
 
-    private CSVSemanticTranslator CSVTranslator;
+    private CsvSemanticTranslator csvTranslator;
 
 
     @Before
     public void initTranslator() {
-        CSVTranslator = new CSVSemanticTranslator();
-        injectOrmFactoryReferencesIntoService(CSVTranslator);
-        CSVTranslator.setValueFactory(VALUE_FACTORY);
-        CSVTranslator.setModelFactory(MODEL_FACTORY);
-        CSVTranslator.setOrmFactoryRegistry(ORM_FACTORY_REGISTRY);
+        csvTranslator = new CsvSemanticTranslator();
+        injectOrmFactoryReferencesIntoService(csvTranslator);
+        csvTranslator.setValueFactory(VALUE_FACTORY);
+        csvTranslator.setModelFactory(MODEL_FACTORY);
+        csvTranslator.setOrmFactoryRegistry(ORM_FACTORY_REGISTRY);
         IriExpressionProcessor processor = new DefaultIriExpressionProcessor();
         ((DefaultIriExpressionProcessor) processor).setValueFactory(VALUE_FACTORY);
-        CSVTranslator.setExpressionProcessor(processor);
+        csvTranslator.setExpressionProcessor(processor);
     }
 
     @Test
@@ -86,7 +78,7 @@ public class CSVSemanticTranslatorTest extends OrmEnabledTestCase {
         ExtractedOntology ont = getRequiredOrmFactory(ExtractedOntology.class)
                 .createNew(VALUE_FACTORY.createIRI(ONT_URI));
         try {
-            final Model results = CSVTranslator.translate(Paths.get(simpleTestFile.toURI()), ont);
+            final Model results = csvTranslator.translate(Paths.get(simpleTestFile.toURI()), ont);
 
             validateSimpleExtractedOntology(ont);
             validateSimpleResults(results, ont);

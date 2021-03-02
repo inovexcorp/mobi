@@ -23,11 +23,11 @@ package com.mobi.document.translator.impl.csv;
  * #L%
  */
 
-public class CSV_range_item {
+public class CsvRangeItem {
     private String type = null;
 
     public void checkTokenType(String token) {
-        if ((token.toLowerCase().equals("false") || token.toLowerCase().equals("true"))) {
+        if (token.toLowerCase().equals("false") || token.toLowerCase().equals("true")) {
             compareTypes("boolean");
         } else if (checkNumber(token) == false) {
             compareTypes("string");
@@ -43,7 +43,7 @@ public class CSV_range_item {
             this.type = currentType;
         } else if ((this.type == "integer" && currentType == "double") || (this.type == "double" && currentType == "integer")) {
             this.type = "double";
-        } else if ((this.type != currentType)) {
+        } else if (this.type != currentType) {
             this.type = "string";
         }
     }

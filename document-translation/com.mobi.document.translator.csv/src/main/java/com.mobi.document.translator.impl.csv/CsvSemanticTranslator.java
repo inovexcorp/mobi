@@ -58,9 +58,9 @@ import java.util.Scanner;
 
 
 @Component(immediate = true, provide = {SemanticTranslator.class})
-public class CSVSemanticTranslator extends AbstractSemanticTranslator {
+public class CsvSemanticTranslator extends AbstractSemanticTranslator {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CSVSemanticTranslator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CsvSemanticTranslator.class);
     private FilenameUtils util = new FilenameUtils();
 
     private static final String ONTOLOGY_IRI = "getOntologyIri()";
@@ -99,7 +99,7 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
     private ExtractedClass classInstance;
     private ArrayList<IRI> propertyIRIs;
 
-    public CSVSemanticTranslator() {
+    public CsvSemanticTranslator() {
         super("csv", ".csv");
     }
 
@@ -134,25 +134,23 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
         System.out.println("How many rows in the csv would you like to check for property ranges?");
         int desiredRows = scanner.nextInt();
 
-        try {
-            CSVReader reader = new CSVReader(new InputStreamReader(dataStream));
+        try (CSVReader reader = new CSVReader(new InputStreamReader(dataStream));) {
             String[] headers = reader.readNext();
-            Map<String, CSV_range_item> properties = new LinkedHashMap<>();
+            Map<String, CsvRangeItem> properties = new LinkedHashMap<>();
 
             for (String header : headers) {
-                properties.put(header, new CSV_range_item());
+                properties.put(header, new CsvRangeItem());
             }
 
             setPropertyRanges(reader, properties, desiredRows);
 
-            for (Map.Entry<String, CSV_range_item> property : properties.entrySet()) {
+            for (Map.Entry<String, CsvRangeItem> property : properties.entrySet()) {
                 IRI range = getPropertyRange(property.getValue());
                 addDatatypeProperty(managedOntology, property.getKey(), range);
             }
 
             dataStream.reset();
             generateClassInstances(dataStream, managedOntology);
-            dataStream.close();
 
         } catch (IOException e) {
             throw new SemanticTranslationException("Issue reading incoming stream to extract meaning from "
@@ -234,13 +232,13 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
         result.add(iri, getRdfType(), prop.getResource());
     }
 
-    private void setPropertyRanges(CSVReader reader, Map<String, CSV_range_item> properties, int desiredRows)
+    private void setPropertyRanges(CSVReader reader, Map<String, CsvRangeItem> properties, int desiredRows)
             throws SemanticTranslationException {
         try {
             for (int count = 0; count < desiredRows; count++) {
                 int index = 0;
                 String[] row = reader.readNext();
-                for (Map.Entry<String, CSV_range_item> property : properties.entrySet()) {
+                for (Map.Entry<String, CsvRangeItem> property : properties.entrySet()) {
                     property.getValue().checkTokenType(row[index]);
                     index++;
                 }
@@ -250,7 +248,7 @@ public class CSVSemanticTranslator extends AbstractSemanticTranslator {
         }
     }
 
-    private IRI getPropertyRange(CSV_range_item property) {
+    private IRI getPropertyRange(CsvRangeItem property) {
         String mostCommon = "";
         IRI datatype;
 
