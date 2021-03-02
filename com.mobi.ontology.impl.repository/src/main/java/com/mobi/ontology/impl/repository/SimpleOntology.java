@@ -1585,7 +1585,7 @@ public class SimpleOntology implements Ontology {
      *
      * @param importedDatasetIRI The datasetIRI of the import.
      * @param importedDatasetSdNg The datasetSdNg of the import.
-     * @param ontologyFile The {@link File} of web resolved ontology to load.
+     * @param ontologyFile The {@link File} of catalog resolved ontology to load.
      * @param imported The IRI of the imported ontology.
      * @param conn The {@link DatasetConnection} used to update the dataset graph with the new import.
      */
