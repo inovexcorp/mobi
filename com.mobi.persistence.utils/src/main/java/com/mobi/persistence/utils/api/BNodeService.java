@@ -84,7 +84,7 @@ public interface BNodeService {
      * <li>does not skolemize BNode chains that do not begin with IRIs</li>
      *
      * @param model Model to search for BNodes to skolemize.
-     * @param skolemizedBNodes Map of BNodes to their corresponding deterministic IRI.
+     * @param skolemizedBNodes Map of BNodes to their corresponding deterministically skolemized IRI.
      * @return Model which contains the skolemized BNodes.
      */
     Model deterministicSkolemize(Model model, Map<BNode, IRI> skolemizedBNodes);

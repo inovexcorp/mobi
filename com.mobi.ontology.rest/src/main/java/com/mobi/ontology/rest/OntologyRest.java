@@ -101,7 +101,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import org.eclipse.rdf4j.model.impl.TreeModel;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
@@ -630,7 +629,9 @@ public class OntologyRest {
     /**
      * Gets a {@link Model} of the provided {@link InputStream}. Deterministically skolemizes any BNode in the model.
      *
-     * @param fileInputStream The {@link InputStream} to process. TODO:
+     * @param fileInputStream The {@link InputStream} to process.
+     * @param bNodesMap The {@link Map} of BNodes to their deterministically skolemized IRIs. Will be populated in
+     *                  method.
      * @return A {@link Model} with deterministically skolemized BNodes.
      * @throws IOException When an error occurs processing the {@link InputStream}
      */
@@ -648,7 +649,9 @@ public class OntologyRest {
      *
      * @param recordId The {@link Resource} of the recordId.
      * @param branchId The {@link Resource} of the branchId.
-     * @param commitId The {@link Resource} of the commitId. TODO:
+     * @param commitId The {@link Resource} of the commitId.
+     * @param bNodesMap The {@link Map} of BNodes to their deterministically skolemized IRIs. Will be populated in
+     *                  method.
      * @return A {@link Model} with deterministically skolemized BNodes.
      */
     private Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId, Map<BNode, IRI> bNodesMap) {
