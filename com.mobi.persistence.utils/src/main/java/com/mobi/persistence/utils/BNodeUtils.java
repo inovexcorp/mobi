@@ -30,7 +30,6 @@ import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
 
 import java.util.HashSet;
 import java.util.Map;
