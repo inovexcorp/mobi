@@ -598,8 +598,8 @@ public class OntologyRest {
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
             startTime = System.currentTimeMillis();
             catalogManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
-                    BNodeUtils.restoreBNodes(diff.getAdditions(), uploadedBNodes, modelFactory, valueFactory),
-                    BNodeUtils.restoreBNodes(diff.getDeletions(), catalogBNodes, modelFactory, valueFactory));
+                    BNodeUtils.restoreBNodes(diff.getAdditions(), uploadedBNodes, modelFactory),
+                    BNodeUtils.restoreBNodes(diff.getDeletions(), catalogBNodes, modelFactory));
             log.trace("uploadChangesToOntology getInProgressCommitIRI took {} ms",
                     System.currentTimeMillis() - startTime);
 

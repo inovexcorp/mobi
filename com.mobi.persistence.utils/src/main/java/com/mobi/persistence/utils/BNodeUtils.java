@@ -45,9 +45,10 @@ public class BNodeUtils {
      *
      * @param model The {@link Model} to resotre BNodes.
      * @param bNodeIRIMap A {@link Map} of the {@link BNode}'s to their deterministic {@link IRI}.
+     * @param mf A {@link ModelFactory} used to create the return {@link Model}.
      * @return A {@link Model} with blank nodes restored.
      */
-    public static Model restoreBNodes(Model model, Map<BNode, IRI> bNodeIRIMap, ModelFactory mf, ValueFactory vf) {
+    public static Model restoreBNodes(Model model, Map<BNode, IRI> bNodeIRIMap, ModelFactory mf) {
         Set<IRI> iriSet = new HashSet<>(bNodeIRIMap.values());
         Model result = mf.createModel();
 
@@ -74,25 +75,25 @@ public class BNodeUtils {
                 for (Resource subjectBNode : subjectBNodes) {
                     for (Resource objectBNode : objectBNodes) {
                         addStatement(result, subjectBNode, statement.getPredicate(), objectBNode,
-                                statement.getContext(), vf);
+                                statement.getContext());
                     }
                 }
             }
             // Only the subject is a BNode
             else if (subjectBNodes.size() > 0) {
                 for (Resource subjectBNode : subjectBNodes) {
-                    addStatement(result, subjectBNode, statement.getPredicate(), object, statement.getContext(), vf);
+                    addStatement(result, subjectBNode, statement.getPredicate(), object, statement.getContext());
                 }
             }
             // Only the object is a BNode
             else if (objectBNodes.size() > 0) {
                 for (Resource objectBNode : objectBNodes) {
-                    addStatement(result, subject, statement.getPredicate(), objectBNode, statement.getContext(), vf);
+                    addStatement(result, subject, statement.getPredicate(), objectBNode, statement.getContext());
                 }
             }
             // Non BNode statement
             else {
-                addStatement(result, subject, statement.getPredicate(), object, statement.getContext(), vf);
+                addStatement(result, subject, statement.getPredicate(), object, statement.getContext());
             }
         }
         return result;
@@ -122,14 +123,13 @@ public class BNodeUtils {
      * @param predicate The {@link IRI} predicate to add.
      * @param object The {@link Value} object to add.
      * @param context An {@link Optional} of {@link Resource} of the context to add.
-     * @param vf A {@link ValueFactory} for creating statements.
      */
     private static void addStatement(Model model, Resource subject, IRI predicate, Value object,
-                                     Optional<Resource> context, ValueFactory vf) {
+                                     Optional<Resource> context) {
         if (context.isPresent()) {
-            model.add(vf.createStatement(subject, predicate, object, context.get()));
+            model.add(subject, predicate, object, context.get());
         } else {
-            model.add(vf.createStatement(subject, predicate, object));
+            model.add(subject, predicate, object);
         }
     }
 }
