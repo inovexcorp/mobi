@@ -1607,8 +1607,7 @@ public class SimpleOntology implements Ontology {
                 transformer, bNodeService, vf, mf, importService);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
-
-
+    
     /**
      * Adds the import of an Ontology that exists the cache to the dataset graph. Updates import statements on
      * datasetIRI graph.
