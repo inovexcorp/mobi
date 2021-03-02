@@ -205,7 +205,7 @@ public class SimpleBNodeService implements BNodeService {
             hashCount.put(idHash, 1);
         }
 
-        IRI skolemizedIRI = vf.createIRI(SKOLEMIZED_NAMESPACE + hashString + "/", bNode.getID());
+        IRI skolemizedIRI = vf.createIRI(SKOLEMIZED_NAMESPACE, hashString);
 
         // Add skolemized statements
         model.filter(bNode, null, null, (Resource) null).stream()
