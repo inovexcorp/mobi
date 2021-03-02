@@ -131,7 +131,7 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
 
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("How many rows in the csv would you like to check for property ranges?");
+        System.out.println("How many rows, excluding a header row, in the csv would you like to check for property ranges?");
         int desiredRows = scanner.nextInt();
 
         try (CSVReader reader = new CSVReader(new InputStreamReader(dataStream));) {
@@ -245,6 +245,8 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
             }
         } catch (IOException e) {
             throw new SemanticTranslationException("Issue reading type of datatype property");
+        } catch (NullPointerException n) {
+            throw new SemanticTranslationException("Cannot parse more rows than in file");
         }
     }
 

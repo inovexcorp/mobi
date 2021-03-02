@@ -25,15 +25,26 @@ package com.mobi.document.translator.impl.csv;
 
 public class CsvRangeItem {
     private String type = null;
+    private final String INTEGER = "integer";
+    private final String STRING = "string";
+    private final String DOUBLE = "double";
 
+    /**
+     * Checks for the type of a cell and compares it to the currently set type of the property
+     * @param token
+     */
     public void checkTokenType(String token) {
-        if (token.toLowerCase().equals("false") || token.toLowerCase().equals("true")) {
+        if (token.equalsIgnoreCase("false") || token.equalsIgnoreCase("true")) {
             compareTypes("boolean");
         } else if (checkNumber(token) == false) {
-            compareTypes("string");
+            compareTypes(STRING);
         }
     }
 
+    /**
+     *Retrieves the datatype of the property
+     * @return A string representing the range of the property
+     */
     public String getRangeType() {
         return this.type;
     }
@@ -41,10 +52,10 @@ public class CsvRangeItem {
     private void compareTypes(String currentType) {
         if (this.type == null) {
             this.type = currentType;
-        } else if ((this.type.equals("integer") && currentType.equals("double")) || (this.type.equals("double") && currentType.equals("integer"))) {
-            this.type = "double";
-        } else if (this.type != currentType) {
-            this.type = "string";
+        } else if ((this.type.equals(INTEGER) && currentType.equals(DOUBLE)) || (this.type.equals(DOUBLE) && currentType.equals(INTEGER))) {
+            this.type = DOUBLE;
+        } else if (!this.type.equals(currentType)) {
+            this.type = STRING;
         }
     }
 
@@ -53,14 +64,13 @@ public class CsvRangeItem {
             double doubleCheck = Double.parseDouble(token);
 
             if (doubleCheck % 1 != 0) {
-                compareTypes("double");
+                compareTypes(DOUBLE);
             } else {
-                compareTypes("integer");
+                compareTypes(INTEGER);
             }
             return true;
         } catch (NumberFormatException e) {
             return false;
         }
     }
-
 }

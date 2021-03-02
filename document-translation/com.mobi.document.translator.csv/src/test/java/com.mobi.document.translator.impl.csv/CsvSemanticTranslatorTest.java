@@ -103,7 +103,7 @@ public class CsvSemanticTranslatorTest extends OrmEnabledTestCase {
         final OrmFactory<ExtractedDatatypeProperty> datatypePropertyOrmFactory = getRequiredOrmFactory(ExtractedDatatypeProperty.class);
 
         assertEquals(1, classOrmFactory.getAllExisting(ont.getModel()).size());
-        assertEquals(14, datatypePropertyOrmFactory.getAllExisting(ont.getModel()).size());
+        assertEquals(15, datatypePropertyOrmFactory.getAllExisting(ont.getModel()).size());
 
         Collection<ExtractedClass> classes = classOrmFactory.getAllExisting(ont.getModel());
         for (ExtractedClass topClass: classes) {
