@@ -65,12 +65,12 @@ public class SimpleSesameTransformer implements SesameTransformer {
     }
 
     @Reference
-    protected void setMobiVF(ValueFactory valueFactory) {
+    public void setMobiVF(ValueFactory valueFactory) {
         mobiVF = valueFactory;
     }
 
     @Reference
-    protected void setMobiMF(ModelFactory modelFactory) {
+    public void setMobiMF(ModelFactory modelFactory) {
         mobiMF = modelFactory;
     }
 

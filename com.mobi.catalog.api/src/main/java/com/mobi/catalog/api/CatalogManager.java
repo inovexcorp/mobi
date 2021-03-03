@@ -38,11 +38,11 @@ import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
 
+import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -891,6 +891,17 @@ public interface CatalogManager {
     Model getCompiledResource(Resource commitId);
 
     /**
+     * Gets the File which represents the entity at the instance of the Commit identified by the provided Resource
+     * using previous Commit data to construct it.
+     *
+     * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
+     *                 to retrieve.
+     * @return A {@link File} which represents the resource at the Commit's point in history.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found.
+     */
+    File getCompiledResourceFile(Resource commitId);
+
+    /**
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Commit List
      * to construct a List of Resources.
      *
@@ -904,14 +915,27 @@ public interface CatalogManager {
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource
      * using previous Commit data to construct it.
      *
+     * @param versionedRDFRecordId The Resource identifying the Record from where the Branch should originate.
      * @param commitId             The Resource identifying the Commit identifying the spot in the entity's history that
      *                             you wish to retrieve.
      * @param branchId             The Resource identifying the Branch from where the Commit should originate.
-     * @param versionedRDFRecordId The Resource identifying the Record from where the Branch should originate.
      * @return Model which represents the resource at the Commit's point in history.
      * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */
     Model getCompiledResource(Resource versionedRDFRecordId, Resource branchId, Resource commitId);
+
+    /**
+     * Gets the File which represents the entity at the instance of the Commit identified by the provided Resource
+     * using previous Commit data to construct it. The File is a temporary file stored in the java.io.tmpdir directory.
+     *
+     * @param versionedRDFRecordId The Resource identifying the Record from where the Branch should originate.
+     * @param commitId             The Resource identifying the Commit identifying the spot in the entity's history that
+     *                             you wish to retrieve.
+     * @param branchId             The Resource identifying the Branch from where the Commit should originate.
+     * @return A {@link File} which represents the resource at the Commit's point in history.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found.
+     */
+    File getCompiledResourceFile(Resource versionedRDFRecordId, Resource branchId, Resource commitId);
 
     /**
      * Gets the Difference between the Commits identified by the two provided Resources. Essentially returns the
@@ -953,12 +977,13 @@ public interface CatalogManager {
     Set<Conflict> getConflicts(Resource leftId, Resource rightId);
 
     /**
-     * Gets the Difference, consisting of Models of additions and deletions, made between the original and the changed
-     * Model.
+     * Gets the Difference, consisting of Models of additions and deletions, made by comparing the provided original
+     * and changed Models. The Difference is created regardless of statement context, meaning only triples are compared.
+     * The resulting Difference retains the original statement contexts.
      *
      * @param original The original Model.
      * @param changed  The changed Model.
-     * @return The Difference between the two Models.
+     * @return The Difference between the two Models regardless of statement context.
      */
     Difference getDiff(Model original, Model changed);
 

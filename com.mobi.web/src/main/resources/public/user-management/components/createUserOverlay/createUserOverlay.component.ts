@@ -52,7 +52,7 @@ const createUserOverlayComponent = {
 createUserOverlayComponentCtrl.$inject = ['userStateService', 'userManagerService', 'REGEX'];
 
 function createUserOverlayComponentCtrl(userStateService, userManagerService, REGEX) {
-    var dvm = this;
+    const dvm = this;
     dvm.state = userStateService;
     dvm.um = userManagerService;
     dvm.usernamePattern = REGEX.LOCALNAME;
@@ -68,20 +68,20 @@ function createUserOverlayComponentCtrl(userStateService, userManagerService, RE
 
     dvm.getUsernames = function() {
         return map(dvm.um.users, 'username');
-    }
+    };
     dvm.add = function() {
         if (dvm.roles.admin) {
             dvm.newUser.roles.push('admin');
         }
         dvm.um.addUser(dvm.newUser, dvm.password)
-            .then(response => {
+            .then(() => {
                 dvm.errorMessage = '';
-                dvm.close()
+                dvm.close();
             }, error => dvm.errorMessage = error);
-    }
+    };
     dvm.cancel = function() {
         dvm.dismiss();
-    }
+    };
 }
 
 export default createUserOverlayComponent;

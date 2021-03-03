@@ -1,0 +1,29 @@
+PREFIX catalog: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+CONSTRUCT {
+  ?deletionSubject ?p ?o
+} WHERE {
+  {
+    SELECT DISTINCT ?deletionSubject WHERE {
+      VALUES ?commit { %COMMITLIST% }
+      GRAPH ?commit {
+        ?commit prov:generated ?revision .
+        ?revision catalog:deletions ?deletionsGraph .
+      }
+      GRAPH ?deletionsGraph {
+        ?deletionSubject ?p ?o .
+      }
+    }
+  }
+
+  VALUES ?commit { %THISCOMMIT% }
+
+  GRAPH ?commit {
+    ?commit prov:generated ?revision .
+    ?revision catalog:additions ?additionsGraph .
+  }
+  GRAPH ?additionsGraph {
+    ?deletionSubject ?p ?o .
+  }
+}
