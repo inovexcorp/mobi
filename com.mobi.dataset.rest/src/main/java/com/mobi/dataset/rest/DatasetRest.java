@@ -246,7 +246,6 @@ public class DatasetRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-<<<<<<< HEAD
     @Operation(
         summary = "Creates a new DatasetRecord in the local Catalog and Dataset in the specified repository.",
         responses = {
@@ -271,19 +270,7 @@ public class DatasetRest {
             @FormDataParam("keywords") List<FormDataBodyPart> keywords,
             @Parameter(description = "Optional list of OntologyRecord IRI strings for the new DatasetRecord")
             @FormDataParam("ontologies") List<FormDataBodyPart> ontologies) {
-=======
-    @ApiOperation("Creates a new DatasetRecord in the local Catalog and Dataset in the specified repository")
-    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = DatasetRecord.TYPE))
-    @ResourceId("http://mobi.com/catalog-local")
-    public Response createDatasetRecord(@Context ContainerRequestContext context,
-                                 @FormDataParam("title") String title,
-                                 @FormDataParam("repositoryId") String repositoryId,
-                                 @FormDataParam("datasetIRI") String datasetIRI,
-                                 @FormDataParam("description") String description,
-                                 @FormDataParam("markdown") String markdown,
-                                 @FormDataParam("keywords") List<FormDataBodyPart> keywords,
-                                 @FormDataParam("ontologies") List<FormDataBodyPart> ontologies) {
->>>>>>> master
+
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
         User activeUser = getActiveUser(context, engineManager);
