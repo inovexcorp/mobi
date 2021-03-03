@@ -589,7 +589,6 @@ public class OntologyRest {
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-<<<<<<< HEAD
     public Response uploadChangesToOntology(
             @Context ContainerRequestContext context,
             @Parameter(description = "String representing the record Resource id")
@@ -600,14 +599,8 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "ontology file to upload")
             @FormDataParam("file") InputStream fileInputStream) {
-=======
-    public Response uploadChangesToOntology(@Context ContainerRequestContext context,
-                                            @PathParam("recordId") String recordIdStr,
-                                            @QueryParam("branchId") String branchIdStr,
-                                            @QueryParam("commitId") String commitIdStr,
-                                            @FormDataParam("file") InputStream fileInputStream) {
         long totalTime = System.currentTimeMillis();
->>>>>>> master
+
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
