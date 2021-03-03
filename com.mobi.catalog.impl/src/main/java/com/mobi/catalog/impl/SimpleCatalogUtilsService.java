@@ -1195,7 +1195,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             String tmpDir = System.getProperty("java.io.tmpdir");
             Path tmpFile = Files.createFile(Paths.get(tmpDir + File.separator + UUID.randomUUID()));
             try (OutputStream outputStream = Files.newOutputStream(tmpFile)) {
-                RDFWriter writer = Rio.createWriter(RDFFormat.TRIG, outputStream);
+                RDFWriter writer = Rio.createWriter(RDFFormat.NQUADS, outputStream);
                 writer.getWriterConfig().set(BasicParserSettings.PRESERVE_BNODE_IDS, true);
                 writer.startRDF();
                 Consumer<Statement> consumer = statement ->

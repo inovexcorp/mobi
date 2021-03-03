@@ -189,7 +189,7 @@ public class ImportsResolverImpl implements ImportsResolver {
             String urlStr = resource.stringValue();
             try {
                 File tempFile = RDFFiles.writeStreamToTempFile(getWebInputStream(urlStr));
-                return RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.TRIG, parsers);
+                return RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.NQUADS, parsers);
             } catch (IOException e) {
                 log.error("Error opening InputStream from web ontology", e);
             }

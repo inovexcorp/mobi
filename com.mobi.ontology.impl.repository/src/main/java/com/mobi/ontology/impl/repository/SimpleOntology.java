@@ -1323,7 +1323,7 @@ public class SimpleOntology implements Ontology {
                     .logOutput(true)
                     .printOutput(false)
                     .batchSize(50000)
-                    .format(RDFFormat.TRIG)
+                    .format(RDFFormat.NQUADS)
                     .repository(repoId);
             importService.importFile(builder.build(), ontologyFile, graph);
             ontologyFile.delete();
