@@ -3622,6 +3622,7 @@ describe('Ontology State Service', function() {
             spyOn(ontologyStateSvc, 'resetSearchTab');
             ontologyStateSvc.listItem.selected = {};
             ontologyStateSvc.listItem.ontologyId = 'newId';
+            ontologyStateSvc.listItem.seeHistory = true;
         });
         it('when getActiveKey is not project or search', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('classes');
@@ -3632,6 +3633,7 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.listItem.selectedBlankNodes).toEqual([]);
             expect(ontologyStateSvc.listItem.blankNodes).toEqual({});
             expect(ontologyStateSvc.setSelected).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.listItem.seeHistory).toBe(false);
         });
         it('when getActiveKey is project', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('project');
@@ -3643,6 +3645,7 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.listItem.selectedBlankNodes).toEqual([{}]);
             expect(ontologyStateSvc.listItem.blankNodes).toEqual({bnode: 'bnode'});
             expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith('newId', false, ontologyStateSvc.listItem, 'project');
+            expect(ontologyStateSvc.listItem.seeHistory).toBe(false);
         });
     });
     it('resetSearchTab should reset variables', function() {
