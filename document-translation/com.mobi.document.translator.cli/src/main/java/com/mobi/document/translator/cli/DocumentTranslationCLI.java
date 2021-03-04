@@ -143,7 +143,7 @@ public class DocumentTranslationCLI implements Action {
                 // Or else throw an exception.
                 .orElseThrow(() -> new UnsupportedOperationException("No translator was found in the system for that file type"));
 
-        if (derivedTranslator instanceof CsvSemanticTranslator) {
+        if (derivedTranslator instanceof CsvSemanticTranslator && desiredRows != 0) {
             ((CsvSemanticTranslator) derivedTranslator).setDesiredRows(desiredRows);
         }
 
