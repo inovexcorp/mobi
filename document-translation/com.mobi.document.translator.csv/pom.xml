@@ -76,6 +76,7 @@
                         <Bundle-Name>Mobi CSV Document Translator</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
+                            com.mobi.document.translator.impl.*; provide:=true
                             com.mobi.document.translator; provide:=true
                             com.mobi.document.translator.stack; provide:=true
                             com.mobi.document.translator.expression.*; provide:=true

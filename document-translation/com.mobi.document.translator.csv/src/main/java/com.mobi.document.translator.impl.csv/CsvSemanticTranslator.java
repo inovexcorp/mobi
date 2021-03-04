@@ -54,7 +54,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Scanner;
 
 
 @Component(immediate = true, provide = {SemanticTranslator.class})
@@ -96,11 +95,13 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
 
     private IRI classIRI;
     private Model result;
+    private int desiredRows = 10;
     private ExtractedClass classInstance;
     private ArrayList<IRI> propertyIRIs;
 
     public CsvSemanticTranslator() {
         super("csv", ".csv");
+        LOG.info("The number of rows parsed to determine range datatype has been set to the default of 10.");
     }
 
     @Override
@@ -129,11 +130,6 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
     public Model translate(InputStream dataStream, String entityIdentifier, ExtractedOntology managedOntology)
             throws SemanticTranslationException {
 
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.println("How many rows, excluding a header row, in the csv would you like to check for property ranges?");
-        int desiredRows = scanner.nextInt();
-
         try (CSVReader reader = new CSVReader(new InputStreamReader(dataStream));) {
             String[] headers = reader.readNext();
             Map<String, CsvRangeItem> properties = new LinkedHashMap<>();
@@ -142,7 +138,7 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
                 properties.put(header, new CsvRangeItem());
             }
 
-            setPropertyRanges(reader, properties, desiredRows);
+            setPropertyRanges(reader, properties);
 
             for (Map.Entry<String, CsvRangeItem> property : properties.entrySet()) {
                 IRI range = getPropertyRange(property.getValue());
@@ -232,7 +228,7 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
         result.add(iri, getRdfType(), prop.getResource());
     }
 
-    private void setPropertyRanges(CSVReader reader, Map<String, CsvRangeItem> properties, int desiredRows)
+    private void setPropertyRanges(CSVReader reader, Map<String, CsvRangeItem> properties)
             throws SemanticTranslationException {
         try {
             for (int count = 0; count < desiredRows; count++) {
@@ -302,5 +298,10 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
         final String expression = instanceClass.getSpelInstanceUri().orElse(DEFAULT_INSTANCE_IRI_EXPRESSION);
         return this.expressionProcessor.processExpression(expression,
                 new DefaultInstanceIriExpressionContext(managedOntology, classInstance,null, this.valueFactory));
+    }
+
+    public void setDesiredRows(int desiredRows) {
+        LOG.info("The number of rows parsed to determine range datatype has been set to the default of {}", desiredRows);
+        this.desiredRows = desiredRows;
     }
 }

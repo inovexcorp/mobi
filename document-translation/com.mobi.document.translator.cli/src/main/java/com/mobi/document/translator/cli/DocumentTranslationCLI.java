@@ -24,6 +24,7 @@ package com.mobi.document.translator.cli;
  */
 
 import com.mobi.document.translator.SemanticTranslator;
+import com.mobi.document.translator.impl.csv.CsvSemanticTranslator;
 import com.mobi.document.translator.ontology.ExtractedOntology;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
@@ -33,10 +34,7 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.karaf.shell.api.action.Action;
-import org.apache.karaf.shell.api.action.Argument;
-import org.apache.karaf.shell.api.action.Command;
-import org.apache.karaf.shell.api.action.Completion;
+import org.apache.karaf.shell.api.action.*;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
@@ -69,22 +67,27 @@ public class DocumentTranslationCLI implements Action {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentTranslationCLI.class);
 
-    @Argument(index = 0, name = "Document", required = true, description = "The document file to translate")
+    @Argument(name = "document", required = true, description = "The document file to translate")
     @Completion(FileCompleter.class)
     private File documentFile;
 
-    @Argument(index = 1, name = "Output Location", required = true,
+    @Argument(index = 1, name = "outputLocation", required = true,
             description = "The directory where we'll write the output zip file containing the ontology and data")
     @Completion(FileCompleter.class)
     private File outputDirectory;
 
-    @Argument(index = 2, name = "Ontology IRI", required = false,
+    @Option(name = "-i", aliases ="--ontology-iri",
             description = "The IRI of the ontology you want to generate")
     private String ontologyIriString;
 
-    @Argument(index = 3, name = "Document Type",
+    @Option(name = "-t", aliases = "--document-type",
             description = "The type of document (If you don't want to use the file extension)")
     private String type;
+
+    @Option(name = "-r", aliases = "--row-count",
+            description = "The desired amount of rows (excluding headers) to parse a csv in order to determine range datatype")
+    private int desiredRows;
+
 
     @Reference
     private List<SemanticTranslator> translators = new ArrayList<>();
@@ -132,13 +135,19 @@ public class DocumentTranslationCLI implements Action {
 
     private SemanticTranslator getTranslatorForType(String type) {
         LOGGER.info("Translating for type '{}' -- We have {} translators registered", type, this.translators.size());
-        return translators.stream()
+        SemanticTranslator derivedTranslator = translators.stream()
                 // If any of the supported types contains the type extensions.
                 .filter(translator -> Arrays.asList(translator.getSupportedTypes()).contains(type))
                 // Find the first matching the above filter predicate.
                 .findFirst()
                 // Or else throw an exception.
                 .orElseThrow(() -> new UnsupportedOperationException("No translator was found in the system for that file type"));
+
+        if (derivedTranslator instanceof CsvSemanticTranslator) {
+            ((CsvSemanticTranslator) derivedTranslator).setDesiredRows(desiredRows);
+        }
+
+        return derivedTranslator;
     }
 
     private static void validateOutputLocation(File loc) throws IOException {
