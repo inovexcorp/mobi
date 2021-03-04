@@ -101,7 +101,7 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
 
     public CsvSemanticTranslator() {
         super("csv", ".csv");
-        LOG.info("The number of rows parsed to determine range datatype has been set to the default of 10.");
+        LOG.debug("The number of rows parsed to determine range datatype has been set to the default of 10.");
     }
 
     @Override
@@ -301,7 +301,7 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
     }
 
     public void setDesiredRows(int desiredRows) {
-        LOG.info("The number of rows parsed to determine range datatype has been set to the default of {}", desiredRows);
+        LOG.debug("The number of rows parsed to determine range datatype has been set to the default of {}", desiredRows);
         this.desiredRows = desiredRows;
     }
 }
