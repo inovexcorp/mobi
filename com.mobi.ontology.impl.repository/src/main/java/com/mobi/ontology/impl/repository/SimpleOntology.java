@@ -1472,11 +1472,13 @@ public class SimpleOntology implements Ontology {
                 } else {
                     Optional<File> localFile = importsResolver.retrieveOntologyLocalFile(imported, ontologyManager);
                     if (localFile.isPresent()) {
-                        createTempImportNotInCache(importedDatasetIRI, importedDatasetSdNgIRI, localFile.get(), conn);
+                        createTempImportNotInCacheLocal(importedDatasetIRI, importedDatasetSdNgIRI, localFile.get(),
+                                imported, conn);
                     } else {
                         Optional<File> webFile = importsResolver.retrieveOntologyFromWebFile(imported);
                         if (webFile.isPresent()) {
-                            createTempImportNotInCache(importedDatasetIRI, importedDatasetSdNgIRI, webFile.get(), conn);
+                            createTempImportNotInCacheWeb(importedDatasetIRI, importedDatasetSdNgIRI, webFile.get(),
+                                    conn);
                         } else {
                             conn.add(datasetIRI, vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), imported,
                                     datasetIRI);
@@ -1565,8 +1567,8 @@ public class SimpleOntology implements Ontology {
      * @param ontologyFile The {@link File} of web resolved ontology to load.
      * @param conn The {@link DatasetConnection} used to update the dataset graph with the new import.
      */
-    private void createTempImportNotInCache(IRI importedDatasetIRI, IRI importedDatasetSdNg, File ontologyFile,
-                                            DatasetConnection conn) {
+    private void createTempImportNotInCacheWeb(IRI importedDatasetIRI, IRI importedDatasetSdNg, File ontologyFile,
+                                               DatasetConnection conn) {
         if (LOG.isTraceEnabled()) {
             LOG.trace("Adding import for inProgressCommit for dataset not in cache " +
                     importedDatasetIRI.stringValue());
@@ -1577,6 +1579,35 @@ public class SimpleOntology implements Ontology {
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
 
+    /**
+     * Loads the import of an Ontology retrieved from the catalog into the cache. Updates import statements on
+     * datasetIRI graph.
+     *
+     * @param importedDatasetIRI The datasetIRI of the import.
+     * @param importedDatasetSdNg The datasetSdNg of the import.
+     * @param ontologyFile The {@link File} of catalog resolved ontology to load.
+     * @param imported The IRI of the imported ontology.
+     * @param conn The {@link DatasetConnection} used to update the dataset graph with the new import.
+     */
+    private void createTempImportNotInCacheLocal(IRI importedDatasetIRI, IRI importedDatasetSdNg, File ontologyFile,
+                                                 IRI imported,
+                                                 DatasetConnection conn) {
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Adding import for inProgressCommit for dataset not in cache from catalog" +
+                    importedDatasetIRI.stringValue());
+        }
+        Resource recordIRI = ontologyManager.getOntologyRecordResource(imported).orElseThrow(
+                () -> new IllegalStateException("Record must exist in catalog"));
+        Resource masterHead = catalogManager.getMasterBranch(
+                configProvider.getLocalCatalogIRI(), recordIRI).getHead_resource().orElseThrow(
+                () -> new IllegalStateException("Commit must exist in catalog"));
+        String recordCommitKey = OntologyDatasets.createRecordKey(recordIRI, masterHead);
+        Ontology importedOntology = new SimpleOntology(recordCommitKey, ontologyFile, repository,
+                ontologyManager, catalogManager, configProvider, datasetManager, importsResolver,
+                transformer, bNodeService, vf, mf, importService);
+        updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
+    }
+    
     /**
      * Adds the import of an Ontology that exists the cache to the dataset graph. Updates import statements on
      * datasetIRI graph.

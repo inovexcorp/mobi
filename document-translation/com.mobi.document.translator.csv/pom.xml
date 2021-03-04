@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  com.mobi.document.translation.cli
+  meaning.extraction.json
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
@@ -32,15 +32,11 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>document.translator.cli</artifactId>
+    <artifactId>document.translator.csv</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
     <dependencies>
-        <dependency>
-            <groupId>org.apache.karaf.shell</groupId>
-            <artifactId>org.apache.karaf.shell.console</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>document.translator.api</artifactId>
@@ -48,29 +44,23 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>document.translator.json</artifactId>
+            <artifactId>persistence.api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>document.translator.xml</artifactId>
-            <version>${project.version}</version>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>document.translator.csv</artifactId>
-            <version>1.19.0-SNAPSHOT</version>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>4.2</version>
         </dependency>
-        <!-- Test Dependencies -->
+
+        <!-- Test dependencies -->
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>rdf-orm-test</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>persistence.utils.impl</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -83,11 +73,16 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-name>Mobi Document Translation - CLI</Bundle-name>
+                        <Bundle-Name>Mobi CSV Document Translator</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package/>
+                        <Export-Package>
+                            com.mobi.document.translator.impl.*; provide:=true
+                            com.mobi.document.translator; provide:=true
+                            com.mobi.document.translator.stack; provide:=true
+                            com.mobi.document.translator.expression.*; provide:=true
+                        </Export-Package>
                         <Service-Component>*</Service-Component>
-                        <Karaf-Commands>*</Karaf-Commands>
+                        <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
