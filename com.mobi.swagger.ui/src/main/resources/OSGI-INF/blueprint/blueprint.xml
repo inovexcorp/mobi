@@ -29,7 +29,7 @@
 
     <service id="resources" interface="org.ops4j.pax.web.service.whiteboard.ResourceMapping">
         <bean class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
-            <property name="alias" value="/mobirest/swagger-ui" />
+            <property name="alias" value="/swagger-ui" />
             <property name="path" value="swagger" />
         </bean>
     </service>
