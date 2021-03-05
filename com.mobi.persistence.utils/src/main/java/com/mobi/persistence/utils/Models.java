@@ -280,7 +280,14 @@ public class Models {
 
         ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
 
-        if (preferredExtension.equalsIgnoreCase("zip")) {
+        if (preferredExtension.endsWith("gzip") || preferredExtension.endsWith("gz")) {
+            preferredExtension = FilenameUtils.removeExtension(preferredExtension);
+            try (BufferedInputStream bis = new BufferedInputStream(rdfData);
+                 GZIPInputStream gzis = new GZIPInputStream(bis)) {
+                rdfData = toByteArrayInputStream(gzis);
+            }
+        } else if (preferredExtension.endsWith("zip")) {
+            preferredExtension = FilenameUtils.removeExtension(preferredExtension);
             try (BufferedInputStream bis = new BufferedInputStream(rdfData);
                  ZipInputStream zis = new ZipInputStream(bis)) {
                 ZipEntry ze;
@@ -296,11 +303,6 @@ public class Models {
                         rdfData = toByteArrayInputStream(zis);
                     }
                 }
-            }
-        } else if (preferredExtension.equalsIgnoreCase("gzip")) {
-            try (BufferedInputStream bis = new BufferedInputStream(rdfData);
-                 GZIPInputStream gzis = new GZIPInputStream(bis)) {
-                rdfData = toByteArrayInputStream(gzis);
             }
         }
         return buildModel(preferredExtension, rdfData, transformer);

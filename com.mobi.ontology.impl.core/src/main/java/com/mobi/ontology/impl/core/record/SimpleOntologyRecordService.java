@@ -183,6 +183,14 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
         if (fileName != null && inputStream != null) {
             try {
                 String fileExtension = FilenameUtils.getExtension(fileName);
+                if (fileExtension.equals("gz") || fileExtension.endsWith("zip")) {
+                    String fileExtensionNoCompress = FilenameUtils.getExtension(
+                            FilenameUtils.removeExtension(fileName));
+                    if (fileExtensionNoCompress.equals("tar")) {
+                        throw new IllegalArgumentException("File must not be a tar");
+                    }
+                    fileExtension = fileExtensionNoCompress + "." + fileExtension;
+                }
                 ontologyModel = Models.createModel(fileExtension, inputStream, sesameTransformer);
             } catch (IOException e) {
                 throw new MobiOntologyException("Could not parse Ontology input stream.", e);
