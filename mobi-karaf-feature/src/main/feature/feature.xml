@@ -67,7 +67,7 @@
         <bundle start-level="80">mvn:net.minidev/accessors-smart/1.2</bundle>
         <bundle start-level="80">mvn:org.ow2.asm/asm/5.0.4</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.oro/2.0.8_6</bundle>
-        <bundle start-level="80">mvn:com.github.jsonld-java/jsonld-java/0.12.4</bundle>
+        <bundle start-level="80">mvn:com.github.jsonld-java/jsonld-java/0.12.2</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/1.0_6</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jcip-annotations/1.0_2</bundle>
         <bundle start-level="80">mvn:org.mapdb/mapdb/1.0.8</bundle>
