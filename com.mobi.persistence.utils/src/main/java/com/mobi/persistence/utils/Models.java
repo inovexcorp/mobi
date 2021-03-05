@@ -78,6 +78,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.io.BufferedInputStream;
@@ -278,6 +279,7 @@ public class Models {
 
         ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
 
+
         if (preferredExtension.equalsIgnoreCase("zip")) {
             try (BufferedInputStream bis = new BufferedInputStream(rdfData);
                  ZipInputStream zis = new ZipInputStream(bis)) {
@@ -294,6 +296,11 @@ public class Models {
                         rdfData = toByteArrayInputStream(zis);
                     }
                 }
+            }
+        } else if (preferredExtension.equalsIgnoreCase("gzip")) {
+            try (BufferedInputStream bis = new BufferedInputStream(rdfData);
+                 GZIPInputStream gzis = new GZIPInputStream(bis)) {
+                rdfData = toByteArrayInputStream(gzis);
             }
         }
         return buildModel(preferredExtension, rdfData, transformer);

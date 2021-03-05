@@ -78,9 +78,9 @@ function uploadOntologyOverlayComponentCtrl(ontologyManagerService, ontologyStat
         }
     }
     dvm.submit = function() {
-        var id = 'upload-' + (uploadOffset + dvm.index);
+        const id = 'upload-' + (uploadOffset + dvm.index);
         dvm.resolve.startUpload();
-        var promise = om.uploadOntology(file, undefined, dvm.title, dvm.description, map(dvm.keywords, trim), id)
+        const promise = om.uploadOntology(file, undefined, dvm.title, dvm.description, map(dvm.keywords, trim), id)
             .then(dvm.resolve.finishUpload, errorObject => {
                 os.addErrorToUploadItem(id, errorObject);
                 dvm.resolve.finishUpload();

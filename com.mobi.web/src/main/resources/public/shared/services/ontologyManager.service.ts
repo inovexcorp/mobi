@@ -21,6 +21,7 @@
  * #L%
  */
 import { async } from '@angular/core/testing';
+import { promises } from 'dns';
 import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq, fromPairs } from 'lodash';
 import pako from 'pako';
 ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
@@ -107,35 +108,39 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param {string} id The identifier for this request.
      * @returns {Promise} A promise indicating whether the ontology was persisted.
      */
-    self.uploadOntology = async function(file, ontologyJson, title, description, keywords, id = '') {
+    self.uploadOntology = function(file, ontologyJson, title, description, keywords, id = '') {
         const fd = new FormData();
         const config = {
-            transformRequest: identity, 
+            transformRequest: identity,
             headers: {
                 'Content-Type': undefined
             }
         };
-
+        let prepPromise;
         if (file !== undefined) {
             const titleInfo = getFileTitleInfo(title);
-            if (titleInfo.ext !== 'zip') {
-                const blob = await self.compressFile(file);
-                fd.append('file', blob, titleInfo.name+'.zip');  
+            if (titleInfo.ext !== 'zip' && file.size) {
+                prepPromise = self.compressFile(file).then(blob => {
+                    fd.append('file', blob, titleInfo.name + '.gzip');
+                });
             } else {
-                fd.append('file', file);
+                prepPromise = Promise.resolve(fd.append('file', file));
             }
+        } else {
+            prepPromise = Promise.resolve();
         }
-       
-        if (ontologyJson !== undefined) {
-            fd.append('json', JSON.stringify(ontologyJson));
-        }
-        fd.append('title', title);
-        if (description) {
-            fd.append('description', description);
-        }
-        forEach(keywords, word => fd.append('keywords', word));
-        const promise = id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
-        return promise.then(response => response.data, util.rejectErrorObject);
+        return prepPromise.then(() => {
+            if (ontologyJson !== undefined) {
+                fd.append('json', JSON.stringify(ontologyJson));
+            }
+            fd.append('title', title);
+            if (description) {
+                fd.append('description', description);
+            }
+            forEach(keywords, word => fd.append('keywords', word));
+            const promise =  id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
+            return new Promise(resolve => resolve(promise));
+        }).then(response => response.data, util.rejectErrorObject);
     };
 
     /**
@@ -1631,31 +1636,46 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     self.getConceptSchemeIRIs = function(ontologies, derivedConceptSchemes) {
         return map(self.getConceptSchemes(ontologies, derivedConceptSchemes), '@id');
     };
-
+    /**
+     * @description
+     * Compressing a file before uploading.
+     * @param {File} file The ontology file.
+     * @returns {file} compressed file
+     */
     self.compressFile = function(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (evt) => {
                 try {
-                    const result = evt.target.result;
-                    console.log(pako);
-                    const compressedData = pako.deflate(result,{level: 1});
+                    const compressedData = pako.gzip(evt.target.result, {to: 'string'});
                     const blob = new Blob([compressedData]);
                     resolve(blob);
                 } catch (error) {
-                   reject(error);
+                    reject(error);
                 }
             };
-            reader.readAsArrayBuffer(file); 
+
+            if (file && file.size) {
+                reader.readAsArrayBuffer(file); 
+            } else {
+                resolve(file);
+            }
         });
         
+    };
+    self.getPromise = function () {
+        return this.promise;
+    };
+
+    self.setPromise = function(p) {
+        this.promise = p;
     };
 
     function getFileTitleInfo(title) {
         const fileName = title.toLowerCase().split('.');
         return {
-            name: fileName.slice(0,1),
-            ext: fileName.slice(-1)
+            name: fileName.slice(0,1)[0],
+            ext: fileName.slice(-1)[0]
         };
     }
 
