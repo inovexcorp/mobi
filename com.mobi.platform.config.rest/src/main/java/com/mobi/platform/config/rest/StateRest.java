@@ -111,6 +111,7 @@ public class StateRest {
         summary = "Retrieves State for the User making the request based on filter criteria",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
@@ -157,6 +158,7 @@ public class StateRest {
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -204,6 +206,7 @@ public class StateRest {
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
             @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -246,6 +249,7 @@ public class StateRest {
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
             @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
@@ -295,6 +299,7 @@ public class StateRest {
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating the success of the request"),
             @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }

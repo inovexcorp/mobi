@@ -158,6 +158,7 @@ public class MappingRest {
         responses = {
             @ApiResponse(responseCode = "201", description = "Response with the MappingRecord Resource ID"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
@@ -237,6 +238,7 @@ public class MappingRest {
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with the JSON-LD from the uploaded mapping"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
@@ -274,6 +276,7 @@ public class MappingRest {
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with mapping to download"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
@@ -322,6 +325,7 @@ public class MappingRest {
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )

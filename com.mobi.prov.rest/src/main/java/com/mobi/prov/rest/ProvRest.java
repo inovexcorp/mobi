@@ -156,6 +156,8 @@ public class ProvRest {
         summary = "Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities.",
         responses = {
             @ApiResponse(responseCode = "200", description = "A JSON object with a key for activities and a key for entities"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getActivities(

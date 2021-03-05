@@ -179,6 +179,7 @@ public class DatasetRest {
         responses = {
             @ApiResponse(responseCode = "200", description = "A Response with a JSON array of DatasetRecords"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
@@ -253,6 +254,7 @@ public class DatasetRest {
         responses = {
             @ApiResponse(responseCode = "201", description = "A Response with the IRI string of the created DatasetRecord"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
@@ -328,6 +330,7 @@ public class DatasetRest {
             responses = {
                 @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),
                 @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
                 @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
             }
     )
@@ -367,6 +370,7 @@ public class DatasetRest {
         responses = {
             @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
@@ -414,6 +418,7 @@ public class DatasetRest {
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
@@ -454,6 +459,7 @@ public class DatasetRest {
         responses = {
             @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),
             @ApiResponse(responseCode = "400", description = "A Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "500", description = "A Response indicating INTERNAL_SERVER_ERROR")
         }
     )

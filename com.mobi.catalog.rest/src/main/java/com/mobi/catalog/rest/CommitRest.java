@@ -127,16 +127,17 @@ public class CommitRest {
         tags = "commits",
         summary = "Retrieves the Commit specified by the provided ID",
         responses = {
-            @ApiResponse(responseCode = "200", description = "A {@link Response} with the {@link Commit} " +
+            @ApiResponse(responseCode = "200", description = "Response with the Commit " +
                     "identified by the provided ID"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
         }
     )
     public Response getCommit(
-            @Parameter(description = "{@link String} value of the {@link Commit} ID. NOTE: Assumes an {@link IRI} " +
-                    "unless {@link String} starts with \"{@code _:}\"")
+            @Parameter(description = "String value of the Commit ID. NOTE: Assumes an {IRI} " +
+                    "unless String starts with \"_:\"")
             @PathParam("commitId") String commitId,
-            @Parameter(description = "{@link String} representation of the desired {@link RDFFormat}")
+            @Parameter(description = "String representation of the desired RDFFormat")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
         try {
@@ -179,20 +180,21 @@ public class CommitRest {
         tags = "commits",
         summary = "Retrieves the Commit history specified by the provided ID",
         responses = {
-            @ApiResponse(responseCode = "200", description = "A {@link Response} containing a {@link List} of" +
-                    " {@link Commit}s starting with the provided {@code commitId} which represents " +
-                    "the {@link Commit} history."),
+            @ApiResponse(responseCode = "200", description = "Response containing a List of " +
+                    "Commits starting with the provided commitId which represents " +
+                    "the Commit history."),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getCommitHistory(
             @Context UriInfo uriInfo,
-            @Parameter(description = "{@link String} value of the {@link Commit} ID")
+            @Parameter(description = "String value of the Commit ID")
             @PathParam("commitId") String commitId,
-            @Parameter(description = "{@link String} value of the target {@link Commit} ID")
+            @Parameter(description = "String value of the target Commit ID")
             @QueryParam("targetId") String targetId,
-            @Parameter(description = "Optional {@link String} value of the entity ID")
+            @Parameter(description = "Optional String value of the Entity ID")
             @QueryParam("entityId") String entityId,
             @Parameter(description = "Optional offset for the results")
             @QueryParam("offset") int offset,
@@ -258,6 +260,7 @@ public class CommitRest {
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST, Thrown if a CommitId could not be found"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
@@ -326,16 +329,17 @@ public class CommitRest {
                 " a header called has-more-results will be added to the response object that indicates whether more " +
                 "pages of results exist.",
         responses = {
-            @ApiResponse(responseCode = "201", description = "A {@link Response} containing the {@link Difference}" +
-                    " for the specified commit or between the {@code sourceId} and {@code targetId}"),
+            @ApiResponse(responseCode = "201", description = "Response containing the Difference" +
+                    " for the specified commit or between the sourceId and targetId"),
             @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
         }
     )
     public Response getDifference(
-            @Parameter(description = "{@link String} value of the source {@link Commit}", required = true)
+            @Parameter(description = "String value of the source Commit", required = true)
             @PathParam("sourceId") String sourceId,
-            @Parameter(description = "Optional {@link String} value of the target Commit ID", required = false)
+            @Parameter(description = "Optional String value of the target Commit ID", required = false)
             @QueryParam("targetId") String targetId,
             @Parameter(description = "Optional limit of the number of subjects to retrieve the differences for. " +
                     "The number of subjects in the response object may be less than the limit " +
@@ -343,7 +347,7 @@ public class CommitRest {
             @DefaultValue("-1") @QueryParam("limit") int limit,
             @Parameter(description = "Optional integer offset of the subject to start collecting differences from")
             @QueryParam("offset") int offset,
-            @Parameter(description = "{@link String} representation of the desired {@link RDFFormat}")
+            @Parameter(description = "String representation of the desired RDFFormat")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
         try {
@@ -390,13 +394,14 @@ public class CommitRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-            tags = "commits",
-            summary = "Retrieves the Difference in the specified commit for the specified subject",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-            }
+        tags = "commits",
+        summary = "Retrieves the Difference in the specified commit for the specified subject",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+        }
     )
     public Response getDifferenceForSubject(@PathParam("sourceId") String sourceId,
                                   @PathParam("subjectId") String subjectId,
