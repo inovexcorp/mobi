@@ -251,6 +251,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Retrieves the distributed and local Catalogs",
         responses = {
             @ApiResponse(responseCode = "200", description = "List of Catalogs within the repository"),
@@ -296,6 +297,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Retrieves the Catalog specified by the provided ID",
         responses = {
             @ApiResponse(responseCode = "200", description = "Specific Catalog from the repository"),
@@ -342,6 +344,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Retrieves the Records in the Catalog",
         responses = {
             @ApiResponse(responseCode = "200", description = "List of Records that match the search criteria"),
@@ -417,6 +420,7 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Creates a new Record in the Catalog",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Record"),
@@ -498,6 +502,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Retrieves the Catalog record by its ID",
         responses = {
             @ApiResponse(responseCode = "200", description = "Array with the contents of the Record’s named graph, " +
@@ -541,6 +546,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Deletes the Catalog Record by its ID",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating whether or not the Record was deleted"),
@@ -590,6 +596,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Updates the Catalog Record by its ID using the provided Record JSON-LD",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating whether or not the Record was updated"),
@@ -637,6 +644,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Retrieves the list of Distributions associated with an UnversionedRecord",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with a list of all the Distributions of the" +
@@ -694,6 +702,7 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Creates a new Distribution for the provided UnversionedRecord",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Distribution"),
@@ -745,6 +754,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets a specific Distribution of an UnversionedRecord",
         responses = {
             @ApiResponse(responseCode = "200", description = "Distribution that was identified by the provided IDs"),
@@ -789,6 +799,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Deletes a specific Distribution of an UnversionedRecord",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating if the Distribution was deleted"),
@@ -832,6 +843,7 @@ public class CatalogRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Updates a specific Distribution for an UnversionedRecord identified by the provided IDs " +
                 "using the modifications in the provided JSON-LD",
         responses = {
@@ -881,6 +893,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets a list of Versions for a VersionedRecord",
         responses = {
             @ApiResponse(responseCode = "200", description = "List of all the Versions associated with a VersionedRecord"),
@@ -935,6 +948,7 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Creates a Version for the identified VersionedRecord using the passed form data and stores" +
                 " it in the repository. This Version will become the latest Version for the identified VersionedRecord",
         responses = {
@@ -999,6 +1013,7 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Creates a Tag for the identified VersionedRecord",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Tag"),
@@ -1070,6 +1085,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets the latest Version of a VersionedRecord identified by the provided IDs",
         responses = {
             @ApiResponse(responseCode = "200", description = "Latest Version for the identified VersionedRecord"),
@@ -1111,6 +1127,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets a specific Version for the identified VersionedRecord",
         responses = {
             @ApiResponse(responseCode = "200", description = "Requested Version"),
@@ -1156,6 +1173,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Removes a specific Version from a VersionedRecord. If that Version happens to be the latest Version," +
                 " the latest Version will be updated to be the previous Version",
         responses = {
@@ -1201,6 +1219,7 @@ public class CatalogRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Updates the Version identified by the provided IDs using the modifications in the provided JSON-LD",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating whether the Version was updated"),
@@ -1253,6 +1272,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets the list of all Distributions for the identified Version",
         responses = {
             @ApiResponse(responseCode = "200", description = "List of Distributions for the identified Version"),
@@ -1312,6 +1332,7 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Creates a Distribution for the identified Version",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Distribution"),
@@ -1368,6 +1389,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets a specific Distribution for the Version identified by the IDs",
         responses = {
             @ApiResponse(responseCode = "200", description = "Distribution for the Version identified by the IDs"),
@@ -1416,6 +1438,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Deletes a specific Distribution of the identified Version",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response identifying whether the Distribution was deleted"),
@@ -1463,6 +1486,7 @@ public class CatalogRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Updates a specific Distribution of the identified Version with the modifications in the " +
                 "provided newDistribution",
         responses = {
@@ -1511,6 +1535,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets the Commit associated with the identified Version using the provided IDs",
         responses = {
             @ApiResponse(responseCode = "200", description = "Commit associated with the identified Version"),
@@ -1564,6 +1589,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs",
         responses = {
             @ApiResponse(responseCode = "200", description = "List of Branches for the identified VersionedRDFRecord"),
@@ -1636,6 +1662,7 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Creates a Branch for a VersionedRDFRecord identified by the IDs using the passed form data",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Branch"),
@@ -1701,6 +1728,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets the master Branch of a VersionedRDFRecord identified by the provided IDs",
         responses = {
             @ApiResponse(responseCode = "200", description = "Master Branch for the identified VersionedRDFRecord"),
@@ -1741,6 +1769,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Get a specific Branch for a specific VersionedRDFRecord",
         responses = {
             @ApiResponse(responseCode = "200", description = "Identified Branch for the specific VersionedRDFRecord"),
@@ -1785,6 +1814,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Deletes a specific Branch for a specific VersionedRDFRecord",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response identifying whether the Branch was deleted"),
@@ -1832,6 +1862,7 @@ public class CatalogRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Updates the specified Branch using the modifications in the provided newBranch for a " +
                 "specific VersionedRDFRecord",
         responses = {
@@ -1886,6 +1917,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets a list of Commits associated with the Branch identified by the provided IDs which represents " +
                 "the Commit chain for that Branch. If a limit is passed which is greater than zero, will paginate the " +
                 "results. If a targetId is passed, then only commits between the HEAD commits of the branchId and " +
@@ -1958,6 +1990,7 @@ public class CatalogRest {
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Creates a new Commit in the repository for a specific Branch using the InProgressCommit " +
                 "associated with the user making this request. The HEAD Commit is updated to be this new Commit",
         responses = {
@@ -2012,6 +2045,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets the HEAD Commit for a specific Branch",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with the Commit which is the HEAD of the " +
@@ -2064,6 +2098,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets the Commit identified by the provided IDs",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with the Commit identified by the provided IDs"),
@@ -2120,6 +2155,7 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/difference")
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets the Difference between the HEAD Commit of the Branch identified by the provided IDs in the " +
                 "path and the HEAD Commit of the Branch identified by the query parameter. For this comparison " +
                 "to be done, the Commits must have an ancestor Commit in common.",
@@ -2179,6 +2215,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets the Conflicts between the HEAD Commit of the Branch identified by the provided IDs in the " +
                 "path and the HEAD Commit of the Branch identified by the query parameter. For this comparison to " +
                 "be done, the Commits must have an ancestor Commit in common",
@@ -2247,6 +2284,7 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Performs a merge between the two Branches identified by the provided IDs. The addition and " +
                 "deletion statements that are required to resolve any conflicts will be used to create the " +
                 "merged Commit. The target Branch will point to the new merge commit, but the source Branch will " +
@@ -2314,6 +2352,7 @@ public class CatalogRest {
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets the Commit identified by the provided IDs and returns the compiled Resource " +
                 "following the Commit chain which terminates at the identified Commit",
         responses = {
@@ -2385,6 +2424,7 @@ public class CatalogRest {
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets the compiled resource for a the entity identified by a specific Commit",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with the compiled Resource for the entity" +
@@ -2459,6 +2499,7 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Creates a InProgressCommit linked to a specific VersionedRDFRecord",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating whether the InProgressCommit" +
@@ -2502,6 +2543,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Gets the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with the changes from the specific InProgressCommit"),
@@ -2547,6 +2589,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Deletes the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord",
         responses = {
             @ApiResponse(responseCode = "200", description = "RResponse indicating whether the InProgressCommit " +
@@ -2591,6 +2634,7 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Updates the InProgressCommit for a user identified by the provided IDs using the statements " +
                 "found in the provided form data. If the user does not have an InProgressCommit, one will be" +
                 " created with the provided data.",
@@ -2637,6 +2681,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Retrieves all the available record types",
         responses = {
             @ApiResponse(responseCode = "200", description = "All the available record types"),
@@ -2662,6 +2707,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "catalogs",
         summary = "Retrieves all the available sorting options",
         responses = {
             @ApiResponse(responseCode = "200", description = "All the available sorting options"),

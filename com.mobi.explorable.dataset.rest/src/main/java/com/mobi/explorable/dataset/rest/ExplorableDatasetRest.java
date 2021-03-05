@@ -234,6 +234,7 @@ public class ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "explorable-datasets",
         summary = "Retrieves all the data associated with ontology objects, from a Dataset in the local Catalog",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -277,6 +278,7 @@ public class ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "explorable-datasets",
         summary = "Retrieves an aggregated summary of all ontology objects from a Dataset in the local Catalog",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
@@ -332,6 +334,7 @@ public class ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "explorable-datasets",
         summary = "Retrieves a list of all properties available for a class from a Dataset in the local Catalog",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response with a JSON array"),
@@ -369,6 +372,7 @@ public class ExplorableDatasetRest {
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @Operation(
+        tags = "explorable-datasets",
         summary = "Creates an instance of a particular class type in a Dataset in the local Catalog",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Instance"),
@@ -415,6 +419,7 @@ public class ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "explorable-datasets",
         summary = "Retrieves an instance of a particular class type from a Dataset in the local Catalog",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with a JSON-LD serialization of the desired instance"),
@@ -457,6 +462,7 @@ public class ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "explorable-datasets",
         summary = "Updates an instance of a particular class type from a Dataset in the local Catalog",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating whether or not the " +
@@ -510,6 +516,7 @@ public class ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "explorable-datasets",
         summary = "Deletes an instance by its ID",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating whether or not the Record was deleted"),

@@ -149,6 +149,7 @@ public class MergeRequestRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "merge-requests",
         summary = "Retrieves all MergeRequests in the application",
         responses = {
             @ApiResponse(responseCode = "201", description = "List of all {@link MergeRequest}s that match the criteria"),
@@ -203,6 +204,7 @@ public class MergeRequestRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
+        tags = "merge-requests",
         summary = "Creates a new MergeRequest in the application with the provided information",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created " +
@@ -274,6 +276,7 @@ public class MergeRequestRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "merge-requests",
         summary = "Retrieves a MergeRequest from the application by its ID",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with the {@link MergeRequest} with the" +
@@ -311,6 +314,7 @@ public class MergeRequestRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "merge-requests",
         summary = "Updates an existing MergeRequest that has the requestId with the provided " +
                 "JSONLD of newMergeRequest",
         responses = {
@@ -345,6 +349,7 @@ public class MergeRequestRest {
     @Path("{requestId}")
     @RolesAllowed("user")
     @Operation(
+        tags = "merge-requests",
         summary = "Accepts a MergeRequest by performing the merge and changing the type",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the status of the acceptance"),
@@ -384,6 +389,7 @@ public class MergeRequestRest {
     @Path("{requestId}")
     @RolesAllowed("user")
     @Operation(
+        tags = "merge-requests",
         summary = "Deletes a MergeRequest that has the provided requestId",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the status of the delete"),
@@ -419,6 +425,7 @@ public class MergeRequestRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "merge-requests",
         summary = "Retrieves all Comment threads on a MergeRequest sorted by issued date of the head " +
                 "of each comment chain",
         responses = {
@@ -460,6 +467,7 @@ public class MergeRequestRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "merge-requests",
         summary = "Retrieves a Comment from the application by its ID",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with the Comment with the provided ID"),
@@ -509,6 +517,7 @@ public class MergeRequestRest {
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @Operation(
+        tags = "merge-requests",
         summary = "Creates a new Comment on the MergeRequest in the application with the provided information",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Comment"),
@@ -558,6 +567,7 @@ public class MergeRequestRest {
     @Consumes(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @Operation(
+        tags = "merge-requests",
         summary = "Updates a Comment by its ID using the provided String",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the status of the update"),
@@ -600,6 +610,7 @@ public class MergeRequestRest {
     @Path("{requestId}/comments/{commentId}")
     @RolesAllowed("user")
     @Operation(
+        tags = "merge-requests",
         summary = "Deletes a Comment that has the provided commentId",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating the status of the delete"),

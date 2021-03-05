@@ -107,6 +107,7 @@ public class StateRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "states",
         summary = "Retrieves State for the User making the request based on filter criteria",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -151,6 +152,7 @@ public class StateRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "states",
         summary = "Creates a new State for the User making the request",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
@@ -197,6 +199,7 @@ public class StateRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "states",
         summary = "Retrieves State by ID as long it belongs to the User making the request",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -238,6 +241,7 @@ public class StateRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "states",
         summary = "Updates State as long as it belongs to the User making the request",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
@@ -286,6 +290,7 @@ public class StateRest {
     @Path("{stateId}")
     @RolesAllowed("user")
     @Operation(
+        tags = "states",
         summary = "Deletes State as long as it belongs to the User making the request",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating the success of the request"),

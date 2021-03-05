@@ -190,6 +190,7 @@ public class DelimitedRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
+        tags = "delimited-files",
         summary = "Upload delimited file sent as form data",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response with the name of the file created on the server"),
@@ -230,6 +231,7 @@ public class DelimitedRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
+        tags = "delimited-files",
         summary = "Replace an uploaded delimited file with another",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with the name of the file replaced on the server"),
@@ -272,6 +274,7 @@ public class DelimitedRest {
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
     @Operation(
+        tags = "delimited-files",
         summary = "ETL an uploaded delimited document using mapping JSON-LD",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response with a JSON object containing the mapping" +
@@ -316,6 +319,7 @@ public class DelimitedRest {
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @Operation(
+        tags = "delimited-files",
         summary = "ETL an uploaded delimited document using an uploaded Mapping file and download the data",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with the converted data in the requested format to download"),
@@ -376,6 +380,7 @@ public class DelimitedRest {
     @javax.ws.rs.Path("{documentName}/map")
     @RolesAllowed("user")
     @Operation(
+        tags = "delimited-files",
         summary = "ETL an uploaded delimited document using an uploaded Mapping file and load data into a Dataset",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
@@ -433,6 +438,7 @@ public class DelimitedRest {
     @javax.ws.rs.Path("{documentName}/map-to-ontology")
     @RolesAllowed("user")
     @Operation(
+        tags = "delimited-files",
         summary = "ETL an uploaded delimited document using an uploaded Mapping file and commit it to an OntologyRecord",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -571,6 +577,7 @@ public class DelimitedRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "delimited-files",
         summary = "Gather rows from an uploaded delimited document",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),

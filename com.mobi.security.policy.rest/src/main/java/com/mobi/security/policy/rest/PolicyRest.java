@@ -93,6 +93,7 @@ public class PolicyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "policies",
         summary = "Retrieves security policies matching the provided filters",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -137,6 +138,7 @@ public class PolicyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("admin")
     @Operation(
+        tags = "policies",
         summary = "Creates a new security policy using the provided JSON body",
         responses = {
             @ApiResponse(responseCode = "201", description = "The new policy ID"),
@@ -169,6 +171,7 @@ public class PolicyRest {
     @Path("{policyId}")
     @RolesAllowed("user")
     @Operation(
+        tags = "policies",
         summary = "Retrieves a specific security policy by its ID",
         responses = {
             @ApiResponse(responseCode = "200", description = "A JSON representation of the identified policy"),
@@ -205,6 +208,7 @@ public class PolicyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("admin")
     @Operation(
+        tags = "policies",
         summary = "Updates an existing security policy using the provided JSON body",
         responses = {
             @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),

@@ -174,6 +174,7 @@ public class SparqlRest {
             JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
+        tags = "sparql",
         summary = "Retrieves the results of the provided SPARQL query",
         responses = {
             @ApiResponse(responseCode = "200", description = "The SPARQL 1.1 results in mime type specified by accept header"),
@@ -241,6 +242,7 @@ public class SparqlRest {
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @Operation(
+        tags = "sparql",
         summary = "Query and Download the results of the provided SPARQL query",
         responses = {
             @ApiResponse(responseCode = "200", description = "The SPARQL 1.1 Response in the format of fileType query parameter"),
@@ -312,6 +314,7 @@ public class SparqlRest {
     @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
+        tags = "sparql",
         summary = "Retrieves the limited results of the provided SPARQL query",
         responses = {
             @ApiResponse(responseCode = "200", description = "The SPARQL 1.1 results in mime type specified by accept header"),

@@ -132,6 +132,7 @@ public class RecordPermissionsRest {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("{recordId}")
     @Operation(
+        tags = "record-permissions",
         summary = "Retrieves a specific record security policy by its ID",
         responses = {
             @ApiResponse(responseCode = "200",
@@ -197,6 +198,7 @@ public class RecordPermissionsRest {
     @Path("{recordId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
+        tags = "record-permissions",
         summary = "Updates an existing record security policy using the provided JSON body",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),

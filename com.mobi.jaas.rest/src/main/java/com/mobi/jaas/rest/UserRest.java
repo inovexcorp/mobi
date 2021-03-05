@@ -126,6 +126,7 @@ public class UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+        tags = "users",
         summary = "Get all Mobi Users",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -165,6 +166,7 @@ public class UserRest {
     @POST
     @RolesAllowed("admin")
     @Operation(
+        tags = "users",
         summary = "Create a Mobi User account",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -235,6 +237,7 @@ public class UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+        tags = "users",
         summary = "Get a single Mobi User",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -271,6 +274,7 @@ public class UserRest {
     @Path("{username}")
     @RolesAllowed("user")
     @Operation(
+        tags = "users",
         summary = "Update a Mobi user's information",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -341,6 +345,7 @@ public class UserRest {
     @Path("{username}/password")
     @RolesAllowed("user")
     @Operation(
+        tags = "users",
         summary = "Changes a Mobi User's password if it is the User making the request",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -386,6 +391,7 @@ public class UserRest {
     @Path("{username}/password")
     @RolesAllowed("admin")
     @Operation(
+        tags = "users",
         summary = "Resets a Mobi User's password if User making request is the admin",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -422,6 +428,7 @@ public class UserRest {
     @Path("{username}")
     @RolesAllowed("user")
     @Operation(
+        tags = "users",
         summary = "Remove a Mobi user's account",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -466,6 +473,7 @@ public class UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+        tags = "users",
         summary = "List roles of a Mobi User",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -506,6 +514,7 @@ public class UserRest {
     @Path("{username}/roles")
     @RolesAllowed("admin")
     @Operation(
+        tags = "users",
         summary = "Add roles to a Mobi User",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -546,6 +555,7 @@ public class UserRest {
     @Path("{username}/roles")
     @RolesAllowed("admin")
     @Operation(
+        tags = "users",
         summary = "Remove role from a Mobi User",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -584,6 +594,7 @@ public class UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+        tags = "users",
         summary = "List groups of a Mobi User",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -627,6 +638,7 @@ public class UserRest {
     @Path("{username}/groups")
     @RolesAllowed("admin")
     @Operation(
+        tags = "users",
         summary = "Add a Mobi user to a group",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -666,6 +678,7 @@ public class UserRest {
     @Path("{username}/groups")
     @RolesAllowed("admin")
     @Operation(
+        tags = "users",
         summary = "Remove a Mobi User from a group",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -705,6 +718,7 @@ public class UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.TEXT_PLAIN)
     @Operation(
+        tags = "users",
         summary = "Retrieve a username based on the passed User IRI",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),

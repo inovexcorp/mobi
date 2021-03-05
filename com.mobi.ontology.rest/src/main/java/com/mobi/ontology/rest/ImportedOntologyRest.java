@@ -45,6 +45,7 @@ public class ImportedOntologyRest {
     @GET
     @Path("{url}")
     @Operation(
+            tags = "groups",
             summary = "Checks to see if the provided URL is resolvable.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "URL is resolvable"),

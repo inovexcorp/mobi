@@ -153,6 +153,7 @@ public class MappingRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
+        tags = "mappings",
         summary = "Upload mapping sent as form data",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response with the MappingRecord Resource ID"),
@@ -231,6 +232,7 @@ public class MappingRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "mappings",
         summary = "Retrieve JSON-LD of an uploaded mapping",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with the JSON-LD from the uploaded mapping"),
@@ -267,6 +269,7 @@ public class MappingRest {
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @Operation(
+        tags = "mappings",
         summary = "Download an uploaded mapping",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with mapping to download"),
@@ -314,6 +317,7 @@ public class MappingRest {
     @Path("{recordId}")
     @RolesAllowed("user")
     @Operation(
+        tags = "mappings",
         summary = "Delete an uploaded mapping",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),

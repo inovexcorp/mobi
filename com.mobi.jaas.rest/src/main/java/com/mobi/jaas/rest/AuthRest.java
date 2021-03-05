@@ -101,6 +101,7 @@ public class AuthRest {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     @Operation(
+        tags = "session",
         summary = "Gets the current user token.",
         responses = {
             @ApiResponse(responseCode = "200", description = "A plaintext response with the current User's username"),
@@ -128,6 +129,7 @@ public class AuthRest {
     @POST
     @Produces(MediaType.TEXT_PLAIN)
     @Operation(
+        tags = "session",
         summary = "Logs in into Mobi creating a new token.",
         responses = {
             @ApiResponse(responseCode = "200", description = "A plaintext response with the newly logged in User's username"),
@@ -175,6 +177,7 @@ public class AuthRest {
     @DELETE
     @Produces(MediaType.TEXT_PLAIN)
     @Operation(
+        tags = "session",
         summary = "Logs out of Mobi by setting unauth token.",
         responses = {
             @ApiResponse(responseCode = "200", description = "An empty response representing an anonymous User's session"),

@@ -104,6 +104,7 @@ public class PolicyEnforcementRest {
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @Operation(
+        tags = "pep",
         summary = "Converts user provided request into XACML and evaluates",
         responses = {
             @ApiResponse(responseCode = "200", description = "the decision of the XACML request evaluation"),

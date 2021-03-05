@@ -127,6 +127,7 @@ public class GroupRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+        tags = "groups",
         summary = "Get all Mobi Groups.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with a JSON-LD list of the {@link Group}s in Mobi"),
@@ -159,6 +160,7 @@ public class GroupRest {
     @POST
     @RolesAllowed("admin")
     @Operation(
+        tags = "groups",
         summary = "Create a new Mobi Group.",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
@@ -220,6 +222,7 @@ public class GroupRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+        tags = "groups",
         summary = "Get a single Mobi Group.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with a JSON representation of the Group in Mobi"),
@@ -255,6 +258,7 @@ public class GroupRest {
     @Path("{groupTitle}")
     @RolesAllowed("admin")
     @Operation(
+        tags = "groups",
         summary = "Update a Mobi Group's information.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -320,6 +324,7 @@ public class GroupRest {
     @Path("{groupTitle}")
     @RolesAllowed("admin")
     @Operation(
+        tags = "groups",
         summary = "Remove a Mobi Group.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -356,6 +361,7 @@ public class GroupRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+        tags = "groups",
         summary = "List roles of a Mobi Group.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with a JSON array of the roles of the Group in Mobi"),
@@ -395,6 +401,7 @@ public class GroupRest {
     @Path("{groupTitle}/roles")
     @RolesAllowed("admin")
     @Operation(
+        tags = "groups",
         summary = "Add roles to a Mobi Group.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -435,6 +442,7 @@ public class GroupRest {
     @Path("{groupTitle}/roles")
     @RolesAllowed("admin")
     @Operation(
+        tags = "groups",
         summary = "Remove role from a Mobi Group.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -475,6 +483,7 @@ public class GroupRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+        tags = "groups",
         summary = "List users of a Mobi Group.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response with a JSON array of the roles of the Group in Mobi"),
@@ -525,6 +534,7 @@ public class GroupRest {
     @Path("{groupTitle}/users")
     @RolesAllowed("admin")
     @Operation(
+        tags = "groups",
         summary = "Add a Mobi User to a Group.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -566,6 +576,7 @@ public class GroupRest {
     @Path("{groupTitle}/users")
     @RolesAllowed("admin")
     @Operation(
+        tags = "groups",
         summary = "Remove a Mobi User from a Group.",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),

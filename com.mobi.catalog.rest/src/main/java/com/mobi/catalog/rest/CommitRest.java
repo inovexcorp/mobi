@@ -124,6 +124,7 @@ public class CommitRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "commits",
         summary = "Retrieves the Commit specified by the provided ID",
         responses = {
             @ApiResponse(responseCode = "200", description = "A {@link Response} with the {@link Commit} " +
@@ -175,6 +176,7 @@ public class CommitRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "commits",
         summary = "Retrieves the Commit history specified by the provided ID",
         responses = {
             @ApiResponse(responseCode = "200", description = "A {@link Response} containing a {@link List} of" +
@@ -251,6 +253,7 @@ public class CommitRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "commits",
         summary = "Retrieves the Commit specified by the provided ID",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
@@ -315,6 +318,7 @@ public class CommitRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "commits",
         summary = "Gets the {@link Difference} for the specified commit or between the two specified {@link Commit}s." +
                 " If a limit and offset are passed in, retrieve the differences for the paged subjects using the" +
                 " limit and offset. If the offset is greater than the number of subjects, the additions and " +
@@ -386,6 +390,7 @@ public class CommitRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+            tags = "commits",
             summary = "Retrieves the Difference in the specified commit for the specified subject",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),

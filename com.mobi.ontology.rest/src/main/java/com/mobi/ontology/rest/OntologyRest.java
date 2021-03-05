@@ -281,6 +281,7 @@ public class OntologyRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+            tags = "ontologies",
             summary = "Uploads an ontology file to the data store.",
             description = "Uploads and imports an ontology file to a data store and creates an associated " +
                     "OntologyRecord using the form data. A master Branch is created and stored with an initial " +
@@ -341,6 +342,7 @@ public class OntologyRest {
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @Operation(
+        tags = "ontologies",
         summary = "Returns the ontology associated with the requested record ID in the requested format.",
         responses = {
             @ApiResponse(responseCode = "200", description = "The Ontology in the requested format"),
@@ -404,6 +406,7 @@ public class OntologyRest {
     @Path("{recordId}")
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Deletes the OntologyRecord with the requested recordId",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating the success"),
@@ -449,6 +452,7 @@ public class OntologyRest {
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @Operation(
+        tags = "ontologies",
         summary = "Streams the ontology associated with the requested record ID to an OutputStream.",
         responses = {
             @ApiResponse(responseCode = "200", description = "The Ontology associated with requested record ID to download")
@@ -519,6 +523,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Updates the requester's InProgressCommit with the provided entity",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully updated"),
@@ -579,6 +584,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Updates the specified ontology branch and commit with the data provided",
         responses = {
             @ApiResponse(responseCode = "200", description = "OK if successful or METHOD_NOT_ALLOWED if the changes " +
@@ -755,6 +761,7 @@ public class OntologyRest {
     @Path("{recordId}/branches/{branchId}")
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Deletes the Branch with the requested BranchId from the OntologyRecord with the provided recordId",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating successfully request"),
@@ -807,6 +814,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets a JSON representation of all the SKOS vocabulary related information about the ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "JSON object with keys \"derivedConcepts\", " +
@@ -940,6 +948,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets a JSON representation of all the OWL ontology related information about the ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "JSON object with keys"),
@@ -1135,6 +1144,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the IRIs in the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "IRIs in the ontology identified by the provided IDs"),
@@ -1179,6 +1189,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the annotations in the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Annotation properties in the ontology identified by the provided IDs"),
@@ -1220,6 +1231,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Adds a new annotation to the identified ontology",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating whether it was successfully added"),
@@ -1267,6 +1279,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Updates the specified ontology branch and commit with the data provided",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully deleted"),
@@ -1319,6 +1332,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the classes in the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Classes in the ontology identified by the provided IDs"),
@@ -1363,6 +1377,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Adds a new class to the identified ontology",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating whether it was successfully added"),
@@ -1408,6 +1423,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Deletes the identified class from the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully deleted"),
@@ -1456,6 +1472,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the datatypes in the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Datatypes in the ontology identified by the provided IDs"),
@@ -1497,6 +1514,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Adds a new datatype to the identified ontology",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating whether it was successfully added"),
@@ -1542,6 +1560,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+            tags = "ontologies",
             summary = "Deletes the identified datatype from the identified ontology",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully deleted"),
@@ -1590,6 +1609,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the object properties in the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Object properties in the ontology identified by the provided IDs"),
@@ -1632,6 +1652,7 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Adds a new object property to the identified ontology.").
     @Operation(
+        tags = "ontologies",
         summary = "Adds a new object property to the identified ontology",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating whether it was successfully updated"),
@@ -1678,6 +1699,7 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Deletes the identified object property from the identified ontology.")
     @Operation(
+        tags = "ontologies",
         summary = "Deletes the identified object property from the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully deleted"),
@@ -1726,6 +1748,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the data properties from the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Data properties in the ontology identified by the provided IDs"),
@@ -1767,6 +1790,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Adds a new data property to the identified ontology",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating whether it was successfully added"),
@@ -1812,6 +1836,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Deletes the identified data property from the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully deleted"),
@@ -1860,6 +1885,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the individuals in the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Named individuals in the ontology identified by the provided IDs"),
@@ -1901,6 +1927,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Adds a new individual to the identified ontology",
         responses = {
             @ApiResponse(responseCode = "201", description = "Response indicating whether it was successfully added"),
@@ -1946,6 +1973,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Deletes the identified individual from the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully deleted"),
@@ -1994,6 +2022,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the IRIs from the imported ontologies of the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "IRIs in the ontology identified by the provided IDs"),
@@ -2037,6 +2066,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the imported ontology IRIs of the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "IRIs of the ontologies in the imports closure for the " +
@@ -2102,6 +2132,7 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Retrieves the JSON-LD of all imported ontologies.")
     @Operation(
+        tags = "ontologies",
         summary = "Updates the specified ontology branch and commit with the data provided",
         responses = {
             @ApiResponse(responseCode = "200", description = "array of imported ontologies from the ontology with the " +
@@ -2153,6 +2184,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the annotations from the imported ontologies of the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Annotation properties in the ontology identified by the provided IDs"),
@@ -2197,6 +2229,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the classes from the imported ontologies of the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Classes in the ontology identified by the provided IDs"),
@@ -2240,6 +2273,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the datatypes from the imported ontologies of the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Datatypes in the ontology identified by the provided IDs"),
@@ -2283,6 +2317,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the object properties from the imported ontologies of the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Object properties in the ontology identified by the provided IDs"),
@@ -2327,6 +2362,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the data properties from the imported ontologies of the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Data properties in the ontology identified by " +
@@ -2372,6 +2408,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the named individuals from the imported ontologies of the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "Named individuals in the ontology identified by the provided IDs"),
@@ -2419,6 +2456,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the class hierarchies for the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "JSON object that represents the class hierarchy " +
@@ -2472,6 +2510,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the object property hierarchies for the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "A JSON object that represents the object property " +
@@ -2525,6 +2564,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the data property hierarchies for the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "A JSON object that represents the data property hierarchy" +
@@ -2579,6 +2619,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the data property hierarchies for the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "A JSON object that represents the annotation property " +
@@ -2631,6 +2672,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the concept hierarchies for the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "JSON object that represents the SKOS concept hierarchy " +
@@ -2685,6 +2727,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the concept hierarchies for the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "JSON object that represents the SKOS concept" +
@@ -2736,6 +2779,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the classes with individuals in a hierarchical structure for the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "A JSON object that represents the classes with individuals in the ontology identified by the provided IDS"),
@@ -2788,6 +2832,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the usages of the identified entity in the identified ontology",
         responses = {
             @ApiResponse(responseCode = "200", description = "JSON-LD containing statements with the requested entity" +
@@ -2851,6 +2896,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets the search results from the identified ontology using the provided searchText",
         responses = {
             @ApiResponse(responseCode = "200", description = "JSON String of the resulting entities sorted " +
@@ -2921,6 +2967,7 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Gets a list of ontology IRIs that were not imported",
         responses = {
             @ApiResponse(responseCode = "200", description = "List of ontology IRIs that were not imported"),
@@ -2972,6 +3019,7 @@ public class OntologyRest {
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Retrieves the SPARQL query results of an ontology, and its import closures in the requested format",
         responses = {
             @ApiResponse(responseCode = "200", description = "SPARQL 1.1 results in JSON format if the query is a " +
@@ -3055,6 +3103,7 @@ public class OntologyRest {
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
     @Operation(
+        tags = "ontologies",
         summary = "Retrieves the triples for a specified entity including all of is transitively attached Blank Node",
         responses = {
             @ApiResponse(responseCode = "200", description = "RDF triples for a specified entity including all of is " +
@@ -3119,6 +3168,7 @@ public class OntologyRest {
     @RolesAllowed("user")
 //    @ApiOperation("Gets the EntityNames in the identified ontology.")
     @Operation(
+        tags = "ontologies",
         summary = "Updates the specified ontology branch and commit with the data provided",
         responses = {
             @ApiResponse(responseCode = "200", description = "List of EntityNames for the given Ontology"),
