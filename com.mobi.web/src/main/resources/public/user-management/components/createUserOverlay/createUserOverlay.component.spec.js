@@ -98,9 +98,9 @@ describe('Create User Overlay component', function() {
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
-        ['form', 'custom-label', 'password-confirm-input', 'email-input', 'permissions-input'].forEach(test => {
+        ['form', 'email-input', 'permissions-input', 'unmask-password', 'custom-label', '.form-group'].forEach(test => {
             it('with a ' + test, function() {
-                expect(this.element.find(test).length).toEqual(1);
+                expect(this.element.querySelectorAll(test).length).toEqual(1);
             });
         });
         it('with text-inputs', function() {

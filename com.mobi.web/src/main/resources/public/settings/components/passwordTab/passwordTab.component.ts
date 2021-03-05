@@ -49,26 +49,25 @@ const passwordTabComponent = {
 passwordTabComponentCtrl.$inject = ['userManagerService', 'loginManagerService', 'utilService'];
 
 function passwordTabComponentCtrl(userManagerService, loginManagerService, utilService) {
-    var dvm = this;
-    var util = utilService;
+    const dvm = this;
+    const util = utilService;
     dvm.um = userManagerService;
     dvm.lm = loginManagerService;
     dvm.currentUser = undefined;
 
     dvm.$onInit = function() {
         dvm.currentUser = angular.copy(find(dvm.um.users, {username: dvm.lm.currentUser}));
-    }
+    };
     dvm.save = function() {
         dvm.um.changePassword(dvm.lm.currentUser, dvm.currentPassword, dvm.password)
-            .then(response => {
+            .then(() => {
                 dvm.errorMessage = '';
                 util.createSuccessToast('Password successfully saved');
                 dvm.currentPassword = '';
                 dvm.password = '';
-                dvm.confirmedPassword = '';
                 dvm.form.$setPristine();
             }, error => dvm.errorMessage = error);
-    }
+    };
 }
 
 export default passwordTabComponent;

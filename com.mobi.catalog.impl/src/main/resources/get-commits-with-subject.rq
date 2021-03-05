@@ -1,0 +1,37 @@
+PREFIX catalog: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT DISTINCT ?commitOfInterest
+WHERE {
+  {
+    SELECT DISTINCT ?deletionSubject WHERE {
+      VALUES ?commit { %COMMITLIST% }
+      GRAPH ?commit {
+        ?commit prov:generated ?revision .
+        ?revision catalog:deletions ?deletionsGraph .
+      }
+      GRAPH ?deletionsGraph {
+        ?deletionSubject ?p ?o .
+      }
+    }
+  }
+
+  VALUES ?commitOfInterest { %COMMITLIST% }
+  {
+    GRAPH ?commitOfInterest {
+      ?commitOfInterest prov:generated ?revision .
+      ?revision catalog:additions ?additionsGraph .
+    }
+    GRAPH ?additionsGraph {
+      ?deletionSubject ?p ?o .
+    }
+  } UNION {
+    GRAPH ?commitOfInterest {
+      ?commitOfInterest prov:generated ?revision .
+      ?revision catalog:deletions ?deletionsGraph .
+    }
+    GRAPH ?deletionsGraph {
+      ?deletionSubject ?p ?o .
+    }
+  }
+}

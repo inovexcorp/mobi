@@ -60,10 +60,13 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.RepositoryResults;
+import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.query.GraphQueryResult;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.BooleanQuery;
+import com.mobi.query.api.GraphQuery;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -78,14 +81,35 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFWriter;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -109,6 +133,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private RevisionFactory revisionFactory;
     private GraphRevisionFactory graphRevisionFactory;
     private InProgressCommitFactory inProgressCommitFactory;
+    private SesameTransformer sesameTransformer;
 
     private static final String GET_PAGED_CHANGES;
     private static final String GET_IN_PROGRESS_COMMIT;
@@ -117,6 +142,12 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private static final String GET_NEW_LATEST_VERSION;
     private static final String GET_COMMIT_PATHS;
     private static final String COMMIT_IN_RECORD;
+    private static final String GET_SUBJECTS_WITH_DELETIONS;
+    private static final String GET_COMMITS_WITH_SUBJECT;
+    private static final String GET_ADDITIONS_IN_COMMIT;
+    private static final String GET_ADDITIONS_FROM_COIS;
+    private static final String GET_FILTERED_ADDITIONS_SUBQUERY;
+    private static final String GET_FILTERED_DELETIONS_SUBQUERY;
     private static final String USER_BINDING = "user";
     private static final String PARENT_BINDING = "parent";
     private static final String RECORD_BINDING = "record";
@@ -151,6 +182,30 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             );
             COMMIT_IN_RECORD = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/commit-in-record.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_SUBJECTS_WITH_DELETIONS = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-subjects-with-deletions.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_COMMITS_WITH_SUBJECT = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-commits-with-subject.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_ADDITIONS_IN_COMMIT = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-additions-in-commit.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_ADDITIONS_FROM_COIS = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-additions-from-cois.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_FILTERED_ADDITIONS_SUBQUERY = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-filtered-additions-subquery.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_FILTERED_DELETIONS_SUBQUERY = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-filtered-deletions-subquery.rq"),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -226,6 +281,11 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     @Reference
     void setGraphRevisionFactory(GraphRevisionFactory graphRevisionFactory) {
         this.graphRevisionFactory = graphRevisionFactory;
+    }
+
+    @Reference
+    void setSesameTransformer(SesameTransformer sesameTransformer) {
+        this.sesameTransformer = sesameTransformer;
     }
 
     @Override
@@ -1111,9 +1171,97 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public File getCompiledResourceFile(Resource commitId, RepositoryConnection conn) {
+        return getCompiledResourceFile(getCommitChain(commitId, true, conn), conn);
+    }
+
+    @Override
     public Model getCompiledResource(List<Resource> commits, RepositoryConnection conn) {
-        Difference difference = getCommitDifference(commits, conn);
-        return difference.getAdditions();
+        Model compiledResource = mf.createModel();
+        if (commits.size() == 0) {
+            return compiledResource;
+        }
+        buildCompiledResource(commits, conn, compiledResource::add);
+        return compiledResource;
+    }
+
+    @Override
+    public File getCompiledResourceFile(List<Resource> commits, RepositoryConnection conn) {
+        try {
+            long writeTimeStart = System.currentTimeMillis();
+            if (commits.size() == 0) {
+                throw new IllegalArgumentException("List of commits must contain at least one Resource");
+            }
+            String tmpDir = System.getProperty("java.io.tmpdir");
+            Path tmpFile = Files.createFile(Paths.get(tmpDir + File.separator + UUID.randomUUID()));
+            try (OutputStream outputStream = Files.newOutputStream(tmpFile)) {
+                RDFWriter writer = Rio.createWriter(RDFFormat.NQUADS, outputStream);
+                writer.getWriterConfig().set(BasicParserSettings.PRESERVE_BNODE_IDS, true);
+                writer.startRDF();
+                Consumer<Statement> consumer = statement ->
+                        com.mobi.persistence.utils.rio.Rio.write(statement, writer, sesameTransformer);
+                buildCompiledResource(commits, conn, consumer);
+                writer.endRDF();
+            }
+            log.trace("Write statements to file in {} ms", System.currentTimeMillis() - writeTimeStart);
+            return tmpFile.toFile();
+        } catch (IOException e) {
+            throw new MobiException("Error creating compiled resource file", e);
+        }
+    }
+
+    /**
+     * Runs queries to calculate the compiled resource. Uses the provided {@link Consumer} to handle the resulting
+     * {@link Statement} that gets generated as part of the compiled resource.
+     *
+     * @param commits The {@link List} of Commits {@link Resource}s.
+     * @param conn The {@link RepositoryConnection} to use to query the repository.
+     * @param consumer The {@link Consumer} to handle the generated {@link Statement}.
+     */
+    private void buildCompiledResource(List<Resource> commits, RepositoryConnection conn,
+                                       Consumer<Statement> consumer) {
+        // Get all subjects in deletions graphs for provided commits
+        String commitsStr = "<" + StringUtils.join(commits, "> <") + ">";
+        Set<Resource> deletionSubjects = new HashSet<>();
+        TupleQuery subjectsQuery = conn.prepareTupleQuery(
+                GET_SUBJECTS_WITH_DELETIONS.replace("%COMMITLIST%", commitsStr));
+        subjectsQuery.evaluate().forEach(bindings -> deletionSubjects.add((Bindings.requiredResource(bindings, "s"))));
+
+        Set<Resource> commitsOfInterest = new HashSet<>();
+        if (deletionSubjects.size() > 0) {
+            // Find all commits with the subjects in additions or deletions graphs. These are the commits of interest
+            // for comparing changes
+            TupleQuery commitsQuery = conn.prepareTupleQuery(GET_COMMITS_WITH_SUBJECT
+                    .replace("%COMMITLIST%", commitsStr));
+            commitsQuery.evaluate().forEach(bindingSet ->
+                    commitsOfInterest.add(Bindings.requiredResource(bindingSet, "commitOfInterest")));
+
+            // Write any addition statement in commitsOfInterest whose subject is NOT a deletionsSubject
+            GraphQuery additionsInCOIQuery = conn.prepareGraphQuery(
+                    GET_ADDITIONS_FROM_COIS.replace("%COMMITLIST%", commitsStr));
+            additionsInCOIQuery.evaluate().forEach(statement -> {
+                if (!deletionSubjects.contains(statement.getSubject())) {
+                    consumer.accept(statement);
+                }
+            });
+
+            // Gather and write final statements from all subjects that have deletions
+            Map<Statement, Integer> additions = new HashMap<>();
+            Map<Statement, Integer> deletions = new HashMap<>();
+            commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, commits, conn));
+            additions.keySet().forEach(consumer);
+        }
+
+        // Write any commit that has additions that do not contain any subject in a deletions graph
+        List<Resource> commitsAdditionsOnly = commits.stream()
+                .filter(commit -> !commitsOfInterest.contains(commit))
+                .collect(Collectors.toList());
+        if (commitsAdditionsOnly.size() > 0) {
+            String commitsAdditionsOnlyStr = "<" + StringUtils.join(commitsAdditionsOnly, "> <") + ">";
+            GraphQuery additionsQuery = conn.prepareGraphQuery(GET_ADDITIONS_IN_COMMIT
+                    .replace("%COMMITLIST%", commitsAdditionsOnlyStr));
+            additionsQuery.evaluate().forEach(consumer);
+        }
     }
 
     @Override
@@ -1307,14 +1455,66 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      * decremented, otherwise the statements are added to the deletions list.
      *
      * @param additions The Map of Statements added to update.
-     * @param additions The Map of Statements deleted to update.
+     * @param deletions The Map of Statements deleted to update.
      * @param commitId  The Resource identifying the Commit.
      * @param conn      The RepositoryConnection to query the repository.
      */
-    private void aggregateDifferences(Map<Statement, Integer> additions, Map<Statement, Integer> deletions, Resource commitId,
-                                      RepositoryConnection conn) {
+    private void aggregateDifferences(Map<Statement, Integer> additions, Map<Statement, Integer> deletions,
+                                      Resource commitId, RepositoryConnection conn) {
         getAdditions(commitId, conn).forEach(statement -> updateModels(statement, additions, deletions));
         getDeletions(commitId, conn).forEach(statement -> updateModels(statement, deletions, additions));
+    }
+
+    /**
+     * Updates the supplied Maps of addition and deletions statements with statements from the additions/deletions
+     * associated with the supplied Commit resource. These additions/deletions are filtered to only include statements
+     * whose subjects are Subjects of Deletions from the provided List of Commits. Addition statements are added to the
+     * additions map if not present. If present, the counter of the times the statement has been added is incremented.
+     * Deletion statements are removed from the additions map if only one exists, if more than one exists the counter is
+     * decremented, otherwise the statements are added to the deletions list.
+     *
+     * @param additions The Map of Statements added to update.
+     * @param deletions The Map of Statements deleted to update.
+     * @param commitId  The Resource identifying the Commit.
+     * @param commits   The Set of Commit IRIs to filter the additions/deletions with.
+     * @param conn      The RepositoryConnection to query the repository.
+     */
+    private void aggregateDifferences(Map<Statement, Integer> additions, Map<Statement, Integer> deletions,
+                                      Resource commitId, List<Resource> commits, RepositoryConnection conn) {
+        getAdditions(commitId, commits, conn).forEach(statement -> updateModels(statement, additions, deletions));
+        getDeletions(commitId, commits, conn).forEach(statement -> updateModels(statement, deletions, additions));
+    }
+
+    /**
+     * Retrieves the additions for provided commitId whose subjects are filtered from the provided Commit List.
+     * Returns a {@link GraphQueryResult}, an iterator over the returned statements.
+     *
+     * @param commitId The Resource of the Commit to query for additions.
+     * @param commits  The Set of Commit IRIs used to filter the Resources to retrieve from the additions graph.
+     * @param conn     The RepositoryConnection to query the repository.
+     * @return A {@link GraphQueryResult} iterator of Statements returned from the query.
+     */
+    private GraphQueryResult getAdditions(Resource commitId, List<Resource> commits, RepositoryConnection conn) {
+        GraphQuery additionsQuery = conn.prepareGraphQuery(GET_FILTERED_ADDITIONS_SUBQUERY
+                .replace("%COMMITLIST%","<" + StringUtils.join(commits, "> <") + ">")
+                .replace("%THISCOMMIT%", "<" + commitId.stringValue() + ">"));
+        return additionsQuery.evaluate();
+    }
+
+    /**
+     * Retrieves the deletions for provided commitId whose subjects are filtered from the provided Commit List.
+     * Returns a {@link GraphQueryResult}, an iterator over the returned statements.
+     *
+     * @param commitId The Resource of the Commit to query for additions.
+     * @param commits  The Set of Commit IRIs used to filter the Resources to retrieve from the deletions graph.
+     * @param conn     The RepositoryConnection to query the repository.
+     * @return A {@link GraphQueryResult} iterator of Statements returned from the query.
+     */
+    private GraphQueryResult getDeletions(Resource commitId, List<Resource> commits, RepositoryConnection conn) {
+        GraphQuery deletionsQuery = conn.prepareGraphQuery(GET_FILTERED_DELETIONS_SUBQUERY
+                .replace("%COMMITLIST%","<" + StringUtils.join(commits, "> <") + ">")
+                .replace("%THISCOMMIT%", "<" + commitId.stringValue() + ">"));
+        return deletionsQuery.evaluate();
     }
 
     /**

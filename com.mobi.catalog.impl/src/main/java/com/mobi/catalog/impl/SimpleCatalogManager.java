@@ -92,6 +92,7 @@ import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -1227,6 +1228,14 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public File getCompiledResourceFile(Resource commitId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            return utils.getCompiledResourceFile(commitId, conn);
+        }
+    }
+
+    @Override
     public Model getCompiledResource(List<Commit> commitList) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return utils.getCompiledResource(commitList.stream().map(commit -> commit.getResource())
@@ -1240,6 +1249,15 @@ public class SimpleCatalogManager implements CatalogManager {
             utils.validateCommitPath(configProvider.getLocalCatalogIRI(), versionedRDFRecordId, branchId, commitId,
                     conn);
             return utils.getCompiledResource(commitId, conn);
+        }
+    }
+
+    @Override
+    public File getCompiledResourceFile(Resource versionedRDFRecordId, Resource branchId, Resource commitId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateCommitPath(configProvider.getLocalCatalogIRI(), versionedRDFRecordId, branchId, commitId,
+                    conn);
+            return utils.getCompiledResourceFile(commitId, conn);
         }
     }
 
@@ -1271,21 +1289,24 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Difference getDiff(Model original, Model changed) {
-        Model originalCopy = mf.createModel(original);
-        Model changedCopy = mf.createModel(changed);
+        Model additions = mf.createModel();
+        Model deletions = mf.createModel();
+
         original.forEach(statement -> {
-            Resource subject = statement.getSubject();
-            IRI predicate = statement.getPredicate();
-            Value object = statement.getObject();
-            if (changedCopy.contains(subject, predicate, object)) {
-                originalCopy.remove(subject, predicate, object);
-                changedCopy.remove(subject, predicate, object);
+            if (!changed.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())) {
+                deletions.add(statement);
+            }
+        });
+
+        changed.forEach(statement -> {
+            if (!original.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())) {
+                additions.add(statement);
             }
         });
 
         return new Difference.Builder()
-                .additions(changedCopy)
-                .deletions(originalCopy)
+                .additions(additions)
+                .deletions(deletions)
                 .build();
     }
 
