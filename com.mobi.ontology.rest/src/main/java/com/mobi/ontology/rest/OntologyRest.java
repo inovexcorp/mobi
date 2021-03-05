@@ -70,6 +70,7 @@ import com.mobi.ontology.rest.json.EntityNames;
 import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.ontology.utils.OntologyUtils;
 import com.mobi.ontology.utils.cache.OntologyCache;
+import com.mobi.persistence.utils.BNodeUtils;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.Models;
@@ -102,7 +103,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import org.eclipse.rdf4j.model.impl.TreeModel;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
@@ -617,27 +617,27 @@ public class OntologyRest {
 
             Resource branchId;
             Resource commitId;
-            {
-                if (StringUtils.isNotBlank(commitIdStr)) {
-                    checkStringParam(branchIdStr, "The branchIdStr is missing.");
-                    commitId = valueFactory.createIRI(commitIdStr);
-                    branchId = valueFactory.createIRI(branchIdStr);
-                } else if (StringUtils.isNotBlank(branchIdStr)) {
-                    branchId = valueFactory.createIRI(branchIdStr);
-                    commitId = catalogManager.getHeadCommit(catalogIRI, recordId, branchId).getResource();
-                } else {
-                    Branch branch = catalogManager.getMasterBranch(catalogIRI, recordId);
-                    branchId = branch.getResource();
-                    commitId = branch.getHead_resource().orElseThrow(() -> new IllegalStateException("Branch "
-                            + branchIdStr + " has no head Commit set"));
-                }
+            if (StringUtils.isNotBlank(commitIdStr)) {
+                checkStringParam(branchIdStr, "The branchIdStr is missing.");
+                commitId = valueFactory.createIRI(commitIdStr);
+                branchId = valueFactory.createIRI(branchIdStr);
+            } else if (StringUtils.isNotBlank(branchIdStr)) {
+                branchId = valueFactory.createIRI(branchIdStr);
+                commitId = catalogManager.getHeadCommit(catalogIRI, recordId, branchId).getResource();
+            } else {
+                Branch branch = catalogManager.getMasterBranch(catalogIRI, recordId);
+                branchId = branch.getResource();
+                commitId = branch.getHead_resource().orElseThrow(() -> new IllegalStateException("Branch "
+                        + branchIdStr + " has no head Commit set"));
             }
 
             long startTime = System.currentTimeMillis();
+            // Uploaded BNode map used for restoring addition BNodes
+            Map<BNode, IRI> uploadedBNodes = new HashMap<>();
             final CompletableFuture<Model> uploadedModelFuture = CompletableFuture.supplyAsync(() -> {
                 try {
                     long startTimeF = System.currentTimeMillis();
-                    Model temp = getUploadedModel(fileInputStream);
+                    Model temp = getUploadedModel(fileInputStream, uploadedBNodes);
                     log.trace("uploadedModelFuture took {} ms", System.currentTimeMillis() - startTimeF);
                     return temp;
                 } catch (IOException e) {
@@ -645,9 +645,11 @@ public class OntologyRest {
                 }
             });
 
+            // Catalog BNode map used for restoring deletion BNodes
+            Map<BNode, IRI> catalogBNodes = new HashMap<>();
             final CompletableFuture<Model> currentModelFuture = CompletableFuture.supplyAsync(() -> {
                 long startTimeF = System.currentTimeMillis();
-                Model temp = getCurrentModel(recordId, branchId, commitId);
+                Model temp = getCurrentModel(recordId, branchId, commitId, catalogBNodes);
                 log.trace("currentModelFuture took " + (System.currentTimeMillis() - startTimeF));
                 return temp;
             });
@@ -675,7 +677,8 @@ public class OntologyRest {
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
             startTime = System.currentTimeMillis();
             catalogManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
-                    diff.getAdditions(), diff.getDeletions());
+                    BNodeUtils.restoreBNodes(diff.getAdditions(), uploadedBNodes, modelFactory),
+                    BNodeUtils.restoreBNodes(diff.getDeletions(), catalogBNodes, modelFactory));
             log.trace("uploadChangesToOntology getInProgressCommitIRI took {} ms",
                     System.currentTimeMillis() - startTime);
 
@@ -689,7 +692,12 @@ public class OntologyRest {
             log.trace("uploadChangesToOntology getGarbageCollectionTime {} ms", getGarbageCollectionTime());
         }
     }
-    
+
+    /**
+     * Calculates the garbage collection time in milliseconds.
+     *
+     * @return The total garbage collection time.
+     */
     private static long getGarbageCollectionTime() {
         long collectionTime = 0;
         for (GarbageCollectorMXBean garbageCollectorMXBean : ManagementFactory.getGarbageCollectorMXBeans()) {
@@ -698,20 +706,38 @@ public class OntologyRest {
         return collectionTime;
     }
 
-    private Model getUploadedModel(InputStream fileInputStream) throws IOException {
+    /**
+     * Gets a {@link Model} of the provided {@link InputStream}. Deterministically skolemizes any BNode in the model.
+     *
+     * @param fileInputStream The {@link InputStream} to process.
+     * @param bNodesMap The {@link Map} of BNodes to their deterministically skolemized IRIs. Will be populated in
+     *                  method.
+     * @return A {@link Model} with deterministically skolemized BNodes.
+     * @throws IOException When an error occurs processing the {@link InputStream}
+     */
+    private Model getUploadedModel(InputStream fileInputStream, Map<BNode, IRI> bNodesMap) throws IOException {
         // Load uploaded ontology into a skolemized model
-        final Model changedOnt = Models.createSkolemizedModel(fileInputStream, modelFactory, sesameTransformer, bNodeService,
+        return Models.createSkolemizedModel(fileInputStream, modelFactory, sesameTransformer, bNodeService, bNodesMap,
                 new RioFunctionalSyntaxParserFactory().getParser(),
                 new RioManchesterSyntaxParserFactory().getParser(),
                 new RioOWLXMLParserFactory().getParser());
-
-
-        return changedOnt;
     }
 
-    private Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId) {
+    /**
+     * Gets a {@link Model} from the provided Record/Branch/Commit in the Catalog. Deterministically skolemizes any
+     * BNode in the model.
+     *
+     * @param recordId The {@link Resource} of the recordId.
+     * @param branchId The {@link Resource} of the branchId.
+     * @param commitId The {@link Resource} of the commitId.
+     * @param bNodesMap The {@link Map} of BNodes to their deterministically skolemized IRIs. Will be populated in
+     *                  method.
+     * @return A {@link Model} with deterministically skolemized BNodes.
+     */
+    private Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId, Map<BNode, IRI> bNodesMap) {
         // Load existing ontology into a skolemized model
-        return bNodeService.deterministicSkolemize(catalogManager.getCompiledResource(recordId, branchId, commitId));
+        return bNodeService.deterministicSkolemize(catalogManager.getCompiledResource(recordId, branchId, commitId),
+                bNodesMap);
     }
 
     /**
