@@ -108,7 +108,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param {string} id The identifier for this request.
      * @returns {Promise} A promise indicating whether the ontology was persisted.
      */
-    self.uploadOntology = function(file, ontologyJson, title, description, keywords, id = '') {
+    self.uploadOntology = function(file, ontologyJson, title, description, keywords, id = '', callback) {
         const fd = new FormData();
         const config = {
             transformRequest: identity,
@@ -129,7 +129,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         } else {
             prepPromise = Promise.resolve();
         }
-        return prepPromise.then(() => {
+       return prepPromise.then(() => {
             if (ontologyJson !== undefined) {
                 fd.append('json', JSON.stringify(ontologyJson));
             }
@@ -139,7 +139,8 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
             }
             forEach(keywords, word => fd.append('keywords', word));
             const promise =  id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
-            return new Promise(resolve => resolve(promise));
+            callback(id, promise);
+            return promise;
         }).then(response => response.data, util.rejectErrorObject);
     };
 

@@ -80,19 +80,8 @@ function uploadOntologyOverlayComponentCtrl(ontologyManagerService, ontologyStat
     dvm.submit = function() {
         const id = 'upload-' + (uploadOffset + dvm.index);
         dvm.resolve.startUpload();
-        const promise = om.uploadOntology(file, undefined, dvm.title, dvm.description, map(dvm.keywords, trim), id)
-            .then(dvm.resolve.finishUpload, errorObject => {
-                os.addErrorToUploadItem(id, errorObject);
-                dvm.resolve.finishUpload();
-            });
-        os.uploadList.push({title: dvm.title, id, promise, error: undefined});
-        if ((dvm.index + 1) < dvm.total) {
-            dvm.index++;
-            setFormValues();
-        } else {
-            os.uploadFiles.splice(0);
-            dvm.close();
-        }
+        const promise = om.uploadOntology(file, undefined, dvm.title, dvm.description, map(dvm.keywords, trim), id, finishLoading);
+     
     }
     dvm.submitAll = function() {
         for (var i = dvm.index; i < dvm.total; i++) {
@@ -110,6 +99,24 @@ function uploadOntologyOverlayComponentCtrl(ontologyManagerService, ontologyStat
         dvm.title = file.name;
         dvm.description = '';
         dvm.keywords = [];
+    }
+
+    function finishLoading(id,promise) {
+        promise.then(pro => {
+            // os.uploadList.push({title: dvm.title, id, pro, error: undefined});
+         }).then(dvm.resolve.finishUpload, errorObject => {
+                 os.addErrorToUploadItem(id, errorObject);
+                 dvm.resolve.finishUpload();
+             });
+         console.log(promise);
+         os.uploadList.push({title: dvm.title, id, promise, error: undefined});
+         if ((dvm.index + 1) < dvm.total) {
+             dvm.index++;
+             setFormValues();
+         } else {
+             os.uploadFiles.splice(0);
+             dvm.close();
+         }
     }
 }
 
