@@ -121,7 +121,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
             const titleInfo = getFileTitleInfo(title);
             if (titleInfo.ext !== 'zip' && file.size) {
                 prepPromise = self.compressFile(file).then(blob => {
-                    fd.append('file', blob, titleInfo.name + '.gzip');
+                    fd.append('file', blob, title + '.gzip');
                 });
             } else {
                 prepPromise = Promise.resolve(fd.append('file', file));
@@ -139,8 +139,8 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
             }
             forEach(keywords, word => fd.append('keywords', word));
             const promise =  id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
-            callback(id, promise);
-            return promise;
+            let resolver = promise.then(response => response.data, util.rejectErrorObject);
+            callback(id, resolver, title);
         }).then(response => response.data, util.rejectErrorObject);
     };
 
@@ -1650,8 +1650,13 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @returns {file} compressed file
      */
     self.compressFile = function(file) {
+        const reader = new FileReader();
+        if (file && file.size) {
+            reader.readAsArrayBuffer(file); 
+        } else {
+            Promise.resolve(file);
+        }
         return new Promise((resolve, reject) => {
-            const reader = new FileReader();
             reader.onload = (evt) => {
                 try {
                     const compressedData = pako.gzip(evt.target.result, {to: 'string'});
@@ -1661,21 +1666,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
                     reject(error);
                 }
             };
-
-            if (file && file.size) {
-                reader.readAsArrayBuffer(file); 
-            } else {
-                resolve(file);
-            }
         });
-        
-    };
-    self.getPromise = function () {
-        return this.promise;
-    };
-
-    self.setPromise = function(p) {
-        this.promise = p;
     };
 
     function getFileTitleInfo(title) {
