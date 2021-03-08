@@ -12,12 +12,12 @@ package com.mobi.etl.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -190,13 +190,16 @@ public class DelimitedRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        tags = "delimited-files",
-        summary = "Upload delimited file sent as form data",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response with the name of the file created on the server"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-        }
+            tags = "delimited-files",
+            summary = "Upload delimited file sent as form data",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response with the name of the file created on the server"),
+                    @ApiResponse(responseCode = "400",
+                            description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403",
+                            description = "Response indicating user does not have access"),
+            }
     )
     public Response upload(
             @Parameter(description = "InputStream of a delimited document passed as form data")
@@ -232,13 +235,16 @@ public class DelimitedRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        tags = "delimited-files",
-        summary = "Replace an uploaded delimited file with another",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with the name of the file replaced on the server"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-        }
+            tags = "delimited-files",
+            summary = "Replace an uploaded delimited file with another",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with the name of the file replaced on the server"),
+                    @ApiResponse(responseCode = "400",
+                            description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403",
+                            description = "Response indicating user does not have access"),
+            }
     )
     public Response upload(
             @Parameter(description = "InputStream of a delimited document passed as form data")
@@ -276,14 +282,15 @@ public class DelimitedRest {
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
     @Operation(
-        tags = "delimited-files",
-        summary = "ETL an uploaded delimited document using mapping JSON-LD",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response with a JSON object containing the mapping" +
-                    " file name and a string containing the converted data in the requested format"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-        }
+            tags = "delimited-files",
+            summary = "ETL an uploaded delimited document using mapping JSON-LD",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response with a JSON object containing the mapping "
+                            + "file name and a string containing the converted data in the requested format"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+            }
     )
     public Response etlFilePreview(
             @Parameter(description = "Name of the delimited document in the data/tmp/ directory")
@@ -322,13 +329,16 @@ public class DelimitedRest {
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @Operation(
-        tags = "delimited-files",
-        summary = "ETL an uploaded delimited document using an uploaded Mapping file and download the data",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with the converted data in the requested format to download"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-        }
+            tags = "delimited-files",
+            summary = "ETL an uploaded delimited document using an uploaded Mapping file and download the data",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with the converted data in the requested format to download"),
+                    @ApiResponse(responseCode = "400",
+                            description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403",
+                            description = "Response indicating user does not have access"),
+            }
     )
     public Response etlFile(
             @Parameter(description = "Name of the delimited document in the data/tmp/ directory")
@@ -384,13 +394,13 @@ public class DelimitedRest {
     @javax.ws.rs.Path("{documentName}/map")
     @RolesAllowed("user")
     @Operation(
-        tags = "delimited-files",
-        summary = "ETL an uploaded delimited document using an uploaded Mapping file and load data into a Dataset",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "delimited-files",
+            summary = "ETL an uploaded delimited document using an uploaded Mapping file and load data into a Dataset",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response etlFile(
             @Parameter(description = "Name of the delimited document in the data/tmp/ directory")
@@ -443,13 +453,17 @@ public class DelimitedRest {
     @javax.ws.rs.Path("{documentName}/map-to-ontology")
     @RolesAllowed("user")
     @Operation(
-        tags = "delimited-files",
-        summary = "ETL an uploaded delimited document using an uploaded Mapping file and commit it to an OntologyRecord",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-            @ApiResponse(responseCode = "204", description = "No data committed. Possible duplicate data."),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-        }
+            tags = "delimited-files",
+            summary = "ETL an uploaded delimited document using an uploaded Mapping file "
+                    + "and commit it to an OntologyRecord",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "204",
+                            description = "No data committed. Possible duplicate data."),
+                    @ApiResponse(responseCode = "403",
+                            description = "Response indicating user does not have access"),
+            }
     )
     @ActionId(value = Modify.TYPE)
     @ActionAttributes(
@@ -485,7 +499,8 @@ public class DelimitedRest {
         IRI recordIRI = vf.createIRI(ontologyRecordIRI);
         User user = getActiveUser(context, engineManager);
         String commitMsg = "Mapping data from " + mappingRecordIRI;
-        Difference committedData = ontologyImportService.importOntology(recordIRI, branchId, update, mappingData, user, commitMsg);
+        Difference committedData = ontologyImportService.importOntology(recordIRI,
+                branchId, update, mappingData, user, commitMsg);
 
         Response response;
         if (committedData.getAdditions().isEmpty() && committedData.getDeletions().isEmpty()) {
@@ -511,7 +526,7 @@ public class DelimitedRest {
      * @return a Mobi Model with the resulting mapped RDF data
      */
     private Model etlFile(String fileName, SupplierWithException<Model> mappingSupplier,
-                                              boolean containsHeaders, String separator, boolean limit) {
+                          boolean containsHeaders, String separator, boolean limit) {
         // Collect the delimited file and its extension
         File delimitedFile = getUploadedFile(fileName).orElseThrow(() ->
                 ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST));
@@ -583,13 +598,14 @@ public class DelimitedRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "delimited-files",
-        summary = "Gather rows from an uploaded delimited document",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-        }
+            tags = "delimited-files",
+            summary = "Gather rows from an uploaded delimited document",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+            }
     )
     public Response getRows(
             @Parameter(description = "name of the delimited document in the data/tmp/ directory")
@@ -787,12 +803,12 @@ public class DelimitedRest {
     private void deleteDirectory(Path dir) throws IOException {
         if (Files.exists(dir)) {
             Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
-                            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     Files.delete(file);
                     return CONTINUE;
                 }
 
-                            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
                     if (exc == null) {
                         Files.delete(dir);
                         return CONTINUE;

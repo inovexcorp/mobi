@@ -12,17 +12,16 @@ package com.mobi.dataset.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
@@ -44,7 +43,6 @@ import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
@@ -53,15 +51,11 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rest.security.annotations.ActionAttributes;
-import com.mobi.rest.security.annotations.AttributeValue;
-import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
@@ -174,14 +168,14 @@ public class DatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "datasets",
-        summary = "Retrieves all DatasetRecords in the local Catalog.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "A Response with a JSON array of DatasetRecords"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "datasets",
+            summary = "Retrieves all DatasetRecords in the local Catalog.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "A Response with a JSON array of DatasetRecords"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getDatasetRecords(
             @Context UriInfo uriInfo,
@@ -249,14 +243,15 @@ public class DatasetRest {
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @Operation(
-        tags = "datasets",
-        summary = "Creates a new DatasetRecord in the local Catalog and Dataset in the specified repository.",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "A Response with the IRI string of the created DatasetRecord"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "datasets",
+            summary = "Creates a new DatasetRecord in the local Catalog and Dataset in the specified repository.",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "A Response with the IRI string of the created DatasetRecord"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response createDatasetRecord(
             @Context ContainerRequestContext context,
@@ -328,10 +323,11 @@ public class DatasetRest {
             tags = "datasets",
             summary = "Gets a specific DatasetRecord from the local Catalog.",
             responses = {
-                @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),
-                @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "200",
+                            description = "A Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
             }
     )
     public Response getDatasetRecord(
@@ -365,14 +361,15 @@ public class DatasetRest {
     @Path("{datasetRecordId}")
     @RolesAllowed("user")
     @Operation(
-        tags = "datasets",
-        summary = "Deletes a specific DatasetRecord in the local Catalog.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "datasets",
+            summary = "Deletes a specific DatasetRecord in the local Catalog.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response deleteDatasetRecord(
             @Context ContainerRequestContext context,
@@ -413,14 +410,14 @@ public class DatasetRest {
     @Path("{datasetRecordId}/data")
     @RolesAllowed("user")
     @Operation(
-        tags = "datasets",
-        summary = "Clears the data within a specific DatasetRecord in the local Catalog.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "datasets",
+            summary = "Clears the data within a specific DatasetRecord in the local Catalog.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response clearDatasetRecord(
             @Parameter(description = "IRI of a DatasetRecord")
@@ -454,14 +451,15 @@ public class DatasetRest {
     @Path("{datasetRecordId}/data")
     @RolesAllowed("user")
     @Operation(
-        tags = "datasets",
-        summary = "Uploads the data within an RDF file to a specific DatasetRecord in the local Catalog.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),
-            @ApiResponse(responseCode = "400", description = "A Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "A Response indicating INTERNAL_SERVER_ERROR")
-        }
+            tags = "datasets",
+            summary = "Uploads the data within an RDF file to a specific DatasetRecord in the local Catalog.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "400", description = "A Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "A Response indicating INTERNAL_SERVER_ERROR")
+            }
     )
     public Response uploadData(
             @Parameter(description = "IRI of a DatasetRecord")

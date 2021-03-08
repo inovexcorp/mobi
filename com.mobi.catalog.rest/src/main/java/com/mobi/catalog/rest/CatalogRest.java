@@ -12,12 +12,12 @@ package com.mobi.catalog.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -251,14 +251,14 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Retrieves the distributed and local Catalogs",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "List of Catalogs within the repository"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Retrieves the distributed and local Catalogs",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "List of Catalogs within the repository"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getCatalogs(
             @Parameter(description = "Type of Catalog you want back (local or distributed)", required = false)
@@ -298,14 +298,14 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Retrieves the Catalog specified by the provided ID",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Specific Catalog from the repository"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "404", description = "Catalog does not exist"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Retrieves the Catalog specified by the provided ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Specific Catalog from the repository"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "404", description = "Catalog does not exist"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getCatalog(
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -346,14 +346,14 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Retrieves the Records in the Catalog",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "List of Records that match the search criteria"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Retrieves the Records in the Catalog",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "List of Records that match the search criteria"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getRecords(
             @Context UriInfo uriInfo,
@@ -361,7 +361,8 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "Field with sort order specified (MODIFIED, ISSUED, TITLE)")
             @QueryParam("sort") String sort,
-            @Parameter(description = "The type of Records you want to get back (unversioned, versioned, ontology, mapping, or dataset)")
+            @Parameter(description = "The type of Records you want to get back "
+                    + "(unversioned, versioned, ontology, mapping, or dataset)")
             @QueryParam("type") String recordType,
             @Parameter(description = "Offset for the page")
             @QueryParam("offset") int offset,
@@ -423,14 +424,15 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Creates a new Record in the Catalog",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Record"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Creates a new Record in the Catalog",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response with the IRI string of the created Record"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionAttributes(
             @AttributeValue(id = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", value = "type",
@@ -440,8 +442,8 @@ public class CatalogRest {
             @Context ContainerRequestContext context,
             @Parameter(description = "String representing the Catalog ID")
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "Required IRI of the type for the new Record. " +
-                    "Must be a valid IRI for a Record or one of its subclasses", required = true)
+            @Parameter(description = "Required IRI of the type for the new Record. "
+                    + "Must be a valid IRI for a Record or one of its subclasses", required = true)
             @FormDataParam("type") String typeIRI,
             @Parameter(description = "Required title for the new Record", required = true)
             @FormDataParam("title") String title,
@@ -506,16 +508,16 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Retrieves the Catalog record by its ID",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Array with the contents of the Record’s named graph, " +
-                    "including the Record object"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "404", description = "Record could not be found"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Retrieves the Catalog record by its ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Array with the contents of the "
+                            + "Record’s named graph, including the Record object"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "404", description = "Record could not be found"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getRecord(
@@ -551,14 +553,15 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Deletes the Catalog Record by its ID",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating whether or not the Record was deleted"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Deletes the Catalog Record by its ID",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether or not the Record was deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteRecord(
@@ -602,14 +605,15 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Updates the Catalog Record by its ID using the provided Record JSON-LD",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating whether or not the Record was updated"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Updates the Catalog Record by its ID using the provided Record JSON-LD",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether or not the Record was updated"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateRecord(
@@ -618,7 +622,7 @@ public class CatalogRest {
             @Parameter(description = "String representing the Record ID")
             @PathParam("recordId") String recordId,
             @Parameter(description = "JSON-LD of the new Record which will replace the existing Record")
-            String newRecordJson) {
+                    String newRecordJson) {
         try {
             Record newRecord = getNewThing(newRecordJson, vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get());
@@ -651,15 +655,16 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Retrieves the list of Distributions associated with an UnversionedRecord",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with a list of all the Distributions of the" +
-                    " requested UnversionedRecord"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Retrieves the list of Distributions associated with an UnversionedRecord",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with a list of all the Distributions of the"
+                                    + " requested UnversionedRecord"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getUnversionedDistributions(
             @Context UriInfo uriInfo,
@@ -710,14 +715,15 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Creates a new Distribution for the provided UnversionedRecord",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Distribution"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Creates a new Distribution for the provided UnversionedRecord",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response with the IRI string of the created Distribution"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response createUnversionedDistribution(
             @Context ContainerRequestContext context,
@@ -763,14 +769,15 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets a specific Distribution of an UnversionedRecord",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Distribution that was identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets a specific Distribution of an UnversionedRecord",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Distribution that was identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getUnversionedDistribution(
             @Parameter(description = "String representing the Catalog ID")
@@ -809,14 +816,15 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Deletes a specific Distribution of an UnversionedRecord",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating if the Distribution was deleted"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Deletes a specific Distribution of an UnversionedRecord",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating if the Distribution was deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response deleteUnversionedDistribution(
             @Parameter(description = "String representing the Catalog ID")
@@ -854,15 +862,16 @@ public class CatalogRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Updates a specific Distribution for an UnversionedRecord identified by the provided IDs " +
-                "using the modifications in the provided JSON-LD",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating if the Distribution was updated"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Updates a specific Distribution for an UnversionedRecord identified by the provided IDs "
+                    + "using the modifications in the provided JSON-LD",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating if the Distribution was updated"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response updateUnversionedDistribution(
             @Parameter(description = "String representing the Catalog ID")
@@ -872,7 +881,7 @@ public class CatalogRest {
             @Parameter(description = "String representing the Distribution ID")
             @PathParam("distributionId") String distributionId,
             @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution")
-            String newDistributionJson) {
+                    String newDistributionJson) {
         try {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
                     distributionFactory);
@@ -905,14 +914,15 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets a list of Versions for a VersionedRecord",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "List of all the Versions associated with a VersionedRecord"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets a list of Versions for a VersionedRecord",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "List of all the Versions associated with a VersionedRecord"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersions(
@@ -961,15 +971,17 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Creates a Version for the identified VersionedRecord using the passed form data and stores" +
-                " it in the repository. This Version will become the latest Version for the identified VersionedRecord",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Version"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Creates a Version for the identified VersionedRecord using the passed form data and "
+                    + "stores it in the repository. This Version will become the latest Version for the "
+                    + "identified VersionedRecord",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response with the IRI string of the created Version"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -979,8 +991,8 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "Required IRI of the type for the new Version. Must be a valid IRI for a " +
-                    "Version or one of its subclasses", required = true)
+            @Parameter(description = "Required IRI of the type for the new Version. Must be a valid IRI for a "
+                    + "Version or one of its subclasses", required = true)
             @FormDataParam("type") String typeIRI,
             @Parameter(description = "Required title for the new Version", required = true)
             @FormDataParam("title") String title,
@@ -1027,14 +1039,18 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Creates a Tag for the identified VersionedRecord",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Tag"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST, likely to be parameter is not set"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Creates a Tag for the identified VersionedRecord",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response with the IRI string of the created Tag"),
+                    @ApiResponse(responseCode = "400",
+                            description = "Response indicating BAD_REQUEST, likely to be parameter is not set"),
+                    @ApiResponse(responseCode = "403",
+                            description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500",
+                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1100,14 +1116,15 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets the latest Version of a VersionedRecord identified by the provided IDs",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Latest Version for the identified VersionedRecord"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets the latest Version of a VersionedRecord identified by the provided IDs",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Latest Version for the identified VersionedRecord"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getLatestVersion(
             @Parameter(description = "String representing the Catalog ID")
@@ -1143,14 +1160,14 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets a specific Version for the identified VersionedRecord",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Requested Version"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets a specific Version for the identified VersionedRecord",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Requested Version"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersion(
@@ -1190,15 +1207,17 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Removes a specific Version from a VersionedRecord. If that Version happens to be the latest Version," +
-                " the latest Version will be updated to be the previous Version",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating whether the Version was deleted"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Removes a specific Version from a VersionedRecord. If that Version happens to be "
+                    + "the latest Version,"
+                    + " the latest Version will be updated to be the previous Version",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether the Version was deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1237,14 +1256,16 @@ public class CatalogRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Updates the Version identified by the provided IDs using the modifications in the provided JSON-LD",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating whether the Version was updated"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Updates the Version identified by the provided IDs using the "
+                    + "modifications in the provided JSON-LD",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether the Version was updated"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1256,7 +1277,7 @@ public class CatalogRest {
             @Parameter(description = "String representing the Version ID")
             @PathParam("versionId") String versionId,
             @Parameter(description = "JSON-LD of the new Version which will replace the existing Version")
-            String newVersionJson) {
+                    String newVersionJson) {
         try {
             Version newVersion = getNewThing(newVersionJson, vf.createIRI(versionId),
                     factoryRegistry.getFactoryOfType(Version.class).get());
@@ -1291,14 +1312,15 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets the list of all Distributions for the identified Version",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "List of Distributions for the identified Version"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets the list of all Distributions for the identified Version",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "List of Distributions for the identified Version"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getVersionedDistributions(
             @Context UriInfo uriInfo,
@@ -1352,14 +1374,15 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Creates a Distribution for the identified Version",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Distribution"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Creates a Distribution for the identified Version",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response with the IRI string of the created Distribution"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response createVersionedDistribution(
             @Context ContainerRequestContext context,
@@ -1410,14 +1433,15 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets a specific Distribution for the Version identified by the IDs",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Distribution for the Version identified by the IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets a specific Distribution for the Version identified by the IDs",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Distribution for the Version identified by the IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getVersionedDistribution(
             @Parameter(description = "String representing the Catalog ID")
@@ -1460,14 +1484,15 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Deletes a specific Distribution of the identified Version",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response identifying whether the Distribution was deleted"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Deletes a specific Distribution of the identified Version",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response identifying whether the Distribution was deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response deleteVersionedDistribution(
             @Parameter(description = "String representing the Catalog ID")
@@ -1509,15 +1534,16 @@ public class CatalogRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Updates a specific Distribution of the identified Version with the modifications in the " +
-                "provided newDistribution",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response identifying whether the Distribution was updated"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Updates a specific Distribution of the identified Version with the modifications in the "
+                    + "provided newDistribution",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response identifying whether the Distribution was updated"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response updateVersionedDistribution(
             @Parameter(description = "String representing the Catalog ID")
@@ -1529,7 +1555,7 @@ public class CatalogRest {
             @Parameter(description = "String representing the Distribution ID")
             @PathParam("distributionId") String distributionId,
             @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution")
-            String newDistributionJson) {
+                    String newDistributionJson) {
         try {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
                     distributionFactory);
@@ -1559,14 +1585,14 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets the Commit associated with the identified Version using the provided IDs",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Commit associated with the identified Version"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets the Commit associated with the identified Version using the provided IDs",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Commit associated with the identified Version"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getVersionCommit(
             @Parameter(description = "String representing the Catalog ID")
@@ -1614,14 +1640,15 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "List of Branches for the identified VersionedRDFRecord"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "List of Branches for the identified VersionedRDFRecord"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranches(
@@ -1639,8 +1666,8 @@ public class CatalogRest {
             @DefaultValue("100") @QueryParam("limit") int limit,
             @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
-            @Parameter(description = "Whether or not the list should be filtered to Branches associated with the user " +
-                    "making the request")
+            @Parameter(description = "Whether or not the list should be filtered to Branches associated "
+                    + "with the user making the request")
             @DefaultValue("false") @QueryParam("applyUserFilter") boolean applyUserFilter) {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
@@ -1653,8 +1680,8 @@ public class CatalogRest {
                             .map(Value::stringValue)
                             .collect(Collectors.toSet());
                     return !types.contains(UserBranch.TYPE)
-                           || branch.getProperty(vf.createIRI(DCTERMS.PUBLISHER.stringValue())).get()
-                                    .stringValue().equals(activeUser.getResource().stringValue());
+                            || branch.getProperty(vf.createIRI(DCTERMS.PUBLISHER.stringValue())).get()
+                            .stringValue().equals(activeUser.getResource().stringValue());
                 };
             }
             return createPaginatedThingResponseJackson(uriInfo, branches, vf.createIRI(sort), offset, limit,
@@ -1688,14 +1715,15 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Creates a Branch for a VersionedRDFRecord identified by the IDs using the passed form data",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response with the IRI string of the created Branch"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Creates a Branch for a VersionedRDFRecord identified by the IDs using the passed form data",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response with the IRI string of the created Branch"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1755,14 +1783,15 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets the master Branch of a VersionedRDFRecord identified by the provided IDs",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Master Branch for the identified VersionedRDFRecord"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets the master Branch of a VersionedRDFRecord identified by the provided IDs",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Master Branch for the identified VersionedRDFRecord"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getMasterBranch(
@@ -1797,14 +1826,15 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Get a specific Branch for a specific VersionedRDFRecord",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Identified Branch for the specific VersionedRDFRecord"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Get a specific Branch for a specific VersionedRDFRecord",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Identified Branch for the specific VersionedRDFRecord"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranch(
@@ -1843,14 +1873,15 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Deletes a specific Branch for a specific VersionedRDFRecord",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response identifying whether the Branch was deleted"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Deletes a specific Branch for a specific VersionedRDFRecord",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response identifying whether the Branch was deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1892,16 +1923,16 @@ public class CatalogRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Updates the specified Branch using the modifications in the provided newBranch for a " +
-                "specific VersionedRDFRecord",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response identifying whether the Branch was " +
-                    "successfully updated"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Updates the specified Branch using the modifications in the provided newBranch for a "
+                    + "specific VersionedRDFRecord",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response identifying whether the Branch was "
+                            + "successfully updated"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1913,7 +1944,7 @@ public class CatalogRest {
             @Parameter(description = "String representing the VersionedRDFRecord ID")
             @PathParam("branchId") String branchId,
             @Parameter(description = "String representing the Branch ID")
-            String newBranchJson) {
+                    String newBranchJson) {
         try {
             Branch newBranch = getNewThing(newBranchJson, vf.createIRI(branchId),
                     factoryRegistry.getFactoryOfType(Branch.class).get());
@@ -1948,18 +1979,20 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets a list of Commits associated with the Branch identified by the provided IDs which represents " +
-                "the Commit chain for that Branch. If a limit is passed which is greater than zero, will paginate the " +
-                "results. If a targetId is passed, then only commits between the HEAD commits of the branchId and " +
-                "targetId will be returned.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "List of Commits for the identified Branch which represents" +
-                    " the Commit chain"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets a list of Commits associated with the Branch identified by the provided IDs "
+                    + "which represents the Commit chain for that Branch. If a limit is passed which is "
+                    + "greater than zero, will paginate the results. If a targetId is passed, then only "
+                    + "commits between the HEAD commits of the branchId and "
+                    + "targetId will be returned.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "List of Commits for the identified Branch which represents"
+                                    + " the Commit chain"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getCommitChain(
@@ -2022,16 +2055,16 @@ public class CatalogRest {
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Creates a new Commit in the repository for a specific Branch using the InProgressCommit " +
-                "associated with the user making this request. The HEAD Commit is updated to be this new Commit",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response with the IRI of the new Commit added to the " +
-                    "Branch"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Creates a new Commit in the repository for a specific Branch using the InProgressCommit "
+                    + "associated with the user making this request. The HEAD Commit is updated to be this new Commit",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response with the IRI of the new Commit added to the Branch"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -2078,15 +2111,16 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets the HEAD Commit for a specific Branch",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with the Commit which is the HEAD of the " +
-                    "identified Branch"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets the HEAD Commit for a specific Branch",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with the Commit which is the HEAD of the "
+                                   + "identified Branch"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getHead(
@@ -2132,15 +2166,16 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets the Commit identified by the provided IDs",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with the Commit identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "404", description = "Commit could not be found"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets the Commit identified by the provided IDs",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with the Commit identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "404", description = "Commit could not be found"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranchCommit(
@@ -2190,17 +2225,19 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/branches/{branchId}/difference")
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets the Difference between the HEAD Commit of the Branch identified by the provided IDs in the " +
-                "path and the HEAD Commit of the Branch identified by the query parameter. For this comparison " +
-                "to be done, the Commits must have an ancestor Commit in common.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with the Difference between the identified" +
-                    " Branches' HEAD Commits as a JSON object"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets the Difference between the HEAD Commit of the Branch identified by the "
+                    + "provided IDs in the path and the HEAD Commit of the Branch identified by the "
+                    + "query parameter. For this comparison to be done, the Commits must have an ancestor "
+                    + "Commit in common.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with the Difference between the identified"
+                                    + " Branches' HEAD Commits as a JSON object"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDifference(
@@ -2251,17 +2288,19 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets the Conflicts between the HEAD Commit of the Branch identified by the provided IDs in the " +
-                "path and the HEAD Commit of the Branch identified by the query parameter. For this comparison to " +
-                "be done, the Commits must have an ancestor Commit in common",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with the list of Conflicts between the " +
-                    "identified Branches' HEAD Commits"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets the Conflicts between the HEAD Commit of the Branch identified by the "
+                    + "provided IDs in the path and the HEAD Commit of the Branch identified by the "
+                    + "query parameter. For this comparison to be done, the Commits must have an "
+                    + "ancestor Commit in common",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with the list of Conflicts between the "
+                                    + "identified Branches' HEAD Commits"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConflicts(
@@ -2321,18 +2360,18 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Performs a merge between the two Branches identified by the provided IDs. The addition and " +
-                "deletion statements that are required to resolve any conflicts will be used to create the " +
-                "merged Commit. The target Branch will point to the new merge commit, but the source Branch will " +
-                "still point to the original head commit. ",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating whether the Commits were" +
-                    " successfully merged"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Performs a merge between the two Branches identified by the provided IDs. The addition and "
+                    + "deletion statements that are required to resolve any conflicts will be used to create the "
+                    + "merged Commit. The target Branch will point to the new merge commit, but the source Branch  "
+                    + "will still point to the original head commit.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether the Commits were successfully merged"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(value = Modify.TYPE)
     @ActionAttributes(
@@ -2349,9 +2388,11 @@ public class CatalogRest {
             @PathParam("branchId") String sourceBranchId,
             @Parameter(description = "String representing the target Branch ID")
             @QueryParam("targetId") String targetBranchId,
-            @Parameter(description = "String of JSON-LD that corresponds to the statements that were added to the entity")
+            @Parameter(description = "String of JSON-LD that corresponds to the statements that"
+                    + "were added to the entity")
             @FormDataParam("additions") String additionsJson,
-            @Parameter(description = "String of JSON-LD that corresponds to the statements that were deleted in the entity")
+            @Parameter(description = "String of JSON-LD that corresponds to the statements that "
+                    + "were deleted in the entity")
             @FormDataParam("deletions") String deletionsJson) {
         try {
             User activeUser = getActiveUser(context, engineManager);
@@ -2390,16 +2431,16 @@ public class CatalogRest {
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets the Commit identified by the provided IDs and returns the compiled Resource " +
-                "following the Commit chain which terminates at the identified Commit",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response the compiled Resource for the entity at " +
-                    "the specific Commit"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets the Commit identified by the provided IDs and returns the compiled Resource "
+                    + "following the Commit chain which terminates at the identified Commit",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response the compiled Resource for the entity at the specific Commit"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getCompiledResource(
@@ -2414,8 +2455,8 @@ public class CatalogRest {
             @PathParam("commitId") String commitId,
             @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
-            @Parameter(description = "Boolean value identifying whether the InProgressCommit associated with " +
-                    "identified Record should be  applied to the result")
+            @Parameter(description = "Boolean value identifying whether the InProgressCommit associated with "
+                    + "identified Record should be  applied to the result")
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply) {
         try {
             Resource catalogIRI = vf.createIRI(catalogId);
@@ -2463,15 +2504,16 @@ public class CatalogRest {
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets the compiled resource for a the entity identified by a specific Commit",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with the compiled Resource for the entity" +
-                    " at the specific Commit to download"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets the compiled resource for a the entity identified by a specific Commit",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with the compiled Resource for the entity"
+                                    + " at the specific Commit to download"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadCompiledResource(
@@ -2486,11 +2528,11 @@ public class CatalogRest {
             @PathParam("commitId") String commitId,
             @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
-            @Parameter(description = "Boolean value identifying whether the InProgressCommit associated with " +
-                    "the identified Record and User making the request should be applied to the result")
+            @Parameter(description = "Boolean value identifying whether the InProgressCommit associated with "
+                    + "the identified Record and User making the request should be applied to the result")
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply,
-            @Parameter(description = "Desired name of the generated file. " +
-                    "NOTE: Optional param - defaults to \"resource\"")
+            @Parameter(description = "Desired name of the generated file. "
+                    + "NOTE: Optional param - defaults to \"resource\"")
             @DefaultValue("resource") @QueryParam("fileName") String fileName) {
         try {
             Resource catalogIRI = vf.createIRI(catalogId);
@@ -2516,7 +2558,7 @@ public class CatalogRest {
             };
 
             return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
-                                                                     + "." + getRDFFormatFileExtension(rdfFormat))
+                    + "." + getRDFFormatFileExtension(rdfFormat))
                     .header("Content-Type", getRDFFormatMimeType(rdfFormat)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -2539,15 +2581,16 @@ public class CatalogRest {
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Creates a InProgressCommit linked to a specific VersionedRDFRecord",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating whether the InProgressCommit" +
-                    " was created successfully"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Creates a InProgressCommit linked to a specific VersionedRDFRecord",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether the InProgressCommit"
+                                   +  " was created successfully"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response createInProgressCommit(
             @Context ContainerRequestContext context,
@@ -2584,14 +2627,15 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Gets the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with the changes from the specific InProgressCommit"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Gets the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with the changes from the specific InProgressCommit"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getInProgressCommit(
             @Context ContainerRequestContext context,
@@ -2631,15 +2675,17 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Deletes the changes made in the User's current InProgressCommit for a specific VersionedRDFRecord",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "RResponse indicating whether the InProgressCommit " +
-                    "was deleted successfully"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Deletes the changes made in the User's current InProgressCommit for a "
+                    + "specific VersionedRDFRecord",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "RResponse indicating whether the InProgressCommit "
+                                    + "was deleted successfully"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response deleteInProgressCommit(
             @Context ContainerRequestContext context,
@@ -2657,7 +2703,7 @@ public class CatalogRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     /**
      * Updates the InProgressCommit for a user identified by the provided IDs using the statements found in the provided
      * form data. If the user does not have an InProgressCommit, one will be created with the provided data.
@@ -2677,17 +2723,17 @@ public class CatalogRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Updates the InProgressCommit for a user identified by the provided IDs using the statements " +
-                "found in the provided form data. If the user does not have an InProgressCommit, one will be" +
-                " created with the provided data.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating whether or not the " +
-                    "InProgressCommit was updated"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Updates the InProgressCommit for a user identified by the provided IDs using the statements "
+                    + "found in the provided form data. If the user does not have an InProgressCommit, one will be"
+                    + " created with the provided data.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response indicating whether or not the "
+                            + "InProgressCommit was updated"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -2697,9 +2743,11 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID")
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String of JSON-LD that corresponds to the statements that were added to the entity")
+            @Parameter(description = "String of JSON-LD that corresponds to the statements that"
+                    + " were added to the entity")
             @FormDataParam("additions") String additionsJson,
-            @Parameter(description = "String of JSON-LD that corresponds to the statements that were deleted in the entity")
+            @Parameter(description = "String of JSON-LD that corresponds to the statements that"
+                    + " were deleted in the entity")
             @FormDataParam("deletions") String deletionsJson) {
         try {
             User activeUser = getActiveUser(context, engineManager);
@@ -2725,14 +2773,14 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Retrieves all the available record types",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "All the available record types"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Retrieves all the available record types",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "All the available record types"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getRecordTypes() {
         try {
@@ -2752,14 +2800,14 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "catalogs",
-        summary = "Retrieves all the available sorting options",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "All the available sorting options"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "catalogs",
+            summary = "Retrieves all the available sorting options",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "All the available sorting options"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getSortOptions() {
         try {

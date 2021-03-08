@@ -12,12 +12,12 @@ package com.mobi.ontology.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -94,11 +94,11 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
+import com.mobi.security.policy.api.ontologies.policy.Read;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import com.mobi.security.policy.api.ontologies.policy.Read;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -283,9 +283,9 @@ public class OntologyRest {
     @Operation(
             tags = "ontologies",
             summary = "Uploads an ontology file to the data store.",
-            description = "Uploads and imports an ontology file to a data store and creates an associated " +
-                    "OntologyRecord using the form data. A master Branch is created and stored with an initial " +
-                    "Commit containing the data provided in the ontology file.",
+            description = "Uploads and imports an ontology file to a data store and creates an associated "
+                    + "OntologyRecord using the form data. A master Branch is created and stored with an initial "
+                    + "Commit containing the data provided in the ontology file.",
             responses = {
                     // TODO: We can actually document the structure of the response with the "content" attribute
                     @ApiResponse(responseCode = "201", description = "OntologyRecord created"),
@@ -299,19 +299,24 @@ public class OntologyRest {
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(
             @Context ContainerRequestContext context,
-            @Parameter(schema = @Schema(type = "string", format = "binary", description = "The ontology file to upload.", required = true))
+            @Parameter(schema = @Schema(type = "string", format = "binary",
+                    description = "The ontology file to upload.", required = true))
             @FormDataParam("file") InputStream fileInputStream,
             @Parameter(description = "File details")
             @FormDataParam("file") FormDataContentDisposition fileDetail,
             @Parameter(description = "The optional list of keyword strings for the OntologyRecord.")
             @FormDataParam("json") String ontologyJson,
-            @Parameter(schema = @Schema(type = "string", description = "The title for the OntologyRecord.", required = true))
+            @Parameter(schema = @Schema(type = "string",
+                    description = "The title for the OntologyRecord.", required = true))
             @FormDataParam("title") String title,
-            @Parameter(schema = @Schema(type = "string", description = "The optional description for the OntologyRecord."))
+            @Parameter(schema = @Schema(type = "string",
+                    description = "The optional description for the OntologyRecord."))
             @FormDataParam("description") String description,
-            @Parameter(schema = @Schema(type = "string", description = "The optional markdown abstract for the new OntologyRecord."))
+            @Parameter(schema = @Schema(type = "string",
+                    description = "The optional markdown abstract for the new OntologyRecord."))
             @FormDataParam("markdown") String markdown,
-            @Parameter(schema = @Schema(type = "string", description = "The optional list of keyword strings for the OntologyRecord."))
+            @Parameter(schema = @Schema(type = "string",
+                    description = "The optional list of keyword strings for the OntologyRecord."))
             @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
         if (fileInputStream == null && ontologyJson == null) {
@@ -343,39 +348,39 @@ public class OntologyRest {
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @Operation(
-        tags = "ontologies",
-        summary = "Returns the ontology associated with the requested record ID in the requested format.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "The Ontology in the requested format"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Returns the ontology associated with the requested record ID in the requested format.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "The Ontology in the requested format"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @RolesAllowed("user")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntology(
             @Context ContainerRequestContext context,
-            @Parameter(description = "The String representing the Record Resource id. NOTE: Assumes id represents an " +
-                    "IRI unless String begins with \"_:\".", required = true)
+            @Parameter(description = "The String representing the Record Resource id. NOTE: Assumes id represents an "
+                    + "IRI unless String begins with \"_:\".", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "The optional String representing the Branch Resource id. NOTE: Assumes id " +
-                    "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing.")
+            @Parameter(description = "The optional String representing the Branch Resource id. NOTE: Assumes id "
+                    + "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing.")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "The optional String representing the Commit Resource id. NOTE: Assumes id " +
-                    "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The " +
-                    "provided commitId must be on the Branch identified by the provided branchId; otherwise, nothing " +
-                    "will be returned.")
+            @Parameter(description = "The optional String representing the Commit Resource id. NOTE: Assumes id "
+                    + "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The "
+                    + "provided commitId must be on the Branch identified by the provided branchId; "
+                    + "otherwise, nothing will be returned.")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "The desired RDF return format.",
+            @Parameter(description = "The desired RDF return format",
                     schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "owl/xml", "turtle"}))
             @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
-            @Parameter(description = "Whether or not the cached version of the identified Ontology should be cleared " +
-                    "before retrieval.")
+            @Parameter(description = "Whether or not the cached version of the identified Ontology should "
+                    + "be cleared before retrieval.")
             @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
             @Parameter(description = "Whether or not the JSON-LD of the ontology should be skolemized.")
             @DefaultValue("false") @QueryParam("skolemize") boolean skolemize,
-            @Parameter(description = "Whether or not any in progress commits by user should be applied to the return " +
-                    "value.")
+            @Parameter(description = "Whether or not any in progress commits by user should be applied "
+                    + "to the return value.")
             @DefaultValue("true") @QueryParam("applyInProgressCommit")
                     boolean applyInProgressCommit
     ) {
@@ -408,14 +413,14 @@ public class OntologyRest {
     @Path("{recordId}")
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Deletes the OntologyRecord with the requested recordId",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Deletes the OntologyRecord with the requested recordId",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response indicating the success"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Delete.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -455,29 +460,31 @@ public class OntologyRest {
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @Operation(
-        tags = "ontologies",
-        summary = "Streams the ontology associated with the requested record ID to an OutputStream.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "The Ontology associated with requested record ID to download"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-        },
-        // TODO: We can't generate swagger docs here because of the limitations on overloaded paths in the OpenAPI Spec
-        hidden = true
+            tags = "ontologies",
+            summary = "Streams the ontology associated with the requested record ID to an OutputStream.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "The Ontology associated with requested record ID to download"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+            },
+            // TODO: We can't generate swagger docs here because of the limitations on overloaded
+            //  paths in the OpenAPI Spec
+            hidden = true
     )
     @RolesAllowed("user")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadOntologyFile(
             @Context ContainerRequestContext context,
-            @Parameter(description = "The String representing the Record Resource id. NOTE: Assumes id represents an " +
-                    "IRI unless String begins with \"_:\".", required = true)
+            @Parameter(description = "The String representing the Record Resource id. "
+                    + "NOTE: Assumes id represents an IRI unless String begins with \"_:\".", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "The optional String representing the Branch Resource id. NOTE: Assumes id " +
-                    "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing.")
+            @Parameter(description = "The optional String representing the Branch Resource id. NOTE: Assumes id "
+                    + "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing.")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "The optional String representing the Commit Resource id. NOTE: Assumes id " +
-                    "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The " +
-                    "provided commitId must be on the Branch identified by the provided branchId; otherwise, nothing " +
-                    "will be returned.")
+            @Parameter(description = "The optional String representing the Commit Resource id. NOTE: Assumes id "
+                    + "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The "
+                    + "provided commitId must be on the Branch identified by the provided branchId; otherwise, nothing "
+                    + "will be returned.")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "The desired RDF return format.",
                     schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "owl/xml", "turtle"}))
@@ -486,7 +493,8 @@ public class OntologyRest {
             @DefaultValue("ontology") @QueryParam("fileName") String fileName
     ) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
+            Ontology ontology = getOntology(context,
+                    recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             StreamingOutput stream = os -> {
                 Writer writer = new BufferedWriter(new OutputStreamWriter(os));
@@ -503,8 +511,8 @@ public class OntologyRest {
     }
 
     /**
-     * Updates the InProgressCommit associated with the User making the request for the OntologyRecord identified by the
-     * provided recordId.
+     * Updates the InProgressCommit associated with the User making the request for the OntologyRecord identified
+     * by the provided recordId.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -516,8 +524,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param entityIdStr the String representing the edited entity id. NOTE: Assumes id represents an IRI unless String
-     *                    begins with "_:".
+     * @param entityIdStr the String representing the edited entity id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
      * @param entityJson  the String representing the edited Resource.
      * @return a Response indicating whether it was successfully updated.
      */
@@ -527,14 +535,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Updates the requester's InProgressCommit with the provided entity",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully updated"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Updates the requester's InProgressCommit with the provided entity",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether it was successfully updated"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -549,9 +558,10 @@ public class OntologyRest {
             @Parameter(description = "the String representing the edited entity id")
             @QueryParam("entityId") String entityIdStr,
             @Parameter(description = "the String representing the edited Resource")
-            String entityJson) {
+                    String entityJson) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
+            Ontology ontology = getOntology(context,
+                    recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             Model entityModel = getModelForEntityInOntology(ontology, entityIdStr);
             Difference diff = catalogManager.getDiff(entityModel, getModelFromJson(entityJson));
@@ -589,15 +599,16 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Updates the specified ontology branch and commit with the data provided",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "OK if successful or METHOD_NOT_ALLOWED if the changes " +
-                    "can not be applied to the commit specified"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Updates the specified ontology branch and commit with the data provided",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "OK if successful or METHOD_NOT_ALLOWED if the changes "
+                                    + "can not be applied to the commit specified"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -695,8 +706,8 @@ public class OntologyRest {
                     System.currentTimeMillis() - startTime);
 
             return Response.ok().build();
-        } catch (IllegalArgumentException | MobiException | ExecutionException |
-                InterruptedException | CompletionException e) {
+        } catch (IllegalArgumentException | MobiException | ExecutionException
+                | InterruptedException | CompletionException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
@@ -767,14 +778,15 @@ public class OntologyRest {
     @Path("{recordId}/branches/{branchId}")
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Deletes the Branch with the requested BranchId from the OntologyRecord with the provided recordId",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating successfully request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Deletes the Branch with the requested BranchId from the "
+                    + "OntologyRecord with the provided recordId",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response indicating successfully request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ActionAttributes(
@@ -821,16 +833,16 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets a JSON representation of all the SKOS vocabulary related information about the ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "JSON object with keys \"derivedConcepts\", " +
-                    "\"derivedConceptSchemes\", \"concepts.hierarchy\", \"concepts.index\",\n" +
-                    "     *      \"conceptSchemes.hierarchy\", and \"conceptSchemes.index\""),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets a JSON representation of all the SKOS vocabulary related information about the ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "JSON object with keys \"derivedConcepts\", "
+                            + "\"derivedConceptSchemes\", \"concepts.hierarchy\", \"concepts.index\","
+                            + "\"conceptSchemes.hierarchy\", and \"conceptSchemes.index\""),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVocabularyStuff(
@@ -856,7 +868,7 @@ public class OntologyRest {
 
     private StreamingOutput getVocabularyStuffStream(Ontology ontology) {
         Set<Ontology> onlyImports = OntologyUtils.getImportedOntologies(ontology);
-        
+
         return outputStream -> {
             StopWatch watch = new StopWatch();
             log.trace("Start concepts");
@@ -956,14 +968,14 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets a JSON representation of all the OWL ontology related information about the ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "JSON object with keys"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets a JSON representation of all the OWL ontology related information about the ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "JSON object with keys"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyStuff(
@@ -980,12 +992,14 @@ public class OntologyRest {
             if (clearCache) {
                 ontologyCache.removeFromCache(recordIdStr, commitIdStr);
             }
-            Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
+            Optional<Ontology> optionalOntology = getOntology(context,
+                    recordIdStr, branchIdStr, commitIdStr, true);
             if (optionalOntology.isPresent()) {
                 StreamingOutput output = getOntologyStuffStream(optionalOntology.get());
                 return Response.ok(output).build();
             } else {
-                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.",
+                        Response.Status.BAD_REQUEST);
             }
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1153,14 +1167,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the IRIs in the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "IRIs in the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the IRIs in the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "IRIs in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getIRIsInOntology(
@@ -1199,14 +1214,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the annotations in the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Annotation properties in the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the annotations in the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Annotation properties in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getAnnotationsInOntology(
@@ -1242,24 +1258,25 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Adds a new annotation to the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response indicating whether it was successfully added"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Adds a new annotation to the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating whether it was successfully added"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addAnnotationToOntology(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the record Resource id. NOTE: Assumes id represents an " +
-                    "IRI unless String begins with \"_:\"")
+            @Parameter(description = "String representing the record Resource id. NOTE: Assumes id represents an "
+                    + "IRI unless String begins with \"_:\"")
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new annotation in JSON-LD")
-            String annotationJson) {
+                    String annotationJson) {
         verifyJsonldType(annotationJson, OWL.ANNOTATIONPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(annotationJson));
@@ -1291,16 +1308,18 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Updates the specified ontology branch and commit with the data provided",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully deleted"),
-            @ApiResponse(responseCode = "400", description = "The ontology could not be found"),
-            @ApiResponse(responseCode = "401", description = "User does not has the permission to modify the record " +
-                    "since deleting an annotation is part of modifying the record"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Updates the specified ontology branch and commit with the data provided",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether it was successfully deleted"),
+                    @ApiResponse(responseCode = "400", description = "The ontology could not be found"),
+                    @ApiResponse(responseCode = "401",
+                            description = "User does not has the permission to modify the record "
+                                    + "since deleting an annotation is part of modifying the record"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1315,7 +1334,8 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource id")
             @QueryParam("commitId") String commitIdStr) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
+            Ontology ontology = getOntology(context,
+                    recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             return deletionsToInProgressCommit(context, ontology, annotationIdStr, recordIdStr);
         } catch (MobiException e) {
@@ -1345,14 +1365,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the classes in the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Classes in the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the classes in the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Classes in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesInOntology(
@@ -1363,8 +1384,8 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource id")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Boolean indicating whether or not any in progress commits by user should be " +
-                    "applied to the return value")
+            @Parameter(description = "Boolean indicating whether or not any in progress commits by user should be "
+                    + "applied to the return value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
             ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray,
@@ -1391,14 +1412,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Adds a new class to the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response indicating whether it was successfully added"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Adds a new class to the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating whether it was successfully added"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1407,7 +1429,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the record Resource id")
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new class model")
-            String classJson) {
+                    String classJson) {
         verifyJsonldType(classJson, OWL.CLASS.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(classJson));
@@ -1438,14 +1460,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Deletes the identified class from the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully deleted"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Deletes the identified class from the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether it was successfully deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1488,14 +1511,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the datatypes in the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Datatypes in the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the datatypes in the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Datatypes in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDatatypesInOntology(
@@ -1531,14 +1555,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Adds a new datatype to the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response indicating whether it was successfully added"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Adds a new datatype to the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating whether it was successfully added"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1547,7 +1572,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the record Resource id")
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "JSON String representing the new datatype model")
-            String datatypeJson) {
+                    String datatypeJson) {
         verifyJsonldType(datatypeJson, OWL.DATATYPEPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(datatypeJson));
@@ -1578,14 +1603,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Deletes the identified datatype from the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully deleted"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Deletes the identified datatype from the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether it was successfully deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1628,14 +1654,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the object properties in the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Object properties in the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the object properties in the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Object properties in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getObjectPropertiesInOntology(
@@ -1671,14 +1698,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Adds a new object property to the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response indicating whether it was successfully updated"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Adds a new object property to the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating whether it was successfully updated"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1687,7 +1715,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the record Resource id")
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new property model")
-            String objectPropertyJson) {
+                    String objectPropertyJson) {
         verifyJsonldType(objectPropertyJson, OWL.OBJECTPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(objectPropertyJson));
@@ -1718,14 +1746,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Deletes the identified object property from the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully deleted"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Deletes the identified object property from the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether it was successfully deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1768,14 +1797,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the data properties from the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Data properties in the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the data properties from the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Data properties in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDataPropertiesInOntology(
@@ -1811,14 +1841,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Adds a new data property to the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response indicating whether it was successfully added"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Adds a new data property to the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating whether it was successfully added"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1827,7 +1858,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the record Resource id")
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "JSON String representing the new property model")
-            String dataPropertyJson) {
+                    String dataPropertyJson) {
         verifyJsonldType(dataPropertyJson, OWL.DATATYPEPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(dataPropertyJson));
@@ -1858,14 +1889,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Deletes the identified data property from the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully deleted"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Deletes the identified data property from the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether it was successfully deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1908,14 +1940,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the individuals in the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Named individuals in the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the individuals in the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Named individuals in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getNamedIndividualsInOntology(
@@ -1951,14 +1984,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Adds a new individual to the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response indicating whether it was successfully added"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Adds a new individual to the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating whether it was successfully added"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1967,7 +2001,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the record Resource id")
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new individual model")
-            String individualJson) {
+                    String individualJson) {
         verifyJsonldType(individualJson, OWL.INDIVIDUAL.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(individualJson));
@@ -1998,14 +2032,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Deletes the identified individual from the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating whether it was successfully deleted"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Deletes the identified individual from the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether it was successfully deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -2048,14 +2083,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the IRIs from the imported ontologies of the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "IRIs in the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the IRIs from the imported ontologies of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "IRIs in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getIRIsInImportedOntologies(
@@ -2093,15 +2129,16 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the imported ontology IRIs of the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "IRIs of the ontologies in the imports closure for the " +
-                    "ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the imported ontology IRIs of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "IRIs of the ontologies in the imports closure for the "
+                                    + "ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getImportedOntologyIRIs(
@@ -2116,7 +2153,7 @@ public class OntologyRest {
             ArrayNode arrayNode = mapper.createArrayNode();
             Set<String> importedOntologyIris = new HashSet<>();
             Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, false);
-            if(optionalOntology.isPresent()) {
+            if (optionalOntology.isPresent()) {
                 Ontology ontology = optionalOntology.get();
                 ontology.getUnloadableImportIRIs().stream()
                         .map(Value::stringValue)
@@ -2159,15 +2196,16 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Updates the specified ontology branch and commit with the data provided",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "array of imported ontologies from the ontology with the " +
-                    "requested ID in the requested format"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Updates the specified ontology branch and commit with the data provided",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "array of imported ontologies from the ontology with the "
+                                    + "requested ID in the requested format"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getImportsClosure(
@@ -2212,14 +2250,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the annotations from the imported ontologies of the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Annotation properties in the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the annotations from the imported ontologies of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Annotation properties in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getAnnotationsInImportedOntologies(
@@ -2258,14 +2297,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the classes from the imported ontologies of the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Classes in the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the classes from the imported ontologies of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Classes in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesInImportedOntologies(
@@ -2303,14 +2343,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the datatypes from the imported ontologies of the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Datatypes in the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the datatypes from the imported ontologies of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Datatypes in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDatatypesInImportedOntologies(
@@ -2348,14 +2389,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the object properties from the imported ontologies of the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Object properties in the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the object properties from the imported ontologies of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Object properties in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getObjectPropertiesInImportedOntologies(
@@ -2394,15 +2436,16 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the data properties from the imported ontologies of the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Data properties in the ontology identified by " +
-                    "the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the data properties from the imported ontologies of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Data properties in the ontology identified by "
+                                    + "the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDataPropertiesInImportedOntologies(
@@ -2441,14 +2484,15 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the named individuals from the imported ontologies of the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Named individuals in the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the named individuals from the imported ontologies of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Named individuals in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getNamedIndividualsInImportedOntologies(
@@ -2490,15 +2534,16 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the class hierarchies for the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "JSON object that represents the class hierarchy " +
-                    "for the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the class hierarchies for the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "JSON object that represents the class hierarchy "
+                                    + "for the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyClassHierarchy(
@@ -2545,15 +2590,16 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the object property hierarchies for the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "A JSON object that represents the object property " +
-                    "hierarchy for the ontology identified by the provided IDS"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the object property hierarchies for the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object that represents the object property "
+                                    + "hierarchy for the ontology identified by the provided IDS"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyObjectPropertyHierarchy(
@@ -2600,15 +2646,16 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the data property hierarchies for the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "A JSON object that represents the data property hierarchy" +
-                    " for the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the data property hierarchies for the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object that represents the data property hierarchy"
+                                    + " for the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyDataPropertyHierarchy(
@@ -2656,15 +2703,16 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the data property hierarchies for the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "A JSON object that represents the annotation property " +
-                    "hierarchy for the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the data property hierarchies for the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object that represents the annotation property "
+                                    + "hierarchy for the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyAnnotationPropertyHierarchy(
@@ -2710,15 +2758,16 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the concept hierarchies for the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "JSON object that represents the SKOS concept hierarchy " +
-                    "for the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the concept hierarchies for the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "JSON object that represents the SKOS concept hierarchy "
+                                    + "for the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConceptHierarchy(
@@ -2766,15 +2815,16 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the concept hierarchies for the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "JSON object that represents the SKOS concept" +
-                    " scheme hierarchy for the ontology identified by the provided IDs"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the concept hierarchies for the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "JSON object that represents the SKOS concept"
+                                    + " scheme hierarchy for the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConceptSchemeHierarchy(
@@ -2819,14 +2869,16 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the classes with individuals in a hierarchical structure for the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "A JSON object that represents the classes with individuals in the ontology identified by the provided IDS"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the classes with individuals in a hierarchical structure for the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object that represents the classes with individuals in "
+                                    + "the ontology identified by the provided IDS"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesWithIndividuals(
@@ -2873,15 +2925,17 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the usages of the identified entity in the identified ontology",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "JSON-LD containing statements with the requested entity" +
-                    " IRI as the predicate or object of each statement when the queryType is \"construct\"."),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the usages of the identified entity in the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "JSON-LD containing statements with the requested entity"
+                                    + " IRI as the predicate or object of each statement when the "
+                                    + "queryType is \"construct\"."),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntityUsages(
@@ -2938,24 +2992,26 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets the search results from the identified ontology using the provided searchText",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "JSON String of the resulting entities sorted " +
-                    "by type from the ontology with the requested record ID " +
-                    "that have statements which contain the requested searchText in a Literal Value."),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets the search results from the identified ontology using the provided searchText",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "JSON String of the resulting entities sorted "
+                                    + "by type from the ontology with the requested record ID "
+                                    + "that have statements which contain the requested searchText in a "
+                                    + "Literal Value."),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getSearchResults(
             @Context ContainerRequestContext context,
             @Parameter(description = "String representing the record Resource id")
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String for the text that is searched for in all of the Literals within the " +
-                    "ontology with the requested record ID")
+            @Parameter(description = "String for the text that is searched for in all of the Literals within the "
+                    + "ontology with the requested record ID")
             @QueryParam("searchText") String searchText,
             @Parameter(description = "String representing the Branch Resource id")
             @QueryParam("branchId") String branchIdStr,
@@ -2984,7 +3040,7 @@ public class OntologyRest {
             });
             return response.size() == 0 ? Response.noContent().build() :
                     Response.ok(mapper.valueToTree(response).toString())
-                    .build();
+                            .build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -3010,14 +3066,14 @@ public class OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Gets a list of ontology IRIs that were not imported",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "List of ontology IRIs that were not imported"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Gets a list of ontology IRIs that were not imported",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "List of ontology IRIs that were not imported"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getFailedImports(
@@ -3063,15 +3119,17 @@ public class OntologyRest {
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Retrieves the SPARQL query results of an ontology, and its import closures in the requested format",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "SPARQL 1.1 results in JSON format if the query is a " +
-                    "SELECT or the JSONLD serialization of the results if the query is a CONSTRUCT"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Retrieves the SPARQL query results of an ontology, "
+                    + "and its import closures in the requested format",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "SPARQL 1.1 results in JSON format if the query is a "
+                                    + "SELECT or the JSONLD serialization of the results if the query is a CONSTRUCT"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response queryOntology(
@@ -3086,7 +3144,8 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Specified format for the return of construct queries only")
             @DefaultValue("jsonld") @QueryParam("format") String format,
-            @Parameter(description = "Boolean indicating whether or not ontology imports should be included in the query")
+            @Parameter(description = "Boolean indicating whether or not ontology "
+                    + "imports should be included in the query")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
@@ -3148,15 +3207,17 @@ public class OntologyRest {
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
     @Operation(
-        tags = "ontologies",
-        summary = "Retrieves the triples for a specified entity including all of is transitively attached Blank Node",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "RDF triples for a specified entity including all of is " +
-                    "transitively attached Blank Nodes"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Retrieves the triples for a specified entity including all of is "
+                    + "transitively attached Blank Node",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "RDF triples for a specified entity including all of is "
+                                    + "transitively attached Blank Nodes"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntity(
@@ -3169,12 +3230,14 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Specified format for the return data. Valid values include 'jsonld', " +
-                    "'turtle', 'rdf/xml', and 'trig'")
+            @Parameter(description = "Specified format for the return data. Valid values include 'jsonld', "
+                    + "'turtle', 'rdf/xml', and 'trig'")
             @DefaultValue("jsonld") @QueryParam("format") String format,
-            @Parameter(description = "Boolean indicating whether or not ontology imports should be included in the query")
+            @Parameter(description = "Boolean indicating whether or not ontology imports "
+                    + "should be included in the query")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
-            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @Parameter(description = "Whether or not to apply the in progress commit "
+                    + "for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try {
@@ -3212,16 +3275,15 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-//    @ApiOperation("Gets the EntityNames in the identified ontology.")
     @Operation(
-        tags = "ontologies",
-        summary = "Updates the specified ontology branch and commit with the data provided",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "List of EntityNames for the given Ontology"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "ontologies",
+            summary = "Updates the specified ontology branch and commit with the data provided",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "List of EntityNames for the given Ontology"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -3235,11 +3297,11 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Boolean indicating whether or not any imports")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
-            @Parameter(description = "Boolean indicating whether or not any in progress commits by user should be " +
-                    "applied to the return value")
+            @Parameter(description = "Boolean indicating whether or not any in progress commits by user should be "
+                    + "applied to the return value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
             @Parameter(description = "Filter JSON")
-            String filterJson) {
+                    String filterJson) {
         try {
             StopWatch watch = new StopWatch();
             log.trace("Start entityNames");
@@ -3273,7 +3335,8 @@ public class OntologyRest {
                 log.trace("Entity names endpoint: " + watch.getTime() + "ms");
                 return Response.ok(output).build();
             } else {
-                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.",
+                        Response.Status.BAD_REQUEST);
             }
         } catch (MobiException | IOException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -3420,7 +3483,7 @@ public class OntologyRest {
             entityNames.setNames(namesSet);
             entityNamesMap.putIfAbsent(entity, entityNames);
         });
- 
+
         outputStream.write(mapper.valueToTree(entityNamesMap).toString().getBytes());
     }
 
@@ -4128,7 +4191,8 @@ public class OntologyRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), response);
         } catch (MobiException ex) {
             ObjectNode objectNode = createJsonErrorObject(ex);
-            Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(objectNode.toString()).build();
+            Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(objectNode.toString()).build();
             throw ErrorUtils.sendError(ex, ex.getMessage(), response);
         }
 

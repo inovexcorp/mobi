@@ -12,12 +12,12 @@ package com.mobi.jaas.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -101,11 +101,12 @@ public class AuthRest {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     @Operation(
-        tags = "session",
-        summary = "Gets the current user token.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "A plaintext response with the current User's username"),
-        }
+            tags = "session",
+            summary = "Gets the current user token.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A plaintext response with the current User's username"),
+            }
     )
     public Response getCurrentUser(
             @Context ContainerRequestContext context) {
@@ -129,18 +130,20 @@ public class AuthRest {
     @POST
     @Produces(MediaType.TEXT_PLAIN)
     @Operation(
-        tags = "session",
-        summary = "Logs in into Mobi creating a new token.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "A plaintext response with the newly logged in User's username"),
-            @ApiResponse(responseCode = "401", description = "UNAUTHORIZED response"),
-        }
+            tags = "session",
+            summary = "Logs in into Mobi creating a new token.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A plaintext response with the newly logged in User's username"),
+                    @ApiResponse(responseCode = "401", description = "UNAUTHORIZED response"),
+            }
     )
     public Response login(
             @Context ContainerRequestContext context,
             @Parameter(description = "Username of user", required = true)
             @QueryParam("username") String username,
-            @Parameter(description = "password of user", schema = @Schema(type="string", format="password"), required = true)
+            @Parameter(description = "password of user",
+                    schema = @Schema(type = "string", format = "password"), required = true)
             @QueryParam("password") String password) {
         Optional<UserCredentials> userCredsOptional = processFormAuth(username, password);
 
@@ -177,11 +180,12 @@ public class AuthRest {
     @DELETE
     @Produces(MediaType.TEXT_PLAIN)
     @Operation(
-        tags = "session",
-        summary = "Logs out of Mobi by setting unauth token.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "An empty response representing an anonymous User's session"),
-        }
+            tags = "session",
+            summary = "Logs out of Mobi by setting unauth token.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "An empty response representing an anonymous User's session"),
+            }
     )
     public Response logout() {
         log.debug("Requested logout. Generating unauthenticated token.");

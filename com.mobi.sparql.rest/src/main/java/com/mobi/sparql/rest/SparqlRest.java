@@ -12,12 +12,12 @@ package com.mobi.sparql.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -155,7 +155,7 @@ public class SparqlRest {
      * Set Limit Results
      * @param limitResults
      */
-    public void setLimitResults(int limitResults){
+    public void setLimitResults(int limitResults) {
         this.limitResults = limitResults;
     }
 
@@ -174,14 +174,15 @@ public class SparqlRest {
             JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
-        tags = "sparql",
-        summary = "Retrieves the results of the provided SPARQL query",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "The SPARQL 1.1 results in mime type specified by accept header"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "sparql",
+            summary = "Retrieves the results of the provided SPARQL query",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "The SPARQL 1.1 results in mime type specified by accept header"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response queryRdf(
@@ -243,14 +244,15 @@ public class SparqlRest {
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @Operation(
-        tags = "sparql",
-        summary = "Query and Download the results of the provided SPARQL query",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "The SPARQL 1.1 Response in the format of fileType query parameter"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "sparql",
+            summary = "Query and Download the results of the provided SPARQL query",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "The SPARQL 1.1 Response in the format of fileType query parameter"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response downloadRdfQuery(
@@ -301,7 +303,8 @@ public class SparqlRest {
     }
 
     /**
-     * Retrieves the results of the provided SPARQL query, number of records limited to configurable limit field variable under SparqlRestConfig.
+     * Retrieves the results of the provided SPARQL query, number of records limited to configurable
+     * limit field variable under SparqlRestConfig.
      * Can optionally limit the query to a Dataset. Supports JSON, Turtle, JSON-LD, and RDF/XML mime types.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
@@ -316,14 +319,15 @@ public class SparqlRest {
     @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
-        tags = "sparql",
-        summary = "Retrieves the limited results of the provided SPARQL query",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "The SPARQL 1.1 results in mime type specified by accept header"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "sparql",
+            summary = "Retrieves the limited results of the provided SPARQL query",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "The SPARQL 1.1 results in mime type specified by accept header"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response getLimitedResults(
@@ -447,7 +451,8 @@ public class SparqlRest {
         if (mimeType == null || mimeType != JSON_MIME_TYPE) {
             log.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", mimeType, JSON_MIME_TYPE));
         }
-        return getSelectQueryResponseEagerly(queryString, datasetRecordId, TupleQueryResultFormat.JSON, JSON_MIME_TYPE, limit);
+        return getSelectQueryResponseEagerly(queryString, datasetRecordId,
+                TupleQueryResultFormat.JSON, JSON_MIME_TYPE, limit);
     }
 
     /**
@@ -467,7 +472,8 @@ public class SparqlRest {
         if (!StringUtils.isBlank(datasetRecordId)) {
             Resource recordId = valueFactory.createIRI(datasetRecordId);
             try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
-                limitExceeded = executeTupleQuery(queryString, tupleQueryResultFormat, byteArrayOutputStream, conn, limit);
+                limitExceeded = executeTupleQuery(queryString, tupleQueryResultFormat, byteArrayOutputStream, conn,
+                        limit);
             } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
             }
@@ -477,7 +483,8 @@ public class SparqlRest {
                     ErrorUtils.sendError("Repository is not available.",
                             Response.Status.INTERNAL_SERVER_ERROR));
             try (RepositoryConnection conn = repository.getConnection()) {
-                limitExceeded = executeTupleQuery(queryString, tupleQueryResultFormat, byteArrayOutputStream, conn, limit);
+                limitExceeded = executeTupleQuery(queryString, tupleQueryResultFormat, byteArrayOutputStream, conn,
+                        limit);
             } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
             }
@@ -684,7 +691,7 @@ public class SparqlRest {
     }
 
     private boolean executeTupleQuery(String queryString, TupleQueryResultFormat format, OutputStream os,
-                                   RepositoryConnection conn, Integer limit) throws IOException {
+                                      RepositoryConnection conn, Integer limit) throws IOException {
         boolean limitExceeded = false;
         TupleQuery query = conn.prepareTupleQuery(queryString);
         TupleQueryResult queryResults = query.evaluate();

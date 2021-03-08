@@ -12,12 +12,12 @@ package com.mobi.security.policy.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -132,27 +132,27 @@ public class RecordPermissionsRest {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("{recordId}")
     @Operation(
-        tags = "record-permissions",
-        summary = "Retrieves a specific record security policy by its ID",
-        responses = {
-            @ApiResponse(responseCode = "200",
-                description = "JSON representation of which user can perform each rule",
-                content = @Content(
-                    examples = {@ExampleObject(value="{" +
-                            "\"urn:read\": {" +
-                            "\"everyone\": false," +
-                            "\"users\": [\n" +
-                            "\"http://mobi.com/users/userIRI1\"," +
-                            "\"http://mobi.com/users/userIRI2\"" +
-                            "]," +
-                            "\"groups\": []" +
-                            "  }, ..." +
-                            "}")
-                    })
-            ),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "record-permissions",
+            summary = "Retrieves a specific record security policy by its ID",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "JSON representation of which user can perform each rule",
+                            content = @Content(
+                                    examples = {@ExampleObject(value = "{"
+                                            + "\"urn:read\": {"
+                                            + "\"everyone\": false,"
+                                            + "\"users\": [\n"
+                                            + "\"http://mobi.com/users/userIRI1\","
+                                            + "\"http://mobi.com/users/userIRI2\""
+                                            + "],"
+                                            + "\"groups\": []"
+                                            + "  }, ..."
+                                            + "}")
+                                    })
+                    ),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Update.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -162,7 +162,7 @@ public class RecordPermissionsRest {
         try (RepositoryConnection conn = repo.getConnection()) {
             Optional<String> recordPolicyIdOpt = getRelatedResourceId(recordId, conn);
             String recordPolicyId = recordPolicyIdOpt.orElseThrow(() -> ErrorUtils.sendError("Policy for record "
-                            + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
+                    + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
 
             Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(recordPolicyId));
             if (!policy.isPresent()) {
@@ -198,20 +198,20 @@ public class RecordPermissionsRest {
     @Path("{recordId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
-        tags = "record-permissions",
-        summary = "Updates an existing record security policy using the provided JSON body",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "record-permissions",
+            summary = "Updates an existing record security policy using the provided JSON body",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateRecordPolicy(
             @Parameter(description = "String representing a recordId whose corresponding policy should be updated")
             @PathParam("recordId") String recordId,
             @Parameter(description = "JSON representation of the new version of the record policy")
-            String policyJson) {
+                    String policyJson) {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Record Policy
             Optional<String> recordPolicyIdOpt = getRelatedResourceId(recordId, conn);

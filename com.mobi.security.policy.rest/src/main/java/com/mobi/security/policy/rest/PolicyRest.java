@@ -12,12 +12,12 @@ package com.mobi.security.policy.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -93,12 +93,13 @@ public class PolicyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "policies",
-        summary = "Retrieves security policies matching the provided filters",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "policies",
+            summary = "Retrieves security policies matching the provided filters",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getPolicies(
             @Parameter(description = "The String representing a subject ID")
@@ -138,17 +139,17 @@ public class PolicyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("admin")
     @Operation(
-        tags = "policies",
-        summary = "Creates a new security policy using the provided JSON body",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "The new policy ID"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "policies",
+            summary = "Creates a new security policy using the provided JSON body",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "The new policy ID"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response createPolicy(
             @Parameter(description = "A JSON representation of a policy to add to Mobi")
-            String policyJson) {
+                    String policyJson) {
         try {
             Resource policyId = policyManager.addPolicy(jsonToPolicy(policyJson));
             return Response.status(201).entity(policyId.stringValue()).build();
@@ -171,13 +172,13 @@ public class PolicyRest {
     @Path("{policyId}")
     @RolesAllowed("user")
     @Operation(
-        tags = "policies",
-        summary = "Retrieves a specific security policy by its ID",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "A JSON representation of the identified policy"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "policies",
+            summary = "Retrieves a specific security policy by its ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "A JSON representation of the identified policy"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "policyId")
     public Response retrievePolicy(
@@ -208,20 +209,21 @@ public class PolicyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("admin")
     @Operation(
-        tags = "policies",
-        summary = "Updates an existing security policy using the provided JSON body",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "A Response indicating the success of the request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "policies",
+            summary = "Updates an existing security policy using the provided JSON body",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "policyId")
     public Response updatePolicy(
             @Parameter(description = "The String representing a policy ID")
             @PathParam("policyId") String policyId,
             @Parameter(description = "A JSON representation of the new version of the policy")
-            String policyJson) {
+                    String policyJson) {
         try {
             XACMLPolicy policy = jsonToPolicy(policyJson);
             if (!policy.getId().equals(vf.createIRI(policyId))) {

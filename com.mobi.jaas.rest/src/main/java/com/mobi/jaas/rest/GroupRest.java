@@ -12,12 +12,12 @@ package com.mobi.jaas.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -127,11 +127,12 @@ public class GroupRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-        tags = "groups",
-        summary = "Get all Mobi Groups.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with a JSON-LD list of the {@link Group}s in Mobi"),
-        }
+            tags = "groups",
+            summary = "Get all Mobi Groups.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with a JSON-LD list of the {@link Group}s in Mobi"),
+            }
     )
     public Response getGroups() {
         try {
@@ -160,23 +161,24 @@ public class GroupRest {
     @POST
     @RolesAllowed("admin")
     @Operation(
-        tags = "groups",
-        summary = "Create a new Mobi Group.",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "groups",
+            summary = "Create a new Mobi Group.",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response createGroup(
-             @Parameter(description = "title of the Group")
-             @FormDataParam("title") String title,
-             @Parameter(description = "description of the Group")
-             @FormDataParam("description") String description,
-             @Parameter(description = "List of roles of the Group")
-             @FormDataParam("roles") List<FormDataBodyPart> roles,
-             @Parameter(description = "List of members of the Group")
-             @FormDataParam("members") List<FormDataBodyPart> members) {
+            @Parameter(description = "title of the Group")
+            @FormDataParam("title") String title,
+            @Parameter(description = "description of the Group")
+            @FormDataParam("description") String description,
+            @Parameter(description = "List of roles of the Group")
+            @FormDataParam("roles") List<FormDataBodyPart> roles,
+            @Parameter(description = "List of members of the Group")
+            @FormDataParam("members") List<FormDataBodyPart> members) {
         checkStringParam(title, "Group title is required");
         try {
             if (engineManager.groupExists(title)) {
@@ -222,11 +224,12 @@ public class GroupRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-        tags = "groups",
-        summary = "Get a single Mobi Group.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with a JSON representation of the Group in Mobi"),
-        }
+            tags = "groups",
+            summary = "Get a single Mobi Group.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with a JSON representation of the Group in Mobi"),
+            }
     )
     public Response getGroup(
             @Parameter(description = "Title of the Group to retrieve")
@@ -258,19 +261,20 @@ public class GroupRest {
     @Path("{groupTitle}")
     @RolesAllowed("admin")
     @Operation(
-        tags = "groups",
-        summary = "Update a Mobi Group's information.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-        }
+            tags = "groups",
+            summary = "Update a Mobi Group's information.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            }
     )
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateGroup(
             @Parameter(description = "Title of the Group to update")
             @PathParam("groupTitle") String groupTitle,
             @Parameter(description = "JSON-LD string representation of a Group to replace the existing Group")
-            String newGroupStr) {
+                    String newGroupStr) {
         if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
@@ -324,12 +328,13 @@ public class GroupRest {
     @Path("{groupTitle}")
     @RolesAllowed("admin")
     @Operation(
-        tags = "groups",
-        summary = "Remove a Mobi Group.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-        }
+            tags = "groups",
+            summary = "Remove a Mobi Group.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            }
     )
     public Response deleteGroup(
             @Parameter(description = "Title of the Group to remove")
@@ -361,12 +366,13 @@ public class GroupRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-        tags = "groups",
-        summary = "List roles of a Mobi Group.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with a JSON array of the roles of the Group in Mobi"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-        }
+            tags = "groups",
+            summary = "List roles of a Mobi Group.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with a JSON array of the roles of the Group in Mobi"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            }
     )
     public Response getGroupRoles(
             @Parameter(description = "Title of the Group to retrieve roles from")
@@ -401,12 +407,13 @@ public class GroupRest {
     @Path("{groupTitle}/roles")
     @RolesAllowed("admin")
     @Operation(
-        tags = "groups",
-        summary = "Add roles to a Mobi Group.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-        }
+            tags = "groups",
+            summary = "Add roles to a Mobi Group.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            }
     )
     public Response addGroupRoles(
             @Parameter(description = "Title of the Group to add a role to")
@@ -442,12 +449,13 @@ public class GroupRest {
     @Path("{groupTitle}/roles")
     @RolesAllowed("admin")
     @Operation(
-        tags = "groups",
-        summary = "Remove role from a Mobi Group.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-        }
+            tags = "groups",
+            summary = "Remove role from a Mobi Group.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            }
     )
     public Response removeGroupRole(
             @Parameter(description = "Title of the Group to remove a role from")
@@ -483,13 +491,14 @@ public class GroupRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-        tags = "groups",
-        summary = "List users of a Mobi Group.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with a JSON array of the roles of the Group in Mobi"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "groups",
+            summary = "List users of a Mobi Group.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with a JSON array of the roles of the Group in Mobi"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getGroupUsers(
             @Parameter(description = "Title of the Group to retrieve users from")
@@ -534,12 +543,13 @@ public class GroupRest {
     @Path("{groupTitle}/users")
     @RolesAllowed("admin")
     @Operation(
-        tags = "groups",
-        summary = "Add a Mobi User to a Group.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-        }
+            tags = "groups",
+            summary = "Add a Mobi User to a Group.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            }
     )
     public Response addGroupUser(
             @Parameter(description = "Title of the Group to add users to")
@@ -576,12 +586,13 @@ public class GroupRest {
     @Path("{groupTitle}/users")
     @RolesAllowed("admin")
     @Operation(
-        tags = "groups",
-        summary = "Remove a Mobi User from a Group.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-        }
+            tags = "groups",
+            summary = "Remove a Mobi User from a Group.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+            }
     )
     public Response removeGroupUser(
             @Parameter(description = "Title of the Group to remove a user from")
@@ -589,7 +600,8 @@ public class GroupRest {
             @Parameter(description = "Username of the user to remove from the Group")
             @QueryParam("user") String username) {
         if (StringUtils.isEmpty(groupTitle) || StringUtils.isEmpty(username)) {
-            throw ErrorUtils.sendError("Both group title and username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Both group title and username must be provided",
+                    Response.Status.BAD_REQUEST);
         }
         try {
             Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->

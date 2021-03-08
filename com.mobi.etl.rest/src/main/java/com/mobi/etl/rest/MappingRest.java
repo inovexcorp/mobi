@@ -12,12 +12,12 @@ package com.mobi.etl.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -135,7 +135,7 @@ public class MappingRest {
         this.transformer = transformer;
     }
 
-    
+
     /**
      * Uploads a mapping sent as form data or a JSON-LD string into a data store with a UUID local name and creates
      * a new MappingRecord in the catalog.
@@ -153,14 +153,14 @@ public class MappingRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @Operation(
-        tags = "mappings",
-        summary = "Upload mapping sent as form data",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Response with the MappingRecord Resource ID"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "mappings",
+            summary = "Upload mapping sent as form data",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Response with the MappingRecord Resource ID"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = MappingRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
@@ -233,14 +233,14 @@ public class MappingRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "mappings",
-        summary = "Retrieve JSON-LD of an uploaded mapping",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with the JSON-LD from the uploaded mapping"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "mappings",
+            summary = "Retrieve JSON-LD of an uploaded mapping",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response with the JSON-LD from the uploaded mapping"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getMapping(
@@ -271,14 +271,14 @@ public class MappingRest {
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @Operation(
-        tags = "mappings",
-        summary = "Download an uploaded mapping",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response with mapping to download"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "mappings",
+            summary = "Download an uploaded mapping",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response with mapping to download"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadMapping(
@@ -320,14 +320,14 @@ public class MappingRest {
     @Path("{recordId}")
     @RolesAllowed("user")
     @Operation(
-        tags = "mappings",
-        summary = "Delete an uploaded mapping",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-            @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "mappings",
+            summary = "Delete an uploaded mapping",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     @ActionId(Delete.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")

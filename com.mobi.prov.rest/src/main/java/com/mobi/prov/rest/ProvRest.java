@@ -12,12 +12,12 @@ package com.mobi.prov.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -152,18 +152,19 @@ public class ProvRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
-        tags = "provenance-data",
-        summary = "Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "A JSON object with a key for activities and a key for entities"),
-            @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-            @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
-        }
+            tags = "provenance-data",
+            summary = "Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities.",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object with a key for activities and a key for entities"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
     )
     public Response getActivities(
             @Context UriInfo uriInfo,
-            @Parameter(schema = @Schema(type = "integer", description = "The URI information of the request to be used " +
-                    "in creating links to other pages of Activities", required = false))
+            @Parameter(schema = @Schema(type = "integer", description = "The URI information of the request "
+                    + "to be used in creating links to other pages of Activities", required = false))
             @DefaultValue("0") @QueryParam("offset") int offset,
             @Parameter(schema = @Schema(type = "integer", description = "The offset for the page", required = false))
             @DefaultValue("50") @QueryParam("limit") int limit) {

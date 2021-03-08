@@ -12,12 +12,12 @@ package com.mobi.jaas.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -126,11 +126,12 @@ public class UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-        tags = "users",
-        summary = "Get all Mobi Users",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "users",
+            summary = "Get all Mobi Users",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     public Response getUsers() {
         try {
@@ -166,11 +167,12 @@ public class UserRest {
     @POST
     @RolesAllowed("admin")
     @Operation(
-        tags = "users",
-        summary = "Create a Mobi User account",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "users",
+            summary = "Create a Mobi User account",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -237,11 +239,12 @@ public class UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-        tags = "users",
-        summary = "Get a single Mobi User",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "users",
+            summary = "Get a single Mobi User",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     public Response getUser(
             @Parameter(description = "Username of the {@link User} to retrieve")
@@ -274,11 +277,12 @@ public class UserRest {
     @Path("{username}")
     @RolesAllowed("user")
     @Operation(
-        tags = "users",
-        summary = "Update a Mobi user's information",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "users",
+            summary = "Update a Mobi user's information",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateUser(
@@ -286,7 +290,7 @@ public class UserRest {
             @Parameter(description = "Current username of the user to update")
             @PathParam("username") String username,
             @Parameter(description = "JSON-LD string representation of a User with the new information to update")
-            String newUserStr) {
+                    String newUserStr) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
         }
@@ -345,11 +349,12 @@ public class UserRest {
     @Path("{username}/password")
     @RolesAllowed("user")
     @Operation(
-        tags = "users",
-        summary = "Changes a Mobi User's password if it is the User making the request",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "users",
+            summary = "Changes a Mobi User's password if it is the User making the request",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     public Response changePassword(
             @Context ContainerRequestContext context,
@@ -391,11 +396,12 @@ public class UserRest {
     @Path("{username}/password")
     @RolesAllowed("admin")
     @Operation(
-        tags = "users",
-        summary = "Resets a Mobi User's password if User making request is the admin",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "users",
+            summary = "Resets a Mobi User's password if User making request is the admin",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     public Response resetPassword(
             @Context ContainerRequestContext context,
@@ -428,11 +434,12 @@ public class UserRest {
     @Path("{username}")
     @RolesAllowed("user")
     @Operation(
-        tags = "users",
-        summary = "Remove a Mobi user's account",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "users",
+            summary = "Remove a Mobi user's account",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     public Response deleteUser(
             @Context ContainerRequestContext context,
@@ -449,7 +456,8 @@ public class UserRest {
             }
             String userIRI = user.get().getResource().stringValue();
             if (userIRI.equals(ADMIN_USER_IRI)) {
-                throw ErrorUtils.sendError("The admin user cannot be deleted.", Response.Status.METHOD_NOT_ALLOWED);
+                throw ErrorUtils.sendError("The admin user cannot be deleted.",
+                        Response.Status.METHOD_NOT_ALLOWED);
             }
             engineManager.deleteUser(rdfEngine.getEngineName(), username);
             logger.info("Deleted user " + username);
@@ -473,11 +481,12 @@ public class UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-        tags = "users",
-        summary = "List roles of a Mobi User",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "users",
+            summary = "List roles of a Mobi User",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     public Response getUserRoles(
             @Parameter(description = "Username of the User to retrieve roles from")
@@ -514,11 +523,12 @@ public class UserRest {
     @Path("{username}/roles")
     @RolesAllowed("admin")
     @Operation(
-        tags = "users",
-        summary = "Add roles to a Mobi User",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "users",
+            summary = "Add roles to a Mobi User",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     public Response addUserRoles(
             @Parameter(description = "username of the User to add a role to")
@@ -555,11 +565,12 @@ public class UserRest {
     @Path("{username}/roles")
     @RolesAllowed("admin")
     @Operation(
-        tags = "users",
-        summary = "Remove role from a Mobi User",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "users",
+            summary = "Remove role from a Mobi User",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     public Response removeUserRole(
             @Parameter(description = "Username of the User to remove a role from")
@@ -594,11 +605,12 @@ public class UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-        tags = "users",
-        summary = "List groups of a Mobi User",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "users",
+            summary = "List groups of a Mobi User",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     public Response listUserGroups(
             @Parameter(description = "Username to retrieve groups from")
@@ -612,7 +624,7 @@ public class UserRest {
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
             Set<Group> groups = engineManager.getGroups().stream()
                     .filter(group -> group.getMember_resource().stream()
-                        .anyMatch(resource -> resource.equals(savedUser.getResource())))
+                            .anyMatch(resource -> resource.equals(savedUser.getResource())))
                     .collect(Collectors.toSet());
 
             JSONArray result = JSONArray.fromObject(groups.stream()
@@ -638,11 +650,12 @@ public class UserRest {
     @Path("{username}/groups")
     @RolesAllowed("admin")
     @Operation(
-        tags = "users",
-        summary = "Add a Mobi user to a group",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "users",
+            summary = "Add a Mobi user to a group",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     public Response addUserGroup(
             @Parameter(description = "Username of the User to add to the group")
@@ -678,11 +691,12 @@ public class UserRest {
     @Path("{username}/groups")
     @RolesAllowed("admin")
     @Operation(
-        tags = "users",
-        summary = "Remove a Mobi User from a group",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "users",
+            summary = "Remove a Mobi User from a group",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     public Response removeUserGroup(
             @Parameter(description = "Username of the User to remove from a group")
@@ -718,11 +732,12 @@ public class UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.TEXT_PLAIN)
     @Operation(
-        tags = "users",
-        summary = "Retrieve a username based on the passed User IRI",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
-        }
+            tags = "users",
+            summary = "Retrieve a username based on the passed User IRI",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
     )
     public Response getUsername(
             @Parameter(description = "IRI to search for")
