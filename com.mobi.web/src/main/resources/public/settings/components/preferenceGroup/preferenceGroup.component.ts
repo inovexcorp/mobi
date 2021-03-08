@@ -21,12 +21,17 @@
  * #L%
  */
 import * as angular from 'angular';
-import { forEach, isEqual, filter } from 'lodash';
+import { forEach, filter, remove } from 'lodash';
 
-import utilService from '../../../shared/services/util.service';
-import { UUID } from 'antlr4ts/misc/UUID';
+import { Input, Component, OnChanges, Inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { v4 as uuid } from 'uuid';
+import preferenceManagerService from '../../../shared/services/preferenceManager.service';
 
-const template = require('./preferenceGroup.component.html');
+@Component({
+    selector: 'preference-group',
+    templateUrl: './preferenceGroup.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush
+})
 
 /**
  * @ngdoc component
@@ -39,100 +44,240 @@ const template = require('./preferenceGroup.component.html');
  * {@link settings.component:preferencesContainer preferencesContainer} and several
  * {@link settings.component:customPreference customPreference}.
  */
-const preferenceGroupComponent = {
-    template,
-    bindings: {
-        group: '<'
-    },
-    controllerAs: 'dvm',
-    controller: preferenceGroupComponentCtrl
-};
+export class PreferenceGroupComponent implements OnChanges {
 
-preferenceGroupComponentCtrl.$inject = ['utilService', 'preferenceManagerService', 'uuid'];
+    @Input() group;
+    errorMessage = '';
+    preferences = {};
+    preferenceDefinitions = {};
+    userPreferences = {};
 
-function preferenceGroupComponentCtrl(utilService, preferenceManagerService, uuid) {
-    const dvm = this;
-    const pm = preferenceManagerService;
-    dvm.util = utilService;
-    dvm.preferences = {};
-    dvm.preferenceDefinitions = {};
-    dvm.userPreferences = {};
-    
-    dvm.$onChanges = function() {
-        pm.getUserPreferences()
+    constructor(@Inject('preferenceManagerService') private pm,
+    @Inject('utilService') private util, private ref: ChangeDetectorRef) {}
+
+    ngOnChanges(): void {
+        this.pm.getUserPreferences()
             .then(response => {
-                dvm.errorMessage = '';
-                dvm.util.createSuccessToast('User Preferences retrieved successfully');
-                dvm.userPreferences = response.data;
-                pm.getPreferenceDefinitions(dvm.group)
+                this.errorMessage = '';
+                this.util.createSuccessToast('User Preferences retrieved successfully');
+                this.userPreferences = response.data;
+                this.pm.getPreferenceDefinitions(this.group)
                     .then(response => {
-                        dvm.errorMessage = '';
-                        dvm.util.createSuccessToast('Preference Definition retrieved successfully');
+                        this.errorMessage = '';
+                        this.util.createSuccessToast('Preference Definition retrieved successfully');
                         forEach(response.data, result => {
-                            dvm.preferenceDefinitions[result['@id']] = result; // Maybe this means I should return a json object instead of array
+                            this.preferenceDefinitions[result['@id']] = result; // Maybe this means I should return a json object instead of array
                             if (result['http://mobi.com/ontologies/preference#inGroup']) {
                                 // verify that it has only one value for sh:property, otherwise show error toast
-                                dvm.preferences[result['@id']] = result;
-                                dvm.preferences[result['@id']].values = [];
+                                this.preferences[result['@id']] = result;
+                                this.preferences[result['@id']].values = [];
                             }
                         });
-                        forEach(dvm.preferences, (preference) => {
-                            const requiredPropertyShape = dvm.preferenceDefinitions[preference['http://www.w3.org/ns/shacl#property'][0]['@id']];
+                        forEach(this.preferences, (preference:unknown) => {
+                            const requiredPropertyShape = this.preferenceDefinitions[preference['http://www.w3.org/ns/shacl#property'][0]['@id']];
                             if (requiredPropertyShape['http://www.w3.org/ns/shacl#node']) {
-                                const attachedNode = dvm.preferenceDefinitions[requiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
+                                const attachedNode:unknown = this.preferenceDefinitions[requiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
                                 preference['targetClass'] = attachedNode['http://www.w3.org/ns/shacl#targetClass'][0]['@id'];
                                 const finalObjects = attachedNode['http://www.w3.org/ns/shacl#property'].map(finalProperty => {
-                                    return dvm.preferenceDefinitions[finalProperty['@id']];
+                                    return this.preferenceDefinitions[finalProperty['@id']];
                                 });
                                 preference['formFields'] = finalObjects;
                             } else {
                                 preference['formFields'] = [requiredPropertyShape];
                             }
                         });
-                        forEach(dvm.preferences, (prefDef, prefDefType) => {
+                        forEach(this.preferences, (prefDef:unknown, prefDefType) => {
                             const formFields = [];
                             forEach(prefDef['formFields'], formField => {
                                 formFields.push(formField['http://www.w3.org/ns/shacl#path'][0]['@id']);
                             });
-                            prefDef['values'] = filter(dvm.userPreferences[prefDefType], formFields[0]); // This will return only those subjects that have one of the "end property shape fields". Should I check that it has all fields?
-                            prefDef['hasId'] = filter(dvm.userPreferences[prefDefType], result => { 
-                                return result['@type'].includes('http://mobi.com/ontologies/preference#Preference');
-                            })[0]['@id'];
-                        });
-                    }, error => dvm.errorMessage = error);
-            }, error => dvm.errorMessage = error);
-    };
-    
-    dvm.updateUserPreference = function(type, preference) {
-        if (preference['hasId']) {
-            pm.updateUserPreference(preference['hasId'], type, dvm.userPreferences[type])
-                .then(() => {
-                    dvm.errorMessage = '';
-                    dvm.util.createSuccessToast('User Preference updated successfully');
-                    pm.getUserPreferences()
-                        .then(response => {
-                            dvm.errorMessage = '';
-                            dvm.util.createSuccessToast('User Preferences retrieved successfully');
-                            dvm.userPreferences = response.data;
-                        }, error => dvm.errorMessage = error);
-                }, error => dvm.errorMessage = error);
-        } else {
-            const userPreference = dvm.buildUserPreferenceJson(preference, type);
-            pm.createUserPreference(type, userPreference)
-                .then(() => {
-                    dvm.errorMessage = '';
-                    dvm.util.createSuccessToast('User Preference created successfully');
-                    pm.getUserPreferences()
-                        .then(response => {
-                            dvm.errorMessage = '';
-                            dvm.util.createSuccessToast('User Preferences retrieved successfully');
-                            dvm.userPreferences = response.data;
-                        }, error => dvm.errorMessage = error);
-                }, error => dvm.errorMessage = error);
-        }
-    };
+                            prefDef['formFieldStrings'] = formFields;
+                            prefDef['values'] = filter(this.userPreferences[prefDefType], formFields[0]); // This will return only those subjects that have one of the "end property shape fields". Should I check that it has all fields?
 
-    dvm.buildUserPreferenceJson = function(preference, type) {
+                            /////////////////////////////////////
+                            this.addBlankForm(prefDef, formFields);
+                            
+                            /////////////////////////////////////
+
+
+                            const userPrefOfType = filter(this.userPreferences[prefDefType], result => {
+                                return result['@type'].includes('http://mobi.com/ontologies/preference#Preference');
+                            });
+
+                            if (userPrefOfType.length) {
+                                prefDef['hasId'] = userPrefOfType[0]['@id']; 
+                                prefDef['preferenceRdf'] = filter(this.userPreferences[prefDefType], result => {
+                                    return result['@id'] === prefDef['hasId'];
+                                });
+                            }
+                        });
+                        this.ref.markForCheck();
+                    }, error => this.errorMessage = error);
+            }, error => this.errorMessage = error);
+    }
+
+    updateUserPreference(data): void {
+        const preference = data.preference;
+        const type = data.type;
+        this.stripBlankValues(preference, preference.formFieldStrings);
+        if (preference['hasId']) {
+            let requestBody = [];
+
+            // if simple preference
+
+            if (!preference.targetClass) {
+                // const m = [];
+                // preference.values.map(val => {
+                //     m.push(val['http://mobi.com/ontologies/preference#hasDataValue'][0]);
+                // });
+                // preference.values[0]['http://mobi.com/ontologies/preference#hasDataValue'] = m;
+                requestBody = preference.values;
+            } else {
+                preference.values.map(val => {
+                    if (!Object.prototype.hasOwnProperty.call(val, '@id')) {
+                        this.convertToJsonLd(val, [preference['targetClass']]);
+                    }
+                    this.addObjectValueToObject(val['@id'], preference.preferenceRdf[0]); // This might break stuff!!!
+                });
+                requestBody.push(...preference.preferenceRdf, ...preference.values);
+            }
+
+            this.pm.updateUserPreference(preference['hasId'], type, requestBody)
+                .then(() => {
+                    this.errorMessage = '';
+                    this.util.createSuccessToast('User Preference updated successfully');
+                    this.pm.getUserPreferences()  // INSTEAD OF THIS RETURN BODY FROM PUT ENDPOINT
+                        .then(response => {
+                            this.errorMessage = '';
+                            this.util.createSuccessToast('User Preferences retrieved successfully');
+                            this.userPreferences = response.data;
+                        }, error => this.errorMessage = error);
+                }, error => this.errorMessage = error);
+        } else {
+            const userPreference = this.buildUserPreferenceJson(preference, type);
+            this.pm.createUserPreference(type, userPreference)
+                .then(() => {
+                    this.errorMessage = '';
+                    this.util.createSuccessToast('User Preference created successfully');
+                    this.pm.getUserPreferences()
+                        .then(response => {
+                            this.errorMessage = '';
+                            this.util.createSuccessToast('User Preferences retrieved successfully');
+                            this.userPreferences = response.data;
+                        }, error => this.errorMessage = error);
+                }, error => this.errorMessage = error);
+        }
+    }
+
+    addBlankForm(pref, formFields) {
+        if (!this.blankFormExists(pref, formFields)) {
+            if (!pref['targetClass']) {
+                this.addValueToSimplePreference(pref, '');
+            } else {
+                this.addBlankFormToComplexPreference(pref, formFields);
+            }
+        }
+    }
+
+    blankFormExists(pref, formFields) {
+        if (pref['targetClass']) {
+            for (let i = 0; i < pref['values'].length; i++) {
+                let populatedFieldExists = false;
+                formFields.forEach(field => {
+                    if (pref['values'][i][field][0]['@value']) {
+                        populatedFieldExists = true;
+                    }
+                });
+                if (!populatedFieldExists) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            if (!pref['values'].length) {
+                return false;
+            }
+            let blankValExists = false;
+            pref['values'][0]['http://mobi.com/ontologies/preference#hasDataValue'].forEach(val => {
+                if (!val['@value']) {
+                    blankValExists = true;
+                }
+            });
+            return blankValExists;
+        }
+    }
+
+    stripBlankValues(pref, formFields) {
+        if (pref['targetClass']) {
+            for (let i = pref['values'].length - 1; i >= 0; i--) {
+                let populatedFieldExists = false;
+                formFields.forEach(field => {
+                    if (pref['values'][i][field][0]['@value']) {
+                        populatedFieldExists = true;
+                    }
+                });
+                if (!populatedFieldExists) {
+                    this.removeObjectValueFromObject(pref['values'][i]['@id'], pref['preferenceRdf'][0]);
+                    pref['values'].splice(i, 1);
+                }
+            }
+        } else {
+            if (!pref['values'].length) {
+                return;
+            }
+            for (let i = pref['values'][0]['http://mobi.com/ontologies/preference#hasDataValue'].length - 1; i >= 0; i--) {
+                if (!pref['values'][0]['http://mobi.com/ontologies/preference#hasDataValue'][i]['@value']) {
+                    pref['values'][0]['http://mobi.com/ontologies/preference#hasDataValue'].splice(i, 1);
+                }
+            }
+        }
+    }
+
+    addValueToSimplePreference(pref, val) {
+        if (pref['values'].length) {
+            pref['values'][0]['http://mobi.com/ontologies/preference#hasDataValue'].push({'@value': val});
+        } else {
+            pref['values'] = [
+                {
+                    'http://mobi.com/ontologies/preference#hasDataValue': [{'@value': val}]
+                }
+            ];
+        }
+    }
+
+    addBlankFormToComplexPreference(pref, formFields) {
+        const valueObject = {};
+        formFields.map(field => {
+            const innerObj = {'@value': ''};
+            valueObject[field] = [innerObj];
+        });
+        pref['values'].push(valueObject);
+    }
+
+    addObjectValueToObject(newObjValId, obj) {
+        if (!obj['http://mobi.com/ontologies/preference#hasObjectValue']) {
+            obj['http://mobi.com/ontologies/preference#hasObjectValue'] = [];
+        }
+        obj['http://mobi.com/ontologies/preference#hasObjectValue'].push({
+            '@id': newObjValId
+        });
+    }
+
+    removeObjectValueFromObject(objValIdToRemove, obj) {
+        remove(obj['http://mobi.com/ontologies/preference#hasObjectValue'], { '@id': objValIdToRemove });
+    }
+
+    convertToJsonLd(object, intendedTypes) {
+        if (Object.prototype.hasOwnProperty.call(object, '@id') || Object.prototype.hasOwnProperty.call(object, '@type')) {
+            console.log('Object has unexpected structure. It appears that the object already has an id or type');
+        } else {
+            object['@id'] = 'http://mobi.com/preference#' + uuid.v4(); // is it ok that we always give targetClass instance a prefix of preference?
+            object['@type'] = ['http://www.w3.org/2002/07/owl#Thing'];
+            intendedTypes.forEach(intendedType => object['@type'].push(intendedType));
+        }
+    }
+
+    buildUserPreferenceJson(preference, type) {
         const userPreferenceJson = [];
         const newPreference = {
             '@id': 'http://mobi.com/preference#' + uuid.v4(),
@@ -143,12 +288,19 @@ function preferenceGroupComponentCtrl(utilService, preferenceManagerService, uui
             ]
         };
         if (preference.targetClass) {
-            newPreference['http://mobi.com/ontologies/preference#hasObjectValue'] = [
-                {
-                    '@id': 'http://mobi.com/preference#' + uuid.v4()
+            // newPreference['http://mobi.com/ontologies/preference#hasObjectValue'] = [
+            //     {
+            //         '@id': 'http://mobi.com/preference#' + uuid.v4()
+            //     }
+            // ];
+
+            preference.values.map(val => {
+                if (!Object.prototype.hasOwnProperty.call(val, '@id')) {
+                    this.convertToJsonLd(val, [preference['targetClass']]);
                 }
-            ];
-            let objectValues = preference.values;
+                this.addObjectValueToObject(val['@id'], newPreference);
+            });
+            userPreferenceJson.push(...preference.values);
             // NOT FINISHED YET!!!
         } else {
             // THIS NEEDS TO WORK FOR MULTIPLE DATA VALUES!!!! FIX!!
@@ -158,7 +310,5 @@ function preferenceGroupComponentCtrl(utilService, preferenceManagerService, uui
         }
         userPreferenceJson.push(newPreference);
         return userPreferenceJson;
-    };
+    }
 }
-
-export default preferenceGroupComponent;

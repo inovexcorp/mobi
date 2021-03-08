@@ -22,10 +22,7 @@
  */
 import { forEach, isEqual } from 'lodash';
 
-import './preferencesTab.component.scss';
-import utilService from '../../../shared/services/util.service';
-
-const template = require('./preferencesTab.component.html');
+import { OnInit, Inject, Component } from '@angular/core';
 
 /**
  * @ngdoc component
@@ -38,60 +35,55 @@ const template = require('./preferencesTab.component.html');
  * {@link settings.component:preferencesContainer preferencesContainer} and several
  * {@link settings.component:customPreference customPreference}.
  */
-const preferencesTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: preferencesTabComponentCtrl
-};
+@Component({
+    selector: 'preferences-tab',
+    templateUrl: './preferencesTab.component.html'
+})
 
-preferencesTabComponentCtrl.$inject = ['utilService', 'preferenceManagerService', 'settingsManagerService'];
+export class PreferencesTabComponent implements OnInit {
 
-function preferencesTabComponentCtrl(utilService, preferenceManagerService, settingsManagerService) {
-    var dvm = this;
-    var pm = preferenceManagerService;
-    var util = utilService;
-    dvm.tabs = [];
-    dvm.preferenceGroups = [];
-    dvm.sm = settingsManagerService;
-    dvm.settings = dvm.sm.getSettings();
+    errorMessage = '';
+    tabs = [];
+    preferenceGroups = [];
+    settings = this.sm.getSettings();
     
-    dvm.$onInit = function() {
-        dvm.setPreferenceTabs();
-    };
+    constructor(@Inject('preferenceManagerService') private pm, @Inject('settingsManagerService') private sm,
+    @Inject('utilService') private util) {}
+    
+    ngOnInit(): void {
+        this.setPreferenceTabs();
+    }
 
-    dvm.addTab = function(preferenceGroup) {
-        dvm.tabs.push({
+    addTab(preferenceGroup: string): void {
+        this.tabs.push({
             type: preferenceGroup,
-            heading: util.getBeautifulIRI(preferenceGroup),
+            heading: this.util.getBeautifulIRI(preferenceGroup),
             active: false
         });
     }
 
-    dvm.select = function(selectedTab) {
-        forEach(dvm.tabs, tab => {
+    select(selectedTab): void {
+        forEach(this.tabs, tab => {
             if (tab.active && !isEqual(tab, selectedTab)) {
                 tab.active = false;
             }
         });
         selectedTab.active = true;
-    };
+    }
 
-    dvm.setPreferenceTabs = function() {
-        pm.getPreferenceGroups()
+    setPreferenceTabs(): void {
+        this.pm.getPreferenceGroups()
         .then(response => {
-            dvm.tabs = [];
-            dvm.errorMessage = '';
-            util.createSuccessToast('Preference Groups retrieved successfully');
+            this.tabs = [];
+            this.errorMessage = '';
+            this.util.createSuccessToast('Preference Groups retrieved successfully');
             forEach(response.data, preferenceGroup => {
-                dvm.addTab(preferenceGroup);
+                this.addTab(preferenceGroup);
             });
-        }, error => dvm.errorMessage = error);
-    };
+        }, error => this.errorMessage = error);
+    }
 
-    dvm.save = function() {
-        dvm.sm.setSettings(dvm.settings);
-    };
+    save(): void {
+        this.sm.setSettings(this.settings);
+    }
 }
-
-export default preferencesTabComponent;

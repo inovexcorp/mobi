@@ -34,6 +34,8 @@ import { SettingsPageComponent } from './components/settingsPage/settingsPage.co
 import { PreferencesTabComponent } from './components/preferencesTab/preferencesTab.component';
 import { PreferenceGroupComponent } from './components/preferenceGroup/preferenceGroup.component';
 import { PreferenceFormComponent } from './components/preferenceForm/preferenceForm.component';
+import { TrustedHtmlPipe } from '../shared/pipes/trustedHtml.pipe';
+import { KeysPipe } from '../shared/pipes/keys.pipe';
 
 @NgModule({
     imports: [
@@ -50,7 +52,9 @@ import { PreferenceFormComponent } from './components/preferenceForm/preferenceF
         PasswordTabComponent,
         PreferencesTabComponent,
         PreferenceGroupComponent,
-        PreferenceFormComponent
+        PreferenceFormComponent,
+        TrustedHtmlPipe,
+        KeysPipe
     ],
     entryComponents: [
         SettingsPageComponent

@@ -141,11 +141,13 @@ import {
     httpServiceProvider,
     loginManagerServiceProvider,
     prefixesProvider,
+    preferenceManagerServiceProvider,
     provManagerServiceProvider,
     userManagerServiceProvider,
     utilServiceProvider,
     ontologyStateServiceProvider,
     discoverStateServiceProvider,
+    settingsManagerServiceProvider,
 } from '../ajs.upgradedProviders';
 
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
@@ -182,9 +184,11 @@ import { WindowRef } from "./services/windowRef.service";
     providers: [
         loginManagerServiceProvider,
         utilServiceProvider,
+        preferenceManagerServiceProvider,
         provManagerServiceProvider,
         prefixesProvider,
         httpServiceProvider,
+        settingsManagerServiceProvider,
         userManagerServiceProvider,
         ontologyStateServiceProvider,
         discoverStateServiceProvider,

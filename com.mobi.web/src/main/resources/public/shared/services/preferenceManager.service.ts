@@ -1,5 +1,3 @@
-import preferenceGroupComponent from "../../settings/components/preferenceGroup/preferenceGroup.component";
-
 /*-
  * #%L
  * com.mobi.web
@@ -38,7 +36,7 @@ preferenceManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService',
  * to hold information about the different types of preferences.
  */
 function preferenceManagerService($http, $q, REST_PREFIX, utilService, prefixes, httpService) {
-    var self = this,
+    const self = this,
         util = utilService,
         prefix = REST_PREFIX + 'preference';
 
@@ -101,9 +99,6 @@ function preferenceManagerService($http, $q, REST_PREFIX, utilService, prefixes,
         return promise.then($q.when, util.rejectError);
     };
 
-
-    // return $http.put(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId), angular.toJson(json))
-    //         .then(response => $q.when(), util.rejectError);
     self.updateUserPreference = function(preferenceId, preferenceType, userPreference, id = '') {
         const config = { params: { preferenceType } };
         const promise = id ? httpService.put(prefix + '/' + encodeURIComponent(preferenceId), userPreference, config, id) 
@@ -127,7 +122,9 @@ function preferenceManagerService($http, $q, REST_PREFIX, utilService, prefixes,
         const promise = id ? httpService.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup) + '/definitions', id) 
             : $http.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup) + '/definitions');
         return promise.then($q.when, util.rejectError);
-    }
+    };
+
+    // self.deleteUserPreference = function()
 }
 
 export default preferenceManagerService;

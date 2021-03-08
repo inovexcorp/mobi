@@ -20,6 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div ng-repeat="preference in dvm.preferences">
-    <preference-form update-event="dvm.updateUserPreference(type, preference)" preference="preference"></preference-form>
+<div *ngFor="let preference of preferences | keys">
+    <preference-form (updateEvent)="updateUserPreference($event)" [preference]="preferences[preference.key]"></preference-form>
 </div>
