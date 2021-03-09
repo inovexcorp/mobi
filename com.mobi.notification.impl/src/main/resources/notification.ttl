@@ -31,5 +31,4 @@
     sh:minCount 1 ;
     sh:maxCount 1 .
 
-# Definitely need more here
 :NotificationPreferenceGroup a pref:PreferenceGroup .

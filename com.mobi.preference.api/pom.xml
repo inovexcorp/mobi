@@ -89,12 +89,6 @@
                                     <ontologyName>Preference</ontologyName>
                                 </ontology>
                             </generates>
-<!--                            <references>-->
-<!--                                <ontology>-->
-<!--                                    <ontologyFile>${project.basedir}/../com.mobi.rdf.orm.ontologies/src/main/resources/shacl.ttl</ontologyFile>-->
-<!--                                    <outputPackage>com.mobi.ontologies.shacl</outputPackage>-->
-<!--                                </ontology>-->
-<!--                            </references>-->
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
                         </configuration>
                     </execution>

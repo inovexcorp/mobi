@@ -67,14 +67,14 @@ public class SimpleNotificationService {
             throw new MobiException(e);
         }
 
-        removeFully(ontologyModel, vf.createIRI(NOTIFICATION_ONTOLOGY_NAME));
+        removeSubjectFromModel(ontologyModel, vf.createIRI(NOTIFICATION_ONTOLOGY_NAME));
 
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             conn.add(ontologyModel, vf.createIRI(PreferenceService.GRAPH));
         }
     }
 
-    public void removeAttachedBNodes(Model model, Resource subject) {
+    private void removeAttachedBNodes(Model model, Resource subject) {
         model.filter(subject, null, null).forEach(stmt -> {
             if (stmt.getObject() instanceof BNode) {
                 model.remove(vf.createBNode(((BNode) stmt.getObject()).getID()), null, null);
@@ -82,7 +82,7 @@ public class SimpleNotificationService {
         });
     }
 
-    public void removeFully(Model model, Resource subject) {
+    private void removeSubjectFromModel(Model model, Resource subject) {
         removeAttachedBNodes(model, subject);
         model.remove(subject, null, null);
     }

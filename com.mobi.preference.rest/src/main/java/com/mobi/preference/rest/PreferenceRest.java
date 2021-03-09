@@ -12,12 +12,12 @@ package com.mobi.preference.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -66,7 +66,7 @@ import javax.ws.rs.core.Response;
 
 @Component(service = PreferenceRest.class, immediate = true)
 @Path("/preference")
-@Api( value = "/preference" )
+@Api(value = "/preference")
 public class PreferenceRest {
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -109,11 +109,11 @@ public class PreferenceRest {
     /**
      * Updates a User Preference as well as it's referenced entities.
      *
-     * @param context The context of the request.
-     * @param preferenceId The resource id of the user preference to be updated
+     * @param context        The context of the request.
+     * @param preferenceId   The resource id of the user preference to be updated
      * @param preferenceType The type of preference that will be updated
-     * @param jsonld The jsonld representation of the user preference and it's referenced entities that will replace the
-     *               current value of the user preference
+     * @param jsonld         The jsonld representation of the user preference and it's referenced entities that will
+     *                       replace the current value of the user preference
      * @return A Response indicating whether or not the User Preference was updated.
      */
     @PUT
@@ -141,9 +141,10 @@ public class PreferenceRest {
     /**
      * Create a User Preference as well as it's referenced entities.
      *
-     * @param context The context of the request.
+     * @param context        The context of the request.
      * @param preferenceType The type of preference that will be updated
-     * @param jsonld The jsonld representation of the user preference and it's referenced entities that will be created
+     * @param jsonld         The jsonld representation of the user preference and it's referenced entities that will
+     *                       be created
      * @return The resource id of the created user preference
      */
     @POST
@@ -166,7 +167,7 @@ public class PreferenceRest {
         }
     }
 
-    public JsonNode getPreferenceAsJsonNode(Preference preference) {
+    private JsonNode getPreferenceAsJsonNode(Preference preference) {
         try {
             return mapper.readTree(RestUtils.modelToString(preference.getModel(), RDFFormat.JSONLD, transformer));
         } catch (IOException e) {
@@ -174,24 +175,28 @@ public class PreferenceRest {
         }
     }
 
-    protected Preference getPreferenceFromModel(String preferenceType, Model preferenceModel) {
-        Collection<? extends Preference> preferences = getSpecificPreferenceFactory(preferenceType).getAllExisting(preferenceModel);
+    private Preference getPreferenceFromModel(String preferenceType, Model preferenceModel) {
+        Collection<? extends Preference> preferences =
+                getSpecificPreferenceFactory(preferenceType).getAllExisting(preferenceModel);
         if (preferences.size() > 1) {
-            throw ErrorUtils.sendError("More than one preference of type: " + preferenceType + " found in request.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("More than one preference of type: " + preferenceType + " found in request.",
+                    Response.Status.BAD_REQUEST);
         } else if (preferences.isEmpty()) {
-            throw ErrorUtils.sendError("No preference of type: " + preferenceType + " was found in request.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("No preference of type: " + preferenceType + " was found in request.",
+                    Response.Status.BAD_REQUEST);
         } else {
             return preferences.iterator().next();
         }
     }
 
-    protected Preference getPreferenceFromModel(String preferenceId, String preferenceType, Model preferenceModel) {
+    private Preference getPreferenceFromModel(String preferenceId, String preferenceType, Model preferenceModel) {
         return getSpecificPreferenceFactory(preferenceType).getExisting(vf.createIRI(preferenceId),
-                preferenceModel).orElseThrow(() -> ErrorUtils.sendError("Could not parse " + preferenceType + " preference with id " +
+                preferenceModel).orElseThrow(() -> ErrorUtils.sendError("Could not parse " + preferenceType + " " +
+                "preference with id " +
                 preferenceId + " from request.", Response.Status.BAD_REQUEST));
     }
 
-    protected OrmFactory<? extends Preference> getSpecificPreferenceFactory(String preferenceType) {
+    private OrmFactory<? extends Preference> getSpecificPreferenceFactory(String preferenceType) {
         return (OrmFactory<? extends Preference>) factoryRegistry.getFactoryOfType(preferenceType).orElseThrow(() ->
                 ErrorUtils.sendError("Unknown preference type: " + preferenceType, Response.Status.BAD_REQUEST));
     }
