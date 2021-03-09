@@ -12,12 +12,12 @@ package com.mobi.preference.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -32,17 +32,15 @@ import com.mobi.persistence.utils.Statements;
 import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
 import com.mobi.preference.api.ontologies.PreferenceFactory;
-import com.mobi.preference.api.ontologies.PreferenceGroup;
 import com.mobi.preference.api.ontologies.Setting;
 import com.mobi.preference.api.ontologies.SettingFactory;
 import com.mobi.query.api.GraphQuery;
-import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Statement;
+import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.repository.api.RepositoryConnection;
@@ -65,21 +63,27 @@ public class SimplePreferenceService implements PreferenceService {
     private static final String USER_BINDING = "user";
     private static final String GET_USER_PREFERENCE;
 
-    private PreferenceFactory preferenceFactory;
-    private SettingFactory settingFactory;
-    private Resource context;
+    static {
+        try {
+            GET_USER_PREFERENCE = IOUtils.toString(
+                    SimplePreferenceService.class.getResourceAsStream("/get-user-preference.rq"), StandardCharsets.UTF_8
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     @Reference
     CatalogConfigProvider configProvider;
-
     @Reference
     ValueFactory vf;
-
     @Reference
     ModelFactory mf;
-
     @Reference
     OrmFactoryRegistry factoryRegistry;
+    private PreferenceFactory preferenceFactory;
+    private SettingFactory settingFactory;
+    private Resource context;
 
     @Reference
     private void setPreferenceFactory(PreferenceFactory preferenceFactory) {
@@ -89,16 +93,6 @@ public class SimplePreferenceService implements PreferenceService {
     @Reference
     private void setSettingFactory(SettingFactory settingFactory) {
         this.settingFactory = settingFactory;
-    }
-
-    static {
-        try {
-            GET_USER_PREFERENCE = IOUtils.toString(
-                    SimplePreferenceService.class.getResourceAsStream("/get-user-preference.rq"), StandardCharsets.UTF_8
-            );
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
     }
 
     @Activate
@@ -112,9 +106,13 @@ public class SimplePreferenceService implements PreferenceService {
             Set<Resource> userPreferenceIris = conn.getStatements(null, vf.createIRI(Preference.forUser_IRI),
                     user.getResource(), context).stream().map(Statement::getSubject).collect(Collectors.toSet());
             return userPreferenceIris.stream().map(userPreferenceIri -> {
-                Model preferenceModel = RepositoryResults.asModelNoContext(conn.getStatements(userPreferenceIri, null, null, context), mf);
-                Preference preference = preferenceFactory.getExisting(userPreferenceIri, preferenceModel).orElseThrow(() ->
-                        new IllegalStateException("Resource " + userPreferenceIri + " could not be parsed as a Preference"));
+                Model preferenceModel = RepositoryResults.asModelNoContext(conn.getStatements(userPreferenceIri, null
+                        , null, context), mf);
+                Preference preference =
+                        preferenceFactory.getExisting(userPreferenceIri, preferenceModel).orElseThrow(() ->
+                                new IllegalStateException("Resource " + userPreferenceIri + " could not be parsed as " +
+                                        "a " +
+                                        "Preference"));
                 addEntitiesToModel(preference.getHasObjectValue_resource(), preferenceModel, conn);
                 return preference;
             }).collect(Collectors.toSet());
@@ -145,7 +143,8 @@ public class SimplePreferenceService implements PreferenceService {
     @Override
     public Optional<Setting> getSetting(Resource resourceId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Model settingModel = RepositoryResults.asModelNoContext(conn.getStatements(resourceId, null, null, context), mf);
+            Model settingModel = RepositoryResults.asModelNoContext(conn.getStatements(resourceId, null, null,
+                    context), mf);
             return settingFactory.getExisting(resourceId, settingModel).map(setting -> {
                 addEntitiesToModel(setting.getHasObjectValue_resource(), settingModel, conn);
                 return setting;
@@ -153,8 +152,6 @@ public class SimplePreferenceService implements PreferenceService {
         }
     }
 
-    // I'm a bit concerned that this will allow random triples to be injected into the repo.
-    // Do you know of a good way to defend against that?
     @Override
     public void addPreference(User user, Preference preference) {
         validatePreference(preference);
@@ -180,7 +177,8 @@ public class SimplePreferenceService implements PreferenceService {
         if (existingPreference.isPresent()) {
             deletePreference(existingPreference.get().getResource());
         } else {
-            throw new IllegalArgumentException("Preference of type" + preferenceType.stringValue() + " does not exist for user");
+            throw new IllegalArgumentException("Preference of type" + preferenceType.stringValue() + " does not exist" +
+                    " for user");
         }
     }
 
@@ -212,7 +210,8 @@ public class SimplePreferenceService implements PreferenceService {
                         "belong to user " + user.getResource());
             }
             conn.begin();
-            List<Resource> hasValue = getReferencedEntityIRIs(newPreference.getResource(), Preference.hasObjectValue_IRI, conn);
+            List<Resource> hasValue = getReferencedEntityIRIs(newPreference.getResource(),
+                    Preference.hasObjectValue_IRI, conn);
             conn.remove(newPreference.getResource(), null, null, context);
             conn.remove((Resource) null, null, newPreference.getResource(), context);
             hasValue.forEach(resource -> removeIfNotReferenced(resource, conn));
@@ -250,13 +249,15 @@ public class SimplePreferenceService implements PreferenceService {
 
     private void addEntitiesToModel(Set<Resource> entityIRIs, Model model, RepositoryConnection conn) {
         entityIRIs.forEach(resource -> {
-            Model entityModel = RepositoryResults.asModelNoContext(conn.getStatements(resource, null, null, context), mf);
+            Model entityModel = RepositoryResults.asModelNoContext(conn.getStatements(resource, null, null, context),
+                    mf);
             model.addAll(entityModel);
         });
     }
 
     public Resource getPreferenceType(Preference preference) {
-        List<Resource> types = mf.createModel(preference.getModel()).filter(preference.getResource(), vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null)
+        List<Resource> types = mf.createModel(preference.getModel()).filter(preference.getResource(),
+                vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null)
                 .stream()
                 .map(Statements::objectResource)
                 .filter(Optional::isPresent)

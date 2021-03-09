@@ -3,10 +3,10 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix dct: <http://purl.org/dc/terms/>.
-@prefix : <http://mobi.com/ontologies/notification#>.
 @prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix um: <http://mobi.com/ontologies/user/management#>.
 @prefix pref: <http://mobi.com/ontologies/preference#>.
+@prefix : <http://mobi.com/ontologies/notification#>.
 @base <http://mobi.com/ontologies/notification>.
 
 <http://mobi.com/ontologies/notification> a owl:Ontology;
