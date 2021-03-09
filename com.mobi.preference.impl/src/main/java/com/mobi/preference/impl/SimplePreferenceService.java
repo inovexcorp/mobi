@@ -32,7 +32,11 @@ import com.mobi.persistence.utils.Statements;
 import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
 import com.mobi.preference.api.ontologies.PreferenceFactory;
+import com.mobi.preference.api.ontologies.PreferenceGroup;
+import com.mobi.preference.api.ontologies.Setting;
+import com.mobi.preference.api.ontologies.SettingFactory;
 import com.mobi.query.api.GraphQuery;
+import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
@@ -62,6 +66,7 @@ public class SimplePreferenceService implements PreferenceService {
     private static final String GET_USER_PREFERENCE;
 
     private PreferenceFactory preferenceFactory;
+    private SettingFactory settingFactory;
     private Resource context;
 
     @Reference
@@ -79,6 +84,11 @@ public class SimplePreferenceService implements PreferenceService {
     @Reference
     private void setPreferenceFactory(PreferenceFactory preferenceFactory) {
         this.preferenceFactory = preferenceFactory;
+    }
+
+    @Reference
+    private void setSettingFactory(SettingFactory settingFactory) {
+        this.settingFactory = settingFactory;
     }
 
     static {
@@ -133,12 +143,12 @@ public class SimplePreferenceService implements PreferenceService {
     }
 
     @Override
-    public Optional<Preference> getUserPreference(Resource resourceId) {
+    public Optional<Setting> getSetting(Resource resourceId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Model preferenceModel = RepositoryResults.asModelNoContext(conn.getStatements(resourceId, null, null, context), mf);
-            return preferenceFactory.getExisting(resourceId, preferenceModel).map(preference -> {
-                addEntitiesToModel(preference.getHasObjectValue_resource(), preferenceModel, conn);
-                return preference;
+            Model settingModel = RepositoryResults.asModelNoContext(conn.getStatements(resourceId, null, null, context), mf);
+            return settingFactory.getExisting(resourceId, settingModel).map(setting -> {
+                addEntitiesToModel(setting.getHasObjectValue_resource(), settingModel, conn);
+                return setting;
             });
         }
     }
@@ -245,7 +255,7 @@ public class SimplePreferenceService implements PreferenceService {
         });
     }
 
-    private Resource getPreferenceType(Preference preference) {
+    public Resource getPreferenceType(Preference preference) {
         List<Resource> types = mf.createModel(preference.getModel()).filter(preference.getResource(), vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null)
                 .stream()
                 .map(Statements::objectResource)

@@ -18,40 +18,33 @@
 
 # Preference
 
+:Setting a owl:Class;
+    rdfs:label "Setting"@en;
+    rdfs:comment "A setting within the Mobi Framework"@en.
+
 :Preference a owl:Class;
     rdfs:label "Preference"@en;
-    rdfs:comment "A preference that a user can have within the Mobi framework"@en.
+    rdfs:comment "A preference that a user can have within the Mobi framework"@en;
+    rdfs:subClassOf :Setting .
+
+:ApplicationSetting a owl:Class;
+    rdfs:label "Application Setting"@en;
+    rdfs:comment "An application setting that applies for all users within the Mobi framework"@en;
+    rdfs:subClassOf :Setting .
 
 :hasDataValue a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "Has Data Value"@en;
-    rdfs:domain :Preference;
+    rdfs:domain :Setting;
     rdfs:range rdfs:Literal .
 
 :hasObjectValue a owl:ObjectProperty;
     rdfs:label "Has Object Value"@en;
-    rdfs:domain :Preference .
-
-
-:PrefixPreference a owl:Class, sh:NodeShape;
-    rdfs:subClassOf :Preference;
-    rdfs:label "Prefix Preference"@en;
-    rdfs:comment "A preference that a user can have within the Mobi framework that signifies the prefixes they want defined."@en;
-    sh:property :PrefixPreferencePropertyShape;
-    :inGroup :PrefixPreferenceGroup .
+    rdfs:domain :Setting .
 
 :inGroup a owl:ObjectProperty;
     rdfs:label "In Group"@en;
     rdfs:domain sh:NodeShape;
     rdfs:range :PreferenceGroup .
-
-:PrefixPreferencePropertyShape a sh:PropertyShape;
-    sh:node :PrefixNodeShape;
-    sh:path :hasObjectValue .
-
-:PrefixNodeShape a sh:NodeShape;
-    sh:property :PrefixPropertyShape;
-    sh:property :NamespacePropertyShape;
-    sh:targetClass :Prefix .
 
 :forUser a owl:ObjectProperty;
     rdfs:label "For User"@en;
