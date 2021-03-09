@@ -91,4 +91,22 @@ public class OntologyDatasets {
     public static String createRecordKey(Resource recordId, Resource commitId) {
         return recordId.stringValue() + CACHE_KEY_SEPARATOR + commitId.stringValue();
     }
+
+
+    /**
+     * Retrieves the {@link IRI} of the Commit used in the recordKey part of the datasetIri.
+     *
+     * @param datasetIri The {@link Resource} of the datasetIri that represents a catalog record loaded as a dataset.
+     * @param vf The {@link ValueFactory} used to create an IRI
+     * @return The {@link IRI} of a Commit.
+     */
+    public static IRI getCommitFromDatasetIRI(Resource datasetIri, ValueFactory vf) {
+        String encodedKey = datasetIri.stringValue().replace(DEFAULT_DS_NAMESPACE, "");
+        String decodedKey = ResourceUtils.decode(encodedKey);
+        String[] keyParts = decodedKey.split(CACHE_KEY_SEPARATOR);
+        if (keyParts.length != 2) {
+            throw new IllegalArgumentException("datasetIri must be comprised of a recordKey");
+        }
+        return vf.createIRI(keyParts[1]);
+    }
 }

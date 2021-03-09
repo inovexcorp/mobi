@@ -108,6 +108,7 @@
         <module>com.mobi.email.api</module>
         <module>com.mobi.email.impl</module>
         <module>com.mobi.utils.cli</module>
+        <module>com.mobi.persistence.utils.impl</module>
     </modules>
 
     <properties>

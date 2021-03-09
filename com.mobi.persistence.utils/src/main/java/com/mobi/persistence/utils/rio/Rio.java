@@ -60,6 +60,24 @@ public class Rio {
     }
 
     /**
+     * Writes each statement to the given {@link RDFHandler}. Provides control to start and end writing to external
+     * caller. startRDF()/endRDF() are handled outside of this method.
+     *
+     * @param statement The {@link Statement} to write to the RDFWriter.
+     * @param writer The {@link org.eclipse.rdf4j.rio.RDFWriter} to handle writing statements.
+     * @param transformer The {@link SesameTransformer} to convert Mobi statements.
+     * @param statementHandlers An optional array of {@link StatementHandler}s to apply to the Statement.
+     */
+    public static void write(Statement statement, RDFHandler writer, SesameTransformer transformer,
+                             StatementHandler... statementHandlers) {
+        for (StatementHandler statementHandler : statementHandlers) {
+            statement = statementHandler.handleStatement(statement);
+        }
+        org.eclipse.rdf4j.model.Statement sesameStatement = transformer.sesameStatement(statement);
+        writer.handleStatement(sesameStatement);
+    }
+
+    /**
      * Writes the given statements to the given {@link RDFHandler}.
      *
      * @param iterable A collection of statements, such as a {@link Model}, to be written.

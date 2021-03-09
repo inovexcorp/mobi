@@ -43,6 +43,7 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.api.RepositoryConnection;
 
+import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -610,6 +611,15 @@ public interface CatalogUtilsService {
     Model getCompiledResource(List<Resource> commits, RepositoryConnection conn);
 
     /**
+     * Gets the File which represents the entity at the instance of theCommit identified by the first Resource in
+     * the provided List using previous Commit data to construct it.
+     *
+     * @param commits The ordered List of Resource identifying the Commits to create a compiled resource from
+     * @return A {@link File} which represents the resource at the Commit's point in history.
+     */
+    File getCompiledResourceFile(List<Resource> commits, RepositoryConnection conn);
+
+    /**
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource
      * using previous Commit data to construct it.
      *
@@ -618,6 +628,16 @@ public interface CatalogUtilsService {
      * @return Model which represents the resource at the Commit's point in history.
      */
     Model getCompiledResource(Resource commitId, RepositoryConnection conn);
+
+    /**
+     * Gets the File which represents the entity at the instance of the Commit identified by the provided Resource
+     * using previous Commit data to construct it.
+     *
+     * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
+     *                 to retrieve.
+     * @return A {@link File} which represents the resource at the Commit's point in history.
+     */
+    File getCompiledResourceFile(Resource commitId, RepositoryConnection conn);
 
     /**
      * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference. The
