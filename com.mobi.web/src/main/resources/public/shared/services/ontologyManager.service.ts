@@ -1660,8 +1660,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
             reader.onload = (evt) => {
                 try {
                     const compressedData = pako.gzip(evt.target.result, {to: 'string'});
-                    const blob = new Blob([compressedData]);
-                    resolve(blob);
+                    resolve(new Blob([compressedData]));
                 } catch (error) {
                     reject(error);
                 }
