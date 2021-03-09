@@ -24,9 +24,10 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs';
-import { MockComponent, MockInstance, MockReset } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
+import 'ng-mocks/dist/jasmine'; // Ensurers every method in Mocked Components are Jasmine spys
 
 import {
     cleanStylesFromDOM
@@ -36,7 +37,7 @@ import { PasswordTabComponent } from '../passwordTab/passwordTab.component';
 import { ProfileTabComponent } from '../profileTab/profileTab.component';
 import { SettingsPageComponent } from './settingsPage.component';
 
-fdescribe('Settings Page component', function() {
+describe('Settings Page component', function() {
     let component: SettingsPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<SettingsPageComponent>;
@@ -45,7 +46,7 @@ fdescribe('Settings Page component', function() {
         TestBed.configureTestingModule({
             imports: [
                 MatTabsModule,
-                BrowserAnimationsModule
+                NoopAnimationsModule
             ],
             declarations: [
                 SettingsPageComponent,
@@ -55,11 +56,6 @@ fdescribe('Settings Page component', function() {
             ]
         });
     });
-
-    // beforeAll(function() {
-    //     MockInstance(ProfileTabComponent, 'reset', jasmine.createSpy());
-    //     MockInstance(PasswordTabComponent, 'reset', jasmine.createSpy());
-    // });
 
     beforeEach(function() {
         fixture = TestBed.createComponent(SettingsPageComponent);
@@ -74,38 +70,31 @@ fdescribe('Settings Page component', function() {
         component = null;
     });
     
-    // afterAll(MockReset);
-
-    // TODO: Figure this out
-    // describe('controller methods', function() {
-    //     describe('should handle when a tab changes', function() {
-    //         beforeEach(function() {
-    //             component.profileTab.reset.calls.reset();
-    //             component.passwordTab.reset.calls.reset();
-    //         });
-    //         it('to the profile tab', function() {
-    //             const event = new MatTabChangeEvent();
-    //             event.index = 0;
-    //             component.onTabChanged(event);
-    //             expect(component.profileTab.reset).toHaveBeenCalled();
-    //             expect(component.passwordTab.reset).not.toHaveBeenCalled();
-    //         });
-    //         it('to the groups tab', function() {
-    //             const event = new MatTabChangeEvent();
-    //             event.index = 1;
-    //             component.onTabChanged(event);
-    //             expect(component.profileTab.reset).not.toHaveBeenCalled();
-    //             expect(component.passwordTab.reset).not.toHaveBeenCalled();
-    //         });
-    //         it('to the password tab', function() {
-    //             const event = new MatTabChangeEvent();
-    //             event.index = 2;
-    //             component.onTabChanged(event);
-    //             expect(component.profileTab.reset).not.toHaveBeenCalled();
-    //             expect(component.passwordTab.reset).toHaveBeenCalled();
-    //         });
-    //     });
-    // });
+    describe('controller methods', function() {
+        describe('should handle when a tab changes', function() {
+            it('to the profile tab', function() {
+                const event = new MatTabChangeEvent();
+                event.index = 0;
+                component.onTabChanged(event);
+                expect(component.profileTab.reset).toHaveBeenCalled();
+                expect(component.passwordTab.reset).not.toHaveBeenCalled();
+            });
+            it('to the groups tab', function() {
+                const event = new MatTabChangeEvent();
+                event.index = 1;
+                component.onTabChanged(event);
+                expect(component.profileTab.reset).not.toHaveBeenCalled();
+                expect(component.passwordTab.reset).not.toHaveBeenCalled();
+            });
+            it('to the password tab', function() {
+                const event = new MatTabChangeEvent();
+                event.index = 2;
+                component.onTabChanged(event);
+                expect(component.profileTab.reset).not.toHaveBeenCalled();
+                expect(component.passwordTab.reset).toHaveBeenCalled();
+            });
+        });
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.query(By.css('.settings-page'))).toBeTruthy();
