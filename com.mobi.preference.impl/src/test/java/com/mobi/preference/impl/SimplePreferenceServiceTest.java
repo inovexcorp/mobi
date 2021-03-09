@@ -33,6 +33,7 @@ import com.mobi.notification.impl.SimpleNotificationService;
 import com.mobi.notification.impl.ontologies.EmailNotificationPreference;
 import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
+import com.mobi.preference.api.ontologies.Setting;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -216,7 +217,7 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
     // getUserPreference
 
     @Test
-    public void getUserPreferenceTest() throws Exception {
+    public void getSettingTest() throws Exception {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
@@ -227,17 +228,17 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
             preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
         }
 
-        Preference retrievedPreference = service.getUserPreference(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference")).get();
-        Model retrievedPreferenceModel = retrievedPreference.getModel();
-        assertTrue(retrievedPreferenceModel.contains(complexPreferenceIRI, VALUE_FACTORY.createIRI(Preference.forUser_IRI),
+        Setting retrievedSetting = service.getSetting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference")).get();
+        Model retrievedSettingModel = retrievedSetting.getModel();
+        assertTrue(retrievedSettingModel.contains(complexPreferenceIRI, VALUE_FACTORY.createIRI(Preference.forUser_IRI),
                 user.getResource()));
 
-        preference.getModel().forEach(statement -> assertTrue(retrievedPreference.getModel().contains(statement)));
+        preference.getModel().forEach(statement -> assertTrue(retrievedSetting.getModel().contains(statement)));
     }
 
     @Test
-    public void getUserPreferenceResourceDoesNotExistTest() throws Exception {
-        Optional<Preference> retrievedPreference = service.getUserPreference(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"));
+    public void getSettingResourceDoesNotExistTest() throws Exception {
+        Optional<Setting> retrievedPreference = service.getSetting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"));
         assertFalse(retrievedPreference.isPresent());
     }
 

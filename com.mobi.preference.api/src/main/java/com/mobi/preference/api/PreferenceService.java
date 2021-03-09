@@ -25,6 +25,7 @@ package com.mobi.preference.api;
 
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.preference.api.ontologies.Preference;
+import com.mobi.preference.api.ontologies.Setting;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 
@@ -62,7 +63,7 @@ public interface PreferenceService {
      * @param resourceId                   The {@link Resource} of the preference to retrieve.
      * @return An optional containing the instance of {@link Preference} for the provided {@link Resource}
      */
-    Optional<Preference> getUserPreference(Resource resourceId);
+    Optional<Setting> getSetting(Resource resourceId);
 
     /**
      * Add the associated preference instance to the repo for the passed in user.

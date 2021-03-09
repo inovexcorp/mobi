@@ -33,6 +33,8 @@ import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
 import com.mobi.preference.api.ontologies.PreferenceFactory;
 import com.mobi.preference.api.ontologies.PreferenceGroup;
+import com.mobi.preference.api.ontologies.Setting;
+import com.mobi.preference.api.ontologies.SettingFactory;
 import com.mobi.query.api.GraphQuery;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
@@ -65,6 +67,7 @@ public class SimplePreferenceService implements PreferenceService {
     private static final String GET_PREFERENCE_DEFINITIONS;
 
     private PreferenceFactory preferenceFactory;
+    private SettingFactory settingFactory;
     private Resource context;
 
     @Reference
@@ -82,6 +85,11 @@ public class SimplePreferenceService implements PreferenceService {
     @Reference
     private void setPreferenceFactory(PreferenceFactory preferenceFactory) {
         this.preferenceFactory = preferenceFactory;
+    }
+
+    @Reference
+    private void setSettingFactory(SettingFactory settingFactory) {
+        this.settingFactory = settingFactory;
     }
 
     static {
@@ -139,12 +147,12 @@ public class SimplePreferenceService implements PreferenceService {
     }
 
     @Override
-    public Optional<Preference> getUserPreference(Resource resourceId) {
+    public Optional<Setting> getSetting(Resource resourceId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Model preferenceModel = RepositoryResults.asModelNoContext(conn.getStatements(resourceId, null, null, context), mf);
-            return preferenceFactory.getExisting(resourceId, preferenceModel).map(preference -> {
-                addEntitiesToModel(preference.getHasObjectValue_resource(), preferenceModel, conn);
-                return preference;
+            Model settingModel = RepositoryResults.asModelNoContext(conn.getStatements(resourceId, null, null, context), mf);
+            return settingFactory.getExisting(resourceId, settingModel).map(setting -> {
+                addEntitiesToModel(setting.getHasObjectValue_resource(), settingModel, conn);
+                return setting;
             });
         }
     }
