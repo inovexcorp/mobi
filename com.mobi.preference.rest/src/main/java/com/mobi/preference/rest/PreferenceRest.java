@@ -43,6 +43,7 @@ import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -85,13 +86,15 @@ public class PreferenceRest {
     OrmFactoryRegistry factoryRegistry;
 
     /**
-     * Returns a JSON array of user preferences for the active user
+     * Returns a JSON object of user preferences and referenced entities for the active user
      *
-     * @return A JSON array of user preferences for the active user
+     * @param context The context of the request.
+     * @return A JSON object of user preferences for the active user
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Retrieves a JSON object with a all of user's Preferences and their referenced Entities")
     public Response getUserPreferences(@Context ContainerRequestContext context) {
         User user = getActiveUser(context, engineManager);
         Set<Preference> userPreferences = preferenceService.getUserPreferences(user);
@@ -103,10 +106,21 @@ public class PreferenceRest {
         return Response.ok(result.toString()).build();
     }
 
+    /**
+     * Updates a User Preference as well as it's referenced entities.
+     *
+     * @param context The context of the request.
+     * @param preferenceId The resource id of the user preference to be updated
+     * @param preferenceType The type of preference that will be updated
+     * @param jsonld The jsonld representation of the user preference and it's referenced entities that will replace the
+     *               current value of the user preference
+     * @return A Response indicating whether or not the User Preference was updated.
+     */
     @PUT
     @Path("{preferenceId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Updates a specific user Preference and it's referenced Entities")
     public Response updateUserPreference(@Context ContainerRequestContext context,
                                          @PathParam("preferenceId") String preferenceId,
                                          @QueryParam("preferenceType") String preferenceType,
@@ -124,9 +138,18 @@ public class PreferenceRest {
         }
     }
 
+    /**
+     * Create a User Preference as well as it's referenced entities.
+     *
+     * @param context The context of the request.
+     * @param preferenceType The type of preference that will be updated
+     * @param jsonld The jsonld representation of the user preference and it's referenced entities that will be created
+     * @return The resource id of the created user preference
+     */
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @ApiOperation("Creates a user Preference as well as it's referenced Entities")
     public Response createUserPreference(@Context ContainerRequestContext context,
                                          @QueryParam("preferenceType") String preferenceType,
                                          String jsonld) {
