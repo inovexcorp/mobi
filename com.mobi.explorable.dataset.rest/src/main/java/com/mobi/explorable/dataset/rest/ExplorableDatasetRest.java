@@ -69,7 +69,6 @@ import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.IOUtils;
