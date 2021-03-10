@@ -2212,7 +2212,7 @@ public class OntologyRest {
             @Context ContainerRequestContext context,
             @Parameter(description = "String representing the record Resource id", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "he desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
+            @Parameter(description = "Desired RDF return format")
             @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
             @Parameter(description = "String representing the Branch Resource id", required = true)
             @QueryParam("branchId") String branchIdStr,
@@ -2776,7 +2776,7 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource id", required = true)
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "tring representing the Commit Resource id", required = true)
+            @Parameter(description = "String representing the Commit Resource id", required = true)
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {

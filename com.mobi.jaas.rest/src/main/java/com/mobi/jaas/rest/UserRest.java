@@ -361,7 +361,7 @@ public class UserRest {
             @PathParam("username") String username,
             @Parameter(description = "Current password of the user to update", required = true)
             @QueryParam("currentPassword") String currentPassword,
-            @Parameter(description = "N ew password for the user", required = true)
+            @Parameter(description = "New password for the user", required = true)
             @QueryParam("newPassword") String newPassword) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
