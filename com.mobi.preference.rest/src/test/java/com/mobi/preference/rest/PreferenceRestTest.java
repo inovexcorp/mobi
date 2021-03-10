@@ -12,12 +12,12 @@ package com.mobi.preference.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -176,6 +176,8 @@ public class PreferenceRestTest extends MobiRestTestNg {
         complexPreferenceJson = IOUtils.toString(getClass().getResourceAsStream("/complexPreference.json"), StandardCharsets.UTF_8);
 
         when(preferenceService.getUserPreferences(any())).thenReturn(preferenceSet);
+        when(preferenceService.getSetting(simplePreference.getResource())).thenReturn(Optional.of(simplePreference));
+        when(preferenceService.getSetting(complexPreference.getResource())).thenReturn(Optional.of(complexPreference));
         when(testComplexPreferenceFactory.getTypeIRI()).thenReturn(vf.createIRI(TestComplexPreference.TYPE));
         when(testComplexPreferenceFactory.getExisting(complexPreference.getResource(), complexPrefModel)).thenReturn(Optional.of(complexPreference));
         when(testComplexPreferenceFactory.getExisting(simplePreference.getResource(), simplePrefModel)).thenReturn(Optional.empty());
@@ -227,6 +229,24 @@ public class PreferenceRestTest extends MobiRestTestNg {
         assertEquals(2, result.size());
         assertEquals(1, result.getJSONArray("http://example.com/MySimplePreference").size());
         assertEquals(2, result.getJSONArray("http://example.com/MyComplexPreference").size());
+    }
+
+    @Test
+    public void getUserPreferenceTest() throws Exception {
+        Response response = target().path("preference/" + encode("http://example.com/MySimplePreference")).request().get();
+        JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(1, result.size());
+
+        Response secondResponse = target().path("preference/" + encode("http://example.com/MyComplexPreference")).request().get();
+        JSONArray secondResult = JSONArray.fromObject(secondResponse.readEntity(String.class));
+        assertEquals(2, secondResult.size());
+    }
+
+    @Test
+    public void getUserPreferenceResourceNotExistsTest() throws Exception {
+        when(preferenceService.getSetting(any())).thenReturn(Optional.empty());
+        Response response = target().path("preference/" + encode("http://example.com/MyComplexPreference")).request().get();
+        assertEquals(400, response.getStatus());
     }
 
     @Test

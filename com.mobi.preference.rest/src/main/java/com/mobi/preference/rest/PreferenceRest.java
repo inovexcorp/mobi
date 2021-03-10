@@ -12,12 +12,12 @@ package com.mobi.preference.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -36,6 +36,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
+import com.mobi.preference.api.ontologies.Setting;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
@@ -103,6 +104,27 @@ public class PreferenceRest {
             JsonNode jsonNode = getPreferenceAsJsonNode(pref);
             result.set(pref.getResource().stringValue(), jsonNode);
         });
+        return Response.ok(result.toString()).build();
+    }
+
+    /**
+     * Returns a JSON object of a user preference and it's referenced entities with the provided resource id
+     *
+     * @param context The context of the request.
+     * @param preferenceId The resource id of the user preference to be retrieved
+     * @return A JSON object of user preferences for the active user
+     */
+    @GET
+    @Path("{preferenceId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("admin")
+    @ApiOperation("Retrieves a JSON object with a specific user Preferences and their referenced Entities")
+    public Response getUserPreference(@Context ContainerRequestContext context,
+                                      @PathParam("preferenceId") String preferenceId) {
+        Preference preference = (Preference) preferenceService.getSetting(vf.createIRI(preferenceId))
+                .orElseThrow(() -> ErrorUtils.sendError("Preference with id " + preferenceId +
+                        " does not exist.", Response.Status.BAD_REQUEST));
+        JsonNode result = getPreferenceAsJsonNode(preference);
         return Response.ok(result.toString()).build();
     }
 
