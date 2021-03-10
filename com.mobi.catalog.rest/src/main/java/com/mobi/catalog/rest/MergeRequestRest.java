@@ -161,7 +161,7 @@ public class MergeRequestRest {
             }
     )
     public Response getMergeRequests(
-            @Parameter(description = "The IRI of the predicate to sort by")
+            @Parameter(description = "The IRI of the predicate to sort by", required = true)
             @QueryParam("sort") String sort,
             @Parameter(description = "Whether the results should be sorted ascending or descending")
             @DefaultValue("false") @QueryParam("ascending") boolean asc,
@@ -233,10 +233,10 @@ public class MergeRequestRest {
             @Parameter(description = "Required IRI of the source {Branch} with the new commits to add "
                     + "to the target {Branch} of the new {MergeRequest", required = true)
             @FormDataParam("sourceBranchId") String sourceBranchId,
-            @Parameter(description = "Required IRI of the target {@link Branch} which will receive the new commits "
+            @Parameter(description = "Required IRI of the target {Branch} which will receive the new commits "
                     + "from the source {Branch} of the new {@link MergeRequest}", required = true)
             @FormDataParam("targetBranchId") String targetBranchId,
-            @Parameter(description = "List of username of {User}s to assign the new {MergeRequest} to")
+            @Parameter(description = "List of username of {User}s to assign the new {MergeRequest} to", required = true)
             @FormDataParam("assignees") List<FormDataBodyPart> assignees,
             @Parameter(description = "Boolean value to remove source")
             @FormDataParam("removeSource") @DefaultValue("false") boolean removeSource) {
@@ -298,7 +298,7 @@ public class MergeRequestRest {
             }
     )
     public Response getMergeRequest(
-            @Parameter(description = "String representing the {@link MergeRequest}")
+            @Parameter(description = "String representing the {MergeRequest}", required = true)
             @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
@@ -336,9 +336,9 @@ public class MergeRequestRest {
             }
     )
     public Response updateMergeRequest(
-            @Parameter(description = "String representing the {MergeRequest} ID")
+            @Parameter(description = "String representing the {MergeRequest} ID", required = true)
             @PathParam("requestId") String requestId,
-            @Parameter(description = "String representing the JSONLD representation of the updated {MergeRequest}")
+            @Parameter(description = "String representing the JSONLD representation of the updated {MergeRequest}", required = true)
                     String newMergeRequest) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
@@ -382,7 +382,7 @@ public class MergeRequestRest {
             id = VersionedRDFRecord.branch_IRI, start = @Value(type = ValueType.PATH, value = "requestId")))
     public Response acceptMergeRequest(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the MergeRequest ID")
+            @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         User activeUser = getActiveUser(context, engineManager);
@@ -417,7 +417,7 @@ public class MergeRequestRest {
             }
     )
     public Response deleteMergeRequest(
-            @Parameter(description = "String representing the MergeRequest ID to delete")
+            @Parameter(description = "String representing the MergeRequest ID to delete", required = true)
             @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
@@ -456,7 +456,7 @@ public class MergeRequestRest {
             }
     )
     public Response getComments(
-            @Parameter(description = "String representing the MergeRequest ID")
+            @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
@@ -498,9 +498,9 @@ public class MergeRequestRest {
             }
     )
     public Response getComment(
-            @Parameter(description = "String representing the MergeRequest ID")
+            @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId,
-            @Parameter(description = "String representing the Comment ID")
+            @Parameter(description = "String representing the Comment ID", required = true)
             @PathParam("commentId") String commentId) {
         try {
             manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->
@@ -603,9 +603,9 @@ public class MergeRequestRest {
             }
     )
     public Response updateComment(
-            @Parameter(description = "String representing the Comment ID")
+            @Parameter(description = "String representing the Comment ID", required = true)
             @PathParam("commentId") String commentId,
-            @Parameter(description = "String representing the new description of the updated Comment")
+            @Parameter(description = "String representing the new description of the updated Comment", required = true)
                     String newCommentStr) {
         Resource commentIdResource = createIRI(commentId, vf);
         Comment comment = manager.getComment(commentIdResource).orElseThrow(() ->
@@ -650,9 +650,9 @@ public class MergeRequestRest {
     )
     public Response deleteComment(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the MergeRequest ID the comment is on")
+            @Parameter(description = "String representing the MergeRequest ID the comment is on", required = true)
             @PathParam("requestId") String requestId,
-            @Parameter(description = "String representing the Comment ID to delete")
+            @Parameter(description = "String representing the Comment ID to delete", required = true)
             @PathParam("commentId") String commentId) {
         try {
             Resource commentIRI = createIRI(commentId, vf);

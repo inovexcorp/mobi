@@ -179,11 +179,11 @@ public class DatasetRest {
     )
     public Response getDatasetRecords(
             @Context UriInfo uriInfo,
-            @Parameter(description = "Offset for a page of DatasetRecords")
+            @Parameter(description = "Offset for a page of DatasetRecords", required = true)
             @QueryParam("offset") int offset,
-            @Parameter(description = "Number of DatasetRecords to return in one page")
+            @Parameter(description = "Number of DatasetRecords to return in one page", required = true)
             @QueryParam("limit") int limit,
-            @Parameter(description = "IRI of the property to sort by")
+            @Parameter(description = "IRI of the property to sort by", required = true)
             @QueryParam("sort") String sort,
             @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
@@ -331,7 +331,7 @@ public class DatasetRest {
             }
     )
     public Response getDatasetRecord(
-            @Parameter(description = "IRI of a DatasetRecord")
+            @Parameter(description = "IRI of a DatasetRecord", required = true)
             @PathParam("datasetRecordId") String datasetRecordId) {
         Resource recordIRI = vf.createIRI(datasetRecordId);
         try {
@@ -373,7 +373,7 @@ public class DatasetRest {
     )
     public Response deleteDatasetRecord(
             @Context ContainerRequestContext context,
-            @Parameter(description = "IRI of a DatasetRecord")
+            @Parameter(description = "IRI of a DatasetRecord", required = true)
             @PathParam("datasetRecordId") String datasetRecordId,
             @Parameter(description = "Whether or not the delete should be forced")
             @DefaultValue("false") @QueryParam("force") boolean force) {
@@ -420,7 +420,7 @@ public class DatasetRest {
             }
     )
     public Response clearDatasetRecord(
-            @Parameter(description = "IRI of a DatasetRecord")
+            @Parameter(description = "IRI of a DatasetRecord", required = true)
             @PathParam("datasetRecordId") String datasetRecordId,
             @Parameter(description = "Whether or not the clear should be forced")
             @DefaultValue("false") @QueryParam("force") boolean force) {
@@ -462,9 +462,9 @@ public class DatasetRest {
             }
     )
     public Response uploadData(
-            @Parameter(description = "IRI of a DatasetRecord")
+            @Parameter(description = "IRI of a DatasetRecord", required = true)
             @PathParam("datasetRecordId") String datasetRecordId,
-            @Parameter(description = "InputStream of a RDF file passed as form data")
+            @Parameter(description = "InputStream of a RDF file passed as form data", required = true)
             @FormDataParam("file") InputStream fileInputStream,
             @Parameter(description = "Information about the RDF file being uploaded, including the name", hidden = true)
             @FormDataParam("file") FormDataContentDisposition fileDetail) {

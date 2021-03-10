@@ -172,11 +172,11 @@ public class MappingRest {
             @FormDataParam("markdown") String markdown,
             @Parameter(description = "Optional list of keywords strings for the new MappingRecord")
             @FormDataParam("keywords") List<FormDataBodyPart> keywords,
-            @Parameter(description = " InputStream of a mapping file passed as form data")
+            @Parameter(description = "InputStream of a mapping file passed as form data", required = true)
             @FormDataParam("file") InputStream fileInputStream,
             @Parameter(description = "Information about the file being uploaded, including the name", hidden = true)
             @FormDataParam("file") FormDataContentDisposition fileDetail,
-            @Parameter(description = "Mapping serialized as JSON-LD")
+            @Parameter(description = "Mapping serialized as JSON-LD", required = true)
             @FormDataParam("jsonld") String jsonld) {
         if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
             throw ErrorUtils.sendError("Must provide either a file or a JSON-LD string", Response.Status.BAD_REQUEST);
@@ -242,7 +242,7 @@ public class MappingRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getMapping(
-            @Parameter(description = "ID of an uploaded mapping")
+            @Parameter(description = "ID of an uploaded mapping", required = true)
             @PathParam("recordId") String recordId) {
         try {
             logger.info("Getting mapping " + recordId);
@@ -280,7 +280,7 @@ public class MappingRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadMapping(
-            @Parameter(description = "Id of an uploaded mapping")
+            @Parameter(description = "Id of an uploaded mapping", required = true)
             @PathParam("recordId") String recordId,
             @Parameter(description = "RDFFormat the file should be")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
@@ -331,7 +331,7 @@ public class MappingRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteMapping(
             @Context ContainerRequestContext context,
-            @Parameter(description = "ID of an uploaded mapping")
+            @Parameter(description = "ID of an uploaded mapping", required = true)
             @PathParam("recordId") String recordId) {
         try {
             catalogManager.deleteRecord(getActiveUser(context, engineManager), vf.createIRI(recordId),

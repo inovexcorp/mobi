@@ -117,9 +117,10 @@ public class StateRest {
     )
     public Response getStates(
             @Context ContainerRequestContext context,
-            @Parameter(description = "ID of the Application to filter State by")
+            @Parameter(description = "ID of the Application to filter State by", required = true)
             @QueryParam("application") String applicationId,
-            @Parameter(description = "List of all the IDs of resources that should be associated with the States")
+            @Parameter(description = "List of all the IDs of resources that should be associated with the States",
+                    required = true)
             @QueryParam("subjects") List<String> subjectIds) {
         String username = RestUtils.getActiveUsername(context);
         Set<Resource> subjects = subjectIds.stream()
@@ -166,9 +167,9 @@ public class StateRest {
     )
     public Response createState(
             @Context ContainerRequestContext context,
-            @Parameter(description = "ID of the Application to associate the new State with")
+            @Parameter(description = "ID of the Application to associate the new State with", required = true)
             @QueryParam("application") String applicationId,
-            @Parameter(description = "JSON-LD of all resources to be linked to the new State")
+            @Parameter(description = "JSON-LD of all resources to be linked to the new State", required = true)
                     String stateJson) {
         String username = RestUtils.getActiveUsername(context);
         try {
@@ -215,7 +216,7 @@ public class StateRest {
     )
     public Response getState(
             @Context ContainerRequestContext context,
-            @Parameter(description = "ID of the State to retrieve")
+            @Parameter(description = "ID of the State to retrieve", required = true)
             @PathParam("stateId") String stateId) {
         String username = RestUtils.getActiveUsername(context);
         try {
@@ -259,9 +260,10 @@ public class StateRest {
     )
     public Response updateState(
             @Context ContainerRequestContext context,
-            @Parameter(description = "ID of the State to update")
+            @Parameter(description = "ID of the State to update", required = true)
             @PathParam("stateId") String stateId,
-            @Parameter(description = "JSON-LD serialization of the new resources to associate with the State")
+            @Parameter(description = "JSON-LD serialization of the new resources to associate with the State",
+                    required = true)
                     String newStateJson) {
         String username = RestUtils.getActiveUsername(context);
         try {
@@ -310,7 +312,7 @@ public class StateRest {
     )
     public Response deleteState(
             @Context ContainerRequestContext context,
-            @Parameter(description = "ID of the State to remove")
+            @Parameter(description = "ID of the State to remove", required = true)
             @PathParam("stateId") String stateId) {
         String username = RestUtils.getActiveUsername(context);
         try {

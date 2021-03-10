@@ -101,11 +101,11 @@ public class PolicyRest {
             }
     )
     public Response getPolicies(
-            @Parameter(description = "The String representing a subject ID")
+            @Parameter(description = "The String representing a subject ID", required = true)
             @QueryParam("relatedSubject") String relatedSubject,
-            @Parameter(description = "The String representing a resource ID")
+            @Parameter(description = "The String representing a resource ID", required = true)
             @QueryParam("relatedResource") String relatedResource,
-            @Parameter(description = "The String representing a action ID")
+            @Parameter(description = "The String representing a action ID", required = true)
             @QueryParam("relatedAction") String relatedAction) {
         PolicyQueryParams.Builder params = new PolicyQueryParams.Builder();
         if (StringUtils.isNotEmpty(relatedResource)) {
@@ -147,7 +147,7 @@ public class PolicyRest {
             }
     )
     public Response createPolicy(
-            @Parameter(description = "A JSON representation of a policy to add to Mobi")
+            @Parameter(description = "A JSON representation of a policy to add to Mobi", required = true)
                     String policyJson) {
         try {
             Resource policyId = policyManager.addPolicy(jsonToPolicy(policyJson));
@@ -181,7 +181,7 @@ public class PolicyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "policyId")
     public Response retrievePolicy(
-            @Parameter(description = "The String representing a policy ID")
+            @Parameter(description = "The String representing a policy ID", required = true)
             @PathParam("policyId") String policyId) {
         try {
             Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(policyId));
@@ -219,9 +219,9 @@ public class PolicyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "policyId")
     public Response updatePolicy(
-            @Parameter(description = "The String representing a policy ID")
+            @Parameter(description = "The String representing a policy ID", required = true)
             @PathParam("policyId") String policyId,
-            @Parameter(description = "A JSON representation of the new version of the policy")
+            @Parameter(description = "A JSON representation of the new version of the policy", required = true)
                     String policyJson) {
         try {
             XACMLPolicy policy = jsonToPolicy(policyJson);

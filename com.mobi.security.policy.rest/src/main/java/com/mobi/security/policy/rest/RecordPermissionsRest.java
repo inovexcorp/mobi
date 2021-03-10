@@ -156,7 +156,8 @@ public class RecordPermissionsRest {
     @ActionId(Update.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response retrieveRecordPolicy(
-            @Parameter(description = "String representing a resource for which to retrieve a policy ID")
+            @Parameter(description = "String representing a resource for which to retrieve a policy ID",
+                    required = true)
             @PathParam("recordId") String recordId) {
         try (RepositoryConnection conn = repo.getConnection()) {
             Optional<String> recordPolicyIdOpt = getRelatedResourceId(recordId, conn);
@@ -207,9 +208,10 @@ public class RecordPermissionsRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateRecordPolicy(
-            @Parameter(description = "String representing a recordId whose corresponding policy should be updated")
+            @Parameter(description = "String representing a recordId whose corresponding policy should be updated",
+                    required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "JSON representation of the new version of the record policy")
+            @Parameter(description = "JSON representation of the new version of the record policy", required = true)
                     String policyJson) {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Record Policy
@@ -239,7 +241,8 @@ public class RecordPermissionsRest {
             IRI policyPolicyIRI = vf.createIRI(policyPolicyId);
             Optional<XACMLPolicy> policyPolicy = policyManager.getPolicy(policyPolicyIRI);
             if (!policyPolicy.isPresent()) {
-                throw ErrorUtils.sendError("Policy policy to update could not be found", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError("Policy policy to update could not be found",
+                        Response.Status.BAD_REQUEST);
             }
 
             XACMLPolicy updatedPolicyPolicy = updatePolicyPolicy(policyJson, policyPolicy.get().getJaxbPolicy());

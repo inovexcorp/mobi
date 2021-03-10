@@ -113,7 +113,7 @@ public class PolicyEnforcementRest {
     )
     public Response evaluateRequest(
             @Context ContainerRequestContext context,
-            @Parameter(description = "A JSON object containing XACML required fields")
+            @Parameter(description = "A JSON object containing XACML required fields", required = true)
                     String jsonRequest) {
         log.debug("Authorizing...");
         long start = System.currentTimeMillis();

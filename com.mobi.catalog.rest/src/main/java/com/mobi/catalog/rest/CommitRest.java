@@ -136,10 +136,10 @@ public class CommitRest {
             }
     )
     public Response getCommit(
-            @Parameter(description = "String value of the Commit ID. NOTE: Assumes an {IRI} "
-                    + "unless String starts with \"_:\"")
+            @Parameter(description = "String value of the Commit ID. "
+                    + "NOTE: Assumes an {IRI} unless String starts with \"_:\"", required = true)
             @PathParam("commitId") String commitId,
-            @Parameter(description = "String representation of the desired RDFFormat")
+            @Parameter(description = "String representation of the desired RDFFormat", required = false)
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
         try {
@@ -192,15 +192,18 @@ public class CommitRest {
     )
     public Response getCommitHistory(
             @Context UriInfo uriInfo,
-            @Parameter(description = "String value of the Commit ID")
+            @Parameter(description = "String value of the Commit ID"
+                    + "NOTE: Assumes an {IRI} unless String starts with \"_:\"", required = true)
             @PathParam("commitId") String commitId,
-            @Parameter(description = "String value of the target Commit ID")
+            @Parameter(description = "String value of the target Commit ID"
+                    + "NOTE: Assumes an {IRI} unless String starts with \"_:\"", required = true)
             @QueryParam("targetId") String targetId,
-            @Parameter(description = "Optional String value of the Entity ID")
+            @Parameter(description = "Optional String value of the Entity ID"
+                    + "NOTE: Assumes an {IRI} unless String starts with \"_:\"", required = false)
             @QueryParam("entityId") String entityId,
-            @Parameter(description = "Optional offset for the results")
+            @Parameter(description = "Optional offset for the results", required = false)
             @QueryParam("offset") int offset,
-            @Parameter(description = "Optional limit for the results")
+            @Parameter(description = "Optional limit for the results", required = false)
             @QueryParam("limit") int limit) {
         long start = System.currentTimeMillis();
         try {
@@ -271,9 +274,10 @@ public class CommitRest {
             }
     )
     public Response getCompiledResource(
-            @Parameter(description = "{@link String} value of the {@link Commit} ID", required = true)
+            @Parameter(description = "{String} value of the {Commit} ID", required = true)
             @PathParam("commitId") String commitId,
-            @Parameter(description = "Optional Resource identifying the Entity to filter the chain of Commit")
+            @Parameter(description = "Optional Resource identifying the Entity to filter the chain of Commit",
+                    required = false)
             @QueryParam("entityId") String entityId) {
         long start = System.currentTimeMillis();
         try {
@@ -354,9 +358,10 @@ public class CommitRest {
                     + "The number of subjects in the response object may be less than the limit "
                     + "due to the way some blank nodes are skolemized", required = false)
             @DefaultValue("-1") @QueryParam("limit") int limit,
-            @Parameter(description = "Optional integer offset of the subject to start collecting differences from")
+            @Parameter(description = "Optional integer offset of the subject to start collecting differences from",
+                    required = false)
             @QueryParam("offset") int offset,
-            @Parameter(description = "String representation of the desired RDFFormat")
+            @Parameter(description = "String representation of the desired RDFFormat", required = false)
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
         try {

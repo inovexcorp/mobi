@@ -357,20 +357,21 @@ public class CatalogRest {
     )
     public Response getRecords(
             @Context UriInfo uriInfo,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "Field with sort order specified (MODIFIED, ISSUED, TITLE)")
+            @Parameter(description = "Field with sort order specified (MODIFIED, ISSUED, TITLE)", required = true)
             @QueryParam("sort") String sort,
             @Parameter(description = "The type of Records you want to get back "
-                    + "(unversioned, versioned, ontology, mapping, or dataset)")
+                    + "(unversioned, versioned, ontology, mapping, or dataset)", required = true)
             @QueryParam("type") String recordType,
-            @Parameter(description = "Offset for the page")
+            @Parameter(description = "Offset for the page", required = true)
             @QueryParam("offset") int offset,
-            @Parameter(description = "Number of Records to return in one page")
+            @Parameter(description = "Number of Records to return in one page", required = true)
             @QueryParam("limit") int limit,
-            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
+            @Parameter(description = "Whether or not the list should be sorted ascending or descending",
+                    required = false)
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
-            @Parameter(description = "String used to filter out Records")
+            @Parameter(description = "String used to filter out Records", required = true)
             @QueryParam("searchText") String searchText) {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
@@ -440,14 +441,14 @@ public class CatalogRest {
     @ResourceId(value = "catalogId", type = ValueType.PATH)
     public Response createRecord(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "Required IRI of the type for the new Record. "
                     + "Must be a valid IRI for a Record or one of its subclasses", required = true)
             @FormDataParam("type") String typeIRI,
             @Parameter(description = "Required title for the new Record", required = true)
             @FormDataParam("title") String title,
-            @Parameter(description = "Required identifier for the new Record. Must be a valid IRI.")
+            @Parameter(description = "Required identifier for the new Record. Must be a valid IRI.", required = true)
             @FormDataParam("identifier") String identifier,
             @Parameter(description = "Optional description for the new Record")
             @FormDataParam("description") String description,
@@ -521,9 +522,9 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getRecord(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the Record ID")
+            @Parameter(description = "String representing the Record ID", required = true)
             @PathParam("recordId") String recordId) {
         try {
             Record record = catalogManager.getRecord(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -566,9 +567,9 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteRecord(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the Record ID")
+            @Parameter(description = "String representing the Record ID", required = true)
             @PathParam("recordId") String recordId) {
         User activeUser = getActiveUser(context, engineManager);
         IRI recordIri = vf.createIRI(recordId);
@@ -617,11 +618,12 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateRecord(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the Record ID")
+            @Parameter(description = "String representing the Record ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "JSON-LD of the new Record which will replace the existing Record")
+            @Parameter(description = "JSON-LD of the new Record which will replace the existing Record",
+                    required = true)
                     String newRecordJson) {
         try {
             Record newRecord = getNewThing(newRecordJson, vf.createIRI(recordId),
@@ -668,11 +670,11 @@ public class CatalogRest {
     )
     public Response getUnversionedDistributions(
             @Context UriInfo uriInfo,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the UnversionedRecord ID")
+            @Parameter(description = "String representing the UnversionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "Field with sort order specified (MODIFIED, ISSUED, TITLE)")
+            @Parameter(description = "Field with sort order specified (MODIFIED, ISSUED, TITLE)", required = true)
             @QueryParam("sort") String sort,
             @Parameter(description = "Offset for the page")
             @DefaultValue("0") @QueryParam("offset") int offset,
@@ -727,9 +729,9 @@ public class CatalogRest {
     )
     public Response createUnversionedDistribution(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the UnversionedRecord ID")
+            @Parameter(description = "String representing the UnversionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
             @Parameter(description = "Required title for the new Distribution", required = true)
             @FormDataParam("title") String title,
@@ -780,11 +782,11 @@ public class CatalogRest {
             }
     )
     public Response getUnversionedDistribution(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the UnversionedRecord ID")
+            @Parameter(description = "String representing the UnversionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Distribution ID")
+            @Parameter(description = "String representing the Distribution ID", required = true)
             @PathParam("distributionId") String distributionId) {
         try {
             Distribution distribution = catalogManager.getUnversionedDistribution(vf.createIRI(catalogId),
@@ -827,11 +829,11 @@ public class CatalogRest {
             }
     )
     public Response deleteUnversionedDistribution(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the UnversionedRecord")
+            @Parameter(description = "String representing the UnversionedRecord", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Distribution ID")
+            @Parameter(description = "String representing the Distribution ID", required = true)
             @PathParam("distributionId") String distributionId) {
         try {
             catalogManager.removeUnversionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -874,13 +876,13 @@ public class CatalogRest {
             }
     )
     public Response updateUnversionedDistribution(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the UnversionedRecord ID")
+            @Parameter(description = "String representing the UnversionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Distribution ID")
+            @Parameter(description = "String representing the Distribution ID", required = true)
             @PathParam("distributionId") String distributionId,
-            @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution")
+            @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution", required = true)
                     String newDistributionJson) {
         try {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
@@ -927,11 +929,11 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersions(
             @Context UriInfo uriInfo,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "Field with sort order specified")
+            @Parameter(description = "Field with sort order specified", required = true)
             @QueryParam("sort") String sort,
             @Parameter(description = "Offset for the page")
             @DefaultValue("0") @QueryParam("offset") int offset,
@@ -987,9 +989,9 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createVersion(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
             @Parameter(description = "Required IRI of the type for the new Version. Must be a valid IRI for a "
                     + "Version or one of its subclasses", required = true)
@@ -1056,17 +1058,17 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createTag(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "Required title for the new Tag")
+            @Parameter(description = "Required title for the new Tag", required = true)
             @FormDataParam("title") String title,
             @Parameter(description = "optional description for the new Tag")
             @FormDataParam("description") String description,
-            @Parameter(description = "required IRI for the new Tag. Must be unique in the repository")
+            @Parameter(description = "required IRI for the new Tag. Must be unique in the repository", required = true)
             @FormDataParam("iri") String iri,
-            @Parameter(description = "required String representing the Commit ID")
+            @Parameter(description = "required String representing the Commit ID", required = true)
             @FormDataParam("commit") String commitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(iri, "Tag iri is required");
@@ -1127,9 +1129,9 @@ public class CatalogRest {
             }
     )
     public Response getLatestVersion(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId) {
         try {
             Version version = catalogManager.getLatestVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -1171,11 +1173,11 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersion(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("versionId") String versionId) {
         try {
             Version version = catalogManager.getVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -1222,11 +1224,11 @@ public class CatalogRest {
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteVersion(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("versionId") String versionId) {
         try {
             catalogManager.removeVersion(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(versionId));
@@ -1270,13 +1272,14 @@ public class CatalogRest {
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateVersion(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Version ID")
+            @Parameter(description = "String representing the Version ID", required = true)
             @PathParam("versionId") String versionId,
-            @Parameter(description = "JSON-LD of the new Version which will replace the existing Version")
+            @Parameter(description = "JSON-LD of the new Version which will replace the existing Version",
+                    required = true)
                     String newVersionJson) {
         try {
             Version newVersion = getNewThing(newVersionJson, vf.createIRI(versionId),
@@ -1324,13 +1327,13 @@ public class CatalogRest {
     )
     public Response getVersionedDistributions(
             @Context UriInfo uriInfo,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Version ID")
+            @Parameter(description = "String representing the Version ID", required = true)
             @PathParam("versionId") String versionId,
-            @Parameter(description = "Field with sort order specified")
+            @Parameter(description = "Field with sort order specified", required = true)
             @QueryParam("sort") String sort,
             @Parameter(description = "Offset for the page")
             @DefaultValue("0") @QueryParam("offset") int offset,
@@ -1386,13 +1389,13 @@ public class CatalogRest {
     )
     public Response createVersionedDistribution(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Version ID")
+            @Parameter(description = "String representing the Version ID", required = true)
             @PathParam("versionId") String versionId,
-            @Parameter(description = "String representing the Version ID")
+            @Parameter(description = "String representing the Version ID", required = true)
             @FormDataParam("title") String title,
             @Parameter(description = "Required title for the new Distribution", required = true)
             @FormDataParam("description") String description,
@@ -1444,13 +1447,13 @@ public class CatalogRest {
             }
     )
     public Response getVersionedDistribution(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Version ID")
+            @Parameter(description = "String representing the Version ID", required = true)
             @PathParam("versionId") String versionId,
-            @Parameter(description = "String representing the Distribution ID")
+            @Parameter(description = "String representing the Distribution ID", required = true)
             @PathParam("distributionId") String distributionId) {
         try {
             Distribution distribution = catalogManager.getVersionedDistribution(vf.createIRI(catalogId),
@@ -1495,13 +1498,13 @@ public class CatalogRest {
             }
     )
     public Response deleteVersionedDistribution(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Version ID")
+            @Parameter(description = "String representing the Version ID", required = true)
             @PathParam("versionId") String versionId,
-            @Parameter(description = "String representing the Distribution ID")
+            @Parameter(description = "String representing the Distribution ID", required = true)
             @PathParam("distributionId") String distributionId) {
         try {
             catalogManager.removeVersionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -1546,15 +1549,15 @@ public class CatalogRest {
             }
     )
     public Response updateVersionedDistribution(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Version ID")
+            @Parameter(description = "String representing the Version ID", required = true)
             @PathParam("versionId") String versionId,
-            @Parameter(description = "String representing the Distribution ID")
+            @Parameter(description = "String representing the Distribution ID", required = true)
             @PathParam("distributionId") String distributionId,
-            @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution")
+            @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution", required = true)
                     String newDistributionJson) {
         try {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
@@ -1595,11 +1598,11 @@ public class CatalogRest {
             }
     )
     public Response getVersionCommit(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Version ID")
+            @Parameter(description = "String representing the Version ID", required = true)
             @PathParam("versionId") String versionId,
             @Parameter(description = "Optional format string")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
@@ -1654,9 +1657,9 @@ public class CatalogRest {
     public Response getBranches(
             @Context ContainerRequestContext context,
             @Context UriInfo uriInfo,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
             @Parameter(description = "Field with sort order specified")
             @DefaultValue("http://purl.org/dc/terms/title") @QueryParam("sort") String sort,
@@ -1729,17 +1732,17 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createBranch(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "Required IRI of the type for the new Branch")
+            @Parameter(description = "Required IRI of the type for the new Branch", required = true)
             @FormDataParam("type") String typeIRI,
-            @Parameter(description = "Required title for the new Branch")
+            @Parameter(description = "Required title for the new Branch", required = true)
             @FormDataParam("title") String title,
             @Parameter(description = "Optional description for the new Branch")
             @FormDataParam("description") String description,
-            @Parameter(description = "String representing the Commit ID")
+            @Parameter(description = "String representing the Commit ID", required = true)
             @FormDataParam("commitId") String commitId) {
         try ( RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(title, "Branch title is required");
@@ -1795,9 +1798,9 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getMasterBranch(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRDFRecord ID")
+            @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
             @PathParam("recordId") String recordId) {
         try {
             Branch masterBranch = catalogManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId));
@@ -1838,11 +1841,11 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranch(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID")
+            @Parameter(description = "String representing the Branch ID", required = true)
             @PathParam("branchId") String branchId) {
         try {
             Branch branch = catalogManager.getBranch(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -1889,11 +1892,11 @@ public class CatalogRest {
             @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
     )
     public Response deleteBranch(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID")
+            @Parameter(description = "String representing the Branch ID", required = true)
             @PathParam("branchId") String branchId) {
         try {
             catalogManager.removeBranch(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(branchId));
@@ -1937,13 +1940,13 @@ public class CatalogRest {
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateBranch(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the VersionedRDFRecord ID")
+            @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the Branch ID")
+            @Parameter(description = "String representing the Branch ID", required = true)
                     String newBranchJson) {
         try {
             Branch newBranch = getNewThing(newBranchJson, vf.createIRI(branchId),
@@ -1997,13 +2000,13 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getCommitChain(
             @Context UriInfo uriInfo,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID")
+            @Parameter(description = "String representing the Branch ID", required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the target Branch ID")
+            @Parameter(description = "String representing the target Branch ID", required = true)
             @QueryParam("targetId") String targetId,
             @Parameter(description = "Optional offset for the results")
             @QueryParam("offset") int offset,
@@ -2073,13 +2076,13 @@ public class CatalogRest {
     )
     public Response createBranchCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID")
+            @Parameter(description = "String representing the Branch ID", required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "Message for the new Commit")
+            @Parameter(description = "Message for the new Commit", required = true)
             @QueryParam("message") String message) {
         try {
             checkStringParam(message, "Commit message is required");
@@ -2124,13 +2127,13 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getHead(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch I")
+            @Parameter(description = "String representing the Branch ID", required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
+            @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
         try {
@@ -2179,15 +2182,15 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranchCommit(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID")
+            @Parameter(description = "String representing the Branch ID", required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the Commit ID")
+            @Parameter(description = "String representing the Commit ID", required = true)
             @PathParam("commitId") String commitId,
-            @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
+            @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
         try {
@@ -2241,15 +2244,15 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDifference(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the source Branch ID")
+            @Parameter(description = "String representing the source Branch ID", required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the target Branch ID")
+            @Parameter(description = "String representing the target Branch ID", required = true)
             @QueryParam("targetId") String targetBranchId,
-            @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
+            @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         try {
             checkStringParam(targetBranchId, "Target branch is required");
@@ -2304,15 +2307,15 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConflicts(
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the VersionedRDFRecord ID")
+            @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the target Branch ID")
+            @Parameter(description = "String representing the target Branch ID", required = true)
             @QueryParam("targetId") String targetBranchId,
-            @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
+            @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
         try {
@@ -2380,13 +2383,13 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response merge(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the VersionedRDFRecord ID")
+            @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
             @PathParam("branchId") String sourceBranchId,
-            @Parameter(description = "String representing the target Branch ID")
+            @Parameter(description = "String representing the target Branch ID", required = true)
             @QueryParam("targetId") String targetBranchId,
             @Parameter(description = "String of JSON-LD that corresponds to the statements that"
                     + "were added to the entity")
@@ -2445,15 +2448,15 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getCompiledResource(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID")
+            @Parameter(description = "String representing the Branch ID", required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the Commit ID")
+            @Parameter(description = "String representing the Commit ID", required = true)
             @PathParam("commitId") String commitId,
-            @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
+            @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
             @Parameter(description = "Boolean value identifying whether the InProgressCommit associated with "
                     + "identified Record should be  applied to the result")
@@ -2518,15 +2521,15 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadCompiledResource(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID")
+            @Parameter(description = "String representing the Branch ID", required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the Commit ID")
+            @Parameter(description = "String representing the Commit ID", required = true)
             @PathParam("commitId") String commitId,
-            @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
+            @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
             @Parameter(description = "Boolean value identifying whether the InProgressCommit associated with "
                     + "the identified Record and User making the request should be applied to the result")
@@ -2594,9 +2597,9 @@ public class CatalogRest {
     )
     public Response createInProgressCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRDFRecord ID")
+            @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
             @PathParam("recordId") String recordId) {
         try {
             User activeUser = getActiveUser(context, engineManager);
@@ -2639,11 +2642,11 @@ public class CatalogRest {
     )
     public Response getInProgressCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "Desired RDF return format. NOTE: Optional param - defaults to \"jsonld\"")
+            @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         try {
             User activeUser = getActiveUser(context, engineManager);
@@ -2689,9 +2692,9 @@ public class CatalogRest {
     )
     public Response deleteInProgressCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "tring representing the VersionedRDFRecord ID")
+            @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
             @PathParam("recordId") String recordId) {
         try {
             User activeUser = getActiveUser(context, engineManager);
@@ -2739,15 +2742,15 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateInProgressCommit(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID")
+            @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID")
+            @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
             @Parameter(description = "String of JSON-LD that corresponds to the statements that"
-                    + " were added to the entity")
+                    + " were added to the entity", required = true)
             @FormDataParam("additions") String additionsJson,
             @Parameter(description = "String of JSON-LD that corresponds to the statements that"
-                    + " were deleted in the entity")
+                    + " were deleted in the entity", required = true)
             @FormDataParam("deletions") String deletionsJson) {
         try {
             User activeUser = getActiveUser(context, engineManager);
