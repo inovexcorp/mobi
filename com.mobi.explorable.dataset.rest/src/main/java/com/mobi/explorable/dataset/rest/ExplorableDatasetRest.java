@@ -293,9 +293,9 @@ public class ExplorableDatasetRest {
             @PathParam("recordIRI") String recordIRI,
             @Parameter(description = "IRI of the class type to get", required = true)
             @PathParam("classIRI") String classIRI,
-            @Parameter(description = "offset for a page of Dataset data", required = true)
+            @Parameter(description = "Offset for a page of Dataset data", required = true)
             @QueryParam("offset") int offset,
-            @Parameter(description = "number of data to return in one page", required = true)
+            @Parameter(description = "Number of data to return in one page", required = true)
             @QueryParam("limit") int limit,
             @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
@@ -345,7 +345,7 @@ public class ExplorableDatasetRest {
             }
     )
     public Response getClassPropertyDetails(
-            @Parameter(description = "id of the {DatasetRecord} for the {Dataset} to summarize", required = true)
+            @Parameter(description = "Id of the {DatasetRecord} for the {Dataset} to summarize", required = true)
             @PathParam("recordIRI") String recordIRI,
             @Parameter(description = "IRI of the class type to get property details for", required = true)
             @PathParam("classIRI") String classIRI) {
@@ -384,7 +384,7 @@ public class ExplorableDatasetRest {
             }
     )
     public Response createInstance(
-            @Parameter(description = "id of the {DatasetRecord} for the {Dataset}", required = true)
+            @Parameter(description = "Id of the {DatasetRecord} for the {Dataset}", required = true)
             @PathParam("recordIRI") String recordIRI,
             @Parameter(description = "New Instance JSON", required = true)
                     String newInstanceJson) {
@@ -477,7 +477,7 @@ public class ExplorableDatasetRest {
             }
     )
     public Response updateInstance(
-            @Parameter(description = "id of the {DatasetRecord} for the {Dataset} to summarize.", required = true)
+            @Parameter(description = "Id of the {DatasetRecord} for the {Dataset} to summarize.", required = true)
             @PathParam("recordIRI") String recordIRI,
             @Parameter(description = "IRI of the instance to update", required = true)
             @PathParam("instanceIRI") String instanceIRI,

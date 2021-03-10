@@ -530,7 +530,7 @@ public class UserRest {
             }
     )
     public Response addUserRoles(
-            @Parameter(description = "username of the User to add a role to", required = true)
+            @Parameter(description = "Username of the User to add a role to", required = true)
             @PathParam("username") String username,
             @Parameter(description = "List of names of the roles to add to the specified User", required = true)
             @QueryParam("roles") List<String> roles) {

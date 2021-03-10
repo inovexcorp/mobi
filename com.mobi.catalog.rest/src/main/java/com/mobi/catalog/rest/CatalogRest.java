@@ -1064,11 +1064,11 @@ public class CatalogRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "Required title for the new Tag", required = true)
             @FormDataParam("title") String title,
-            @Parameter(description = "optional description for the new Tag")
+            @Parameter(description = "Optional description for the new Tag")
             @FormDataParam("description") String description,
-            @Parameter(description = "required IRI for the new Tag. Must be unique in the repository", required = true)
+            @Parameter(description = "Required IRI for the new Tag. Must be unique in the repository", required = true)
             @FormDataParam("iri") String iri,
-            @Parameter(description = "required String representing the Commit ID", required = true)
+            @Parameter(description = "Required String representing the Commit ID", required = true)
             @FormDataParam("commit") String commitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(iri, "Tag iri is required");
@@ -1663,7 +1663,7 @@ public class CatalogRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "Field with sort order specified")
             @DefaultValue("http://purl.org/dc/terms/title") @QueryParam("sort") String sort,
-            @Parameter(description = "offset for the page")
+            @Parameter(description = "Offset for the page")
             @DefaultValue("0") @QueryParam("offset") int offset,
             @Parameter(description = "Number of Branches to return in one page")
             @DefaultValue("100") @QueryParam("limit") int limit,

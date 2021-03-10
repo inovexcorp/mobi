@@ -171,9 +171,9 @@ public class GroupRest {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response createGroup(
-            @Parameter(description = "title of the Group", required = true)
+            @Parameter(description = "Title of the Group", required = true)
             @FormDataParam("title") String title,
-            @Parameter(description = "description of the Group", required = true)
+            @Parameter(description = "Description of the Group", required = true)
             @FormDataParam("description") String description,
             @Parameter(description = "List of roles of the Group", required = true)
             @FormDataParam("roles") List<FormDataBodyPart> roles,

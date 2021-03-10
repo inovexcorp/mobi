@@ -203,7 +203,7 @@ public class DelimitedRest {
     public Response upload(
             @Parameter(description = "InputStream of a delimited document passed as form data", required = true)
             @FormDataParam("delimitedFile") InputStream fileInputStream,
-            @Parameter(description = "information about the file being uploaded, including the name", hidden = true)
+            @Parameter(description = "Information about the file being uploaded, including the name", hidden = true)
             @FormDataParam("delimitedFile") FormDataContentDisposition fileDetail) {
         ByteArrayOutputStream fileOutput;
         try {
@@ -298,7 +298,7 @@ public class DelimitedRest {
             @FormDataParam("jsonld") String jsonld,
             @Parameter(description = "RDF serialization to use if getting a preview")
             @DefaultValue("jsonld") @QueryParam("format") String format,
-            @Parameter(description = "whether the delimited file has headers")
+            @Parameter(description = "Whether the delimited file has headers")
             @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
             @Parameter(description = "Character the columns are separated by if it is a CSV")
             @DefaultValue(",") @QueryParam("separator") String separator) {
@@ -471,7 +471,7 @@ public class DelimitedRest {
     @ResourceId(type = ValueType.QUERY, value = "ontologyRecordIRI")
     public Response etlFileOntology(
             @Context ContainerRequestContext context,
-            @Parameter(description = "name of the delimited document in the data/tmp/ directory", required = true)
+            @Parameter(description = "Name of the delimited document in the data/tmp/ directory", required = true)
             @PathParam("documentName") String fileName,
             @Parameter(description = "ID of  the MappingRecord", required = true)
             @QueryParam("mappingRecordIRI") String mappingRecordIRI,
@@ -479,7 +479,7 @@ public class DelimitedRest {
             @QueryParam("ontologyRecordIRI") String ontologyRecordIRI,
             @Parameter(description = "ID of the BranchRecord", required = true)
             @QueryParam("branchIRI") String branchIRI,
-            @Parameter(description = "whether to treat the mapped data as an update or new additions")
+            @Parameter(description = "Whether to treat the mapped data as an update or new additions")
             @DefaultValue("false") @QueryParam("update") boolean update,
             @Parameter(description = "Whether the delimited file has headers")
             @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
@@ -607,9 +607,9 @@ public class DelimitedRest {
             }
     )
     public Response getRows(
-            @Parameter(description = "name of the delimited document in the data/tmp/ directory", required = true)
+            @Parameter(description = "Name of the delimited document in the data/tmp/ directory", required = true)
             @PathParam("documentName") String fileName,
-            @Parameter(description = "number of rows to retrieve from the delimited document")
+            @Parameter(description = "Number of rows to retrieve from the delimited document")
             @DefaultValue("10") @QueryParam("rowCount") int rowEnd,
             @Parameter(description = "Character the columns are separated by")
             @DefaultValue(",") @QueryParam("separator") String separator) {

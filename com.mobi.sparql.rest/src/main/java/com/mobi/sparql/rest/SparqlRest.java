@@ -185,11 +185,11 @@ public class SparqlRest {
     )
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response queryRdf(
-            @Parameter(description = "a string representing a SPARQL query", required = true)
+            @Parameter(description = "A string representing a SPARQL query", required = true)
             @QueryParam("query") String queryString,
-            @Parameter(description = "an optional DatasetRecord IRI representing the Dataset to query")
+            @Parameter(description = "An optional DatasetRecord IRI representing the Dataset to query")
             @QueryParam("dataset") String datasetRecordId,
-            @Parameter(description = "used to specify certain media types which are acceptable for the response", required = true)
+            @Parameter(description = "Used to specify certain media types which are acceptable for the response", required = true)
             @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
@@ -257,12 +257,12 @@ public class SparqlRest {
     public Response downloadRdfQuery(
             @Parameter(description = "The SPARQL query to execute", required = true)
             @QueryParam("query") String queryString,
-            @Parameter(description = "an optional DatasetRecord IRI representing the Dataset to query")
+            @Parameter(description = "An optional DatasetRecord IRI representing the Dataset to query")
             @QueryParam("dataset") String datasetRecordId,
-            @Parameter(description = "used to specify certain media types which are acceptable for the response",
+            @Parameter(description = "Used to specify certain media types which are acceptable for the response",
                     required = true)
             @QueryParam("fileType") String fileType,
-            @Parameter(description = "used to specify certain media types which are acceptable for the response",
+            @Parameter(description = "Used to specify certain media types which are acceptable for the response",
                     required = true)
             @HeaderParam("accept") String acceptString,
             @Parameter(description = "The optional file name for the download file")

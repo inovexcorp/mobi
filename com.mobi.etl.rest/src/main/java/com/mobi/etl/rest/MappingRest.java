@@ -164,7 +164,7 @@ public class MappingRest {
     @ResourceId("http://mobi.com/catalog-local")
     public Response upload(
             @Context ContainerRequestContext context,
-            @Parameter(description = "required title for the new MappingRecord", required = true)
+            @Parameter(description = "Required title for the new MappingRecord", required = true)
             @FormDataParam("title") String title,
             @Parameter(description = "Optional description for the new MappingRecord")
             @FormDataParam("description") String description,

@@ -489,7 +489,7 @@ public class OntologyRest {
             @Parameter(description = "The desired RDF return format.",
                     schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "owl/xml", "turtle"}))
             @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
-            @Parameter(description = "the file name for the ontology file")
+            @Parameter(description = "The file name for the ontology file")
             @DefaultValue("ontology") @QueryParam("fileName") String fileName
     ) {
         try {
@@ -551,13 +551,13 @@ public class OntologyRest {
             @Context ContainerRequestContext context,
             @Parameter(description = "String representing the record Resource id", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "the String representing the Branch Resource id", required = true)
+            @Parameter(description = "The String representing the Branch Resource id", required = true)
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "the String representing the Commit Resource id", required = true)
+            @Parameter(description = "The String representing the Commit Resource id", required = true)
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "the String representing the edited entity id", required = true)
+            @Parameter(description = "The String representing the edited entity id", required = true)
             @QueryParam("entityId") String entityIdStr,
-            @Parameter(description = "the String representing the edited Resource", required = true)
+            @Parameter(description = "The String representing the edited Resource", required = true)
                     String entityJson) {
         try {
             Ontology ontology = getOntology(context,
@@ -620,7 +620,7 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource id", required = true)
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "ontology file to upload", required = true)
+            @Parameter(description = "Ontology file to upload", required = true)
             @FormDataParam("file") InputStream fileInputStream) {
         long totalTime = System.currentTimeMillis();
 

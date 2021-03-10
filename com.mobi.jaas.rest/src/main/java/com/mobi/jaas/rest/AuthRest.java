@@ -142,7 +142,7 @@ public class AuthRest {
             @Context ContainerRequestContext context,
             @Parameter(description = "Username of user", required = true)
             @QueryParam("username") String username,
-            @Parameter(description = "password of user",
+            @Parameter(description = "Password of user",
                     schema = @Schema(type = "string", format = "password"), required = true)
             @QueryParam("password") String password) {
         Optional<UserCredentials> userCredsOptional = processFormAuth(username, password);
