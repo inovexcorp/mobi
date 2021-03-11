@@ -81,7 +81,7 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>etl.api</artifactId>
+            <artifactId>ontology.cacheloader.api</artifactId>
             <version>${project.version}</version>
         </dependency>
 

@@ -109,6 +109,8 @@
         <module>com.mobi.email.impl</module>
         <module>com.mobi.utils.cli</module>
         <module>com.mobi.persistence.utils.impl</module>
+        <module>com.mobi.ontology.cacheloader.api</module>
+        <module>com.mobi.ontology.cacheloader.impl</module>
     </modules>
 
     <properties>

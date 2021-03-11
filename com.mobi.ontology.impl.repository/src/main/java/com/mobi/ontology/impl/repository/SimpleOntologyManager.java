@@ -34,8 +34,8 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
-import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.exception.MobiException;
+import com.mobi.ontology.cacheloader.api.CacheLoader;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
@@ -73,7 +73,7 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
     private DatasetManager datasetManager;
     private ImportsResolver importsResolver;
     private BNodeService bNodeService;
-    private RDFImportService importService;
+    private CacheLoader cacheLoader;
 
 
     public SimpleOntologyManager() {
@@ -148,8 +148,8 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
     }
 
     @Reference
-    public void setRDFImportService(RDFImportService importService) {
-        this.importService = importService;
+    public void setCacheLoader(CacheLoader cacheLoader) {
+        this.cacheLoader = cacheLoader;
     }
 
     /**
@@ -257,7 +257,7 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
 
         String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
         return new SimpleOntology(key, ontologyFile, repository, this, catalogManager, configProvider, datasetManager,
-                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, importService);
+                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, cacheLoader);
     }
 
     /**
@@ -273,6 +273,6 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
 
         String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
         return new SimpleOntology(key, repository, this, catalogManager, configProvider, datasetManager,
-                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, importService);
+                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, cacheLoader);
     }
 }

@@ -23,23 +23,6 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
@@ -51,9 +34,8 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.impl.SimpleDatasetRepositoryConnection;
 import com.mobi.dataset.ontology.dataset.Dataset;
-import com.mobi.etl.api.config.rdf.ImportServiceConfig;
-import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.exception.MobiException;
+import com.mobi.ontology.cacheloader.api.CacheLoader;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
@@ -87,13 +69,29 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import javax.cache.Cache;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Optional;
-import javax.cache.Cache;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
@@ -143,7 +141,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     private RepositoryConfig cacheRepoConfig;
 
     @Mock
-    private RDFImportService importService;
+    private CacheLoader cacheLoader;
 
     private SimpleOntologyManager manager;
     private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
@@ -281,12 +279,12 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         });
 
         doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(2, Resource.class);
+            Resource graph = invocation.getArgumentAt(1, Resource.class);
             try (RepositoryConnection conn = cacheRepo.getConnection()) {
                 conn.add(model, graph);
             }
             return null;
-        }).when(importService).importFile(any(ImportServiceConfig.class), any(File.class), any(Resource.class));
+        }).when(cacheLoader).loadOntologyFile(any(File.class), any(Resource.class), any(String.class));
 
         manager = Mockito.spy(new SimpleOntologyManager());
         injectOrmFactoryReferencesIntoService(manager);
@@ -301,7 +299,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         manager.setbNodeService(bNodeService);
         manager.setImportsResolver(importsResolver);
         manager.setDatasetManager(datasetManager);
-        manager.setRDFImportService(importService);
+        manager.setCacheLoader(cacheLoader);
         manager.activate();
     }
 
