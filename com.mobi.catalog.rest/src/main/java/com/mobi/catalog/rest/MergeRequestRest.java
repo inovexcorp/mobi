@@ -223,20 +223,20 @@ public class MergeRequestRest {
     )
     public Response createMergeRequests(
             @Context ContainerRequestContext context,
-            @Parameter(description = "The required title for the new {MergeRequest}", required = true)
+            @Parameter(description = "The required title for the new MergeRequest", required = true)
             @FormDataParam("title") String title,
-            @Parameter(description = "Optional description for the new {MergeRequest}")
+            @Parameter(description = "Optional description for the new MergeRequest")
             @FormDataParam("description") String description,
-            @Parameter(description = "Required IRI of the {VersionedRDFRecord} to associate with the "
+            @Parameter(description = "Required IRI of the VersionedRDFRecord to associate with the "
                     + "new {MergeRequest}", required = true)
             @FormDataParam("recordId") String recordId,
-            @Parameter(description = "Required IRI of the source {Branch} with the new commits to add "
+            @Parameter(description = "Required IRI of the source Branch with the new commits to add "
                     + "to the target {Branch} of the new {MergeRequest", required = true)
             @FormDataParam("sourceBranchId") String sourceBranchId,
-            @Parameter(description = "Required IRI of the target {Branch} which will receive the new commits "
+            @Parameter(description = "Required IRI of the target Branch which will receive the new commits "
                     + "from the source {Branch} of the new {@link MergeRequest}", required = true)
             @FormDataParam("targetBranchId") String targetBranchId,
-            @Parameter(description = "List of username of {User}s to assign the new {MergeRequest} to", required = true)
+            @Parameter(description = "List of username of Users to assign the new MergeRequest to", required = true)
             @FormDataParam("assignees") List<FormDataBodyPart> assignees,
             @Parameter(description = "Boolean value to remove source")
             @FormDataParam("removeSource") @DefaultValue("false") boolean removeSource) {
@@ -298,7 +298,7 @@ public class MergeRequestRest {
             }
     )
     public Response getMergeRequest(
-            @Parameter(description = "String representing the {MergeRequest}", required = true)
+            @Parameter(description = "String representing the MergeRequest", required = true)
             @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
@@ -336,9 +336,9 @@ public class MergeRequestRest {
             }
     )
     public Response updateMergeRequest(
-            @Parameter(description = "String representing the {MergeRequest} ID", required = true)
+            @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId,
-            @Parameter(description = "String representing the JSONLD representation of the updated {MergeRequest}", required = true)
+            @Parameter(description = "String representing the JSONLD representation of the updated MergeRequest", required = true)
                     String newMergeRequest) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {

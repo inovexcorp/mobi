@@ -246,7 +246,7 @@ public class UserRest {
             }
     )
     public Response getUser(
-            @Parameter(description = "Username of the {User} to retrieve", required = true)
+            @Parameter(description = "Username of the User to retrieve", required = true)
             @PathParam("username") String username) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);

@@ -274,7 +274,7 @@ public class CommitRest {
             }
     )
     public Response getCompiledResource(
-            @Parameter(description = "{String} value of the {Commit} ID", required = true)
+            @Parameter(description = "String value of the Commit ID", required = true)
             @PathParam("commitId") String commitId,
             @Parameter(description = "Optional Resource identifying the Entity to filter the chain of Commit",
                     required = false)

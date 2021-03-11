@@ -243,7 +243,7 @@ public class ExplorableDatasetRest {
             }
     )
     public Response getClassDetails(
-            @Parameter(description = "ID of the {DatasetRecord} for the {Dataset} from which to retrieve the data", required = true)
+            @Parameter(description = "ID of the DatasetRecord for the Dataset from which to retrieve the data", required = true)
             @PathParam("recordIRI") String recordIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
@@ -289,7 +289,7 @@ public class ExplorableDatasetRest {
     )
     public Response getInstanceDetails(
             @Context UriInfo uriInfo,
-            @Parameter(description = "IRI of the {DatasetRecord} for the {Dataset} to summarize", required = true)
+            @Parameter(description = "IRI of the DatasetRecord for the Dataset to summarize", required = true)
             @PathParam("recordIRI") String recordIRI,
             @Parameter(description = "IRI of the class type to get", required = true)
             @PathParam("classIRI") String classIRI,
@@ -345,7 +345,7 @@ public class ExplorableDatasetRest {
             }
     )
     public Response getClassPropertyDetails(
-            @Parameter(description = "Id of the {DatasetRecord} for the {Dataset} to summarize", required = true)
+            @Parameter(description = "Id of the DatasetRecord for the Dataset to summarize", required = true)
             @PathParam("recordIRI") String recordIRI,
             @Parameter(description = "IRI of the class type to get property details for", required = true)
             @PathParam("classIRI") String classIRI) {
@@ -384,7 +384,7 @@ public class ExplorableDatasetRest {
             }
     )
     public Response createInstance(
-            @Parameter(description = "Id of the {DatasetRecord} for the {Dataset}", required = true)
+            @Parameter(description = "Id of the DatasetRecord for the Dataset", required = true)
             @PathParam("recordIRI") String recordIRI,
             @Parameter(description = "New Instance JSON", required = true)
                     String newInstanceJson) {
@@ -433,7 +433,7 @@ public class ExplorableDatasetRest {
             }
     )
     public Response getInstance(
-            @Parameter(description = "IRI of the {DatasetRecord} for the {Dataset} to summarize", required = true)
+            @Parameter(description = "IRI of the DatasetRecord for the Dataset to summarize", required = true)
             @PathParam("recordIRI") String recordIRI,
             @Parameter(description = "IRI of the instance to get", required = true)
             @PathParam("instanceIRI") String instanceIRI) {
@@ -477,7 +477,7 @@ public class ExplorableDatasetRest {
             }
     )
     public Response updateInstance(
-            @Parameter(description = "Id of the {DatasetRecord} for the {Dataset} to summarize.", required = true)
+            @Parameter(description = "Id of the DatasetRecord for the Dataset to summarize.", required = true)
             @PathParam("recordIRI") String recordIRI,
             @Parameter(description = "IRI of the instance to update", required = true)
             @PathParam("instanceIRI") String instanceIRI,
@@ -531,7 +531,7 @@ public class ExplorableDatasetRest {
             }
     )
     public Response deleteInstance(
-            @Parameter(description = "IRI of the {DatasetRecord} for the {Dataset}", required = true)
+            @Parameter(description = "IRI of the DatasetRecord for the Dataset", required = true)
             @PathParam("recordIRI") String recordIRI,
             @Parameter(description = "IRI of the instance to delete", required = true)
             @PathParam("instanceIRI") String instanceIRI) {
