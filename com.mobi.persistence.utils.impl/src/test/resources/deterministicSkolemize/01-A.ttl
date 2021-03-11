@@ -1,0 +1,5 @@
+@prefix : <http://test.com#> .
+
+:A :pred1 "A" .
+
+:B :pred1 "B" .

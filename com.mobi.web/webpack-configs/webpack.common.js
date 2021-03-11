@@ -62,7 +62,9 @@ module.exports = {
             }
         }),
         new CopyWebpackPlugin([
-            { from: 'src/main/resources/public/images', to: 'images' }
+            { from: 'src/main/resources/public/images', to: 'images'},
+            { from: 'src/main/resources/public/css/Material_Icons', to: 'css/Material_Icons'}
+            
         ])
     ]
 }
