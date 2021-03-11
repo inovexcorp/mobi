@@ -26,6 +26,8 @@ package com.mobi.catalog.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.builder.Conflict;
@@ -43,7 +45,9 @@ import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.ontologies.dcterms._Thing;
+import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.RepositoryResults;
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.*;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
@@ -60,7 +64,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -139,11 +148,15 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     private static final IRI DELETIONS_CATALOG_IRI = VALUE_FACTORY.createIRI(Revision.deletions_IRI);
     private static final IRI LATEST_VERSION_CATALOG_IRI = VALUE_FACTORY.createIRI(VersionedRecord.latestVersion_IRI);
 
+    @Mock
+    SesameTransformer transformer;
+
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
     @Before
     public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
@@ -152,7 +165,19 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
         }
 
+        // mock sesameTransformer
+        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
+                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
+        when(transformer.mobiIRI(any(org.eclipse.rdf4j.model.IRI.class)))
+                .thenAnswer(i -> Values.mobiIRI(i.getArgumentAt(0, org.eclipse.rdf4j.model.IRI.class)));
+        when(transformer.sesameModel(any(Model.class)))
+                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
+        when(transformer.sesameStatement(any(Statement.class)))
+                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
+
+
         service = new SimpleCatalogUtilsService();
+        service.setSesameTransformer(transformer);
         injectOrmFactoryReferencesIntoService(service);
         service.setMf(MODEL_FACTORY);
         service.setVf(VALUE_FACTORY);
@@ -2041,10 +2066,10 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         }
     }
 
-    /* getCompiledResource(List<Resource>, RepositoryConnection) */
+    /* getCompiledResource(Resource, RepositoryConnection) */
 
     @Test
-    public void getCompiledResourceWithListTest() {
+    public void getCompiledResourceWithIdTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1");
@@ -2055,14 +2080,110 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             expected.add(VALUE_FACTORY.createIRI("http://mobi.com/test/class0"), typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
 
             Model result = service.getCompiledResource(commitId, conn);
-            result.forEach(statement -> assertTrue(expected.contains(statement)));
+            expected.forEach(statement -> assertTrue(result.contains(statement)));
         }
     }
 
-    /* getCompiledResource(Resource, RepositoryConnection) */
+    @Test
+    public void getCompiledResourceWithIdChangeEntityTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename1");
+            Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+            expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
+
+            Model result = service.getCompiledResource(commitId, conn);
+            expected.forEach(statement -> assertTrue(result.contains(statement)));
+            assertEquals(expected.size(), result.size());
+        }
+    }
 
     @Test
-    public void getCompiledResourceWithIdTest() {
+    public void getCompiledResourceWithIdBlankNodeTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank1");
+            Resource blankNode = VALUE_FACTORY.createBNode("genid1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(blankNode, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
+            expected.add(blankNode, titleIRI, VALUE_FACTORY.createLiteral("Test Blank 1 Title"));
+
+            Model model = service.getCompiledResource(commitId, conn);
+            model.forEach(statement -> {
+                assertTrue(statement.getSubject() instanceof BNode);
+                Statement temp = VALUE_FACTORY.createStatement(blankNode, statement.getPredicate(), statement.getObject());
+                assertTrue(expected.contains(temp));
+            });
+            assertEquals(expected.size(), model.size());
+        }
+    }
+
+    /* getCompiledResourceFile(Resource, RepositoryConnection) */
+
+    @Test
+    public void getCompiledResourceFileWithIdTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1");
+            Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+            expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test 1 Title"));
+            expected.add(VALUE_FACTORY.createIRI("http://mobi.com/test/class0"), typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
+
+            File file = service.getCompiledResourceFile(commitId, conn);
+            Model model = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(expected.size(), model.size());
+            expected.forEach(statement -> assertTrue(model.contains(statement)));
+            file.delete();
+        }
+    }
+
+    @Test
+    public void getCompiledResourceFileWithIdChangeEntityTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename1");
+            Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+            expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
+
+            File file = service.getCompiledResourceFile(commitId, conn);
+            Model model = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(expected.size(), model.size());
+            expected.forEach(statement -> assertTrue(model.contains(statement)));
+            file.delete();
+        }
+    }
+
+    @Test
+    public void getCompiledResourceFileWithIdBlankNodeTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank1");
+            Resource blankNode = VALUE_FACTORY.createBNode("genid1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(blankNode, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
+            expected.add(blankNode, titleIRI, VALUE_FACTORY.createLiteral("Test Blank 1 Title"));
+
+            File file = service.getCompiledResourceFile(commitId, conn);
+            Model model = Models.createModel(new FileInputStream(file), transformer);
+            model.forEach(statement -> {
+                assertTrue(statement.getSubject() instanceof BNode);
+                Statement temp = VALUE_FACTORY.createStatement(blankNode, statement.getPredicate(), statement.getObject());
+                assertTrue(expected.contains(temp));
+            });
+            assertEquals(expected.size(), model.size());
+        }
+    }
+
+    /* getCompiledResource(List<Resource>, RepositoryConnection) */
+
+    @Test
+    public void getCompiledResourceWithListTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1")).collect(Collectors.toList());
@@ -2073,7 +2194,104 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             expected.add(classStmt);
 
             Model result = service.getCompiledResource(commits, conn);
-            result.forEach(statement -> assertTrue(expected.contains(statement)));
+            assertEquals(expected.size(), result.size());
+            expected.forEach(statement -> assertTrue(result.contains(statement)));
+        }
+    }
+
+    @Test
+    public void getCompiledResourceWithListChangeEntityTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename0")).collect(Collectors.toList());
+            Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+            expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
+
+            Model result = service.getCompiledResource(commits, conn);
+            assertEquals(expected.size(), result.size());
+            expected.forEach(statement -> assertTrue(result.contains(statement)));
+        }
+    }
+
+    @Test
+    public void getCompiledResourceWithListBlankNodeTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank0")).collect(Collectors.toList());
+            Resource blankNode = VALUE_FACTORY.createBNode("genid1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(blankNode, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
+            expected.add(blankNode, titleIRI, VALUE_FACTORY.createLiteral("Test Blank 1 Title"));
+
+            Model model = service.getCompiledResource(commits, conn);
+            model.forEach(statement -> {
+                assertTrue(statement.getSubject() instanceof BNode);
+                Statement temp = VALUE_FACTORY.createStatement(blankNode, statement.getPredicate(), statement.getObject());
+                assertTrue(expected.contains(temp));
+            });
+            assertEquals(expected.size(), model.size());
+        }
+    }
+
+    /* getCompiledResourceFile(List<Resource>, RepositoryConnection) */
+
+    @Test
+    public void getCompiledResourceFileWithListTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1")).collect(Collectors.toList());
+            Model expected = MODEL_FACTORY.createModel(Collections.singleton(
+                    VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"))));
+            Statement classStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
+                    VALUE_FACTORY.createLiteral("Class Title 2"));
+            expected.add(classStmt);
+
+            File file = service.getCompiledResourceFile(commits, conn);
+            Model model = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(expected.size(), model.size());
+            expected.forEach(statement -> assertTrue(model.contains(statement)));
+            file.delete();
+        }
+    }
+
+    @Test
+    public void getCompiledResourceFileWithListChangeEntityTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename0")).collect(Collectors.toList());
+            Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+            expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
+
+            File file = service.getCompiledResourceFile(commits, conn);
+            Model model = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(expected.size(), model.size());
+            expected.forEach(statement -> assertTrue(model.contains(statement)));
+            file.delete();
+        }
+    }
+
+    @Test
+    public void getCompiledResourceFileWithListBlankNodeTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank0")).collect(Collectors.toList());
+            Resource blankNode = VALUE_FACTORY.createBNode("genid1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(blankNode, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
+            expected.add(blankNode, titleIRI, VALUE_FACTORY.createLiteral("Test Blank 1 Title"));
+
+            File file = service.getCompiledResourceFile(commits, conn);
+            Model model = Models.createModel(new FileInputStream(file), transformer);
+            model.forEach(statement -> {
+                assertTrue(statement.getSubject() instanceof BNode);
+                Statement temp = VALUE_FACTORY.createStatement(blankNode, statement.getPredicate(), statement.getObject());
+                assertTrue(expected.contains(temp));
+            });
+            assertEquals(expected.size(), model.size());
         }
     }
 

@@ -2287,6 +2287,21 @@ describe('Ontology Manager service', function() {
                 });
             flushAndVerify($httpBackend);
         });
+        it('is an identical file', function() {
+            $httpBackend.expectPUT('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + this.params,
+                function(data) {
+                    return data instanceof FormData;
+                }, function(headers) {
+                    return headers['Content-Type'] === undefined;
+                }).respond(204, { additions: [], deletions: [] });
+            ontologyManagerSvc.uploadChangesFile(this.file, this.recordId, this.branchId, this.commitId)
+                .then(() => {
+                    fail('Promise should have rejected');
+                }, response => {
+                    expect(response).toEqual('Uploaded file is identical to current branch.');
+                });
+            flushAndVerify($httpBackend);
+        });
         it('unless an error occurs', function() {
             $httpBackend.expectPUT('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + this.params,
                 function(data) {

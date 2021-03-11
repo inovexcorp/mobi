@@ -112,6 +112,7 @@
         <module>com.mobi.preference.impl</module>
         <module>com.mobi.preference.rest</module>
         <module>com.mobi.notification.impl</module>
+        <module>com.mobi.persistence.utils.impl</module>
     </modules>
 
     <properties>

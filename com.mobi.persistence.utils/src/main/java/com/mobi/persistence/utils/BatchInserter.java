@@ -36,13 +36,13 @@ import java.util.Map;
 
 public class BatchInserter extends AbstractRDFHandler {
 
-    private RepositoryConnection conn;
-    private SesameTransformer transformer;
-    private long count = 0;
-    private long batchSize = 10000;
-    private final Map<String, String> namespaces = new HashMap<>();
-    private Logger logger = null;
-    private boolean printToSystem = false;
+    protected RepositoryConnection conn;
+    protected SesameTransformer transformer;
+    protected long count = 0;
+    protected long batchSize = 10000;
+    protected final Map<String, String> namespaces = new HashMap<>();
+    protected Logger logger = null;
+    protected boolean printToSystem = false;
 
     /**
      * Creates a new BatchInserter that will use the provided RepositoryConnection to insert statements
