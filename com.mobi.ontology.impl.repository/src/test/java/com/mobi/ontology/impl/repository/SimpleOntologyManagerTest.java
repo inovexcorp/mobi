@@ -31,6 +31,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
@@ -50,6 +51,9 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.impl.SimpleDatasetRepositoryConnection;
 import com.mobi.dataset.ontology.dataset.Dataset;
+import com.mobi.etl.api.config.rdf.ImportServiceConfig;
+import com.mobi.etl.api.rdf.RDFImportService;
+import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
@@ -69,6 +73,7 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
+import org.apache.commons.lang.NotImplementedException;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -81,7 +86,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Optional;
 import javax.cache.Cache;
@@ -104,7 +112,10 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     private OntologyId ontologyId;
 
     @Mock
-    private Ontology ontology;
+    private SimpleOntology ontology;
+
+    @Mock
+    private Ontology nonSimpleOntology;
 
     @Mock
     private Ontology vocabulary;
@@ -130,6 +141,9 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     @Mock
     private RepositoryConfig cacheRepoConfig;
 
+    @Mock
+    private RDFImportService importService;
+
     private SimpleOntologyManager manager;
     private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
@@ -152,6 +166,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     private Repository repo;
     private Repository vocabRepo;
     private Repository cacheRepo;
+    private File file;
 
     private static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
 
@@ -192,8 +207,18 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
         when(ontologyId.getOntologyIdentifier()).thenReturn(ontologyIRI);
 
+        when(nonSimpleOntology.asModel(MODEL_FACTORY)).thenReturn(ontologyModel);
+        when(nonSimpleOntology.getImportsClosure()).thenReturn(Collections.singleton(nonSimpleOntology));
+        when(nonSimpleOntology.getOntologyId()).thenReturn(ontologyId);
+        when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
+        when(ontologyId.getOntologyIdentifier()).thenReturn(ontologyIRI);
+
         model = MODEL_FACTORY.createModel();
         model.add(VALUE_FACTORY.createIRI("urn:ontologyIRI"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(OWL.ONTOLOGY.stringValue()));
+        Path path = Files.createTempFile(null, null);
+        Rio.write(Values.sesameModel(model), Files.newOutputStream(path), RDFFormat.RDFXML);
+        file = path.toFile();
+        file.deleteOnExit();
 
         InputStream testVocabulary = getClass().getResourceAsStream("/test-vocabulary.ttl");
         when(vocabulary.asModel(MODEL_FACTORY)).thenReturn(Values.mobiModel(Rio.parse(testVocabulary, "", RDFFormat.TURTLE)));
@@ -249,6 +274,14 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
             return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY);
         });
 
+        doAnswer(invocation -> {
+            Resource graph = invocation.getArgumentAt(2, Resource.class);
+            try (RepositoryConnection conn = cacheRepo.getConnection()) {
+                conn.add(model, graph);
+            }
+            return null;
+        }).when(importService).importFile(any(ImportServiceConfig.class), any(File.class), any(Resource.class));
+
         manager = Mockito.spy(new SimpleOntologyManager());
         injectOrmFactoryReferencesIntoService(manager);
         manager.setValueFactory(VALUE_FACTORY);
@@ -262,6 +295,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         manager.setbNodeService(bNodeService);
         manager.setImportsResolver(importsResolver);
         manager.setDatasetManager(datasetManager);
+        manager.setRDFImportService(importService);
         manager.activate();
     }
 
@@ -275,11 +309,12 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     /* applyChanges */
 
     @Test
-    public void testApplyChangesDifference() {Branch branch = branchFactory.createNew(branchIRI);
+    public void testApplyChangesDifference() {
+        Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
         manager.applyChanges(ontology, difference);
-        verify(catalogUtilsService).applyDifference(eq(ontologyModel), eq(difference));
+        verify(ontology).setDifference(eq(difference));
     }
 
     @Test
@@ -290,7 +325,15 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
         manager.applyChanges(ontology, inProgressCommit);
         verify(catalogUtilsService).getCommitDifference(eq(inProgressCommit.getResource()), any(RepositoryConnection.class));
-        verify(catalogUtilsService).applyDifference(eq(ontologyModel), eq(difference));
+        verify(ontology).setDifference(eq(difference));
+    }
+
+    @Test(expected = MobiException.class)
+    public void testApplyChangesDifferenceNotSimpleOntologyInstance() {
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
+        manager.applyChanges(nonSimpleOntology, difference);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -310,7 +353,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         verify(ontologyId).getOntologyIdentifier();
         verify(catalogManager).getInProgressCommit(eq(catalogIRI), eq(recordIRI), eq(inProgressCommit.getResource()));
         verify(catalogUtilsService).getCommitDifference(eq(inProgressCommit.getResource()), any(RepositoryConnection.class));
-        verify(catalogUtilsService).applyDifference(eq(ontologyModel), eq(difference));
+        verify(ontology).setDifference(eq(difference));
     }
 
     @Test
@@ -325,7 +368,17 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         verify(ontologyId).getOntologyIdentifier();
         verify(catalogManager).getInProgressCommit(eq(catalogIRI), eq(recordIRI), eq(inProgressCommit.getResource()));
         verify(catalogUtilsService).getCommitDifference(eq(inProgressCommit.getResource()), any(RepositoryConnection.class));
-        verify(catalogUtilsService).applyDifference(eq(ontologyModel), eq(difference));
+        verify(ontology).setDifference(eq(difference));
+    }
+
+    @Test(expected = MobiException.class)
+    public void testApplyChangesInProgressCommitIdNotSimpleOntology() {
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
+
+        when(ontologyId.getOntologyIRI()).thenReturn(Optional.empty());
+        manager.applyChanges(nonSimpleOntology, inProgressCommit.getResource());
     }
 
     @Test(expected = IllegalStateException.class)
@@ -354,7 +407,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(model);
+        when(catalogManager.getCompiledResourceFile(commitIRI)).thenReturn(file);
 
         Optional<Ontology> result = manager.retrieveOntologyByIRI(ontologyIRI);
         assertTrue(result.isPresent());
@@ -410,7 +463,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
-        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResource(commitIRI);
+        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResourceFile(commitIRI);
 
         manager.retrieveOntology(recordIRI);
     }
@@ -421,7 +474,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(model);
+        when(catalogManager.getCompiledResourceFile(commitIRI)).thenReturn(file);
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI);
         assertTrue(optionalOntology.isPresent());
@@ -487,7 +540,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResource(commitIRI);
+        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResourceFile(commitIRI);
 
         manager.retrieveOntology(recordIRI, branchIRI);
     }
@@ -498,7 +551,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(model);
+        when(catalogManager.getCompiledResourceFile(commitIRI)).thenReturn(file);
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI);
         assertTrue(optionalOntology.isPresent());
@@ -554,7 +607,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         // Setup:
         Commit commit = commitFactory.createNew(commitIRI);
         when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
-        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResource(commitIRI);
+        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResourceFile(commitIRI);
 
         manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
     }
@@ -564,7 +617,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         // Setup:
         Commit commit = commitFactory.createNew(commitIRI);
         when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(model);
+        when(catalogManager.getCompiledResourceFile(commitIRI)).thenReturn(file);
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
         assertTrue(optionalOntology.isPresent());
@@ -614,5 +667,17 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         manager.deleteOntologyBranch(recordIRI, branchIRI);
         verify(catalogManager).removeBranch(catalogIRI, recordIRI, branchIRI);
         verify(ontologyCache).removeFromCache(recordIRI.stringValue(), commitIRI.stringValue());
+    }
+
+    /* createOntology */
+
+    @Test(expected = NotImplementedException.class)
+    public void testCreateOntologyWithModel() throws Exception {
+        manager.createOntology(model);
+    }
+
+    @Test(expected = NotImplementedException.class)
+    public void testCreateOntologyWithStream() throws Exception {
+        manager.createOntology(getClass().getResourceAsStream("/test-ontology.ttl"), false);
     }
 }

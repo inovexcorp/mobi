@@ -84,7 +84,7 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                             com.mobi.document.translator,
-                            com.mobi.document.translator.expression,
+                            com.mobi.document.translator.expression.*,
                             com.mobi.document.translator.ontology,
                             com.mobi.document.translator.stack
                         </Export-Package>

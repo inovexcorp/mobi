@@ -517,6 +517,84 @@ GRAPH additions:testLoner {
 GRAPH deletions:testLoner {
 }
 
+# Test changing entity IRI
+
+GRAPH commits:testRename0 {
+    commits:testRename0 a mcat:Commit ;
+        dc:title "Commit Test Rename 0" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:testRename0 .
+
+    revisions:testRename0 a mcat:Revision ;
+        mcat:additions additions:testRename0 ;
+        mcat:deletions deletions:testRename0 .
+}
+
+GRAPH additions:testRename0 {
+    <http://mobi.com/test/ontology> a owl:Ontology ;
+        dc:title "Test Rename 0 Title" .
+}
+
+GRAPH commits:testRename1 {
+    commits:testRename1 a mcat:Commit ;
+        dc:title "Commit Test Rename 1" ;
+        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:testRename0 ;
+        prov:generated revisions:testRename1 .
+
+    revisions:testRename1 a mcat:Revision ;
+        mcat:additions additions:testRename1 ;
+        mcat:deletions deletions:testRename1 .
+}
+
+GRAPH additions:testRename1 {
+    <http://mobi.com/test/ontology1> a owl:Ontology ;
+        dc:title "Test Rename 0 Title" .
+}
+
+GRAPH deletions:testRename1 {
+    <http://mobi.com/test/ontology> a owl:Ontology ;
+        dc:title "Test Rename 0 Title" .
+}
+
+# Test changing blank node
+
+GRAPH commits:testBlank0 {
+    commits:testBlank0 a mcat:Commit ;
+        dc:title "Commit Test Blank 0" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:testBlank0 .
+
+    revisions:testBlank0 a mcat:Revision ;
+        mcat:additions additions:testBlank0 ;
+        mcat:deletions deletions:testBlank0 .
+}
+
+GRAPH additions:testBlank0 {
+    _:genid1 a owl:Class ;
+        dc:title "Test Blank 0 Title" .
+}
+
+GRAPH commits:testBlank1 {
+    commits:testBlank1 a mcat:Commit ;
+        dc:title "Commit Test Rename 1" ;
+        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:testBlank0 ;
+        prov:generated revisions:testBlank1 .
+
+    revisions:testBlank1 a mcat:Revision ;
+        mcat:additions additions:testBlank1 ;
+        mcat:deletions deletions:testBlank1 .
+}
+
+GRAPH additions:testBlank1 {
+    _:genid1 dc:title "Test Blank 1 Title" .
+}
+
+GRAPH deletions:testBlank1 {
+    _:genid1 dc:title "Test Blank 0 Title" .
+}
+
 # Complex Commit History Deletion Test
 
 GRAPH records:complex-record {

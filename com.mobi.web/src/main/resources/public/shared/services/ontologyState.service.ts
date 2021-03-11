@@ -1559,6 +1559,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         } else {
             self.setSelected(listItem.editorTabStates.project.entityIRI, false, listItem, 'project');
         }
+        listItem.seeHistory = false;
     }
     self.resetSearchTab = function(listItem = self.listItem) {
         httpService.cancel(listItem.editorTabStates.search.id);
