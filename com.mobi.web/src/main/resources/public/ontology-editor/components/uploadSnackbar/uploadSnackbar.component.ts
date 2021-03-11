@@ -65,7 +65,8 @@ function uploadSnackbarComponentCtrl(httpService, ontologyStateService, modalSer
         return get(promise, '$$state.status') === value;
     }
     dvm.isPending = function(item) {
-        return httpService.isPending(item.id);
+        let isProcessing = dvm.isFilePending(item.id)
+        return isProcessing ?  isProcessing : httpService.isPending(item.id);
     }
     dvm.attemptClose = function() {
         if (dvm.hasPending()) {
@@ -93,6 +94,10 @@ function uploadSnackbarComponentCtrl(httpService, ontologyStateService, modalSer
     }
     dvm.showUploadErrorsOverlay = function(item) {
         modalService.openModal('uploadErrorsOverlay', {item}, undefined, "lg");
+    }
+    dvm.isFilePending = (id) => {
+        const status = dvm.os.fileStatus.find(item => item.id == id);
+        return status ? status.isProcessing : false;
     }
 }
 

@@ -24,6 +24,7 @@ import { async } from '@angular/core/testing';
 import { promises } from 'dns';
 import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq, fromPairs } from 'lodash';
 import pako from 'pako';
+import * as jszip from 'jszip';
 ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
 
 /**
@@ -120,8 +121,8 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         if (file !== undefined) {
             const titleInfo = getFileTitleInfo(title);
             if (titleInfo.ext !== 'zip' && file.size) {
-                prepPromise = self.compressFile(file).then(blob => {
-                    fd.append('file', blob, title + '.gzip');
+                prepPromise = self.compressFile(file).then(file => {
+                    fd.append('file',file);
                 });
             } else {
                 prepPromise = Promise.resolve(fd.append('file', file));
@@ -141,7 +142,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
             const promise =  id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
             let resolver = promise.then(response => response.data, util.rejectErrorObject);
             callback(id, resolver, title);
-        }).then(response => response.data, util.rejectErrorObject);
+        }).then(response => { return response});
     };
 
     /**
@@ -1651,6 +1652,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.compressFile = function(file) {
         const reader = new FileReader();
+        const zip = new jszip();
         if (file && file.size) {
             reader.readAsArrayBuffer(file); 
         } else {
@@ -1659,8 +1661,15 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         return new Promise((resolve, reject) => {
             reader.onload = (evt) => {
                 try {
-                    const compressedData = pako.gzip(evt.target.result, {to: 'string'});
-                    resolve(new Blob([compressedData]));
+                   // const compressedData = pako.gzip(evt.target.result, {to: 'string'});
+                   // resolve(new Blob([compressedData]));
+                    zip.file(file.name, evt.target.result);
+                    zip.generateAsync({type: 'blob', compression:'DEFLATE'})
+                        .then((content) => {
+                            let fl = new File([content], file.name + '.zip')
+                            resolve(fl)
+                        })
+
                 } catch (error) {
                     reject(error);
                 }
