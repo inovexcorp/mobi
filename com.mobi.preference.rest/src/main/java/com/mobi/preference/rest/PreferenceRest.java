@@ -36,7 +36,6 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
-import com.mobi.preference.api.ontologies.Setting;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
@@ -87,7 +86,7 @@ public class PreferenceRest {
     OrmFactoryRegistry factoryRegistry;
 
     /**
-     * Returns a JSON object of user preferences and referenced entities for the active user
+     * Returns a JSON object of user preferences and referenced entities for the active user.
      *
      * @param context The context of the request.
      * @return A JSON object of user preferences for the active user
@@ -100,7 +99,7 @@ public class PreferenceRest {
         User user = getActiveUser(context, engineManager);
         Set<Preference> userPreferences = preferenceService.getUserPreferences(user);
         ObjectNode result = mapper.createObjectNode();
-        userPreferences.stream().forEach(pref -> {
+        userPreferences.forEach(pref -> {
             JsonNode jsonNode = getPreferenceAsJsonNode(pref);
             result.set(pref.getResource().stringValue(), jsonNode);
         });
@@ -108,7 +107,7 @@ public class PreferenceRest {
     }
 
     /**
-     * Returns a JSON object of a user preference and it's referenced entities with the provided resource id
+     * Returns a JSON object of a user preference and it's referenced entities with the provided resource id.
      *
      * @param context The context of the request.
      * @param preferenceId The resource id of the user preference to be retrieved
@@ -122,8 +121,8 @@ public class PreferenceRest {
     public Response getUserPreference(@Context ContainerRequestContext context,
                                       @PathParam("preferenceId") String preferenceId) {
         Preference preference = (Preference) preferenceService.getSetting(vf.createIRI(preferenceId))
-                .orElseThrow(() -> ErrorUtils.sendError("Preference with id " + preferenceId +
-                        " does not exist.", Response.Status.BAD_REQUEST));
+                .orElseThrow(() -> ErrorUtils.sendError("Preference with id " + preferenceId
+                        + " does not exist.", Response.Status.BAD_REQUEST));
         JsonNode result = getPreferenceAsJsonNode(preference);
         return Response.ok(result.toString()).build();
     }
@@ -213,9 +212,8 @@ public class PreferenceRest {
 
     private Preference getPreferenceFromModel(String preferenceId, String preferenceType, Model preferenceModel) {
         return getSpecificPreferenceFactory(preferenceType).getExisting(vf.createIRI(preferenceId),
-                preferenceModel).orElseThrow(() -> ErrorUtils.sendError("Could not parse " + preferenceType + " " +
-                "preference with id " +
-                preferenceId + " from request.", Response.Status.BAD_REQUEST));
+                preferenceModel).orElseThrow(() -> ErrorUtils.sendError("Could not parse " + preferenceType + " "
+                + "preference with id " + preferenceId + " from request.", Response.Status.BAD_REQUEST));
     }
 
     private OrmFactory<? extends Preference> getSpecificPreferenceFactory(String preferenceType) {

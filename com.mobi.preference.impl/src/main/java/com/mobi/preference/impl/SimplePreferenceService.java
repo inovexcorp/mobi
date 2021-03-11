@@ -106,13 +106,12 @@ public class SimplePreferenceService implements PreferenceService {
             Set<Resource> userPreferenceIris = conn.getStatements(null, vf.createIRI(Preference.forUser_IRI),
                     user.getResource(), context).stream().map(Statement::getSubject).collect(Collectors.toSet());
             return userPreferenceIris.stream().map(userPreferenceIri -> {
-                Model preferenceModel = RepositoryResults.asModelNoContext(conn.getStatements(userPreferenceIri, null
-                        , null, context), mf);
+                Model preferenceModel = RepositoryResults.asModelNoContext(conn.getStatements(userPreferenceIri, null,
+                        null, context), mf);
                 Preference preference =
                         preferenceFactory.getExisting(userPreferenceIri, preferenceModel).orElseThrow(() ->
-                                new IllegalStateException("Resource " + userPreferenceIri + " could not be parsed as " +
-                                        "a " +
-                                        "Preference"));
+                                new IllegalStateException("Resource " + userPreferenceIri + " could not be parsed as "
+                                        + "a " + "Preference"));
                 addEntitiesToModel(preference.getHasObjectValue_resource(), preferenceModel, conn);
                 return preference;
             }).collect(Collectors.toSet());
@@ -134,8 +133,8 @@ public class SimplePreferenceService implements PreferenceService {
             } else if (preferences.isEmpty()) {
                 return Optional.empty();
             } else {
-                throw new IllegalStateException("More than one preference of type " + preferenceType + " exists" +
-                        " for user " + user.getResource());
+                throw new IllegalStateException("More than one preference of type " + preferenceType + " exists"
+                        + " for user " + user.getResource());
             }
         }
     }
@@ -177,8 +176,8 @@ public class SimplePreferenceService implements PreferenceService {
         if (existingPreference.isPresent()) {
             deletePreference(existingPreference.get().getResource());
         } else {
-            throw new IllegalArgumentException("Preference of type" + preferenceType.stringValue() + " does not exist" +
-                    " for user");
+            throw new IllegalArgumentException("Preference of type" + preferenceType.stringValue() + " does not exist"
+                    + " for user");
         }
     }
 
@@ -206,8 +205,8 @@ public class SimplePreferenceService implements PreferenceService {
             }
             if (!conn.contains(newPreference.getResource(), vf.createIRI(newPreference.forUser_IRI),
                     user.getResource(), context)) {
-                throw new IllegalArgumentException("Preference " + newPreference.getResource() + " does not " +
-                        "belong to user " + user.getResource());
+                throw new IllegalArgumentException("Preference " + newPreference.getResource() + " does not "
+                        + "belong to user " + user.getResource());
             }
             conn.begin();
             List<Resource> hasValue = getReferencedEntityIRIs(newPreference.getResource(),
@@ -221,40 +220,7 @@ public class SimplePreferenceService implements PreferenceService {
         }
     }
 
-    private void removeIfNotReferenced(Resource iri, RepositoryConnection conn) {
-        if (!conn.contains(null, null, iri)) {
-            conn.remove(iri, null, null);
-        }
-    }
-
-    public void validatePreference(Preference preference) {
-        preference.getHasObjectValue_resource().forEach(objectValue -> {
-            if (!preference.getModel().contains(objectValue, null, null)) {
-                throw new IllegalArgumentException("Preference RDF must include all referenced object values");
-            }
-        });
-
-        if (preference.getHasObjectValue_resource().isEmpty() && !preference.getHasDataValue().isPresent()) {
-            throw new IllegalArgumentException("Preference must have either data value or object value");
-        }
-    }
-
-    private List<Resource> getReferencedEntityIRIs(Resource preferenceIRI, String propIRI, RepositoryConnection conn) {
-        return RepositoryResults.asList(conn.getStatements(preferenceIRI, vf.createIRI(propIRI), null, context)).stream()
-                .map(Statements::objectResource)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
-    }
-
-    private void addEntitiesToModel(Set<Resource> entityIRIs, Model model, RepositoryConnection conn) {
-        entityIRIs.forEach(resource -> {
-            Model entityModel = RepositoryResults.asModelNoContext(conn.getStatements(resource, null, null, context),
-                    mf);
-            model.addAll(entityModel);
-        });
-    }
-
+    @Override
     public Resource getPreferenceType(Preference preference) {
         List<Resource> types = mf.createModel(preference.getModel()).filter(preference.getResource(),
                 vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null)
@@ -276,5 +242,40 @@ public class SimplePreferenceService implements PreferenceService {
         }
 
         return orderedIRIs.get(0);
+    }
+
+    private void removeIfNotReferenced(Resource iri, RepositoryConnection conn) {
+        if (!conn.contains(null, null, iri)) {
+            conn.remove(iri, null, null);
+        }
+    }
+
+    protected void validatePreference(Preference preference) {
+        preference.getHasObjectValue_resource().forEach(objectValue -> {
+            if (!preference.getModel().contains(objectValue, null, null)) {
+                throw new IllegalArgumentException("Preference RDF must include all referenced object values");
+            }
+        });
+
+        if (preference.getHasObjectValue_resource().isEmpty() && !preference.getHasDataValue().isPresent()) {
+            throw new IllegalArgumentException("Preference must have either data value or object value");
+        }
+    }
+
+    private List<Resource> getReferencedEntityIRIs(Resource preferenceIRI, String propIRI, RepositoryConnection conn) {
+        return RepositoryResults.asList(conn.getStatements(preferenceIRI, vf.createIRI(propIRI), null, context))
+                .stream()
+                .map(Statements::objectResource)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+    }
+
+    private void addEntitiesToModel(Set<Resource> entityIRIs, Model model, RepositoryConnection conn) {
+        entityIRIs.forEach(resource -> {
+            Model entityModel = RepositoryResults.asModelNoContext(conn.getStatements(resource, null, null, context),
+                    mf);
+            model.addAll(entityModel);
+        });
     }
 }

@@ -40,7 +40,7 @@ import org.osgi.service.component.annotations.Reference;
 import java.io.IOException;
 import java.io.InputStream;
 
-@Component(immediate=true)
+@Component(immediate = true)
 public class SimpleNotificationService {
     private static final String NOTIFICATION_ONTOLOGY_NAME = "http://mobi.com/ontologies/notification";
     private static final InputStream NOTIFICATION_ONTOLOGY;

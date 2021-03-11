@@ -89,18 +89,18 @@ public interface PreferenceService {
     void deletePreference(Resource preferenceIRI);
 
     /**
-     * Get the specific subclass of preference or preference type for a given preference.
-     *
-     * @param preference The {@link Preference} whose type will be retrieved
-     * @return The {@link Resource} associated with the subclass of preference for the provided {@link Preference}
-     */
-    Resource getPreferenceType(Preference preference);
-
-    /**
      * Updates the Preference for a user identified by the IRI of the passed in preference.
      *
      * @param user       The {@link User} whose {@link Preference} will be updated.
      * @param preference The new {@link Preference} for the {@link User}
      */
     void updatePreference(User user, Preference preference);
+
+    /**
+     * Get the specific subclass of preference or preference type for a given preference.
+     *
+     * @param preference The {@link Preference} whose type will be retrieved
+     * @return The {@link Resource} associated with the subclass of preference for the provided {@link Preference}
+     */
+    Resource getPreferenceType(Preference preference);
 }
