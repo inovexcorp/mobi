@@ -40,7 +40,7 @@ import org.osgi.service.component.annotations.Reference;
 import java.io.IOException;
 import java.io.InputStream;
 
-@Component(immediate=true)
+@Component(immediate = true)
 public class SimpleNotificationService {
     private static final String NOTIFICATION_ONTOLOGY_NAME = "http://mobi.com/ontologies/notification";
     private static final InputStream NOTIFICATION_ONTOLOGY;
@@ -67,14 +67,14 @@ public class SimpleNotificationService {
             throw new MobiException(e);
         }
 
-        removeFully(ontologyModel, vf.createIRI(NOTIFICATION_ONTOLOGY_NAME));
+        removeSubjectFromModel(ontologyModel, vf.createIRI(NOTIFICATION_ONTOLOGY_NAME));
 
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             conn.add(ontologyModel, vf.createIRI(PreferenceService.GRAPH));
         }
     }
 
-    public void removeAttachedBNodes(Model model, Resource subject) {
+    private void removeAttachedBNodes(Model model, Resource subject) {
         model.filter(subject, null, null).forEach(stmt -> {
             if (stmt.getObject() instanceof BNode) {
                 model.remove(vf.createBNode(((BNode) stmt.getObject()).getID()), null, null);
@@ -82,7 +82,7 @@ public class SimpleNotificationService {
         });
     }
 
-    public void removeFully(Model model, Resource subject) {
+    private void removeSubjectFromModel(Model model, Resource subject) {
         removeAttachedBNodes(model, subject);
         model.remove(subject, null, null);
     }

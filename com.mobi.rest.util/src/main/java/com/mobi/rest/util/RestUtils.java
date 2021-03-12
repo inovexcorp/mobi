@@ -435,26 +435,6 @@ public class RestUtils {
         return (ObjectNode) firstObject;
     }
 
-    public static JsonNode getJsonNodeFromJsonld(String json) {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode jsonNode = null;
-        try {
-            jsonNode = mapper.readTree(json);
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
-        JsonNode firstObject = jsonNode.get(0);
-        if (firstObject == null) {
-            return mapper.createObjectNode();
-        } else if (firstObject.has("@graph")) {
-            firstObject = firstObject.get("@graph").get(0);
-            if (firstObject == null) {
-                return mapper.createObjectNode();
-            }
-        }
-        return (ObjectNode) firstObject;
-    }
-
     /**
      * Retrieves a single entity object, of the type specified, from a JSON-LD string and returns it as a
      * {@link JSONObject}.
