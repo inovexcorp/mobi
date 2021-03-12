@@ -37,7 +37,6 @@ import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
