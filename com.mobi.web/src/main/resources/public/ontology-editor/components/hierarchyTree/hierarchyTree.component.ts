@@ -99,7 +99,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         dvm.filterText = '';
     }
     dvm.$onChanges = function(changesObj) {
-        if (!changesObj.hierarchy || !changesObj.hierarchy.isFirstChange()) {
+        if ((!changesObj.hierarchy || !changesObj.hierarchy.isFirstChange()) && !(Object.keys(changesObj).length === 1 && changesObj.branchId)) {
             if (changesObj.branchId) {
                 removeFilters();
             }

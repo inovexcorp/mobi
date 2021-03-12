@@ -22,88 +22,15 @@
   -->
 <h2>{{util.getBeautifulIRI(type)}}</h2>
 
-<!-- this.experiences.controls.forEach(exp => {
-    Object.keys(exp.controls).forEach(controlKey => {
-        console.log(exp.controls[controlKey].value);
-    });
-}); -->
-
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
-    <div formArrayName="experiences">
-      <div *ngFor="let exp of experiences.controls; let n=index">
+    <div formArrayName="formBlocks">
+      <div *ngFor="let formBlock of formBlocks.controls; let n=index">
         <div [formGroupName]="n">
-          <div *ngFor="let e of exp.controls | keys">
-            {{util.getBeautifulIRI(e.key)}}: <input [formControlName]="e.key" placeholder="">
+          <div *ngFor="let formField of formBlock.controls | keys">
+            {{util.getBeautifulIRI(formField.key)}}: <input [formControlName]="formField.key" placeholder="">
           </div>
         </div>
       </div>
     </div>
     <button>Submit</button>
-    <!-- <button><i class="fa fa-times" (click)="deletePreference()"></button> -->
   </form>
-
-<!-- <div [formGroup]="mainFormGroup">
-<div formArrayName="mainArray">
-    <div *ngFor="let miniForm of mainArray.controls; let n=index">
-      <div [formGroupName]="n">
-        <div *ngFor="let theFormField of formFieldsGroup | keys">
-          <input [formControlName]="theFormField.key">
-        </div>
-      </div>
-    </div>
-  </div>
-</div> -->
-
-<!-- <div [formGroup]="innerFormGroup">
-    <div formArrayName="innerForm">
-      <div *ngFor="let control of innerFormGroup | keys; index as i">
-        <input [formControl]="control">
-      </div>
-    </div>
-    <button (click)="update()" class="btn btn-primary mb-2">Submit</button>
-    <button class="btn btn-link" (click)="addGroup()"><i class="fa fa-plus"></i></button>
-  </div> -->
-
-  <!-- In your class:
-
-  this.cityArray = new FormArray([new FormControl('SF')]);
-  this.myGroup = new FormGroup({
-    cities: this.cityArray
-  });
-
-<div formArrayName="innerForm" *ngFor="let field of innerFormArray['controls']; let i = index;">
-    <div [formGroupName]="i">
-      <input formControlName="innerFormArray['controls'][i]">
-    </div>
-  </div> -->
-
-
-<!-- <div [formGroup]="outerFormGroup">
-    <div mat-dialog-content>
-        <div *ngFor="let fieldControl of outerFormGroup.controls[prefFormControl].controls | keys; let i=index">
-        <mat-form-field>
-            {{util.getBeautifulIRI(field['http://www.w3.org/ns/shacl#path'][0]['@id'])}}: <input style="width: 300px;" [formControlName]="field['@id']" ngDefaultControl matInput value="values[0][field['http://www.w3.org/ns/shacl#path'][0]['@id']][0]['@value']">
-        </mat-form-field>
-        </div>
-        <button (click)="update()" class="btn btn-primary mb-2">Submit</button>
-        <button class="btn btn-link" (click)="addGroup()"><i class="fa fa-plus"></i></button>
-    </div>
-  </div> -->
-<!-- <div *ngFor="let prefFormControl of outerFormGroup.controls | keys" [formGroup]="form">
-    <div mat-dialog-content>
-        <div *ngFor="let fieldControl of outerFormGroup.controls[prefFormControl].controls | keys; let i=index">
-        <mat-form-field>
-            {{util.getBeautifulIRI(field['http://www.w3.org/ns/shacl#path'][0]['@id'])}}: <input style="width: 300px;" [formControlName]="field['@id']" ngDefaultControl matInput value="values[0][field['http://www.w3.org/ns/shacl#path'][0]['@id']][0]['@value']">
-        </mat-form-field>
-        </div>
-        <button (click)="update()" class="btn btn-primary mb-2">Submit</button>
-        <button class="btn btn-link" (click)="addGroup()"><i class="fa fa-plus"></i></button>
-    </div>
-  </div> -->
-<!-- <form ng-repeat="value in dvm.values" action="" class="form-inline">
-    <div ng-repeat="field in dvm.fields">
-        {{dvm.util.getBeautifulIRI(field['http://www.w3.org/ns/shacl#path'][0]['@id'])}}: <input style="width: 300px;" type="text" class="form-control" ng-model="value[field['http://www.w3.org/ns/shacl#path'][0]['@id']][0]['@value']">
-    </div>
-    <button ng-click="dvm.update()" class="btn btn-primary mb-2">Submit</button>
-    <button class="btn btn-link" ng-click="dvm.addFormFields()"><i class="fa fa-plus"></i></button>
-</form> -->
