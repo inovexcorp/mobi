@@ -95,34 +95,7 @@ export class PreferenceGroupComponent implements OnChanges {
                             // Can probably move into a preference.populate(userPreference)
                             preference.Values = filter(this.userPreferences[preferenceType], preference.FormFieldStrings[0]);
 
-                            // // preference.RequiredPropertyShape = this.preferenceDefinitions[preference.RequiredPropertyShapeId];
-                            // if (requiredPropertyShape['http://www.w3.org/ns/shacl#node']) {
-                            //     const attachedNode:unknown = this.preferenceDefinitions[requiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
-                            //     preference['targetClass'] = attachedNode['http://www.w3.org/ns/shacl#targetClass'][0]['@id'];
-                            //     // preference.TargetClass = attachedNode['http://www.w3.org/ns/shacl#targetClass'][0]['@id'];
-                            //     const finalObjects = attachedNode['http://www.w3.org/ns/shacl#property'].map(finalProperty => {
-                            //         return this.preferenceDefinitions[finalProperty['@id']];
-                            //     });
-                            //     preference['formFields'] = finalObjects;
-                            // } else {
-                            //     preference['formFields'] = [requiredPropertyShape];
-                            //     // preference.setFormFields([requiredFormFields]);
-                            // }
-                            // const formFields = [];
-                            // forEach(preference['formFields'], formField => {
-                            //     formFields.push(formField['http://www.w3.org/ns/shacl#path'][0]['@id']);
-                            // });
-                            // preference['formFieldStrings'] = formFields;
-                            // I'll be able to remove the above code
-                            // preference['values'] = filter(this.userPreferences[preferenceType], formFields[0]); // This will return only those subjects that have one of the "end property shape fields". Should I check that it has all fields?
-
-                            /////////////////////////////////////
                             preference.addBlankForm();
-
-                            // this.addBlankForm(preference);
-                            
-                            /////////////////////////////////////
-
 
                             // Find Node that corresponds to the top level instance of nodeshape of the given user preference 
                             const topLevelPreferenceNodeshapeInstance = filter(this.userPreferences[preferenceType], result => {
@@ -140,51 +113,6 @@ export class PreferenceGroupComponent implements OnChanges {
                             }
                             this.preferences[preferenceType] = preference;
                         });
-
-                        // // I think this is basically just for complex preferences
-                        // forEach(this.preferences, (preference:Preference) => {
-                        //     const requiredPropertyShape = this.preferenceDefinitions[preference['http://www.w3.org/ns/shacl#property'][0]['@id']];
-                        //     // const requiredPropertyShape = this.preferenceDefinitions[preference.mainPropertyShapeId]
-                        //     if (requiredPropertyShape['http://www.w3.org/ns/shacl#node']) {
-                        //         const attachedNode:unknown = this.preferenceDefinitions[requiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
-                        //         preference['targetClass'] = attachedNode['http://www.w3.org/ns/shacl#targetClass'][0]['@id'];
-                        //         const finalObjects = attachedNode['http://www.w3.org/ns/shacl#property'].map(finalProperty => {
-                        //             return this.preferenceDefinitions[finalProperty['@id']];
-                        //         });
-                        //         preference['formFields'] = finalObjects;
-                        //     } else {
-                        //         preference['formFields'] = [requiredPropertyShape];
-                        //         // preference.setFormFields([requiredFormFields]);
-                        //     }
-                        // });
-
-
-                        // forEach(this.preferences, (prefDef:Preference, prefDefType) => {
-                        //     const formFields = [];
-                        //     forEach(prefDef['formFields'], formField => {
-                        //         formFields.push(formField['http://www.w3.org/ns/shacl#path'][0]['@id']);
-                        //     });
-                        //     prefDef['formFieldStrings'] = formFields;
-                        //     // I'll be able to remove the above code
-                        //     prefDef['values'] = filter(this.userPreferences[prefDefType], formFields[0]); // This will return only those subjects that have one of the "end property shape fields". Should I check that it has all fields?
-
-                        //     /////////////////////////////////////
-                        //     this.addBlankForm(prefDef, formFields);
-                            
-                        //     /////////////////////////////////////
-
-
-                        //     const userPrefOfType = filter(this.userPreferences[prefDefType], result => {
-                        //         return result['@type'].includes('http://mobi.com/ontologies/preference#Preference');
-                        //     });
-
-                        //     if (userPrefOfType.length) {
-                        //         prefDef['hasId'] = userPrefOfType[0]['@id']; 
-                        //         prefDef['preferenceRdf'] = filter(this.userPreferences[prefDefType], result => {
-                        //             return result['@id'] === prefDef['hasId'];
-                        //         });
-                        //     }
-                        // });
                         this.ref.markForCheck();
                     }, error => this.errorMessage = error);
             }, error => this.errorMessage = error);
@@ -194,27 +122,6 @@ export class PreferenceGroupComponent implements OnChanges {
         const preference: Preference = data.preference;
         preference.stripBlankValues();
         if (preference.exists()) {
-            // let requestBody = [];
-
-            // if simple preference
-
-            // if (!preference.targetClass) {
-            //     // const m = [];
-            //     // preference.values.map(val => {
-            //     //     m.push(val['http://mobi.com/ontologies/preference#hasDataValue'][0]);
-            //     // });
-            //     // preference.values[0]['http://mobi.com/ontologies/preference#hasDataValue'] = m;
-            //     requestBody = preference.values;
-            // } else {
-            //     preference.values.map(val => {
-            //         if (!Object.prototype.hasOwnProperty.call(val, '@id')) {
-            //             this.convertToJsonLd(val, [preference['targetClass']]);
-            //         }
-            //         this.addObjectValueToObject(val['@id'], preference.preferenceRdf[0]); // This might break stuff!!!
-            //     });
-            //     requestBody.push(...preference.preferenceRdf, ...preference.values);
-            // }
-
             this.pm.updateUserPreference(preference.TopLevelPreferenceNodeshapeInstanceId, preference.type(), preference.asJsonLD())
                 .then(() => {
                     this.errorMessage = '';
@@ -246,91 +153,6 @@ export class PreferenceGroupComponent implements OnChanges {
         return Object.prototype.hasOwnProperty.call(shape, 'http://mobi.com/ontologies/preference#inGroup');
     }
 
-    // addBlankForm(pref: Preference) {
-    //     if (!this.blankFormExists(pref)) {
-    //         if (pref instanceof SimplePreference) {
-    //             this.addValueToSimplePreference(pref, '');
-    //         } else {
-    //             this.addBlankFormToComplexPreference(pref);
-    //         }
-    //     }
-    // }
-
-    // blankFormExists(pref: Preference): boolean {
-    //     if (pref instanceof ComplexPreference) {
-    //         for (let i = 0; i < pref.Values.length; i++) {
-    //             let populatedFieldExists = false;
-    //             pref.FormFieldStrings.forEach(field => {
-    //                 if (pref.Values[i][field][0]['@value']) {
-    //                     populatedFieldExists = true;
-    //                 }
-    //             });
-    //             if (!populatedFieldExists) {
-    //                 return true;
-    //             }
-    //         }
-    //         return false;
-    //     } else {
-    //         if (!pref.Values.length) {
-    //             return false;
-    //         }
-    //         let blankValExists = false;
-    //         pref.Values[0]['http://mobi.com/ontologies/preference#hasDataValue'].forEach(val => {
-    //             if (!val['@value']) {
-    //                 blankValExists = true;
-    //             }
-    //         });
-    //         return blankValExists;
-    //     }
-    // }
-
-    // stripBlankValues(pref: Preference) {
-    //     if (pref instanceof ComplexPreference) {
-    //         for (let i = pref.Values.length - 1; i >= 0; i--) {
-    //             let populatedFieldExists = false;
-    //             pref.FormFieldStrings.forEach(field => {
-    //                 if (pref.Values[i][field][0]['@value']) {
-    //                     populatedFieldExists = true;
-    //                 }
-    //             });
-    //             if (!populatedFieldExists) {
-    //                 this.removeObjectValueFromObject(pref.Values[i]['@id'], pref['preferenceRdf'][0]); // NEED TO CHANGE TO WORK WITH INTERFACE
-    //                 pref.Values.splice(i, 1);
-    //             }
-    //         }
-    //     } else {
-    //         if (!pref.Values.length) {
-    //             return;
-    //         }
-    //         for (let i = pref.Values[0]['http://mobi.com/ontologies/preference#hasDataValue'].length - 1; i >= 0; i--) {
-    //             if (!pref.Values[0]['http://mobi.com/ontologies/preference#hasDataValue'][i]['@value']) {
-    //                 pref.Values[0]['http://mobi.com/ontologies/preference#hasDataValue'].splice(i, 1);
-    //             }
-    //         }
-    //     }
-    // }
-
-    // addValueToSimplePreference(pref, val) {
-    //     if (pref.Values.length) {
-    //         pref.Values[0]['http://mobi.com/ontologies/preference#hasDataValue'].push({'@value': val});
-    //     } else {
-    //         pref.Values = [
-    //             {
-    //                 'http://mobi.com/ontologies/preference#hasDataValue': [{'@value': val}]
-    //             }
-    //         ];
-    //     }
-    // }
-
-    // addBlankFormToComplexPreference(pref:Preference) {
-    //     const valueObject = {};
-    //     pref.FormFieldStrings.map(field => {
-    //         const innerObj = {'@value': ''};
-    //         valueObject[field] = [innerObj];
-    //     });
-    //     pref.Values.push(valueObject);
-    // }
-
     addObjectValueToObject(newObjValId, obj) {
         if (!obj['http://mobi.com/ontologies/preference#hasObjectValue']) {
             obj['http://mobi.com/ontologies/preference#hasObjectValue'] = [];
@@ -339,10 +161,6 @@ export class PreferenceGroupComponent implements OnChanges {
             '@id': newObjValId
         });
     }
-
-    // removeObjectValueFromObject(objValIdToRemove, obj) {
-    //     remove(obj['http://mobi.com/ontologies/preference#hasObjectValue'], { '@id': objValIdToRemove });
-    // }
 
     convertToJsonLd(object, intendedTypes) {
         if (Object.prototype.hasOwnProperty.call(object, '@id') || Object.prototype.hasOwnProperty.call(object, '@type')) {
@@ -365,12 +183,6 @@ export class PreferenceGroupComponent implements OnChanges {
             ]
         };
         if (preference.targetClass) {
-            // newPreference['http://mobi.com/ontologies/preference#hasObjectValue'] = [
-            //     {
-            //         '@id': 'http://mobi.com/preference#' + uuid.v4()
-            //     }
-            // ];
-
             preference.values.map(val => {
                 if (!Object.prototype.hasOwnProperty.call(val, '@id')) {
                     this.convertToJsonLd(val, [preference['targetClass']]);
