@@ -82,10 +82,8 @@ function uploadOntologyOverlayComponentCtrl(ontologyManagerService, ontologyStat
         const emtyPromise = new Promise(resolve => {
         });
         dvm.resolve.startUpload();
-        os.fileStatus.push({id, isProcessing: true});
         os.uploadList
-            .push({title: dvm.title, id, promise: emtyPromise, error: undefined});
-
+            .push({title: dvm.title, id, promise: emtyPromise, error: undefined, isProcessing: true});
         om.uploadOntology(file, undefined, dvm.title, dvm.description, map(dvm.keywords, trim), id, this.finishLoading);
         if ((dvm.index + 1) < dvm.total) {
             dvm.index++;
@@ -100,16 +98,16 @@ function uploadOntologyOverlayComponentCtrl(ontologyManagerService, ontologyStat
             dvm.submit();
         }
     }
-    this.finishLoading = function(id,promise, title) {
-        let fileStatus = os.fileStatus.find(item => item.id === id);
-        fileStatus.isProcessing = false;
+    dvm.finishLoading = function(id,promise, title) {
         promise.then(dvm.resolve.finishUpload, errorObject => {
                  os.addErrorToUploadItem(id, errorObject);
                  dvm.resolve.finishUpload();
              });
-        let p = os.uploadList.find(item => item.id === id);
-        p.promise = promise;
+        let fileInfo = os.uploadList.find(item => item.id === id);
+        fileInfo.promise = promise;
+        fileInfo.isProcessing = false;
     }
+
     dvm.cancel = function() {
         os.uploadFiles.splice(0);
         dvm.total = 0;

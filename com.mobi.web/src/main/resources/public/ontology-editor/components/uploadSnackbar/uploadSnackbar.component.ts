@@ -96,7 +96,7 @@ function uploadSnackbarComponentCtrl(httpService, ontologyStateService, modalSer
         modalService.openModal('uploadErrorsOverlay', {item}, undefined, "lg");
     }
     dvm.isFilePending = (id) => {
-        const status = dvm.os.fileStatus.find(item => item.id == id);
+        const status = dvm.os.uploadList.find(item => item.id === id);
         return status ? status.isProcessing : false;
     }
 }
