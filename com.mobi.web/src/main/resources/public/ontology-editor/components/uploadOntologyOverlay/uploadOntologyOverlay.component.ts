@@ -108,7 +108,6 @@ function uploadOntologyOverlayComponentCtrl(ontologyManagerService, ontologyStat
                  dvm.resolve.finishUpload();
              });
         let p = os.uploadList.find(item => item.id === id);
-        console.log(p)
         p.promise = promise;
     }
     dvm.cancel = function() {
