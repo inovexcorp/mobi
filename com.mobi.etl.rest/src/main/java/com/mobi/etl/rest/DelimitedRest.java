@@ -206,7 +206,7 @@ public class DelimitedRest {
                     description = "InputStream of a delimited document passed as form data", required = true))
             @FormDataParam("delimitedFile") InputStream fileInputStream,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Information about the file being uploaded, including the name", hidden = true))
+                    description = "Information about the file being uploaded, including the name"), hidden = true)
             @FormDataParam("delimitedFile") FormDataContentDisposition fileDetail) {
         ByteArrayOutputStream fileOutput;
         try {
