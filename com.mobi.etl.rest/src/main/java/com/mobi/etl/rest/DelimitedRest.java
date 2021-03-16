@@ -59,6 +59,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.opencsv.CSVReader;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.FilenameUtils;
@@ -201,9 +202,11 @@ public class DelimitedRest {
             }
     )
     public Response upload(
-            @Parameter(description = "InputStream of a delimited document passed as form data", required = true)
+            @Parameter(schema = @Schema(type = "string", format = "binary",
+                    description = "InputStream of a delimited document passed as form data", required = true))
             @FormDataParam("delimitedFile") InputStream fileInputStream,
-            @Parameter(description = "Information about the file being uploaded, including the name", hidden = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Information about the file being uploaded, including the name", hidden = true))
             @FormDataParam("delimitedFile") FormDataContentDisposition fileDetail) {
         ByteArrayOutputStream fileOutput;
         try {
@@ -246,9 +249,11 @@ public class DelimitedRest {
             }
     )
     public Response upload(
-            @Parameter(description = "InputStream of a delimited document passed as form data", required = true)
+            @Parameter(schema = @Schema(type = "string", format = "binary",
+                    description = "InputStream of a delimited document passed as form data", required = true))
             @FormDataParam("delimitedFile") InputStream fileInputStream,
-            @Parameter(description = "Name of the uploaded file on the server to replace", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Name of the uploaded file on the server to replace", required = true))
             @PathParam("documentName") String fileName) {
         ByteArrayOutputStream fileOutput;
         try {
@@ -294,7 +299,8 @@ public class DelimitedRest {
     public Response etlFilePreview(
             @Parameter(description = "Name of the delimited document in the data/tmp/ directory", required = true)
             @PathParam("documentName") String fileName,
-            @Parameter(description = "Mapping in JSON-LD", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Mapping in JSON-LD", required = true))
             @FormDataParam("jsonld") String jsonld,
             @Parameter(description = "RDF serialization to use if getting a preview")
             @DefaultValue("jsonld") @QueryParam("format") String format,

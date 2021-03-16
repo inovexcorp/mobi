@@ -48,6 +48,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
@@ -171,13 +172,17 @@ public class GroupRest {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response createGroup(
-            @Parameter(description = "Title of the Group", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Title of the Group", required = true))
             @FormDataParam("title") String title,
-            @Parameter(description = "Description of the Group", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Description of the Group", required = true))
             @FormDataParam("description") String description,
-            @Parameter(description = "List of roles of the Group", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "List of roles of the Group", required = true))
             @FormDataParam("roles") List<FormDataBodyPart> roles,
-            @Parameter(description = "List of members of the Group", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "List of members of the Group", required = true))
             @FormDataParam("members") List<FormDataBodyPart> members) {
         checkStringParam(title, "Group title is required");
         try {
@@ -273,8 +278,8 @@ public class GroupRest {
     public Response updateGroup(
             @Parameter(description = "Title of the Group to update", required = true)
             @PathParam("groupTitle") String groupTitle,
-            @Parameter(description = "JSON-LD string representation of a Group to replace the existing Group", required = true)
-                    String newGroupStr) {
+            @Parameter(description = "JSON-LD string representation of a Group to replace the existing Group",
+                    required = true) String newGroupStr) {
         if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }

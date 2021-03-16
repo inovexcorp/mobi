@@ -94,6 +94,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
@@ -443,18 +444,24 @@ public class CatalogRest {
             @Context ContainerRequestContext context,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "Required IRI of the type for the new Record. "
-                    + "Must be a valid IRI for a Record or one of its subclasses", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required IRI of the type for the new Record. "
+                    + "Must be a valid IRI for a Record or one of its subclasses", required = true))
             @FormDataParam("type") String typeIRI,
-            @Parameter(description = "Required title for the new Record", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required title for the new Record", required = true))
             @FormDataParam("title") String title,
-            @Parameter(description = "Required identifier for the new Record. Must be a valid IRI.", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required identifier for the new Record. Must be a valid IRI.", required = true))
             @FormDataParam("identifier") String identifier,
-            @Parameter(description = "Optional description for the new Record")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional description for the new Record"))
             @FormDataParam("description") String description,
-            @Parameter(description = "Optional markdown abstract for the new Record")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional markdown abstract for the new Record"))
             @FormDataParam("markdown") String markdown,
-            @Parameter(description = "Optional list of keywords strings for the new Record")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional list of keywords strings for the new Record"))
             @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
         checkStringParam(title, "Record title is required");
         Map<String, OrmFactory<? extends Record>> recordFactories = getRecordFactories();
@@ -733,15 +740,20 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the UnversionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "Required title for the new Distribution", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required title for the new Distribution", required = true))
             @FormDataParam("title") String title,
-            @Parameter(description = "Optional description for the new Distribution")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional description for the new Distribution"))
             @FormDataParam("description") String description,
-            @Parameter(description = "Optional format string for the new Distribution. Expects a MIME type")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional format string for the new Distribution. Expects a MIME type"))
             @FormDataParam("format") String format,
-            @Parameter(description = "Optional access URL for the new Distribution")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional access URL for the new Distribution"))
             @FormDataParam("accessURL") String accessURL,
-            @Parameter(description = "Optional download URL for the new Distribution")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional download URL for the new Distribution"))
             @FormDataParam("downloadURL") String downloadURL) {
         try {
             Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL,
@@ -993,12 +1005,15 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "Required IRI of the type for the new Version. Must be a valid IRI for a "
-                    + "Version or one of its subclasses", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required IRI of the type for the new Version. Must be a valid IRI for a "
+                    + "Version or one of its subclasses", required = true))
             @FormDataParam("type") String typeIRI,
-            @Parameter(description = "Required title for the new Version", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required title for the new Version", required = true))
             @FormDataParam("title") String title,
-            @Parameter(description = "Optional description for the new Version", required = false)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional description for the new Version", required = false))
             @FormDataParam("description") String description) {
         try {
             checkStringParam(title, "Version title is required");
@@ -1062,13 +1077,17 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "Required title for the new Tag", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required title for the new Tag", required = true))
             @FormDataParam("title") String title,
-            @Parameter(description = "Optional description for the new Tag")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional description for the new Tag"))
             @FormDataParam("description") String description,
-            @Parameter(description = "Required IRI for the new Tag. Must be unique in the repository", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required IRI for the new Tag. Must be unique in the repository", required = true))
             @FormDataParam("iri") String iri,
-            @Parameter(description = "Required String representing the Commit ID", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required String representing the Commit ID", required = true))
             @FormDataParam("commit") String commitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(iri, "Tag iri is required");
@@ -1395,15 +1414,20 @@ public class CatalogRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Version ID", required = true)
             @PathParam("versionId") String versionId,
-            @Parameter(description = "String representing the Version ID", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "String representing the Version ID", required = true))
             @FormDataParam("title") String title,
-            @Parameter(description = "Required title for the new Distribution", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required title for the new Distribution", required = true))
             @FormDataParam("description") String description,
-            @Parameter(description = "Optional format string for the new Distribution. Expects a MIME type")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional format string for the new Distribution. Expects a MIME type"))
             @FormDataParam("format") String format,
-            @Parameter(description = "Optional access URL for the new Distribution")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional access URL for the new Distribution"))
             @FormDataParam("accessURL") String accessURL,
-            @Parameter(description = "Optional download URL for the new Distribution")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional download URL for the new Distribution"))
             @FormDataParam("downloadURL") String downloadURL) {
         try {
             Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL,
@@ -1736,13 +1760,17 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "Required IRI of the type for the new Branch", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required IRI of the type for the new Branch", required = true))
             @FormDataParam("type") String typeIRI,
-            @Parameter(description = "Required title for the new Branch", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required title for the new Branch", required = true))
             @FormDataParam("title") String title,
-            @Parameter(description = "Optional description for the new Branch")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional description for the new Branch"))
             @FormDataParam("description") String description,
-            @Parameter(description = "String representing the Commit ID", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "String representing the Commit ID", required = true))
             @FormDataParam("commitId") String commitId) {
         try ( RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(title, "Branch title is required");
@@ -2391,11 +2419,13 @@ public class CatalogRest {
             @PathParam("branchId") String sourceBranchId,
             @Parameter(description = "String representing the target Branch ID", required = true)
             @QueryParam("targetId") String targetBranchId,
-            @Parameter(description = "String of JSON-LD that corresponds to the statements that"
-                    + "were added to the entity")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "String of JSON-LD that corresponds to the statements that"
+                    + "were added to the entity"))
             @FormDataParam("additions") String additionsJson,
-            @Parameter(description = "String of JSON-LD that corresponds to the statements that "
-                    + "were deleted in the entity")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "String of JSON-LD that corresponds to the statements that "
+                    + "were deleted in the entity"))
             @FormDataParam("deletions") String deletionsJson) {
         try {
             User activeUser = getActiveUser(context, engineManager);
@@ -2746,11 +2776,13 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String of JSON-LD that corresponds to the statements that"
-                    + " were added to the entity", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "String of JSON-LD that corresponds to the statements that"
+                    + " were added to the entity", required = true))
             @FormDataParam("additions") String additionsJson,
-            @Parameter(description = "String of JSON-LD that corresponds to the statements that"
-                    + " were deleted in the entity", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "String of JSON-LD that corresponds to the statements that"
+                    + " were deleted in the entity", required = true))
             @FormDataParam("deletions") String deletionsJson) {
         try {
             User activeUser = getActiveUser(context, engineManager);

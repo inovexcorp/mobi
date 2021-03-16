@@ -621,7 +621,8 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Ontology file to upload", required = true)
+            @Parameter(schema = @Schema(type = "string", format = "binary",
+                    description = "Ontology file to upload", required = true))
             @FormDataParam("file") InputStream fileInputStream) {
         long totalTime = System.currentTimeMillis();
 

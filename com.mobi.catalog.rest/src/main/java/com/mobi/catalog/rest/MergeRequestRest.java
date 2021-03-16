@@ -61,6 +61,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -223,22 +224,29 @@ public class MergeRequestRest {
     )
     public Response createMergeRequests(
             @Context ContainerRequestContext context,
-            @Parameter(description = "The required title for the new MergeRequest", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "The required title for the new MergeRequest", required = true))
             @FormDataParam("title") String title,
-            @Parameter(description = "Optional description for the new MergeRequest")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional description for the new MergeRequest"))
             @FormDataParam("description") String description,
-            @Parameter(description = "Required IRI of the VersionedRDFRecord to associate with the "
-                    + "new MergeRequest", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required IRI of the VersionedRDFRecord to associate with the "
+                    + "new MergeRequest", required = true))
             @FormDataParam("recordId") String recordId,
-            @Parameter(description = "Required IRI of the source Branch with the new commits to add "
-                    + "to the target Branch of the new MergeRequest", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required IRI of the source Branch with the new commits to add "
+                    + "to the target Branch of the new MergeRequest", required = true))
             @FormDataParam("sourceBranchId") String sourceBranchId,
-            @Parameter(description = "Required IRI of the target Branch which will receive the new commits "
-                    + "from the source Branch of the new MergeRequest", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required IRI of the target Branch which will receive the new commits "
+                    + "from the source Branch of the new MergeRequest", required = true))
             @FormDataParam("targetBranchId") String targetBranchId,
-            @Parameter(description = "List of username of Users to assign the new MergeRequest to", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "List of username of Users to assign the new MergeRequest to", required = true))
             @FormDataParam("assignees") List<FormDataBodyPart> assignees,
-            @Parameter(description = "Boolean value to remove source")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Boolean value to remove source"))
             @FormDataParam("removeSource") @DefaultValue("false") boolean removeSource) {
 
         checkStringParam(title, "Merge Request title is required");

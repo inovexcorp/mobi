@@ -56,6 +56,7 @@ import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
@@ -255,19 +256,26 @@ public class DatasetRest {
     )
     public Response createDatasetRecord(
             @Context ContainerRequestContext context,
-            @Parameter(description = "Required title for the new DatasetRecord", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required title for the new DatasetRecord", required = true))
             @FormDataParam("title") String title,
-            @Parameter(description = "Required id of a repository in Mobi", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required id of a repository in Mobi", required = true))
             @FormDataParam("repositoryId") String repositoryId,
-            @Parameter(description = "The optional IRI for the new Dataset")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "The optional IRI for the new Dataset"))
             @FormDataParam("datasetIRI") String datasetIRI,
-            @Parameter(description = "Optional description for the new DatasetRecord")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional description for the new DatasetRecord"))
             @FormDataParam("description") String description,
-            @Parameter(description = "Optional list of keywords strings for the new DatasetRecord")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional list of keywords strings for the new DatasetRecord"))
             @FormDataParam("markdown") String markdown,
-            @Parameter(description = "Optional list of keywords strings for the new DatasetRecord")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional list of keywords strings for the new DatasetRecord"))
             @FormDataParam("keywords") List<FormDataBodyPart> keywords,
-            @Parameter(description = "Optional list of OntologyRecord IRI strings for the new DatasetRecord")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional list of OntologyRecord IRI strings for the new DatasetRecord"))
             @FormDataParam("ontologies") List<FormDataBodyPart> ontologies) {
 
         checkStringParam(title, "Title is required");
@@ -464,9 +472,11 @@ public class DatasetRest {
     public Response uploadData(
             @Parameter(description = "IRI of a DatasetRecord", required = true)
             @PathParam("datasetRecordId") String datasetRecordId,
-            @Parameter(description = "InputStream of a RDF file passed as form data", required = true)
+            @Parameter(schema = @Schema(type = "string", format="binary",
+                    description = "InputStream of a RDF file passed as form data", required = true))
             @FormDataParam("file") InputStream fileInputStream,
-            @Parameter(description = "Information about the RDF file being uploaded, including the name", hidden = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Information about the RDF file being uploaded, including the name", hidden = true))
             @FormDataParam("file") FormDataContentDisposition fileDetail) {
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("Must provide a file", Response.Status.BAD_REQUEST);

@@ -54,6 +54,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -164,19 +165,26 @@ public class MappingRest {
     @ResourceId("http://mobi.com/catalog-local")
     public Response upload(
             @Context ContainerRequestContext context,
-            @Parameter(description = "Required title for the new MappingRecord", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required title for the new MappingRecord", required = true))
             @FormDataParam("title") String title,
-            @Parameter(description = "Optional description for the new MappingRecord")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional description for the new MappingRecord"))
             @FormDataParam("description") String description,
-            @Parameter(description = "Optional markdown abstract for the new MappingRecord")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional markdown abstract for the new MappingRecord"))
             @FormDataParam("markdown") String markdown,
-            @Parameter(description = "Optional list of keywords strings for the new MappingRecord")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional list of keywords strings for the new MappingRecord"))
             @FormDataParam("keywords") List<FormDataBodyPart> keywords,
-            @Parameter(description = "InputStream of a mapping file passed as form data", required = true)
+            @Parameter(schema = @Schema(type = "string", format="binary",
+                    description = "InputStream of a mapping file passed as form data", required = true))
             @FormDataParam("file") InputStream fileInputStream,
-            @Parameter(description = "Information about the file being uploaded, including the name", hidden = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Information about the file being uploaded, including the name", hidden = true))
             @FormDataParam("file") FormDataContentDisposition fileDetail,
-            @Parameter(description = "Mapping serialized as JSON-LD", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Mapping serialized as JSON-LD", required = true))
             @FormDataParam("jsonld") String jsonld) {
         if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
             throw ErrorUtils.sendError("Must provide either a file or a JSON-LD string", Response.Status.BAD_REQUEST);

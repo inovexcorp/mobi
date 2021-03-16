@@ -48,6 +48,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
@@ -176,17 +177,23 @@ public class UserRest {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response createUser(
-            @Parameter(description = "Required username of the User to create", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                   description = "Required username of the User to create", required = true))
             @FormDataParam("username") String username,
-            @Parameter(description = "Required password of the User to create", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required password of the User to create", required = true))
             @FormDataParam("password") String password,
-            @Parameter(description = "List of roles of the User to create", required = true)
+            @Parameter(schema = @Schema(type = "string",
+                    description = "List of roles of the User to create", required = true))
             @FormDataParam("roles") List<FormDataBodyPart> roles,
-            @Parameter(description = "Optional first name of the User to create")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional first name of the User to create"))
             @FormDataParam("firstName") String firstName,
-            @Parameter(description = "Optional last name of the User to create")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional last name of the User to create"))
             @FormDataParam("lastName") String lastName,
-            @Parameter(description = "Optional email of the User to create")
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional email of the User to create"))
             @FormDataParam("email") String email) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
