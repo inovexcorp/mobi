@@ -147,9 +147,15 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
         this.bNodeService = bNodeService;
     }
 
-    @Reference
+    @Reference(dynamic = true, unbind = "removeCacheLoader")
     public void setCacheLoader(CacheLoader cacheLoader) {
         this.cacheLoader = cacheLoader;
+    }
+
+    public void removeCacheLoader(CacheLoader cacheLoader) {
+        if (cacheLoader.equals(this.cacheLoader)) {
+            this.cacheLoader = null;
+        }
     }
 
     /**
