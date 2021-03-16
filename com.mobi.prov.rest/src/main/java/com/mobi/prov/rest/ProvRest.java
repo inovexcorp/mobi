@@ -153,7 +153,7 @@ public class ProvRest {
     @RolesAllowed("user")
     @Operation(
             tags = "provenance-data",
-            summary = "Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities.",
+            summary = "Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities",
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "A JSON object with a key for activities and a key for entities"),

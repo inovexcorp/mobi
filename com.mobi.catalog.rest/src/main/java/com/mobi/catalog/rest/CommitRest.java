@@ -137,7 +137,7 @@ public class CommitRest {
     )
     public Response getCommit(
             @Parameter(description = "String value of the Commit ID. "
-                    + "NOTE: Assumes an {IRI} unless String starts with \"_:\"", required = true)
+                    + "NOTE: Assumes an IRI unless String starts with \"_:\"", required = true)
             @PathParam("commitId") String commitId,
             @Parameter(description = "String representation of the desired RDFFormat", required = false)
             @DefaultValue("jsonld") @QueryParam("format") String format) {
@@ -193,13 +193,13 @@ public class CommitRest {
     public Response getCommitHistory(
             @Context UriInfo uriInfo,
             @Parameter(description = "String value of the Commit ID"
-                    + "NOTE: Assumes an {IRI} unless String starts with \"_:\"", required = true)
+                    + "NOTE: Assumes an IRI unless String starts with \"_:\"", required = true)
             @PathParam("commitId") String commitId,
             @Parameter(description = "String value of the target Commit ID"
-                    + "NOTE: Assumes an {IRI} unless String starts with \"_:\"", required = true)
+                    + "NOTE: Assumes an IRI unless String starts with \"_:\"", required = true)
             @QueryParam("targetId") String targetId,
             @Parameter(description = "Optional String value of the Entity ID"
-                    + "NOTE: Assumes an {IRI} unless String starts with \"_:\"", required = false)
+                    + "NOTE: Assumes an IRI unless String starts with \"_:\"", required = false)
             @QueryParam("entityId") String entityId,
             @Parameter(description = "Optional offset for the results", required = false)
             @QueryParam("offset") int offset,

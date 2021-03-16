@@ -153,7 +153,7 @@ public class MergeRequestRest {
             summary = "Retrieves all MergeRequests in the application",
             responses = {
                     @ApiResponse(responseCode = "201",
-                            description = "List of all {MergeRequest}s that match the criteria"),
+                            description = "List of all MergeRequests that match the criteria"),
                     @ApiResponse(responseCode = "403",
                             description = "Response indicating user does not have access"),
                     @ApiResponse(responseCode = "500",
@@ -212,7 +212,7 @@ public class MergeRequestRest {
             summary = "Creates a new MergeRequest in the application with the provided information",
             responses = {
                     @ApiResponse(responseCode = "201",
-                            description = "Response with the IRI string of the created {MergeRequest}"),
+                            description = "Response with the IRI string of the created MergeRequest"),
                     @ApiResponse(responseCode = "400",
                             description = "Response indicating BAD_REQUEST"),
                     @ApiResponse(responseCode = "403",
@@ -228,13 +228,13 @@ public class MergeRequestRest {
             @Parameter(description = "Optional description for the new MergeRequest")
             @FormDataParam("description") String description,
             @Parameter(description = "Required IRI of the VersionedRDFRecord to associate with the "
-                    + "new {MergeRequest}", required = true)
+                    + "new MergeRequest", required = true)
             @FormDataParam("recordId") String recordId,
             @Parameter(description = "Required IRI of the source Branch with the new commits to add "
-                    + "to the target {Branch} of the new {MergeRequest", required = true)
+                    + "to the target Branch of the new MergeRequest", required = true)
             @FormDataParam("sourceBranchId") String sourceBranchId,
             @Parameter(description = "Required IRI of the target Branch which will receive the new commits "
-                    + "from the source {Branch} of the new {@link MergeRequest}", required = true)
+                    + "from the source Branch of the new MergeRequest", required = true)
             @FormDataParam("targetBranchId") String targetBranchId,
             @Parameter(description = "List of username of Users to assign the new MergeRequest to", required = true)
             @FormDataParam("assignees") List<FormDataBodyPart> assignees,
@@ -288,7 +288,7 @@ public class MergeRequestRest {
             summary = "Retrieves a MergeRequest from the application by its ID",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response with the {MergeRequest} with the provided ID"),
+                            description = "Response with the MergeRequest with the provided ID"),
                     @ApiResponse(responseCode = "403",
                             description = "Response indicating user does not have access"),
                     @ApiResponse(responseCode = "404",

@@ -163,7 +163,7 @@ public class SparqlRest {
      * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
-     * @param queryString a string representing a SPARQL query.
+     * @param queryString String representing a SPARQL query.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 results in mime type specified by accept header
@@ -185,7 +185,7 @@ public class SparqlRest {
     )
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response queryRdf(
-            @Parameter(description = "A string representing a SPARQL query", required = true)
+            @Parameter(description = "String representing a SPARQL query", required = true)
             @QueryParam("query") String queryString,
             @Parameter(description = "An optional DatasetRecord IRI representing the Dataset to query")
             @QueryParam("dataset") String datasetRecordId,

@@ -123,7 +123,7 @@ public class RecordPermissionsRest {
      *   }, ...
      * }
      *
-     * @param recordId The String representing a resource for which to retrieve a policy ID. NOTE: Assumes ID
+     * @param recordId String representing a resource for which to retrieve a policy ID. NOTE: Assumes ID
      *                   represents an IRI unless String begins with "_:"
      * @return A JSON representation of which user can perform each rule.
      */
@@ -189,7 +189,7 @@ public class RecordPermissionsRest {
      *   }, ...
      * }
      *
-     * @param recordId The String representing a recordId whose corresponding policy should be updated.
+     * @param recordId String representing a recordId whose corresponding policy should be updated.
      *                   NOTE: Assumes ID represents an IRI unless String begins with "_:"
      * @param policyJson A JSON representation of the new version of the record policy
      * @return A Response indicating the success of the request

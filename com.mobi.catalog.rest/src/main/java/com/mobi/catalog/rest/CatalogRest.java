@@ -2826,7 +2826,7 @@ public class CatalogRest {
      * Commit's deletion statements.
      *
      * @param commitId The value of the Commit to retrieve the Difference of.
-     * @param format   A string representing the RDF format to return the statements in.
+     * @param format   String representing the RDF format to return the statements in.
      *
      * @return A JSONObject with a key for the Commit's addition statements and a key for the Commit's deletion
      *         statements.
@@ -2845,7 +2845,7 @@ public class CatalogRest {
      * Difference's addition statements and key "deletions" has value of the Difference's deletion statements.
      *
      * @param difference The Difference to convert into a JSONObject.
-     * @param format     A String representing the RDF format to return the statements in.
+     * @param format     String representing the RDF format to return the statements in.
      *
      * @return A JSONObject with a key for the Difference's addition statements and a key for the Difference's deletion
      *         statements.
@@ -2929,7 +2929,7 @@ public class CatalogRest {
      * the serialized original Model of a conflict, key "left" has a value of an object with the additions and
      *
      * @param conflict  The Conflict to turn into a JSONObject
-     * @param rdfFormat A string representing the RDF format to return the statements in.
+     * @param rdfFormat String representing the RDF format to return the statements in.
      *
      * @return A JSONObject with a key for the Conflict's original Model, a key for the Conflict's left Difference, and
      *         a key for the Conflict's right Difference.

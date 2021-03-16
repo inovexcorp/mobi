@@ -80,11 +80,11 @@ public class PolicyRest {
     /**
      * Fetches all security policies that match the provided query parameters.
      *
-     * @param relatedSubject The String representing a subject ID. NOTE: Assumes ID represents an IRI unless String
+     * @param relatedSubject String representing a subject ID. NOTE: Assumes ID represents an IRI unless String
      *                       begins with "_:"
-     * @param relatedResource The String representing a resource ID. NOTE: Assumes ID represents an IRI unless String
+     * @param relatedResource String representing a resource ID. NOTE: Assumes ID represents an IRI unless String
      *                       begins with "_:"
-     * @param relatedAction The String representing a action ID. NOTE: Assumes ID represents an IRI unless String
+     * @param relatedAction String representing a action ID. NOTE: Assumes ID represents an IRI unless String
      *                       begins with "_:"
      * @return A JSON array of JSON representations of matching policies
      */
@@ -101,11 +101,11 @@ public class PolicyRest {
             }
     )
     public Response getPolicies(
-            @Parameter(description = "The String representing a subject ID", required = true)
+            @Parameter(description = "String representing a subject ID", required = true)
             @QueryParam("relatedSubject") String relatedSubject,
-            @Parameter(description = "The String representing a resource ID", required = true)
+            @Parameter(description = "String representing a resource ID", required = true)
             @QueryParam("relatedResource") String relatedResource,
-            @Parameter(description = "The String representing a action ID", required = true)
+            @Parameter(description = "String representing a action ID", required = true)
             @QueryParam("relatedAction") String relatedAction) {
         PolicyQueryParams.Builder params = new PolicyQueryParams.Builder();
         if (StringUtils.isNotEmpty(relatedResource)) {
@@ -162,7 +162,7 @@ public class PolicyRest {
     /**
      * Retrieves a specific security policy identified by its ID. If the policy could not be found, returns a 400.
      *
-     * @param policyId The String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
+     * @param policyId String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
      *                 begins with "_:"
      * @return A JSON representation of the identified policy
      */
@@ -181,7 +181,7 @@ public class PolicyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "policyId")
     public Response retrievePolicy(
-            @Parameter(description = "The String representing a policy ID", required = true)
+            @Parameter(description = "String representing a policy ID", required = true)
             @PathParam("policyId") String policyId) {
         try {
             Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(policyId));
@@ -198,7 +198,7 @@ public class PolicyRest {
      * Updates the identified policy with the provided JSON representation in the body. Provided policy must have
      * the same ID.
      *
-     * @param policyId The String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
+     * @param policyId String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
      *                 begins with "_:"
      * @param policyJson A JSON representation of the new version of the policy
      * @return A Response indicating the success of the request
@@ -219,7 +219,7 @@ public class PolicyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "policyId")
     public Response updatePolicy(
-            @Parameter(description = "The String representing a policy ID", required = true)
+            @Parameter(description = "String representing a policy ID", required = true)
             @PathParam("policyId") String policyId,
             @Parameter(description = "A JSON representation of the new version of the policy", required = true)
                     String policyJson) {

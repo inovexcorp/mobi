@@ -42,11 +42,20 @@ import javax.ws.rs.core.Response;
 @Component(service = ImportedOntologyRest.class, immediate = true)
 public class ImportedOntologyRest {
 
+    /**
+     * Checks to see if the provided URL is resolvable.
+     *
+     * @param url String representing the URL to verify
+     * @return OK if the provided URL is resolvable. BAD_REQUEST if the URL is not resolvable. INTERNAL_SERVER_ERROR if
+     *         a HttpURLConnection cannot be made.
+     * @param url
+     * @return
+     */
     @GET
     @Path("{url}")
     @Operation(
             tags = "groups",
-            summary = "Checks to see if the provided URL is resolvable.",
+            summary = "Checks to see if the provided URL is resolvable",
             responses = {
                     @ApiResponse(responseCode = "200", description = "URL is resolvable"),
                     @ApiResponse(responseCode = "400", description = "URL is not resolvable"),
@@ -55,7 +64,7 @@ public class ImportedOntologyRest {
             })
     @RolesAllowed("user")
     public Response verifyUrl(
-            @Parameter(description = "The String representing the URL to verify.", required = true)
+            @Parameter(description = "String representing the URL to verify.", required = true)
             @PathParam("url") String url
     ) {
         HttpURLConnection conn = null;

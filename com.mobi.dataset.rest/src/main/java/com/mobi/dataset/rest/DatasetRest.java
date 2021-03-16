@@ -169,7 +169,7 @@ public class DatasetRest {
     @RolesAllowed("user")
     @Operation(
             tags = "datasets",
-            summary = "Retrieves all DatasetRecords in the local Catalog.",
+            summary = "Retrieves all DatasetRecords in the local Catalog",
             responses = {
                     @ApiResponse(responseCode = "200", description = "A Response with a JSON array of DatasetRecords"),
                     @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
@@ -244,7 +244,7 @@ public class DatasetRest {
     @RolesAllowed("user")
     @Operation(
             tags = "datasets",
-            summary = "Creates a new DatasetRecord in the local Catalog and Dataset in the specified repository.",
+            summary = "Creates a new DatasetRecord in the local Catalog and Dataset in the specified repository",
             responses = {
                     @ApiResponse(responseCode = "201",
                             description = "A Response with the IRI string of the created DatasetRecord"),
@@ -321,7 +321,7 @@ public class DatasetRest {
     @RolesAllowed("user")
     @Operation(
             tags = "datasets",
-            summary = "Gets a specific DatasetRecord from the local Catalog.",
+            summary = "Gets a specific DatasetRecord from the local Catalog",
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "A Response indicating the success of the request"),
@@ -362,7 +362,7 @@ public class DatasetRest {
     @RolesAllowed("user")
     @Operation(
             tags = "datasets",
-            summary = "Deletes a specific DatasetRecord in the local Catalog.",
+            summary = "Deletes a specific DatasetRecord in the local Catalog",
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "A Response indicating the success of the request"),
@@ -411,7 +411,7 @@ public class DatasetRest {
     @RolesAllowed("user")
     @Operation(
             tags = "datasets",
-            summary = "Clears the data within a specific DatasetRecord in the local Catalog.",
+            summary = "Clears the data within a specific DatasetRecord in the local Catalog",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
                     @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
@@ -452,7 +452,7 @@ public class DatasetRest {
     @RolesAllowed("user")
     @Operation(
             tags = "datasets",
-            summary = "Uploads the data within an RDF file to a specific DatasetRecord in the local Catalog.",
+            summary = "Uploads the data within an RDF file to a specific DatasetRecord in the local Catalog",
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "A Response indicating the success of the request"),
