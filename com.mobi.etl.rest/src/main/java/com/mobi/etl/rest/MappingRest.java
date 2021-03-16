@@ -181,7 +181,7 @@ public class MappingRest {
                     description = "InputStream of a mapping file passed as form data", required = true))
             @FormDataParam("file") InputStream fileInputStream,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Information about the file being uploaded, including the name", hidden = true))
+                    description = "Information about the file being uploaded, including the name"), hidden = true)
             @FormDataParam("file") FormDataContentDisposition fileDetail,
             @Parameter(schema = @Schema(type = "string",
                     description = "Mapping serialized as JSON-LD", required = true))

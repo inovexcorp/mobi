@@ -476,7 +476,7 @@ public class DatasetRest {
                     description = "InputStream of a RDF file passed as form data", required = true))
             @FormDataParam("file") InputStream fileInputStream,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Information about the RDF file being uploaded, including the name", hidden = true))
+                    description = "Information about the RDF file being uploaded, including the name"), hidden = true)
             @FormDataParam("file") FormDataContentDisposition fileDetail) {
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("Must provide a file", Response.Status.BAD_REQUEST);
