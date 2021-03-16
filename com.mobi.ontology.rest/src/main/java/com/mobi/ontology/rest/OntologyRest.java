@@ -287,7 +287,6 @@ public class OntologyRest {
                     + "OntologyRecord using the form data. A master Branch is created and stored with an initial "
                     + "Commit containing the data provided in the ontology file.",
             responses = {
-                    // TODO: We can actually document the structure of the response with the "content" attribute
                     @ApiResponse(responseCode = "201", description = "OntologyRecord created"),
                     @ApiResponse(responseCode = "400", description = "Publisher can't be found"),
                     @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
@@ -305,19 +304,19 @@ public class OntologyRest {
             @Parameter(description = "File details", hidden = true)
             @FormDataParam("file") FormDataContentDisposition fileDetail,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Optional list of keyword strings for the OntologyRecord."))
+                    description = "Ontology JSON-LD to upload"))
             @FormDataParam("json") String ontologyJson,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Title for the OntologyRecord.", required = true))
+                    description = "Title for the OntologyRecord", required = true))
             @FormDataParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Optional description for the OntologyRecord."))
+                    description = "Optional description for the OntologyRecord"))
             @FormDataParam("description") String description,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Optional markdown abstract for the new OntologyRecord."))
+                    description = "Optional markdown abstract for the new OntologyRecord"))
             @FormDataParam("markdown") String markdown,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Optional list of keyword strings for the OntologyRecord."))
+                    description = "Optional list of keyword strings for the OntologyRecord"))
             @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
         if (fileInputStream == null && ontologyJson == null) {
@@ -362,7 +361,7 @@ public class OntologyRest {
     public Response getOntology(
             @Context ContainerRequestContext context,
             @Parameter(description = "String representing the Record Resource ID. NOTE: Assumes id represents an "
-                    + "IRI unless String begins with \"_:\".", required = true)
+                    + "IRI unless String begins with \"_:\"", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "Optional String representing the Branch Resource id. NOTE: Assumes id "
                     + "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing")
@@ -370,7 +369,7 @@ public class OntologyRest {
             @Parameter(description = "Optional String representing the Commit Resource id. NOTE: Assumes id "
                     + "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The "
                     + "provided commitId must be on the Branch identified by the provided branchId; "
-                    + "otherwise, nothing will be returned.", required = false)
+                    + "otherwise, nothing will be returned", required = false)
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Desired RDF return format",
                     schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "owl/xml", "turtle"}))
@@ -468,8 +467,6 @@ public class OntologyRest {
                             description = "The Ontology associated with requested record ID to download"),
                     @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
             },
-            // TODO: We can't generate swagger docs here because of the limitations on overloaded
-            //  paths in the OpenAPI Spec
             hidden = true
     )
     @RolesAllowed("user")
@@ -477,7 +474,7 @@ public class OntologyRest {
     public Response downloadOntologyFile(
             @Context ContainerRequestContext context,
             @Parameter(description = "String representing the Record Resource ID. "
-                    + "NOTE: Assumes id represents an IRI unless String begins with \"_:\".", required = true)
+                    + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "Optional String representing the Branch Resource id. NOTE: Assumes id "
                     + "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing")
