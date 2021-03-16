@@ -133,7 +133,7 @@ public class CatalogRestUtils {
      * Difference's addition statements and key "deletions" has value of the Difference's deletion statements.
      *
      * @param difference   The Difference to convert into a JSONObject.
-     * @param format       A String representing the RDF format to return the statements in.
+     * @param format       String representing the RDF format to return the statements in.
      * @param transformer  The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return A JSONObject with a key for the Difference's addition statements and a key for the Difference's deletion

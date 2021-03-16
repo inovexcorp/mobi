@@ -25,7 +25,6 @@ package com.mobi.etl.rest;
 
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
-import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
@@ -53,8 +52,10 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -92,7 +93,6 @@ import javax.ws.rs.core.StreamingOutput;
 
 @Component(service = MappingRest.class, immediate = true)
 @Path("/mappings")
-@Api( value = "/mappings" )
 public class MappingRest {
 
     private final Logger logger = LoggerFactory.getLogger(MappingRest.class);
@@ -134,7 +134,7 @@ public class MappingRest {
         this.transformer = transformer;
     }
 
-    
+
     /**
      * Uploads a mapping sent as form data or a JSON-LD string into a data store with a UUID local name and creates
      * a new MappingRecord in the catalog.
@@ -151,17 +151,41 @@ public class MappingRest {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Upload mapping sent as form data.")
+    @Operation(
+            tags = "mappings",
+            summary = "Upload mapping sent as form data",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Response with the MappingRecord Resource ID"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = MappingRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
-    public Response upload(@Context ContainerRequestContext context,
-                    @FormDataParam("title") String title,
-                    @FormDataParam("description") String description,
-                    @FormDataParam("markdown") String markdown,
-                    @FormDataParam("keywords") List<FormDataBodyPart> keywords,
-                    @FormDataParam("file") InputStream fileInputStream,
-                    @FormDataParam("file") FormDataContentDisposition fileDetail,
-                    @FormDataParam("jsonld") String jsonld) {
+    public Response upload(
+            @Context ContainerRequestContext context,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required title for the new MappingRecord", required = true))
+            @FormDataParam("title") String title,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional description for the new MappingRecord"))
+            @FormDataParam("description") String description,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional markdown abstract for the new MappingRecord"))
+            @FormDataParam("markdown") String markdown,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional list of keywords strings for the new MappingRecord"))
+            @FormDataParam("keywords") List<FormDataBodyPart> keywords,
+            @Parameter(schema = @Schema(type = "string", format="binary",
+                    description = "InputStream of a mapping file passed as form data", required = true))
+            @FormDataParam("file") InputStream fileInputStream,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Information about the file being uploaded, including the name"), hidden = true)
+            @FormDataParam("file") FormDataContentDisposition fileDetail,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Mapping serialized as JSON-LD", required = true))
+            @FormDataParam("jsonld") String jsonld) {
         if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
             throw ErrorUtils.sendError("Must provide either a file or a JSON-LD string", Response.Status.BAD_REQUEST);
         }
@@ -208,15 +232,26 @@ public class MappingRest {
      * Collects the JSON-LD from an uploaded mapping and returns it as JSON.
      *
      * @param recordId the id of an uploaded mapping
-     * @return a response with the JSON-LD from the uploaded mapping
+     * @return Response with the JSON-LD from the uploaded mapping
      */
     @GET
     @Path("{recordId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieve JSON-LD of an uploaded mapping")
+    @Operation(
+            tags = "mappings",
+            summary = "Retrieve JSON-LD of an uploaded mapping",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response with the JSON-LD from the uploaded mapping"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getMapping(@PathParam("recordId") String recordId) {
+    public Response getMapping(
+            @Parameter(description = "ID of an uploaded mapping", required = true)
+            @PathParam("recordId") String recordId) {
         try {
             logger.info("Getting mapping " + recordId);
             MappingWrapper mapping = manager.retrieveMapping(vf.createIRI(recordId)).orElseThrow(() ->
@@ -234,16 +269,29 @@ public class MappingRest {
      * Downloads an uploaded mapping.
      *
      * @param recordId the id of an uploaded mapping
+     * @param format the RDFFormat the file should be
      * @return a response with mapping to download
      */
     @GET
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
-    @ApiOperation("Download an uploaded mapping")
+    @Operation(
+            tags = "mappings",
+            summary = "Download an uploaded mapping",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response with mapping to download"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response downloadMapping(@PathParam("recordId") String recordId,
-                             @DefaultValue("jsonld") @QueryParam("format") String format) {
+    public Response downloadMapping(
+            @Parameter(description = "Id of an uploaded mapping", required = true)
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "RDFFormat the file should be")
+            @DefaultValue("jsonld") @QueryParam("format") String format) {
         try {
             logger.info("Downloading mapping " + recordId);
             MappingWrapper mapping = manager.retrieveMapping(vf.createIRI(recordId)).orElseThrow(() ->
@@ -272,16 +320,27 @@ public class MappingRest {
      * Deletes an uploaded mapping from the data store.
      *
      * @param recordId the id of an uploaded mapping
-     * @return a response indicating the success or failure of the request
+     * @return Response indicating the success or failure of the request
      */
     @DELETE
     @Path("{recordId}")
     @RolesAllowed("user")
-    @ApiOperation("Delete an uploaded mapping")
+    @Operation(
+            tags = "mappings",
+            summary = "Delete an uploaded mapping",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Delete.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteMapping(@Context ContainerRequestContext context,
-                           @PathParam("recordId") String recordId) {
+    public Response deleteMapping(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "ID of an uploaded mapping", required = true)
+            @PathParam("recordId") String recordId) {
         try {
             catalogManager.deleteRecord(getActiveUser(context, engineManager), vf.createIRI(recordId),
                     MappingRecord.class);
