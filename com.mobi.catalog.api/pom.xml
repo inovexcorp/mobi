@@ -73,10 +73,6 @@
             <artifactId>persistence.utils</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
@@ -99,6 +95,7 @@
                         <_metatype>*</_metatype>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
+                        <_dsannotations-options>inherit</_dsannotations-options>
                     </instructions>
                 </configuration>
             </plugin>
