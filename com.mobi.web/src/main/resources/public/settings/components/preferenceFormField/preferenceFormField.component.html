@@ -20,19 +20,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<h2>{{util.getBeautifulIRI(preference.type)}}</h2>
 
-<form [formGroup]="form" (ngSubmit)="onSubmit()">
-    <div formArrayName="formBlocks">
-      <div *ngFor="let formBlock of formBlocks.controls; let n=index">
-        <div [formGroupName]="n">
-          <div *ngFor="let formField of formBlock.controls | keys">
-              <preference-form-field [formField]="formField" [shaclValidation]="shaclFieldValidation[formField.key]"></preference-form-field>
-            <!-- {{util.getBeautifulIRI(formField.key)}}: <input [formControlName]="formField.key" placeholder=""> -->
-          </div>
+<form [formGroup]="formField.value" (ngSubmit)="onSubmit()">
+    <div *ngIf="formType === 'radio'">
+        <div *ngFor="let option of options">
+            <input type="radio" value="option" formControlName="one">{{option}}
         </div>
-      </div>
     </div>
-    <button>Submit</button>
-    <button type="button" (click)="addFormBlock()"><i class="fa fa-plus"></i></button>
-  </form>
+    <div *ngIf="formType === 'text-input'">{{util.getBeautifulIRI(formField.key)}}: <input [formControlName]="formField.key" placeholder=""></div>
+</form>

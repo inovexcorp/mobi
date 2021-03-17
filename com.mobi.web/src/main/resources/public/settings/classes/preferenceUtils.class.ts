@@ -37,5 +37,10 @@ export class PreferenceUtils {
             object['@type'] = ['http://www.w3.org/2002/07/owl#Thing'];
             intendedTypes.forEach(intendedType => object['@type'].push(intendedType));
         }
+        return object;
+    }
+
+    static isJsonLd(obj) {
+        return Object.prototype.hasOwnProperty.call(obj, '@id') && Object.prototype.hasOwnProperty.call(obj, '@type');
     }
 }

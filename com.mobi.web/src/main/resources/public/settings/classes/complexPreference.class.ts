@@ -24,6 +24,7 @@ import { Preference } from '../interfaces/preference.interface';
 import { forEach, remove } from 'lodash';
 import { FormGroup, FormControl, FormArray } from '@angular/forms';
 import { PreferenceUtils } from './preferenceUtils.class';
+import { v4 as uuid } from 'uuid';
 
 export class ComplexPreference implements Preference {
     _topLevelPreferenceNodeshapeInstanceId: string;
@@ -105,7 +106,7 @@ export class ComplexPreference implements Preference {
         this.FormFieldStrings = formFieldStrings;
     }
 
-    public type() {
+    public get type() {
         return this.Json['@id'];
     }
 
@@ -160,14 +161,14 @@ export class ComplexPreference implements Preference {
 
     // Change name from addBlankForm to something else as it is only indirectly causing the creation of a blank form
     public addBlankForm() {
-        if (!this.blankFormExists()) { // I may remove this conditional at some point since submitting a form strips off the blank values, and perhaps the user may want to enter multiple values at once without having to submit first
+        // if (!this.blankFormExists()) { // I may remove this conditional at some point since submitting a form strips off the blank values, and perhaps the user may want to enter multiple values at once without having to submit first
             const valueObject = {};
             this.FormFieldStrings.map(field => {
                 const innerObj = {'@value': ''};
                 valueObject[field] = [innerObj];
             });
             this.addValue(valueObject);
-        }
+        // }
     }
 
     public blankFormExists(): boolean {
@@ -185,21 +186,26 @@ export class ComplexPreference implements Preference {
         return false;
     }
 
+    
+
     public buildForm(): FormGroup {
         let theForm = new FormGroup({
             formBlocks: new FormArray([])
         });
 
         this.Values.forEach(value => {
-            const fg: any = {};
+            const fg: FormGroup = new FormGroup({});
             const fieldsTemplate = {};
             this.FormFields.forEach(field => {
                 fieldsTemplate[field['http://www.w3.org/ns/shacl#path'][0]['@id']] = value[field['http://www.w3.org/ns/shacl#path'][0]['@id']][0]['@value'];
             });
+            
             for (const control in fieldsTemplate) {
-                fg[control] = new FormControl(fieldsTemplate[control]);
+                const newFormGroup: FormGroup = new FormGroup({});
+                newFormGroup.addControl(control, new FormControl(fieldsTemplate[control]));
+                fg.addControl(control, newFormGroup);
             }
-            (theForm.get('formBlocks') as FormArray).push(new FormGroup(fg)); // Ask Robert how to write this line better
+            (theForm.get('formBlocks') as FormArray).push(fg); // Ask Robert how to write this line better
         });
 
         return theForm;
@@ -208,7 +214,7 @@ export class ComplexPreference implements Preference {
     public updateWithFormValues(theForm: FormGroup) {
         theForm.get('formBlocks').value.forEach((value, index) => {
             Object.keys(value).forEach(field => {
-                this.Values[index][field] = [{'@value': value[field]}];
+                this.Values[index][field] = [{'@value': value[field][field]}]; // This is weird that I'm doing [field][field] but I'm doing it because I had to add that formGroup in order to create a separate component.
             });
         });
     }
@@ -233,9 +239,13 @@ export class ComplexPreference implements Preference {
     }
 
     asJsonLD(): Array<any> {
+        if (!this.TopLevelPreferenceNodeshapeInstance) {
+            this.TopLevelPreferenceNodeshapeInstance = [PreferenceUtils.convertToJsonLd({}, [this.type, 'http://mobi.com/ontologies/preference#Setting', 'http://mobi.com/ontologies/preference#Preference'])];
+        }
+        this.stripBlankValues();
         let requestBody = [];
         this.Values.map(val => {
-            if (!Object.prototype.hasOwnProperty.call(val, '@id')) {
+            if (!PreferenceUtils.isJsonLd(val)) {
                 PreferenceUtils.convertToJsonLd(val, [this.TargetClass]);
             }
             this.addObjectValueToObject(val['@id'], this.TopLevelPreferenceNodeshapeInstance[0]); // This might break stuff!!!
@@ -243,6 +253,29 @@ export class ComplexPreference implements Preference {
         requestBody.push(...this.TopLevelPreferenceNodeshapeInstance, ...this.Values);
         return requestBody;
     }
+
+    // buildUserPreferenceJson() {
+    //     const userPreferenceJson = [];
+    //     const newPreference = {
+    //         '@id': 'http://mobi.com/preference#' + uuid.v4(),
+    //         '@type': [
+    //             this.type(),
+    //             'http://mobi.com/ontologies/preference#Preference',
+    //             'http://www.w3.org/2002/07/owl#Thing',
+    //             'http://mobi.com/ontologies/preference#Setting'
+    //         ]
+    //     };
+    //     this.Values.map(val => {
+    //         if (!PreferenceUtils.isJsonLd(val)) {
+    //             PreferenceUtils.convertToJsonLd(val, [this.TargetClass]);
+    //         }
+    //         this.addObjectValueToObject(val['@id'], newPreference);
+    //     });
+    //     userPreferenceJson.push(...this.Values);
+    //     // NOT FINISHED YET!!!
+    //     userPreferenceJson.push(newPreference);
+    //     return userPreferenceJson;
+    // }
 
     addObjectValueToObject(newObjValId, obj) {
         if (!obj['http://mobi.com/ontologies/preference#hasObjectValue']) {

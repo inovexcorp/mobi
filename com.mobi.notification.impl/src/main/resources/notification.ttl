@@ -29,7 +29,8 @@
     sh:path pref:hasDataValue;
     sh:datatype xsd:boolean;
     sh:minCount 1 ;
-    sh:maxCount 1 .
+    sh:maxCount 1 ;
+    pref:usesFormField pref:RadioInput .
 
 # Definitely need more here
 :NotificationPreferenceGroup a pref:PreferenceGroup .
@@ -57,14 +58,16 @@
     sh:datatype xsd:string ;
     sh:order 0 ;
     sh:minCount 1 ;
-    sh:maxCount 1 .
+    sh:maxCount 1 ;
+    pref:usesFormField pref:TextInput .
 
 :NamespacePropertyShape a sh:PropertyShape ;
     sh:path :hasNamespace ;
     sh:datatype xsd:string ;
     sh:order 1 ;
     sh:minCount 1 ;
-    sh:maxCount 1 .
+    sh:maxCount 1 ;
+    pref:usesFormField pref:TextInput .
 
 :Prefix a owl:Class;
     rdfs:label "Prefix"@en.

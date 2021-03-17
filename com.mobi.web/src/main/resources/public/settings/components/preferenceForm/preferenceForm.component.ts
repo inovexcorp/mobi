@@ -24,6 +24,7 @@
 import { Component, Input, EventEmitter, Output, OnChanges, Inject } from '@angular/core';
 import { FormArray, FormGroup } from '@angular/forms';
 import { Preference } from '../../interfaces/preference.interface';
+import { filter } from 'lodash';
 
 @Component({
     selector: 'preference-form',
@@ -33,6 +34,7 @@ import { Preference } from '../../interfaces/preference.interface';
 export class PreferenceFormComponent implements OnChanges {
     @Input() preference: Preference;
     @Output() updateEvent = new EventEmitter<{preference:unknown}>();
+    shaclFieldValidation = {};
     
     form = new FormGroup({
         formBlocks: new FormArray([])
@@ -41,7 +43,21 @@ export class PreferenceFormComponent implements OnChanges {
     constructor(@Inject('utilService') private util) {}
 
     ngOnChanges() {
+        // Temporary code. Put this somewhere else eventually
+        this.preference.FormFieldStrings.forEach(formFieldString => {
+            const shaclValidator = filter(this.preference.FormFields, formField => {
+                return formField['http://www.w3.org/ns/shacl#path'][0]['@id'] === formFieldString;
+            })[0];
+            this.shaclFieldValidation[formFieldString] = shaclValidator;
+        });
+
         this.formBlocks.setValue([]);
+        this.form = this.preference.buildForm();
+    }
+
+    addFormBlock() {
+        this.preference.updateWithFormValues(this.form);
+        this.preference.addBlankForm();
         this.form = this.preference.buildForm();
     }
 

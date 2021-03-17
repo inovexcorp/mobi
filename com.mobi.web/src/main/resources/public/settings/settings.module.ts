@@ -34,6 +34,7 @@ import { SettingsPageComponent } from './components/settingsPage/settingsPage.co
 import { PreferencesTabComponent } from './components/preferencesTab/preferencesTab.component';
 import { PreferenceGroupComponent } from './components/preferenceGroup/preferenceGroup.component';
 import { PreferenceFormComponent } from './components/preferenceForm/preferenceForm.component';
+import { PreferenceFormFieldComponent } from './components/preferenceFormField/preferenceFormField.component';
 import { TrustedHtmlPipe } from '../shared/pipes/trustedHtml.pipe';
 import { KeysPipe } from '../shared/pipes/keys.pipe';
 
@@ -53,6 +54,7 @@ import { KeysPipe } from '../shared/pipes/keys.pipe';
         PreferencesTabComponent,
         PreferenceGroupComponent,
         PreferenceFormComponent,
+        PreferenceFormFieldComponent,
         TrustedHtmlPipe,
         KeysPipe
     ],
@@ -74,4 +76,5 @@ angular.module('settings', [])
     .directive('settingsPage', downgradeComponent({component: SettingsPageComponent}) as angular.IDirectiveFactory)
     .directive('preferencesTab', downgradeComponent({component: PreferencesTabComponent}) as angular.IDirectiveFactory)
     .directive('preferenceGroup', downgradeComponent({component: PreferenceGroupComponent}) as angular.IDirectiveFactory)
-    .directive('preferenceForm', downgradeComponent({component: PreferenceFormComponent}) as angular.IDirectiveFactory);
+    .directive('preferenceForm', downgradeComponent({component: PreferenceFormComponent}) as angular.IDirectiveFactory)
+    .directive('preferenceFormField', downgradeComponent({component: PreferenceFormFieldComponent}) as angular.IDirectiveFactory);

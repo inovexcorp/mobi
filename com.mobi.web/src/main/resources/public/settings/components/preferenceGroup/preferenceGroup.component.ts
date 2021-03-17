@@ -61,6 +61,10 @@ export class PreferenceGroupComponent implements OnChanges {
     @Inject('utilService') private util, private ref: ChangeDetectorRef) {}
 
     ngOnChanges(): void {
+        this.retrievePreferences();
+    }
+
+    retrievePreferences() {
         this.pm.getUserPreferences()
             .then(response => {
                 this.errorMessage = '';
@@ -95,7 +99,9 @@ export class PreferenceGroupComponent implements OnChanges {
                             // Can probably move into a preference.populate(userPreference)
                             preference.Values = filter(this.userPreferences[preferenceType], preference.FormFieldStrings[0]);
 
-                            preference.addBlankForm();
+                            if (!preference.Values.length) {
+                                preference.addBlankForm();
+                            }
 
                             // Find Node that corresponds to the top level instance of nodeshape of the given user preference 
                             const topLevelPreferenceNodeshapeInstance = filter(this.userPreferences[preferenceType], result => {
@@ -120,31 +126,15 @@ export class PreferenceGroupComponent implements OnChanges {
 
     updateUserPreference(data): void {
         const preference: Preference = data.preference;
-        preference.stripBlankValues();
         if (preference.exists()) {
-            this.pm.updateUserPreference(preference.TopLevelPreferenceNodeshapeInstanceId, preference.type(), preference.asJsonLD())
+            this.pm.updateUserPreference(preference.TopLevelPreferenceNodeshapeInstanceId, preference.type, preference.asJsonLD())
                 .then(() => {
-                    this.errorMessage = '';
-                    this.util.createSuccessToast('User Preference updated successfully');
-                    this.pm.getUserPreferences()  // INSTEAD OF THIS RETURN BODY FROM PUT ENDPOINT
-                        .then(response => {
-                            this.errorMessage = '';
-                            this.util.createSuccessToast('User Preferences retrieved successfully');
-                            this.userPreferences = response.data;
-                        }, error => this.errorMessage = error);
+                    this.retrievePreferences();
                 }, error => this.errorMessage = error);
         } else {
-            const userPreference = this.buildUserPreferenceJson(preference, preference.type());
-            this.pm.createUserPreference(preference.type(), userPreference)
+            this.pm.createUserPreference(preference.type, preference.asJsonLD())
                 .then(() => {
-                    this.errorMessage = '';
-                    this.util.createSuccessToast('User Preference created successfully');
-                    this.pm.getUserPreferences()
-                        .then(response => {
-                            this.errorMessage = '';
-                            this.util.createSuccessToast('User Preferences retrieved successfully');
-                            this.userPreferences = response.data;
-                        }, error => this.errorMessage = error);
+                    this.retrievePreferences();
                 }, error => this.errorMessage = error);
         }
     }
@@ -153,51 +143,53 @@ export class PreferenceGroupComponent implements OnChanges {
         return Object.prototype.hasOwnProperty.call(shape, 'http://mobi.com/ontologies/preference#inGroup');
     }
 
-    addObjectValueToObject(newObjValId, obj) {
-        if (!obj['http://mobi.com/ontologies/preference#hasObjectValue']) {
-            obj['http://mobi.com/ontologies/preference#hasObjectValue'] = [];
-        }
-        obj['http://mobi.com/ontologies/preference#hasObjectValue'].push({
-            '@id': newObjValId
-        });
-    }
+    // addObjectValueToObject(newObjValId, obj) {
+    //     if (!obj['http://mobi.com/ontologies/preference#hasObjectValue']) {
+    //         obj['http://mobi.com/ontologies/preference#hasObjectValue'] = [];
+    //     }
+    //     obj['http://mobi.com/ontologies/preference#hasObjectValue'].push({
+    //         '@id': newObjValId
+    //     });
+    // }
 
-    convertToJsonLd(object, intendedTypes) {
-        if (Object.prototype.hasOwnProperty.call(object, '@id') || Object.prototype.hasOwnProperty.call(object, '@type')) {
-            console.log('Object has unexpected structure. It appears that the object already has an id or type');
-        } else {
-            object['@id'] = 'http://mobi.com/preference#' + uuid.v4(); // is it ok that we always give targetClass instance a prefix of preference?
-            object['@type'] = ['http://www.w3.org/2002/07/owl#Thing'];
-            intendedTypes.forEach(intendedType => object['@type'].push(intendedType));
-        }
-    }
+    // Basically just adds an id and types to an object, thus making it legal jsonLD
+    // convertToJsonLd(object, intendedTypes) {
+    //     if (Object.prototype.hasOwnProperty.call(object, '@id') || Object.prototype.hasOwnProperty.call(object, '@type')) {
+    //         console.log('Object has unexpected structure. It appears that the object already has an id or type');
+    //     } else {
+    //         object['@id'] = 'http://mobi.com/preference#' + uuid.v4(); // is it ok that we always give targetClass instance a prefix of preference?
+    //         object['@type'] = ['http://www.w3.org/2002/07/owl#Thing'];
+    //         intendedTypes.forEach(intendedType => object['@type'].push(intendedType));
+    //     }
+    // }
 
-    buildUserPreferenceJson(preference, type) {
-        const userPreferenceJson = [];
-        const newPreference = {
-            '@id': 'http://mobi.com/preference#' + uuid.v4(),
-            '@type': [
-                type,
-                'http://mobi.com/ontologies/preference#Preference',
-                'http://www.w3.org/2002/07/owl#Thing'
-            ]
-        };
-        if (preference.targetClass) {
-            preference.values.map(val => {
-                if (!Object.prototype.hasOwnProperty.call(val, '@id')) {
-                    this.convertToJsonLd(val, [preference['targetClass']]);
-                }
-                this.addObjectValueToObject(val['@id'], newPreference);
-            });
-            userPreferenceJson.push(...preference.values);
-            // NOT FINISHED YET!!!
-        } else {
-            // THIS NEEDS TO WORK FOR MULTIPLE DATA VALUES!!!! FIX!!
-            const dataValues = angular.copy(preference.values[0]['http://mobi.com/ontologies/preference#hasDataValue'][0]);
-            dataValues['@type'] = preference['formFields'][0]['http://www.w3.org/ns/shacl#datatype'][0]['@id'];
-            newPreference['http://mobi.com/ontologies/preference#hasDataValue'] = [dataValues];
-        }
-        userPreferenceJson.push(newPreference);
-        return userPreferenceJson;
-    }
+    // buildUserPreferenceJson(preference, type) {
+    //     const userPreferenceJson = [];
+    //     const newPreference = {
+    //         '@id': 'http://mobi.com/preference#' + uuid.v4(),
+    //         '@type': [
+    //             type,
+    //             'http://mobi.com/ontologies/preference#Preference',
+    //             'http://www.w3.org/2002/07/owl#Thing',
+    //             'http://mobi.com/ontologies/preference#Setting'
+    //         ]
+    //     };
+    //     if (preference.TargetClass) {
+    //         preference.Values.map(val => {
+    //             if (!PreferenceUtils.isJsonLd(val)) {
+    //                 this.convertToJsonLd(val, [preference.TargetClass]);
+    //             }
+    //             this.addObjectValueToObject(val['@id'], newPreference);
+    //         });
+    //         userPreferenceJson.push(...preference.Values);
+    //         // NOT FINISHED YET!!!
+    //     } else {
+    //         PreferenceUtils.convertToJsonLd(preference.Values, preference.type);
+    //         const dataValues = angular.copy(preference.Values[0]['http://mobi.com/ontologies/preference#hasDataValue'][0]);
+    //         dataValues['@type'] = preference.FormFields[0]['http://www.w3.org/ns/shacl#datatype'][0]['@id'];
+    //         newPreference['http://mobi.com/ontologies/preference#hasDataValue'] = [dataValues];
+    //     }
+    //     userPreferenceJson.push(newPreference);
+    //     return userPreferenceJson;
+    // }
 }

@@ -23,6 +23,7 @@
 import { Preference } from '../interfaces/preference.interface';
 import { forEach } from 'lodash';
 import { FormGroup, FormArray, FormControl } from '@angular/forms';
+import { PreferenceUtils } from './preferenceUtils.class';
 
 export class SimplePreference implements Preference {
     _topLevelPreferenceNodeshapeInstanceId: string;
@@ -43,7 +44,7 @@ export class SimplePreference implements Preference {
         this.FormFieldStrings = ['http://mobi.com/ontologies/preference#hasDataValue'];
     }
 
-    public type() {
+    public get type() {
         return this.Json['@id'];
     }
 
@@ -137,9 +138,9 @@ export class SimplePreference implements Preference {
 
     // Change name from addBlankForm to something else as it is only indirectly causing the creation of a blank form
     addBlankForm(): void {
-        if (!this.blankFormExists()) { // I may remove this conditional at some point since submitting a form strips off the blank values, and perhaps the user may want to enter multiple values at once without having to submit first
+        // if (!this.blankFormExists()) { // I may remove this conditional at some point since submitting a form strips off the blank values, and perhaps the user may want to enter multiple values at once without having to submit first
             this.addValue('');
-        }
+        // }
     }
 
     blankFormExists(): boolean {
@@ -161,15 +162,32 @@ export class SimplePreference implements Preference {
         });
 
         this.Values[0]['http://mobi.com/ontologies/preference#hasDataValue'].forEach(value => {
-            const fg: any = {};
+            const fg: FormGroup = new FormGroup({});
             const fieldsTemplate = {};
             this.FormFields.forEach(field => {
                 fieldsTemplate[field['http://www.w3.org/ns/shacl#path'][0]['@id']] = value['@value'];
             });
+            // for (const control in fieldsTemplate) {
+            //     for (const control in fieldsTemplate) {
+            //         form: formGroup
+            //             formBlocks: formArray
+            //                 0: 
+            //                     Namespace: FormGroup
+            //                         innerGroup: FormControl
+            //                     Prefix: FormGroup
+            //                         innerGroup: FormControl
+            //         fg[control] = new FormGroup({
+            //             innerControl: new FormControl(fieldsTemplate[control])
+            //         });
+            //     }
+            //     fg[control] = new FormControl(fieldsTemplate[control]);
+            // }
             for (const control in fieldsTemplate) {
-                fg[control] = new FormControl(fieldsTemplate[control]);
+                const newFormGroup: FormGroup = new FormGroup({});
+                newFormGroup.addControl(control, new FormControl(fieldsTemplate[control]));
+                fg.addControl(control, newFormGroup);
             }
-            (form.get('formBlocks') as FormArray).push(new FormGroup(fg)); // Ask Robert how to write this line better
+            (form.get('formBlocks') as FormArray).push(fg); // Ask Robert how to write this line better
         });
 
         return form;
@@ -178,7 +196,7 @@ export class SimplePreference implements Preference {
     public updateWithFormValues(form: FormGroup) {
         this.Values[0]['http://mobi.com/ontologies/preference#hasDataValue'] = [];
         form.get('formBlocks').value.forEach((value) => {
-            this.Values[0]['http://mobi.com/ontologies/preference#hasDataValue'].push({'@value': value['http://mobi.com/ontologies/preference#hasDataValue']});
+            this.Values[0]['http://mobi.com/ontologies/preference#hasDataValue'].push({'@value': value['http://mobi.com/ontologies/preference#hasDataValue']['http://mobi.com/ontologies/preference#hasDataValue']});
         });
     }
 
@@ -198,6 +216,12 @@ export class SimplePreference implements Preference {
     }
 
     asJsonLD(): Array<any> {
+        this.stripBlankValues();
+        this.Values.map(val => {
+            if (!PreferenceUtils.isJsonLd(val)) {
+                PreferenceUtils.convertToJsonLd(val, [this.type, 'http://mobi.com/ontologies/preference#Setting', 'http://mobi.com/ontologies/preference#Preference']);
+            }
+        });
         return this.Values;
     }
 }
