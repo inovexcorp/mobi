@@ -32,8 +32,9 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -42,12 +43,6 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -62,10 +57,15 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component(service = StateRest.class, immediate = true)
 @Path("/states")
-@Api(value = "/states")
 public class StateRest {
     protected StateManager stateManager;
     protected ValueFactory factory;
@@ -105,10 +105,23 @@ public class StateRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves State for the User making the request based on filter criteria")
-    public Response getStates(@Context ContainerRequestContext context,
-                       @QueryParam("application") String applicationId,
-                       @QueryParam("subjects") List<String> subjectIds) {
+    @Operation(
+            tags = "states",
+            summary = "Retrieves State for the User making the request based on filter criteria",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response getStates(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "ID of the Application to filter State by", required = true)
+            @QueryParam("application") String applicationId,
+            @Parameter(description = "List of all the IDs of resources that should be associated with the States",
+                    required = true)
+            @QueryParam("subjects") List<String> subjectIds) {
         String username = RestUtils.getActiveUsername(context);
         Set<Resource> subjects = subjectIds.stream()
                 .map(factory::createIRI)
@@ -140,10 +153,24 @@ public class StateRest {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Creates a new State for the User making the request")
-    public Response createState(@Context ContainerRequestContext context,
-                         @QueryParam("application") String applicationId,
-                         String stateJson) {
+    @Operation(
+            tags = "states",
+            summary = "Creates a new State for the User making the request",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response createState(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "ID of the Application to associate the new State with", required = true)
+            @QueryParam("application") String applicationId,
+            @Parameter(description = "JSON-LD of all resources to be linked to the new State", required = true)
+                    String stateJson) {
         String username = RestUtils.getActiveUsername(context);
         try {
             Model newState = transformer.mobiModel(Rio.parse(IOUtils.toInputStream(stateJson, StandardCharsets.UTF_8),
@@ -175,8 +202,22 @@ public class StateRest {
     @Path("{stateId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves State by ID as long it belongs to the User making the request")
-    public Response getState(@Context ContainerRequestContext context, @PathParam("stateId") String stateId) {
+    @Operation(
+            tags = "states",
+            summary = "Retrieves State by ID as long it belongs to the User making the request",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response getState(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "ID of the State to retrieve", required = true)
+            @PathParam("stateId") String stateId) {
         String username = RestUtils.getActiveUsername(context);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
@@ -205,10 +246,25 @@ public class StateRest {
     @Path("{stateId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Updates State as long as it belongs to the User making the request")
-    public Response updateState(@Context ContainerRequestContext context,
-                         @PathParam("stateId") String stateId,
-                         String newStateJson) {
+    @Operation(
+            tags = "states",
+            summary = "Updates State as long as it belongs to the User making the request",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response updateState(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "ID of the State to update", required = true)
+            @PathParam("stateId") String stateId,
+            @Parameter(description = "JSON-LD serialization of the new resources to associate with the State",
+                    required = true)
+                    String newStateJson) {
         String username = RestUtils.getActiveUsername(context);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
@@ -242,8 +298,22 @@ public class StateRest {
     @DELETE
     @Path("{stateId}")
     @RolesAllowed("user")
-    @ApiOperation("Deletes State as long as it belongs to the User making the request")
-    public Response deleteState(@Context ContainerRequestContext context, @PathParam("stateId") String stateId) {
+    @Operation(
+            tags = "states",
+            summary = "Deletes State as long as it belongs to the User making the request",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response deleteState(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "ID of the State to remove", required = true)
+            @PathParam("stateId") String stateId) {
         String username = RestUtils.getActiveUsername(context);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {

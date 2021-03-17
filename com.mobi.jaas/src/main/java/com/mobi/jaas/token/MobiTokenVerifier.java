@@ -100,7 +100,7 @@ public class MobiTokenVerifier implements TokenVerifier {
      * @param scope The scope of the token
      * @param tokenDuration The duration for the new token
      * @param claims An optional map of custom claims to add to the token
-     * @return The String representing the encoded and compact JWT Token
+     * @return String representing the encoded and compact JWT Token
      * @throws JOSEException if there is a problem creating the token
      */
     SignedJWT generateToken(String username, String issuer, String scope, long tokenDuration,

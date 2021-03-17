@@ -46,8 +46,10 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.jaxb.Links;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -57,13 +59,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -74,10 +69,16 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component(service = ProvRest.class, immediate = true)
 @Path("/provenance-data")
-@Api( value = "/provenance-data" )
 public class ProvRest {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProvRest.class);
@@ -150,10 +151,23 @@ public class ProvRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities")
-    public Response getActivities(@Context UriInfo uriInfo,
-                           @DefaultValue("0") @QueryParam("offset") int offset,
-                           @DefaultValue("50") @QueryParam("limit") int limit) {
+    @Operation(
+            tags = "provenance-data",
+            summary = "Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object with a key for activities and a key for entities"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response getActivities(
+            @Context UriInfo uriInfo,
+            @Parameter(schema = @Schema(type = "integer", description = "The URI information of the request "
+                    + "to be used in creating links to other pages of Activities", required = false))
+            @DefaultValue("0") @QueryParam("offset") int offset,
+            @Parameter(schema = @Schema(type = "integer", description = "The offset for the page", required = false))
+            @DefaultValue("50") @QueryParam("limit") int limit) {
         validateParams(limit, offset);
         List<Activity> activityList = new ArrayList<>();
         try (RepositoryConnection conn = provService.getConnection()) {
