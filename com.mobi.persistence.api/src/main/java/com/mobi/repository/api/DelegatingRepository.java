@@ -42,7 +42,7 @@ public interface DelegatingRepository extends Repository {
     /**
      * Returns the ID of this Repository Object.
      *
-     * @return The String representing the ID of this Repository Object.
+     * @return String representing the ID of this Repository Object.
      */
     String getRepositoryID();
 }
