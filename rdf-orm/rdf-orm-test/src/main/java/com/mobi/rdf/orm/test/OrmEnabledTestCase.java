@@ -35,7 +35,9 @@ import com.mobi.rdf.orm.conversion.ValueConverter;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
 import com.mobi.rdf.orm.impl.OrmFactoryRegistryImpl;
+import net.jodah.typetools.TypeResolver;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +46,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -156,13 +161,18 @@ public abstract class OrmEnabledTestCase {
      */
     public static void injectOrmFactoryReferencesIntoService(Object serviceObject) {
         Class<?> serviceClazz = serviceObject.getClass();
-        // Stream over every method in the service class.
-        Arrays.stream(serviceClazz.getDeclaredMethods())
+        // Stream over every field in the service class
+        Arrays.stream(FieldUtils.getAllFields(serviceClazz))
                 // Determine if an ORM Factory reference.
                 .filter(OrmEnabledTestCase::determineIfOrmFactoryReference)
                 // For each ORM factory reference.
-                .forEach(method -> injectApplicableOrmFactory(method, serviceObject, serviceClazz));
-
+                .forEach(field -> injectApplicableOrmFactory(field, serviceObject, serviceClazz));
+//        // Stream over every method in the service class.
+//        Arrays.stream(serviceClazz.getDeclaredMethods())
+//                // Determine if an ORM Factory reference.
+//                .filter(OrmEnabledTestCase::determineIfOrmFactoryReference)
+//                // For each ORM factory reference.
+//                .forEach(method -> injectApplicableOrmFactory(method, serviceObject, serviceClazz));
     }
 
     private static void injectApplicableOrmFactory(final Method method, final Object serviceObject, Class<?> serviceClazz) {
@@ -181,6 +191,39 @@ public abstract class OrmEnabledTestCase {
             throw new OrmTestCaseException("Issue injecting factory '" + targetFactory.getClass().getName()
                     + "' into service '" + serviceClazz.getName()
                     + "' using method '" + method.getName() + "'", e);
+        }
+    }
+
+    private static void injectApplicableOrmFactory(final Field field, final Object serviceObject, Class<?> serviceClazz) {
+        // Find the matching ORM Factory.
+        OrmFactory<?> targetFactory;
+        if (field.getType().equals(OrmFactory.class)) {
+            Type genericType = field.getGenericType();
+            Type reifiedType = TypeResolver.reify(genericType);
+            ParameterizedType paramType = (ParameterizedType) reifiedType;
+
+            Type actualType = paramType.getActualTypeArguments()[0];
+
+            targetFactory = ORM_FACTORIES.stream()
+                    .filter(factory -> actualType.getClass().isAssignableFrom(factory.getClass()))
+                    .findFirst().orElseThrow(() -> new OrmTestCaseException("Missing factory for injection into " +
+                            "specified service!  Requires type '" + actualType.getClass().getName() + "'"));
+        } else {
+            targetFactory = ORM_FACTORIES.stream()
+                    .filter(factory -> field.getType().isAssignableFrom(factory.getClass()))
+                    .findFirst().orElseThrow(() -> new OrmTestCaseException("Missing factory for injection into " +
+                            "specified service!  Requires type '" + field.getType().getName() + "'"));
+        }
+        try {
+            // Make sure the field can be accessed reflectively.
+            field.setAccessible(true);
+            // Set the field with our target OrmFactory.
+            field.set(serviceObject, targetFactory);
+        } catch (Exception e) {
+            // If an exception occurs, throw our OrmTestCaseException to halt the test.
+            throw new OrmTestCaseException("Issue injecting factory '" + targetFactory.getClass().getName()
+                    + "' into service '" + serviceClazz.getName()
+                    + "' using field '" + field.getName() + "'", e);
         }
     }
 
@@ -265,6 +308,16 @@ public abstract class OrmEnabledTestCase {
             includeMethod = true;
         }
         return includeMethod;
+    }
+
+    private static boolean determineIfOrmFactoryReference(final Field field) {
+        boolean includeField = false;
+        // Return type is void, one parameter, and OrmFactory is assignable from the parameter type.
+        if (OrmFactory.class.isAssignableFrom(field.getType())) {
+            // Include the method in the injection analysis process.
+            includeField = true;
+        }
+        return includeField;
     }
 
     private static String tab(String in) {

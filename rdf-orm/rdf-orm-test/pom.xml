@@ -66,6 +66,12 @@
             <artifactId>mockito-core</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>net.jodah</groupId>
+            <artifactId>typetools</artifactId>
+            <version>0.6.2</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 </project>
