@@ -140,7 +140,6 @@ public class PreferenceRest {
      */
     @PUT
     @Path("{preferenceId}")
-    @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Updates a specific user Preference and it's referenced Entities")
     public Response updateUserPreference(@Context ContainerRequestContext context,
@@ -170,7 +169,7 @@ public class PreferenceRest {
      * @return The resource id of the created user preference
      */
     @POST
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @ApiOperation("Creates a user Preference as well as it's referenced Entities")
     public Response createUserPreference(@Context ContainerRequestContext context,

@@ -62,6 +62,9 @@ public class SimplePreferenceService implements PreferenceService {
     private static final String PREFERENCE_TYPE_BINDING = "preferenceType";
     private static final String USER_BINDING = "user";
     private static final String GET_USER_PREFERENCE;
+    private PreferenceFactory preferenceFactory;
+    private SettingFactory settingFactory;
+    private Resource context;
 
     static {
         try {
@@ -75,15 +78,15 @@ public class SimplePreferenceService implements PreferenceService {
 
     @Reference
     CatalogConfigProvider configProvider;
+
     @Reference
     ValueFactory vf;
+
     @Reference
     ModelFactory mf;
+
     @Reference
     OrmFactoryRegistry factoryRegistry;
-    private PreferenceFactory preferenceFactory;
-    private SettingFactory settingFactory;
-    private Resource context;
 
     @Reference
     private void setPreferenceFactory(PreferenceFactory preferenceFactory) {
