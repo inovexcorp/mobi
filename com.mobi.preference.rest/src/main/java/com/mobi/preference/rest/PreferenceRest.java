@@ -36,6 +36,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
+import com.mobi.preference.api.ontologies.Setting;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
@@ -100,7 +101,7 @@ public class PreferenceRest {
         Set<Preference> userPreferences = preferenceService.getUserPreferences(user);
         ObjectNode result = mapper.createObjectNode();
         userPreferences.forEach(pref -> {
-            JsonNode jsonNode = getPreferenceAsJsonNode(pref);
+            JsonNode jsonNode = getSettingAsJsonNode(pref);
             result.set(pref.getResource().stringValue(), jsonNode);
         });
         return Response.ok(result.toString()).build();
@@ -120,10 +121,10 @@ public class PreferenceRest {
     @ApiOperation("Retrieves a JSON object with a specific user Preferences and their referenced Entities")
     public Response getUserPreference(@Context ContainerRequestContext context,
                                       @PathParam("preferenceId") String preferenceId) {
-        Preference preference = (Preference) preferenceService.getSetting(vf.createIRI(preferenceId))
+        Setting preference = preferenceService.getSetting(vf.createIRI(preferenceId))
                 .orElseThrow(() -> ErrorUtils.sendError("Preference with id " + preferenceId
                         + " does not exist.", Response.Status.BAD_REQUEST));
-        JsonNode result = getPreferenceAsJsonNode(preference);
+        JsonNode result = getSettingAsJsonNode(preference);
         return Response.ok(result.toString()).build();
     }
 
@@ -188,9 +189,9 @@ public class PreferenceRest {
         }
     }
 
-    private JsonNode getPreferenceAsJsonNode(Preference preference) {
+    private JsonNode getSettingAsJsonNode(Setting setting) {
         try {
-            return mapper.readTree(RestUtils.modelToString(preference.getModel(), RDFFormat.JSONLD, transformer));
+            return mapper.readTree(RestUtils.modelToString(setting.getModel(), RDFFormat.JSONLD, transformer));
         } catch (IOException e) {
             throw new MobiException(e);
         }
