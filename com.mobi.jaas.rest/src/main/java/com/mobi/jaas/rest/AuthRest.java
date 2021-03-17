@@ -35,8 +35,10 @@ import com.mobi.rest.util.RestUtils;
 import com.mobi.web.security.util.RestSecurityUtils;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.osgi.service.component.annotations.Component;
@@ -65,7 +67,6 @@ import javax.ws.rs.core.Response;
 
 @Component(service = AuthRest.class, immediate = true)
 @Path("/session")
-@Api( value = "/session")
 public class AuthRest {
 
     static final String REQUIRED_ROLE = "user";
@@ -99,8 +100,16 @@ public class AuthRest {
      */
     @GET
     @Produces(MediaType.TEXT_PLAIN)
-    @ApiOperation("Gets the current user token")
-    public Response getCurrentUser(@Context ContainerRequestContext context) {
+    @Operation(
+            tags = "session",
+            summary = "Gets the current user token",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A plaintext response with the current User's username"),
+            }
+    )
+    public Response getCurrentUser(
+            @Context ContainerRequestContext context) {
         Optional<String> optUsername = RestUtils.optActiveUsername(context);
         if (optUsername.isPresent()) {
             log.debug("Found username in request headers");
@@ -120,10 +129,22 @@ public class AuthRest {
      */
     @POST
     @Produces(MediaType.TEXT_PLAIN)
-    @ApiOperation("Logs in into Mobi creating a new token")
-    public Response login(@Context ContainerRequestContext context,
-                   @QueryParam("username") String username,
-                   @QueryParam("password") String password) {
+    @Operation(
+            tags = "session",
+            summary = "Logs in into Mobi creating a new token",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A plaintext response with the newly logged in User's username"),
+                    @ApiResponse(responseCode = "401", description = "UNAUTHORIZED response"),
+            }
+    )
+    public Response login(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "Username of user", required = true)
+            @QueryParam("username") String username,
+            @Parameter(description = "Password of user",
+                    schema = @Schema(type = "string", format = "password"), required = true)
+            @QueryParam("password") String password) {
         Optional<UserCredentials> userCredsOptional = processFormAuth(username, password);
 
         if (!userCredsOptional.isPresent()) {
@@ -158,7 +179,14 @@ public class AuthRest {
      */
     @DELETE
     @Produces(MediaType.TEXT_PLAIN)
-    @ApiOperation("Logs out of Mobi by setting unauth token")
+    @Operation(
+            tags = "session",
+            summary = "Logs out of Mobi by setting unauth token",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "An empty response representing an anonymous User's session"),
+            }
+    )
     public Response logout() {
         log.debug("Requested logout. Generating unauthenticated token.");
         SignedJWT unauthToken = tokenManager.generateUnauthToken();

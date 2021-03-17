@@ -35,7 +35,7 @@ public interface HTTPRepositoryConfig extends RepositoryConfig {
     /**
      * The HTTP server URL.
      *
-     * @return The String representing the HTTP server URL.
+     * @return String representing the HTTP server URL.
      */
     @Meta.AD
     String serverUrl();

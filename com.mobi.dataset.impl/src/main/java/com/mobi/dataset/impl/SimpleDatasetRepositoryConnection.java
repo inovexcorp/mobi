@@ -438,7 +438,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
      * system default named graph for that dataset.
      *
      * @param statement The statement to add.
-     * @param predicate The String representing the predicate to use for the graph registration in the dataset.
+     * @param predicate String representing the predicate to use for the graph registration in the dataset.
      * @param contexts The contexts to add the statement to. Note that this parameter is a vararg and as such
      *                 is optional. If no contexts are specified, the statement is added to any context specified
      *                 in each statement, or if the statement contains no context, it is added to the system default
@@ -467,7 +467,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
      * system default named graph for that dataset.
      *
      * @param statements The statements to add.
-     * @param predicate The String representing the predicate to use for the graph registration in the dataset.
+     * @param predicate String representing the predicate to use for the graph registration in the dataset.
      * @param contexts The contexts to add the statements to. Note that this parameter is a vararg and as such
      *                 is optional. If no contexts are specified, the statements are added to any context specified
      *                 in each statement, or if the statement contains no context, it is added to the system default
@@ -514,7 +514,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
      * the dataset using the provided predicate; otherwise, add the data to the system default named graph.
      *
      * @param statement The Statement to add to the dataset.
-     * @param predicate The String representing the predicate to use to add the graph if it has a context.
+     * @param predicate String representing the predicate to use to add the graph if it has a context.
      */
     private void addSingleStatement(Statement statement, String predicate) {
         if (statement.getContext().isPresent()) {
@@ -597,7 +597,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
      * Rewrites a SPARQL query replacing the dataset clauses with appropriate dataset clauses for this dataset.
      *
      * @param query The query to rewrite.
-     * @return A String representing the query rewritten with dataset clauses appropriate for this dataset.
+     * @return String representing the query rewritten with dataset clauses appropriate for this dataset.
      */
     private String rewriteQuery(String query, Resource... contexts) {
         Sparql11Parser parser = Query.getParser(query);

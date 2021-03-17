@@ -38,15 +38,14 @@ import com.mobi.security.policy.api.xacml.PolicyQueryParams;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
-import java.io.IOException;
-import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -58,10 +57,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.util.Optional;
 
 @Component(service = PolicyRest.class, immediate = true)
 @Path("/policies")
-@Api(value = "/policies")
 public class PolicyRest {
 
     private ValueFactory vf;
@@ -80,21 +80,33 @@ public class PolicyRest {
     /**
      * Fetches all security policies that match the provided query parameters.
      *
-     * @param relatedSubject The String representing a subject ID. NOTE: Assumes ID represents an IRI unless String
+     * @param relatedSubject String representing a subject ID. NOTE: Assumes ID represents an IRI unless String
      *                       begins with "_:"
-     * @param relatedResource The String representing a resource ID. NOTE: Assumes ID represents an IRI unless String
+     * @param relatedResource String representing a resource ID. NOTE: Assumes ID represents an IRI unless String
      *                       begins with "_:"
-     * @param relatedAction The String representing a action ID. NOTE: Assumes ID represents an IRI unless String
+     * @param relatedAction String representing a action ID. NOTE: Assumes ID represents an IRI unless String
      *                       begins with "_:"
      * @return A JSON array of JSON representations of matching policies
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves security policies matching the provided filters.")
-    public Response getPolicies(@QueryParam("relatedSubject") String relatedSubject,
-                         @QueryParam("relatedResource") String relatedResource,
-                         @QueryParam("relatedAction") String relatedAction) {
+    @Operation(
+            tags = "policies",
+            summary = "Retrieves security policies matching the provided filters",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response getPolicies(
+            @Parameter(description = "String representing a subject ID", required = true)
+            @QueryParam("relatedSubject") String relatedSubject,
+            @Parameter(description = "String representing a resource ID", required = true)
+            @QueryParam("relatedResource") String relatedResource,
+            @Parameter(description = "String representing a action ID", required = true)
+            @QueryParam("relatedAction") String relatedAction) {
         PolicyQueryParams.Builder params = new PolicyQueryParams.Builder();
         if (StringUtils.isNotEmpty(relatedResource)) {
             params.addResourceIRI(vf.createIRI(relatedResource));
@@ -125,8 +137,18 @@ public class PolicyRest {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("admin")
-    @ApiOperation("Creates a new security policy using the provided JSON body.")
-    public Response createPolicy(String policyJson) {
+    @Operation(
+            tags = "policies",
+            summary = "Creates a new security policy using the provided JSON body",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "The new policy ID"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response createPolicy(
+            @Parameter(description = "A JSON representation of a policy to add to Mobi", required = true)
+                    String policyJson) {
         try {
             Resource policyId = policyManager.addPolicy(jsonToPolicy(policyJson));
             return Response.status(201).entity(policyId.stringValue()).build();
@@ -140,7 +162,7 @@ public class PolicyRest {
     /**
      * Retrieves a specific security policy identified by its ID. If the policy could not be found, returns a 400.
      *
-     * @param policyId The String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
+     * @param policyId String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
      *                 begins with "_:"
      * @return A JSON representation of the identified policy
      */
@@ -148,9 +170,19 @@ public class PolicyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("{policyId}")
     @RolesAllowed("user")
-    @ApiOperation("Retrieves a specific security policy by its ID.")
+    @Operation(
+            tags = "policies",
+            summary = "Retrieves a specific security policy by its ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "A JSON representation of the identified policy"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "policyId")
-    public Response retrievePolicy(@PathParam("policyId") String policyId) {
+    public Response retrievePolicy(
+            @Parameter(description = "String representing a policy ID", required = true)
+            @PathParam("policyId") String policyId) {
         try {
             Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(policyId));
             if (!policy.isPresent()) {
@@ -166,7 +198,7 @@ public class PolicyRest {
      * Updates the identified policy with the provided JSON representation in the body. Provided policy must have
      * the same ID.
      *
-     * @param policyId The String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
+     * @param policyId String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
      *                 begins with "_:"
      * @param policyJson A JSON representation of the new version of the policy
      * @return A Response indicating the success of the request
@@ -175,9 +207,22 @@ public class PolicyRest {
     @Path("{policyId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("admin")
-    @ApiOperation("Updates an existing security policy using the provided JSON body.")
+    @Operation(
+            tags = "policies",
+            summary = "Updates an existing security policy using the provided JSON body",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "policyId")
-    public Response updatePolicy(@PathParam("policyId") String policyId, String policyJson) {
+    public Response updatePolicy(
+            @Parameter(description = "String representing a policy ID", required = true)
+            @PathParam("policyId") String policyId,
+            @Parameter(description = "A JSON representation of the new version of the policy", required = true)
+                    String policyJson) {
         try {
             XACMLPolicy policy = jsonToPolicy(policyJson);
             if (!policy.getId().equals(vf.createIRI(policyId))) {

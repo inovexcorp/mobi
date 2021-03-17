@@ -56,8 +56,11 @@ import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 import com.mobi.security.policy.api.xacml.jaxb.RuleType;
 import com.mobi.security.policy.api.xacml.jaxb.TargetType;
 import com.mobi.vocabularies.xsd.XSD;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
@@ -66,11 +69,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -81,10 +79,14 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 
 @Component(service = RecordPermissionsRest.class, immediate = true)
 @Path("/record-permissions")
-@Api(value = "/record-permissions")
 public class RecordPermissionsRest {
     private final Logger LOGGER = LoggerFactory.getLogger(RecordPermissionsRest.class);
 
@@ -121,21 +123,46 @@ public class RecordPermissionsRest {
      *   }, ...
      * }
      *
-     * @param recordId The String representing a resource for which to retrieve a policy ID. NOTE: Assumes ID
+     * @param recordId String representing a resource for which to retrieve a policy ID. NOTE: Assumes ID
      *                   represents an IRI unless String begins with "_:"
      * @return A JSON representation of which user can perform each rule.
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("{recordId}")
-    @ApiOperation("Retrieves a specific record security policy by its ID.")
+    @Operation(
+            tags = "record-permissions",
+            summary = "Retrieves a specific record security policy by its ID",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "JSON representation of which user can perform each rule",
+                            content = @Content(
+                                    examples = {@ExampleObject(value = "{"
+                                            + "\"urn:read\": {"
+                                            + "\"everyone\": false,"
+                                            + "\"users\": [\n"
+                                            + "\"http://mobi.com/users/userIRI1\","
+                                            + "\"http://mobi.com/users/userIRI2\""
+                                            + "],"
+                                            + "\"groups\": []"
+                                            + "  }, ..."
+                                            + "}")
+                                    })
+                    ),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Update.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response retrieveRecordPolicy(@PathParam("recordId") String recordId) {
+    public Response retrieveRecordPolicy(
+            @Parameter(description = "String representing a resource for which to retrieve a policy ID",
+                    required = true)
+            @PathParam("recordId") String recordId) {
         try (RepositoryConnection conn = repo.getConnection()) {
             Optional<String> recordPolicyIdOpt = getRelatedResourceId(recordId, conn);
             String recordPolicyId = recordPolicyIdOpt.orElseThrow(() -> ErrorUtils.sendError("Policy for record "
-                            + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
+                    + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
 
             Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(recordPolicyId));
             if (!policy.isPresent()) {
@@ -162,7 +189,7 @@ public class RecordPermissionsRest {
      *   }, ...
      * }
      *
-     * @param recordId The String representing a recordId whose corresponding policy should be updated.
+     * @param recordId String representing a recordId whose corresponding policy should be updated.
      *                   NOTE: Assumes ID represents an IRI unless String begins with "_:"
      * @param policyJson A JSON representation of the new version of the record policy
      * @return A Response indicating the success of the request
@@ -170,9 +197,22 @@ public class RecordPermissionsRest {
     @PUT
     @Path("{recordId}")
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation("Updates an existing record security policy using the provided JSON body.")
+    @Operation(
+            tags = "record-permissions",
+            summary = "Updates an existing record security policy using the provided JSON body",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response updateRecordPolicy(@PathParam("recordId") String recordId, String policyJson) {
+    public Response updateRecordPolicy(
+            @Parameter(description = "String representing a recordId whose corresponding policy should be updated",
+                    required = true)
+            @PathParam("recordId") String recordId,
+            @Parameter(description = "JSON representation of the new version of the record policy", required = true)
+                    String policyJson) {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Record Policy
             Optional<String> recordPolicyIdOpt = getRelatedResourceId(recordId, conn);
@@ -201,7 +241,8 @@ public class RecordPermissionsRest {
             IRI policyPolicyIRI = vf.createIRI(policyPolicyId);
             Optional<XACMLPolicy> policyPolicy = policyManager.getPolicy(policyPolicyIRI);
             if (!policyPolicy.isPresent()) {
-                throw ErrorUtils.sendError("Policy policy to update could not be found", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError("Policy policy to update could not be found",
+                        Response.Status.BAD_REQUEST);
             }
 
             XACMLPolicy updatedPolicyPolicy = updatePolicyPolicy(policyJson, policyPolicy.get().getJaxbPolicy());

@@ -91,7 +91,15 @@
             <artifactId>jersey-media-multipart</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.swagger</groupId>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-jaxrs2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-jaxrs2-servlet-initializer</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
         </dependency>
 
@@ -150,6 +158,10 @@
                             com.mobi.jaas.rest; provide:=true,
                             com.mobi.jaas.rest.providers
                         </Export-Package>
+                        <Import-Package>
+                            !io.swagger.v3.*,
+                            *
+                        </Import-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
