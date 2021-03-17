@@ -39,6 +39,7 @@ import com.mobi.ontology.cacheloader.api.CacheLoader;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import com.mobi.ontology.impl.core.AbstractOntologyManager;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.persistence.utils.api.BNodeService;
@@ -72,9 +73,12 @@ import org.mockito.MockitoAnnotations;
 import javax.cache.Cache;
 import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.Assert.assertFalse;
@@ -288,18 +292,31 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
         manager = Mockito.spy(new SimpleOntologyManager());
         injectOrmFactoryReferencesIntoService(manager);
-        manager.setValueFactory(VALUE_FACTORY);
-        manager.setModelFactory(MODEL_FACTORY);
-        manager.setSesameTransformer(sesameTransformer);
-        manager.setConfigProvider(configProvider);
-        manager.setCatalogManager(catalogManager);
-        manager.setUtilsService(catalogUtilsService);
-        manager.setRepositoryManager(mockRepoManager);
-        manager.addOntologyCache(ontologyCache);
-        manager.setbNodeService(bNodeService);
-        manager.setImportsResolver(importsResolver);
-        manager.setDatasetManager(datasetManager);
-        manager.setCacheLoader(cacheLoader);
+
+        Map<String, Object> abstractFields = new HashMap<>();
+        abstractFields.put("valueFactory", VALUE_FACTORY);
+        abstractFields.put("modelFactory", MODEL_FACTORY);
+        abstractFields.put("sesameTransformer", sesameTransformer);
+        abstractFields.put("configProvider", configProvider);
+        abstractFields.put("catalogManager", catalogManager);
+        abstractFields.put("utilsService", catalogUtilsService);
+        abstractFields.put("repositoryManager", mockRepoManager);
+        abstractFields.put("ontologyCache", ontologyCache);
+        abstractFields.put("bNodeService", bNodeService);
+
+        abstractFields.forEach((key, value) -> {
+            try {
+                Field field = AbstractOntologyManager.class.getDeclaredField(key);
+                field.setAccessible(true);
+                field.set(manager, value);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        manager.importsResolver = importsResolver;
+        manager.datasetManager = datasetManager;
+        manager.cacheLoader = cacheLoader;
         manager.activate();
     }
 

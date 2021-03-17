@@ -23,36 +23,26 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.component.Reference;
-import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
-import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.cacheloader.api.CacheLoader;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.impl.core.AbstractOntologyManager;
-import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.ontology.utils.imports.ImportsResolver;
-import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.lang.NotImplementedException;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
@@ -62,100 +52,24 @@ import java.io.InputStream;
 import java.util.Optional;
 
 @Component(
-        provide = { SimpleOntologyManager.class, OntologyManager.class },
+        service = { SimpleOntologyManager.class, OntologyManager.class },
         name = SimpleOntologyManager.COMPONENT_NAME,
-        configurationPolicy = ConfigurationPolicy.require
+        configurationPolicy = ConfigurationPolicy.REQUIRE
 )
 public class SimpleOntologyManager extends AbstractOntologyManager {
 
     static final String COMPONENT_NAME = "com.mobi.ontology.impl.repository.OntologyManager";
 
-    private DatasetManager datasetManager;
-    private ImportsResolver importsResolver;
-    private BNodeService bNodeService;
-    private CacheLoader cacheLoader;
+    @Reference
+    protected DatasetManager datasetManager;
 
+    @Reference
+    protected ImportsResolver importsResolver;
+
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
+    protected CacheLoader cacheLoader;
 
     public SimpleOntologyManager() {
-    }
-
-    @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
-    }
-
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
-    }
-
-    @Reference
-    public void setSesameTransformer(SesameTransformer sesameTransformer) {
-        this.sesameTransformer = sesameTransformer;
-    }
-
-    @Reference
-    public void setDatasetManager(DatasetManager datasetManager) {
-        this.datasetManager = datasetManager;
-    }
-
-    @Reference
-    void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
-        this.ontologyRecordFactory = ontologyRecordFactory;
-    }
-
-    @Reference
-    void setConfigProvider(CatalogConfigProvider configProvider) {
-        this.configProvider = configProvider;
-    }
-
-    @Reference
-    public void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    void setUtilsService(CatalogUtilsService utilsService) {
-        this.utilsService = utilsService;
-    }
-
-    @Reference
-    public void setRepositoryManager(RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
-    }
-
-    @Reference
-    public void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
-
-    @Reference(type = '*', dynamic = true, optional = true)
-    public void addOntologyCache(OntologyCache ontologyCache) {
-        this.ontologyCache = ontologyCache;
-    }
-
-    public void removeOntologyCache(OntologyCache ontologyCache) {
-    }
-
-    @Reference
-    public void setImportsResolver(ImportsResolver importsResolver) {
-        this.importsResolver = importsResolver;
-    }
-
-    @Reference
-    public void setbNodeService(BNodeService bNodeService) {
-        this.bNodeService = bNodeService;
-    }
-
-    @Reference(dynamic = true, unbind = "removeCacheLoader")
-    public void setCacheLoader(CacheLoader cacheLoader) {
-        this.cacheLoader = cacheLoader;
-    }
-
-    public void removeCacheLoader(CacheLoader cacheLoader) {
-        if (cacheLoader.equals(this.cacheLoader)) {
-            this.cacheLoader = null;
-        }
     }
 
     /**

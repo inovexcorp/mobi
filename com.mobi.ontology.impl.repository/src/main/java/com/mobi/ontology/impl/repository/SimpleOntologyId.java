@@ -32,7 +32,6 @@ import com.mobi.rdf.api.ValueFactory;
 import java.util.Optional;
 import java.util.UUID;
 
-
 public class SimpleOntologyId extends AbstractOntologyId {
 
     private IRI ontologyIRI;

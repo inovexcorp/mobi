@@ -48,26 +48,55 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.io.IOUtils;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import javax.annotation.Nonnull;
-import javax.cache.Cache;
 
 public abstract class AbstractOntologyManager implements OntologyManager  {
     protected Logger log;
+
+    @Reference
     protected ValueFactory valueFactory;
+
+    @Reference
     protected ModelFactory modelFactory;
+
+    @Reference
     protected SesameTransformer sesameTransformer;
+
+    @Reference
     protected OntologyRecordFactory ontologyRecordFactory;
+
+    @Reference
     protected RepositoryManager repositoryManager;
+
+    @Reference
     protected BranchFactory branchFactory;
+
+    @Reference(
+            cardinality = ReferenceCardinality.OPTIONAL,
+            policy = ReferencePolicy.DYNAMIC,
+            policyOption = ReferencePolicyOption.GREEDY
+    )
     protected OntologyCache ontologyCache;
+
+    @Reference
     protected CatalogConfigProvider configProvider;
+
+    @Reference
     protected CatalogManager catalogManager;
+
+    @Reference
     protected CatalogUtilsService utilsService;
+
+    @Reference
     protected BNodeService bNodeService;
 
     protected static final String FIND_ONTOLOGY;
