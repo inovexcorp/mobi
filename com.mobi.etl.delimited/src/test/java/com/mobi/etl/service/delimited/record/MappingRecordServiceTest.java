@@ -23,18 +23,6 @@ package com.mobi.etl.service.delimited.record;
  * #L%
  */
 
-import static junit.framework.TestCase.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
@@ -100,6 +88,18 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static junit.framework.TestCase.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class MappingRecordServiceTest extends OrmEnabledTestCase {
     private SimpleMappingRecordService recordService;
@@ -262,15 +262,16 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         doNothing().when(utilsService).removeInProgressCommit(any(InProgressCommit.class), eq(connection));
 
         injectOrmFactoryReferencesIntoService(recordService);
-        recordService.setManager(manager);
-        recordService.setUtilsService(utilsService);
-        recordService.setVf(VALUE_FACTORY);
-        recordService.setProvUtils(provUtils);
-        recordService.setVersioningManager(versioningManager);
-        recordService.setMergeRequestManager(mergeRequestManager);
-        recordService.setPolicyManager(xacmlPolicyManager);
-        recordService.setEngineManager(engineManager);
-        recordService.setCatalogConfigProvider(configProvider);
+
+//        recordService.setManager(manager);
+//        recordService.setUtilsService(utilsService);
+//        recordService.setVf(VALUE_FACTORY);
+//        recordService.setProvUtils(provUtils);
+//        recordService.setVersioningManager(versioningManager);
+//        recordService.setMergeRequestManager(mergeRequestManager);
+//        recordService.setPolicyManager(xacmlPolicyManager);
+//        recordService.setEngineManager(engineManager);
+//        recordService.setCatalogConfigProvider(configProvider);
     }
 
     /* activate() */
