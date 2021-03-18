@@ -96,8 +96,10 @@ import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import com.mobi.security.policy.api.ontologies.policy.Read;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -168,8 +170,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
+
 @Path("/ontologies")
-@Api(value = "/ontologies")
 @Component(service = OntologyRest.class, immediate = true)
 public class OntologyRest {
 
@@ -279,18 +281,44 @@ public class OntologyRest {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            tags = "ontologies",
+            summary = "Uploads an ontology file to the data store",
+            description = "Uploads and imports an ontology file to a data store and creates an associated "
+                    + "OntologyRecord using the form data. A master Branch is created and stored with an initial "
+                    + "Commit containing the data provided in the ontology file.",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "OntologyRecord created"),
+                    @ApiResponse(responseCode = "400", description = "Publisher can't be found"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Problem creating OntologyRecord")
+            }
+    )
     @RolesAllowed("user")
-    @ApiOperation("Uploads an ontology file to the data store.")
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
-    public Response uploadOntology(@Context ContainerRequestContext context,
-                                   @FormDataParam("file") InputStream fileInputStream,
-                                   @FormDataParam("file") FormDataContentDisposition fileDetail,
-                                   @FormDataParam("json") String ontologyJson,
-                                   @FormDataParam("title") String title,
-                                   @FormDataParam("description") String description,
-                                   @FormDataParam("markdown") String markdown,
-                                   @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
+    public Response uploadFile(
+            @Context ContainerRequestContext context,
+            @Parameter(schema = @Schema(type = "string", format = "binary",
+                    description = "Ontology file to upload.", required = true))
+            @FormDataParam("file") InputStream fileInputStream,
+            @Parameter(description = "File details", hidden = true)
+            @FormDataParam("file") FormDataContentDisposition fileDetail,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Ontology JSON-LD to upload"))
+            @FormDataParam("json") String ontologyJson,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Title for the OntologyRecord", required = true))
+            @FormDataParam("title") String title,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional description for the OntologyRecord"))
+            @FormDataParam("description") String description,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional markdown abstract for the new OntologyRecord"))
+            @FormDataParam("markdown") String markdown,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional list of keyword strings for the OntologyRecord"))
+            @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
         if (fileInputStream == null && ontologyJson == null) {
             throw ErrorUtils.sendError("The ontology data is missing.", Response.Status.BAD_REQUEST);
@@ -317,42 +345,46 @@ public class OntologyRest {
         }
     }
 
-    /**
-     * Returns the ontology associated with the requested record ID in the requested format.
-     *
-     * @param context     the context of the request
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                    otherwise, nothing will be returned.
-     * @param rdfFormat   the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @param clearCache  whether or not the cached version of the identified Ontology should be cleared before
-     *                    retrieval
-     * @param skolemize   whether or not the JSON-LD of the ontology should be skolemized
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
-     *                              applied to the return value
-     * @return a Response with the ontology in the requested format.
-     */
     @GET
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @Operation(
+            tags = "ontologies",
+            summary = "Returns the ontology associated with the requested record ID in the requested format",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "The Ontology in the requested format"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the ontology in the requested format.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getOntology(@Context ContainerRequestContext context,
-                                @PathParam("recordId") String recordIdStr,
-                                @QueryParam("branchId") String branchIdStr,
-                                @QueryParam("commitId") String commitIdStr,
-                                @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
-                                @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
-                                @DefaultValue("false") @QueryParam("skolemize") boolean skolemize,
-                                @DefaultValue("true") @QueryParam("applyInProgressCommit")
-                                            boolean applyInProgressCommit) {
+    public Response getOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID. NOTE: Assumes id represents an "
+                    + "IRI unless String begins with \"_:\"", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "Optional String representing the Branch Resource id. NOTE: Assumes id "
+                    + "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "Optional String representing the Commit Resource id. NOTE: Assumes id "
+                    + "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The "
+                    + "provided commitId must be on the Branch identified by the provided branchId; "
+                    + "otherwise, nothing will be returned", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Desired RDF return format",
+                    schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "owl/xml", "turtle"}))
+            @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+            @Parameter(description = "Whether or not the cached version of the identified Ontology should "
+                    + "be cleared before retrieval")
+            @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
+            @Parameter(description = "Whether or not the JSON-LD of the ontology should be skolemized.")
+            @DefaultValue("false") @QueryParam("skolemize") boolean skolemize,
+            @Parameter(description = "Whether or not any in progress commits by user should be applied "
+                    + "to the return value")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit")
+                    boolean applyInProgressCommit
+    ) {
         try {
             if (clearCache) {
                 ontologyCache.removeFromCache(recordIdStr, commitIdStr);
@@ -374,18 +406,29 @@ public class OntologyRest {
      * Deletes the ontology associated with the requested record ID in the requested format.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @return OK.
      */
     @DELETE
     @Path("{recordId}")
     @RolesAllowed("user")
-    @ApiOperation("Deletes the OntologyRecord with the requested recordId.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Deletes the OntologyRecord with the requested recordId",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response indicating the success"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Delete.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteOntology(@Context ContainerRequestContext context,
-                                   @PathParam("recordId") String recordIdStr) {
+    public Response deleteOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr) {
         try {
             catalogManager.deleteRecord(getActiveUser(context, engineManager), valueFactory.createIRI(recordIdStr),
                     OntologyRecord.class);
@@ -401,12 +444,12 @@ public class OntologyRest {
      * Streams the ontology associated with the requested record ID to an OutputStream.
      *
      * @param context     the context of the request
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -417,17 +460,40 @@ public class OntologyRest {
     @GET
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
+    @Operation(
+            tags = "ontologies",
+            summary = "Streams the ontology associated with the requested record ID to an OutputStream",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "The Ontology associated with requested record ID to download"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+            },
+            hidden = true
+    )
     @RolesAllowed("user")
-    @ApiOperation("Streams the associated ontology to an OutputStream.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response downloadOntologyFile(@Context ContainerRequestContext context,
-                                         @PathParam("recordId") String recordIdStr,
-                                         @QueryParam("branchId") String branchIdStr,
-                                         @QueryParam("commitId") String commitIdStr,
-                                         @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
-                                         @DefaultValue("ontology") @QueryParam("fileName") String fileName) {
+    public Response downloadOntologyFile(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID. "
+                    + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "Optional String representing the Branch Resource id. NOTE: Assumes id "
+                    + "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "Optional String representing the Commit Resource id. NOTE: Assumes id "
+                    + "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The "
+                    + "provided commitId must be on the Branch identified by the provided branchId; otherwise, nothing "
+                    + "will be returned")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Desired RDF return format",
+                    schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "owl/xml", "turtle"}))
+            @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+            @Parameter(description = "File name for the ontology file")
+            @DefaultValue("ontology") @QueryParam("fileName") String fileName
+    ) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
+            Ontology ontology = getOntology(context,
+                    recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             StreamingOutput stream = os -> {
                 Writer writer = new BufferedWriter(new OutputStreamWriter(os));
@@ -444,22 +510,22 @@ public class OntologyRest {
     }
 
     /**
-     * Updates the InProgressCommit associated with the User making the request for the OntologyRecord identified by the
-     * provided recordId.
+     * Updates the InProgressCommit associated with the User making the request for the OntologyRecord identified
+     * by the provided recordId.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param entityIdStr the String representing the edited entity id. NOTE: Assumes id represents an IRI unless String
-     *                    begins with "_:".
-     * @param entityJson  the String representing the edited Resource.
+     * @param entityIdStr String representing the edited entity id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param entityJson  String representing the edited Resource.
      * @return a Response indicating whether it was successfully updated.
      */
     @POST
@@ -467,16 +533,34 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Updates the requester's InProgressCommit with the provided entity.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Updates the requester's InProgressCommit with the provided entity",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether it was successfully updated"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response saveChangesToOntology(@Context ContainerRequestContext context,
-                                          @PathParam("recordId") String recordIdStr,
-                                          @QueryParam("branchId") String branchIdStr,
-                                          @QueryParam("commitId") String commitIdStr,
-                                          @QueryParam("entityId") String entityIdStr, String entityJson) {
+    public Response saveChangesToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "String representing the edited entity id", required = true)
+            @QueryParam("entityId") String entityIdStr,
+            @Parameter(description = "String representing the edited Resource", required = true)
+                    String entityJson) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
+            Ontology ontology = getOntology(context,
+                    recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             Model entityModel = getModelForEntityInOntology(ontology, entityIdStr);
             Difference diff = catalogManager.getDiff(entityModel, getModelFromJson(entityJson));
@@ -496,12 +580,12 @@ public class OntologyRest {
      * provided recordId.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -513,15 +597,33 @@ public class OntologyRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Updates the specified ontology branch and commit with the data provided.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Updates the specified ontology branch and commit with the data provided",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "OK if successful or METHOD_NOT_ALLOWED if the changes "
+                                    + "can not be applied to the commit specified"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response uploadChangesToOntology(@Context ContainerRequestContext context,
-                                            @PathParam("recordId") String recordIdStr,
-                                            @QueryParam("branchId") String branchIdStr,
-                                            @QueryParam("commitId") String commitIdStr,
-                                            @FormDataParam("file") InputStream fileInputStream) {
+    public Response uploadChangesToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(schema = @Schema(type = "string", format = "binary",
+                    description = "Ontology file to upload", required = true))
+            @FormDataParam("file") InputStream fileInputStream) {
         long totalTime = System.currentTimeMillis();
+
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
@@ -604,8 +706,8 @@ public class OntologyRest {
                     System.currentTimeMillis() - startTime);
 
             return Response.ok().build();
-        } catch (IllegalArgumentException | MobiException | ExecutionException |
-                InterruptedException | CompletionException e) {
+        } catch (IllegalArgumentException | MobiException | ExecutionException
+                | InterruptedException | CompletionException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
@@ -666,24 +768,37 @@ public class OntologyRest {
      * specified. In which case the branch specified by the branchId query parameter will be removed and nothing else.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @return OK.
      */
     @DELETE
     @Path("{recordId}/branches/{branchId}")
     @RolesAllowed("user")
-    @ApiOperation("Deletes the Branch with the requested BranchId from the OntologyRecord with the provided recordId.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Deletes the Branch with the requested BranchId from the "
+                    + "OntologyRecord with the provided recordId",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response indicating successfully request"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ActionAttributes(
             @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteOntologyBranch(@Context ContainerRequestContext context,
-                                         @PathParam("recordId") String recordIdStr,
-                                         @PathParam("branchId") String branchIdStr) {
+    public Response deleteOntologyBranch(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = true)
+            @PathParam("branchId") String branchIdStr) {
         try {
             ontologyManager.deleteOntologyBranch(valueFactory.createIRI(recordIdStr),
                     valueFactory.createIRI(branchIdStr));
@@ -701,12 +816,12 @@ public class OntologyRest {
      * hierarchy and index.
      *
      * @param context the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -717,12 +832,27 @@ public class OntologyRest {
     @Path("{recordId}/vocabulary-stuff")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets a JSON representation of all the SKOS vocabulary related information about the ontology")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets a JSON representation of all the SKOS vocabulary related information about the ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "JSON object with keys \"derivedConcepts\", "
+                            + "\"derivedConceptSchemes\", \"concepts.hierarchy\", \"concepts.index\","
+                            + "\"conceptSchemes.hierarchy\", and \"conceptSchemes.index\""),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getVocabularyStuff(@Context ContainerRequestContext context,
-                                       @PathParam("recordId") String recordIdStr,
-                                       @QueryParam("branchId") String branchIdStr,
-                                       @QueryParam("commitId") String commitIdStr) {
+    public Response getVocabularyStuff(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
             if (optionalOntology.isPresent()) {
@@ -738,7 +868,7 @@ public class OntologyRest {
 
     private StreamingOutput getVocabularyStuffStream(Ontology ontology) {
         Set<Ontology> onlyImports = OntologyUtils.getImportedOntologies(ontology);
-        
+
         return outputStream -> {
             StopWatch watch = new StopWatch();
             log.trace("Start concepts");
@@ -822,12 +952,12 @@ public class OntologyRest {
      * ontologies.
      *
      * @param context the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -837,23 +967,39 @@ public class OntologyRest {
     @Path("{recordId}/ontology-stuff")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets a JSON representation of all the OWL ontology related information about the ontology")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets a JSON representation of all the OWL ontology related information about the ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "JSON object with keys"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getOntologyStuff(@Context ContainerRequestContext context,
-                                     @PathParam("recordId") String recordIdStr,
-                                     @QueryParam("branchId") String branchIdStr,
-                                     @QueryParam("commitId") String commitIdStr,
-                                     @DefaultValue("false") @QueryParam("clearCache") boolean clearCache) {
+    public Response getOntologyStuff(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Boolean to decide to clear cache")
+            @DefaultValue("false") @QueryParam("clearCache") boolean clearCache) {
         try {
             if (clearCache) {
                 ontologyCache.removeFromCache(recordIdStr, commitIdStr);
             }
-            Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
+            Optional<Ontology> optionalOntology = getOntology(context,
+                    recordIdStr, branchIdStr, commitIdStr, true);
             if (optionalOntology.isPresent()) {
                 StreamingOutput output = getOntologyStuffStream(optionalOntology.get());
                 return Response.ok(output).build();
             } else {
-                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.",
+                        Response.Status.BAD_REQUEST);
             }
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1006,12 +1152,12 @@ public class OntologyRest {
      * Returns IRIs in the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1021,12 +1167,26 @@ public class OntologyRest {
     @Path("{recordId}/iris")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the IRIs in the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the IRIs in the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "IRIs in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getIRIsInOntology(@Context ContainerRequestContext context,
-                                      @PathParam("recordId") String recordIdStr,
-                                      @QueryParam("branchId") String branchIdStr,
-                                      @QueryParam("commitId") String commitIdStr) {
+    public Response getIRIsInOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs, true);
             return Response.ok(result.toString()).build();
@@ -1039,12 +1199,12 @@ public class OntologyRest {
      * Returns annotation property IRIs in the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1054,12 +1214,26 @@ public class OntologyRest {
     @Path("{recordId}/annotations")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the annotations in the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the annotations in the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Annotation properties in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getAnnotationsInOntology(@Context ContainerRequestContext context,
-                                             @PathParam("recordId") String recordIdStr,
-                                             @QueryParam("branchId") String branchIdStr,
-                                             @QueryParam("commitId") String commitIdStr) {
+    public Response getAnnotationsInOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getAnnotationIRIObject, true);
@@ -1074,9 +1248,9 @@ public class OntologyRest {
      * requester's InProgressCommit.
      *
      * @param context        the context of the request.
-     * @param recordIdStr    the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr    String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                       String begins with "_:".
-     * @param annotationJson the String representing the new annotation in JSON-LD.
+     * @param annotationJson String representing the new annotation in JSON-LD.
      * @return a Response indicating whether it was successfully added.
      */
     @POST
@@ -1084,12 +1258,26 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Adds a new annotation to the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Adds a new annotation to the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating whether it was successfully added"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response addAnnotationToOntology(@Context ContainerRequestContext context,
-                                            @PathParam("recordId") String recordIdStr,
-                                            String annotationJson) {
+    public Response addAnnotationToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID. NOTE: Assumes id represents an "
+                    + "IRI unless String begins with \"_:\"")
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the new annotation in JSON-LD", required = true)
+                    String annotationJson) {
         verifyJsonldType(annotationJson, OWL.ANNOTATIONPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(annotationJson));
@@ -1098,20 +1286,19 @@ public class OntologyRest {
         }
     }
 
-    @ActionId(Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, value = "recordId")
+
     /**
      * Delete annotation with requested annotation ID from ontology identified by the provided IDs from the server.
      *
      * @param context         the context of the request.
-     * @param recordIdStr     the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr     String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                        String begins with "_:".
-     * @param annotationIdStr the String representing the annotation Resource id. NOTE: Assumes id represents
+     * @param annotationIdStr String representing the annotation Resource id. NOTE: Assumes id represents
      *                        an IRI unless String begins with "_:".
-     * @param branchIdStr     the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr     String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                        String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                        master Branch.
-     * @param commitIdStr     the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr     String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                        String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                        head Commit. The provided commitId must be on the Branch identified by the provided
      *                        branchId; otherwise, nothing will be returned.
@@ -1121,14 +1308,35 @@ public class OntologyRest {
     @Path("{recordId}/annotations/{annotationId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes the identified annotation from the identified ontology.")
-    public Response deleteAnnotationFromOntology(@Context ContainerRequestContext context,
-                                                 @PathParam("recordId") String recordIdStr,
-                                                 @PathParam("annotationId") String annotationIdStr,
-                                                 @QueryParam("branchId") String branchIdStr,
-                                                 @QueryParam("commitId") String commitIdStr) {
+    @Operation(
+            tags = "ontologies",
+            summary = "Updates the specified ontology branch and commit with the data provided",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether it was successfully deleted"),
+                    @ApiResponse(responseCode = "400", description = "The ontology could not be found"),
+                    @ApiResponse(responseCode = "401",
+                            description = "User does not has the permission to modify the record "
+                                    + "since deleting an annotation is part of modifying the record"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response deleteAnnotationFromOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the annotation Resource ID", required = true)
+            @PathParam("annotationId") String annotationIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
+            Ontology ontology = getOntology(context,
+                    recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             return deletionsToInProgressCommit(context, ontology, annotationIdStr, recordIdStr);
         } catch (MobiException e) {
@@ -1140,12 +1348,12 @@ public class OntologyRest {
      * Returns class IRIs in the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1157,14 +1365,29 @@ public class OntologyRest {
     @Path("{recordId}/classes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the classes in the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the classes in the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Classes in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getClassesInOntology(@Context ContainerRequestContext context,
-                                         @PathParam("recordId") String recordIdStr,
-                                         @QueryParam("branchId") String branchIdStr,
-                                         @QueryParam("commitId") String commitIdStr,
-                                         @DefaultValue("true") @QueryParam("applyInProgressCommit")
-                                                     boolean applyInProgressCommit) {
+    public Response getClassesInOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Boolean indicating whether or not any in progress commits by user should be "
+                    + "applied to the return value")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
             ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray,
                     applyInProgressCommit);
@@ -1179,9 +1402,9 @@ public class OntologyRest {
      * InProgressCommit.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param classJson   the String representing the new class model.
+     * @param classJson   String representing the new class model.
      * @return a Response indicating whether it was successfully added.
      */
     @POST
@@ -1189,12 +1412,25 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Adds a new class to the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Adds a new class to the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating whether it was successfully added"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response addClassToOntology(@Context ContainerRequestContext context,
-                                       @PathParam("recordId") String recordIdStr,
-                                       String classJson) {
+    public Response addClassToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the new class model", required = true)
+                    String classJson) {
         verifyJsonldType(classJson, OWL.CLASS.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(classJson));
@@ -1207,14 +1443,14 @@ public class OntologyRest {
      * Delete class with requested class ID from ontology identified by the provided IDs from the server.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param classIdStr  the String representing the class Resource id. NOTE: Assumes id represents
+     * @param classIdStr  String representing the class Resource id. NOTE: Assumes id represents
      *                    an IRI unless String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1224,14 +1460,29 @@ public class OntologyRest {
     @Path("{recordId}/classes/{classId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes the identified class from the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Deletes the identified class from the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether it was successfully deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteClassFromOntology(@Context ContainerRequestContext context,
-                                            @PathParam("recordId") String recordIdStr,
-                                            @PathParam("classId") String classIdStr,
-                                            @QueryParam("branchId") String branchIdStr,
-                                            @QueryParam("commitId") String commitIdStr) {
+    public Response deleteClassFromOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the class Resource ID", required = true)
+            @PathParam("classId") String classIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -1245,12 +1496,12 @@ public class OntologyRest {
      * Returns datatype IRIs in the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1260,12 +1511,26 @@ public class OntologyRest {
     @Path("{recordId}/datatypes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the datatypes in the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the datatypes in the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Datatypes in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getDatatypesInOntology(@Context ContainerRequestContext context,
-                                           @PathParam("recordId") String recordIdStr,
-                                           @QueryParam("branchId") String branchIdStr,
-                                           @QueryParam("commitId") String commitIdStr) {
+    public Response getDatatypesInOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getDatatypeIRIObject, true);
@@ -1280,9 +1545,9 @@ public class OntologyRest {
      * InProgressCommit.
      *
      * @param context      the context of the request.
-     * @param recordIdStr  the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr  String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                     String begins with "_:".
-     * @param datatypeJson the String representing the new datatype model.
+     * @param datatypeJson String representing the new datatype model.
      * @return a Response indicating whether it was successfully added.
      */
     @POST
@@ -1290,12 +1555,25 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Adds a new datatype to the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Adds a new datatype to the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating whether it was successfully added"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response addDatatypeToOntology(@Context ContainerRequestContext context,
-                                          @PathParam("recordId") String recordIdStr,
-                                          String datatypeJson) {
+    public Response addDatatypeToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "JSON String representing the new datatype model", required = true)
+                    String datatypeJson) {
         verifyJsonldType(datatypeJson, OWL.DATATYPEPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(datatypeJson));
@@ -1308,14 +1586,14 @@ public class OntologyRest {
      * Delete the datatype from the ontology identified by the provided IDs.
      *
      * @param context       the context of the request.
-     * @param recordIdStr   the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr   String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                      String begins with "_:".
-     * @param datatypeIdStr the String representing the datatype Resource id. NOTE: Assumes id represents
+     * @param datatypeIdStr String representing the datatype Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
-     * @param branchIdStr   the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr   String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                      String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                      master Branch.
-     * @param commitIdStr   the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr   String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                      String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                      head Commit. The provided commitId must be on the Branch identified by the provided
      *                      branchId; otherwise, nothing will be returned.
@@ -1325,14 +1603,29 @@ public class OntologyRest {
     @Path("{recordId}/datatypes/{datatypeId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes the identified datatype from the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Deletes the identified datatype from the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether it was successfully deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteDatatypeFromOntology(@Context ContainerRequestContext context,
-                                               @PathParam("recordId") String recordIdStr,
-                                               @PathParam("datatypeId") String datatypeIdStr,
-                                               @QueryParam("branchId") String branchIdStr,
-                                               @QueryParam("commitId") String commitIdStr) {
+    public Response deleteDatatypeFromOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the datatype Resource ID", required = true)
+            @PathParam("datatypeId") String datatypeIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -1346,12 +1639,12 @@ public class OntologyRest {
      * Returns object property IRIs in the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1361,12 +1654,26 @@ public class OntologyRest {
     @Path("{recordId}/object-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the object properties in the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the object properties in the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Object properties in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getObjectPropertiesInOntology(@Context ContainerRequestContext context,
-                                                  @PathParam("recordId") String recordIdStr,
-                                                  @QueryParam("branchId") String branchIdStr,
-                                                  @QueryParam("commitId") String commitIdStr) {
+    public Response getObjectPropertiesInOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getObjectPropertyArray, true);
@@ -1381,9 +1688,9 @@ public class OntologyRest {
      * requester's InProgressCommit.
      *
      * @param context            the context of the request.
-     * @param recordIdStr        the String representing the record Resource id. NOTE: Assumes id represents an IRI
+     * @param recordIdStr        String representing the Record Resource ID. NOTE: Assumes id represents an IRI
      *                           unless String begins with "_:".
-     * @param objectPropertyJson the String representing the new property model.
+     * @param objectPropertyJson String representing the new property model.
      * @return a Response indicating whether it was successfully added.
      */
     @POST
@@ -1391,12 +1698,25 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Adds a new object property to the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Adds a new object property to the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating whether it was successfully updated"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response addObjectPropertyToOntology(@Context ContainerRequestContext context,
-                                                @PathParam("recordId") String recordIdStr,
-                                                String objectPropertyJson) {
+    public Response addObjectPropertyToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the new property model", required = true)
+                    String objectPropertyJson) {
         verifyJsonldType(objectPropertyJson, OWL.OBJECTPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(objectPropertyJson));
@@ -1409,14 +1729,14 @@ public class OntologyRest {
      * Delete object property with requested class ID from ontology identified by the provided IDs from the server.
      *
      * @param context             the context of the request.
-     * @param recordIdStr         the String representing the record Resource id. NOTE: Assumes id represents an IRI
+     * @param recordIdStr         String representing the Record Resource ID. NOTE: Assumes id represents an IRI
      *                            unless String begins with "_:".
-     * @param objectPropertyIdStr the String representing the class Resource id. NOTE: Assumes id represents
+     * @param objectPropertyIdStr String representing the class Resource id. NOTE: Assumes id represents
      *                            an IRI unless String begins with "_:".
-     * @param branchIdStr         the String representing the Branch Resource id. NOTE: Assumes id represents an IRI
+     * @param branchIdStr         String representing the Branch Resource id. NOTE: Assumes id represents an IRI
      *                            unless String begins with "_:". NOTE: Optional param - if nothing is specified, it
      *                            will get the master Branch.
-     * @param commitIdStr         the String representing the Commit Resource id. NOTE: Assumes id represents an IRI
+     * @param commitIdStr         String representing the Commit Resource id. NOTE: Assumes id represents an IRI
      *                            unless String begins with "_:". NOTE: Optional param - if nothing is specified, it
      *                            will get the head Commit. The provided commitId must be on the Branch identified by
      *                            the provided branchId; otherwise, nothing will be returned.
@@ -1426,14 +1746,29 @@ public class OntologyRest {
     @Path("{recordId}/object-properties/{objectPropertyId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes the identified object property from the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Deletes the identified object property from the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether it was successfully deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteObjectPropertyFromOntology(@Context ContainerRequestContext context,
-                                                     @PathParam("recordId") String recordIdStr,
-                                                     @PathParam("objectPropertyId") String objectPropertyIdStr,
-                                                     @QueryParam("branchId") String branchIdStr,
-                                                     @QueryParam("commitId") String commitIdStr) {
+    public Response deleteObjectPropertyFromOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the class Resource ID", required = true)
+            @PathParam("objectPropertyId") String objectPropertyIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -1447,12 +1782,12 @@ public class OntologyRest {
      * Returns data properties in the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1462,12 +1797,26 @@ public class OntologyRest {
     @Path("{recordId}/data-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the data properties from the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the data properties from the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Data properties in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getDataPropertiesInOntology(@Context ContainerRequestContext context,
-                                                @PathParam("recordId") String recordIdStr,
-                                                @QueryParam("branchId") String branchIdStr,
-                                                @QueryParam("commitId") String commitIdStr) {
+    public Response getDataPropertiesInOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getDataPropertyArray, true);
@@ -1482,9 +1831,9 @@ public class OntologyRest {
      * requester's InProgressCommit.
      *
      * @param context          the context of the request.
-     * @param recordIdStr      the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr      String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                         String begins with "_:".
-     * @param dataPropertyJson the String representing the new property model.
+     * @param dataPropertyJson String representing the new property model.
      * @return a Response indicating whether it was successfully added.
      */
     @POST
@@ -1492,12 +1841,25 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Adds a new data property to the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Adds a new data property to the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating whether it was successfully added"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response addDataPropertyToOntology(@Context ContainerRequestContext context,
-                                              @PathParam("recordId") String recordIdStr,
-                                              String dataPropertyJson) {
+    public Response addDataPropertyToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "JSON String representing the new property model", required = true)
+                    String dataPropertyJson) {
         verifyJsonldType(dataPropertyJson, OWL.DATATYPEPROPERTY.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(dataPropertyJson));
@@ -1510,14 +1872,14 @@ public class OntologyRest {
      * Delete data property with requested class ID from ontology identified by the provided IDs from the server.
      *
      * @param context           the context of the request.
-     * @param recordIdStr       the String representing the record Resource id. NOTE: Assumes id represents an IRI
+     * @param recordIdStr       String representing the Record Resource ID. NOTE: Assumes id represents an IRI
      *                          unless String begins with "_:".
-     * @param dataPropertyIdStr the String representing the class Resource id. NOTE: Assumes id represents
+     * @param dataPropertyIdStr String representing the class Resource id. NOTE: Assumes id represents
      *                          an IRI unless String begins with "_:".
-     * @param branchIdStr       the String representing the Branch Resource id. NOTE: Assumes id represents an IRI
+     * @param branchIdStr       String representing the Branch Resource id. NOTE: Assumes id represents an IRI
      *                          unless String begins with "_:". NOTE: Optional param - if nothing is specified, it will
      *                          get the master Branch.
-     * @param commitIdStr       the String representing the Commit Resource id. NOTE: Assumes id represents an IRI
+     * @param commitIdStr       String representing the Commit Resource id. NOTE: Assumes id represents an IRI
      *                          unless String begins with "_:". NOTE: Optional param - if nothing is specified, it will
      *                          get the head Commit. The provided commitId must be on the Branch identified by the
      *                          provided branchId; otherwise, nothing will be returned.
@@ -1527,14 +1889,29 @@ public class OntologyRest {
     @Path("{recordId}/data-properties/{dataPropertyId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes the identified data property from the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Deletes the identified data property from the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether it was successfully deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteDataPropertyFromOntology(@Context ContainerRequestContext context,
-                                                   @PathParam("recordId") String recordIdStr,
-                                                   @PathParam("dataPropertyId") String dataPropertyIdStr,
-                                                   @QueryParam("branchId") String branchIdStr,
-                                                   @QueryParam("commitId") String commitIdStr) {
+    public Response deleteDataPropertyFromOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the class Resource ID", required = true)
+            @PathParam("dataPropertyId") String dataPropertyIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -1548,12 +1925,12 @@ public class OntologyRest {
      * Returns named individual IRIs in the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1563,12 +1940,26 @@ public class OntologyRest {
     @Path("{recordId}/named-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the individuals in the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the individuals in the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Named individuals in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getNamedIndividualsInOntology(@Context ContainerRequestContext context,
-                                                  @PathParam("recordId") String recordIdStr,
-                                                  @QueryParam("branchId") String branchIdStr,
-                                                  @QueryParam("commitId") String commitIdStr) {
+    public Response getNamedIndividualsInOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getNamedIndividualIRIObject, true);
@@ -1583,9 +1974,9 @@ public class OntologyRest {
      * requester's InProgressCommit.
      *
      * @param context        the context of the request.
-     * @param recordIdStr    the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr    String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                       String begins with "_:".
-     * @param individualJson the String representing the new individual model.
+     * @param individualJson String representing the new individual model.
      * @return a Response indicating whether it was successfully added.
      */
     @POST
@@ -1593,12 +1984,25 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Adds a new individual to the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Adds a new individual to the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating whether it was successfully added"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response addIndividualToOntology(@Context ContainerRequestContext context,
-                                            @PathParam("recordId") String recordIdStr,
-                                            String individualJson) {
+    public Response addIndividualToOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the new individual model", required = true)
+                    String individualJson) {
         verifyJsonldType(individualJson, OWL.INDIVIDUAL.stringValue());
         try {
             return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(individualJson));
@@ -1611,14 +2015,14 @@ public class OntologyRest {
      * Delete individual with requested class ID from ontology identified by the provided IDs from the server.
      *
      * @param context         the context of the request.
-     * @param recordIdStr     the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr     String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                        String begins with "_:".
-     * @param individualIdStr the String representing the individual Resource id. NOTE: Assumes id represents
+     * @param individualIdStr String representing the individual Resource id. NOTE: Assumes id represents
      *                        an IRI unless String begins with "_:".
-     * @param branchIdStr     the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr     String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                        String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                        master Branch.
-     * @param commitIdStr     the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr     String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                        String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                        head Commit. The provided commitId must be on the Branch identified by the provided
      *                        branchId; otherwise, nothing will be returned.
@@ -1628,14 +2032,29 @@ public class OntologyRest {
     @Path("{recordId}/named-individuals/{individualId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes the identified individual from the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Deletes the identified individual from the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating whether it was successfully deleted"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteIndividualFromOntology(@Context ContainerRequestContext context,
-                                                 @PathParam("recordId") String recordIdStr,
-                                                 @PathParam("individualId") String individualIdStr,
-                                                 @QueryParam("branchId") String branchIdStr,
-                                                 @QueryParam("commitId") String commitIdStr) {
+    public Response deleteIndividualFromOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the individual Resource ID", required = true)
+            @PathParam("individualId") String individualIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -1649,12 +2068,12 @@ public class OntologyRest {
      * Returns IRIs in the imports closure for the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1664,12 +2083,26 @@ public class OntologyRest {
     @Path("{recordId}/imported-iris")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the IRIs from the imported ontologies of the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the IRIs from the imported ontologies of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "IRIs in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getIRIsInImportedOntologies(@Context ContainerRequestContext context,
-                                                @PathParam("recordId") String recordIdStr,
-                                                @QueryParam("branchId") String branchIdStr,
-                                                @QueryParam("commitId") String commitIdStr) {
+    public Response getIRIsInImportedOntologies(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs);
         } catch (MobiException e) {
@@ -1681,12 +2114,12 @@ public class OntologyRest {
      * Returns IRIs of the ontologies in the imports closure for the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1696,17 +2129,32 @@ public class OntologyRest {
     @Path("{recordId}/imported-ontology-iris")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the imported ontology IRIs of the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the imported ontology IRIs of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "IRIs of the ontologies in the imports closure for the "
+                                    + "ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getImportedOntologyIRIs(@Context ContainerRequestContext context,
-                                            @PathParam("recordId") String recordIdStr,
-                                            @QueryParam("branchId") String branchIdStr,
-                                            @QueryParam("commitId") String commitIdStr) {
+    public Response getImportedOntologyIRIs(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             ArrayNode arrayNode = mapper.createArrayNode();
             Set<String> importedOntologyIris = new HashSet<>();
             Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, false);
-            if(optionalOntology.isPresent()) {
+            if (optionalOntology.isPresent()) {
                 Ontology ontology = optionalOntology.get();
                 ontology.getUnloadableImportIRIs().stream()
                         .map(Value::stringValue)
@@ -1732,13 +2180,13 @@ public class OntologyRest {
      * with the requested ID.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param rdfFormat   the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1748,13 +2196,29 @@ public class OntologyRest {
     @Path("{recordId}/imported-ontologies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the JSON-LD of all imported ontologies.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Updates the specified ontology branch and commit with the data provided",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "array of imported ontologies from the ontology with the "
+                                    + "requested ID in the requested format"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getImportsClosure(@Context ContainerRequestContext context,
-                                      @PathParam("recordId") String recordIdStr,
-                                      @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
-                                      @QueryParam("branchId") String branchIdStr,
-                                      @QueryParam("commitId") String commitIdStr) {
+    public Response getImportsClosure(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "Desired RDF return format")
+            @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Set<Ontology> importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr);
             ArrayNode arrayNode = mapper.createArrayNode();
@@ -1771,12 +2235,12 @@ public class OntologyRest {
      * Returns annotation property IRIs in the imports closure for the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1786,12 +2250,26 @@ public class OntologyRest {
     @Path("{recordId}/imported-annotations")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the annotations from the imported ontologies of the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the annotations from the imported ontologies of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Annotation properties in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getAnnotationsInImportedOntologies(@Context ContainerRequestContext context,
-                                                       @PathParam("recordId") String recordIdStr,
-                                                       @QueryParam("branchId") String branchIdStr,
-                                                       @QueryParam("commitId") String commitIdStr) {
+    public Response getAnnotationsInImportedOntologies(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getAnnotationIRIObject);
@@ -1804,12 +2282,12 @@ public class OntologyRest {
      * Returns class IRIs in the imports closure for the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1819,12 +2297,26 @@ public class OntologyRest {
     @Path("{recordId}/imported-classes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the classes from the imported ontologies of the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the classes from the imported ontologies of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Classes in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getClassesInImportedOntologies(@Context ContainerRequestContext context,
-                                                   @PathParam("recordId") String recordIdStr,
-                                                   @QueryParam("branchId") String branchIdStr,
-                                                   @QueryParam("commitId") String commitIdStr) {
+    public Response getClassesInImportedOntologies(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getClassIRIArray);
         } catch (MobiException e) {
@@ -1836,12 +2328,12 @@ public class OntologyRest {
      * Returns datatype IRIs in the imports closure for the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1851,12 +2343,26 @@ public class OntologyRest {
     @Path("{recordId}/imported-datatypes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the datatypes from the imported ontologies of the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the datatypes from the imported ontologies of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Datatypes in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getDatatypesInImportedOntologies(@Context ContainerRequestContext context,
-                                                     @PathParam("recordId") String recordIdStr,
-                                                     @QueryParam("branchId") String branchIdStr,
-                                                     @QueryParam("commitId") String commitIdStr) {
+    public Response getDatatypesInImportedOntologies(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getDatatypeIRIObject);
         } catch (MobiException e) {
@@ -1868,12 +2374,12 @@ public class OntologyRest {
      * Returns object property IRIs in the imports closure for the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1883,12 +2389,26 @@ public class OntologyRest {
     @Path("{recordId}/imported-object-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the object properties from the imported ontologies of the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the object properties from the imported ontologies of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Object properties in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getObjectPropertiesInImportedOntologies(@Context ContainerRequestContext context,
-                                                            @PathParam("recordId") String recordIdStr,
-                                                            @QueryParam("branchId") String branchIdStr,
-                                                            @QueryParam("commitId") String commitIdStr) {
+    public Response getObjectPropertiesInImportedOntologies(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getObjectPropertyIRIObject);
@@ -1901,12 +2421,12 @@ public class OntologyRest {
      * Returns data property IRIs in the imports closure for the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1916,12 +2436,27 @@ public class OntologyRest {
     @Path("{recordId}/imported-data-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the data properties from the imported ontologies of the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the data properties from the imported ontologies of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Data properties in the ontology identified by "
+                                    + "the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getDataPropertiesInImportedOntologies(@Context ContainerRequestContext context,
-                                                          @PathParam("recordId") String recordIdStr,
-                                                          @QueryParam("branchId") String branchIdStr,
-                                                          @QueryParam("commitId") String commitIdStr) {
+    public Response getDataPropertiesInImportedOntologies(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getDataPropertyIRIObject);
@@ -1934,12 +2469,12 @@ public class OntologyRest {
      * Returns named individual IRIs in the imports closure for the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1949,12 +2484,26 @@ public class OntologyRest {
     @Path("{recordId}/imported-named-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the named individuals from the imported ontologies of the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the named individuals from the imported ontologies of the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Named individuals in the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getNamedIndividualsInImportedOntologies(@Context ContainerRequestContext context,
-                                                            @PathParam("recordId") String recordIdStr,
-                                                            @QueryParam("branchId") String branchIdStr,
-                                                            @QueryParam("commitId") String commitIdStr) {
+    public Response getNamedIndividualsInImportedOntologies(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getNamedIndividualIRIObject);
@@ -1969,12 +2518,12 @@ public class OntologyRest {
      * IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -1985,13 +2534,29 @@ public class OntologyRest {
     @Path("{recordId}/class-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the class hierarchies for the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the class hierarchies for the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "JSON object that represents the class hierarchy "
+                                    + "for the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getOntologyClassHierarchy(@Context ContainerRequestContext context,
-                                              @PathParam("recordId") String recordIdStr,
-                                              @QueryParam("branchId") String branchIdStr,
-                                              @QueryParam("commitId") String commitIdStr,
-                                              @DefaultValue("false") @QueryParam("nested") boolean nested) {
+    public Response getOntologyClassHierarchy(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
+            @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2027,12 +2592,12 @@ public class OntologyRest {
      * of parent property IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -2044,13 +2609,29 @@ public class OntologyRest {
     @Path("{recordId}/object-property-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the object property hierarchies for the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the object property hierarchies for the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object that represents the object property "
+                                    + "hierarchy for the ontology identified by the provided IDS"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getOntologyObjectPropertyHierarchy(@Context ContainerRequestContext context,
-                                                       @PathParam("recordId") String recordIdStr,
-                                                       @QueryParam("branchId") String branchIdStr,
-                                                       @QueryParam("commitId") String commitIdStr,
-                                                       @DefaultValue("false") @QueryParam("nested") boolean nested) {
+    public Response getOntologyObjectPropertyHierarchy(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
+            @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2067,12 +2648,12 @@ public class OntologyRest {
      * of parent property IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -2084,13 +2665,29 @@ public class OntologyRest {
     @Path("{recordId}/data-property-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the data property hierarchies for the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the data property hierarchies for the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object that represents the data property hierarchy"
+                                    + " for the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getOntologyDataPropertyHierarchy(@Context ContainerRequestContext context,
-                                                     @PathParam("recordId") String recordIdStr,
-                                                     @QueryParam("branchId") String branchIdStr,
-                                                     @QueryParam("commitId") String commitIdStr,
-                                                     @DefaultValue("false") @QueryParam("nested") boolean nested) {
+    public Response getOntologyDataPropertyHierarchy(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
+            @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2108,12 +2705,12 @@ public class OntologyRest {
      * hierarchy.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -2125,14 +2722,29 @@ public class OntologyRest {
     @Path("{recordId}/annotation-property-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the data property hierarchies for the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the data property hierarchies for the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object that represents the annotation property "
+                                    + "hierarchy for the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getOntologyAnnotationPropertyHierarchy(@Context ContainerRequestContext context,
-                                                           @PathParam("recordId") String recordIdStr,
-                                                           @QueryParam("branchId") String branchIdStr,
-                                                           @QueryParam("commitId") String commitIdStr,
-                                                           @DefaultValue("false") @QueryParam("nested")
-                                                                       boolean nested) {
+    public Response getOntologyAnnotationPropertyHierarchy(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
+            @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2149,12 +2761,12 @@ public class OntologyRest {
      * parent concept IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -2165,13 +2777,29 @@ public class OntologyRest {
     @Path("{recordId}/concept-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the concept hierarchies for the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the concept hierarchies for the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "JSON object that represents the SKOS concept hierarchy "
+                                    + "for the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getConceptHierarchy(@Context ContainerRequestContext context,
-                                        @PathParam("recordId") String recordIdStr,
-                                        @QueryParam("branchId") String branchIdStr,
-                                        @QueryParam("commitId") String commitIdStr,
-                                        @DefaultValue("false") @QueryParam("nested") boolean nested) {
+    public Response getConceptHierarchy(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
+            @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2189,30 +2817,46 @@ public class OntologyRest {
      * the hierarchy.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @param nested      Whether to return the nested JSON-LD version of the hierarchy.
-     * @return A JSON object that represents the SKOS concept scheme hierarchy for the ontology identified by the
-     *         provided IDs.
+     * @return A JSON object that represents the SKOS concept scheme hierarchy for the ontology identified by
+     *         the provided IDs.
      */
     @GET
     @Path("{recordId}/concept-scheme-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the concept hierarchies for the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the concept hierarchies for the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "JSON object that represents the SKOS concept"
+                                    + " scheme hierarchy for the ontology identified by the provided IDs"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getConceptSchemeHierarchy(@Context ContainerRequestContext context,
-                                              @PathParam("recordId") String recordIdStr,
-                                              @QueryParam("branchId") String branchIdStr,
-                                              @QueryParam("commitId") String commitIdStr,
-                                              @DefaultValue("false") @QueryParam("nested") boolean nested) {
+    public Response getConceptSchemeHierarchy(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
+            @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2228,12 +2872,12 @@ public class OntologyRest {
      * key for a map of class IRIs to arrays of individual IRIs.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -2244,12 +2888,27 @@ public class OntologyRest {
     @Path("{recordId}/classes-with-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the classes with individuals in a hierarchical structure for the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the classes with individuals in a hierarchical structure for the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object that represents the classes with individuals in "
+                                    + "the ontology identified by the provided IDS"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getClassesWithIndividuals(@Context ContainerRequestContext context,
-                                              @PathParam("recordId") String recordIdStr,
-                                              @QueryParam("branchId") String branchIdStr,
-                                              @QueryParam("commitId") String commitIdStr) {
+    public Response getClassesWithIndividuals(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2268,13 +2927,13 @@ public class OntologyRest {
      * IRI as the predicate or object of each statement when the queryType is "construct".
      *
      * @param context      the context of the request.
-     * @param recordIdStr  the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr  String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                     String begins with "_:".
-     * @param entityIRIStr the String representing the entity Resource IRI.
-     * @param branchIdStr  the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param entityIRIStr String representing the entity Resource IRI.
+     * @param branchIdStr  String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                     String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                     master Branch.
-     * @param commitIdStr  the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr  String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                     String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                     Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                     otherwise, nothing will be returned.
@@ -2285,14 +2944,32 @@ public class OntologyRest {
     @Path("{recordId}/entity-usages/{entityIri}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the usages of the identified entity in the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the usages of the identified entity in the identified ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "JSON-LD containing statements with the requested entity"
+                                    + " IRI as the predicate or object of each statement when the "
+                                    + "queryType is \"construct\"."),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getEntityUsages(@Context ContainerRequestContext context,
-                                    @PathParam("recordId") String recordIdStr,
-                                    @PathParam("entityIri") String entityIRIStr,
-                                    @QueryParam("branchId") String branchIdStr,
-                                    @QueryParam("commitId") String commitIdStr,
-                                    @DefaultValue("select") @QueryParam("queryType") String queryType) {
+    public Response getEntityUsages(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the entity Resource IRI", required = true)
+            @PathParam("entityIri") String entityIRIStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "String identifying whether you want to do a select or construct query")
+            @DefaultValue("select") @QueryParam("queryType") String queryType) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2317,14 +2994,14 @@ public class OntologyRest {
      * that have statements which contain the requested searchText in a Literal Value.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param searchText  the String for the text that is searched for in all of the Literals within the ontology with
      *                    the requested record ID.
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -2334,13 +3011,32 @@ public class OntologyRest {
     @Path("{recordId}/search-results")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the search results from the identified ontology using the provided searchText.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets the search results from the identified ontology using the provided searchText",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "JSON String of the resulting entities sorted "
+                                    + "by type from the ontology with the requested record ID "
+                                    + "that have statements which contain the requested searchText in a "
+                                    + "Literal Value."),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getSearchResults(@Context ContainerRequestContext context,
-                                     @PathParam("recordId") String recordIdStr,
-                                     @QueryParam("searchText") String searchText,
-                                     @QueryParam("branchId") String branchIdStr,
-                                     @QueryParam("commitId") String commitIdStr) {
+    public Response getSearchResults(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String for the text that is searched for in all of the Literals within the "
+                    + "ontology with the requested record ID")
+            @QueryParam("searchText") String searchText,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2364,7 +3060,7 @@ public class OntologyRest {
             });
             return response.size() == 0 ? Response.noContent().build() :
                     Response.ok(mapper.valueToTree(response).toString())
-                    .build();
+                            .build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2374,12 +3070,12 @@ public class OntologyRest {
      * Returns a list of ontology IRIs that were not imported.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -2389,12 +3085,25 @@ public class OntologyRest {
     @Path("{recordId}/failed-imports")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets a list of ontology IRIs that were not imported.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets a list of ontology IRIs that were not imported",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "List of ontology IRIs that were not imported"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getFailedImports(@Context ContainerRequestContext context,
-                                     @PathParam("recordId") String recordIdStr,
-                                     @QueryParam("branchId") String branchIdStr,
-                                     @QueryParam("commitId") String commitIdStr) {
+    public Response getFailedImports(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -2409,18 +3118,19 @@ public class OntologyRest {
      * Accepts SELECT and CONSTRUCT queries.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param queryString SPARQL Query to perform against ontology.
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @param format      the specified format for the return of construct queries only.
      * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
+     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
      * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
      *      if the query is a CONSTRUCT
      */
@@ -2428,16 +3138,37 @@ public class OntologyRest {
     @Path("{recordId}/query")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the SPARQL query results of an ontology, and its import closures in the requested format.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Retrieves the SPARQL query results of an ontology, "
+                    + "and its import closures in the requested format",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "SPARQL 1.1 results in JSON format if the query is a "
+                                    + "SELECT or the JSONLD serialization of the results if the query is a CONSTRUCT"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response queryOntology(@Context ContainerRequestContext context,
-                                  @PathParam("recordId") String recordIdStr,
-                                  @QueryParam("query") String queryString,
-                                  @QueryParam("branchId") String branchIdStr,
-                                  @QueryParam("commitId") String commitIdStr,
-                                  @DefaultValue("jsonld") @QueryParam("format") String format,
-                                  @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
-                                  @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
+    public Response queryOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "SPARQL Query to perform against ontology", required = true)
+            @QueryParam("query") String queryString,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Specified format for the return of construct queries only")
+            @DefaultValue("jsonld") @QueryParam("format") String format,
+            @Parameter(description = "Boolean indicating whether or not ontology "
+                    + "imports should be included in the query")
+            @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
+            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         checkStringParam(queryString, "Parameter 'query' must be set.");
 
         try {
@@ -2474,14 +3205,14 @@ public class OntologyRest {
      * Retrieves the triples for a specified entity including all of is transitively attached Blank Nodes.
      *
      * @param context        the context of the request.
-     * @param recordIdStr    the String representing the record Resource ID. NOTE: Assumes ID represents an IRI unless
+     * @param recordIdStr    String representing the Record Resource ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
-     * @param entityIdStr    the String representing the entity Resource ID. NOTE: Assumes ID represents an IRI unless
+     * @param entityIdStr    String representing the entity Resource ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
-     * @param branchIdStr    the String representing the Branch Resource ID. NOTE: Assumes ID represents an IRI unless
+     * @param branchIdStr    String representing the Branch Resource ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                       master Branch.
-     * @param commitIdStr    the String representing the Commit Resource ID. NOTE: Assumes ID represents an IRI unless
+     * @param commitIdStr    String representing the Commit Resource ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                       head Commit. The provided commitId must be on the Branch identified by the provided
      *                       branchId; otherwise, nothing will be returned.
@@ -2495,16 +3226,39 @@ public class OntologyRest {
     @Path("{recordId}/entities/{entityId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the triples for a specified entity including all of is transitively attached Blank Nodes.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Retrieves the triples for a specified entity including all of is "
+                    + "transitively attached Blank Node",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "RDF triples for a specified entity including all of is "
+                                    + "transitively attached Blank Nodes"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getEntity(@Context ContainerRequestContext context,
-                              @PathParam("recordId") String recordIdStr,
-                              @PathParam("entityId") String entityIdStr,
-                              @QueryParam("branchId") String branchIdStr,
-                              @QueryParam("commitId") String commitIdStr,
-                              @DefaultValue("jsonld") @QueryParam("format") String format,
-                              @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
-                              @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
+    public Response getEntity(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the entity Resource ID", required = true)
+            @PathParam("entityId") String entityIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Specified format for the return data. Valid values include 'jsonld', "
+                    + "'turtle', 'rdf/xml', and 'trig'")
+            @DefaultValue("jsonld") @QueryParam("format") String format,
+            @Parameter(description = "Boolean indicating whether or not ontology imports "
+                    + "should be included in the query")
+            @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
+            @Parameter(description = "Whether or not to apply the in progress commit "
+                    + "for the user making the request")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit).orElseThrow(() ->
@@ -2523,12 +3277,12 @@ public class OntologyRest {
      * Retrieves the map of EntityNames in an Ontology.
      *
      * @param context     the context of the request.
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
@@ -2541,17 +3295,33 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the EntityNames in the identified ontology.")
+    @Operation(
+            tags = "ontologies",
+            summary = "Updates the specified ontology branch and commit with the data provided",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "List of EntityNames for the given Ontology"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getEntityNames(@Context ContainerRequestContext context,
-                                   @PathParam("recordId") String recordIdStr,
-                                   @QueryParam("branchId") String branchIdStr,
-                                   @QueryParam("commitId") String commitIdStr,
-                                   @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
-                                   @DefaultValue("true") @QueryParam("applyInProgressCommit")
-                                               boolean applyInProgressCommit,
-                                   String filterJson) {
+    public Response getEntityNames(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Boolean indicating whether or not any imports")
+            @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
+            @Parameter(description = "Boolean indicating whether or not any in progress commits by user should be "
+                    + "applied to the return value")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
+            @Parameter(description = "Filter JSON", required = true)
+                    String filterJson) {
         try {
             StopWatch watch = new StopWatch();
             log.trace("Start entityNames");
@@ -2585,7 +3355,8 @@ public class OntologyRest {
                 log.trace("Entity names endpoint: " + watch.getTime() + "ms");
                 return Response.ok(output).build();
             } else {
-                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.",
+                        Response.Status.BAD_REQUEST);
             }
         } catch (MobiException | IOException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2735,7 +3506,7 @@ public class OntologyRest {
             entityNames.setNames(namesSet);
             entityNamesMap.putIfAbsent(entity, entityNames);
         });
- 
+
         outputStream.write(mapper.valueToTree(entityNamesMap).toString().getBytes());
     }
 
@@ -3434,7 +4205,8 @@ public class OntologyRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), response);
         } catch (MobiException ex) {
             ObjectNode objectNode = createJsonErrorObject(ex);
-            Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(objectNode.toString()).build();
+            Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(objectNode.toString()).build();
             throw ErrorUtils.sendError(ex, ex.getMessage(), response);
         }
 

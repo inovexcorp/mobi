@@ -37,6 +37,7 @@
         <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-databind/${jackson.version}</bundle>
         <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-core/${jackson.version}</bundle>
         <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-annotations/${jackson.version}</bundle>
+        <bundle start-level="80">mvn:jakarta.xml.bind/jakarta.xml.bind-api/2.3.2</bundle>
     </feature>
     <feature name="mobi-server-core" description="Mobi Server Core Bundles" version="${project.version}">
         <feature prerequisite="true">jaas</feature>
@@ -61,7 +62,7 @@
         <bundle start-level="80">mvn:org.apache.httpcomponents/httpcore-osgi/4.4.11</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.json-lib/2.4_1</bundle>
         <bundle start-level="80">mvn:com.fasterxml.jackson.module/jackson-module-jaxb-annotations/${jackson.version}</bundle>
-        <bundle start-level="80">mvn:com.eclipsesource.jaxrs/swagger-all/1.5.7</bundle>
+
         <bundle start-level="80">mvn:com.nimbusds/nimbus-jose-jwt/${jose-jwt.version}</bundle>
         <bundle start-level="80">mvn:net.minidev/json-smart/2.3</bundle>
         <bundle start-level="80">mvn:net.minidev/accessors-smart/1.2</bundle>

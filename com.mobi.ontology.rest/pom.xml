@@ -98,7 +98,15 @@
             <artifactId>jersey-media-multipart</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.swagger</groupId>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-jaxrs2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-jaxrs2-servlet-initializer</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
         </dependency>
         <dependency>
@@ -172,6 +180,7 @@
                             <!-- For some reason BND is not including these -->
                             com.mobi.ontology.core.api.classexpression,
                             com.mobi.ontology.core.api.datarange,
+                            !io.swagger.v3.*,
                             *
                         </Import-Package>
                         <build>${maven.build.timestamp}</build>

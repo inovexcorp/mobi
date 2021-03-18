@@ -385,9 +385,9 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
     Resource getDataset();
 
     /**
-     * Returns the String representing the ID for the Repository for this DatasetConnection.
+     * Returns String representing the ID for the Repository for this DatasetConnection.
      *
-     * @return the String representing the ID for the Repository for this DatasetConnection.
+     * @return String representing the ID for the Repository for this DatasetConnection.
      */
     String getRepositoryId();
 }
