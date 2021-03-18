@@ -53,7 +53,7 @@ public abstract class AbstractMappingRecordService<T extends MappingRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
 
     @Reference
-    protected MappingManager manager;
+    public MappingManager manager;
 
     private static final String USER_IRI_BINDING = "%USERIRI%";
     private static final String RECORD_IRI_BINDING = "%RECORDIRI%";

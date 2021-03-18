@@ -46,11 +46,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>net.jodah</groupId>
-            <artifactId>typetools</artifactId>
-            <version>0.6.2</version>
-        </dependency>
-        <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
             <version>${project.version}</version>

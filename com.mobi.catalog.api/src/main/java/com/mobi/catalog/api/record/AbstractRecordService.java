@@ -60,18 +60,18 @@ import java.util.stream.Collectors;
 public abstract class AbstractRecordService<T extends Record> implements RecordService<T> {
 
     @Reference
-    protected CatalogProvUtils provUtils;
+    public CatalogProvUtils provUtils;
 
     @Reference
-    protected CatalogUtilsService utilsService;
+    public CatalogUtilsService utilsService;
 
     @Reference
-    protected ValueFactory valueFactory;
+    public ValueFactory valueFactory;
 
     @Reference
-    protected CatalogFactory catalogFactory;
+    public CatalogFactory catalogFactory;
 
-    protected OrmFactory<T> recordFactory;
+    public OrmFactory<T> recordFactory;
 
     @Override
     public T create(User user, RecordOperationConfig config, RepositoryConnection conn) {

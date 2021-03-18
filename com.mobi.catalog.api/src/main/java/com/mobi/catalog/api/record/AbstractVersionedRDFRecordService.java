@@ -107,25 +107,25 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     }
 
     @Reference
-    protected CommitFactory commitFactory;
+    public CommitFactory commitFactory;
 
     @Reference
-    protected BranchFactory branchFactory;
+    public BranchFactory branchFactory;
 
     @Reference
-    protected MergeRequestManager mergeRequestManager;
+    public MergeRequestManager mergeRequestManager;
 
     @Reference
-    protected VersioningManager versioningManager;
+    public VersioningManager versioningManager;
 
     @Reference
-    protected XACMLPolicyManager xacmlPolicyManager;
+    public XACMLPolicyManager xacmlPolicyManager;
 
     @Reference
-    protected CatalogConfigProvider configProvider;
+    public CatalogConfigProvider configProvider;
 
     @Reference
-    protected EngineManager engineManager;
+    public EngineManager engineManager;
 
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {

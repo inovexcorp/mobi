@@ -50,13 +50,13 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
 
     @Reference
-    protected ModelFactory modelFactory;
+    public ModelFactory modelFactory;
 
     @Reference
-    protected OntologyManager ontologyManager;
+    public OntologyManager ontologyManager;
 
     @Reference
-    protected SesameTransformer sesameTransformer;
+    public SesameTransformer sesameTransformer;
 
     /**
      * Semaphore for protecting ontology IRI uniqueness checks.

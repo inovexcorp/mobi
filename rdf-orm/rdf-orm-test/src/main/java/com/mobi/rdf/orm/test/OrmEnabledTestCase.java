@@ -35,7 +35,6 @@ import com.mobi.rdf.orm.conversion.ValueConverter;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
 import com.mobi.rdf.orm.impl.OrmFactoryRegistryImpl;
-import net.jodah.typetools.TypeResolver;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Assert;
@@ -48,8 +47,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -173,44 +170,10 @@ public abstract class OrmEnabledTestCase {
     private static void injectApplicableOrmFactory(final Field field, final Object serviceObject,
                                                    Class<?> serviceClazz) {
         // Find the matching ORM Factory.
-        OrmFactory<?> targetFactory = null;
-        if (field.getType().equals(OrmFactory.class)) {
-            Type genericType = field.getGenericType();
-            Type reifiedType = TypeResolver.reify(genericType);
-            ParameterizedType paramType = (ParameterizedType) reifiedType;
-            Type actualType = paramType.getActualTypeArguments()[0];
-            Class<?> clazz;
-            try {
-                clazz = Class.forName(actualType.getTypeName());
-            } catch (ClassNotFoundException e) {
-                throw new IllegalStateException("Class must exist");
-            }
-
-            if (Thing.class.isAssignableFrom(clazz)) {
-                Class<? extends Thing> thingSubclass = clazz.asSubclass(Thing.class);
-                List<OrmFactory<? extends Thing>> sortedClasses =
-                        ORM_FACTORY_REGISTRY.getSortedFactoriesOfType((Class<Thing>) thingSubclass);
-                for (OrmFactory<? extends Thing> sortedClass : sortedClasses) {
-                    if (sortedClass.getType().equals(clazz)) {
-                        targetFactory = sortedClass;
-                    }
-                }
-            }
-            if (targetFactory == null) {
-                targetFactory = ORM_FACTORIES.stream()
-                        .filter(factory -> clazz.isAssignableFrom(factory.getType()))
-                        .findFirst().orElseThrow(() -> new OrmTestCaseException("Missing factory for injection into "
-                                + "specified service!  Requires type '" + actualType.getClass().getName() + "'"));
-            }
-            if (targetFactory == null) {
-                throw new IllegalStateException("Could not find factory for " + clazz.toString());
-            }
-        } else {
-            targetFactory = ORM_FACTORIES.stream()
-                    .filter(factory -> field.getType().isAssignableFrom(factory.getClass()))
-                    .findFirst().orElseThrow(() -> new OrmTestCaseException("Missing factory for injection into "
-                            + "specified service!  Requires type '" + field.getType().getName() + "'"));
-        }
+        OrmFactory<?> targetFactory = ORM_FACTORIES.stream()
+                .filter(factory -> field.getType().isAssignableFrom(factory.getClass()))
+                .findFirst().orElseThrow(() -> new OrmTestCaseException("Missing factory for injection into "
+                        + "specified service!  Requires type '" + field.getType().getName() + "'"));
         try {
             // Make sure the field can be accessed reflectively.
             field.setAccessible(true);
