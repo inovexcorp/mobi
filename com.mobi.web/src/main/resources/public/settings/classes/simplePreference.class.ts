@@ -39,8 +39,8 @@ export class SimplePreference implements Preference {
         // this._mainPropertyShapeId = preference['http://www.w3.org/ns/shacl#property'][0]['@id'];
         preferenceJson.values = [];
         this.Json = preferenceJson;
-        const requiredPropertyShape = preferenceDefinitions[this.RequiredPropertyShapeId];  
-        this.FormFields = [requiredPropertyShape];
+        this.RequiredPropertyShape = preferenceDefinitions[this.RequiredPropertyShapeId];  
+        this.FormFields = [this.RequiredPropertyShape];
         this.FormFieldStrings = ['http://mobi.com/ontologies/preference#hasDataValue'];
     }
 

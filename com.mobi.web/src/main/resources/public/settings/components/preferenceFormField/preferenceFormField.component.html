@@ -23,8 +23,9 @@
 
 <form [formGroup]="formField.value" (ngSubmit)="onSubmit()">
     <div *ngIf="formType === 'radio'">
+        {{util.getBeautifulIRI(formField.key)}}
         <div *ngFor="let option of options">
-            <input type="radio" value="option" formControlName="one">{{option}}
+            <input type="radio" [value]="option" [formControlName]="formField.key">{{option}}
         </div>
     </div>
     <div *ngIf="formType === 'text-input'">{{util.getBeautifulIRI(formField.key)}}: <input [formControlName]="formField.key" placeholder=""></div>

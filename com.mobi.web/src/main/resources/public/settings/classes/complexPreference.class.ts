@@ -41,10 +41,10 @@ export class ComplexPreference implements Preference {
         // this._mainPropertyShapeId = preference['http://www.w3.org/ns/shacl#property'][0]['@id'];
         preferenceJson.values = [];
         this.Json = preferenceJson;
-        const requiredPropertyShape = preferenceDefinitions[this.RequiredPropertyShapeId];
+        this.RequiredPropertyShape = preferenceDefinitions[this.RequiredPropertyShapeId];
         // preference.RequiredPropertyShape = this.preferenceDefinitions[preference.RequiredPropertyShapeId];
-        if (requiredPropertyShape['http://www.w3.org/ns/shacl#node']) {
-            const attachedNode:unknown = preferenceDefinitions[requiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
+        if (this.RequiredPropertyShape['http://www.w3.org/ns/shacl#node']) {
+            const attachedNode:unknown = preferenceDefinitions[this.RequiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
             // this.Json['targetClass'] = attachedNode['http://www.w3.org/ns/shacl#targetClass'][0]['@id'];
             this.TargetClass = attachedNode['http://www.w3.org/ns/shacl#targetClass'][0]['@id'];
             const finalObjects = attachedNode['http://www.w3.org/ns/shacl#property'].map(finalProperty => {
@@ -241,6 +241,7 @@ export class ComplexPreference implements Preference {
     asJsonLD(): Array<any> {
         if (!this.TopLevelPreferenceNodeshapeInstance) {
             this.TopLevelPreferenceNodeshapeInstance = [PreferenceUtils.convertToJsonLd({}, [this.type, 'http://mobi.com/ontologies/preference#Setting', 'http://mobi.com/ontologies/preference#Preference'])];
+            this.TopLevelPreferenceNodeshapeInstanceId = this.TopLevelPreferenceNodeshapeInstance[0]['@id'];
         }
         this.stripBlankValues();
         let requestBody = [];

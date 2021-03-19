@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import { forEach, filter, remove } from 'lodash';
+import { forEach, filter, remove, sortBy } from 'lodash';
 
 import { Input, Component, OnChanges, Inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { v4 as uuid } from 'uuid';
@@ -68,7 +68,6 @@ export class PreferenceGroupComponent implements OnChanges {
         this.pm.getUserPreferences()
             .then(response => {
                 this.errorMessage = '';
-                this.util.createSuccessToast('User Preferences retrieved successfully');
                 this.userPreferences = response.data;
                 this.pm.getPreferenceDefinitions(this.group)
                     .then(response => {
@@ -76,7 +75,6 @@ export class PreferenceGroupComponent implements OnChanges {
                         this.preferenceDefinitions = {};
                         this.errorMessage = '';
                         const preferencesJson = {};
-                        this.util.createSuccessToast('Preference Definition retrieved successfully');
                         forEach(response.data, shape => {
                             this.preferenceDefinitions[shape['@id']] = shape; // Maybe this means I should return a json object instead of array
                             if (this.isTopLevelNodeShape(shape)) {
@@ -97,7 +95,15 @@ export class PreferenceGroupComponent implements OnChanges {
                             }
 
                             // Can probably move into a preference.populate(userPreference)
-                            preference.Values = filter(this.userPreferences[preferenceType], preference.FormFieldStrings[0]);
+                            preference.Values = filter(this.userPreferences[preferenceType], preference.FormFieldStrings[0]).sort((a, b) => {
+                                if (a[preference.FormFieldStrings[0]][0]['@value'] < b[preference.FormFieldStrings[0]][0]['@value']) {
+                                    return -1;
+                                } else if (a[preference.FormFieldStrings[0]][0]['@value'] > b[preference.FormFieldStrings[0]][0]['@value']) {
+                                    return 1;
+                                } else {
+                                    return 0;
+                                }
+                            });
 
                             if (!preference.Values.length) {
                                 preference.addBlankForm();
@@ -119,6 +125,7 @@ export class PreferenceGroupComponent implements OnChanges {
                             }
                             this.preferences[preferenceType] = preference;
                         });
+                        
                         this.ref.markForCheck();
                     }, error => this.errorMessage = error);
             }, error => this.errorMessage = error);

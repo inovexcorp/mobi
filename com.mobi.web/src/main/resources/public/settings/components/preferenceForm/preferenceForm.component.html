@@ -34,5 +34,5 @@
       </div>
     </div>
     <button>Submit</button>
-    <button type="button" (click)="addFormBlock()"><i class="fa fa-plus"></i></button>
+    <button type="button" *ngIf="preference.Values.length < maxBlocks" (click)="addFormBlock()"><i class="fa fa-plus"></i></button>
   </form>

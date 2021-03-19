@@ -21,6 +21,7 @@
  * #L%
  */
 import { Component, Input, OnChanges, Inject } from '@angular/core';
+import { Validators } from '@angular/forms';
 
 @Component({
     selector: 'preference-form-field',
@@ -37,6 +38,11 @@ export class PreferenceFormFieldComponent implements OnChanges {
     constructor(@Inject('utilService') private util) {}
 
     ngOnChanges() {
+        if (this.shaclValidation['http://www.w3.org/ns/shacl#pattern']) {
+            const regex = this.shaclValidation['http://www.w3.org/ns/shacl#pattern'][0]['@value'];
+            this.formField.value.get([this.formField.key]).setValidators([Validators.pattern(regex)]);
+            this.formField.value.get([this.formField.key]).updateValueAndValidity();
+        }
         switch(this.shaclValidation['http://mobi.com/ontologies/preference#usesFormField'][0]['@id']) {
             case 'http://mobi.com/ontologies/preference#TextInput':
               this.formType = 'text-input';
@@ -56,10 +62,11 @@ export class PreferenceFormFieldComponent implements OnChanges {
             case 'http://www.w3.org/2001/XMLSchema#string':
                 this.dataType = 'string';
                 break;
+            case 'http://www.w3.org/2001/XMLSchema#integer':
+                this.dataType = 'integer';
+                this.formField.value.get([this.formField.key]).setValidators(Validators.pattern("^[0-9]+$"));
             default:
                 this.dataType = 'Unknown Data Type!';
         }
-
-        console.log('hello');
     }
 }

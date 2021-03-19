@@ -76,7 +76,6 @@ export class PreferencesTabComponent implements OnInit {
         .then(response => {
             this.tabs = [];
             this.errorMessage = '';
-            this.util.createSuccessToast('Preference Groups retrieved successfully');
             forEach(response.data, preferenceGroup => {
                 this.addTab(preferenceGroup);
             });
