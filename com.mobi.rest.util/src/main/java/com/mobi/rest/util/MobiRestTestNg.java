@@ -24,6 +24,7 @@ package com.mobi.rest.util;
  */
 
 import org.glassfish.jersey.test.JerseyTestNg;
+import org.glassfish.jersey.test.TestProperties;
 
 import javax.ws.rs.core.Application;
 
@@ -31,6 +32,7 @@ public abstract class MobiRestTestNg extends JerseyTestNg.ContainerPerClassTest 
     @Override
     protected Application configure() {
         try {
+            forceSet(TestProperties.CONTAINER_PORT, "0");
             return configureApp();
         } catch (Exception e) {
             throw new RuntimeException(e);
