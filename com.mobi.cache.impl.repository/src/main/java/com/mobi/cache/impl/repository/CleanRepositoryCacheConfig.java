@@ -35,7 +35,7 @@ public interface CleanRepositoryCacheConfig {
     /**
      * The Cache Repository ID to clean. If not present, defaults to "ontologyCache".
      *
-     * @return The String representing the Repository ID
+     * @return String representing the Repository ID
      */
     String repoId();
 

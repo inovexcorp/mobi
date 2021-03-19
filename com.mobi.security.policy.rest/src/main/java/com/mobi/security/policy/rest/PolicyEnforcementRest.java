@@ -36,8 +36,9 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.osgi.service.component.annotations.Component;
@@ -45,8 +46,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -56,10 +55,11 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component(service = PolicyEnforcementRest.class, immediate = true)
 @Path("/pep")
-@Api(value = "/pep")
 public class PolicyEnforcementRest {
 
     private final Logger log = LoggerFactory.getLogger(PolicyEnforcementRest.class);
@@ -102,8 +102,19 @@ public class PolicyEnforcementRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @ApiOperation("Converts user provided request into XACML and evaluates.")
-    public Response evaluateRequest(@Context ContainerRequestContext context, String jsonRequest) {
+    @Operation(
+            tags = "pep",
+            summary = "Converts user provided request into XACML and evaluates",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "the decision of the XACML request evaluation"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response evaluateRequest(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "A JSON object containing XACML required fields", required = true)
+                    String jsonRequest) {
         log.debug("Authorizing...");
         long start = System.currentTimeMillis();
 
