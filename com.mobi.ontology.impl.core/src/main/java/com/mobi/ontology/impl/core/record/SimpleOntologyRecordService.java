@@ -53,10 +53,11 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
 
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyRecordService.class);
 
-    protected OntologyCache ontologyCache;
+    @Reference
+    public OntologyCache ontologyCache;
 
     @Reference
-    OntologyRecordFactory ontologyRecordFactory;
+    public OntologyRecordFactory ontologyRecordFactory;
 
     @Activate
     public void activate() {
