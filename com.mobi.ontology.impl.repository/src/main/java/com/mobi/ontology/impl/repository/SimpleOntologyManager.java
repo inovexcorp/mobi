@@ -31,6 +31,7 @@ import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.impl.core.AbstractOntologyManager;
+import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -42,6 +43,8 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.LoggerFactory;
 
@@ -66,8 +69,12 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
     @Reference
     protected ImportsResolver importsResolver;
 
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    protected CacheLoader cacheLoader;
+    @Reference(
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            policyOption = ReferencePolicyOption.GREEDY
+    )
+    protected volatile CacheLoader cacheLoader;
 
     public SimpleOntologyManager() {
     }

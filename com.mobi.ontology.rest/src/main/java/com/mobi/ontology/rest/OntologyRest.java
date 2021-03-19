@@ -23,16 +23,6 @@ package com.mobi.ontology.rest;
  * #L%
  */
 
-import static com.mobi.rest.util.RestUtils.checkStringParam;
-import static com.mobi.rest.util.RestUtils.getActiveUser;
-import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
-import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
-import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
-import static com.mobi.rest.util.RestUtils.jsonldToModel;
-import static com.mobi.rest.util.RestUtils.modelToJsonld;
-import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
-import static com.mobi.rest.util.RestUtils.modelToString;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -127,6 +117,23 @@ import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -151,24 +158,16 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import javax.annotation.security.RolesAllowed;
-import javax.cache.Cache;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
+
+import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.getActiveUser;
+import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
+import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
+import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
+import static com.mobi.rest.util.RestUtils.jsonldToModel;
+import static com.mobi.rest.util.RestUtils.modelToJsonld;
+import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
+import static com.mobi.rest.util.RestUtils.modelToString;
 
 
 @Path("/ontologies")
@@ -2567,11 +2566,12 @@ public class OntologyRest {
         }
     }
 
+
+    // TODO: REMOVE
     @GET
     @Path("{recordId}/load")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the class hierarchies for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response loadIntoCache(@Context ContainerRequestContext context,
                                               @PathParam("recordId") String recordIdStr) {

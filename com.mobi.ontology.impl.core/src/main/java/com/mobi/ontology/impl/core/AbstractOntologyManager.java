@@ -85,7 +85,7 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
             policy = ReferencePolicy.DYNAMIC,
             policyOption = ReferencePolicyOption.GREEDY
     )
-    protected OntologyCache ontologyCache;
+    protected volatile OntologyCache ontologyCache;
 
     @Reference
     protected CatalogConfigProvider configProvider;
