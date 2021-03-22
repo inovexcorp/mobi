@@ -262,14 +262,15 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
 
         injectOrmFactoryReferencesIntoService(recordService);
-        recordService.setVersioningManager(versioningManager);
-        recordService.setUtilsService(utilsService);
-        recordService.setVf(VALUE_FACTORY);
-        recordService.setProvUtils(provUtils);
-        recordService.setMergeRequestManager(mergeRequestManager);
-        recordService.setPolicyManager(xacmlPolicyManager);
-        recordService.setEngineManager(engineManager);
-        recordService.setCatalogConfigProvider(configProvider);
+        recordService.versioningManager = versioningManager;
+        recordService.utilsService = utilsService;
+        recordService.valueFactory = VALUE_FACTORY;
+        recordService.provUtils = provUtils;
+        recordService.mergeRequestManager = mergeRequestManager;
+        recordService.xacmlPolicyManager = xacmlPolicyManager;
+        recordService.engineManager = engineManager;
+        recordService.configProvider = configProvider;
+        recordService.recordFactory = recordService.versionedRDFRecordFactory;
     }
 
     /* activate() */

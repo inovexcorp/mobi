@@ -1,7 +1,7 @@
 package com.mobi.rdf.orm.test;
 
-        /*-
-         * #%L
+/*-
+ * #%L
  * rdf-orm-test
  * $Id:$
  * $HeadURL:$
@@ -21,7 +21,7 @@ package com.mobi.rdf.orm.test;
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
-         */
+ */
 
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
@@ -36,6 +36,7 @@ import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
 import com.mobi.rdf.orm.impl.OrmFactoryRegistryImpl;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
@@ -156,31 +158,32 @@ public abstract class OrmEnabledTestCase {
      */
     public static void injectOrmFactoryReferencesIntoService(Object serviceObject) {
         Class<?> serviceClazz = serviceObject.getClass();
-        // Stream over every method in the service class.
-        Arrays.stream(serviceClazz.getDeclaredMethods())
+        // Stream over every field in the service class
+        Arrays.stream(FieldUtils.getAllFields(serviceClazz))
                 // Determine if an ORM Factory reference.
                 .filter(OrmEnabledTestCase::determineIfOrmFactoryReference)
                 // For each ORM factory reference.
-                .forEach(method -> injectApplicableOrmFactory(method, serviceObject, serviceClazz));
-
+                .forEach(field -> injectApplicableOrmFactory(field, serviceObject, serviceClazz));
     }
 
-    private static void injectApplicableOrmFactory(final Method method, final Object serviceObject, Class<?> serviceClazz) {
+
+    private static void injectApplicableOrmFactory(final Field field, final Object serviceObject,
+                                                   Class<?> serviceClazz) {
         // Find the matching ORM Factory.
         OrmFactory<?> targetFactory = ORM_FACTORIES.stream()
-                .filter(factory -> method.getParameterTypes()[0].isAssignableFrom(factory.getClass()))
-                .findFirst().orElseThrow(() -> new OrmTestCaseException("Missing factory for injection into " +
-                        "specified service!  Requires type '" + method.getParameterTypes()[0].getName() + "'"));
+                .filter(factory -> field.getType().isAssignableFrom(factory.getClass()))
+                .findFirst().orElseThrow(() -> new OrmTestCaseException("Missing factory for injection into "
+                        + "specified service!  Requires type '" + field.getType().getName() + "'"));
         try {
-            // Make sure the method can be accessed reflectively.
-            method.setAccessible(true);
-            // Invoke the method with our target OrmFactory.
-            method.invoke(serviceObject, targetFactory);
+            // Make sure the field can be accessed reflectively.
+            field.setAccessible(true);
+            // Set the field with our target OrmFactory.
+            field.set(serviceObject, targetFactory);
         } catch (Exception e) {
             // If an exception occurs, throw our OrmTestCaseException to halt the test.
             throw new OrmTestCaseException("Issue injecting factory '" + targetFactory.getClass().getName()
                     + "' into service '" + serviceClazz.getName()
-                    + "' using method '" + method.getName() + "'", e);
+                    + "' using field '" + field.getName() + "'", e);
         }
     }
 
@@ -216,13 +219,13 @@ public abstract class OrmEnabledTestCase {
     private static void initOrmFactory(OrmFactory<?> factory) {
         // If the given factory is an AbstractOrmFactory, we know how to initialize it.
         if (AbstractOrmFactory.class.isAssignableFrom(factory.getClass())) {
-            ((AbstractOrmFactory) factory).setModelFactory(MODEL_FACTORY);
-            ((AbstractOrmFactory) factory).setValueConverterRegistry(VALUE_CONVERTER_REGISTRY);
-            ((AbstractOrmFactory) factory).setValueFactory(VALUE_FACTORY);
+            ((AbstractOrmFactory<?>) factory).setModelFactory(MODEL_FACTORY);
+            ((AbstractOrmFactory<?>) factory).setValueConverterRegistry(VALUE_CONVERTER_REGISTRY);
+            ((AbstractOrmFactory<?>) factory).setValueFactory(VALUE_FACTORY);
         } else {
             // Otherwise, it won't work in this framework.
-            throw new OrmTestCaseException("OrmFactory '" + factory.getClass().getName() +
-                    "' isn't an AbstractOrmFactory, so it can't be initialized by an ormFactories.conf file");
+            throw new OrmTestCaseException("OrmFactory '" + factory.getClass().getName()
+                    + "' isn't an AbstractOrmFactory, so it can't be initialized by an ormFactories.conf file");
         }
     }
 
@@ -247,24 +250,22 @@ public abstract class OrmEnabledTestCase {
     private static void registerOrmFactory(OrmFactory<?> factory) throws OrmTestCaseException {
         try {
             // Reflectively register an OrmFactory in our factory registry.
-            Method m = OrmFactoryRegistryImpl.class.getDeclaredMethod("addFactory", OrmFactory.class);
-            m.setAccessible(true);
-            m.invoke(ORM_FACTORY_REGISTRY, factory);
+            Method method = OrmFactoryRegistryImpl.class.getDeclaredMethod("addFactory", OrmFactory.class);
+            method.setAccessible(true);
+            method.invoke(ORM_FACTORY_REGISTRY, factory);
         } catch (Exception e) {
             throw new OrmTestCaseException("Issue registering OrmFactory", e);
         }
     }
 
-    private static boolean determineIfOrmFactoryReference(final Method method) {
-        boolean includeMethod = false;
+    private static boolean determineIfOrmFactoryReference(final Field field) {
+        boolean includeField = false;
         // Return type is void, one parameter, and OrmFactory is assignable from the parameter type.
-        if (method.getReturnType() == void.class
-                && method.getParameters().length == 1
-                && OrmFactory.class.isAssignableFrom(method.getParameterTypes()[0])) {
+        if (OrmFactory.class.isAssignableFrom(field.getType())) {
             // Include the method in the injection analysis process.
-            includeMethod = true;
+            includeField = true;
         }
-        return includeMethod;
+        return includeField;
     }
 
     private static String tab(String in) {

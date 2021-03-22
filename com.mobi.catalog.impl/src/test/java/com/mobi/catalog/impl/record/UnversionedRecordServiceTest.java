@@ -106,9 +106,10 @@ public class UnversionedRecordServiceTest extends OrmEnabledTestCase {
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
 
         injectOrmFactoryReferencesIntoService(recordService);
-        recordService.setUtilsService(utilsService);
-        recordService.setVf(VALUE_FACTORY);
-        recordService.setProvUtils(provUtils);
+        recordService.utilsService = utilsService;
+        recordService.valueFactory = VALUE_FACTORY;
+        recordService.provUtils = provUtils;
+        recordService.start();
     }
 
     /* delete() */
