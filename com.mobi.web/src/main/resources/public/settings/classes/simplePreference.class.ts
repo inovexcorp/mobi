@@ -22,7 +22,7 @@
  */
 import { Preference } from '../interfaces/preference.interface';
 import { forEach } from 'lodash';
-import { FormGroup, FormArray, FormControl } from '@angular/forms';
+import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
 import { PreferenceUtils } from './preferenceUtils.class';
 
 export class SimplePreference implements Preference {
@@ -184,7 +184,7 @@ export class SimplePreference implements Preference {
             // }
             for (const control in fieldsTemplate) {
                 const newFormGroup: FormGroup = new FormGroup({});
-                newFormGroup.addControl(control, new FormControl(fieldsTemplate[control]));
+                newFormGroup.addControl(control, new FormControl(fieldsTemplate[control], Validators.required));
                 fg.addControl(control, newFormGroup);
             }
             (form.get('formBlocks') as FormArray).push(fg); // Ask Robert how to write this line better

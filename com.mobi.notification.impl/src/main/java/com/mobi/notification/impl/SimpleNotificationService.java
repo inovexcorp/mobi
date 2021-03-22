@@ -35,6 +35,7 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
@@ -59,6 +60,7 @@ public class SimpleNotificationService {
     SesameTransformer transformer;
 
     @Activate
+    @Modified
     protected void start() {
         Model ontologyModel;
         try {

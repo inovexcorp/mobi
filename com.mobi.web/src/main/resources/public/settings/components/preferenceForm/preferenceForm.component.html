@@ -33,6 +33,6 @@
         </div>
       </div>
     </div>
-    <button>Submit</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="form.pristine || form.invalid">Save</button>
     <button type="button" *ngIf="preference.Values.length < maxBlocks" (click)="addFormBlock()"><i class="fa fa-plus"></i></button>
   </form>

@@ -21,12 +21,18 @@
   #L%
   -->
 
-<form [formGroup]="formField.value" (ngSubmit)="onSubmit()">
+<form [formGroup]="formField.value">
     <div *ngIf="formType === 'radio'">
         {{util.getBeautifulIRI(formField.key)}}
         <div *ngFor="let option of options">
             <input type="radio" [value]="option" [formControlName]="formField.key">{{option}}
         </div>
     </div>
-    <div *ngIf="formType === 'text-input'">{{util.getBeautifulIRI(formField.key)}}: <input [formControlName]="formField.key" placeholder=""></div>
+    <div *ngIf="formType === 'text-input'">
+        <mat-form-field class="w-100">
+            <mat-label>{{util.getBeautifulIRI(formField.key)}}</mat-label>
+            <input matInput [formControlName]="formField.key">
+            <mat-error *ngIf="this.formField.value.get([formField.key]).invalid">Not a valid value</mat-error>
+        </mat-form-field>
+    </div>
 </form>
