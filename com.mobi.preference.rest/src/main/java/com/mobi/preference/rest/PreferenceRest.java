@@ -186,8 +186,8 @@ public class PreferenceRest {
                                          @Parameter(description = "The type of user preference being updated",
                                                  required = true)
                                          @QueryParam("preferenceType") String preferenceType,
-                                         @Parameter(description = "A JSON-LD representation of the updated user " +
-                                                 "preference", required = true)
+                                         @Parameter(description = "A JSON-LD representation of the updated user "
+                                                 + "preference", required = true)
                                          String jsonld) {
         checkStringParam(preferenceType, "Preference Type is required");
         checkStringParam(jsonld, "User Preference JSON-LD is required");
@@ -228,8 +228,8 @@ public class PreferenceRest {
                                          @Parameter(description = "The type of user preference being created",
                                                  required = true)
                                          @QueryParam("preferenceType") String preferenceType,
-                                         @Parameter(description = "A JSON-LD representation of the user " +
-                                                 "preference that will be created", required = true)
+                                         @Parameter(description = "A JSON-LD representation of the user "
+                                                 + "preference that will be created", required = true)
                                          String jsonld) {
         checkStringParam(preferenceType, "Preference Type is required");
         checkStringParam(jsonld, "User Preference JSON is required");
