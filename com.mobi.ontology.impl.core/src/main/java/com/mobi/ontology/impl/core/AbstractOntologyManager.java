@@ -63,41 +63,41 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
     protected Logger log;
 
     @Reference
-    protected ValueFactory valueFactory;
+    public ValueFactory valueFactory;
 
     @Reference
-    protected ModelFactory modelFactory;
+    public ModelFactory modelFactory;
 
     @Reference
-    protected SesameTransformer sesameTransformer;
+    public SesameTransformer sesameTransformer;
 
     @Reference
-    protected OntologyRecordFactory ontologyRecordFactory;
+    public OntologyRecordFactory ontologyRecordFactory;
 
     @Reference
-    protected RepositoryManager repositoryManager;
+    public RepositoryManager repositoryManager;
 
     @Reference
-    protected BranchFactory branchFactory;
+    public BranchFactory branchFactory;
 
     @Reference(
             cardinality = ReferenceCardinality.OPTIONAL,
             policy = ReferencePolicy.DYNAMIC,
             policyOption = ReferencePolicyOption.GREEDY
     )
-    protected volatile OntologyCache ontologyCache;
+    public volatile OntologyCache ontologyCache;
 
     @Reference
-    protected CatalogConfigProvider configProvider;
+    public CatalogConfigProvider configProvider;
 
     @Reference
-    protected CatalogManager catalogManager;
+    public CatalogManager catalogManager;
 
     @Reference
-    protected CatalogUtilsService utilsService;
+    public CatalogUtilsService utilsService;
 
     @Reference
-    protected BNodeService bNodeService;
+    public BNodeService bNodeService;
 
     protected static final String FIND_ONTOLOGY;
     protected static final String ONTOLOGY_IRI = "ontologyIRI";

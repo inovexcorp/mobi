@@ -356,17 +356,6 @@ public class SimpleDatasetManager implements DatasetManager {
                 operationDatasetFactory);
     }
 
-    private DatasetConnection getConnectionNoSystemDefaultNG(Resource dataset, String repositoryId) {
-        if (!getRecordResource(dataset, repositoryId).isPresent()) {
-            throw new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog with this "
-                    + "dataset/repository combination.");
-        }
-        Repository dsRepo = getDatasetRepo(repositoryId);
-
-        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf,
-                operationDatasetFactory, false);
-    }
-
     @Override
     public DatasetConnection getConnection(Resource dataset, String repositoryId, boolean datasetRecord) {
         if (datasetRecord) {
@@ -374,24 +363,6 @@ public class SimpleDatasetManager implements DatasetManager {
         }
         Repository dsRepo = getDatasetRepo(repositoryId);
         return getConnection(dataset, repositoryId, dsRepo);
-    }
-
-    @Override
-    public DatasetConnection getConnection(Resource dataset, String repositoryId, boolean datasetRecord,
-                                           boolean setSystemDefaultNG) {
-        if (datasetRecord) {
-            if (setSystemDefaultNG) {
-                return getConnection(dataset, repositoryId);
-            } else {
-                return getConnectionNoSystemDefaultNG(dataset, repositoryId);
-            }
-        }
-        Repository dsRepo = getDatasetRepo(repositoryId);
-        if (setSystemDefaultNG) {
-            return getConnection(dataset, repositoryId, dsRepo);
-        } else {
-            return getConnectionNoSystemDefaultNG(dataset, repositoryId, dsRepo);
-        }
     }
 
     @Override
@@ -410,11 +381,6 @@ public class SimpleDatasetManager implements DatasetManager {
     private DatasetConnection getConnection(Resource dataset, String repoId, Repository dsRepo) {
         return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repoId, vf,
                 operationDatasetFactory);
-    }
-
-    private DatasetConnection getConnectionNoSystemDefaultNG(Resource dataset, String repoId, Repository dsRepo) {
-        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repoId, vf,
-                operationDatasetFactory, false);
     }
 
     /**

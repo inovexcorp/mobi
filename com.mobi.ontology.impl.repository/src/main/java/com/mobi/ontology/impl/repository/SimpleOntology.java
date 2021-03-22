@@ -56,7 +56,6 @@ import com.mobi.persistence.utils.rio.SkolemizeHandler;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.query.api.GraphQuery;
-import com.mobi.query.api.OperationDataset;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
@@ -118,10 +117,6 @@ public class SimpleOntology implements Ontology {
     private Set<IRI> importsClosure;
     private Set<IRI> unresolvedImports;
     private Difference difference;
-
-    private Resource datasetSdng;
-    private OperationDataset operationDataset;
-    private boolean refreshOperationDataset = false;
 
     private static final String GET_SUB_CLASSES_OF;
     private static final String GET_CLASSES_FOR;
@@ -287,10 +282,6 @@ public class SimpleOntology implements Ontology {
         Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile, false);
         this.importsClosure = imports.get(CLOSURE_KEY);
         this.unresolvedImports = imports.get(UNRESOLVED_KEY);
-
-        try (DatasetConnection conn = getDatasetConnection()) {
-            this.datasetSdng = conn.getAndSetSystemDefaultNamedGraph();
-        }
         logTrace("SimpleOntology constructor specific commit in catalog but not in cache", startTime);
     }
 
@@ -308,7 +299,7 @@ public class SimpleOntology implements Ontology {
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
      * @param vf              The {@link ValueFactory} used to create Statements
      * @param mf              The {@link ModelFactory} used to create Models
-     * @param cacheLoader   The {@link CacheLoader} used to bulk load an ontology file
+     * @param cacheLoader     The {@link CacheLoader} used to bulk load an ontology file
      */
     public SimpleOntology(String recordCommitKey, Repository cacheRepo, OntologyManager ontologyManager,
                           CatalogManager catalogManager, CatalogConfigProvider configProvider,
@@ -357,8 +348,6 @@ public class SimpleOntology implements Ontology {
                 this.importsClosure = importsMap.get(CLOSURE_KEY);
                 this.unresolvedImports = importsMap.get(UNRESOLVED_KEY);
             }
-
-            this.datasetSdng = conn.getAndSetSystemDefaultNamedGraph();
         }
         logTrace("SimpleOntology constructor from cache with recordCommitKey", startTime);
     }
@@ -377,7 +366,7 @@ public class SimpleOntology implements Ontology {
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
      * @param vf              The {@link ValueFactory} used to create Statements
      * @param mf              The {@link ModelFactory} used to create Models
-     * @param cacheLoader   The {@link CacheLoader} used to bulk load an ontology file
+     * @param cacheLoader     The {@link CacheLoader} used to bulk load an ontology file
      */
     protected SimpleOntology(IRI datasetIRI, Repository cacheRepo, OntologyManager ontologyManager,
                            CatalogManager catalogManager, CatalogConfigProvider configProvider,
@@ -438,10 +427,6 @@ public class SimpleOntology implements Ontology {
                 this.unresolvedImports = imports.get(UNRESOLVED_KEY);
             }
         }
-        try (DatasetConnection conn = getDatasetConnection()) {
-            this.datasetSdng = conn.getAndSetSystemDefaultNamedGraph();
-        }
-
         logTrace("SimpleOntology constructor from import in cache", startTime);
     }
 
@@ -483,11 +468,6 @@ public class SimpleOntology implements Ontology {
         Map<String, Set<IRI>> importsMap = loadOntologyIntoCache(ontologyFile, true);
         this.importsClosure = importsMap.get(CLOSURE_KEY);
         this.unresolvedImports = importsMap.get(UNRESOLVED_KEY);
-
-        try (DatasetConnection conn = getDatasetConnection()) {
-            this.datasetSdng = conn.getAndSetSystemDefaultNamedGraph();
-        }
-
         logTrace("SimpleOntology constructor from web import", startTime);
     }
 
@@ -498,15 +478,14 @@ public class SimpleOntology implements Ontology {
      */
     public void setDifference(Difference difference) {
         this.difference = difference;
-        this.refreshOperationDataset = true;
     }
 
     @Override
     public Model asModel(ModelFactory factory) throws MobiOntologyException {
         try (DatasetConnection conn = getDatasetConnection()) {
             long startTime = getStartTime();
-            Model model = RepositoryResults.asModelNoContext(conn.getStatements(null, null, null, this.datasetSdng),
-                    factory);
+            Model model = RepositoryResults.asModelNoContext(conn.getStatements(null, null, null,
+                    conn.getSystemDefaultNamedGraph()), factory);
             logTrace("asModel(factory)", startTime);
             undoApplyDifferenceIfPresent(conn);
             return model;
@@ -579,7 +558,8 @@ public class SimpleOntology implements Ontology {
                                                  OutputStream outputStream) {
         long startTime = getStartTime();
         try (DatasetConnection conn = getDatasetConnection()) {
-            RepositoryResult<Statement> statements = conn.getStatements(null, null, null, this.datasetSdng);
+            RepositoryResult<Statement> statements = conn.getStatements(null, null, null,
+                    conn.getSystemDefaultNamedGraph());
 
             RDFHandler rdfWriter;
             if (prettyPrint) {
@@ -636,7 +616,7 @@ public class SimpleOntology implements Ontology {
     public Set<Ontology> getImportsClosure() {
         try (DatasetConnection conn = getDatasetConnection()) {
             long start = getStartTime();
-            Resource sdNg = this.datasetSdng;
+            Resource sdNg = conn.getSystemDefaultNamedGraph();
             Set<Ontology> closure = new HashSet<>();
             conn.getDefaultNamedGraphs().forEach(ng -> {
                 if (ng.stringValue().equals(sdNg.stringValue())) {
@@ -674,7 +654,7 @@ public class SimpleOntology implements Ontology {
      */
     protected Set<IRI> getImportedOntologyIRIs(DatasetConnection conn) {
         List<Statement> importStatements = RepositoryResults.asList(conn.getStatements(null,
-                vf.createIRI(OWL.IMPORTS.stringValue()), null, this.datasetSdng));
+                vf.createIRI(OWL.IMPORTS.stringValue()), null, conn.getSystemDefaultNamedGraph()));
         return importStatements.stream()
                 .map(Statement::getObject)
                 .filter(iri -> iri instanceof IRI)
@@ -702,7 +682,7 @@ public class SimpleOntology implements Ontology {
             long start = getStartTime();
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
                     vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ANNOTATIONPROPERTY.stringValue()),
-                    this.datasetSdng));
+                    conn.getSystemDefaultNamedGraph()));
             Set<AnnotationProperty> annotationProperties = statements.stream()
                     .map(Statement::getSubject)
                     .map(subject -> new SimpleAnnotationProperty((IRI) subject))
@@ -783,7 +763,7 @@ public class SimpleOntology implements Ontology {
             long start = getStartTime();
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
                     vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(com.mobi.ontologies.rdfs.Datatype.TYPE),
-                    this.datasetSdng));
+                    conn.getSystemDefaultNamedGraph()));
             Set<Datatype> dataTypes = statements.stream()
                     .map(Statement::getSubject)
                     .filter(iri -> iri instanceof IRI)
@@ -801,7 +781,7 @@ public class SimpleOntology implements Ontology {
             long start = getStartTime();
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
                     vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.OBJECTPROPERTY.stringValue()),
-                    this.datasetSdng));
+                    conn.getSystemDefaultNamedGraph()));
             Set<ObjectProperty> objectProperties = statements.stream()
                     .map(Statement::getSubject)
                     .map(subject -> new SimpleObjectProperty((IRI) subject))
@@ -854,7 +834,7 @@ public class SimpleOntology implements Ontology {
             long start = getStartTime();
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
                     vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue()),
-                    this.datasetSdng));
+                    conn.getSystemDefaultNamedGraph()));
             Set<DataProperty> dataProperties = statements.stream()
                     .map(Statement::getSubject)
                     .map(subject -> new SimpleDataProperty((IRI) subject))
@@ -1053,14 +1033,13 @@ public class SimpleOntology implements Ontology {
                                           @Nullable Function<GraphQuery, GraphQuery> addBinding,
                                           String methodName, boolean includeImports, ModelFactory modelFactory) {
         try (DatasetConnection conn = getDatasetConnection()) {
-            conn.setSystemDefaultNamedGraph(this.datasetSdng);
             long start = getStartTime();
             try {
                 GraphQuery query;
                 if (includeImports) {
                     query = conn.prepareGraphQuery(queryString);
                 } else {
-                    query = conn.prepareGraphQuery(queryString, this.datasetSdng);
+                    query = conn.prepareGraphQuery(queryString, conn.getSystemDefaultNamedGraph());
                 }
                 if (addBinding != null) {
                     query = addBinding.apply(query);
@@ -1088,13 +1067,12 @@ public class SimpleOntology implements Ontology {
                                                 String methodName, boolean includeImports) {
         try (DatasetConnection conn = getDatasetConnection()) {
             long start = getStartTime();
-            conn.setSystemDefaultNamedGraph(this.datasetSdng);
             try {
                 TupleQuery query;
                 if (includeImports) {
                     query = conn.prepareTupleQuery(queryString);
                 } else {
-                    query = conn.prepareTupleQuery(queryString, this.datasetSdng);
+                    query = conn.prepareTupleQuery(queryString, conn.getSystemDefaultNamedGraph());
                 }
                 if (addBinding != null) {
                     query = addBinding.apply(query);
@@ -1407,16 +1385,8 @@ public class SimpleOntology implements Ontology {
      * @return A {@link DatasetConnection} for the datasetIRI.
      */
     private DatasetConnection getDatasetConnection() {
-        long start = getStartTime();
-        DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false, false);
+        DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false);
         applyDifferenceIfPresent(conn);
-        if (refreshOperationDataset || operationDataset == null) {
-            operationDataset = conn.getOperationDataset(true);
-            refreshOperationDataset = false;
-        } else {
-            conn.setOperationDataset(operationDataset);
-        }
-        logTrace("getDatasetConnection()", start);
         return conn;
     }
 
@@ -1433,8 +1403,8 @@ public class SimpleOntology implements Ontology {
             long start = getStartTime();
             // Start transaction that will be rolled back in #undoApplyDifferenceIfPresent()
             conn.begin();
-            conn.add(difference.getAdditions(), this.datasetSdng);
-            conn.remove(difference.getDeletions(), this.datasetSdng);
+            conn.add(difference.getAdditions(), conn.getSystemDefaultNamedGraph());
+            conn.remove(difference.getDeletions(), conn.getSystemDefaultNamedGraph());
             addTemporaryImports(conn);
             removeImports(conn);
             logTrace("applyDifferenceIfPresent()", start);
@@ -1509,7 +1479,7 @@ public class SimpleOntology implements Ontology {
 
             // Add the ontologyIRI of this to the imports closure
             conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()),
-                    vf.createIRI(OWL.ONTOLOGY.stringValue()), this.datasetSdng)
+                    vf.createIRI(OWL.ONTOLOGY.stringValue()), conn.getSystemDefaultNamedGraph())
                     .stream().map(Statement::getSubject)
                     .filter(iri -> iri instanceof IRI)
                     .map(iri -> (IRI) iri)
@@ -1542,7 +1512,7 @@ public class SimpleOntology implements Ontology {
                 IRI importDatasetIRI = getDatasetIRI(iri);
                 if (importDatasetIRI.equals(ontologyIRI)) {
                     // DatasetIRI doesn't exist for newly updated ontologyIRI
-                    conn.addDefaultNamedGraph(this.datasetSdng);
+                    conn.addDefaultNamedGraph(conn.getSystemDefaultNamedGraph());
                 } else {
                     IRI importDatasetSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(importDatasetIRI, vf);
                     conn.addDefaultNamedGraph(importDatasetSdNg);

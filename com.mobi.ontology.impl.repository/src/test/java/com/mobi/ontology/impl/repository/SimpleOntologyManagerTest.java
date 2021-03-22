@@ -23,10 +23,28 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
@@ -80,22 +98,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import javax.cache.Cache;
 
 public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
@@ -277,10 +280,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
             datasetManager.createDataset(resource.getValue().stringValue(), "ontologyCache");
             return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY, operationDatasetFactory);
         });
-        when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean(), anyBoolean())).thenAnswer(invocation -> {
-            datasetManager.createDataset(resource.getValue().stringValue(), "ontologyCache");
-            return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY, operationDatasetFactory);
-        });
 
         doAnswer(invocation -> {
             Resource graph = invocation.getArgumentAt(1, Resource.class);
@@ -293,27 +292,18 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         manager = Mockito.spy(new SimpleOntologyManager());
         injectOrmFactoryReferencesIntoService(manager);
 
-        Map<String, Object> abstractFields = new HashMap<>();
-        abstractFields.put("valueFactory", VALUE_FACTORY);
-        abstractFields.put("modelFactory", MODEL_FACTORY);
-        abstractFields.put("sesameTransformer", sesameTransformer);
-        abstractFields.put("configProvider", configProvider);
-        abstractFields.put("catalogManager", catalogManager);
-        abstractFields.put("utilsService", catalogUtilsService);
-        abstractFields.put("repositoryManager", mockRepoManager);
-        abstractFields.put("ontologyCache", ontologyCache);
-        abstractFields.put("bNodeService", bNodeService);
+        // TODO: Remove when new ORM test is in.
+        manager.branchFactory = (BranchFactory) branchFactory;
 
-        abstractFields.forEach((key, value) -> {
-            try {
-                Field field = AbstractOntologyManager.class.getDeclaredField(key);
-                field.setAccessible(true);
-                field.set(manager, value);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
-
+        manager.valueFactory = VALUE_FACTORY;
+        manager.modelFactory = MODEL_FACTORY;
+        manager.sesameTransformer = sesameTransformer;
+        manager.configProvider = configProvider;
+        manager.catalogManager = catalogManager;
+        manager.utilsService = catalogUtilsService;
+        manager.repositoryManager = mockRepoManager;
+        manager.ontologyCache = ontologyCache;
+        manager.bNodeService = bNodeService;
         manager.importsResolver = importsResolver;
         manager.datasetManager = datasetManager;
         manager.cacheLoader = cacheLoader;

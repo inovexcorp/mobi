@@ -31,7 +31,6 @@ import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.impl.core.AbstractOntologyManager;
-import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -64,17 +63,17 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
     static final String COMPONENT_NAME = "com.mobi.ontology.impl.repository.OntologyManager";
 
     @Reference
-    protected DatasetManager datasetManager;
+    public DatasetManager datasetManager;
 
     @Reference
-    protected ImportsResolver importsResolver;
+    public ImportsResolver importsResolver;
 
     @Reference(
             cardinality = ReferenceCardinality.MANDATORY,
             policy = ReferencePolicy.DYNAMIC,
             policyOption = ReferencePolicyOption.GREEDY
     )
-    protected volatile CacheLoader cacheLoader;
+    public volatile CacheLoader cacheLoader;
 
     public SimpleOntologyManager() {
     }

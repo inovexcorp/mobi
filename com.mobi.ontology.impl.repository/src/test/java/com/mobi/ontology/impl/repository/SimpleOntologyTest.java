@@ -249,10 +249,6 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
             datasetManager.createDataset(resource.getValue().stringValue(), "ontologyCache");
             return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY, operationDatasetFactory);
         });
-        when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean(), anyBoolean())).thenAnswer(invocation -> {
-            datasetManager.createDataset(resource.getValue().stringValue(), "ontologyCache");
-            return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY, operationDatasetFactory);
-        });
 
         Model ontologyModel = Models.createModel(this.getClass().getResourceAsStream("/test.owl"), transformer);
         Path ontologyPath = Files.createTempFile(null, null);

@@ -87,8 +87,8 @@ public class Rio {
      * @param statementHandlers StatementHandler
      * @return boolean if limit has been exceeded
      */
-    public static boolean write(Iterable<? extends Statement> iterable, RDFHandler writer, SesameTransformer transformer,
-                                int limit, StatementHandler... statementHandlers) {
+    public static boolean write(Iterable<? extends Statement> iterable, RDFHandler writer,
+                                SesameTransformer transformer, int limit, StatementHandler... statementHandlers) {
         boolean limitExceeded = false;
         int limitExceededCounter = 0;
         writer.startRDF();

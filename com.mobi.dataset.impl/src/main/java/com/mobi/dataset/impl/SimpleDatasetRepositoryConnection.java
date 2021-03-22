@@ -53,18 +53,17 @@ import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapper implements DatasetConnection {
+
     private Resource datasetResource;
     private String repositoryId;
     private ValueFactory valueFactory;
@@ -125,18 +124,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         this.repositoryId = repositoryId;
         this.valueFactory = valueFactory;
         this.operationDatasetFactory = operationDatasetFactory;
-        getAndSetSystemDefaultNamedGraph();
-    }
-
-    public SimpleDatasetRepositoryConnection(RepositoryConnection delegate, Resource dataset, String repositoryId,
-                                             ValueFactory valueFactory, OperationDatasetFactory operationDatasetFactory,
-                                             boolean setSystemDefaultNG) {
-        setDelegate(delegate);
-        this.datasetResource = dataset;
-        this.repositoryId = repositoryId;
-        this.valueFactory = valueFactory;
-        this.operationDatasetFactory = operationDatasetFactory;
-        this.systemDefaultNG = setSystemDefaultNG ? getAndSetSystemDefaultNamedGraph() : null;
+        this.systemDefaultNG = getSystemDefaultNG();
     }
 
     public SimpleDatasetRepositoryConnection(RepositoryConnection delegate, Resource dataset, String repositoryId,
@@ -147,7 +135,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         this.repositoryId = repositoryId;
         this.valueFactory = valueFactory;
         this.operationDatasetFactory = operationDatasetFactory;
-        getAndSetSystemDefaultNamedGraph();
+        this.systemDefaultNG = getSystemDefaultNG();
         this.batchSize = batchSize;
     }
 
@@ -204,7 +192,6 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void remove(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
-        // TODO: Trivial Implementation
         // Start a transaction if not currently in one
         boolean startedTransaction = startTransaction();
 
@@ -293,9 +280,6 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public Resource getSystemDefaultNamedGraph() {
-        if (systemDefaultNG == null) {
-            return getAndSetSystemDefaultNamedGraph();
-        }
         return systemDefaultNG;
     }
 
@@ -363,7 +347,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     @Override
     public TupleQuery prepareTupleQuery(String query) throws RepositoryException, MalformedQueryException {
         TupleQuery tupleQuery = getDelegate().prepareTupleQuery(query);
-        tupleQuery.setDataset(getOperationDataset(false));
+        tupleQuery.setDataset(getOperationDataset());
         return tupleQuery;
     }
 
@@ -371,7 +355,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     public TupleQuery prepareTupleQuery(String query, String baseURI) throws RepositoryException,
             MalformedQueryException {
         TupleQuery tupleQuery = getDelegate().prepareTupleQuery(query, baseURI);
-        tupleQuery.setDataset(getOperationDataset(false));
+        tupleQuery.setDataset(getOperationDataset());
         return tupleQuery;
     }
 
@@ -386,7 +370,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     @Override
     public GraphQuery prepareGraphQuery(String query) throws RepositoryException, MalformedQueryException {
         GraphQuery graphQuery = getDelegate().prepareGraphQuery(query);
-        graphQuery.setDataset(getOperationDataset(false));
+        graphQuery.setDataset(getOperationDataset());
         return graphQuery;
     }
 
@@ -394,7 +378,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     public GraphQuery prepareGraphQuery(String query, String baseURI) throws RepositoryException,
             MalformedQueryException {
         GraphQuery graphQuery = getDelegate().prepareGraphQuery(query, baseURI);
-        graphQuery.setDataset(getOperationDataset(false));
+        graphQuery.setDataset(getOperationDataset());
         return graphQuery;
     }
 
@@ -448,25 +432,6 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public Resource getAndSetSystemDefaultNamedGraph() {
-        RepositoryResult<Statement> statements = getDelegate()
-                .getStatements(datasetResource, valueFactory.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
-
-        if (statements.hasNext()) {
-            this.systemDefaultNG = Statements.objectResource(statements.next())
-                    .orElseThrow(() -> new MobiException("Could not retrieve systemDefaultNamedGraph for dataset"));
-            return systemDefaultNG;
-        } else {
-            throw new MobiException("Could not retrieve systemDefaultNamedGraph for dataset");
-        }
-    }
-
-    @Override
-    public void setSystemDefaultNamedGraph(Resource systemDefaultNamedGraph) {
-        this.systemDefaultNG = systemDefaultNamedGraph;
-    }
-
-    @Override
     public Resource getDataset() {
         return datasetResource;
     }
@@ -476,9 +441,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         return repositoryId;
     }
 
-    @Override
-    public OperationDataset getOperationDataset(boolean force) {
-        if (dirty || force) {
+    private OperationDataset getOperationDataset() {
+        if (dirty) {
             OperationDataset operationDataset = operationDatasetFactory.createOperationDataset();
             TupleQueryResult result = getGraphs();
             result.forEach(bindings -> {
@@ -490,24 +454,15 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             });
             opDataset = operationDataset;
             dirty = false;
-
-            if (systemDefaultNG == null) {
-                getAndSetSystemDefaultNamedGraph();
-            }
+            
             operationDataset.addDefaultGraph((IRI) systemDefaultNG);
         }
         return opDataset;
     }
 
-    @Override
-    public void setOperationDataset(OperationDataset operationDataset) {
-        this.opDataset = operationDataset;
-        dirty = false;
-    }
-
     private OperationDataset getFilteredOperationDataset(Resource... contexts) {
         if (varargsPresent(contexts)) {
-            OperationDataset opDataset = getOperationDataset(false);
+            OperationDataset opDataset = getOperationDataset();
             OperationDataset filteredOpDataset = operationDatasetFactory.createOperationDataset();
 
             List<Resource> contextList = Arrays.asList(contexts);
@@ -521,7 +476,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
                     .forEach(filteredOpDataset::addDefaultGraph);
             return filteredOpDataset;
         } else {
-            return getOperationDataset(false);
+            return getOperationDataset();
         }
     }
 
@@ -534,18 +489,28 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     private Set<Resource> getGraphsSet() {
         Set<Resource> graphSet = new HashSet<>();
-        OperationDataset operationDataset = getOperationDataset(false);
+        OperationDataset operationDataset = getOperationDataset();
         graphSet.addAll(operationDataset.getDefaultGraphs());
         graphSet.addAll(operationDataset.getNamedGraphs());
-        if (systemDefaultNG == null) {
-            getAndSetSystemDefaultNamedGraph();
-        }
+
         graphSet.add(systemDefaultNG);
         return graphSet;
     }
 
     private boolean varargsPresent(Object[] varargs) {
         return !(varargs == null || varargs.length == 0 || varargs[0] == null);
+    }
+
+    private Resource getSystemDefaultNG() {
+        RepositoryResult<Statement> statements = getDelegate()
+                .getStatements(datasetResource, valueFactory.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
+
+        if (statements.hasNext()) {
+            return Statements.objectResource(statements.next())
+                    .orElseThrow(() -> new MobiException("Could not retrieve systemDefaultNamedGraph for dataset"));
+        } else {
+            throw new MobiException("Could not retrieve systemDefaultNamedGraph for dataset");
+        }
     }
 
     /**

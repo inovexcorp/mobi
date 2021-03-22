@@ -233,21 +233,6 @@ public interface DatasetManager {
     DatasetConnection getConnection(Resource dataset, String repositoryId, boolean datasetRecord);
 
     /**
-     * Returns a DatasetConnection for the specified Dataset in the specified repository.
-     *
-     * @param dataset The Resource of the Dataset for which to return a DatasetConnection.
-     * @param repositoryId The ID of the Repository where the Dataset is stored.
-     * @param datasetRecord Whether or not the Resource IRI has a DatasetRecord associated with it.
-     * @param setSystemDefaultNG Boolean whether to initially set the system default named graph on the connection.
-     * @return A DatasetConnection for the specified Dataset.
-     * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog with this
-     *      Dataset/Repository combination.
-     * @throws IllegalStateException if the DatasetRecord does not point to a Dataset or a repository
-     */
-    DatasetConnection getConnection(Resource dataset, String repositoryId, boolean datasetRecord,
-                                    boolean setSystemDefaultNG);
-
-    /**
      * Returns a DatasetConnection for the specified DatasetRecord. The DatasetConnection is associated with the
      * Repository defined for the DatasetRecord in the catalog.
      *

@@ -27,9 +27,7 @@ import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.DatasetFactory;
 import com.mobi.exception.MobiException;
-import com.mobi.ontology.utils.cache.repository.OntologyDatasets;
 import com.mobi.query.api.Update;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -40,10 +38,10 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.cache.Cache;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
-import javax.cache.Cache;
 
 public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V> {
 
@@ -82,7 +80,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
                 }
             }
         }
-        DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false, false);
+        DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false);
         updateDatasetTimestamp(conn);
         return conn;
     }

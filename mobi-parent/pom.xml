@@ -535,10 +535,6 @@
                     <includes>
                         <include>**/*Spec.java</include>
                         <include>**/*Test.java</include>
-<!--                        <systemPropertyVariables>-->
-<!--                            <org.slf4j.simpleLogger.defaultLogLevel>INFO</org.slf4j.simpleLogger.defaultLogLevel>-->
-<!--                            <org.slf4j.simpleLogger.showDateTime>true</org.slf4j.simpleLogger.showDateTime>-->
-<!--                        </systemPropertyVariables>-->
                     </includes>
                     <systemPropertyVariables>
                         <logback.configurationFile>../mobi-parent/src/test/resources/logback-test.xml</logback.configurationFile>

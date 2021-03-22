@@ -86,7 +86,6 @@
         <module>com.mobi.dataset.api</module>
         <module>com.mobi.dataset.impl</module>
         <module>com.mobi.dataset.rest</module>
-<!--        <module>com.mobi.sparql.utils</module>-->
         <module>com.mobi.cache</module>
         <module>com.mobi.cache.impl.core</module>
         <module>com.mobi.cache.impl.repository</module>
