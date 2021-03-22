@@ -288,6 +288,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * {@link ontology-editor.component:uploadOntologyOverlay}.
      */
     self.uploadFiles = [];
+    self.fileStatus = [];
 
     /**
      * @ngdoc property

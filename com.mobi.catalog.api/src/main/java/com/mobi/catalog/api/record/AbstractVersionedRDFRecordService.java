@@ -51,7 +51,6 @@ import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.repository.api.RepositoryConnection;
@@ -61,9 +60,11 @@ import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -75,7 +76,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 
 /**
  * Defines functionality for VersionedRDFRecordService. Provides common methods for exporting and deleting a Record.
@@ -106,13 +106,26 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         }
     }
 
-    protected CommitFactory commitFactory;
-    protected BranchFactory branchFactory;
-    protected MergeRequestManager mergeRequestManager;
-    protected VersioningManager versioningManager;
-    protected XACMLPolicyManager xacmlPolicyManager;
-    protected CatalogConfigProvider configProvider;
-    protected EngineManager engineManager;
+    @Reference
+    public CommitFactory commitFactory;
+
+    @Reference
+    public BranchFactory branchFactory;
+
+    @Reference
+    public MergeRequestManager mergeRequestManager;
+
+    @Reference
+    public VersioningManager versioningManager;
+
+    @Reference
+    public XACMLPolicyManager xacmlPolicyManager;
+
+    @Reference
+    public CatalogConfigProvider configProvider;
+
+    @Reference
+    public EngineManager engineManager;
 
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
