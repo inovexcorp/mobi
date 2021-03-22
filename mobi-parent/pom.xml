@@ -529,10 +529,16 @@
                 <configuration>
                     <useFile>false</useFile>
                     <trimStackTrace>false</trimStackTrace>
+                    <forkCount>5</forkCount>
+                    <reuseForks>true</reuseForks>
+                    <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
                     <includes>
                         <include>**/*Spec.java</include>
                         <include>**/*Test.java</include>
                     </includes>
+                    <systemPropertyVariables>
+                        <logback.configurationFile>../mobi-parent/src/test/resources/logback-test.xml</logback.configurationFile>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>
@@ -575,13 +581,14 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>license-maven-plugin</artifactId>
-                <version>1.9</version>
+                <version>1.20</version>
                 <configuration>
                     <verbose>false</verbose>
                     <addSvnKeyWords>true</addSvnKeyWords>
                     <excludedGroups>com.mobi</excludedGroups>
                     <excludes>
                         <exclude>src/test/resources/**</exclude>
+                        <exclude>src/**/*.svg</exclude>
                     </excludes>
                     <extraExtensions>
                         <scss>java</scss>
