@@ -22,6 +22,7 @@
  */
 package com.mobi.persistence.utils
 
+import com.mobi.exception.MobiException
 import com.mobi.persistence.utils.api.SesameTransformer
 import com.mobi.rdf.api.*
 import org.eclipse.rdf4j.rio.RDFParseException
@@ -342,7 +343,19 @@ class ModelsSpec extends Specification{
             assert args[0].size() > 1
         }
     }
+    def "createModel with a valid compressed (ext.gzip) file format returns correct data"() {
+        setup:
+        def input = getClass().getResourceAsStream("/bfo.owl.gz")
+        def transformer = Mock(SesameTransformer)
 
+        when:
+        Models.createModel('owl.gz', input, transformer)
+
+        then:
+        1 * transformer.mobiModel(_) >> { args ->
+            assert args[0].size() > 1
+        }
+    }
 
     def "createModel with extension for invalid format throws an Exception"() {
         setup:
@@ -387,6 +400,18 @@ class ModelsSpec extends Specification{
 
         when:
         Models.createModel('.zip', input, transformer)
+
+        then:
+        thrown(MobiException)
+    }
+
+    def "createModel with an invalid compressed (.gzip) file format throws an Exception"() {
+        setup:
+        def input = getClass().getResourceAsStream("/invalid.owl.gz")
+        def transformer = Mock(SesameTransformer)
+
+        when:
+        Models.createModel('gz', input, transformer)
 
         then:
         thrown(RDFParseException.class)
