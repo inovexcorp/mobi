@@ -20,8 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Preference } from '../interfaces/preference.interface';
-import { forEach } from 'lodash';
 import { v4 as uuid } from 'uuid';
 
 export class PreferenceUtils {

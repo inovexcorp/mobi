@@ -95,17 +95,17 @@ export class PreferenceGroupComponent implements OnChanges {
                             }
 
                             // Can probably move into a preference.populate(userPreference)
-                            preference.Values = filter(this.userPreferences[preferenceType], preference.FormFieldStrings[0]).sort((a, b) => {
-                                if (a[preference.FormFieldStrings[0]][0]['@value'] < b[preference.FormFieldStrings[0]][0]['@value']) {
+                            preference.values = filter(this.userPreferences[preferenceType], preference.formFieldStrings[0]).sort((a, b) => {
+                                if (a[preference.formFieldStrings[0]][0]['@value'] < b[preference.formFieldStrings[0]][0]['@value']) {
                                     return -1;
-                                } else if (a[preference.FormFieldStrings[0]][0]['@value'] > b[preference.FormFieldStrings[0]][0]['@value']) {
+                                } else if (a[preference.formFieldStrings[0]][0]['@value'] > b[preference.formFieldStrings[0]][0]['@value']) {
                                     return 1;
                                 } else {
                                     return 0;
                                 }
                             });
 
-                            if (!preference.Values.length) {
+                            if (!preference.values.length) {
                                 preference.addBlankForm();
                             }
 
@@ -116,11 +116,11 @@ export class PreferenceGroupComponent implements OnChanges {
 
                             if (topLevelPreferenceNodeshapeInstance.length) {
                                 // Change to preferenceInstanceResourceId
-                                preference.TopLevelPreferenceNodeshapeInstanceId = topLevelPreferenceNodeshapeInstance[0]['@id']; 
+                                preference.topLevelPreferenceNodeshapeInstanceId = topLevelPreferenceNodeshapeInstance[0]['@id']; 
                                 // Change to topLevelPreferenceNodeshape
                                 // This should be able to be removed since I believe we already got this value above. Will have to test before removing though.
-                                preference.TopLevelPreferenceNodeshapeInstance = filter(this.userPreferences[preferenceType], result => {
-                                    return result['@id'] === preference.TopLevelPreferenceNodeshapeInstanceId;
+                                preference.topLevelPreferenceNodeshapeInstance = filter(this.userPreferences[preferenceType], result => {
+                                    return result['@id'] === preference.topLevelPreferenceNodeshapeInstanceId;
                                 });
                             }
                             this.preferences[preferenceType] = preference;
@@ -134,7 +134,7 @@ export class PreferenceGroupComponent implements OnChanges {
     updateUserPreference(data): void {
         const preference: Preference = data.preference;
         if (preference.exists()) {
-            this.pm.updateUserPreference(preference.TopLevelPreferenceNodeshapeInstanceId, preference.type, preference.asJsonLD())
+            this.pm.updateUserPreference(preference.topLevelPreferenceNodeshapeInstanceId, preference.type, preference.asJsonLD())
                 .then(() => {
                     this.retrievePreferences();
                 }, error => this.errorMessage = error);
@@ -149,54 +149,4 @@ export class PreferenceGroupComponent implements OnChanges {
     isTopLevelNodeShape(shape):boolean {
         return Object.prototype.hasOwnProperty.call(shape, 'http://mobi.com/ontologies/preference#inGroup');
     }
-
-    // addObjectValueToObject(newObjValId, obj) {
-    //     if (!obj['http://mobi.com/ontologies/preference#hasObjectValue']) {
-    //         obj['http://mobi.com/ontologies/preference#hasObjectValue'] = [];
-    //     }
-    //     obj['http://mobi.com/ontologies/preference#hasObjectValue'].push({
-    //         '@id': newObjValId
-    //     });
-    // }
-
-    // Basically just adds an id and types to an object, thus making it legal jsonLD
-    // convertToJsonLd(object, intendedTypes) {
-    //     if (Object.prototype.hasOwnProperty.call(object, '@id') || Object.prototype.hasOwnProperty.call(object, '@type')) {
-    //         console.log('Object has unexpected structure. It appears that the object already has an id or type');
-    //     } else {
-    //         object['@id'] = 'http://mobi.com/preference#' + uuid.v4(); // is it ok that we always give targetClass instance a prefix of preference?
-    //         object['@type'] = ['http://www.w3.org/2002/07/owl#Thing'];
-    //         intendedTypes.forEach(intendedType => object['@type'].push(intendedType));
-    //     }
-    // }
-
-    // buildUserPreferenceJson(preference, type) {
-    //     const userPreferenceJson = [];
-    //     const newPreference = {
-    //         '@id': 'http://mobi.com/preference#' + uuid.v4(),
-    //         '@type': [
-    //             type,
-    //             'http://mobi.com/ontologies/preference#Preference',
-    //             'http://www.w3.org/2002/07/owl#Thing',
-    //             'http://mobi.com/ontologies/preference#Setting'
-    //         ]
-    //     };
-    //     if (preference.TargetClass) {
-    //         preference.Values.map(val => {
-    //             if (!PreferenceUtils.isJsonLd(val)) {
-    //                 this.convertToJsonLd(val, [preference.TargetClass]);
-    //             }
-    //             this.addObjectValueToObject(val['@id'], newPreference);
-    //         });
-    //         userPreferenceJson.push(...preference.Values);
-    //         // NOT FINISHED YET!!!
-    //     } else {
-    //         PreferenceUtils.convertToJsonLd(preference.Values, preference.type);
-    //         const dataValues = angular.copy(preference.Values[0]['http://mobi.com/ontologies/preference#hasDataValue'][0]);
-    //         dataValues['@type'] = preference.FormFields[0]['http://www.w3.org/ns/shacl#datatype'][0]['@id'];
-    //         newPreference['http://mobi.com/ontologies/preference#hasDataValue'] = [dataValues];
-    //     }
-    //     userPreferenceJson.push(newPreference);
-    //     return userPreferenceJson;
-    // }
 }

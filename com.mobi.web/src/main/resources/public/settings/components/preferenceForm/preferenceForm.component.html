@@ -26,13 +26,12 @@
     <div formArrayName="formBlocks">
       <div *ngFor="let formBlock of formBlocks.controls; let n=index">
         <div [formGroupName]="n">
-          <div *ngFor="let formField of formBlock.controls | keys">
+          <div *ngFor="let formField of formBlock.controls | keyvalue">
               <preference-form-field [formField]="formField" [shaclValidation]="shaclFieldValidation[formField.key]"></preference-form-field>
-            <!-- {{util.getBeautifulIRI(formField.key)}}: <input [formControlName]="formField.key" placeholder=""> -->
           </div>
         </div>
       </div>
     </div>
     <button mat-raised-button color="primary" type="submit" [disabled]="form.pristine || form.invalid">Save</button>
-    <button type="button" *ngIf="preference.Values.length < maxBlocks" (click)="addFormBlock()"><i class="fa fa-plus"></i></button>
+    <button type="button" *ngIf="preference.values.length < maxBlocks" (click)="addFormBlock()"><i class="fa fa-plus"></i></button>
   </form>

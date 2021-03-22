@@ -20,6 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div *ngFor="let preference of preferences | keys">
+<div *ngFor="let preference of preferences | keyvalue">
     <preference-form (updateEvent)="updateUserPreference($event)" [preference]="preferences[preference.key]"></preference-form>
 </div>

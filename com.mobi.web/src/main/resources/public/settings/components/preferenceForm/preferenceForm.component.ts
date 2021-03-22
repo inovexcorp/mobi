@@ -44,13 +44,13 @@ export class PreferenceFormComponent implements OnChanges {
     constructor(@Inject('utilService') private util) {}
 
     ngOnChanges() {
-        if (this.preference.RequiredPropertyShape['http://www.w3.org/ns/shacl#maxCount']) {
-            this.maxBlocks = this.preference.RequiredPropertyShape['http://www.w3.org/ns/shacl#maxCount'][0]['@value'];
+        if (this.preference.requiredPropertyShape['http://www.w3.org/ns/shacl#maxCount']) {
+            this.maxBlocks = this.preference.requiredPropertyShape['http://www.w3.org/ns/shacl#maxCount'][0]['@value'];
         }
 
         // Temporary code. Put this somewhere else eventually
-        this.preference.FormFieldStrings.forEach(formFieldString => {
-            const shaclValidator = filter(this.preference.FormFields, formField => {
+        this.preference.formFieldStrings.forEach(formFieldString => {
+            const shaclValidator = filter(this.preference.formFields, formField => {
                 return formField['http://www.w3.org/ns/shacl#path'][0]['@id'] === formFieldString;
             })[0];
             this.shaclFieldValidation[formFieldString] = shaclValidator;

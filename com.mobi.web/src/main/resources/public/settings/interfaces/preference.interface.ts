@@ -23,14 +23,14 @@ import { FormGroup } from "@angular/forms";
  * #L%
  */
 export interface Preference {
-    Json: any;
-    FormFields: any;
-    FormFieldStrings: Array<string>;
-    MainPropertyShapeId: string;
-    Values: Array<any>;
-    RequiredPropertyShape: any;
-    TopLevelPreferenceNodeshapeInstanceId: string;
-    TopLevelPreferenceNodeshapeInstance: any;
+    json: any;
+    formFields: any;
+    formFieldStrings: Array<string>;
+    mainPropertyShapeId: string;
+    values: Array<any>;
+    requiredPropertyShape: any;
+    topLevelPreferenceNodeshapeInstanceId: string;
+    topLevelPreferenceNodeshapeInstance: any;
     type: string;
     addValue(value): void;
     addBlankForm(): void;

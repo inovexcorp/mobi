@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Input, OnChanges, Inject } from '@angular/core';
-import { Validators, Validator, ValidatorFn } from '@angular/forms';
+import { Validators, ValidatorFn } from '@angular/forms';
 
 @Component({
     selector: 'preference-form-field',
