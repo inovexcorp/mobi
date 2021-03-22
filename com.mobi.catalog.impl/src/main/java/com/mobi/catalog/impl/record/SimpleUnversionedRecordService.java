@@ -23,46 +23,26 @@ package com.mobi.catalog.impl.record;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
-import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecordFactory;
 import com.mobi.catalog.api.record.AbstractUnversionedRecordService;
 import com.mobi.catalog.api.record.RecordService;
-import com.mobi.rdf.api.ValueFactory;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 @Component(
         immediate = true,
-        provide = { RecordService.class, SimpleUnversionedRecordService.class }
+        service = { RecordService.class, SimpleUnversionedRecordService.class }
 )
 public class SimpleUnversionedRecordService extends AbstractUnversionedRecordService<UnversionedRecord> {
 
     @Reference
-    void setCatalogFactory(CatalogFactory catalogFactory) {
-        this.catalogFactory = catalogFactory;
-    }
+    UnversionedRecordFactory unversionedRecordFactory;
 
-    @Reference
-    void setUtilsService(CatalogUtilsService utilsService) {
-        this.utilsService = utilsService;
-    }
-
-    @Reference
-    void setProvUtils(CatalogProvUtils provUtils) {
-        this.provUtils = provUtils;
-    }
-
-    @Reference
-    void setVf(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
-    }
-
-    @Reference
-    void setRecordFactory(UnversionedRecordFactory recordFactory) {
-        this.recordFactory = recordFactory;
+    @Activate
+    void start() {
+        this.recordFactory = this.unversionedRecordFactory;
     }
 
     @Override
