@@ -262,15 +262,16 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         doNothing().when(utilsService).removeInProgressCommit(any(InProgressCommit.class), eq(connection));
 
         injectOrmFactoryReferencesIntoService(recordService);
-        recordService.setManager(manager);
-        recordService.setUtilsService(utilsService);
-        recordService.setVf(VALUE_FACTORY);
-        recordService.setProvUtils(provUtils);
-        recordService.setVersioningManager(versioningManager);
-        recordService.setMergeRequestManager(mergeRequestManager);
-        recordService.setPolicyManager(xacmlPolicyManager);
-        recordService.setEngineManager(engineManager);
-        recordService.setCatalogConfigProvider(configProvider);
+        recordService.manager = manager;
+        recordService.utilsService = utilsService;
+        recordService.valueFactory = VALUE_FACTORY;
+        recordService.provUtils = provUtils;
+        recordService.versioningManager = versioningManager;
+        recordService.mergeRequestManager = mergeRequestManager;
+        recordService.xacmlPolicyManager = xacmlPolicyManager;
+        recordService.engineManager = engineManager;
+        recordService.configProvider = configProvider;
+        recordService.recordFactory = recordService.mappingRecordFactory;
     }
 
     /* activate() */

@@ -301,18 +301,19 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         doNothing().when(utilsService).removeInProgressCommit(any(InProgressCommit.class), eq(connection));
 
         injectOrmFactoryReferencesIntoService(recordService);
-        recordService.setOntologyManager(ontologyManager);
-        recordService.setUtilsService(utilsService);
-        recordService.setVf(VALUE_FACTORY);
-        recordService.setModelFactory(MODEL_FACTORY);
-        recordService.setProvUtils(provUtils);
-        recordService.setOntologyCache(ontologyCache);
-        recordService.setVersioningManager(versioningManager);
-        recordService.setMergeRequestManager(mergeRequestManager);
-        recordService.setPolicyManager(xacmlPolicyManager);
-        recordService.setEngineManager(engineManager);
-        recordService.setCatalogConfigProvider(configProvider);
-        recordService.setSesameTransformer(sesameTransformer);
+        recordService.ontologyManager = ontologyManager;
+        recordService.utilsService = utilsService;
+        recordService.valueFactory = VALUE_FACTORY;
+        recordService.modelFactory = MODEL_FACTORY;
+        recordService.provUtils = provUtils;
+        recordService.ontologyCache = ontologyCache;
+        recordService.versioningManager = versioningManager;
+        recordService.mergeRequestManager = mergeRequestManager;
+        recordService.xacmlPolicyManager = xacmlPolicyManager;
+        recordService.engineManager = engineManager;
+        recordService.configProvider = configProvider;
+        recordService.sesameTransformer = sesameTransformer;
+        recordService.recordFactory = recordService.ontologyRecordFactory;
     }
 
     /* activate() */
