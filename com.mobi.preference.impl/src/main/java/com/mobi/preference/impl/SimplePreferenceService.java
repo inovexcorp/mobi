@@ -62,8 +62,6 @@ public class SimplePreferenceService implements PreferenceService {
     private static final String PREFERENCE_TYPE_BINDING = "preferenceType";
     private static final String USER_BINDING = "user";
     private static final String GET_USER_PREFERENCE;
-    private PreferenceFactory preferenceFactory;
-    private SettingFactory settingFactory;
     private Resource context;
 
     static {
@@ -89,14 +87,10 @@ public class SimplePreferenceService implements PreferenceService {
     OrmFactoryRegistry factoryRegistry;
 
     @Reference
-    private void setPreferenceFactory(PreferenceFactory preferenceFactory) {
-        this.preferenceFactory = preferenceFactory;
-    }
+    PreferenceFactory preferenceFactory;
 
     @Reference
-    private void setSettingFactory(SettingFactory settingFactory) {
-        this.settingFactory = settingFactory;
-    }
+    SettingFactory settingFactory;
 
     @Activate
     protected void start() {
