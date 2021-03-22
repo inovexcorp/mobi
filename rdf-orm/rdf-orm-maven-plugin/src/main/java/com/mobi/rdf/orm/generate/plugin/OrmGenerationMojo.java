@@ -57,7 +57,7 @@ import java.util.Optional;
  *
  * @author bdgould
  */
-@Mojo(name = "generate-orm")
+@Mojo(name = "generate-orm", threadSafe = true)
 public class OrmGenerationMojo extends AbstractMojo {
 
     private FileSystemManager fileSystemManager;
