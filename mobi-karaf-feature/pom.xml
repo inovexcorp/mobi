@@ -222,11 +222,6 @@
             <artifactId>dataset.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.mobi</groupId>-->
-<!--            <artifactId>sparql.utils</artifactId>-->
-<!--            <version>${project.version}</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>cache</artifactId>
@@ -365,6 +360,26 @@
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>ontology.cacheloader.impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+	<dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>preference.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+	<dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>preference.impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+	<dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>preference.rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+	<dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>notification.impl</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
