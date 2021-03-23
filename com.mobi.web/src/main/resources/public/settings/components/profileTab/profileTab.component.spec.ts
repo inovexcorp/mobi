@@ -25,7 +25,6 @@ import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
-import { MatFormFieldModule, MatInputModule } from '@angular/material';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import {
@@ -50,8 +49,6 @@ describe('Profile Tab component', function() {
         TestBed.configureTestingModule({
             imports: [
                 SharedModule,
-                MatFormFieldModule,
-                MatInputModule,
                 NoopAnimationsModule
             ],
             declarations: [

@@ -19,13 +19,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
- */
+*/
 import * as angular from 'angular';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
 import { downgradeComponent } from '@angular/upgrade/static';
+import { MatFormFieldModule, MatInputModule, MatButtonModule, ErrorStateMatcher } from '@angular/material';
 
 import actionMenuComponent from './components/actionMenu/actionMenu.component';
 import blockComponent from './components/block/block.component';
@@ -150,7 +150,7 @@ import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.co
 import { InfoMessageComponent } from './components/infoMessage/infoMessage.component';
 import { UnmaskPasswordComponent } from './components/unmaskPassword/unmaskPassword.component';
 import { WindowRef } from "./services/windowRef.service";
-import { MatFormFieldModule, MatInputModule, MatButtonModule } from '@angular/material';
+import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
 
 /**
  * @namespace shared
@@ -181,6 +181,9 @@ import { MatFormFieldModule, MatInputModule, MatButtonModule } from '@angular/ma
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
+        MatButtonModule,
+        MatFormFieldModule,
+        MatInputModule,
         ErrorDisplayComponent,
         InfoMessageComponent,
         UnmaskPasswordComponent
@@ -194,7 +197,8 @@ import { MatFormFieldModule, MatInputModule, MatButtonModule } from '@angular/ma
         userManagerServiceProvider,
         ontologyStateServiceProvider,
         discoverStateServiceProvider,
-        WindowRef
+        WindowRef,
+        { provide: ErrorStateMatcher, useClass: MobiErrorStateMatcher }
     ]
 })
 export class SharedModule {}

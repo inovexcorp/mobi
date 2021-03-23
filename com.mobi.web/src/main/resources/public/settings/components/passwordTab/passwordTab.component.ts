@@ -28,8 +28,8 @@ import { FormBuilder, Validators, FormGroup } from '@angular/forms';
  * @name settings.PasswordTabComponent
  *
  * `passwordTab` is a component that creates a Bootstrap `row` with a form allowing the current user to change their
- * password. The user must enter their current password in order to make a change. The new password is confirmed within
- * a separate input.
+ * password. The user must enter their current password in order to make a change. The new password is entered in an
+ * {@link shared.component:unmaskPassword Unmask Password Component}.
  */
 @Component({
     selector: 'password-tab',
@@ -62,7 +62,7 @@ export class PasswordTabComponent implements OnInit {
             .then(() => {
                 this.errorMessage = '';
                 this.util.createSuccessToast('Password successfully saved');
-                this.passwordForm.reset();
+                this.reset();
             }, error => this.errorMessage = error);
     }
 

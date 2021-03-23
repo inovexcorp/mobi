@@ -26,7 +26,6 @@ import { MockComponent } from 'ng-mocks';
 import { configureTestSuite } from 'ng-bullet';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MatFormFieldModule, MatInputModule } from '@angular/material';
 
 import {
     mockUserManager,
@@ -51,8 +50,6 @@ describe('Password Tab component', function() {
         TestBed.configureTestingModule({
             imports: [
                 SharedModule,
-                MatFormFieldModule,
-                MatInputModule,
                 NoopAnimationsModule
              ],
             declarations: [
@@ -117,6 +114,7 @@ describe('Password Tab component', function() {
                 expect(control.value).toEqual('test');
                 expect(control.dirty).toBeTrue();
             });
+            // console.log(component.formGroupDirective);
             component.reset();
             Object.keys(component.passwordForm.controls).forEach(key => {
                 const control = component.passwordForm.get(key);
@@ -151,6 +149,10 @@ describe('Password Tab component', function() {
         });
     });
     describe('contains the correct html', function() {
+        beforeEach(function() {
+            component.ngOnInit();
+            fixture.detectChanges();
+        });
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.password-tab')).length).toEqual(1);
             expect(element.queryAll(By.css('.row')).length).toEqual(1);
@@ -167,11 +169,19 @@ describe('Password Tab component', function() {
         it('with the correct classes based on the confirm password field dirty flag', function() {
             let currentPassword = element.query(By.css('.current-password input'));
             expect(currentPassword.classes['is-invalid']).toBeFalsy();
+            expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeTruthy();
 
             component.passwordForm.controls.currentPassword.markAsDirty();
             fixture.detectChanges();
             expect(currentPassword.classes['is-invalid']).toBeTruthy();
             expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeTruthy();
+
+            component.passwordForm.controls['currentPassword'].setValue('test');
+            component.passwordForm.controls['unmaskPassword'].setValue('test');
+            component.passwordForm.updateValueAndValidity();
+            fixture.detectChanges();
+            expect(currentPassword.classes['is-invalid']).toBeFalsy();
+            expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeFalsy();
         });
         it('with an unmaskPassword', function() {
             expect(element.queryAll(By.css('unmask-password')).length).toEqual(1);

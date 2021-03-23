@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Input } from "@angular/core";
-import { FormBuilder, FormGroup } from "@angular/forms";
+import { AbstractControl, FormBuilder, FormGroup } from "@angular/forms";
 
 /**
  * @name shared.component:unmaskPassword
@@ -45,4 +45,10 @@ export class UnmaskPasswordComponent {
     showPassword = false;
 
     constructor(private fb: FormBuilder) {}
+
+    isRequired(): boolean {
+        const ctrl = this.parentForm.controls.unmaskPassword;
+        const validators = ctrl.validator && ctrl.validator({} as AbstractControl);
+        return !!(validators && validators.required);
+    }
 }

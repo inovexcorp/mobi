@@ -27,7 +27,7 @@ import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testin
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs';
 import { MockComponent } from 'ng-mocks';
-import 'ng-mocks/dist/jasmine'; // Ensurers every method in Mocked Components are Jasmine spys
+import 'ng-mocks/dist/jasmine'; // Ensures every method in Mocked Components are Jasmine spies
 
 import {
     cleanStylesFromDOM

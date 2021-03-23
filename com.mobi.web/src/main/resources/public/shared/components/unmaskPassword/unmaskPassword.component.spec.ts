@@ -77,6 +77,14 @@ describe('Unmask Password component', function() {
             expect(component.showPassword).toBeFalse();
         });
     });
+    describe('controller methods', function() {
+        it('correctly determine whether the field is required', function() {
+            expect(component.isRequired()).toBeTrue();
+
+            component.parentForm.controls.unmaskPassword.clearValidators();
+            expect(component.isRequired()).toBeFalse();
+        });
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.unmask-password')).length).toEqual(1);
