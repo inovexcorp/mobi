@@ -100,7 +100,11 @@
             <artifactId>sparql.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>preference.rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Swagger Dependencies -->
         <dependency>

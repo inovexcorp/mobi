@@ -1,0 +1,6 @@
+@prefix test: <http://example.com/>.
+@prefix pref: <http://mobi.com/ontologies/preference#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+
+test:MySimplePreference a test:ExampleSimplePreference, pref:Preference, owl:Thing;
+    pref:hasDataValue false .
