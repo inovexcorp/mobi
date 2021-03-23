@@ -1,0 +1,7 @@
+@prefix test: <http://example.com/>.
+@prefix pref: <http://mobi.com/ontologies/preference#>.
+
+test:MyComplexPreference a test:ExampleComplexPreference, pref:Preference, pref:Setting;
+    pref:hasObjectValue test:MyObjectValue .
+
+test:MyObjectValue a test:MyClass. # Make fancy later
