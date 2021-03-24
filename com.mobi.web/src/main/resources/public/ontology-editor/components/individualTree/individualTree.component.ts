@@ -72,7 +72,7 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     dvm.activeTab = '';
     dvm.dropdownFilterActive = false;
     dvm.activeEntityFilter = {
-        name: 'Active Entities Only',
+        name: 'Hide unused imports',
         checked: false,
         flag: false, 
         filter: function(node) {
@@ -83,7 +83,19 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
             return match;
         }
     };
-    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
+    dvm.deprecatedEntityFilter = {
+        name: 'Hide deprecated entities',
+        checked: false,
+        flag: false,
+        filter: function(node) {
+            var match = true;
+            if (dvm.os.isIriDeprecated(node.entityIRI)) {
+                match = false;
+            }
+            return match;
+        }
+    };
+    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter), angular.copy(dvm.deprecatedEntityFilter)];
 
     dvm.$onInit = function() {
         dvm.activeTab = dvm.os.getActiveKey();
@@ -106,7 +118,7 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         dvm.searchText = '';
         dvm.filterText = '';
         dvm.dropdownFilterActive = false;
-        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
+        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter), angular.copy(dvm.deprecatedEntityFilter)];
     }
     dvm.clickItem = function(entityIRI) {
         dvm.os.selectItem(entityIRI, undefined, dvm.os.listItem.editorTabStates.individuals.targetedSpinnerId);

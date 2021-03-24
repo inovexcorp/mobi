@@ -76,7 +76,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
     dvm.activeTab = '';
     dvm.dropdownFilterActive = false;
     dvm.activeEntityFilter = {
-        name: 'Active Entities Only',
+        name: 'Hide unused imports',
         checked: false,
         flag: false, 
         filter: function(node) {
@@ -87,7 +87,20 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
             return match;
         }
     };
-    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
+    dvm.deprecatedEntityFilter = {
+        name: 'Hide deprecated properties',
+        checked: false,
+        flag: false,
+        filter: function(node) {
+            console.log(node);
+            var match = true;
+            if (dvm.os.isIriDeprecated(node.entityIRI)) {
+                match = false;
+            }
+            return match;
+        }
+    };
+    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter), angular.copy(dvm.deprecatedEntityFilter)];
 
     dvm.$onInit = function() {
         dvm.activeTab = dvm.os.getActiveKey();
@@ -110,7 +123,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
     }
     function removeFilters() {
         dvm.dropdownFilterActive = false;
-        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
+        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter), angular.copy(dvm.deprecatedEntityFilter)];
         dvm.searchText = '';
         dvm.filterText = '';
     }
