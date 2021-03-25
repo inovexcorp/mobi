@@ -25,29 +25,28 @@ package com.mobi.query;
 
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
 
-import java.io.IOException;
 import java.io.OutputStream;
 
 public interface QueryResultsIO {
 
     /**
-     * Method streams out Tuple Query Results into the given TupleQueryResultFormat
+     * Method streams out Tuple Query Results into the given TupleQueryResultFormat.
+     *
      * @param tqr TupleQueryResult the tuple results
      * @param format TupleQueryResultFormat the format to stream in
      * @param out OutputStream Stream of TupleQueryResult in the TupleQueryResultFormat
-     * @throws IOException
      */
-    public void writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, OutputStream out) throws IOException;
+    void writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, OutputStream out);
 
     /**
-     * Method streams out Tuple Query Results into the given TupleQueryResultFormat
+     * Method streams out Tuple Query Results into the given TupleQueryResultFormat.
+     *
      * @param tqr TupleQueryResult the tuple results
      * @param format TupleQueryResultFormat the format to stream in
      * @param limit the max number of records
      * @param out OutputStream Stream of TupleQueryResult in the TupleQueryResultFormat
-     * @return boolean value, if true then limit was exceeded, if false then limit was not exceeded
-     * @throws IOException
      *
+     * @return boolean value, if true then limit was exceeded, if false then limit was not exceeded
      */
-    public boolean writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, int limit, OutputStream out) throws IOException;
+    boolean writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, int limit, OutputStream out);
 }

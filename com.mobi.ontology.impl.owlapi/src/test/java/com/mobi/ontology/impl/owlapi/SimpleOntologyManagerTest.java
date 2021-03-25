@@ -77,8 +77,6 @@ import org.powermock.reflect.Whitebox;
 
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import javax.cache.Cache;
@@ -119,6 +117,9 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Mock
     private BNodeService bNodeService;
+
+    @Mock
+    private OntologyManagerConfig config;
 
     private SimpleOntologyManager manager;
     private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
@@ -219,18 +220,20 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
         when(sesameTransformer.sesameResource(any(Resource.class))).thenReturn(new SimpleIRI("http://test.com/ontology1"));
 
+        when(config.poolSize()).thenReturn(1);
+
         manager = Mockito.spy(new SimpleOntologyManager());
         injectOrmFactoryReferencesIntoService(manager);
-        manager.setValueFactory(VALUE_FACTORY);
-        manager.setModelFactory(MODEL_FACTORY);
-        manager.setSesameTransformer(sesameTransformer);
-        manager.setConfigProvider(configProvider);
-        manager.setCatalogManager(catalogManager);
-        manager.setUtilsService(catalogUtilsService);
-        manager.setRepositoryManager(mockRepoManager);
-        manager.addOntologyCache(ontologyCache);
-        manager.setbNodeService(bNodeService);
-        manager.start(new HashMap<>());
+        manager.valueFactory = VALUE_FACTORY;
+        manager.modelFactory = MODEL_FACTORY;
+        manager.sesameTransformer = sesameTransformer;
+        manager.configProvider = configProvider;
+        manager.catalogManager = catalogManager;
+        manager.utilsService = catalogUtilsService;
+        manager.repositoryManager = mockRepoManager;
+        manager.ontologyCache = ontologyCache;
+        manager.bNodeService = bNodeService;
+        manager.start(config);
     }
 
     @After
@@ -243,21 +246,20 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testActivate() {
-        Map<String, Object> props = new HashMap<>();
-        props.put("poolSize", 0);
-        manager.modified(props);
+        when(config.poolSize()).thenReturn(0);
+        manager.start(config);
         ForkJoinPool pool = Whitebox.getInternalState(manager, "threadPool");
         assertTrue(pool.getParallelism() > 0);
-        props.put("poolSize", -1);
-        manager.modified(props);
+        when(config.poolSize()).thenReturn(-1);
+        manager.start(config);
         pool = Whitebox.getInternalState(manager, "threadPool");
         assertEquals(pool.getParallelism(), 1);
-        props.put("poolSize", 1);
-        manager.modified(props);
+        when(config.poolSize()).thenReturn(1);
+        manager.start(config);
         pool = Whitebox.getInternalState(manager, "threadPool");
         assertEquals(pool.getParallelism(), 1);
-        props.put("poolSize", 2);
-        manager.modified(props);
+        when(config.poolSize()).thenReturn(2);
+        manager.start(config);
         pool = Whitebox.getInternalState(manager, "threadPool");
         assertEquals(pool.getParallelism(), 2);
     }

@@ -1,6 +1,4 @@
-@Version("1.0.0.${build}")
-
-package com.mobi.ontology.core.api.config;
+package com.mobi.ontology.impl.owlapi;
 
 /*-
  * #%L
@@ -25,4 +23,17 @@ package com.mobi.ontology.core.api.config;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
+
+@ObjectClassDefinition(name = "OntologyManager Service Config", description = "Configure the OntologyManager service")
+public @interface OntologyManagerConfig {
+
+    /**
+     * The size of the thread pool.
+     *
+     * @return The size of the thread pool
+     */
+    @AttributeDefinition(defaultValue = "1")
+    int poolSize();
+}

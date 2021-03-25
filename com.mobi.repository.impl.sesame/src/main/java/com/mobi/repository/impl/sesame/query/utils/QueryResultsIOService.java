@@ -26,84 +26,55 @@ package com.mobi.repository.impl.sesame.query.utils;
 import com.mobi.exception.MobiException;
 import com.mobi.query.QueryResultsIO;
 import com.mobi.query.TupleQueryResult;
-import com.mobi.repository.impl.sesame.query.SesameTupleQueryResult;
-import org.eclipse.rdf4j.query.BindingSet;
-import org.eclipse.rdf4j.query.QueryEvaluationException;
-import org.eclipse.rdf4j.query.QueryResultHandler;
-import org.eclipse.rdf4j.query.QueryResultHandlerException;
-import org.eclipse.rdf4j.query.QueryResults;
-import org.eclipse.rdf4j.query.TupleQueryResultHandlerException;
+import com.mobi.rdf.core.utils.Values;
+import org.eclipse.rdf4j.query.impl.MapBindingSet;
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultWriter;
 import org.osgi.service.component.annotations.Component;
 
-import java.io.IOException;
 import java.io.OutputStream;
 
 @Component
 public class QueryResultsIOService implements QueryResultsIO {
 
     @Override
-    public void writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, OutputStream out) throws IOException {
-        if (tqr instanceof SesameTupleQueryResult) {
-            SesameTupleQueryResult sesameTupleQueryResult = (SesameTupleQueryResult) tqr;
-            org.eclipse.rdf4j.query.resultio.QueryResultIO.writeTuple(sesameTupleQueryResult.getTupleQueryResult(), format, out);
-        } else {
-            throw new MobiException("TupleQueryResult is not an instance of SesameTupleQueryResult");
-        }
+    public void writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, OutputStream out) {
+        writeTupleToStream(tqr, format, out, -1);
     }
 
     @Override
-    public boolean writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, int limit, OutputStream out)
-            throws IOException {
-        boolean limitExceeded = false;
-
-        if (tqr instanceof SesameTupleQueryResult) {
-            SesameTupleQueryResult sesameTupleQueryResult = (SesameTupleQueryResult) tqr;
-            TupleQueryResultWriter writer = org.eclipse.rdf4j.query.resultio.QueryResultIO.createTupleWriter(format, out);
-
-            try {
-                writer.startDocument();
-                writer.startHeader();
-                limitExceeded = report(sesameTupleQueryResult.getTupleQueryResult(), writer, limit);
-            } catch (QueryResultHandlerException var5) {
-                if (var5.getCause() instanceof IOException) {
-                    throw (IOException) var5.getCause();
-                } else if (var5 instanceof TupleQueryResultHandlerException) {
-                    throw (TupleQueryResultHandlerException) var5;
-                } else {
-                    throw new TupleQueryResultHandlerException(var5);
-                }
-            }
-        } else {
-            throw new MobiException("TupleQueryResult is not an instance of SesameTupleQueryResult");
-        }
-        return limitExceeded;
+    public boolean writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, int limit, OutputStream out) {
+        return writeTupleToStream(tqr, format, out, limit);
     }
 
-    private static boolean report(org.eclipse.rdf4j.query.TupleQueryResult tqr, QueryResultHandler handler, int limit)
-            throws TupleQueryResultHandlerException, QueryEvaluationException {
-        boolean limitExceeded = false;
+    private boolean writeTupleToStream(TupleQueryResult tqr, TupleQueryResultFormat format, OutputStream out,
+                                       int limit) {
+        TupleQueryResultWriter writer = org.eclipse.rdf4j.query.resultio.QueryResultIO.createTupleWriter(format,
+                out);
         try {
-            int limitCounter = 0;
-            handler.startQueryResult(tqr.getBindingNames());
+            writer.startDocument();
+            writer.startHeader();
+            writer.startQueryResult(tqr.getBindingNames());
 
+            int limitCounter = 1;
             while (tqr.hasNext()) {
-                limitCounter += 1;
+                com.mobi.query.api.BindingSet bindingSet = tqr.next();
+                MapBindingSet mapBindingSet = new MapBindingSet();
+                bindingSet.forEach(binding ->
+                        mapBindingSet.addBinding(binding.getName(), Values.sesameValue(binding.getValue())));
+                writer.handleSolution(mapBindingSet);
 
-                BindingSet bindingSet = (BindingSet)tqr.next();
-                handler.handleSolution(bindingSet);
-
-                if (limitCounter >= limit) {
-                    limitExceeded = true;
-                    break;
+                if (limit > 0 && limitCounter >= limit) {
+                    return true;
                 }
+                limitCounter++;
             }
+        } catch (Exception e) {
+            throw new MobiException(e);
         } finally {
             tqr.close();
+            writer.endQueryResult();
         }
-        handler.endQueryResult();
-        return limitExceeded;
+        return false;
     }
-
 }

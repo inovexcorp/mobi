@@ -93,6 +93,13 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
         update.setBinding("dataset", dataset);
         update.setBinding("now", timestamp);
         update.execute();
+//        IRI pred = vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING);
+//        Literal timestamp = vf.createLiteral(OffsetDateTime.now());
+//
+//        Resource dataset = conn.getDataset();
+//        LOG.debug("Updating cache dataset last accessed property for " + dataset);
+//        conn.remove(dataset, pred, null, dataset);
+//        conn.add(dataset, pred, timestamp, dataset);
     }
 
     protected void requireNotClosed() {
