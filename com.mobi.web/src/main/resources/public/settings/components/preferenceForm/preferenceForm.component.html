@@ -29,9 +29,10 @@
           <div *ngFor="let formField of formBlock.controls | keyvalue">
               <preference-form-field [formField]="formField" [shaclValidation]="shaclFieldValidation[formField.key]"></preference-form-field>
           </div>
+          <!-- <button type="button" (click)="deleteFormBlock(n)"><i class="fa fa-times"></i></button> -->
         </div>
       </div>
     </div>
     <button mat-raised-button color="primary" type="submit" [disabled]="form.pristine || form.invalid">Save</button>
-    <button type="button" *ngIf="preference.values.length < maxBlocks" (click)="addFormBlock()"><i class="fa fa-plus"></i></button>
+    <button type="button" *ngIf="numValues < maxBlocks" (click)="addFormBlock()"><i class="fa fa-plus"></i></button>
   </form>

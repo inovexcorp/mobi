@@ -23,7 +23,7 @@
 import * as angular from 'angular';
 import { NgModule } from '@angular/core';
 import { downgradeComponent } from '@angular/upgrade/static';
-import { MatTabsModule, MatFormFieldModule, MatInputModule, MatButtonModule } from '@angular/material';
+import { MatTabsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSidenavModule, MatListModule } from '@angular/material';
 
 import { SharedModule } from '../shared/shared.module';
 
@@ -44,7 +44,9 @@ import { KeyValuePipe } from '../shared/pipes/keyvalue.pipe';
         MatTabsModule,
         MatFormFieldModule,
         MatInputModule,
-        MatButtonModule
+        MatButtonModule,
+        MatSidenavModule,
+        MatListModule
     ],
     declarations: [
         SettingsPageComponent,

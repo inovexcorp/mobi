@@ -30,7 +30,7 @@ public interface CacheConfiguration<K, V> {
     /**
      * The Cache ID.
      *
-     * @return The String representing the Cache ID
+     * @return String representing the Cache ID
      */
     String getCacheId();
 

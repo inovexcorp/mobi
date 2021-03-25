@@ -42,7 +42,7 @@ public interface ApplicationWrapper {
     /**
      * Returns the ID of the application. The ID is the local name of the Application's IRI.
      *
-     * @return a string representing the ID of the application
+     * @return String representing the ID of the application
      */
     String getId();
 

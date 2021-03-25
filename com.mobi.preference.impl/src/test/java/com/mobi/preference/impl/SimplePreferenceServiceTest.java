@@ -76,11 +76,11 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
     @Mock
     private OrmFactoryRegistry registry;
 
-    private interface TestComplexPreference extends Thing, Preference {
+    private interface TestComplexPreference extends Thing, Setting, Preference {
         String TYPE = "http://example.com/ExampleComplexPreference";
     }
 
-    private interface TestSimplePreference extends Thing, Preference {
+    private interface TestSimplePreference extends Thing, Setting, Preference {
         String TYPE = "http://example.com/ExampleSimplePreference";
     }
 
@@ -138,7 +138,6 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         }
     }
 
-
     @Test
     public void addPreferenceWithDataValueTest() throws Exception {
         // Setup:
@@ -183,7 +182,22 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         service.addPreference(user, secondPreference);
     }
 
-    // TODO: Add test where it prevents user injection
+    @Test
+    public void addPreferencePreventUserInjectionTest() throws Exception {
+        // Setup:
+        User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
+        InputStream inputStream = getClass().getResourceAsStream("/simplePreference.ttl");
+        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        testDataModel.add(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"), VALUE_FACTORY.createIRI("http://mobi.com/ontologies/preference#forUser"), VALUE_FACTORY.createIRI("http://test.com/injectedUser"));
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"), testDataModel).get();
+
+        service.addPreference(user, preference);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            assertTrue(conn.contains(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"), VALUE_FACTORY.createIRI("http://mobi.com/ontologies/preference#forUser"), VALUE_FACTORY.createIRI("http://test.com/user")));
+            assertFalse(conn.contains(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"), VALUE_FACTORY.createIRI("http://mobi.com/ontologies/preference#forUser"), VALUE_FACTORY.createIRI("http://test.com/injectedUser")));
+        }
+    }
 
     // validatePreference
 

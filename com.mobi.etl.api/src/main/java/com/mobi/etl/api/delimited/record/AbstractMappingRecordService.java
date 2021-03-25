@@ -42,6 +42,7 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,7 +52,8 @@ import java.time.OffsetDateTime;
 public abstract class AbstractMappingRecordService<T extends MappingRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
 
-    protected MappingManager manager;
+    @Reference
+    public MappingManager manager;
 
     private static final String USER_IRI_BINDING = "%USERIRI%";
     private static final String RECORD_IRI_BINDING = "%RECORDIRI%";

@@ -59,8 +59,10 @@ import com.mobi.rest.security.annotations.Value;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
@@ -90,7 +92,6 @@ import javax.ws.rs.core.Response;
 
 @Component(service = MergeRequestRest.class, immediate = true)
 @Path("/merge-requests")
-@Api(value = "/merge-requests")
 public class MergeRequestRest {
 
     private MergeRequestManager manager;
@@ -140,7 +141,7 @@ public class MergeRequestRest {
      * Retrieves a list of all the {@link MergeRequest}s in Mobi sorted according to the provided parameters
      * and optionally filtered by whether or not they are accepted.
      *
-     * @param sort The IRI of the predicate to sort by
+     * @param sort IRI of the predicate to sort by
      * @param asc Whether the results should be sorted ascending or descending. Default is false.
      * @param accepted Whether the results should only be accepted or open requests
      * @return The list of all {@link MergeRequest}s that match the criteria
@@ -148,10 +149,25 @@ public class MergeRequestRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves all MergeRequests in the application")
-    public Response getMergeRequests(@QueryParam("sort") String sort,
-                              @DefaultValue("false") @QueryParam("ascending") boolean asc,
-                              @DefaultValue("false") @QueryParam("accepted") boolean accepted) {
+    @Operation(
+            tags = "merge-requests",
+            summary = "Retrieves all MergeRequests in the application",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "List of all MergeRequests that match the criteria"),
+                    @ApiResponse(responseCode = "403",
+                            description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500",
+                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response getMergeRequests(
+            @Parameter(description = "The IRI of the predicate to sort by", required = true)
+            @QueryParam("sort") String sort,
+            @Parameter(description = "Whether the results should be sorted ascending or descending")
+            @DefaultValue("false") @QueryParam("ascending") boolean asc,
+            @Parameter(description = "Whether the results should only be accepted or open requests")
+            @DefaultValue("false") @QueryParam("accepted") boolean accepted) {
         MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
         if (!StringUtils.isEmpty(sort)) {
             builder.setSortBy(createIRI(sort, vf));
@@ -173,9 +189,9 @@ public class MergeRequestRest {
      * `sourceBranchId`, and `targetBranchId` fields to be set. Returns a Response with the IRI of the new
      * {@link MergeRequest}.
      *
-     * @param context The context of the request.
+     * @param context Context of the request.
      * @param title The required title for the new {@link MergeRequest}.
-     * @param description The optional description for the new {@link MergeRequest}.
+     * @param description Optional description for the new {@link MergeRequest}.
      * @param recordId The required IRI of the {@link VersionedRDFRecord} to associate with the new
      *                 {@link MergeRequest}. NOTE: Assumes ID represents an IRI unless String begins with "_:".
      * @param sourceBranchId The required IRI of the source {@link Branch} with the new commits to add to the target
@@ -185,21 +201,53 @@ public class MergeRequestRest {
      *                       source {@link Branch} of the new {@link MergeRequest}. NOTE: Assumes ID represents an IRI
      *                       unless String begins with "_:".
      * @param assignees The list of username of {@link User}s to assign the new {@link MergeRequest} to
+     * @param removeSource Boolean value to remove source
      * @return A Response with the IRI string of the created {@link MergeRequest}.
      */
     @POST
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
-    @ApiOperation("Creates a new MergeRequest in the application with the provided information")
-    public Response createMergeRequests(@Context ContainerRequestContext context,
-                                 @FormDataParam("title") String title,
-                                 @FormDataParam("description") String description,
-                                 @FormDataParam("recordId") String recordId,
-                                 @FormDataParam("sourceBranchId") String sourceBranchId,
-                                 @FormDataParam("targetBranchId") String targetBranchId,
-                                 @FormDataParam("assignees") List<FormDataBodyPart> assignees,
-                                 @FormDataParam("removeSource") @DefaultValue("false") boolean removeSource) {
+    @Operation(
+            tags = "merge-requests",
+            summary = "Creates a new MergeRequest in the application with the provided information",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response with the IRI string of the created MergeRequest"),
+                    @ApiResponse(responseCode = "400",
+                            description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403",
+                            description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500",
+                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response createMergeRequests(
+            @Context ContainerRequestContext context,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "The required title for the new MergeRequest", required = true))
+            @FormDataParam("title") String title,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional description for the new MergeRequest"))
+            @FormDataParam("description") String description,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required IRI of the VersionedRDFRecord to associate with the "
+                    + "new MergeRequest", required = true))
+            @FormDataParam("recordId") String recordId,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required IRI of the source Branch with the new commits to add "
+                    + "to the target Branch of the new MergeRequest", required = true))
+            @FormDataParam("sourceBranchId") String sourceBranchId,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required IRI of the target Branch which will receive the new commits "
+                    + "from the source Branch of the new MergeRequest", required = true))
+            @FormDataParam("targetBranchId") String targetBranchId,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "List of username of Users to assign the new MergeRequest to", required = true))
+            @FormDataParam("assignees") List<FormDataBodyPart> assignees,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Boolean value to remove source"))
+            @FormDataParam("removeSource") @DefaultValue("false") boolean removeSource) {
 
         checkStringParam(title, "Merge Request title is required");
         checkStringParam(recordId, "Merge Request record is required");
@@ -235,16 +283,31 @@ public class MergeRequestRest {
     /**
      * Returns a {@link MergeRequest} with the provided ID.
      *
-     * @param requestId The String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
      *                  String begins with "_:".
-     * @return A Response with the {@link MergeRequest} with the provided ID
+     * @return Response with the {@link MergeRequest} with the provided ID
      */
     @GET
     @Path("{requestId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves a MergeRequest from the application by its ID")
-    public Response getMergeRequest(@PathParam("requestId") String requestId) {
+    @Operation(
+            tags = "merge-requests",
+            summary = "Retrieves a MergeRequest from the application by its ID",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with the MergeRequest with the provided ID"),
+                    @ApiResponse(responseCode = "403",
+                            description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "404",
+                            description = "Response indicating NOT_FOUND"),
+                    @ApiResponse(responseCode = "500",
+                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response getMergeRequest(
+            @Parameter(description = "String representing the MergeRequest", required = true)
+            @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
             MergeRequest request = manager.getMergeRequest(requestIdResource).orElseThrow(() ->
@@ -261,17 +324,30 @@ public class MergeRequestRest {
      * Updates an existing {@link MergeRequest} that has the {@code requestId} with the provided JSONLD of
      * {@code newMergeRequest}.
      *
-     * @param requestId The String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
      *                  String begins with "_:".
-     * @param newMergeRequest The String representing the JSONLD representation of the updated {@link MergeRequest}.
-     * @return A Response indicating the status of the update.
+     * @param newMergeRequest String representing the JSONLD representation of the updated {@link MergeRequest}.
+     * @return Response indicating the status of the update.
      */
     @PUT
     @Path("{requestId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Updates a MergeRequest by its ID using the provided JSON-LD")
-    public Response updateMergeRequest(@PathParam("requestId") String requestId, String newMergeRequest) {
+    @Operation(
+            tags = "merge-requests",
+            summary = "Updates an existing MergeRequest that has the requestId with the provided "
+                    + "JSONLD of newMergeRequest",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response indicating the status of the update"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response updateMergeRequest(
+            @Parameter(description = "String representing the MergeRequest ID", required = true)
+            @PathParam("requestId") String requestId,
+            @Parameter(description = "String representing the JSONLD representation of the updated MergeRequest", required = true)
+                    String newMergeRequest) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
             manager.updateMergeRequest(requestIdResource, jsonToMergeRequest(requestIdResource, newMergeRequest));
@@ -281,27 +357,41 @@ public class MergeRequestRest {
         }
     }
 
-    
     /**
      * Accepts a {@link MergeRequest} with the provided ID by completing the merge it represents and changing the
      * type to an {@link com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest}.
      *
-     * @param context The context of the request.
-     * @param requestId The String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     * @param context Context of the request.
+     * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
      *                  String begins with "_:".
-     * @return A Response indicating the status of the acceptance.
+     * @return Response indicating the status of the acceptance.
      */
     @POST
     @Path("{requestId}")
     @RolesAllowed("user")
-    @ApiOperation("Accepts a MergeRequest by performing the merge and changing the type")
+    @Operation(
+            tags = "merge-requests",
+            summary = "Accepts a MergeRequest by performing the merge and changing the type",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the status of the acceptance"),
+                    @ApiResponse(responseCode = "400",
+                            description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403",
+                            description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500",
+                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PROP_PATH, value = "<" + MergeRequest.onRecord_IRI + ">",
             start = @Value(type = ValueType.PATH, value = "requestId"))
     @ActionAttributes(@AttributeValue(type = ValueType.PROP_PATH, value = "<" + MergeRequest.targetBranch_IRI + ">",
             id = VersionedRDFRecord.branch_IRI, start = @Value(type = ValueType.PATH, value = "requestId")))
-    public Response acceptMergeRequest(@Context ContainerRequestContext context,
-                                @PathParam("requestId") String requestId) {
+    public Response acceptMergeRequest(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the MergeRequest ID", required = true)
+            @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         User activeUser = getActiveUser(context, engineManager);
         try {
@@ -317,15 +407,26 @@ public class MergeRequestRest {
     /**
      * Deletes an existing {@link MergeRequest} that has the {@code requestId}.
      *
-     * @param requestId The String representing the {@link MergeRequest} ID to delete. NOTE: Assumes ID represents an
+     * @param requestId String representing the {@link MergeRequest} ID to delete. NOTE: Assumes ID represents an
      *                  IRI unless String begins with "_:".
-     * @return A Response indicating the status of the delete.
+     * @return Response indicating the status of the delete.
      */
     @DELETE
     @Path("{requestId}")
     @RolesAllowed("user")
-    @ApiOperation("Deletes a MergeRequest that has the provided requestId")
-    public Response deleteMergeRequest(@PathParam("requestId") String requestId) {
+    @Operation(
+            tags = "merge-requests",
+            summary = "Deletes a MergeRequest that has the provided requestId",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response indicating the status of the delete"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response deleteMergeRequest(
+            @Parameter(description = "String representing the MergeRequest ID to delete", required = true)
+            @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
             manager.deleteMergeRequest(requestIdResource);
@@ -338,12 +439,11 @@ public class MergeRequestRest {
         }
     }
 
-
     /**
      * Retrieves a list of all the {@link Comment} chains in Mobi on the provided {@code requestId} sorted by issued
      * date of the head of each comment chain.
      *
-     * @param requestId The String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
      *                  String begins with "_:".
      * @return The list of all {@link Comment} chains for the specified {@link MergeRequest}
      */
@@ -351,8 +451,21 @@ public class MergeRequestRest {
     @Path("{requestId}/comments")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves all Comment threads on a MergeRequest")
-    public Response getComments(@PathParam("requestId") String requestId) {
+    @Operation(
+            tags = "merge-requests",
+            summary = "Retrieves all Comment threads on a MergeRequest sorted by issued date of the head "
+                    + "of each comment chain",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "list of all Comment chains for the "
+                            + "specified MergeRequest"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response getComments(
+            @Parameter(description = "String representing the MergeRequest ID", required = true)
+            @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
             List<List<JSONObject>> commentsJson = manager.getComments(requestIdResource).stream().map(
@@ -371,9 +484,9 @@ public class MergeRequestRest {
     /**
      * Returns a {@link MergeRequest} with the provided ID.
      *
-     * @param requestId The String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
      *                  String begins with "_:".
-     * @param commentId The String representing the {@link Comment} ID. NOTE: Assumes ID represents an IRI unless String
+     * @param commentId String representing the {@link Comment} ID. NOTE: Assumes ID represents an IRI unless String
      *                 begins with "_:".
      * @return A Response with the {@link Comment} with the provided ID
      */
@@ -381,8 +494,22 @@ public class MergeRequestRest {
     @Path("{requestId}/comments/{commentId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves a Comment from the application by its ID")
-    public Response getComment(@PathParam("requestId") String requestId, @PathParam("commentId") String commentId) {
+    @Operation(
+            tags = "merge-requests",
+            summary = "Retrieves a Comment from the application by its ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response with the Comment with the provided ID"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response getComment(
+            @Parameter(description = "String representing the MergeRequest ID", required = true)
+            @PathParam("requestId") String requestId,
+            @Parameter(description = "String representing the Comment ID", required = true)
+            @PathParam("commentId") String commentId) {
         try {
             manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->
                     ErrorUtils.sendError("MergeRequest " + requestId + " could not be found",
@@ -405,12 +532,12 @@ public class MergeRequestRest {
      * the `commentId` already has a reply comment, the newly created comment is added to the bottom of the comment
      * chain. Returns a Response with the IRI of the new {@link Comment}.
      *
-     * @param context The context of the request.
-     * @param requestId The String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     * @param context Context of the request.
+     * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
      *                  String begins with "_:".
-     * @param commentId The optional IRI of the parent {@link Comment} that the newly created Comment is a reply
+     * @param commentId Optional IRI of the parent {@link Comment} that the newly created Comment is a reply
      *                       to. NOTE: Assumes ID represents an IRI unless String begins with "_:".
-     * @param commentStr The string containing comment text for the {@link Comment}.
+     * @param commentStr String containing comment text for the {@link Comment}.
      * @return A Response with the IRI string of the created {@link Comment}.
      */
     @POST
@@ -418,11 +545,29 @@ public class MergeRequestRest {
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @ApiOperation("Creates a new Comment on the MergeRequest in the application with the provided information")
-    public Response createComment(@Context ContainerRequestContext context,
-                           @PathParam("requestId") String requestId,
-                           @QueryParam("commentId") String commentId,
-                           String commentStr) {
+    @Operation(
+            tags = "merge-requests",
+            summary = "Creates a new Comment on the MergeRequest in the application with the provided information",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response with the IRI string of the created Comment"),
+                    @ApiResponse(responseCode = "400",
+                            description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403",
+                            description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500",
+                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response createComment(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the MergeRequest ID", required = true)
+            @PathParam("requestId") String requestId,
+            @Parameter(description = "Optional IRI of the parent Comment that the newly created "
+                    + "Comment is a reply to", required = false)
+            @QueryParam("commentId") String commentId,
+            @Parameter(description = "String containing comment text for the Comment", required = true)
+                    String commentStr) {
         checkStringParam(commentStr, "Comment string is required");
         User activeUser = getActiveUser(context, engineManager);
 
@@ -446,17 +591,30 @@ public class MergeRequestRest {
      * Updates an existing {@link Comment} that has the {@code commentId} with the provided String of
      * {@code newCommentStr}.
      *
-     * @param commentId The String representing the {@link Comment} ID. NOTE: Assumes ID represents an IRI unless
+     * @param commentId String representing the {@link Comment} ID. NOTE: Assumes ID represents an IRI unless
      *                  String begins with "_:".
-     * @param newCommentStr The String representing the new description of the updated {@link Comment}.
-     * @return A Response indicating the status of the update.
+     * @param newCommentStr String representing the new description of the updated {@link Comment}.
+     * @return Response indicating the status of the update.
      */
     @PUT
     @Path("{requestId}/comments/{commentId}")
     @Consumes(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @ApiOperation("Updates a Comment by its ID using the provided String")
-    public Response updateComment(@PathParam("commentId") String commentId, String newCommentStr) {
+    @Operation(
+            tags = "merge-requests",
+            summary = "Updates a Comment by its ID using the provided String",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response indicating the status of the update"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response updateComment(
+            @Parameter(description = "String representing the Comment ID", required = true)
+            @PathParam("commentId") String commentId,
+            @Parameter(description = "String representing the new description of the updated Comment", required = true)
+                    String newCommentStr) {
         Resource commentIdResource = createIRI(commentId, vf);
         Comment comment = manager.getComment(commentIdResource).orElseThrow(() ->
                 ErrorUtils.sendError("Comment " + commentId + " could not be found",
@@ -476,20 +634,34 @@ public class MergeRequestRest {
     /**
      * Deletes an existing {@link Comment} that has the {@code commentId} if it belongs to the active {@link User}.
      *
-     * @param context The context of the request.
-     * @param requestId The String representing the {@link MergeRequest} ID the comment is on. NOTE: Assumes ID
+     * @param context Context of the request.
+     * @param requestId String representing the {@link MergeRequest} ID the comment is on. NOTE: Assumes ID
      *                  represents an IRI unless String begins with "_:".
-     * @param commentId The String representing the {@link Comment} ID to delete. NOTE: Assumes ID represents an IRI
+     * @param commentId String representing the {@link Comment} ID to delete. NOTE: Assumes ID represents an IRI
      *                  unless String begins with "_:".
-     * @return A Response indicating the status of the delete.
+     * @return Response indicating the status of the delete.
      */
     @DELETE
     @Path("{requestId}/comments/{commentId}")
     @RolesAllowed("user")
-    @ApiOperation("Deletes a Comment that has the provided commentId")
-    public Response deleteComment(@Context ContainerRequestContext context,
-                           @PathParam("requestId") String requestId,
-                           @PathParam("commentId") String commentId) {
+    @Operation(
+            tags = "merge-requests",
+            summary = "Deletes a Comment that has the provided commentId",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Response indicating the status of the delete"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response deleteComment(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the MergeRequest ID the comment is on", required = true)
+            @PathParam("requestId") String requestId,
+            @Parameter(description = "String representing the Comment ID to delete", required = true)
+            @PathParam("commentId") String commentId) {
         try {
             Resource commentIRI = createIRI(commentId, vf);
             manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->

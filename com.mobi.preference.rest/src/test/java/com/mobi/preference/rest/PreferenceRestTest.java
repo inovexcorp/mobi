@@ -1,5 +1,28 @@
 package com.mobi.preference.rest;
 
+/*-
+ * #%L
+ * com.mobi.preference.rest
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
@@ -53,28 +76,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 
-/*-
- * #%L
- * com.mobi.preference.rest
- * $Id:$
- * $HeadURL:$
- * %%
- * Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
- * %%
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * #L%
- */
 public class PreferenceRestTest extends MobiRestTestNg {
 
     private PreferenceRest rest;
@@ -175,6 +176,8 @@ public class PreferenceRestTest extends MobiRestTestNg {
         complexPreferenceJson = IOUtils.toString(getClass().getResourceAsStream("/complexPreference.json"), StandardCharsets.UTF_8);
 
         when(preferenceService.getUserPreferences(any())).thenReturn(preferenceSet);
+        when(preferenceService.getSetting(simplePreference.getResource())).thenReturn(Optional.of(simplePreference));
+        when(preferenceService.getSetting(complexPreference.getResource())).thenReturn(Optional.of(complexPreference));
         when(preferenceService.getPreferenceType(simplePreference)).thenReturn(vf.createIRI(simplePreference.TYPE));
         when(preferenceService.getPreferenceType(complexPreference)).thenReturn(vf.createIRI(complexPreference.TYPE));
         when(testComplexPreferenceFactory.getTypeIRI()).thenReturn(vf.createIRI(TestComplexPreference.TYPE));
@@ -228,6 +231,24 @@ public class PreferenceRestTest extends MobiRestTestNg {
         assertEquals(2, result.size());
         assertEquals(1, result.getJSONArray(TestSimplePreference.TYPE).size());
         assertEquals(2, result.getJSONArray(TestComplexPreference.TYPE).size());
+    }
+
+    @Test
+    public void getUserPreferenceTest() throws Exception {
+        Response response = target().path("preference/" + encode("http://example.com/MySimplePreference")).request().get();
+        JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(1, result.size());
+
+        Response secondResponse = target().path("preference/" + encode("http://example.com/MyComplexPreference")).request().get();
+        JSONArray secondResult = JSONArray.fromObject(secondResponse.readEntity(String.class));
+        assertEquals(2, secondResult.size());
+    }
+
+    @Test
+    public void getUserPreferenceResourceNotExistsTest() throws Exception {
+        when(preferenceService.getSetting(any())).thenReturn(Optional.empty());
+        Response response = target().path("preference/" + encode("http://example.com/MyComplexPreference")).request().get();
+        assertEquals(400, response.getStatus());
     }
 
     @Test

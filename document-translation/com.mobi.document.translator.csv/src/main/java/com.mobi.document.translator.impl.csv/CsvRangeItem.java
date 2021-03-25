@@ -43,7 +43,7 @@ public class CsvRangeItem {
 
     /**
      *Retrieves the datatype of the property
-     * @return A string representing the range of the property
+     * @return String representing the range of the property
      */
     public String getRangeType() {
         return this.type;

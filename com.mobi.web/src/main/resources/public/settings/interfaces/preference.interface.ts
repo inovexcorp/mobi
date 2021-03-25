@@ -1,4 +1,5 @@
 import { FormGroup } from "@angular/forms";
+import { IntegerList } from "antlr4ts/misc/IntegerList";
 
 /*-
  * #%L
@@ -32,6 +33,7 @@ export interface Preference {
     topLevelPreferenceNodeshapeInstanceId: string;
     topLevelPreferenceNodeshapeInstance: any;
     type: string;
+    numValues(): number;
     addValue(value): void;
     addBlankForm(): void;
     buildForm(): FormGroup;

@@ -3,9 +3,9 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
 @prefix dct: <http://purl.org/dc/terms/>.
-@prefix : <http://mobi.com/ontologies/preference#>.
 @prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix um: <http://mobi.com/ontologies/user/management#>.
+@prefix : <http://mobi.com/ontologies/preference#>.
 @base <http://mobi.com/ontologies/preference>.
 
 <http://mobi.com/ontologies/preference> a owl:Ontology;
@@ -46,12 +46,19 @@
     rdfs:domain sh:NodeShape;
     rdfs:range :PreferenceGroup .
 
+:PrefixPreferencePropertyShape a sh:PropertyShape;
+    sh:node :PrefixNodeShape;
+    sh:path :hasObjectValue .
+
+:PrefixNodeShape a sh:NodeShape;
+    sh:property :PrefixPropertyShape;
+    sh:property :NamespacePropertyShape;
+    sh:targetClass :Prefix .
+
 :forUser a owl:ObjectProperty;
     rdfs:label "For User"@en;
     rdfs:domain :Preference;
     rdfs:range um:User.
-
-# Define inGroup
 
 :PreferenceGroup a owl:Class;
     rdfs:label "Preference Group"@en;

@@ -228,6 +228,10 @@ export class ComplexPreference implements Preference {
         return requestBody;
     }
 
+    numValues(): number {
+        return this.values.length;
+    }
+
     addObjectValueToObject(newObjValId, obj) {
         if (!obj['http://mobi.com/ontologies/preference#hasObjectValue']) {
             obj['http://mobi.com/ontologies/preference#hasObjectValue'] = [];

@@ -23,93 +23,26 @@ package com.mobi.catalog.impl.record;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
-import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.mergerequest.MergeRequestManager;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
-import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
-import com.mobi.catalog.api.versioning.VersioningManager;
-import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.jaas.api.engines.EngineManager;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 @Component(
         immediate = true,
-        provide = { RecordService.class, SimpleVersionedRDFRecordService.class }
+        service = { RecordService.class, SimpleVersionedRDFRecordService.class }
 )
 public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordService<VersionedRDFRecord> {
 
     @Reference
-    void setCatalogFactory(CatalogFactory catalogFactory) {
-        this.catalogFactory = catalogFactory;
-    }
-
-    @Reference
-    void setUtilsService(CatalogUtilsService utilsService) {
-        this.utilsService = utilsService;
-    }
-
-    @Reference
-    void setProvUtils(CatalogProvUtils provUtils) {
-        this.provUtils = provUtils;
-    }
-
-    @Reference
-    void setVf(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
-    }
-
-    @Reference
-    void setRecordFactory(VersionedRDFRecordFactory recordFactory) {
-        this.recordFactory = recordFactory;
-    }
-
-    @Reference
-    void setCommitFactory(CommitFactory commitFactory) {
-        this.commitFactory = commitFactory;
-    }
-
-    @Reference
-    void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
-
-    @Reference
-    void setMergeRequestManager(MergeRequestManager mergeRequestManager) {
-        this.mergeRequestManager = mergeRequestManager;
-    }
-
-    @Reference
-    void setPolicyManager(XACMLPolicyManager xacmlPolicyManager) {
-        this.xacmlPolicyManager = xacmlPolicyManager;
-    }
-
-    @Reference
-    void setVersioningManager(VersioningManager versioningManager) {
-        this.versioningManager = versioningManager;
-    }
-
-    @Reference
-    void setCatalogConfigProvider(CatalogConfigProvider configProvider) {
-        this.configProvider = configProvider;
-    }
-
-    @Reference
-    void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
+    VersionedRDFRecordFactory versionedRDFRecordFactory;
 
     @Activate
     public void activate() {
+        this.recordFactory = versionedRDFRecordFactory;
         checkForMissingPolicies();
     }
 

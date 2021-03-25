@@ -38,7 +38,7 @@ public class SimpleIRI extends org.eclipse.rdf4j.model.impl.SimpleIRI implements
      * use a ValueFactory (obtained from your repository or by using SimpleValueFactory.getInstance()) to create new
      * IRI objects.
      *
-     * @param iriString - A String representing a valid, absolute IRI. May not be null.
+     * @param iriString - String representing a valid, absolute IRI. May not be null.
      * @throws IllegalArgumentException - If the supplied IRI is not a valid (absolute) IRI.
      */
     public SimpleIRI(String iriString) {

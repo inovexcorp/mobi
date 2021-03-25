@@ -46,6 +46,7 @@ export class PreferencesTabComponent implements OnInit {
     tabs = [];
     preferenceGroups = [];
     settings = this.sm.getSettings();
+    rdfsLabel = "http://www.w3.org/2000/01/rdf-schema#label";
     
     constructor(@Inject('preferenceManagerService') private pm, @Inject('settingsManagerService') private sm,
     @Inject('utilService') private util) {}

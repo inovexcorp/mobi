@@ -46,8 +46,10 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -81,7 +83,6 @@ import javax.ws.rs.core.Response;
 
 @Component(service = UserRest.class, immediate = true)
 @Path("/users")
-@Api( value = "/users")
 public class UserRest {
     private EngineManager engineManager;
     private ValueFactory vf;
@@ -124,7 +125,14 @@ public class UserRest {
     @GET
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("Get all Mobi Users")
+    @Operation(
+            tags = "users",
+            summary = "Get all Mobi Users",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
+    )
     public Response getUsers() {
         try {
             Set<User> users = engineManager.getUsers();
@@ -158,15 +166,35 @@ public class UserRest {
      */
     @POST
     @RolesAllowed("admin")
-    @ApiOperation("Create a Mobi User account")
+    @Operation(
+            tags = "users",
+            summary = "Create a Mobi User account",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
+    )
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response createUser(@FormDataParam("username") String username,
-                        @FormDataParam("password") String password,
-                        @FormDataParam("roles") List<FormDataBodyPart> roles,
-                        @FormDataParam("firstName") String firstName,
-                        @FormDataParam("lastName") String lastName,
-                        @FormDataParam("email") String email) {
+    public Response createUser(
+            @Parameter(schema = @Schema(type = "string",
+                   description = "Required username of the User to create", required = true))
+            @FormDataParam("username") String username,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Required password of the User to create", required = true))
+            @FormDataParam("password") String password,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "List of roles of the User to create", required = true))
+            @FormDataParam("roles") List<FormDataBodyPart> roles,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional first name of the User to create"))
+            @FormDataParam("firstName") String firstName,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional last name of the User to create"))
+            @FormDataParam("lastName") String lastName,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "Optional email of the User to create"))
+            @FormDataParam("email") String email) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
@@ -216,8 +244,17 @@ public class UserRest {
     @Path("{username}")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("Get a single Mobi User")
-    public Response getUser(@PathParam("username") String username) {
+    @Operation(
+            tags = "users",
+            summary = "Get a single Mobi User",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
+    )
+    public Response getUser(
+            @Parameter(description = "Username of the User to retrieve", required = true)
+            @PathParam("username") String username) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
@@ -245,11 +282,21 @@ public class UserRest {
     @PUT
     @Path("{username}")
     @RolesAllowed("user")
-    @ApiOperation("Update a Mobi user's information")
+    @Operation(
+            tags = "users",
+            summary = "Update a Mobi user's information",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
+    )
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateUser(@Context ContainerRequestContext context,
-                        @PathParam("username") String username,
-                        String newUserStr) {
+    public Response updateUser(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "Current username of the user to update", required = true)
+            @PathParam("username") String username,
+            @Parameter(description = "JSON-LD string representation of a User with the new information to update", required = true)
+                    String newUserStr) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
         }
@@ -307,11 +354,22 @@ public class UserRest {
     @POST
     @Path("{username}/password")
     @RolesAllowed("user")
-    @ApiOperation("Changes a Mobi User's password if it is the User making the request")
-    public Response changePassword(@Context ContainerRequestContext context,
-                            @PathParam("username") String username,
-                            @QueryParam("currentPassword") String currentPassword,
-                            @QueryParam("newPassword") String newPassword) {
+    @Operation(
+            tags = "users",
+            summary = "Changes a Mobi User's password if it is the User making the request",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
+    )
+    public Response changePassword(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "Current username of the user to update", required = true)
+            @PathParam("username") String username,
+            @Parameter(description = "Current password of the user to update", required = true)
+            @QueryParam("currentPassword") String currentPassword,
+            @Parameter(description = "New password for the user", required = true)
+            @QueryParam("newPassword") String newPassword) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
         }
@@ -343,10 +401,20 @@ public class UserRest {
     @PUT
     @Path("{username}/password")
     @RolesAllowed("admin")
-    @ApiOperation("Resets a Mobi User's password if User making request is the admin")
-    public Response resetPassword(@Context ContainerRequestContext context,
-                           @PathParam("username") String username,
-                           @QueryParam("newPassword") String newPassword) {
+    @Operation(
+            tags = "users",
+            summary = "Resets a Mobi User's password if User making request is the admin",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
+    )
+    public Response resetPassword(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "Current username of the User to update", required = true)
+            @PathParam("username") String username,
+            @Parameter(description = "New password for the User", required = true)
+            @QueryParam("newPassword") String newPassword) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
         }
@@ -371,9 +439,18 @@ public class UserRest {
     @DELETE
     @Path("{username}")
     @RolesAllowed("user")
-    @ApiOperation("Remove a Mobi user's account")
-    public Response deleteUser(@Context ContainerRequestContext context,
-                        @PathParam("username") String username) {
+    @Operation(
+            tags = "users",
+            summary = "Remove a Mobi user's account",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
+    )
+    public Response deleteUser(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "Username of the User to remove", required = true)
+            @PathParam("username") String username) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
@@ -385,7 +462,8 @@ public class UserRest {
             }
             String userIRI = user.get().getResource().stringValue();
             if (userIRI.equals(ADMIN_USER_IRI)) {
-                throw ErrorUtils.sendError("The admin user cannot be deleted.", Response.Status.METHOD_NOT_ALLOWED);
+                throw ErrorUtils.sendError("The admin user cannot be deleted.",
+                        Response.Status.METHOD_NOT_ALLOWED);
             }
             engineManager.deleteUser(rdfEngine.getEngineName(), username);
             logger.info("Deleted user " + username);
@@ -408,9 +486,19 @@ public class UserRest {
     @Path("{username}/roles")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("List roles of a Mobi User")
-    public Response getUserRoles(@PathParam("username") String username,
-                          @DefaultValue("false") @QueryParam("includeGroups") boolean includeGroups) {
+    @Operation(
+            tags = "users",
+            summary = "List roles of a Mobi User",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
+    )
+    public Response getUserRoles(
+            @Parameter(description = "Username of the User to retrieve roles from", required = true)
+            @PathParam("username") String username,
+            @Parameter(description = "Whether or not to include roles from the User's groups")
+            @DefaultValue("false") @QueryParam("includeGroups") boolean includeGroups) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
@@ -440,8 +528,19 @@ public class UserRest {
     @PUT
     @Path("{username}/roles")
     @RolesAllowed("admin")
-    @ApiOperation("Add roles to a Mobi User")
-    public Response addUserRoles(@PathParam("username") String username, @QueryParam("roles") List<String> roles) {
+    @Operation(
+            tags = "users",
+            summary = "Add roles to a Mobi User",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
+    )
+    public Response addUserRoles(
+            @Parameter(description = "Username of the User to add a role to", required = true)
+            @PathParam("username") String username,
+            @Parameter(description = "List of names of the roles to add to the specified User", required = true)
+            @QueryParam("roles") List<String> roles) {
         if (StringUtils.isEmpty(username) || roles.isEmpty()) {
             throw ErrorUtils.sendError("Both username and roles must be provided", Response.Status.BAD_REQUEST);
         }
@@ -471,8 +570,19 @@ public class UserRest {
     @DELETE
     @Path("{username}/roles")
     @RolesAllowed("admin")
-    @ApiOperation("Remove role from a Mobi User")
-    public Response removeUserRole(@PathParam("username") String username, @QueryParam("role") String role) {
+    @Operation(
+            tags = "users",
+            summary = "Remove role from a Mobi User",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
+    )
+    public Response removeUserRole(
+            @Parameter(description = "Username of the User to remove a role from", required = true)
+            @PathParam("username") String username,
+            @Parameter(description = "Role to remove from the specified User", required = true)
+            @QueryParam("role") String role) {
         if (StringUtils.isEmpty(username) || role == null) {
             throw ErrorUtils.sendError("Both username and role must be provided", Response.Status.BAD_REQUEST);
         }
@@ -500,8 +610,17 @@ public class UserRest {
     @Path("{username}/groups")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("List groups of a Mobi User")
-    public Response listUserGroups(@PathParam("username") String username) {
+    @Operation(
+            tags = "users",
+            summary = "List groups of a Mobi User",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
+    )
+    public Response listUserGroups(
+            @Parameter(description = "Username to retrieve groups from", required = true)
+            @PathParam("username") String username) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
@@ -511,7 +630,7 @@ public class UserRest {
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
             Set<Group> groups = engineManager.getGroups().stream()
                     .filter(group -> group.getMember_resource().stream()
-                        .anyMatch(resource -> resource.equals(savedUser.getResource())))
+                            .anyMatch(resource -> resource.equals(savedUser.getResource())))
                     .collect(Collectors.toSet());
 
             JSONArray result = JSONArray.fromObject(groups.stream()
@@ -536,8 +655,19 @@ public class UserRest {
     @PUT
     @Path("{username}/groups")
     @RolesAllowed("admin")
-    @ApiOperation("Add a Mobi user to a group")
-    public Response addUserGroup(@PathParam("username") String username, @QueryParam("group") String groupTitle) {
+    @Operation(
+            tags = "users",
+            summary = "Add a Mobi user to a group",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
+    )
+    public Response addUserGroup(
+            @Parameter(description = "Username of the User to add to the group", required = true)
+            @PathParam("username") String username,
+            @Parameter(description = "Title of the group to add the specified User to", required = true)
+            @QueryParam("group") String groupTitle) {
         if (StringUtils.isEmpty(username) || StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
         }
@@ -566,8 +696,19 @@ public class UserRest {
     @DELETE
     @Path("{username}/groups")
     @RolesAllowed("admin")
-    @ApiOperation("Remove a Mobi User from a group")
-    public Response removeUserGroup(@PathParam("username") String username, @QueryParam("group") String groupTitle) {
+    @Operation(
+            tags = "users",
+            summary = "Remove a Mobi User from a group",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
+    )
+    public Response removeUserGroup(
+            @Parameter(description = "Username of the User to remove from a group", required = true)
+            @PathParam("username") String username,
+            @Parameter(description = "Title of the group to remove the specified User from", required = true)
+            @QueryParam("group") String groupTitle) {
         if (StringUtils.isEmpty(username) || StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
         }
@@ -596,8 +737,17 @@ public class UserRest {
     @Path("username")
     @RolesAllowed("user")
     @Produces(MediaType.TEXT_PLAIN)
-    @ApiOperation("Retrieve a username based on the passed User IRI")
-    public Response getUsername(@QueryParam("iri") String userIri) {
+    @Operation(
+            tags = "users",
+            summary = "Retrieve a username based on the passed User IRI",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+            }
+    )
+    public Response getUsername(
+            @Parameter(description = "IRI to search for", required = true)
+            @QueryParam("iri") String userIri) {
         try {
             String username = engineManager.getUsername(vf.createIRI(userIri)).orElseThrow(() ->
                     ErrorUtils.sendError("User not found", Response.Status.NOT_FOUND));

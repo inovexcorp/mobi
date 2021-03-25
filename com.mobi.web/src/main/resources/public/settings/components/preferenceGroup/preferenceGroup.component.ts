@@ -56,6 +56,7 @@ export class PreferenceGroupComponent implements OnChanges {
     preferences = {};
     preferenceDefinitions = {};
     userPreferences = {};
+    rdfsLabel = "http://www.w3.org/2000/01/rdf-schema#label";
 
     constructor(@Inject('preferenceManagerService') private pm,
     @Inject('utilService') private util, private ref: ChangeDetectorRef) {}

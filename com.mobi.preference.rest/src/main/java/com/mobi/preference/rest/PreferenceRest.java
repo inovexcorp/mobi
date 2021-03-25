@@ -36,13 +36,16 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.preference.api.PreferenceService;
 import com.mobi.preference.api.ontologies.Preference;
+import com.mobi.preference.api.ontologies.Setting;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -66,7 +69,6 @@ import javax.ws.rs.core.Response;
 
 @Component(service = PreferenceRest.class, immediate = true)
 @Path("/preference")
-@Api( value = "/preference" )
 public class PreferenceRest {
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -86,24 +88,46 @@ public class PreferenceRest {
     OrmFactoryRegistry factoryRegistry;
 
     /**
-     * Returns a JSON array of user preferences for the active user
+     * Returns a JSON object of user preferences and referenced entities for the active user.
      *
-     * @return A JSON array of user preferences for the active user
+     * @param context The context of the request.
+     * @return A JSON object of user preferences for the active user
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @Operation(
+            tags = "preference",
+            summary = "Retrieves all of a user's preferences and their referenced entities",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "500",
+                            description = "Response indicating Internal Server Error")
+            }
+    )
     public Response getUserPreferences(@Context ContainerRequestContext context) {
         User user = getActiveUser(context, engineManager);
-        Set<Preference> userPreferences = preferenceService.getUserPreferences(user);
-        ObjectNode result = mapper.createObjectNode();
-        userPreferences.stream().forEach(pref -> {
-            JsonNode jsonNode = getPreferenceAsJsonNode(pref);
-            result.set(preferenceService.getPreferenceType(pref).stringValue(), jsonNode);
-        });
-        return Response.ok(result.toString()).build();
+        try {
+            Set<Preference> userPreferences = preferenceService.getUserPreferences(user);
+            ObjectNode result = mapper.createObjectNode();
+            userPreferences.forEach(pref -> {
+                JsonNode jsonNode = getSettingAsJsonNode(pref);
+                result.set(preferenceService.getPreferenceType(pref).stringValue(), jsonNode);
+            });
+            return Response.ok(result.toString()).build();
+        } catch (MobiException | IllegalStateException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 
+    /**
+     * Returns a JSON object of a user preference and it's referenced entities with the provided resource id.
+     *
+     * @param context The context of the request.
+     * @param preferenceId The resource id of the user preference to be retrieved
+     * @return A JSON object of user preferences for the active user
+     */
     @GET
     @Path("groups/{preferenceGroup}/definitions")
     @Produces(MediaType.APPLICATION_JSON)
@@ -123,13 +147,67 @@ public class PreferenceRest {
         return Response.ok(userPreferences).build();
     }
 
-    @PUT
+    @GET
     @Path("{preferenceId}")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("admin")
+    @Operation(
+            tags = "preference",
+            summary = "Retrieves a user preference with the specified resource id and it's referenced entities",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "500",
+                            description = "Response indicating INTERNAL_SERVER_ERROR")
+            }
+    )
+    public Response getUserPreference(@Context ContainerRequestContext context,
+                                      @Parameter(description = "The resource id for the preference being retrieved",
+                                              required = true)
+                                      @PathParam("preferenceId") String preferenceId) {
+        try {
+            Setting preference = preferenceService.getSetting(vf.createIRI(preferenceId))
+                    .orElseThrow(() -> ErrorUtils.sendError("Preference with id " + preferenceId
+                            + " does not exist.", Response.Status.BAD_REQUEST));
+            JsonNode result = getSettingAsJsonNode(preference);
+            return Response.ok(result.toString()).build();
+        } catch (MobiException | IllegalStateException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Updates a User Preference as well as it's referenced entities.
+     *
+     * @param context        The context of the request.
+     * @param preferenceId   The resource id of the user preference to be updated
+     * @param preferenceType The type of preference that will be updated
+     * @param jsonld         The jsonld representation of the user preference and it's referenced entities that will
+     *                       replace the current value of the user preference
+     * @return A Response indicating whether or not the User Preference was updated.
+     */
+    @PUT
+    @Path("{preferenceId}")
     @RolesAllowed("user")
+    @Operation(
+            tags = "preference",
+            summary = "Updates a specific user preference and it's referenced entities",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "400",
+                            description = "Response indicating BAD_REQUEST")
+            }
+    )
     public Response updateUserPreference(@Context ContainerRequestContext context,
+                                         @Parameter(description = "The resource id for the preference being updated",
+                                                 required = true)
                                          @PathParam("preferenceId") String preferenceId,
+                                         @Parameter(description = "The type of user preference being updated",
+                                                 required = true)
                                          @QueryParam("preferenceType") String preferenceType,
+                                         @Parameter(description = "A JSON-LD representation of the updated user "
+                                                 + "preference", required = true)
                                          String jsonld) {
         checkStringParam(preferenceType, "Preference Type is required");
         checkStringParam(jsonld, "User Preference JSON-LD is required");
@@ -144,11 +222,34 @@ public class PreferenceRest {
         }
     }
 
+    /**
+     * Create a User Preference as well as it's referenced entities.
+     *
+     * @param context        The context of the request.
+     * @param preferenceType The type of preference that will be updated
+     * @param jsonld         The jsonld representation of the user preference and it's referenced entities that will
+     *                       be created
+     * @return The resource id of the created user preference
+     */
     @POST
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
+    @Operation(
+            tags = "preference",
+            summary = "Creates a specific user preference and it's referenced entities",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "400",
+                            description = "Response indicating BAD_REQUEST")
+            }
+    )
     public Response createUserPreference(@Context ContainerRequestContext context,
+                                         @Parameter(description = "The type of user preference being created",
+                                                 required = true)
                                          @QueryParam("preferenceType") String preferenceType,
+                                         @Parameter(description = "A JSON-LD representation of the user "
+                                                 + "preference that will be created", required = true)
                                          String jsonld) {
         checkStringParam(preferenceType, "Preference Type is required");
         checkStringParam(jsonld, "User Preference JSON is required");
@@ -163,32 +264,35 @@ public class PreferenceRest {
         }
     }
 
-    public JsonNode getPreferenceAsJsonNode(Preference preference) {
+    private JsonNode getSettingAsJsonNode(Setting setting) {
         try {
-            return mapper.readTree(RestUtils.modelToString(preference.getModel(), RDFFormat.JSONLD, transformer));
+            return mapper.readTree(RestUtils.modelToString(setting.getModel(), RDFFormat.JSONLD, transformer));
         } catch (IOException e) {
             throw new MobiException(e);
         }
     }
 
-    protected Preference getPreferenceFromModel(String preferenceType, Model preferenceModel) {
-        Collection<? extends Preference> preferences = getSpecificPreferenceFactory(preferenceType).getAllExisting(preferenceModel);
+    private Preference getPreferenceFromModel(String preferenceType, Model preferenceModel) {
+        Collection<? extends Preference> preferences =
+                getSpecificPreferenceFactory(preferenceType).getAllExisting(preferenceModel);
         if (preferences.size() > 1) {
-            throw ErrorUtils.sendError("More than one preference of type: " + preferenceType + " found in request.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("More than one preference of type: " + preferenceType + " found in request.",
+                    Response.Status.BAD_REQUEST);
         } else if (preferences.isEmpty()) {
-            throw ErrorUtils.sendError("No preference of type: " + preferenceType + " was found in request.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("No preference of type: " + preferenceType + " was found in request.",
+                    Response.Status.BAD_REQUEST);
         } else {
             return preferences.iterator().next();
         }
     }
 
-    protected Preference getPreferenceFromModel(String preferenceId, String preferenceType, Model preferenceModel) {
+    private Preference getPreferenceFromModel(String preferenceId, String preferenceType, Model preferenceModel) {
         return getSpecificPreferenceFactory(preferenceType).getExisting(vf.createIRI(preferenceId),
-                preferenceModel).orElseThrow(() -> ErrorUtils.sendError("Could not parse " + preferenceType + " preference with id " +
-                preferenceId + " from request.", Response.Status.BAD_REQUEST));
+                preferenceModel).orElseThrow(() -> ErrorUtils.sendError("Could not parse " + preferenceType + " "
+                + "preference with id " + preferenceId + " from request.", Response.Status.BAD_REQUEST));
     }
 
-    protected OrmFactory<? extends Preference> getSpecificPreferenceFactory(String preferenceType) {
+    private OrmFactory<? extends Preference> getSpecificPreferenceFactory(String preferenceType) {
         return (OrmFactory<? extends Preference>) factoryRegistry.getFactoryOfType(preferenceType).orElseThrow(() ->
                 ErrorUtils.sendError("Unknown preference type: " + preferenceType, Response.Status.BAD_REQUEST));
     }

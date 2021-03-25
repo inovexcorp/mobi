@@ -34,14 +34,14 @@ public interface RepositoryConfig {
     /**
      * The Repository ID
      *
-     * @return The String representing the Repository ID
+     * @return String representing the Repository ID
      */
     String id();
 
     /**
      * The Repository Title
      *
-     * @return The String representing the Repository Title
+     * @return String representing the Repository Title
      */
     String title();
 
@@ -50,7 +50,7 @@ public interface RepositoryConfig {
      * an optional property as some repositories do not store data in a single
      * directory.
      *
-     * @return The String representing the directory where the repository data is
+     * @return String representing the directory where the repository data is
      * stored, if applicable.
      */
     @Meta.AD(required = false)

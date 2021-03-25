@@ -23,19 +23,9 @@ package com.mobi.ontology.impl.core.record;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.mergerequest.MergeRequestManager;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
-import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
-import com.mobi.catalog.api.versioning.VersioningManager;
-import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.jaas.api.engines.EngineManager;
-import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.core.api.record.AbstractOntologyRecordService;
@@ -43,17 +33,12 @@ import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Models;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.apache.commons.io.FilenameUtils;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,92 +50,18 @@ import java.io.InputStream;
         service = { RecordService.class, SimpleOntologyRecordService.class }
 )
 public class SimpleOntologyRecordService extends AbstractOntologyRecordService<OntologyRecord> {
-    private OntologyCache ontologyCache;
 
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyRecordService.class);
 
     @Reference
-    void setUtilsService(CatalogUtilsService utilsService) {
-        this.utilsService = utilsService;
-    }
+    public OntologyCache ontologyCache;
 
     @Reference
-    void setProvUtils(CatalogProvUtils provUtils) {
-        this.provUtils = provUtils;
-    }
-
-    @Reference
-    public void setOntologyCache(OntologyCache ontologyCache) {
-        this.ontologyCache = ontologyCache;
-    }
-
-    @Reference
-    void setVf(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
-    }
-
-    @Reference
-    void setCatalogFactory(CatalogFactory catalogFactory) {
-        this.catalogFactory = catalogFactory;
-    }
-
-    @Reference
-    void setRecordFactory(OntologyRecordFactory recordFactory) {
-        this.recordFactory = recordFactory;
-    }
-
-    @Reference
-    void setCommitFactory(CommitFactory commitFactory) {
-        this.commitFactory = commitFactory;
-    }
-
-    @Reference
-    void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
-
-    @Reference
-    void setSesameTransformer(SesameTransformer sesameTransformer) {
-        this.sesameTransformer = sesameTransformer;
-    }
-
-    @Reference
-    void setMergeRequestManager(MergeRequestManager mergeRequestManager) {
-        this.mergeRequestManager = mergeRequestManager;
-    }
-
-    @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    void setOntologyManager(OntologyManager ontologyManager) {
-        this.ontologyManager = ontologyManager;
-    }
-
-    @Reference
-    void setPolicyManager(XACMLPolicyManager xacmlPolicyManager) {
-        this.xacmlPolicyManager = xacmlPolicyManager;
-    }
-
-    @Reference
-    void setVersioningManager(VersioningManager versioningManager) {
-        this.versioningManager = versioningManager;
-    }
-
-    @Reference
-    void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
-    }
-
-    @Reference
-    void setCatalogConfigProvider(CatalogConfigProvider configProvider) {
-        this.configProvider = configProvider;
-    }
-
-    @Reference
-    void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
+    public OntologyRecordFactory ontologyRecordFactory;
 
     @Activate
     public void activate() {
+        this.recordFactory = ontologyRecordFactory;
         checkForMissingPolicies();
     }
 
@@ -183,6 +94,14 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
         if (fileName != null && inputStream != null) {
             try {
                 String fileExtension = FilenameUtils.getExtension(fileName);
+                if (fileExtension.equals("gz") || fileExtension.endsWith("zip")) {
+                    String fileExtensionNoCompress = FilenameUtils.getExtension(
+                            FilenameUtils.removeExtension(fileName));
+                    if (fileExtensionNoCompress.equals("tar")) {
+                        throw new IllegalArgumentException("File must not be a tar");
+                    }
+                    fileExtension = fileExtensionNoCompress + "." + fileExtension;
+                }
                 ontologyModel = Models.createModel(fileExtension, inputStream, sesameTransformer);
             } catch (IOException e) {
                 throw new MobiOntologyException("Could not parse Ontology input stream.", e);

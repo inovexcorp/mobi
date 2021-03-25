@@ -191,6 +191,10 @@ export class SimplePreference implements Preference {
         return !!this.topLevelPreferenceNodeshapeInstanceId;
     }
 
+    numValues(): number {
+        return this.values[0]['http://mobi.com/ontologies/preference#hasDataValue'].length;
+    }
+
     asJsonLD(): Array<any> {
         this.stripBlankValues();
         this.values.map(val => {
