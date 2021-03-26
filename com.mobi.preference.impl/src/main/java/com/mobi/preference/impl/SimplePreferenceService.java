@@ -67,6 +67,7 @@ public class SimplePreferenceService implements PreferenceService {
     private static final String USER_BINDING = "user";
     private static final String GET_USER_PREFERENCE;
     private static final String GET_PREFERENCE_DEFINITIONS;
+    private static final String GET_PREFERENCE_GROUPS;
 
     private Resource context;
 
@@ -77,6 +78,9 @@ public class SimplePreferenceService implements PreferenceService {
             );
             GET_PREFERENCE_DEFINITIONS = IOUtils.toString(
                     SimplePreferenceService.class.getResourceAsStream("/get-preference-definitions.rq"), StandardCharsets.UTF_8
+            );
+            GET_PREFERENCE_GROUPS = IOUtils.toString(
+                    SimplePreferenceService.class.getResourceAsStream("/get-preference-groups.rq"), StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -236,10 +240,10 @@ public class SimplePreferenceService implements PreferenceService {
     }
 
     @Override
-    public List<String> getPreferenceGroups() {
+    public Model getPreferenceGroups() {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return RepositoryResults.asList(conn.getStatements(null, null, vf.createIRI(PreferenceGroup.TYPE)))
-                    .stream().map(Statement::getSubject).map(Resource::stringValue).collect(Collectors.toList());
+            GraphQuery query = conn.prepareGraphQuery(GET_PREFERENCE_GROUPS);
+            return QueryResults.asModel(query.evaluate(), mf);
         }
     }
 

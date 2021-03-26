@@ -68,20 +68,23 @@ export class PreferenceFormComponent implements OnChanges {
         this.preference.addBlankForm();
         this.numValues = this.preference.numValues();
         this.form = this.preference.buildForm();
+        this.form.markAsDirty(); // Enable the submit button
     }
 
+    // Might be a better way to do this
     deleteFormBlock(index: number) {
-        this.formBlocks.removeAt(index);
-        this.preference.updateWithFormValues(this.form);
-        this.numValues = this.preference.numValues();
-        this.form = this.preference.buildForm();
+        this.formBlocks.removeAt(index); // Modify the angular form contents
+        this.preference.updateWithFormValues(this.form); // modify the preference object to make it in sync with the form
+        this.numValues = this.preference.numValues(); // update the number of form blocks present (to influence whether the plus button is shown)
+        this.form = this.preference.buildForm(); // Re-build form based on preference object
+        this.form.markAsDirty(); // Enable the submit button
     }
 
     get formBlocks(): FormArray {
         return this.form.get('formBlocks') as FormArray;
     }
 
-    onSubmit() {
+    submitForm() {
         this.preference.updateWithFormValues(this.form);
         this.updateEvent.emit({preference: this.preference});
     }

@@ -35,6 +35,7 @@ export class ComplexPreference implements Preference {
     _json: any = {};
     _requiredPropertyShape: any = {};
     _targetClass: any;
+    _label: string;
 
     constructor(preferenceJson: any, preferenceDefinitions: any) {
         preferenceJson.values = [];
@@ -85,6 +86,14 @@ export class ComplexPreference implements Preference {
 
     public get type() {
         return this.json['@id'];
+    }
+
+    public get label() {
+        return this.json['http://www.w3.org/ns/shacl#description'][0]['@value'];
+    }
+
+    public get instantSubmit(): boolean {
+        return false;
     }
 
     public get json() {
@@ -183,7 +192,9 @@ export class ComplexPreference implements Preference {
 
         return theForm;
     }
-
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // TODO: Does not work when deleting items!!!
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     public updateWithFormValues(theForm: FormGroup) {
         theForm.get('formBlocks').value.forEach((value, index) => {
             Object.keys(value).forEach(field => {

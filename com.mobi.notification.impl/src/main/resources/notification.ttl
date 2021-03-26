@@ -20,23 +20,22 @@
 
 :EmailNotificationPreference a owl:Class, sh:NodeShape;
     rdfs:subClassOf pref:Preference;
-    rdfs:label "Email Notifications"@en;
+    sh:description "Receive email notifications" ;
     rdfs:comment "A preference that a user can have within the Mobi framework that signifies whether they want to receive email notifications."@en;
     sh:property :EmailNotificationPreferencePropertyShape;
     pref:inGroup :NotificationPreferenceGroup .
 
 :EmailNotificationPreferencePropertyShape a sh:PropertyShape;
-    rdfs:label "Would you like to receive Email Notifications?"@en;
     sh:path pref:hasDataValue;
     sh:datatype xsd:boolean;
-    sh:in ( "yes" "no" ) ;
     sh:minCount 1 ;
     sh:maxCount 1 ;
-    pref:usesFormField pref:RadioInput .
+    pref:usesFormField pref:ToggleInput ;
+    pref:instantSubmit true^^xsd:boolean .
 
 :SomeSimpleTextPreference a owl:Class, sh:NodeShape;
     rdfs:subClassOf pref:Preference;
-    rdfs:label "Email Notification Preference"@en;
+    sh:description "Enter a value for this simple text preference"@en;
     rdfs:comment "A preference that a user can have within the Mobi framework that signifies whether they want to receive email notifications."@en;
     sh:property :SomeSimpleTextPreferencePropertyShape;
     pref:inGroup :NotificationPreferenceGroup .
@@ -53,12 +52,13 @@
 
 :PrefixPreference a owl:Class, sh:NodeShape;
     rdfs:subClassOf pref:Preference;
-    rdfs:label "Prefix Preference"@en;
+    sh:description "Provide a list of prefixes that you would like Mobi to recognize"@en;
     rdfs:comment "A preference that a user can have within the Mobi framework that signifies the prefixes they want defined."@en;
     sh:property :PrefixPreferencePropertyShape;
     pref:inGroup :PrefixPreferenceGroup .
 
-:PrefixPreferenceGroup a pref:PreferenceGroup .
+:PrefixPreferenceGroup a pref:PreferenceGroup ;
+    rdfs:label "Prefixes"@en .
 
 :PrefixPreferencePropertyShape a sh:PropertyShape;
     sh:node :PrefixNodeShape;
@@ -70,6 +70,7 @@
     sh:targetClass :Prefix .
 
 :PrefixPropertyShape a sh:PropertyShape ;
+    sh:name "Prefix" ;
     sh:path :hasPrefix ;
     sh:datatype xsd:string ;
     sh:order 0 ;
@@ -78,6 +79,7 @@
     pref:usesFormField pref:TextInput .
 
 :NamespacePropertyShape a sh:PropertyShape ;
+    sh:name "Namespace" ;
     sh:path :hasNamespace ;
     sh:datatype xsd:string ;
     sh:pattern "((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+(:[0-9]+)?|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)" ;

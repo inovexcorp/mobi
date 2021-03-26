@@ -20,10 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="preferences-tab row h-100 py-2">
+<!-- <div class="preferences-tab row h-100 py-2">
     <div class="col-6 offset-3 h-100 mat-elevation-z4 tab-box">
-        <div class="row">
-            <div class="col-4">
+    <div class="row"> -->
+
+        <mat-sidenav-container class="example-container">
+            <mat-sidenav mode="side" opened>Sidenav content</mat-sidenav>
+            <mat-sidenav-content>Main content</mat-sidenav-content>
+          </mat-sidenav-container>
+          <!-- </div> -->
+        <!-- <div class="row"> -->
+            <!-- <div class="col-4">
                 <div class="material-tabset h-100 d-flex flex-column">
                     <ul>
                         <li *ngFor="let tab of tabs">
@@ -33,12 +40,13 @@
                         </li>
                     </ul>
                 </div>
-            </div>                 
-            <div class="col-8">
+            </div>                  -->
+            
+            <!-- <div class="col-8">
                 <div *ngFor="let tab of tabs">
                     <preference-group *ngIf="tab.active" [group]="tab.type"></preference-group>
                 </div>
-            </div>
-        </div>
-    </div>
-  </div>
+            </div> -->
+        <!-- </div> -->
+    <!-- </div>
+  </div> -->

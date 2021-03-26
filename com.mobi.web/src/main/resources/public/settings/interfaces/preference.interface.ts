@@ -32,7 +32,9 @@ export interface Preference {
     requiredPropertyShape: any;
     topLevelPreferenceNodeshapeInstanceId: string;
     topLevelPreferenceNodeshapeInstance: any;
+    label: string;
     type: string;
+    instantSubmit: boolean;
     numValues(): number;
     addValue(value): void;
     addBlankForm(): void;

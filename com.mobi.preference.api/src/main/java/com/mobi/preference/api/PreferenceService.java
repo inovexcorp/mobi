@@ -109,5 +109,5 @@ public interface PreferenceService {
 
     Model getPreferenceDefinitions(Resource preferenceGroup);
 
-    List<String> getPreferenceGroups();
+    Model getPreferenceGroups();
 }

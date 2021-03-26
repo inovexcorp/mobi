@@ -55,10 +55,10 @@ export class PreferencesTabComponent implements OnInit {
         this.setPreferenceTabs();
     }
 
-    addTab(preferenceGroup: string): void {
+    addTab(preferenceGroup: any): void {
         this.tabs.push({
-            type: preferenceGroup,
-            heading: this.util.getBeautifulIRI(preferenceGroup),
+            type: preferenceGroup['@id'],
+            heading: preferenceGroup[this.rdfsLabel][0]['@value'],
             active: false
         });
     }

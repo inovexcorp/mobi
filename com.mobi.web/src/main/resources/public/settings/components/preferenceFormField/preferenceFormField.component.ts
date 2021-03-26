@@ -22,6 +22,7 @@
  */
 import { Component, Input, OnChanges, Inject } from '@angular/core';
 import { Validators, ValidatorFn } from '@angular/forms';
+import { get } from 'lodash';
 
 @Component({
     selector: 'preference-form-field',
@@ -35,10 +36,13 @@ export class PreferenceFormFieldComponent implements OnChanges {
     dataType;
     options;
     validators: Array<ValidatorFn> = [];
+    label: string = '';
         
     constructor(@Inject('utilService') private util) {}
 
     ngOnChanges() {
+        this.label = get(this.shaclValidation, ['http://www.w3.org/ns/shacl#name', '0', '@value'], '');
+
         if (this.shaclValidation['http://www.w3.org/ns/shacl#pattern']) {
             const regex = this.shaclValidation['http://www.w3.org/ns/shacl#pattern'][0]['@value'];
             this.validators.push(Validators.pattern(regex));
@@ -50,6 +54,9 @@ export class PreferenceFormFieldComponent implements OnChanges {
             case 'http://mobi.com/ontologies/preference#RadioInput':
               this.formType = 'radio';
               break;
+            case 'http://mobi.com/ontologies/preference#ToggleInput':
+              this.formType = 'toggle';
+              break;
             default:
               this.formType = 'Unknown Form Type!';
         }
@@ -57,7 +64,7 @@ export class PreferenceFormFieldComponent implements OnChanges {
         switch(this.shaclValidation['http://www.w3.org/ns/shacl#datatype'][0]['@id']) {
             case 'http://www.w3.org/2001/XMLSchema#boolean':
                 this.dataType = 'boolean';
-                this.options = ['true', 'false'];
+                this.convertFormValueToBoolean();
                 break;
             case 'http://www.w3.org/2001/XMLSchema#string':
                 this.dataType = 'string';
@@ -75,5 +82,9 @@ export class PreferenceFormFieldComponent implements OnChanges {
 
         this.formField.value.get([this.formField.key]).setValidators(this.validators);
         this.formField.value.get([this.formField.key]).updateValueAndValidity();
+    }
+
+    convertFormValueToBoolean() {
+        this.formField.value.get([this.formField.key]).setValue(this.formField.value.get([this.formField.key]).value === 'true');
     }
 }

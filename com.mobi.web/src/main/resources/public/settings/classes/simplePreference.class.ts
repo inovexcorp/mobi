@@ -21,7 +21,7 @@
  * #L%
  */
 import { Preference } from '../interfaces/preference.interface';
-import { forEach } from 'lodash';
+import { forEach, get } from 'lodash';
 import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
 import { PreferenceUtils } from './preferenceUtils.class';
 
@@ -70,6 +70,14 @@ export class SimplePreference implements Preference {
 
     public get requiredPropertyShapeId(): string {
         return this.json['http://www.w3.org/ns/shacl#property'][0]['@id'];
+    }
+
+    public get label() {
+        return this.json['http://www.w3.org/ns/shacl#description'][0]['@value'];
+    }
+
+    public get instantSubmit(): boolean {
+        return Boolean(get(this.json, ['http://mobi.com/ontologies/preference#instantSubmit']['0']['@value'], false));
     }
 
     public get json() {
@@ -172,7 +180,7 @@ export class SimplePreference implements Preference {
     public updateWithFormValues(form: FormGroup) {
         this.values[0]['http://mobi.com/ontologies/preference#hasDataValue'] = [];
         form.get('formBlocks').value.forEach((value) => {
-            this.values[0]['http://mobi.com/ontologies/preference#hasDataValue'].push({'@value': value['http://mobi.com/ontologies/preference#hasDataValue']['http://mobi.com/ontologies/preference#hasDataValue']});
+            this.values[0]['http://mobi.com/ontologies/preference#hasDataValue'].push({'@value': String(value['http://mobi.com/ontologies/preference#hasDataValue']['http://mobi.com/ontologies/preference#hasDataValue'])});
         });
     }
 
