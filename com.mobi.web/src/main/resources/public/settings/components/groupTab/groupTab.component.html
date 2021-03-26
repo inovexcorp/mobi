@@ -21,10 +21,10 @@
   #L%
   -->
 <div class="group-tab row h-100 py-2">
-    <div class="col-6 offset-3 mat-elevation-z4 tab-box">
-        <ul class="user-groups-list admin-top">
+    <div class="col-6 offset-3">
+        <ul class="user-groups-list">
             <li *ngFor="let group of groups; trackBy: trackByFn" class="user-group">{{group.title}} <small class="admin" *ngIf="group.roles.includes('admin')">(Admin)</small><span class="member-count float-right"><i class="fa fa-users"></i> {{group.members.length}}</span></li>
-            <li class="no-groups" *ngIf="groups.length === 0"><info-message class="admin-input">No groups</info-message></li>
+            <li class="no-groups" *ngIf="groups.length === 0"><info-message>No groups</info-message></li>
         </ul>
     </div>
 </div>

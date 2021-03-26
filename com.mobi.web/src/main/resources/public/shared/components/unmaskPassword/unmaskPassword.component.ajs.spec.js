@@ -38,11 +38,11 @@ describe('Unmask Password component', function() {
         scope.isDisabledWhen = false;
         scope.changeEvent = jasmine.createSpy('changeEvent');
         var form = $compile('<form></form>')(scope);
-        this.element = angular.element('<unmask-password password="password" change-event="changeEvent(value)" label="label" input-name="inputName" required="required" is-disabled-when="isDisabledWhen"></unmask-password>');
+        this.element = angular.element('<unmask-password-ajs password="password" change-event="changeEvent(value)" label="label" input-name="inputName" required="required" is-disabled-when="isDisabledWhen"></unmask-password-ajs>');
         form.append(this.element);
         this.element = $compile(this.element)(scope);
         scope.$digest();
-        this.controller = this.element.controller('unmaskPassword');
+        this.controller = this.element.controller('unmaskPasswordAjs');
     });
 
     afterEach(function() {
@@ -84,7 +84,7 @@ describe('Unmask Password component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toEqual('UNMASK-PASSWORD');
+            expect(this.element.prop('tagName')).toEqual('UNMASK-PASSWORD-AJS');
             expect(this.element.querySelectorAll('.unmask-password').length).toEqual(1);
             expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
         });

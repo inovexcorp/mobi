@@ -24,14 +24,12 @@ import { find, cloneDeep } from 'lodash';
 import { OnInit, Component, Inject } from '@angular/core';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 
-import { checkPasswords } from '../../../shared/validators/checkPasswords.validator';
-
 /**
  * @name settings.PasswordTabComponent
  *
  * `passwordTab` is a component that creates a Bootstrap `row` with a form allowing the current user to change their
- * password. The user must enter their current password in order to make a change. The new password is confirmed within
- * a separate input.
+ * password. The user must enter their current password in order to make a change. The new password is entered in an
+ * {@link shared.component:unmaskPassword Unmask Password Component}.
  */
 @Component({
     selector: 'password-tab',
@@ -41,11 +39,8 @@ export class PasswordTabComponent implements OnInit {
     currentUser: any = {};
     errorMessage: string;
     passwordForm = this.fb.group({
-        currentPassword: ['', [Validators.required]],
-        newPassword: this.fb.group({
-            password: ['', [Validators.required]],
-            confirmPassword: ['', {updateOn: 'blur', validators: [Validators.required]}]
-        }, { validator: checkPasswords })
+        currentPassword: [{value: '', disabled: this.currentUser.external}, [Validators.required]],
+        unmaskPassword: [{value: '', disabled: this.currentUser.external}, [Validators.required]]
     });
    
     constructor(@Inject('userManagerService') private um, @Inject('loginManagerService') private lm,
@@ -58,12 +53,16 @@ export class PasswordTabComponent implements OnInit {
         }
     }
 
+    reset(): void {
+        this.passwordForm.reset();
+    }
+
     save(): void {
-        this.um.changePassword(this.lm.currentUser, this.passwordForm.controls.currentPassword.value, this.passwordForm.get('newPassword.password').value)
+        this.um.changePassword(this.lm.currentUser, this.passwordForm.controls.currentPassword.value, this.passwordForm.controls.unmaskPassword.value)
             .then(() => {
                 this.errorMessage = '';
                 this.util.createSuccessToast('Password successfully saved');
-                this.passwordForm.reset();
+                this.reset();
             }, error => this.errorMessage = error);
     }
 

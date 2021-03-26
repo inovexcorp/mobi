@@ -98,7 +98,7 @@ describe('Create User Overlay component', function() {
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
-        ['form', 'email-input', 'permissions-input', 'unmask-password', 'custom-label', '.form-group'].forEach(test => {
+        ['form', 'email-input', 'permissions-input', 'unmask-password-ajs', 'custom-label', '.form-group'].forEach(test => {
             it('with a ' + test, function() {
                 expect(this.element.querySelectorAll(test).length).toEqual(1);
             });

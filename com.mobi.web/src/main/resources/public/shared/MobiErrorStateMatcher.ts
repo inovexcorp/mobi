@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,25 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/* Core variables */
-@import "../../../css/variables";
+import { FormControl, FormGroupDirective, NgForm } from "@angular/forms";
+import { ErrorStateMatcher } from "@angular/material";
 
-.settings-page {
-    .mat-tab-group {
-        height: 100%;
-
-        .mat-tab-labels {
-            justify-content: center;
-        }
-        .mat-tab-header {
-            background-color: white;
-        }
-        .mat-tab-body-wrapper {
-            flex: 1;
-            min-height: 0;
-        }
-        mat-form-field.mat-form-field {
-            font-size: 16px;
-        }
+/**
+ * Custom Angular Material ErrorStateMatcher to remove requirement on the submitted nature of form.
+ * Copied from Angular Material code v5.2.5 
+ */
+export class MobiErrorStateMatcher implements ErrorStateMatcher {
+    isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+        return !!(control && control.invalid && control.touched);
     }
 }

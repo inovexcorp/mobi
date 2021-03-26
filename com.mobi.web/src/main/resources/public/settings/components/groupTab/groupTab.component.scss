@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,11 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { FormGroup } from "@angular/forms";
+/* Core variables */
+@import "../../../css/variables";
 
-export function checkPasswords(group: FormGroup) { // here we have the 'passwords' group
-  let pass = group.get('password').value;
-  let confirmPass = group.get('confirmPassword').value;
-
-  return pass === confirmPass ? null : { notSame: true }     
+.group-tab {
+    li {
+        font-size: 16px;
+    }
 }

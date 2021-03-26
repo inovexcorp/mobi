@@ -23,6 +23,8 @@
 import { filter, includes } from 'lodash';
 import { Component, Inject, OnInit } from '@angular/core';
 
+import './groupTab.component.scss';
+
 /**
  * @name settings.GroupTabComponent
  *

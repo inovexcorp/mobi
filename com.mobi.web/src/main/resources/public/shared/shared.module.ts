@@ -19,13 +19,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
- */
+*/
 import * as angular from 'angular';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
 import { downgradeComponent } from '@angular/upgrade/static';
+import { MatFormFieldModule, MatInputModule, MatButtonModule, ErrorStateMatcher, MatIconModule, MatSlideToggleModule } from '@angular/material';
 
 import actionMenuComponent from './components/actionMenu/actionMenu.component';
 import blockComponent from './components/block/block.component';
@@ -70,7 +70,7 @@ import statementDisplayComponent from './components/statementDisplay/statementDi
 import stepProgressBarComponent from './components/stepProgressBar/stepProgressBar.component';
 import textAreaComponent from './components/textArea/textArea.component';
 import textInputComponent from './components/textInput/textInput.component';
-import unmaskPasswordComponent from './components/unmaskPassword/unmaskPassword.component';
+import unmaskPasswordComponent from './components/unmaskPassword/unmaskPassword.component.ajs';
 import userAccessControlsComponent from './components/userAccessControls/userAccessControls.component';
 import valueDisplayComponent from './components/valueDisplay/valueDisplay.component';
 
@@ -151,7 +151,9 @@ import {
 
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from './components/infoMessage/infoMessage.component';
+import { UnmaskPasswordComponent } from './components/unmaskPassword/unmaskPassword.component';
 import { WindowRef } from "./services/windowRef.service";
+import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
 
 /**
  * @namespace shared
@@ -163,22 +165,35 @@ import { WindowRef } from "./services/windowRef.service";
     imports: [
         CommonModule,
         FormsModule,
-        ReactiveFormsModule
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+        MatIconModule,
+        MatSlideToggleModule
     ],
     declarations: [
         ErrorDisplayComponent,
-        InfoMessageComponent
+        InfoMessageComponent,
+        UnmaskPasswordComponent
     ],
     entryComponents: [
         ErrorDisplayComponent,
-        InfoMessageComponent
+        InfoMessageComponent,
+        UnmaskPasswordComponent
     ],
     exports: [
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
+        MatButtonModule,
+        MatIconModule,
+        MatSlideToggleModule,
+        MatFormFieldModule,
+        MatInputModule,
         ErrorDisplayComponent,
-        InfoMessageComponent
+        InfoMessageComponent,
+        UnmaskPasswordComponent
     ],
     providers: [
         loginManagerServiceProvider,
@@ -191,7 +206,8 @@ import { WindowRef } from "./services/windowRef.service";
         userManagerServiceProvider,
         ontologyStateServiceProvider,
         discoverStateServiceProvider,
-        WindowRef
+        WindowRef,
+        { provide: ErrorStateMatcher, useClass: MobiErrorStateMatcher }
     ]
 })
 export class SharedModule {}
@@ -240,7 +256,7 @@ angular.module('shared', [])
     .component('stepProgressBar', stepProgressBarComponent)
     .component('textArea', textAreaComponent)
     .component('textInput', textInputComponent)
-    .component('unmaskPassword', unmaskPasswordComponent)
+    .component('unmaskPasswordAjs', unmaskPasswordComponent)
     .component('userAccessControls', userAccessControlsComponent)
     .component('valueDisplay', valueDisplayComponent)
     .directive('emailIri', emailIri)
@@ -302,4 +318,5 @@ angular.module('shared', [])
     .factory('clickAnywhereButHereService', clickAnywhereButHereService)
     .service('yasguiService',yasguiService)
     .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory)
-    .directive('infoMessage', downgradeComponent({component: InfoMessageComponent}) as angular.IDirectiveFactory);
+    .directive('infoMessage', downgradeComponent({component: InfoMessageComponent}) as angular.IDirectiveFactory)
+    .directive('unmaskPassword', downgradeComponent({component: UnmaskPasswordComponent}) as angular.IDirectiveFactory);

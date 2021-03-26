@@ -20,10 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { async } from '@angular/core/testing';
-import { promises } from 'dns';
 import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq, fromPairs } from 'lodash';
-import pako from 'pako';
 import * as jszip from 'jszip';
 ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
 
@@ -109,7 +106,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param {string} id The identifier for this request.
      * @returns {Promise} A promise indicating whether the ontology was persisted.
      */
-    self.uploadOntology = function(file, ontologyJson, title, description, keywords, id = '', callback) {
+    self.uploadOntology = function(file, ontologyJson, title, description, keywords, id = '', callback = null) {
         const fd = new FormData();
         const config = {
             transformRequest: identity,
@@ -140,8 +137,13 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
             }
             forEach(keywords, word => fd.append('keywords', word));
             const promise =  id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
-            let resolver = promise.then(response => response.data, util.rejectErrorObject);
-            callback(id, resolver, title);
+           
+            if (typeof(callback) == 'function') {
+                let resolver = promise.then(response => response.data, util.rejectErrorObject);
+                callback(id, resolver, title);
+            } else {
+                return promise.then(response => response.data, util.rejectErrorObject);;
+            }    
         }).then(response => { return response});
     };
 
@@ -1661,8 +1663,6 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         return new Promise((resolve, reject) => {
             reader.onload = (evt) => {
                 try {
-                   // const compressedData = pako.gzip(evt.target.result, {to: 'string'});
-                   // resolve(new Blob([compressedData]));
                     zip.file(file.name, evt.target.result);
                     zip.generateAsync({type: 'blob', compression:'DEFLATE'})
                         .then((content) => {

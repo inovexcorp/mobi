@@ -30,9 +30,8 @@
     sh:datatype xsd:boolean;
     sh:minCount 1 ;
     sh:maxCount 1 ;
-    pref:usesFormField pref:ToggleInput ;
-    pref:instantSubmit true^^xsd:boolean .
-
+    pref:usesFormField pref:ToggleInput .
+    
 :SomeSimpleTextPreference a owl:Class, sh:NodeShape;
     rdfs:subClassOf pref:Preference;
     sh:description "Enter a value for this simple text preference"@en;
