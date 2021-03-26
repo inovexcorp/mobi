@@ -19,13 +19,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
- */
+*/
 import * as angular from 'angular';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
 import { downgradeComponent } from '@angular/upgrade/static';
+import { MatFormFieldModule, MatInputModule, MatButtonModule, ErrorStateMatcher } from '@angular/material';
 
 import actionMenuComponent from './components/actionMenu/actionMenu.component';
 import blockComponent from './components/block/block.component';
@@ -49,7 +49,6 @@ import emailInputComponent from './components/emailInput/emailInput.component';
 import entityDatesComponent from './components/entityDates/entityDates.component';
 import entityDescriptionComponent from './components/entityDescription/entityDescription.component';
 import fileInputComponent from './components/fileInput/fileInput.component';
-import infoMessageComponent from './components/infoMessage/infoMessage.component';
 import warningMessageComponent from './components/warningMessage/warningMessage.component';
 import inlineEditComponent from './components/inlineEdit/inlineEdit.component';
 import iriSelectComponent from './components/iriSelect/iriSelect.component';
@@ -71,7 +70,7 @@ import statementDisplayComponent from './components/statementDisplay/statementDi
 import stepProgressBarComponent from './components/stepProgressBar/stepProgressBar.component';
 import textAreaComponent from './components/textArea/textArea.component';
 import textInputComponent from './components/textInput/textInput.component';
-import unmaskPasswordComponent from './components/unmaskPassword/unmaskPassword.component';
+import unmaskPasswordComponent from './components/unmaskPassword/unmaskPassword.component.ajs';
 import userAccessControlsComponent from './components/userAccessControls/userAccessControls.component';
 import valueDisplayComponent from './components/valueDisplay/valueDisplay.component';
 
@@ -148,7 +147,10 @@ import {
 } from '../ajs.upgradedProviders';
 
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
+import { InfoMessageComponent } from './components/infoMessage/infoMessage.component';
+import { UnmaskPasswordComponent } from './components/unmaskPassword/unmaskPassword.component';
 import { WindowRef } from "./services/windowRef.service";
+import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
 
 /**
  * @namespace shared
@@ -160,19 +162,31 @@ import { WindowRef } from "./services/windowRef.service";
     imports: [
         CommonModule,
         FormsModule,
-        ReactiveFormsModule
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule
     ],
     declarations: [
-        ErrorDisplayComponent
+        ErrorDisplayComponent,
+        InfoMessageComponent,
+        UnmaskPasswordComponent
     ],
     entryComponents: [
-        ErrorDisplayComponent
+        ErrorDisplayComponent,
+        InfoMessageComponent,
+        UnmaskPasswordComponent
     ],
     exports: [
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
+        MatButtonModule,
+        MatFormFieldModule,
+        MatInputModule,
         ErrorDisplayComponent,
+        InfoMessageComponent,
+        UnmaskPasswordComponent
     ],
     providers: [
         loginManagerServiceProvider,
@@ -183,7 +197,8 @@ import { WindowRef } from "./services/windowRef.service";
         userManagerServiceProvider,
         ontologyStateServiceProvider,
         discoverStateServiceProvider,
-        WindowRef
+        WindowRef,
+        { provide: ErrorStateMatcher, useClass: MobiErrorStateMatcher }
     ]
 })
 export class SharedModule {}
@@ -211,7 +226,6 @@ angular.module('shared', [])
     .component('entityDates', entityDatesComponent)
     .component('entityDescription', entityDescriptionComponent)
     .component('fileInput', fileInputComponent)
-    .component('infoMessage', infoMessageComponent)
     .component('warningMessage', warningMessageComponent)
     .component('inlineEdit', inlineEditComponent)
     .component('iriSelect', iriSelectComponent)
@@ -233,7 +247,7 @@ angular.module('shared', [])
     .component('stepProgressBar', stepProgressBarComponent)
     .component('textArea', textAreaComponent)
     .component('textInput', textInputComponent)
-    .component('unmaskPassword', unmaskPasswordComponent)
+    .component('unmaskPasswordAjs', unmaskPasswordComponent)
     .component('userAccessControls', userAccessControlsComponent)
     .component('valueDisplay', valueDisplayComponent)
     .directive('emailIri', emailIri)
@@ -293,4 +307,6 @@ angular.module('shared', [])
     .service('utilService', utilService)
     .factory('clickAnywhereButHereService', clickAnywhereButHereService)
     .service('yasguiService',yasguiService)
-    .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory);
+    .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory)
+    .directive('infoMessage', downgradeComponent({component: InfoMessageComponent}) as angular.IDirectiveFactory)
+    .directive('unmaskPassword', downgradeComponent({component: UnmaskPasswordComponent}) as angular.IDirectiveFactory);

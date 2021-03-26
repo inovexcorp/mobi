@@ -83,32 +83,52 @@ $sidebar-open-width: 180px;
 $sidebar-closed-width: 50px;
 
 // Palettes
-$mobi-primary-050: #E6E8F3;
-$mobi-primary-100: #C1C5E2;
-$mobi-primary-200: #989FCF;
-$mobi-primary-300: #6E79BC;
-$mobi-primary-400: #4F5CAD;
-$mobi-primary-500: #303F9F;
-$mobi-primary-600: #2B3997;
-$mobi-primary-700: #24318D;
-$mobi-primary-800: #1E2983;
-$mobi-primary-900: #131B72;
-$mobi-primary-A100: #A8AEFF;
-$mobi-primary-A200: #757EFF;
-$mobi-primary-A400: #424FFF;
-$mobi-primary-A700: #2937FF;
+$mobi-primary: (
+            50: #E6E8F3,
+            100: #C1C5E2,
+            200: #989FCF,
+            300: #6E79BC,
+            400: #4F5CAD,
+            500: #303F9F,
+            600: #2B3997,
+            700: #24318D,
+            800: #1E2983,
+            900: #131B72,
+            A100: #A8AEFF,
+            A200: #757EFF,
+            A400: #424FFF,
+            A700: #2937FF,
+            contrast: (
+                    500: white,
+                    600: white,
+                    700: white,
+                    800: white,
+                    900: white,
+                    A700: white,
+            )
+    );
 
-$mobi-secondary-50: #E8EAF6;
-$mobi-secondary-100: #C5CBE9;
-$mobi-secondary-200: #9FA8DA;
-$mobi-secondary-300: #7985CB;
-$mobi-secondary-400: #5C6BC0;
-$mobi-secondary-500: #3F51B5;
-$mobi-secondary-600: #394AAE;
-$mobi-secondary-700: #3140A5;
-$mobi-secondary-800: #29379D;
-$mobi-secondary-900: #1B278D;
-$mobi-secondary-A100: #C6CBFF;
-$mobi-secondary-A200: #939DFF;
-$mobi-secondary-A400: #606EFF;
-$mobi-secondary-A700: #4757FF;
+$mobi-secondary: (
+            50: #E8EAF6,
+            100: #C5CBE9,
+            200: #9FA8DA,
+            300: #7985CB,
+            400: #5C6BC0,
+            500: #3F51B5,
+            600: #394AAE,
+            700: #3140A5,
+            800: #29379D,
+            900: #1B278D,
+            A100: #C6CBFF,
+            A200: #939DFF,
+            A400: #606EFF,
+            A700: #4757FF,
+            contrast: (
+                    500: white,
+                    600: white,
+                    700: white,
+                    800: white,
+                    900: white,
+                    A700: white,
+            )
+    );

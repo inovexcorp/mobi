@@ -20,35 +20,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import './settingsPage.component.scss';
+import { Component, ViewChild } from '@angular/core';
+import { MatTabChangeEvent } from '@angular/material/tabs';
+import { PasswordTabComponent } from '../passwordTab/passwordTab.component';
+import { ProfileTabComponent } from '../profileTab/profileTab.component';
 
-const template = require('./settingsPage.component.html');
+import './settingsPage.component.scss';
 
 /**
  * @ngdoc component
  * @name settings.component:settingsPage
  *
  * @description
- * `settingsPage` is a component which creates a {@link shared.component:tabset tabset} with
- * {@link shared.component:tab tabs} for different settings pertaining to the current user. The tabs are
- * {@link settings.component:profileTab profileTab}, {@link settings.component:passwordTab passwordTab}, and the
- * {@link settings.component:preferencesTab preferencesTab}.
+ * `settingsPage` is a component which creates a `mat-tab-group` with tabs for different settings pertaining to the
+ * current user. The tabs are {@link settings.component:profileTab profileTab},
+ * {@link settings.component:passwordTab passwordTab}, and the {@link settings.component:preferencesTab preferencesTab}.
  */
-const settingsPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: settingsPageComponentCtrl
-};
+@Component({
+    selector: 'settings-page',
+    templateUrl: './settingsPage.component.html'
+})
+export class SettingsPageComponent {
+    @ViewChild(ProfileTabComponent) profileTab: ProfileTabComponent;
+    @ViewChild(PasswordTabComponent) passwordTab: PasswordTabComponent;
 
-function settingsPageComponentCtrl() {
-    var dvm = this;
-    dvm.tabs = {
-        profile: true,
-        group: false,
-        password: false,
-        preferences: false
-    };
+    constructor() {}
+
+    onTabChanged(event: MatTabChangeEvent) {
+        if (event.index === 0) {
+            this.profileTab.reset();
+        } else if (event.index === 2) {
+            this.passwordTab.reset();
+        }
+    }
 }
-
-export default settingsPageComponent;
