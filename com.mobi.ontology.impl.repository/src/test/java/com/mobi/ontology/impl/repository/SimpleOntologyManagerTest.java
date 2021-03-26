@@ -23,7 +23,6 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -44,7 +43,6 @@ import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
@@ -52,12 +50,12 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.impl.SimpleDatasetRepositoryConnection;
 import com.mobi.dataset.ontology.dataset.Dataset;
+import com.mobi.etl.api.config.rdf.ImportServiceConfig;
+import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.exception.MobiException;
-import com.mobi.ontology.cacheloader.api.CacheLoader;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.impl.core.AbstractOntologyManager;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.persistence.utils.api.BNodeService;
@@ -88,15 +86,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import javax.cache.Cache;
 import java.io.File;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import javax.cache.Cache;
 
@@ -148,7 +142,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     private RepositoryConfig cacheRepoConfig;
 
     @Mock
-    private CacheLoader cacheLoader;
+    private RDFImportService importService;
 
     private SimpleOntologyManager manager;
     private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
@@ -282,31 +276,27 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         });
 
         doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(1, Resource.class);
+            Resource graph = invocation.getArgumentAt(2, Resource.class);
             try (RepositoryConnection conn = cacheRepo.getConnection()) {
                 conn.add(model, graph);
             }
             return null;
-        }).when(cacheLoader).loadOntologyFile(any(File.class), any(Resource.class), any(String.class));
+        }).when(importService).importFile(any(ImportServiceConfig.class), any(File.class), any(Resource.class));
 
         manager = Mockito.spy(new SimpleOntologyManager());
         injectOrmFactoryReferencesIntoService(manager);
-
-        // TODO: Remove when new ORM test is in.
-        manager.branchFactory = (BranchFactory) branchFactory;
-
-        manager.valueFactory = VALUE_FACTORY;
-        manager.modelFactory = MODEL_FACTORY;
-        manager.sesameTransformer = sesameTransformer;
-        manager.configProvider = configProvider;
-        manager.catalogManager = catalogManager;
-        manager.utilsService = catalogUtilsService;
-        manager.repositoryManager = mockRepoManager;
-        manager.ontologyCache = ontologyCache;
-        manager.bNodeService = bNodeService;
-        manager.importsResolver = importsResolver;
-        manager.datasetManager = datasetManager;
-        manager.cacheLoader = cacheLoader;
+        manager.setValueFactory(VALUE_FACTORY);
+        manager.setModelFactory(MODEL_FACTORY);
+        manager.setSesameTransformer(sesameTransformer);
+        manager.setConfigProvider(configProvider);
+        manager.setCatalogManager(catalogManager);
+        manager.setUtilsService(catalogUtilsService);
+        manager.setRepositoryManager(mockRepoManager);
+        manager.addOntologyCache(ontologyCache);
+        manager.setbNodeService(bNodeService);
+        manager.setImportsResolver(importsResolver);
+        manager.setDatasetManager(datasetManager);
+        manager.setRDFImportService(importService);
         manager.activate();
     }
 

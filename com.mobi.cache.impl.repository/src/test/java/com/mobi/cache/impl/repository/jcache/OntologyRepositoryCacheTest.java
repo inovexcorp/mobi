@@ -257,7 +257,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), repositoryConfig.id(), vf, operationDatasetFactory));
         doNothing().when(datasetManager).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
         ArgumentCaptor<String> datasetIRIStr = ArgumentCaptor.forClass(String.class);
-        when(datasetManager.createDataset(datasetIRIStr.capture(), any(RepositoryConnection.class))).thenAnswer(invocation -> {
+        when(datasetManager.createDataset(datasetIRIStr.capture(), anyString())).thenAnswer(invocation -> {
             try (RepositoryConnection conn = repo.getConnection()) {
                 Resource datasetIRI = vf.createIRI(datasetIRIStr.getValue());
                 Dataset dataset = datasetFactory.createNew(datasetIRI);

@@ -23,6 +23,16 @@ package com.mobi.ontology.rest;
  * #L%
  */
 
+import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.getActiveUser;
+import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
+import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
+import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
+import static com.mobi.rest.util.RestUtils.jsonldToModel;
+import static com.mobi.rest.util.RestUtils.modelToJsonld;
+import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
+import static com.mobi.rest.util.RestUtils.modelToString;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -67,7 +77,6 @@ import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.Binding;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -117,23 +126,6 @@ import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
-import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -158,16 +150,23 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static com.mobi.rest.util.RestUtils.checkStringParam;
-import static com.mobi.rest.util.RestUtils.getActiveUser;
-import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
-import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
-import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
-import static com.mobi.rest.util.RestUtils.jsonldToModel;
-import static com.mobi.rest.util.RestUtils.modelToJsonld;
-import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
-import static com.mobi.rest.util.RestUtils.modelToString;
+import javax.annotation.Nullable;
+import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 
 @Path("/ontologies")
@@ -2566,26 +2565,6 @@ public class OntologyRest {
         }
     }
 
-
-    // TODO: REMOVE
-    @GET
-    @Path("{recordId}/load")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response loadIntoCache(@Context ContainerRequestContext context,
-                                              @PathParam("recordId") String recordIdStr) {
-        try {
-            Ontology ontology = getOntology(context, recordIdStr, "", "", true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            log.debug("************************************ Loaded ontology into cache ************************************");
-            return Response.ok().build();
-        } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-
     /**
      * Returns the object property hierarchy for the ontology identified by the provided IDs as a JSON object with keys
      * for a map of parent property IRIs to arrays of children property IRIs and a map of child property IRIs to arrays
@@ -3480,18 +3459,15 @@ public class OntologyRest {
      */
     private void writeEntityNamesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
         Map<String, EntityNames> entityNamesMap = new HashMap<>();
-        String entityBindingName = "entity";
-        String enPrefNamesBindingName = "en_pref_names_array";
-        String prefNamesBindingName = "pref_names_array";
-        String namesBindingName = "names_array";
+        String entityBinding = "entity";
+        String enPrefNamesBinding = "en_pref_names_array";
+        String prefNamesBinding = "pref_names_array";
+        String namesBinding = "names_array";
         tupleQueryResults.forEach(bindings -> {
-            String entity = Bindings.requiredResource(bindings, entityBindingName).stringValue();
-            Optional<Binding> enlabelsBinding = bindings.getBinding(enPrefNamesBindingName);
-            Optional<Binding> labelsBinding = bindings.getBinding(prefNamesBindingName);
-            Optional<Binding> namesBinding = bindings.getBinding(namesBindingName);
-            String enlabelsString = enlabelsBinding.isPresent() ? enlabelsBinding.get().getValue().stringValue() : "";
-            String labelsString = labelsBinding.isPresent() ? labelsBinding.get().getValue().stringValue() : "";
-            String namesString = namesBinding.isPresent() ? namesBinding.get().getValue().stringValue() : "";
+            String entity = Bindings.requiredResource(bindings, entityBinding).stringValue();
+            String enlabelsString = Bindings.requiredLiteral(bindings, enPrefNamesBinding).stringValue();
+            String labelsString = Bindings.requiredLiteral(bindings, prefNamesBinding).stringValue();
+            String namesString = Bindings.requiredLiteral(bindings, namesBinding).stringValue();
             EntityNames entityNames = new EntityNames();
 
             String[] enLabels = StringUtils.split(enlabelsString, NAME_SPLITTER);

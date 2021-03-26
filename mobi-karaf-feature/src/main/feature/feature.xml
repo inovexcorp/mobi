@@ -148,8 +148,6 @@
         <bundle start-level="80">mvn:com.mobi/ontology.impl.core/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/ontology.impl.owlapi/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/ontology.impl.repository/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/ontology.cacheloader.api/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/ontology.cacheloader.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/ontology.utils/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/persistence.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/persistence.utils/${project.version}</bundle>
@@ -167,7 +165,6 @@
         <bundle start-level="80">mvn:com.mobi/platform.config.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/dataset.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/dataset.impl/${project.version}</bundle>
-<!--        <bundle start-level="80">mvn:com.mobi/sparql.utils/${project.version}</bundle>-->
         <bundle start-level="80">mvn:com.mobi/cache/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/cache.impl.core/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/cache.impl.repository/${project.version}</bundle>

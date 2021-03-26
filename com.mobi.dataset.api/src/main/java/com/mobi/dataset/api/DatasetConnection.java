@@ -25,7 +25,6 @@ package com.mobi.dataset.api;
 
 import com.mobi.query.api.GraphQuery;
 import com.mobi.query.api.TupleQuery;
-import com.mobi.query.api.Update;
 import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
@@ -282,22 +281,6 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      */
     GraphQuery prepareGraphQuery(String query, Resource... contexts) throws RepositoryException,
             MalformedQueryException;
-
-    /**
-     * Prepares SPARQL queries against the specified contexts that modify RDF graphs, that is, SPARQL INSERT/DELETE
-     * queries. If the query string contains an INSERT and/or DELETE, the operation will occur on the dataset graph.
-     *
-     * @param query The query string, in SPARQL syntax.
-     * @param contexts The context(s) to query. Note that this parameter is a vararg and as such is optional. If no
-     *                 contexts are supplied the method operates on the entire dataset.
-     * @return a {@link GraphQuery} ready to be evaluated on this {@link DatasetConnection}.
-     * @throws IllegalArgumentException If the supplied query is not a graph query.
-     * @throws MalformedQueryException If the supplied query is malformed.
-     * @throws RepositoryException - If the query could not be run against the repository, for example because
-     *      the repository is not readable.
-     */
-    Update prepareUpdate(String query, Resource... contexts)
-            throws RepositoryException, MalformedQueryException;
 
     /**
      * Gets the resources that are used as named graphs in the dataset. Care should be taken that the returned

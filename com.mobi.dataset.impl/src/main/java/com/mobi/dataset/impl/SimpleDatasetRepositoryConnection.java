@@ -53,7 +53,6 @@ import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -412,26 +411,6 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public Update prepareUpdate(String query, Resource... contexts) {
-        Update update = getDelegate().prepareUpdate(query);
-        boolean insert = query.toUpperCase().contains("INSERT");
-        boolean delete = query.toUpperCase().contains("DELETE");
-        if (!insert && !delete) {
-            throw new MobiException("Update query must contain an INSERT/DELETE clause");
-        }
-        OperationDataset operationDataset = getFilteredOperationDataset(contexts);
-        if (insert) {
-            operationDataset.setDefaultInsertGraph((IRI) getSystemDefaultNamedGraph());
-        }
-        if (delete) {
-            operationDataset.addDefaultRemoveGraph((IRI) getSystemDefaultNamedGraph());
-        }
-        update.setDataset(operationDataset);
-        dirty = true;
-        return update;
-    }
-
-    @Override
     public Resource getDataset() {
         return datasetResource;
     }
@@ -454,7 +433,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             });
             opDataset = operationDataset;
             dirty = false;
-            
+
             operationDataset.addDefaultGraph((IRI) systemDefaultNG);
         }
         return opDataset;
@@ -658,7 +637,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
      *
      * @param graph The graph to delete and remove from the dataset.
      */
-    private void deleteDatasetGraph(@Nullable Resource graph) {
+    private void deleteDatasetGraph(Resource graph) {
         IRI ngPred = valueFactory.createIRI(Dataset.namedGraph_IRI);
         IRI dngPred = valueFactory.createIRI(Dataset.defaultNamedGraph_IRI);
 

@@ -1,9 +1,0 @@
-DELETE {
-    ?dataset <http://mobi.com/ontologies/graph#lastAccessed> ?lastAccessed
-}
-INSERT {
-    ?dataset <http://mobi.com/ontologies/graph#lastAccessed> ?now
-}
-WHERE {
-    ?dataset <http://mobi.com/ontologies/graph#lastAccessed> ?lastAccessed
-}

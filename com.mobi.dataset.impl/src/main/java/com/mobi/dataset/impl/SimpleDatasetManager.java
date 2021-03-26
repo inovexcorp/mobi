@@ -28,16 +28,14 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.dataset.api.DatasetConnection;
-import com.mobi.dataset.api.DatasetManager;
-import com.mobi.dataset.ontology.dataset.Dataset;
-import com.mobi.query.api.OperationDatasetFactory;
-import org.apache.commons.io.IOUtils;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.builder.DatasetRecordConfig;
+import com.mobi.dataset.api.DatasetConnection;
+import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetFactory;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.dataset.ontology.dataset.DatasetRecordFactory;
@@ -46,6 +44,7 @@ import com.mobi.dataset.pagination.DatasetRecordSearchResults;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.OperationDatasetFactory;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
@@ -57,6 +56,7 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.base.RepositoryResult;
+import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -221,22 +221,6 @@ public class SimpleDatasetManager implements DatasetManager {
             newDataset.setSystemDefaultNamedGraph(sdgIRI);
             conn.add(newDataset.getModel(), datasetIRI);
         }
-
-        return true;
-    }
-
-    @Override
-    public boolean createDataset(String dataset, RepositoryConnection conn) {
-        IRI datasetIRI = vf.createIRI(dataset);
-        IRI sdgIRI = vf.createIRI(dataset + SYSTEM_DEFAULT_NG_SUFFIX);
-
-        if (conn.getStatements(null, null, null, datasetIRI).hasNext()) {
-            throw new IllegalArgumentException("The dataset already exists in the specified repository.");
-        }
-
-        Dataset newDataset = dsFactory.createNew(datasetIRI);
-        newDataset.setSystemDefaultNamedGraph(sdgIRI);
-        conn.add(newDataset.getModel(), datasetIRI);
 
         return true;
     }

@@ -352,16 +352,6 @@
             <artifactId>server.impl</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>ontology.cacheloader.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>ontology.cacheloader.impl</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 	<dependency>
             <groupId>com.mobi</groupId>
             <artifactId>preference.api</artifactId>

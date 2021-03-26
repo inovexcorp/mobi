@@ -48,10 +48,6 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.io.IOUtils;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
@@ -61,43 +57,17 @@ import java.util.Optional;
 
 public abstract class AbstractOntologyManager implements OntologyManager  {
     protected Logger log;
-
-    @Reference
-    public ValueFactory valueFactory;
-
-    @Reference
-    public ModelFactory modelFactory;
-
-    @Reference
-    public SesameTransformer sesameTransformer;
-
-    @Reference
-    public OntologyRecordFactory ontologyRecordFactory;
-
-    @Reference
-    public RepositoryManager repositoryManager;
-
-    @Reference
-    public BranchFactory branchFactory;
-
-    @Reference(
-            cardinality = ReferenceCardinality.OPTIONAL,
-            policy = ReferencePolicy.DYNAMIC,
-            policyOption = ReferencePolicyOption.GREEDY
-    )
-    public volatile OntologyCache ontologyCache;
-
-    @Reference
-    public CatalogConfigProvider configProvider;
-
-    @Reference
-    public CatalogManager catalogManager;
-
-    @Reference
-    public CatalogUtilsService utilsService;
-
-    @Reference
-    public BNodeService bNodeService;
+    protected ValueFactory valueFactory;
+    protected ModelFactory modelFactory;
+    protected SesameTransformer sesameTransformer;
+    protected OntologyRecordFactory ontologyRecordFactory;
+    protected RepositoryManager repositoryManager;
+    protected BranchFactory branchFactory;
+    protected OntologyCache ontologyCache;
+    protected CatalogConfigProvider configProvider;
+    protected CatalogManager catalogManager;
+    protected CatalogUtilsService utilsService;
+    protected BNodeService bNodeService;
 
     protected static final String FIND_ONTOLOGY;
     protected static final String ONTOLOGY_IRI = "ontologyIRI";

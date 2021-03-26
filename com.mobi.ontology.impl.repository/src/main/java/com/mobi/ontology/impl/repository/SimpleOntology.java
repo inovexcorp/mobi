@@ -29,8 +29,9 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.Dataset;
+import com.mobi.etl.api.config.rdf.ImportServiceConfig;
+import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.exception.MobiException;
-import com.mobi.ontology.cacheloader.api.CacheLoader;
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.AnnotationProperty;
 import com.mobi.ontology.core.api.DataProperty;
@@ -112,7 +113,7 @@ public class SimpleOntology implements Ontology {
     private ImportsResolver importsResolver;
     private SesameTransformer transformer;
     private BNodeService bNodeService;
-    private CacheLoader cacheLoader;
+    private RDFImportService importService;
     private IRI datasetIRI;
     private Set<IRI> importsClosure;
     private Set<IRI> unresolvedImports;
@@ -258,13 +259,13 @@ public class SimpleOntology implements Ontology {
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
      * @param vf              The {@link ValueFactory} used to create Statements
      * @param mf              The {@link ModelFactory} used to create Models
-     * @param cacheLoader     The {@link CacheLoader} used to bulk load an ontology file
+     * @param importService   The {@link RDFImportService} used to bulk load an ontology file
      */
     public SimpleOntology(String recordCommitKey, File ontologyFile, Repository cacheRepo,
                           OntologyManager ontologyManager, CatalogManager catalogManager,
                           CatalogConfigProvider configProvider, DatasetManager datasetManager,
                           ImportsResolver importsResolver, SesameTransformer transformer, BNodeService bNodeService,
-                          ValueFactory vf, ModelFactory mf, CacheLoader cacheLoader) {
+                          ValueFactory vf, ModelFactory mf, RDFImportService importService) {
         long startTime = getStartTime();
         this.mf = mf;
         this.vf = vf;
@@ -277,7 +278,7 @@ public class SimpleOntology implements Ontology {
         this.importsResolver = importsResolver;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
-        this.cacheLoader = cacheLoader;
+        this.importService = importService;
 
         Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile, false);
         this.importsClosure = imports.get(CLOSURE_KEY);
@@ -299,12 +300,12 @@ public class SimpleOntology implements Ontology {
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
      * @param vf              The {@link ValueFactory} used to create Statements
      * @param mf              The {@link ModelFactory} used to create Models
-     * @param cacheLoader     The {@link CacheLoader} used to bulk load an ontology file
+     * @param importService   The {@link RDFImportService} used to bulk load an ontology file
      */
     public SimpleOntology(String recordCommitKey, Repository cacheRepo, OntologyManager ontologyManager,
                           CatalogManager catalogManager, CatalogConfigProvider configProvider,
                           DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer,
-                          BNodeService bNodeService, ValueFactory vf, ModelFactory mf, CacheLoader cacheLoader) {
+                          BNodeService bNodeService, ValueFactory vf, ModelFactory mf, RDFImportService importService) {
         long startTime = getStartTime();
         this.mf = mf;
         this.vf = vf;
@@ -317,7 +318,7 @@ public class SimpleOntology implements Ontology {
         this.importsResolver = importsResolver;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
-        this.cacheLoader = cacheLoader;
+        this.importService = importService;
 
         importsClosure = new HashSet<>();
         unresolvedImports = new HashSet<>();
@@ -366,13 +367,12 @@ public class SimpleOntology implements Ontology {
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
      * @param vf              The {@link ValueFactory} used to create Statements
      * @param mf              The {@link ModelFactory} used to create Models
-     * @param cacheLoader     The {@link CacheLoader} used to bulk load an ontology file
      */
     protected SimpleOntology(IRI datasetIRI, Repository cacheRepo, OntologyManager ontologyManager,
                            CatalogManager catalogManager, CatalogConfigProvider configProvider,
                            DatasetManager datasetManager, ImportsResolver importsResolver,
                            SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf,
-                           CacheLoader cacheLoader) {
+                           RDFImportService importService) {
         long startTime = getStartTime();
         this.mf = mf;
         this.vf = vf;
@@ -385,7 +385,7 @@ public class SimpleOntology implements Ontology {
         this.importsResolver = importsResolver;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
-        this.cacheLoader = cacheLoader;
+        this.importService = importService;
 
         importsClosure = new HashSet<>();
         unresolvedImports = new HashSet<>();
@@ -450,7 +450,7 @@ public class SimpleOntology implements Ontology {
                            CatalogManager catalogManager, CatalogConfigProvider configProvider,
                            DatasetManager datasetManager, ImportsResolver importsResolver,
                            SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf,
-                           CacheLoader cacheLoader) {
+                           RDFImportService importService) {
         long startTime = getStartTime();
         this.mf = mf;
         this.vf = vf;
@@ -463,7 +463,7 @@ public class SimpleOntology implements Ontology {
         this.importsResolver = importsResolver;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
-        this.cacheLoader = cacheLoader;
+        this.importService = importService;
 
         Map<String, Set<IRI>> importsMap = loadOntologyIntoCache(ontologyFile, true);
         this.importsClosure = importsMap.get(CLOSURE_KEY);
@@ -626,7 +626,7 @@ public class SimpleOntology implements Ontology {
                     IRI ontDatasetIRI = getDatasetIRI(ontIRI);
                     closure.add(new SimpleOntology(ontDatasetIRI, repository, ontologyManager,
                             catalogManager, configProvider, datasetManager, importsResolver, transformer, bNodeService,
-                            vf, mf, cacheLoader));
+                            vf, mf, importService));
                 }
             });
             undoApplyDifferenceIfPresent(conn);
@@ -1289,7 +1289,7 @@ public class SimpleOntology implements Ontology {
         // If SdNg exists already, the file is already loaded. When a null ontologyFile is passed, it indicates a web
         // import that has already been loaded into the cache.
         if (!conn.containsContext(ontologySdNg) && ontologyFile != null) {
-            cacheLoader.loadOntologyFile(ontologyFile, ontologySdNg, repoId);
+            loadOntologyFile(ontologyFile, ontologySdNg, repoId);
         }
         try (DatasetConnection dsConn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false)) {
             dsConn.addDefaultNamedGraph(ontologySdNg);
@@ -1300,6 +1300,34 @@ public class SimpleOntology implements Ontology {
             }
         } finally {
             logTrace("addOntologyToRepo()", start);
+        }
+    }
+
+    /**
+     * Loads the provided ontologyFile into the provided named graph in the repository identified by the repoId.
+     *
+     * @param ontologyFile The RDF {@link File} of an Ontology to bulk load.
+     * @param graph The {@link Resource} specifying what graph to load the ontologyFile into.
+     * @param repoId The Id of the {@link Repository} to load data into.
+     */
+    private void loadOntologyFile(File ontologyFile, Resource graph, String repoId) {
+        long importTimeStart = System.currentTimeMillis();
+        try {
+            ImportServiceConfig.Builder builder = new ImportServiceConfig.Builder()
+                    .continueOnError(false)
+                    .logOutput(true)
+                    .printOutput(false)
+                    .batchSize(50000)
+                    .format(RDFFormat.NQUADS)
+                    .repository(repoId);
+            importService.importFile(builder.build(), ontologyFile, graph);
+            ontologyFile.delete();
+        } catch (IOException e) {
+            throw new MobiException("Error writing file to repo or deleting file.", e);
+        } finally {
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Import statements to repo in {} ms", System.currentTimeMillis() - importTimeStart);
+            }
         }
     }
 
@@ -1490,7 +1518,7 @@ public class SimpleOntology implements Ontology {
                 IRI importDatasetIRI = getDatasetIRI(importIri);
                 SimpleOntology importedOnt = new SimpleOntology(importDatasetIRI, repository, ontologyManager,
                         catalogManager, configProvider, datasetManager, importsResolver, transformer, bNodeService,
-                        vf, mf, cacheLoader);
+                        vf, mf, importService);
                 Set<Ontology> ontClosure = importedOnt.getImportsClosure();
 
                 // Add all internal importsClosure IRIs and unresolved IRIs to appropriate sets
@@ -1542,7 +1570,7 @@ public class SimpleOntology implements Ontology {
         }
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI, ontologyFile, repository,
                 ontologyManager, catalogManager, configProvider, datasetManager, importsResolver, transformer,
-                bNodeService, vf, mf, cacheLoader);
+                bNodeService, vf, mf, importService);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
 
@@ -1567,11 +1595,11 @@ public class SimpleOntology implements Ontology {
                 () -> new IllegalStateException("Record must exist in catalog"));
         Resource masterHead = catalogManager.getMasterBranch(
                 configProvider.getLocalCatalogIRI(), recordIRI).getHead_resource().orElseThrow(
-                        () -> new IllegalStateException("Commit must exist in catalog"));
+                () -> new IllegalStateException("Commit must exist in catalog"));
         String recordCommitKey = OntologyDatasets.createRecordKey(recordIRI, masterHead);
         Ontology importedOntology = new SimpleOntology(recordCommitKey, ontologyFile, repository,
                 ontologyManager, catalogManager, configProvider, datasetManager, importsResolver,
-                transformer, bNodeService, vf, mf, cacheLoader);
+                transformer, bNodeService, vf, mf, importService);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
 
@@ -1591,7 +1619,7 @@ public class SimpleOntology implements Ontology {
         }
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI, repository,
                 ontologyManager, catalogManager, configProvider, datasetManager, importsResolver, transformer,
-                bNodeService, vf, mf, cacheLoader);
+                bNodeService, vf, mf, importService);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
 

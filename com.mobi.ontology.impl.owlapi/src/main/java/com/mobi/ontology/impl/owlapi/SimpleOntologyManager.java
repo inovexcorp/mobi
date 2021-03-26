@@ -23,33 +23,47 @@ package com.mobi.ontology.impl.owlapi;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Activate;
+import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.ConfigurationPolicy;
+import aQute.bnd.annotation.component.Modified;
+import aQute.bnd.annotation.component.Reference;
+import aQute.bnd.annotation.metatype.Configurable;
+import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.core.api.config.OntologyManagerConfig;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.impl.core.AbstractOntologyManager;
+import com.mobi.ontology.utils.cache.OntologyCache;
+import com.mobi.persistence.utils.api.BNodeService;
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
-import org.osgi.service.component.annotations.Modified;
-import org.osgi.service.metatype.annotations.Designate;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.repository.api.RepositoryManager;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.cache.Cache;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
+import javax.annotation.Nonnull;
+import javax.cache.Cache;
 
 @Component(
-        service = { SimpleOntologyManager.class, OntologyManager.class },
-        configurationPolicy = ConfigurationPolicy.REQUIRE,
+        provide = { SimpleOntologyManager.class, OntologyManager.class },
+        configurationPolicy = ConfigurationPolicy.require,
+        designateFactory = OntologyManagerConfig.class,
         name = SimpleOntologyManager.COMPONENT_NAME
 )
-@Designate(ocd = OntologyManagerConfig.class)
 public class SimpleOntologyManager extends AbstractOntologyManager {
 
     private ForkJoinPool threadPool;
@@ -59,10 +73,69 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
     public SimpleOntologyManager() {
     }
 
+    @Reference
+    public void setValueFactory(ValueFactory valueFactory) {
+        this.valueFactory = valueFactory;
+    }
+
+    @Reference
+    public void setModelFactory(ModelFactory modelFactory) {
+        this.modelFactory = modelFactory;
+    }
+
+    @Reference
+    public void setSesameTransformer(SesameTransformer sesameTransformer) {
+        this.sesameTransformer = sesameTransformer;
+    }
+
+    @Reference
+    void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
+        this.ontologyRecordFactory = ontologyRecordFactory;
+    }
+
+    @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
+    }
+
+    @Reference
+    public void setCatalogManager(CatalogManager catalogManager) {
+        this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    void setUtilsService(CatalogUtilsService utilsService) {
+        this.utilsService = utilsService;
+    }
+
+    @Reference
+    public void setRepositoryManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
+    }
+
+    @Reference
+    public void setBranchFactory(BranchFactory branchFactory) {
+        this.branchFactory = branchFactory;
+    }
+
+    @Reference(type = '*', dynamic = true, optional = true)
+    public void addOntologyCache(OntologyCache ontologyCache) {
+        this.ontologyCache = ontologyCache;
+    }
+
+    public void removeOntologyCache(OntologyCache ontologyCache) {
+        this.ontologyCache = null;
+    }
+
+    @Reference
+    public void setbNodeService(BNodeService bNodeService) {
+        this.bNodeService = bNodeService;
+    }
+
     @Activate
-    @Modified
-    protected void start(final OntologyManagerConfig config) {
+    protected void start(Map<String, Object> props) {
         log = LoggerFactory.getLogger(SimpleOntologyManager.class);
+        OntologyManagerConfig config = Configurable.createConfigurable(OntologyManagerConfig.class, props);
         if (config.poolSize() == 0) {
             int cpus = Runtime.getRuntime().availableProcessors();
             int parallelism = cpus / 2 == 0 ? 1 : cpus / 2;
@@ -77,6 +150,11 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
             log.debug("OntologyManager pool size: " + parallelism);
             threadPool = new ForkJoinPool(parallelism);
         }
+    }
+
+    @Modified
+    protected void modified(Map<String, Object> props) {
+        start(props);
     }
 
     @Override
