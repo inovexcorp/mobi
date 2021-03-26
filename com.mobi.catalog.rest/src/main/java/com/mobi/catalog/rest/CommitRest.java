@@ -30,11 +30,9 @@ import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJsonNode;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 
-import aQute.bnd.service.diff.Diff;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -42,16 +40,15 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.query.TupleQueryResult;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.apache.commons.io.IOUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Component;
@@ -59,7 +56,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -77,7 +73,6 @@ import javax.ws.rs.core.UriInfo;
 
 @Component(service = CommitRest.class, immediate = true)
 @Path("/commits")
-@Api(value = "/commits")
 public class CommitRest {
 
     private static final Logger logger = LoggerFactory.getLogger(CommitRest.class);
@@ -128,9 +123,24 @@ public class CommitRest {
     @Path("{commitId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the Commit specified by the provided ID.")
-    public Response getCommit(@PathParam("commitId") String commitId,
-                       @DefaultValue("jsonld") @QueryParam("format") String format) {
+    @Operation(
+            tags = "commits",
+            summary = "Retrieves the Commit specified by the provided ID",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response with the Commit identified by the provided ID"),
+                    @ApiResponse(responseCode = "403",
+                            description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "404",
+                            description = "Response indicating NOT_FOUND"),
+            }
+    )
+    public Response getCommit(
+            @Parameter(description = "String value of the Commit ID. "
+                    + "NOTE: Assumes an IRI unless String starts with \"_:\"", required = true)
+            @PathParam("commitId") String commitId,
+            @Parameter(description = "String representation of the desired RDFFormat", required = false)
+            @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
         try {
             Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(commitId));
@@ -168,13 +178,33 @@ public class CommitRest {
     @Path("{commitId}/history")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the Commit history specified by the provided ID.")
-    public Response getCommitHistory(@Context UriInfo uriInfo,
-                              @PathParam("commitId") String commitId,
-                              @QueryParam("targetId") String targetId,
-                              @QueryParam("entityId") String entityId,
-                              @QueryParam("offset") int offset,
-                              @QueryParam("limit") int limit) {
+    @Operation(
+            tags = "commits",
+            summary = "Retrieves the Commit history specified by the provided ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Response containing a List of "
+                            + "Commits starting with the provided commitId which represents "
+                            + "the Commit history."),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response getCommitHistory(
+            @Context UriInfo uriInfo,
+            @Parameter(description = "String value of the Commit ID"
+                    + "NOTE: Assumes an IRI unless String starts with \"_:\"", required = true)
+            @PathParam("commitId") String commitId,
+            @Parameter(description = "String value of the target Commit ID"
+                    + "NOTE: Assumes an IRI unless String starts with \"_:\"", required = true)
+            @QueryParam("targetId") String targetId,
+            @Parameter(description = "Optional String value of the Entity ID"
+                    + "NOTE: Assumes an IRI unless String starts with \"_:\"", required = false)
+            @QueryParam("entityId") String entityId,
+            @Parameter(description = "Optional offset for the results", required = false)
+            @QueryParam("offset") int offset,
+            @Parameter(description = "Optional limit for the results", required = false)
+            @QueryParam("limit") int limit) {
         long start = System.currentTimeMillis();
         try {
             LinksUtils.validateParams(limit, offset);
@@ -229,9 +259,26 @@ public class CommitRest {
     @Path("{commitId}/resource")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the Commit specified by the provided ID.")
-    public Response getCompiledResource(@PathParam("commitId") String commitId,
-                                 @QueryParam("entityId") String entityId) {
+    @Operation(
+            tags = "commits",
+            summary = "Retrieves the Commit specified by the provided ID",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success or failure of the request"),
+                    @ApiResponse(responseCode = "400",
+                            description = "Response indicating BAD_REQUEST, Thrown if a CommitId could not be found"),
+                    @ApiResponse(responseCode = "403",
+                            description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500",
+                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response getCompiledResource(
+            @Parameter(description = "String value of the Commit ID", required = true)
+            @PathParam("commitId") String commitId,
+            @Parameter(description = "Optional Resource identifying the Entity to filter the chain of Commit",
+                    required = false)
+            @QueryParam("entityId") String entityId) {
         long start = System.currentTimeMillis();
         try {
             checkStringParam(commitId, "Commit ID is required");
@@ -270,8 +317,9 @@ public class CommitRest {
      *                  {@link String} starts with "{@code _:}".
      * @param targetId  Optional {@link String} value of the target {@link Commit} ID. NOTE: Assumes an {@link IRI}
      *                  unless {@link String} starts with "{@code _:}".
-     * @param limit     An optional limit of the number of subjects to retrieve the differences for. The number of subjects in the response
-     *                  object may be less than the limit due to the way some blank nodes are skolemized.
+     * @param limit     An optional limit of the number of subjects to retrieve the differences for.
+     *                  The number of subjects in the response object may be less than the limit due to the way
+     *                  some blank nodes are skolemized.
      * @param offset    An optional integer offset of the subject to start collecting differences from.
      * @param rdfFormat {@link String} representation of the desired {@link RDFFormat}. Default value is
      *                  {@code "jsonld"}.
@@ -283,12 +331,38 @@ public class CommitRest {
     @Path("{sourceId}/difference")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the Difference of the two specified Commits.")
-    public Response getDifference(@PathParam("sourceId") String sourceId,
-                                  @QueryParam("targetId") String targetId,
-                                  @DefaultValue("-1") @QueryParam("limit") int limit,
-                                  @QueryParam("offset") int offset,
-                                  @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
+    @Operation(
+            tags = "commits",
+            summary = "Gets the {@link Difference} for the specified commit or between the two "
+                    + "specified {@link Commit}s. If a limit and offset are passed in, retrieve the "
+                    + "differences for the paged subjects using the limit and offset. If the offset is "
+                    + "greater than the number of subjects, the additions and deletions arrays of the "
+                    + "response object will be empty arrays. If limit and offset are provided, a header "
+                    + "called has-more-results will be added to the response object that indicates whether more "
+                    + "pages of results exist.",
+            responses = {
+                    @ApiResponse(responseCode = "201",
+                            description = "Response containing the Difference for the specified commit or "
+                                    + "between the sourceId and targetId"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response getDifference(
+            @Parameter(description = "String value of the source Commit", required = true)
+            @PathParam("sourceId") String sourceId,
+            @Parameter(description = "Optional String value of the target Commit ID", required = false)
+            @QueryParam("targetId") String targetId,
+            @Parameter(description = "Optional limit of the number of subjects to retrieve the differences for. "
+                    + "The number of subjects in the response object may be less than the limit "
+                    + "due to the way some blank nodes are skolemized", required = false)
+            @DefaultValue("-1") @QueryParam("limit") int limit,
+            @Parameter(description = "Optional integer offset of the subject to start collecting differences from",
+                    required = false)
+            @QueryParam("offset") int offset,
+            @Parameter(description = "String representation of the desired RDFFormat", required = false)
+            @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
         try {
             checkStringParam(sourceId, "Source commit is required");
@@ -301,10 +375,12 @@ public class CommitRest {
                                 catalogManager.getCommitDifference(optCommit.get().getResource()),
                                 rdfFormat, transformer, bNodeService);
                     } else {
-                        PagedDifference pagedDifference = catalogManager.getCommitDifferencePaged(optCommit.get().getResource(), limit, offset);
+                        PagedDifference pagedDifference = catalogManager.getCommitDifferencePaged(
+                                optCommit.get().getResource(), limit, offset);
                         return Response.fromResponse(createCommitResponse(optCommit.get(),
                                 pagedDifference.getDifference(),
-                                rdfFormat, transformer, bNodeService)).header("Has-More-Results", pagedDifference.hasMoreResults()).build();
+                                rdfFormat, transformer, bNodeService)).header("Has-More-Results",
+                                pagedDifference.hasMoreResults()).build();
                     }
                 } else {
                     return Response.status(Response.Status.NOT_FOUND).build();
@@ -315,9 +391,12 @@ public class CommitRest {
                     return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
                             MediaType.APPLICATION_JSON).build();
                 } else {
-                    PagedDifference pagedDifference = catalogManager.getDifferencePaged(vf.createIRI(sourceId), vf.createIRI(targetId), limit, offset);
-                    return Response.ok(getDifferenceJsonString(pagedDifference.getDifference(), rdfFormat, transformer, bNodeService),
-                            MediaType.APPLICATION_JSON).header("Has-More-Results", pagedDifference.hasMoreResults()).build();
+                    PagedDifference pagedDifference = catalogManager.getDifferencePaged(
+                            vf.createIRI(sourceId), vf.createIRI(targetId), limit, offset);
+                    return Response.ok(getDifferenceJsonString(pagedDifference.getDifference(),
+                            rdfFormat, transformer, bNodeService),
+                            MediaType.APPLICATION_JSON).header("Has-More-Results",
+                            pagedDifference.hasMoreResults()).build();
                 }
             }
         } catch (IllegalArgumentException ex) {
@@ -329,24 +408,46 @@ public class CommitRest {
         }
     }
 
+    /**
+     * Get Difference For Subject.
+     * @param sourceId {@link String} value of the source {@link Commit} ID
+     * @param subjectId String value of the subjectId
+     * @param rdfFormat String representation of the desired RDFFormat
+     * @return Results
+     */
     @GET
     @Path("{sourceId}/difference/{subjectId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the Difference in the specified commit for the specified subject.")
-    public Response getDifferenceForSubject(@PathParam("sourceId") String sourceId,
-                                  @PathParam("subjectId") String subjectId,
-                                  @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
+    @Operation(
+            tags = "commits",
+            summary = "Retrieves the Difference in the specified commit for the specified subject",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response getDifferenceForSubject(
+            @Parameter(description = "String value of the source Commit", required = true)
+            @PathParam("sourceId") String sourceId,
+            @Parameter(description = "String value of the subjectId", required = true)
+            @PathParam("subjectId") String subjectId,
+            @Parameter(description = "String representation of the desired RDFFormat", required = true)
+            @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
         try {
             checkStringParam(sourceId, "Source commit is required");
             Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(sourceId));
             if (optCommit.isPresent()) {
-                    return createCommitResponse(optCommit.get(),
-                            catalogManager.getCommitDifferenceForSubject(vf.createIRI(subjectId), optCommit.get().getResource()),
-                            rdfFormat, transformer, bNodeService);
+                return createCommitResponse(optCommit.get(),
+                        catalogManager.getCommitDifferenceForSubject(vf.createIRI(subjectId),
+                                optCommit.get().getResource()),
+                        rdfFormat, transformer, bNodeService);
             } else {
-                throw ErrorUtils.sendError("Commit " + sourceId + " could not be found", Response.Status.NOT_FOUND);
+                throw ErrorUtils.sendError("Commit " + sourceId + " could not be found",
+                        Response.Status.NOT_FOUND);
             }
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);

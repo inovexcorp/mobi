@@ -216,7 +216,7 @@ export function mockOntologyManager() {
             this.entityNameProps = [];
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
-            this.uploadOntology = jasmine.createSpy('uploadOntology').and.returnValue($q.when({}));
+            this.uploadOntology = jasmine.createSpy('uploadOntology');
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
             this.getVocabularyStuff = jasmine.createSpy('getVocabularyStuff').and.returnValue($q.when({}));
             this.getOntologyStuff = jasmine.createSpy('getOntologyStuff').and.returnValue($q.when({}));

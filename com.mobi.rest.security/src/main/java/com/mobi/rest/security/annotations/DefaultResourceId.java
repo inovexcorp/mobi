@@ -42,7 +42,7 @@ public @interface DefaultResourceId {
     ValueType type() default ValueType.PRIMITIVE;
 
     /**
-     * A string representing the ID of the Resource of a request. If the type is {@link ValueType#PATH}, this will be
+     * String representing the ID of the Resource of a request. If the type is {@link ValueType#PATH}, this will be
      * the {@link javax.ws.rs.PathParam} id. If the type is {@link ValueType#QUERY}, this will be the
      * {@link javax.ws.rs.QueryParam} id. If the type is {@link ValueType#BODY}, this will be the
      * {@link org.glassfish.jersey.media.multipart.FormDataParam} id. If the type is a {@link ValueType#PROP_PATH},

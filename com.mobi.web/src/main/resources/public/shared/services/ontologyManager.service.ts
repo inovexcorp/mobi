@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq } from 'lodash';
-
+import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq, fromPairs } from 'lodash';
+import * as jszip from 'jszip';
 ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
 
 /**
@@ -106,7 +106,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param {string} id The identifier for this request.
      * @returns {Promise} A promise indicating whether the ontology was persisted.
      */
-    self.uploadOntology = function(file, ontologyJson, title, description, keywords, id = '') {
+    self.uploadOntology = function(file, ontologyJson, title, description, keywords, id = '', callback = null) {
         const fd = new FormData();
         const config = {
             transformRequest: identity,
@@ -114,20 +114,39 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
                 'Content-Type': undefined
             }
         };
+        let prepPromise;
         if (file !== undefined) {
-            fd.append('file', file);
+            const titleInfo = getFileTitleInfo(title);
+            if (titleInfo.ext !== 'zip' && file.size) {
+                prepPromise = self.compressFile(file).then(file => {
+                    fd.append('file',file);
+                });
+            } else {
+                prepPromise = Promise.resolve(fd.append('file', file));
+            }
+        } else {
+            prepPromise = Promise.resolve();
         }
-        if (ontologyJson !== undefined) {
-            fd.append('json', JSON.stringify(ontologyJson));
-        }
-        fd.append('title', title);
-        if (description) {
-            fd.append('description', description);
-        }
-        forEach(keywords, word => fd.append('keywords', word));
-        const promise = id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
-        return promise.then(response => response.data, util.rejectErrorObject);
+       return prepPromise.then(() => {
+            if (ontologyJson !== undefined) {
+                fd.append('json', JSON.stringify(ontologyJson));
+            }
+            fd.append('title', title);
+            if (description) {
+                fd.append('description', description);
+            }
+            forEach(keywords, word => fd.append('keywords', word));
+            const promise =  id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
+           
+            if (typeof(callback) == 'function') {
+                let resolver = promise.then(response => response.data, util.rejectErrorObject);
+                callback(id, resolver, title);
+            } else {
+                return promise.then(response => response.data, util.rejectErrorObject);;
+            }    
+        }).then(response => { return response});
     };
+
     /**
      * @ngdoc method
      * @name uploadChangesFile
@@ -1627,6 +1646,44 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     self.getConceptSchemeIRIs = function(ontologies, derivedConceptSchemes) {
         return map(self.getConceptSchemes(ontologies, derivedConceptSchemes), '@id');
     };
+    /**
+     * @description
+     * Compressing a file before uploading.
+     * @param {File} file The ontology file.
+     * @returns {file} compressed file
+     */
+    self.compressFile = function(file) {
+        const reader = new FileReader();
+        const zip = new jszip();
+        if (file && file.size) {
+            reader.readAsArrayBuffer(file); 
+        } else {
+            Promise.resolve(file);
+        }
+        return new Promise((resolve, reject) => {
+            reader.onload = (evt) => {
+                try {
+                    zip.file(file.name, evt.target.result);
+                    zip.generateAsync({type: 'blob', compression:'DEFLATE'})
+                        .then((content) => {
+                            let fl = new File([content], file.name + '.zip')
+                            resolve(fl)
+                        })
+
+                } catch (error) {
+                    reject(error);
+                }
+            };
+        });
+    };
+
+    function getFileTitleInfo(title) {
+        const fileName = title.toLowerCase().split('.');
+        return {
+            name: fileName.slice(0,1)[0],
+            ext: fileName.slice(-1)[0]
+        };
+    }
 
     function collectThings(ontologies, filterFunc) {
         const things = [];

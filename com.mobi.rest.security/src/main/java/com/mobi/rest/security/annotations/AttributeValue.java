@@ -51,7 +51,7 @@ public @interface AttributeValue {
     String datatype() default "http://www.w3.org/2001/XMLSchema#string";
 
     /**
-     * A string representing the value of the Attribute. If the type is {@link ValueType#PATH}, this will be the
+     * String representing the value of the Attribute. If the type is {@link ValueType#PATH}, this will be the
      * {@link javax.ws.rs.PathParam} id. If the type is {@link ValueType#QUERY}, this will be the
      * {@link javax.ws.rs.QueryParam} id. If the type is {@link ValueType#BODY}, this will be the
      * {@link org.glassfish.jersey.media.multipart.FormDataParam} id. If the type is a {@link ValueType#PROP_PATH},
