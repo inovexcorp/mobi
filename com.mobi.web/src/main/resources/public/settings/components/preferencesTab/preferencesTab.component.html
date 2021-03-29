@@ -20,22 +20,24 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="preferences-tab row h-100 py-2">
-    <div class="col-6 offset-3 h-100 mat-elevation-z4 tab-box">
+<div class="preferences-tab vertical-scroll row h-100 py-2">
+    <div *ngIf="!tabs.length">
+        <info-message>No Preference Groups could be found</info-message>
+    </div>
+    <div class="col-3">
+        <div style="padding-top: 15px; padding-left: 150px;" class="material-tabset h-100 d-flex flex-column">
+            <ul>
+                <li style="border-right: solid gray; display: block; padding: .5rem .1rem; font-weight: 500;" *ngFor="let tab of tabs">
+                    <a style="color: gray;" [ngClass]="{'active': tab.active}" (click)="select(tab)">
+                        <span [innerHtml]="tab.heading | safeHtml: 'html'" class="ng-binding"></span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>                 
+    <div class="col-9">
         <div class="row">
-            <div class="col-4">
-                <div class="material-tabset h-100 d-flex flex-column">
-                    <ul>
-                        <li *ngFor="let tab of tabs">
-                            <a [ngClass]="{'active': tab.active}" (click)="select(tab)">
-                                <span [innerHtml]="tab.heading | safeHtml: 'html'" class="ng-binding">Profile</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>                 
-            
-            <div class="col-8">
+            <div class="col-10">
                 <div *ngFor="let tab of tabs">
                     <preference-group *ngIf="tab.active" [group]="tab.type"></preference-group>
                 </div>

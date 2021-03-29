@@ -31,37 +31,40 @@ import { get } from 'lodash';
 
 export class PreferenceFormFieldComponent implements OnChanges {
     @Input() formField;
-    @Input() shaclValidation;
-    formType;
+    @Input() shaclShape;
+    formType = '';
     dataType;
-    options;
     validators: Array<ValidatorFn> = [];
     label: string = '';
         
     constructor(@Inject('utilService') private util) {}
 
     ngOnChanges() {
-        this.label = get(this.shaclValidation, ['http://www.w3.org/ns/shacl#name', '0', '@value'], '');
+        this.label = get(this.shaclShape, ['http://www.w3.org/ns/shacl#name', '0', '@value'], '');
 
-        if (this.shaclValidation['http://www.w3.org/ns/shacl#pattern']) {
-            const regex = this.shaclValidation['http://www.w3.org/ns/shacl#pattern'][0]['@value'];
+        if (this.shaclShape['http://www.w3.org/ns/shacl#pattern']) {
+            const regex = this.shaclShape['http://www.w3.org/ns/shacl#pattern'][0]['@value'];
             this.validators.push(Validators.pattern(regex));
         }
-        switch(this.shaclValidation['http://mobi.com/ontologies/preference#usesFormField'][0]['@id']) {
+
+        switch(get(this.shaclShape, ['http://mobi.com/ontologies/preference#usesFormField', '0', '@id'], '')) {
             case 'http://mobi.com/ontologies/preference#TextInput':
-              this.formType = 'text-input';
-              break;
+                this.formType = 'textInput';
+                break;
             case 'http://mobi.com/ontologies/preference#RadioInput':
-              this.formType = 'radio';
-              break;
+                this.formType = 'radio';
+                break;
             case 'http://mobi.com/ontologies/preference#ToggleInput':
-              this.formType = 'toggle';
-              break;
+                this.formType = 'toggle';
+                break;
+            case '':
+                this.util.createErrorToast('Form field type not configured');
+                break;
             default:
-              this.formType = 'Unknown Form Type!';
+                this.util.createErrorToast('Unsupported form field type')
         }
         
-        switch(this.shaclValidation['http://www.w3.org/ns/shacl#datatype'][0]['@id']) {
+        switch(this.shaclShape['http://www.w3.org/ns/shacl#datatype'][0]['@id']) {
             case 'http://www.w3.org/2001/XMLSchema#boolean':
                 this.dataType = 'boolean';
                 this.convertFormValueToBoolean();
@@ -76,7 +79,7 @@ export class PreferenceFormFieldComponent implements OnChanges {
                 this.dataType = 'Unknown Data Type!';
         }
 
-        if (this.shaclValidation['http://www.w3.org/ns/shacl#minCount'] && this.shaclValidation['http://www.w3.org/ns/shacl#minCount'][0]['@value'] > 0) {
+        if (this.shaclShape['http://www.w3.org/ns/shacl#minCount'] && this.shaclShape['http://www.w3.org/ns/shacl#minCount'][0]['@value'] > 0) {
             this.validators.push(Validators.required);
         }
 

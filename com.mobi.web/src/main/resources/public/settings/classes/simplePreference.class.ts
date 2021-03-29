@@ -21,43 +21,42 @@
  * #L%
  */
 import { Preference } from '../interfaces/preference.interface';
-import { forEach, get } from 'lodash';
+import { forEach } from 'lodash';
 import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
 import { PreferenceUtils } from './preferenceUtils.class';
 
 export class SimplePreference implements Preference {
     _topLevelPreferenceNodeshapeInstanceId: string;
     _topLevelPreferenceNodeshapeInstance: any;
-    _mainPropertyShapeId: any;
-    _formFields: any;
-    _formFieldStrings: Array<string>;
+    _formFieldPropertyShapes: any;
+    _formFieldProperties: Array<string>;
     _values: Array<any> = [];
     _json: any = {};
     _requiredPropertyShape: any = {};
 
-    constructor(preferenceJson: any, preferenceDefinitions: any) {
+    constructor(preferenceJson: any, shapeDefinitions: any) {
         preferenceJson.values = [];
         this.json = preferenceJson;
-        this.requiredPropertyShape = preferenceDefinitions[this.requiredPropertyShapeId];  
-        this.formFields = [this.requiredPropertyShape];
-        this.formFieldStrings = ['http://mobi.com/ontologies/preference#hasDataValue'];
+        this.requiredPropertyShape = shapeDefinitions[this.requiredPropertyShapeId];  
+        this.formFieldPropertyShapes = [this.requiredPropertyShape];
+        this.formFieldProperties = ['http://mobi.com/ontologies/preference#hasDataValue'];
     }
 
     public get type() {
         return this.json['@id'];
     }
 
-    public get formFields() {
-        return this._formFields;
+    public get formFieldPropertyShapes() {
+        return this._formFieldPropertyShapes;
     }
 
-    public set formFields(formFields: Array<any>) {
-        this._formFields = formFields;
-        const formFieldStrings = [];
-        forEach(formFields, formField => {
-            formFieldStrings.push(formField['http://www.w3.org/ns/shacl#path'][0]['@id']);
+    public set formFieldPropertyShapes(formFieldPropertyShapes: Array<any>) {
+        this._formFieldPropertyShapes = formFieldPropertyShapes;
+        const formFieldProperties = [];
+        forEach(formFieldPropertyShapes, formField => {
+            formFieldProperties.push(formField['http://www.w3.org/ns/shacl#path'][0]['@id']);
         });
-        this._formFieldStrings = formFieldStrings;
+        this._formFieldProperties = formFieldProperties;
     }
 
     public get requiredPropertyShape() {
@@ -76,10 +75,6 @@ export class SimplePreference implements Preference {
         return this.json['http://www.w3.org/ns/shacl#description'][0]['@value'];
     }
 
-    public get instantSubmit(): boolean {
-        return Boolean(get(this.json, ['http://mobi.com/ontologies/preference#instantSubmit']['0']['@value'], false));
-    }
-
     public get json() {
         return this._json;
     }
@@ -88,16 +83,12 @@ export class SimplePreference implements Preference {
         this._json = json;
     }
 
-    public get formFieldStrings(): Array<string> {
-        return this._formFieldStrings;
+    public get formFieldProperties(): Array<string> {
+        return this._formFieldProperties;
     }
 
-    public set formFieldStrings(formFieldStrings) {
-        this._formFieldStrings = formFieldStrings;
-    }
-
-    public get mainPropertyShapeId() {
-        return this._mainPropertyShapeId;
+    public set formFieldProperties(formFieldProperties) {
+        this._formFieldProperties = formFieldProperties;
     }
 
     public get values() {
@@ -137,8 +128,7 @@ export class SimplePreference implements Preference {
         }
     }
 
-    // Change name from addBlankForm to something else as it is only indirectly causing the creation of a blank form
-    addBlankForm(): void {
+    addBlankValue(): void {
         this.addValue('');
     }
 
@@ -163,7 +153,7 @@ export class SimplePreference implements Preference {
         this.values[0]['http://mobi.com/ontologies/preference#hasDataValue'].forEach(value => {
             const fg: FormGroup = new FormGroup({});
             const fieldsTemplate = {};
-            this.formFields.forEach(field => {
+            this.formFieldPropertyShapes.forEach(field => {
                 fieldsTemplate[field['http://www.w3.org/ns/shacl#path'][0]['@id']] = value['@value'];
             });
             for (const control in fieldsTemplate) {

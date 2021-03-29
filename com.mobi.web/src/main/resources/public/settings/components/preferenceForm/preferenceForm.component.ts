@@ -33,8 +33,9 @@ import { filter } from 'lodash';
 
 export class PreferenceFormComponent implements OnChanges {
     @Input() preference: Preference;
-    @Output() updateEvent = new EventEmitter<{preference:unknown}>();
-    shaclFieldValidation = {};
+    @Output() updateEvent = new EventEmitter<Preference>();
+    
+    shaclShapes = {};
     maxBlocks = 1000;
     numValues = 0;
     
@@ -44,35 +45,35 @@ export class PreferenceFormComponent implements OnChanges {
         
     constructor(@Inject('utilService') private util) {}
 
-    ngOnChanges() {
+    ngOnChanges(): void {
         if (this.preference.requiredPropertyShape['http://www.w3.org/ns/shacl#maxCount']) {
             this.maxBlocks = this.preference.requiredPropertyShape['http://www.w3.org/ns/shacl#maxCount'][0]['@value'];
         }
 
         this.numValues = this.preference.numValues();
 
-        // Temporary code. Put this somewhere else eventually
-        this.preference.formFieldStrings.forEach(formFieldString => {
-            const shaclValidator = filter(this.preference.formFields, formField => {
-                return formField['http://www.w3.org/ns/shacl#path'][0]['@id'] === formFieldString;
+        // Temporary code. Put this somewhere else eventually. Open to suggestions. The point of this code is to create a lookup object to get the associated property shape for a given formFieldProperty.
+        this.preference.formFieldProperties.forEach(formFieldProperty => {
+            const shaclShape = filter(this.preference.formFieldPropertyShapes, formFieldPropertyShape => {
+                return formFieldPropertyShape['http://www.w3.org/ns/shacl#path'][0]['@id'] === formFieldProperty;
             })[0];
-            this.shaclFieldValidation[formFieldString] = shaclValidator;
+            this.shaclShapes[formFieldProperty] = shaclShape;
         });
 
         this.formBlocks.setValue([]);
         this.form = this.preference.buildForm();
     }
 
-    addFormBlock() {
+    addFormBlock(): void {
         this.preference.updateWithFormValues(this.form);
-        this.preference.addBlankForm();
+        this.preference.addBlankValue();
         this.numValues = this.preference.numValues();
         this.form = this.preference.buildForm();
         this.form.markAsDirty(); // Enable the submit button
     }
 
     // Might be a better way to do this
-    deleteFormBlock(index: number) {
+    deleteFormBlock(index: number): void {
         this.formBlocks.removeAt(index); // Modify the angular form contents
         this.preference.updateWithFormValues(this.form); // modify the preference object to make it in sync with the form
         this.numValues = this.preference.numValues(); // update the number of form blocks present (to influence whether the plus button is shown)
@@ -86,6 +87,6 @@ export class PreferenceFormComponent implements OnChanges {
 
     submitForm() {
         this.preference.updateWithFormValues(this.form);
-        this.updateEvent.emit({preference: this.preference});
+        this.updateEvent.emit(this.preference);
     }
 }

@@ -28,32 +28,31 @@ import { PreferenceUtils } from './preferenceUtils.class';
 export class ComplexPreference implements Preference {
     _topLevelPreferenceNodeshapeInstanceId: string;
     _topLevelPreferenceNodeshapeInstance: any;
-    _mainPropertyShapeId: any;
-    _formFields: any;
-    _formFieldStrings: Array<string>;
+    _formFieldPropertyShapes: any;
+    _formFieldProperties: Array<string>;
     _values: Array<any> = [];
     _json: any = {};
     _requiredPropertyShape: any = {};
     _targetClass: any;
     _label: string;
 
-    constructor(preferenceJson: any, preferenceDefinitions: any) {
+    constructor(preferenceJson: any, shapeDefinitions: any) {
         preferenceJson.values = [];
         this.json = preferenceJson;
-        this.requiredPropertyShape = preferenceDefinitions[this.requiredPropertyShapeId];
+        this.requiredPropertyShape = shapeDefinitions[this.requiredPropertyShapeId];
         if (this.requiredPropertyShape['http://www.w3.org/ns/shacl#node']) {
-            const attachedNode:unknown = preferenceDefinitions[this.requiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
+            const attachedNode:unknown = shapeDefinitions[this.requiredPropertyShape['http://www.w3.org/ns/shacl#node'][0]['@id']];
             this.targetClass = attachedNode['http://www.w3.org/ns/shacl#targetClass'][0]['@id'];
             const finalObjects = attachedNode['http://www.w3.org/ns/shacl#property'].map(finalProperty => {
-                return preferenceDefinitions[finalProperty['@id']];
+                return shapeDefinitions[finalProperty['@id']];
             });
-            this.formFields = finalObjects;
+            this.formFieldPropertyShapes = finalObjects;
         }
-        const formFieldStrings = [];
-        forEach(this.formFields, formField => {
-            formFieldStrings.push(formField['http://www.w3.org/ns/shacl#path'][0]['@id']);
+        const formFieldProperties = [];
+        forEach(this.formFieldPropertyShapes, formField => {
+            formFieldProperties.push(formField['http://www.w3.org/ns/shacl#path'][0]['@id']);
         });
-        this.formFieldStrings = formFieldStrings;
+        this.formFieldProperties = formFieldProperties;
     }
 
     public get targetClass() {
@@ -64,12 +63,12 @@ export class ComplexPreference implements Preference {
         this._targetClass = targetClass;
     }
 
-    public get formFields() {
-        return this._formFields;
+    public get formFieldPropertyShapes() {
+        return this._formFieldPropertyShapes;
     }
 
-    public set formFields(formFields: Array<any>) {
-        this._formFields = formFields;
+    public set formFieldPropertyShapes(formFieldPropertyShapes: Array<any>) {
+        this._formFieldPropertyShapes = formFieldPropertyShapes;
     }
 
     public get requiredPropertyShape() {
@@ -92,10 +91,6 @@ export class ComplexPreference implements Preference {
         return this.json['http://www.w3.org/ns/shacl#description'][0]['@value'];
     }
 
-    public get instantSubmit(): boolean {
-        return false;
-    }
-
     public get json() {
         return this._json;
     }
@@ -104,16 +99,12 @@ export class ComplexPreference implements Preference {
         this._json = json;
     }
 
-    public get formFieldStrings(): Array<string> {
-        return this._formFieldStrings;
+    public get formFieldProperties(): Array<string> {
+        return this._formFieldProperties;
     }
 
-    public set formFieldStrings(formFieldStrings) {
-        this._formFieldStrings = formFieldStrings;
-    }
-
-    public get mainPropertyShapeId() {
-        return this._mainPropertyShapeId;
+    public set formFieldProperties(formFieldProperties) {
+        this._formFieldProperties = formFieldProperties;
     }
 
     public get values() {
@@ -145,10 +136,9 @@ export class ComplexPreference implements Preference {
         this.values.push(value);
     }
 
-    // Change name from addBlankForm to something else as it is only indirectly causing the creation of a blank form
-    public addBlankForm() {
+    public addBlankValue() {
         const valueObject = {};
-        this.formFieldStrings.map(field => {
+        this.formFieldProperties.map(field => {
             const innerObj = {'@value': ''};
             valueObject[field] = [innerObj];
         });
@@ -158,7 +148,7 @@ export class ComplexPreference implements Preference {
     public blankFormExists(): boolean {
         for (let i = 0; i < this.values.length; i++) {
             let populatedFieldExists = false;
-            this.formFieldStrings.forEach(field => {
+            this.formFieldProperties.forEach(field => {
                 if (this.values[i][field][0]['@value']) {
                     populatedFieldExists = true;
                 }
@@ -178,7 +168,7 @@ export class ComplexPreference implements Preference {
         this.values.forEach(value => {
             const fg: FormGroup = new FormGroup({});
             const fieldsTemplate = {};
-            this.formFields.forEach(field => {
+            this.formFieldPropertyShapes.forEach(field => {
                 fieldsTemplate[field['http://www.w3.org/ns/shacl#path'][0]['@id']] = value[field['http://www.w3.org/ns/shacl#path'][0]['@id']][0]['@value'];
             });
             
@@ -206,7 +196,7 @@ export class ComplexPreference implements Preference {
     stripBlankValues(): void {
         for (let i = this.values.length - 1; i >= 0; i--) {
             let populatedFieldExists = false;
-            this.formFieldStrings.forEach(field => {
+            this.formFieldProperties.forEach(field => {
                 if (this.values[i][field][0]['@value']) {
                     populatedFieldExists = true;
                 }
@@ -223,20 +213,20 @@ export class ComplexPreference implements Preference {
     }
 
     asJsonLD(): Array<any> {
-        if (!this.topLevelPreferenceNodeshapeInstance) {
+        if (!this.topLevelPreferenceNodeshapeInstance.length) {
             this.topLevelPreferenceNodeshapeInstance = [PreferenceUtils.convertToJsonLd({}, [this.type, 'http://mobi.com/ontologies/preference#Setting', 'http://mobi.com/ontologies/preference#Preference'])];
             this.topLevelPreferenceNodeshapeInstanceId = this.topLevelPreferenceNodeshapeInstance[0]['@id'];
         }
         this.stripBlankValues();
-        let requestBody = [];
+        let jsonLD = [];
         this.values.map(val => {
             if (!PreferenceUtils.isJsonLd(val)) {
                 PreferenceUtils.convertToJsonLd(val, [this.targetClass]);
             }
-            this.addObjectValueToObject(val['@id'], this.topLevelPreferenceNodeshapeInstance[0]); // This might break stuff!!!
+            this.addObjectValueToObject(val['@id'], this.topLevelPreferenceNodeshapeInstance[0]);
         });
-        requestBody.push(...this.topLevelPreferenceNodeshapeInstance, ...this.values);
-        return requestBody;
+        jsonLD.push(...this.topLevelPreferenceNodeshapeInstance, ...this.values);
+        return jsonLD;
     }
 
     numValues(): number {

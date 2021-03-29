@@ -41,24 +41,22 @@ import { OnInit, Inject, Component } from '@angular/core';
 })
 
 export class PreferencesTabComponent implements OnInit {
-
-    errorMessage = '';
     tabs = [];
-    preferenceGroups = [];
-    settings = this.sm.getSettings();
-    rdfsLabel = "http://www.w3.org/2000/01/rdf-schema#label";
     
-    constructor(@Inject('preferenceManagerService') private pm, @Inject('settingsManagerService') private sm,
-    @Inject('utilService') private util) {}
+    constructor(@Inject('preferenceManagerService') private pm, @Inject('utilService') private util) {}
     
     ngOnInit(): void {
         this.setPreferenceTabs();
     }
 
     addTab(preferenceGroup: any): void {
+        if (!preferenceGroup['http://www.w3.org/2000/01/rdf-schema#label']) {
+            this.util.createErrorToast('Preference Group not configured with label.')
+            return;
+        }
         this.tabs.push({
             type: preferenceGroup['@id'],
-            heading: preferenceGroup[this.rdfsLabel][0]['@value'],
+            heading: preferenceGroup['http://www.w3.org/2000/01/rdf-schema#label'][0]['@value'],
             active: false
         });
     }
@@ -76,14 +74,12 @@ export class PreferencesTabComponent implements OnInit {
         this.pm.getPreferenceGroups()
         .then(response => {
             this.tabs = [];
-            this.errorMessage = '';
             forEach(response.data, preferenceGroup => {
                 this.addTab(preferenceGroup);
             });
-        }, error => this.errorMessage = error);
-    }
-
-    save(): void {
-        this.sm.setSettings(this.settings);
+            if (this.tabs.length) {
+                this.tabs[0].active = true;
+            }
+        }, (errorMessage) => this.util.createErrorToast(errorMessage));
     }
 }

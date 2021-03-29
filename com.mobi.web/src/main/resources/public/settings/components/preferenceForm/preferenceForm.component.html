@@ -27,7 +27,7 @@
       <div *ngFor="let formBlock of formBlocks.controls; let n=index">
         <div [formGroupName]="n">
           <div *ngFor="let formField of formBlock.controls | keyvalue">
-              <preference-form-field [formField]="formField" [shaclValidation]="shaclFieldValidation[formField.key]"></preference-form-field>
+              <preference-form-field [formField]="formField" [shaclShape]="shaclShapes[formField.key]"></preference-form-field>
           </div>
           <button mat-icon-button *ngIf="numValues > 1" type="button" (click)="deleteFormBlock(n)"><mat-icon>clear</mat-icon></button>
         </div>

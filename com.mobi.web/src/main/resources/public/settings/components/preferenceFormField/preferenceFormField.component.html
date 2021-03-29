@@ -28,15 +28,10 @@
             <input type="radio" [value]="option" [formControlName]="formField.key">{{option}}
         </div>
     </div>
-    <div *ngIf="formType === 'toggle'">
+    <div style="padding-bottom: 20px;" *ngIf="formType === 'toggle'">
         <mat-slide-toggle [formControlName]="formField.key">{{label}}</mat-slide-toggle>
-        <!-- <mat-form-field class="w-100">
-            <mat-label>{{util.getBeautifulIRI(formField.key)}}</mat-label>
-            <input matInput [formControlName]="formField.key">
-            <mat-error *ngIf="this.formField.value.get([formField.key]).invalid">Not a valid value</mat-error>
-        </mat-form-field> -->
     </div>
-    <div *ngIf="formType === 'text-input'">
+    <div *ngIf="formType === 'textInput'">
         <mat-form-field class="w-100">
             <mat-label>{{label}}</mat-label>
             <input matInput [formControlName]="formField.key">

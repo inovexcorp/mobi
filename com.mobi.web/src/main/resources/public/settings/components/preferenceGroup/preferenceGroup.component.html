@@ -20,6 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
+<error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
 <div *ngFor="let preference of preferences | keyvalue">
     <preference-form (updateEvent)="updateUserPreference($event)" [preference]="preferences[preference.key]"></preference-form>
 </div>

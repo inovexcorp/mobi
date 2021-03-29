@@ -25,19 +25,17 @@ import { IntegerList } from "antlr4ts/misc/IntegerList";
  */
 export interface Preference {
     json: any;
-    formFields: any;
-    formFieldStrings: Array<string>;
-    mainPropertyShapeId: string;
+    formFieldPropertyShapes: any;
+    formFieldProperties: Array<string>;
     values: Array<any>;
     requiredPropertyShape: any;
-    topLevelPreferenceNodeshapeInstanceId: string;
+    topLevelPreferenceNodeshapeInstanceId: string; // can probably be removed
     topLevelPreferenceNodeshapeInstance: any;
     label: string;
     type: string;
-    instantSubmit: boolean;
     numValues(): number;
     addValue(value): void;
-    addBlankForm(): void;
+    addBlankValue(): void;
     buildForm(): FormGroup;
     updateWithFormValues(form: FormGroup): void;
     stripBlankValues(): void;

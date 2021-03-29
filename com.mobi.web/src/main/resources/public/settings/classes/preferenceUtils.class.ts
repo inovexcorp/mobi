@@ -23,8 +23,8 @@
 import { v4 as uuid } from 'uuid';
 
 export class PreferenceUtils {
-    static isSimplePreference(preferenceJson, preferenceDefinitions): boolean {
-        return preferenceDefinitions[preferenceJson['http://www.w3.org/ns/shacl#property'][0]['@id']]['http://www.w3.org/ns/shacl#path'][0]['@id'] === 'http://mobi.com/ontologies/preference#hasDataValue';
+    static isSimplePreference(preferenceJson, shapeDefinitions): boolean {
+        return shapeDefinitions[preferenceJson['http://www.w3.org/ns/shacl#property'][0]['@id']]['http://www.w3.org/ns/shacl#path'][0]['@id'] === 'http://mobi.com/ontologies/preference#hasDataValue';
     }
 
     static convertToJsonLd(object, intendedTypes) {
@@ -38,7 +38,7 @@ export class PreferenceUtils {
         return object;
     }
 
-    static isJsonLd(obj) {
+    static isJsonLd(obj): boolean {
         return Object.prototype.hasOwnProperty.call(obj, '@id') && Object.prototype.hasOwnProperty.call(obj, '@type');
     }
 }
