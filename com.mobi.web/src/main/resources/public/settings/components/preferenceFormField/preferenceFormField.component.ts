@@ -33,7 +33,7 @@ export class PreferenceFormFieldComponent implements OnChanges {
     @Input() formField;
     @Input() shaclShape;
     formType = '';
-    dataType;
+    options = [];
     validators: Array<ValidatorFn> = [];
     label: string = '';
         
@@ -64,19 +64,23 @@ export class PreferenceFormFieldComponent implements OnChanges {
                 this.util.createErrorToast('Unsupported form field type')
         }
         
-        switch(this.shaclShape['http://www.w3.org/ns/shacl#datatype'][0]['@id']) {
+        switch(get(this.shaclShape, ['http://www.w3.org/ns/shacl#datatype', '0', '@id'], '')) {
             case 'http://www.w3.org/2001/XMLSchema#boolean':
-                this.dataType = 'boolean';
-                this.convertFormValueToBoolean();
-                break;
-            case 'http://www.w3.org/2001/XMLSchema#string':
-                this.dataType = 'string';
+                if (this.formType === 'radio') {
+                    this.options = ['true', 'false'];
+                } else if (this.formType === 'toggle') {
+                    this.convertFormValueToBoolean();
+                }
                 break;
             case 'http://www.w3.org/2001/XMLSchema#integer':
-                this.dataType = 'integer';
                 this.formField.value.get([this.formField.key]).setValidators(Validators.pattern("^[0-9]+$"));
+                break;
+            case 'http://www.w3.org/2001/XMLSchema#string':
+                break;
+            case '':
+                this.util.createErrorToast('Form field datatype not configured');
             default:
-                this.dataType = 'Unknown Data Type!';
+                this.util.createErrorToast('Unsupported form field datatype')
         }
 
         if (this.shaclShape['http://www.w3.org/ns/shacl#minCount'] && this.shaclShape['http://www.w3.org/ns/shacl#minCount'][0]['@value'] > 0) {
