@@ -29,6 +29,7 @@ import './preferencesTab.component.scss';
 
 /**
  * @name settings.PreferencesTabComponent
+ * @requires shared.service:preferenceManagerService
  *
  * `preferencesTab` is a component that creates a Bootstrap `row` with a both a sidebar containing Preference Groups configured in the application as well as another section displaying the various preference forms contained within that preference group.
  */

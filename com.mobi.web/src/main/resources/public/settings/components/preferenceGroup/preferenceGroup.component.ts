@@ -36,14 +36,11 @@ import { ComplexPreference } from '../../classes/complexPreference.class';
 
 /**
  * @ngdoc component
- * @name settings.component:preferencesTab
- * @requires shared.service:settingsManagerService
+ * @name settings.component:preferenceGroup
+ * @requires shared.service:preferenceManagerService
  *
  * @description
- * `preferencesTab` is a component that creates a Bootstrap `row` with a {@link shared.component:block block} containing
- * a form allowing the current user to change their display preferences. The preferences are displayed using a
- * {@link settings.component:preferencesContainer preferencesContainer} and several
- * {@link settings.component:customPreference customPreference}.
+ * `preferenceGroup` is a component that consisting of a series of {@link settings.component:preferenceForm preferenceForm}.
  */
 export class PreferenceGroupComponent implements OnChanges {
     @Input() group;
