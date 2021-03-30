@@ -92,7 +92,6 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         checked: false,
         flag: false,
         filter: function(node) {
-            console.log(node);
             var match = true;
             if (dvm.os.isIriDeprecated(node.entityIRI)) {
                 match = false;

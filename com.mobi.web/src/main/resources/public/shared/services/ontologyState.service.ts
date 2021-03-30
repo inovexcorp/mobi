@@ -892,7 +892,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             get(responseIriList, 'namedIndividuals', []).forEach(iri => addIri(listItem, 'individuals.iris', iri, listItem.ontologyId));
             get(responseIriList, 'concepts', []).forEach(iri => addIri(listItem, 'concepts.iris', iri, listItem.ontologyId));
             get(responseIriList, 'conceptSchemes', []).forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, listItem.ontologyId));
-            get(responseIriList, 'deprecatedIris', []).forEach(iri => addIri(listItem, 'deprecated.iris', iri, listItem.ontologyId));
+            get(responseIriList, 'deprecatedIris', []).forEach(iri => self.annotationModified(iri, prefixes.owl + 'deprecated', "true", listItem));
             listItem.derivedConcepts = get(responseIriList, 'derivedConcepts', []);
             listItem.derivedConceptSchemes = get(responseIriList, 'derivedConceptSchemes', []);
             listItem.derivedSemanticRelations = get(responseIriList, 'derivedSemanticRelations', []);
@@ -1946,10 +1946,21 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         if (iri === listItem.ontologyId) {
             return false;
         }
-        console.log(listItem);
         return get(listItem, "entityInfo['" + iri + "'].imported", true);
     }
 
+   /**
+     * @ngdoc method
+     * @name isIriDeprecated
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Determines whether the provided IRI is deprecated or not. Defaults to false.
+     *
+     * @param {string} iri The IRI to search for
+     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
+     * @returns {boolean} True if the IRI is deprecated; false otherwise
+     */
     self.isIriDeprecated = function(iri, listItem = self.listItem) {
         if (iri === listItem.ontologyId) {
             return false;
@@ -1957,6 +1968,31 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var isDep = get(listItem, "deprecated.iris['" + iri + "']", false);
         console.log("isDep:" + isDep);
         return isDep;
+    }
+
+   /**
+     * @ngdoc method
+     * @name annotationModified
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Motify annotation state, it is being used to ensure deprecated is correct
+     *
+     * @param {string} iri The IRI to search for
+     * @param {annotationIri} annotation iri
+     * @param {annotationValue} annotation value
+     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
+     * @returns {boolean} True if the IRI is deprecated; false otherwise
+     */
+
+    self.annotationModified = function(iri, annotationIri, annotationValue, listItem = self.listItem){
+        if (annotationIri === prefixes.owl + 'deprecated') {
+            if (annotationValue === "true") {
+                set(listItem, "deprecated.iris['" + iri + "']", listItem.ontologyId);
+            } else if (annotationValue === "false" || annotationValue === null) {
+                unset(listItem, "deprecated.iris['" + iri + "']");
+            }
+        }
     }
     /**
      * @ngdoc method

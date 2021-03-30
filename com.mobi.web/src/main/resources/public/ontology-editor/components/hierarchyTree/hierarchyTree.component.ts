@@ -78,7 +78,6 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
 
 
     dvm.$onInit = function() {
-    console.log("onInit");
         dvm.activeEntityFilter = {
             name: 'Hide unused imports',
             checked: false,
@@ -104,8 +103,6 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
                 return match;
             }
         };
-
-        console.log(dvm);
         dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter), angular.copy(dvm.deprecatedEntityFilter)];
 
         dvm.activeTab = dvm.os.getActiveKey();

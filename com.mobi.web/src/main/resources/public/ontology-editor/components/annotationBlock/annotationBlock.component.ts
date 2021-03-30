@@ -82,6 +82,7 @@ function annotationBlockComponentCtrl($filter, ontologyStateService, ontologyUti
         modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
             dvm.ontoUtils.removeProperty(key, index);
             dvm.updatePropertiesFiltered();
+            dvm.os.annotationModified(dvm.os.listItem.selected["@id"], key, null);
         });
     }
     dvm.editClicked = function(annotation, index) {

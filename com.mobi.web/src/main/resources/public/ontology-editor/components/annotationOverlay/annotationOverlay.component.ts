@@ -112,6 +112,7 @@ function annotationOverlayComponentCtrl(ontologyManagerService, propertyManagerS
             if (om.entityNameProps.includes(dvm.os.annotationSelect)) {
                 dvm.ontoUtils.updateLabel();
             }
+            dvm.os.annotationModified(dvm.os.listItem.selected["@id"], dvm.os.annotationSelect, dvm.os.annotationValue);
         } else {
             dvm.util.createWarningToast('Duplicate property values not allowed');
         }
@@ -131,6 +132,7 @@ function annotationOverlayComponentCtrl(ontologyManagerService, propertyManagerS
             if (om.entityNameProps.includes(dvm.os.annotationSelect)) {
                 dvm.ontoUtils.updateLabel();
             }
+            dvm.os.annotationModified(dvm.os.listItem.selected["@id"], dvm.os.annotationSelect, dvm.os.annotationValue);
         } else {
             dvm.util.createWarningToast('Duplicate property values not allowed');
         }
@@ -144,6 +146,7 @@ function annotationOverlayComponentCtrl(ontologyManagerService, propertyManagerS
         var valueObj = dvm.pm.createValueObj(value, type, language);
         return dvm.util.createJson(dvm.os.listItem.selected['@id'], dvm.os.annotationSelect, valueObj);
     }
+
 }
 
 export default annotationOverlayComponent;
