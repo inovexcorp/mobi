@@ -217,6 +217,7 @@ describe('Annotation Overlay component', function() {
                     expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontologyStateSvc.annotationModified).toHaveBeenCalledWith('id', 'dcterms:title', 'value');
                     expect(ontoUtils.updateLabel).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
@@ -227,6 +228,7 @@ describe('Annotation Overlay component', function() {
                     expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontologyStateSvc.annotationModified).toHaveBeenCalledWith('id', 'dcterms:description', 'value');
                     expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
@@ -237,6 +239,7 @@ describe('Annotation Overlay component', function() {
                 expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.annotationModified).not.toHaveBeenCalled();
                 expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
                 expect(util.createWarningToast).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
@@ -257,6 +260,7 @@ describe('Annotation Overlay component', function() {
                     expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontologyStateSvc.annotationModified).toHaveBeenCalledWith('id', 'dcterms:title', 'value');
                     expect(ontoUtils.updateLabel).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
@@ -268,6 +272,7 @@ describe('Annotation Overlay component', function() {
                     expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontologyStateSvc.annotationModified).toHaveBeenCalledWith('id', 'dcterms:description', 'value');
                     expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
@@ -280,6 +285,7 @@ describe('Annotation Overlay component', function() {
                     expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontologyStateSvc.annotationModified).toHaveBeenCalledWith('id', 'select', 'value');
                     expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
@@ -291,6 +297,7 @@ describe('Annotation Overlay component', function() {
                 expect(ontologyStateSvc.addToDeletions).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.annotationModified).not.toHaveBeenCalled();
                 expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
                 expect(util.createWarningToast).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
