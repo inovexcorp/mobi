@@ -1,0 +1,19 @@
+@import "../../../css/variables";
+
+.preferences-tab {
+    .material-tabset {
+        padding-top: 15px; 
+        padding-left: 150px;
+
+        .preference-group-item {
+            border-right: solid gray; 
+            display: block; 
+            padding: .5rem .1rem; 
+            font-weight: 500;
+
+            a {
+                color: gray;
+            }
+        }
+    }
+}

@@ -145,7 +145,7 @@ export class ComplexPreference implements Preference {
         this.addValue(valueObject);
     }
 
-    public blankFormExists(): boolean {
+    public blankValueExists(): boolean {
         for (let i = 0; i < this.values.length; i++) {
             let populatedFieldExists = false;
             this.formFieldProperties.forEach(field => {

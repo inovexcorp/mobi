@@ -24,16 +24,13 @@ import { forEach, isEqual } from 'lodash';
 
 import { OnInit, Inject, Component } from '@angular/core';
 
+import './preferencesTab.component.scss';
+
+
 /**
- * @ngdoc component
- * @name settings.component:preferencesTab
- * @requires shared.service:settingsManagerService
+ * @name settings.PreferencesTabComponent
  *
- * @description
- * `preferencesTab` is a component that creates a Bootstrap `row` with a {@link shared.component:block block} containing
- * a form allowing the current user to change their display preferences. The preferences are displayed using a
- * {@link settings.component:preferencesContainer preferencesContainer} and several
- * {@link settings.component:customPreference customPreference}.
+ * `preferencesTab` is a component that creates a Bootstrap `row` with a both a sidebar containing Preference Groups configured in the application as well as another section displaying the various preference forms contained within that preference group.
  */
 @Component({
     selector: 'preferences-tab',

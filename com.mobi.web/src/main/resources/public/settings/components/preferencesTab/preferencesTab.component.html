@@ -25,9 +25,9 @@
         <info-message>No Preference Groups could be found</info-message>
     </div>
     <div class="col-3">
-        <div style="padding-top: 15px; padding-left: 150px;" class="material-tabset h-100 d-flex flex-column">
+        <div class="material-tabset h-100 d-flex flex-column">
             <ul>
-                <li style="border-right: solid gray; display: block; padding: .5rem .1rem; font-weight: 500;" *ngFor="let tab of tabs">
+                <li class="preference-group-item" *ngFor="let tab of tabs">
                     <a style="color: gray;" [ngClass]="{'active': tab.active}" (click)="select(tab)">
                         <span [innerHtml]="tab.heading | safeHtml: 'html'" class="ng-binding"></span>
                     </a>

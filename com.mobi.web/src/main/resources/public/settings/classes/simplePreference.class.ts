@@ -42,11 +42,11 @@ export class SimplePreference implements Preference {
         this.formFieldProperties = ['http://mobi.com/ontologies/preference#hasDataValue'];
     }
 
-    public get type() {
+    public get type(): string {
         return this.json['@id'];
     }
 
-    public get formFieldPropertyShapes() {
+    public get formFieldPropertyShapes(): Array<any> {
         return this._formFieldPropertyShapes;
     }
 
@@ -59,11 +59,11 @@ export class SimplePreference implements Preference {
         this._formFieldProperties = formFieldProperties;
     }
 
-    public get requiredPropertyShape() {
+    public get requiredPropertyShape(): any {
         return this._requiredPropertyShape;
     }
 
-    public set requiredPropertyShape(requiredPropertyShape) {
+    public set requiredPropertyShape(requiredPropertyShape: any) {
         this._requiredPropertyShape = requiredPropertyShape;
     }
 
@@ -71,15 +71,15 @@ export class SimplePreference implements Preference {
         return this.json['http://www.w3.org/ns/shacl#property'][0]['@id'];
     }
 
-    public get label() {
+    public get label(): string {
         return this.json['http://www.w3.org/ns/shacl#description'][0]['@value'];
     }
 
-    public get json() {
+    public get json(): any {
         return this._json;
     }
 
-    public set json(json) {
+    public set json(json: any) {
         this._json = json;
     }
 
@@ -87,31 +87,31 @@ export class SimplePreference implements Preference {
         return this._formFieldProperties;
     }
 
-    public set formFieldProperties(formFieldProperties) {
+    public set formFieldProperties(formFieldProperties: Array<string>) {
         this._formFieldProperties = formFieldProperties;
     }
 
-    public get values() {
+    public get values(): Array<any> {
         return this._values;
     }
 
-    public set values(values) {
+    public set values(values: Array<any>) {
         this._values = values;
     }
 
-    public get topLevelPreferenceNodeshapeInstance() {
+    public get topLevelPreferenceNodeshapeInstance(): any {
         return this._topLevelPreferenceNodeshapeInstance;
     }
 
-    public set topLevelPreferenceNodeshapeInstance(instance) {
+    public set topLevelPreferenceNodeshapeInstance(instance: any) {
         this._topLevelPreferenceNodeshapeInstance = instance;
     }
 
-    public get topLevelPreferenceNodeshapeInstanceId() {
+    public get topLevelPreferenceNodeshapeInstanceId(): string {
         return this._topLevelPreferenceNodeshapeInstanceId;
     }
 
-    public set topLevelPreferenceNodeshapeInstanceId(resourceId) {
+    public set topLevelPreferenceNodeshapeInstanceId(resourceId: string) {
         this._topLevelPreferenceNodeshapeInstanceId = resourceId;
     }
 
@@ -132,7 +132,7 @@ export class SimplePreference implements Preference {
         this.addValue('');
     }
 
-    blankFormExists(): boolean {
+    blankValueExists(): boolean {
         if (!this.values.length) {
             return false;
         }
