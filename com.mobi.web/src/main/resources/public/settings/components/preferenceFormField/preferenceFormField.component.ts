@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Input, OnChanges, Inject } from '@angular/core';
-import { Validators, ValidatorFn } from '@angular/forms';
+import { Validators, ValidatorFn, FormControl, FormGroup } from '@angular/forms';
 import { get } from 'lodash';
 
 @Component({
@@ -30,10 +30,12 @@ import { get } from 'lodash';
 })
 
 export class PreferenceFormFieldComponent implements OnChanges {
-    @Input() formField;
-    @Input() shaclShape;
-    formType = '';
-    options = [];
+    @Input() fieldFormGroup: FormGroup;
+    @Input() fieldShaclProperty: string;
+    @Input() shaclShape: any;
+    
+    formType: string = '';
+    options: Array<string> = [];
     validators: Array<ValidatorFn> = [];
     label: string = '';
         
@@ -73,12 +75,13 @@ export class PreferenceFormFieldComponent implements OnChanges {
                 }
                 break;
             case 'http://www.w3.org/2001/XMLSchema#integer':
-                this.formField.value.get([this.formField.key]).setValidators(Validators.pattern("^[0-9]+$"));
+                this.fieldFormControl.setValidators(Validators.pattern("^[0-9]+$"));
                 break;
             case 'http://www.w3.org/2001/XMLSchema#string':
                 break;
             case '':
                 this.util.createErrorToast('Form field datatype not configured');
+                break;
             default:
                 this.util.createErrorToast('Unsupported form field datatype')
         }
@@ -87,11 +90,15 @@ export class PreferenceFormFieldComponent implements OnChanges {
             this.validators.push(Validators.required);
         }
 
-        this.formField.value.get([this.formField.key]).setValidators(this.validators);
-        this.formField.value.get([this.formField.key]).updateValueAndValidity();
+        this.fieldFormControl.setValidators(this.validators);
+        this.fieldFormControl.updateValueAndValidity();
     }
 
     convertFormValueToBoolean() {
-        this.formField.value.get([this.formField.key]).setValue(this.formField.value.get([this.formField.key]).value === 'true');
+        this.fieldFormControl.setValue(this.fieldFormControl.value === 'true');
+    }
+
+    get fieldFormControl(): FormControl {
+        return this.fieldFormGroup.get([this.fieldShaclProperty]) as FormControl;
     }
 }

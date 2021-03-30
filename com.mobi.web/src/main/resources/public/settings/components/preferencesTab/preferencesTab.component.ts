@@ -26,7 +26,6 @@ import { OnInit, Inject, Component } from '@angular/core';
 
 import './preferencesTab.component.scss';
 
-
 /**
  * @name settings.PreferencesTabComponent
  * @requires shared.service:preferenceManagerService

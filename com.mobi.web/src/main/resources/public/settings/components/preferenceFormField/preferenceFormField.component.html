@@ -21,21 +21,21 @@
   #L%
   -->
 
-<form [formGroup]="formField.value">
+<form [formGroup]="fieldFormGroup">
     <div *ngIf="formType === 'radio'">
         {{label}}
         <div *ngFor="let option of options">
-            <input type="radio" [value]="option" [formControlName]="formField.key">{{option}}
+            <input type="radio" [value]="option" [formControlName]="fieldShaclProperty">{{option}}
         </div>
     </div>
     <div style="padding-bottom: 20px;" *ngIf="formType === 'toggle'">
-        <mat-slide-toggle [formControlName]="formField.key">{{label}}</mat-slide-toggle>
+        <mat-slide-toggle [formControlName]="fieldShaclProperty">{{label}}</mat-slide-toggle>
     </div>
     <div *ngIf="formType === 'textInput'">
         <mat-form-field class="w-100">
             <mat-label>{{label}}</mat-label>
-            <input matInput [formControlName]="formField.key">
-            <mat-error *ngIf="this.formField.value.get([formField.key]).invalid">Not a valid value</mat-error>
+            <input matInput [formControlName]="fieldShaclProperty">
+            <mat-error *ngIf="fieldFormControl.invalid">Not a valid value</mat-error>
         </mat-form-field>
     </div>
 </form>

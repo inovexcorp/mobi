@@ -21,7 +21,7 @@
  * #L%
  */
 
-import { Component, Input, EventEmitter, Output, OnChanges, Inject } from '@angular/core';
+import { Component, Input, EventEmitter, Output, OnChanges } from '@angular/core';
 import { FormArray, FormGroup } from '@angular/forms';
 import { Preference } from '../../interfaces/preference.interface';
 import { filter } from 'lodash';
@@ -31,6 +31,13 @@ import { filter } from 'lodash';
     templateUrl: './preferenceForm.component.html'
 })
 
+/**
+ * @ngdoc component
+ * @name settings.component:preferenceForm
+ *
+ * @description
+ * `preferenceForm` is a component that contains a form allowing a user to change their preferences
+ */
 export class PreferenceFormComponent implements OnChanges {
     @Input() preference: Preference;
     @Output() updateEvent = new EventEmitter<Preference>();
@@ -43,7 +50,7 @@ export class PreferenceFormComponent implements OnChanges {
         formBlocks: new FormArray([])
     });
         
-    constructor(@Inject('utilService') private util) {}
+    constructor() {}
 
     ngOnChanges(): void {
         if (this.preference.requiredPropertyShape['http://www.w3.org/ns/shacl#maxCount']) {
