@@ -24,6 +24,7 @@ import { Preference } from '../interfaces/preference.interface';
 import { forEach, remove } from 'lodash';
 import { FormGroup, FormControl, FormArray, Validators } from '@angular/forms';
 import { PreferenceUtils } from './preferenceUtils.class';
+import { PreferenceConstants } from './preferenceConstants.class';
 
 export class ComplexPreference implements Preference {
     _topLevelPreferenceNodeshapeInstanceId: string;
@@ -50,7 +51,7 @@ export class ComplexPreference implements Preference {
         }
         const formFieldProperties = [];
         forEach(this.formFieldPropertyShapes, formField => {
-            formFieldProperties.push(formField['http://www.w3.org/ns/shacl#path'][0]['@id']);
+            formFieldProperties.push(PreferenceUtils.getShaclPath(formField));
         });
         this.formFieldProperties = formFieldProperties;
     }
@@ -80,7 +81,7 @@ export class ComplexPreference implements Preference {
     }
 
     public get requiredPropertyShapeId(): string {
-        return this.json['http://www.w3.org/ns/shacl#property'][0]['@id'];
+        return PreferenceUtils.getShaclProperty(this.json);
     }
 
     public get type() {
@@ -169,7 +170,7 @@ export class ComplexPreference implements Preference {
             const fg: FormGroup = new FormGroup({});
             const fieldsTemplate = {};
             this.formFieldPropertyShapes.forEach(field => {
-                fieldsTemplate[field['http://www.w3.org/ns/shacl#path'][0]['@id']] = value[field['http://www.w3.org/ns/shacl#path'][0]['@id']][0]['@value'];
+                fieldsTemplate[PreferenceUtils.getShaclPath(field)] = value[PreferenceUtils.getShaclPath(field)][0]['@value'];
             });
             
             for (const control in fieldsTemplate) {
@@ -234,15 +235,15 @@ export class ComplexPreference implements Preference {
     }
 
     addObjectValueToObject(newObjValId, obj) {
-        if (!obj['http://mobi.com/ontologies/preference#hasObjectValue']) {
-            obj['http://mobi.com/ontologies/preference#hasObjectValue'] = [];
+        if (!obj[PreferenceConstants.HAS_OBJECT_VALUE]) {
+            obj[PreferenceConstants.HAS_OBJECT_VALUE] = [];
         }
-        obj['http://mobi.com/ontologies/preference#hasObjectValue'].push({
+        obj[PreferenceConstants.HAS_OBJECT_VALUE].push({
             '@id': newObjValId
         });
     }
 
     removeObjectValueFromObject(objValIdToRemove, obj): void { // I can probably remove one of the parameters since this will only ever be use with the topLevelPreferenceNodeShapeInstance
-        remove(obj['http://mobi.com/ontologies/preference#hasObjectValue'], { '@id': objValIdToRemove });
+        remove(obj[PreferenceConstants.HAS_OBJECT_VALUE], { '@id': objValIdToRemove });
     }
 }

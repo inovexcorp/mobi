@@ -21,10 +21,12 @@
  * #L%
  */
 import { v4 as uuid } from 'uuid';
+import { PreferenceConstants } from './preferenceConstants.class';
 
 export class PreferenceUtils {
     static isSimplePreference(preferenceJson, shapeDefinitions): boolean {
-        return shapeDefinitions[preferenceJson['http://www.w3.org/ns/shacl#property'][0]['@id']]['http://www.w3.org/ns/shacl#path'][0]['@id'] === 'http://mobi.com/ontologies/preference#hasDataValue';
+        const requiredPropertyShape = shapeDefinitions[PreferenceUtils.getShaclProperty(preferenceJson)];
+        return PreferenceUtils.getShaclPath(requiredPropertyShape) === PreferenceConstants.HAS_DATA_VALUE;
     }
 
     static convertToJsonLd(object, intendedTypes) {
@@ -40,5 +42,13 @@ export class PreferenceUtils {
 
     static isJsonLd(obj): boolean {
         return Object.prototype.hasOwnProperty.call(obj, '@id') && Object.prototype.hasOwnProperty.call(obj, '@type');
+    }
+
+    static getShaclProperty(object) {
+        return object['http://www.w3.org/ns/shacl#property'][0]['@id'];
+    }
+
+    static getShaclPath(object) {
+        return object['http://www.w3.org/ns/shacl#path'][0]['@id'];
     }
 }

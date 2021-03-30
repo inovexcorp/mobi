@@ -24,22 +24,24 @@ import { Preference } from '../interfaces/preference.interface';
 import { forEach } from 'lodash';
 import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
 import { PreferenceUtils } from './preferenceUtils.class';
+import { PreferenceConstants } from './preferenceConstants.class';
+
 
 export class SimplePreference implements Preference {
-    _topLevelPreferenceNodeshapeInstanceId: string;
-    _topLevelPreferenceNodeshapeInstance: any;
-    _formFieldPropertyShapes: any;
-    _formFieldProperties: Array<string>;
-    _values: Array<any> = [];
-    _json: any = {};
-    _requiredPropertyShape: any = {};
+    private _topLevelPreferenceNodeshapeInstanceId: string;
+    private _topLevelPreferenceNodeshapeInstance: any;
+    private _formFieldPropertyShapes: any;
+    private _formFieldProperties: Array<string>;
+    private _values: Array<any> = [];
+    private _json: any = {};
+    private _requiredPropertyShape: any = {};
 
     constructor(preferenceJson: any, shapeDefinitions: any) {
         preferenceJson.values = [];
         this.json = preferenceJson;
         this.requiredPropertyShape = shapeDefinitions[this.requiredPropertyShapeId];  
         this.formFieldPropertyShapes = [this.requiredPropertyShape];
-        this.formFieldProperties = ['http://mobi.com/ontologies/preference#hasDataValue'];
+        this.formFieldProperties = [PreferenceConstants.HAS_DATA_VALUE];
     }
 
     public get type(): string {
@@ -54,7 +56,7 @@ export class SimplePreference implements Preference {
         this._formFieldPropertyShapes = formFieldPropertyShapes;
         const formFieldProperties = [];
         forEach(formFieldPropertyShapes, formField => {
-            formFieldProperties.push(formField['http://www.w3.org/ns/shacl#path'][0]['@id']);
+            formFieldProperties.push(PreferenceUtils.getShaclPath(formField));
         });
         this._formFieldProperties = formFieldProperties;
     }
@@ -68,7 +70,7 @@ export class SimplePreference implements Preference {
     }
 
     public get requiredPropertyShapeId(): string {
-        return this.json['http://www.w3.org/ns/shacl#property'][0]['@id'];
+        return PreferenceUtils.getShaclProperty(this.json);
     }
 
     public get label(): string {
@@ -118,7 +120,7 @@ export class SimplePreference implements Preference {
     // Will take a literal value
     addValue(value: any): void {
         if (this.values.length) {
-            this.values[0]['http://mobi.com/ontologies/preference#hasDataValue'].push({'@value': value});
+            this.values[0][PreferenceConstants.HAS_DATA_VALUE].push({'@value': value});
         } else {
             this.values = [
                 {
@@ -137,7 +139,7 @@ export class SimplePreference implements Preference {
             return false;
         }
         let blankValExists = false;
-        this.values[0]['http://mobi.com/ontologies/preference#hasDataValue'].forEach(val => {
+        this.values[0][PreferenceConstants.HAS_DATA_VALUE].forEach(val => {
             if (!val['@value']) {
                 blankValExists = true;
             }
@@ -150,11 +152,11 @@ export class SimplePreference implements Preference {
             formBlocks: new FormArray([])
         });
 
-        this.values[0]['http://mobi.com/ontologies/preference#hasDataValue'].forEach(value => {
+        this.values[0][PreferenceConstants.HAS_DATA_VALUE].forEach(value => {
             const fg: FormGroup = new FormGroup({});
             const fieldsTemplate = {};
             this.formFieldPropertyShapes.forEach(field => {
-                fieldsTemplate[field['http://www.w3.org/ns/shacl#path'][0]['@id']] = value['@value'];
+                fieldsTemplate[PreferenceUtils.getShaclPath(field)] = value['@value'];
             });
             for (const control in fieldsTemplate) {
                 const newFormGroup: FormGroup = new FormGroup({});
@@ -168,9 +170,9 @@ export class SimplePreference implements Preference {
     }
 
     public updateWithFormValues(form: FormGroup) {
-        this.values[0]['http://mobi.com/ontologies/preference#hasDataValue'] = [];
+        this.values[0][PreferenceConstants.HAS_DATA_VALUE] = [];
         form.get('formBlocks').value.forEach((value) => {
-            this.values[0]['http://mobi.com/ontologies/preference#hasDataValue'].push({'@value': String(value['http://mobi.com/ontologies/preference#hasDataValue']['http://mobi.com/ontologies/preference#hasDataValue'])});
+            this.values[0][PreferenceConstants.HAS_DATA_VALUE].push({'@value': String(value[PreferenceConstants.HAS_DATA_VALUE][PreferenceConstants.HAS_DATA_VALUE])});
         });
     }
 
@@ -178,9 +180,9 @@ export class SimplePreference implements Preference {
         if (!this.values.length) {
             return;
         }
-        for (let i = this.values[0]['http://mobi.com/ontologies/preference#hasDataValue'].length - 1; i >= 0; i--) {
-            if (!this.values[0]['http://mobi.com/ontologies/preference#hasDataValue'][i]['@value']) {
-                this.values[0]['http://mobi.com/ontologies/preference#hasDataValue'].splice(i, 1);
+        for (let i = this.values[0][PreferenceConstants.HAS_DATA_VALUE].length - 1; i >= 0; i--) {
+            if (!this.values[0][PreferenceConstants.HAS_DATA_VALUE][i]['@value']) {
+                this.values[0][PreferenceConstants.HAS_DATA_VALUE].splice(i, 1);
             }
         }
     }
@@ -190,7 +192,7 @@ export class SimplePreference implements Preference {
     }
 
     numValues(): number {
-        return this.values[0]['http://mobi.com/ontologies/preference#hasDataValue'].length;
+        return this.values[0][PreferenceConstants.HAS_DATA_VALUE].length;
     }
 
     asJsonLD(): Array<any> {
