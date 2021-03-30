@@ -29,11 +29,18 @@ import { get } from 'lodash';
     templateUrl: './preferenceFormField.component.html'
 })
 
+/**
+ * @ngdoc component
+ * @name settings.component:preferenceFormField
+ *
+ * @description
+ * `preferenceFormField` is a component that create form input(s) for a specific form field
+ */
 export class PreferenceFormFieldComponent implements OnChanges {
     @Input() fieldFormGroup: FormGroup;
     @Input() fieldShaclProperty: string;
     @Input() shaclShape: any;
-    
+
     formType: string = '';
     options: Array<string> = [];
     validators: Array<ValidatorFn> = [];

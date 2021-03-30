@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-preferenceManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'prefixes', 'httpService'];
+preferenceManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'httpService'];
 
 /**
  * @ngdoc service
@@ -28,68 +28,28 @@ preferenceManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService',
  * @requires $http
  * @requires $q
  * @requires shared.service:utilService
- * @requires shared.service:prefixes
  * @requires shared.service:httpService
  *
  * @description
  * `preferenceManagerService` is a service that provides access to the Mobi Preference REST endpoints and variables
  * to hold information about the different types of preferences.
  */
-function preferenceManagerService($http, $q, REST_PREFIX, utilService, prefixes, httpService) {
+function preferenceManagerService($http, $q, REST_PREFIX, utilService, httpService) {
     const self = this,
         util = utilService,
         prefix = REST_PREFIX + 'preference';
 
     /**
-     * @ngdoc property
-     * @name activityTypes
-     * @propertyOf shared.service:preferenceManagerService
-     * @type {Object[]}
-     *
-     * @description
-     * `activityTypes` is an array of objects that represent the different subclasses of `prov:Activity`
-     * that Mobi supports ordered such that subclasses are first. Each object contains the type IRI, the
-     * associated active word, and associated predicate for linking to the affected `prov:Entity(s)`.
-     */
-    self.activityTypes = [
-        {
-            type: prefixes.matprov + 'CreateActivity',
-            word: 'created',
-            pred: prefixes.prov + 'generated'
-        },
-        {
-            type: prefixes.matprov + 'UpdateActivity',
-            word: 'updated',
-            pred: prefixes.prov + 'used'
-        },
-        {
-            type: prefixes.matprov + 'UseActivity',
-            word: 'used',
-            pred: prefixes.prov + 'used'
-        },
-        {
-            type: prefixes.matprov + 'DeleteActivity',
-            word: 'deleted',
-            pred: prefixes.prov + 'invalidated'
-        }
-    ];
-
-    /**
      * @ngdoc method
      * @name getUserPreferences
-     * @methodOf shared.service:provManagerService
+     * @methodOf shared.service:preferenceManagerService
      *
      * @description
-     * Makes a call to GET /mobirest/provenance-data to get a paginated list of `Activities` and their associated
-     * `Entities`. Returns the paginated response for the query using the passed page index and limit. The
-     * data of the response will be an object with the array of `Activities` and the array of associated
-     * `Entities`, the "x-total-count" headers will contain the total number of `Activities` matching the
-     * query, and the "link" header will contain the URLs for the next and previous page if present. Can
-     * optionally be a cancel-able request by passing a request id.
+     * Makes a call to GET /mobirest/preference to get a JSON object of all user preferences and referenced entities 
+     * for the active user. The return object will have a key for each preference type a user has previously created and values
+     * that are a json-ld representation of the instance of Preference and referenced entities that they have previously created
+     * for that type.
      *
-     * @param {Object} paginatedConfig A configuration object for paginated requests
-     * @param {number} paginatedConfig.limit The number of results per page
-     * @param {number} paginatedConfig.pageIndex The index of the page of results to retrieve
      * @param {string} [id=''] The identifier for this request
      * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
      * error message
@@ -99,6 +59,22 @@ function preferenceManagerService($http, $q, REST_PREFIX, utilService, prefixes,
         return promise.then($q.when, util.rejectError);
     };
 
+    /**
+     * @ngdoc method
+     * @name updateUserPreference
+     * @methodOf shared.service:preferenceManagerService
+     *
+     * @description
+     * Calls the PUT /mobirest/preference/{preferenceId} endpoint and updates the User Preference with the passed in preferenceId
+     * using the JSON-LD provided in the passed in object.
+     *
+     * @param {string} preferenceId The id of the user preference that will be updated 
+     * @param {string} preferenceType The type of user preference being updated
+     * @param {Object} userPreference The JSON-LD containing the new user preference values and referenced entities
+     * @param {string} [id=''] The identifier for this request
+     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * error message
+     */
     self.updateUserPreference = function(preferenceId, preferenceType, userPreference, id = '') {
         const config = { params: { preferenceType } };
         const promise = id ? httpService.put(prefix + '/' + encodeURIComponent(preferenceId), userPreference, config, id) 
@@ -106,6 +82,21 @@ function preferenceManagerService($http, $q, REST_PREFIX, utilService, prefixes,
         return promise.then($q.when, util.rejectError);
     };
 
+    /**
+     * @ngdoc method
+     * @name createUserPreference
+     * @methodOf shared.service:preferenceManagerService
+     *
+     * @description
+     * Calls the POST /mobirest/preference endpoint and creates an instance of preference as well as it's referenced entities for
+     * the active user of the type defined by the passed in preferenceType using the JSON-LD provided in the passed in object.
+     *
+     * @param {string} preferenceType The type of user preference being updated
+     * @param {Object} userPreference The JSON-LD containing the new user preference values and referenced entities
+     * @param {string} [id=''] The identifier for this request
+     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * error message
+     */
     self.createUserPreference = function(preferenceType, userPreference, id = '') {
         const config = { params: { preferenceType } };
         const promise = id ? httpService.post(prefix, userPreference, config, id) 
@@ -113,18 +104,43 @@ function preferenceManagerService($http, $q, REST_PREFIX, utilService, prefixes,
         return promise.then($q.when, util.rejectError);
     };
 
+    /**
+     * @ngdoc method
+     * @name getPreferenceGroups
+     * @methodOf shared.service:preferenceManagerService
+     *
+     * @description
+     * Makes a call to GET /mobirest/preference/groups to get the JSON-LD representation of each
+     * Preference Group currently defined in the repo.
+     *
+     * @param {string} [id=''] The identifier for this request
+     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * error message
+     */
     self.getPreferenceGroups = function(id = '') {
         const promise = id ? httpService.get(prefix + '/groups', id) : $http.get(prefix + '/groups');
         return promise.then($q.when, util.rejectError);
     };
 
+    /**
+     * @ngdoc method
+     * @name getPreferenceDefinitions
+     * @methodOf shared.service:preferenceManagerService
+     *
+     * @description
+     * Makes a call to GET /mobirest/preference/groups/{preferenceGroup}/definitions to get the JSON-LD representation of each
+     * subclass of Preference defined in the repo that is declared as being part of the passed in Preference Group.
+     *
+     * @param {string} preferenceGroup The preference group to retrieve preference definitions for
+     * @param {string} [id=''] The identifier for this request
+     * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+     * error message
+     */
     self.getPreferenceDefinitions = function(preferenceGroup, id = '') {
         const promise = id ? httpService.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup) + '/definitions', id) 
             : $http.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup) + '/definitions');
         return promise.then($q.when, util.rejectError);
     };
-
-    // self.deleteUserPreference = function()
 }
 
 export default preferenceManagerService;
