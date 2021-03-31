@@ -1985,6 +1985,24 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             } else if (annotationValue === "false" || annotationValue === null) {
                 unset(listItem, "deprecated.iris['" + iri + "']");
             }
+            triggerTreeRender(listItem);
+        }
+    }
+    /**
+    Method to trigger re-rendering of trees
+    */
+    function triggerTreeRender(listItem = self.listItem) {
+        var flatLists = ['classes', 'dataProperties', 'objectProperties', 'annotations',
+            'concepts', 'conceptSchemes', 'dataProperties', 'individuals'];
+
+        forEach(flatLists, listKey =>{
+            if('flat' in listItem[listKey]){
+                listItem[listKey].flat = listItem[listKey].flat.map(x => x);
+            }
+        });
+
+        if('flatEverythingTree' in listItem){
+            listItem['flatEverythingTree'] = listItem['flatEverythingTree'].map(x => x);
         }
     }
     /**

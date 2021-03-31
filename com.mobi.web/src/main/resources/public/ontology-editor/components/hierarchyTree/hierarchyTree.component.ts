@@ -76,7 +76,6 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     dvm.dropdownFilterActive = false;
     dvm.dropdownFilters = []
 
-
     dvm.$onInit = function() {
         dvm.activeEntityFilter = {
             name: 'Hide unused imports',
