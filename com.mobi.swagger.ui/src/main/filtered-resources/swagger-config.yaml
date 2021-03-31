@@ -6,6 +6,7 @@ resourcePackages:
   - com.mobi.explorable.dataset.rest
   - com.mobi.jaas.rest
   - com.mobi.platform.config.rest
+  - com.mobi.preference.rest
   - com.mobi.prov.rest
   - com.mobi.rest.security
   - com.mobi.rest.util

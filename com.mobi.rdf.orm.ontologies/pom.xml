@@ -111,6 +111,10 @@
                                     <ontologyFile>${project.basedir}/src/main/resources/owl.ttl</ontologyFile>
                                     <outputPackage>com.mobi.ontologies.owl</outputPackage>
                                 </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/shacl.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.ontologies.shacl</outputPackage>
+                                </ontology>
                             </generates>
                             <references>
                                 <ontology>

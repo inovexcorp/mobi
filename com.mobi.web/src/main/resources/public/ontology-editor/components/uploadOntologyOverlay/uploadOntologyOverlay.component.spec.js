@@ -109,41 +109,71 @@ describe('Upload Ontology Overlay component', function() {
                     this.controller.keywords = [' keywords '];
                     this.controller.index = 0;
                     this.newId = 'upload-' + (ontologyStateSvc.uploadList.length + this.controller.index);
+                    this.controller.finishLoading =  spyOn(this.controller, 'finishLoading').and.callFake(function(id) {
+                        ontologyStateSvc.uploadList.push({promise: jasmine.any(Object), id: id, title: 'title', error: undefined})
+                    });
+                    ontologyManagerSvc.uploadOntology.and.callFake(function (file, ontologyJson, title, description, keywords, id = '', callback) {
+                        callback(id, $q.when(), title);
+                    })
                 });
                 it('less than controller.files.length', function() {
+    
                     this.controller.submit();
-                    expect(ontologyManagerSvc.uploadOntology).toHaveBeenCalledWith({name: 'file1'}, undefined, 'title', 'description', ['keywords'], this.newId);
+                    expect(ontologyManagerSvc.uploadOntology).toHaveBeenCalledWith({name: 'file1'}, undefined, 'title', 'description', ['keywords'], this.newId, this.controller.finishLoading);
                     expect(this.controller.index).toEqual(1);
                     expect(this.controller.title).toEqual('file2');
                     expect(this.controller.description).toEqual('');
                     expect(this.controller.keywords).toEqual([]);
                     expect(scope.resolve.startUpload).toHaveBeenCalled();
+                    expect(this.controller.finishLoading).toHaveBeenCalled();
                     expect(ontologyStateSvc.uploadList).toContain({promise: jasmine.any(Object), id: this.newId, title: 'title', error: undefined});
                     expect(scope.close).not.toHaveBeenCalled();
                 });
                 it('equal to controller.files.length', function() {
                     this.controller.total = 1;
                     this.controller.submit();
-                    expect(ontologyManagerSvc.uploadOntology).toHaveBeenCalledWith({name: 'file1'}, undefined, 'title', 'description', ['keywords'], this.newId);
+                    expect(ontologyManagerSvc.uploadOntology).toHaveBeenCalledWith({name: 'file1'}, undefined, 'title', 'description', ['keywords'], this.newId, this.controller.finishLoading);
                     expect(scope.resolve.startUpload).toHaveBeenCalled();
                     expect(ontologyStateSvc.uploadList).toContain({promise: jasmine.any(Object), id: this.newId, title: 'title', error: undefined});
                     expect(scope.close).toHaveBeenCalled();
                 });
             });
             describe('when uploadFile is', function() {
+                beforeEach(function() {
+                    this.controller.title = 'title';
+                    this.controller.description = 'description';
+                    this.controller.keywords = [' keywords '];
+                    this.controller.index = 0;
+                    this.newId = 'upload-' + (ontologyStateSvc.uploadList.length + this.controller.index);
+                    this.controller.finishLoading =  spyOn(this.controller, 'finishLoading').and.callFake(function(id, promise, title) {
+                        promise.then(scope.resolve.finishUpload, errorObject => {
+                            ontologyStateSvc.addErrorToUploadItem(id, errorObject);
+                            scope.resolve.finishUpload();
+                        });
+                        ontologyStateSvc.uploadList.push({promise: jasmine.any(Object), id, title, error: undefined})
+                    });
+                    ontologyManagerSvc.uploadOntology.and.callFake(function (file, ontologyJson, title, description, keywords, id = '', callback) {
+                        callback(id, $q.when(), title);
+                    })
+                });
                 it('resolved', function() {
-                    ontologyManagerSvc.uploadOntology.and.returnValue($q.when());
                     this.controller.submit();
+                
                     scope.$apply();
+                    expect(ontologyManagerSvc.uploadOntology).toHaveBeenCalledWith({name: 'file1'}, undefined, 'title', 'description', ['keywords'], this.newId, this.controller.finishLoading);
                     expect(ontologyStateSvc.addErrorToUploadItem).not.toHaveBeenCalled();
+                    expect(this.controller.finishLoading).toHaveBeenCalled();
                     expect(scope.resolve.finishUpload).toHaveBeenCalled();
                 });
                 it('rejected', function() {
                     this.controller.index = 0;
                     this.newId = 'upload-' + (ontologyStateSvc.uploadList.length + this.controller.index);
-                    ontologyManagerSvc.uploadOntology.and.returnValue($q.reject('error'));
+                    ontologyManagerSvc.uploadOntology.and.callFake(function (file, ontologyJson, title, description, keywords, id = '', callback) {
+                        callback(id, $q.reject('error'), title);
+                    })
                     this.controller.submit();
                     scope.$apply();
+                    expect(ontologyManagerSvc.uploadOntology).toHaveBeenCalledWith({name: 'file1'}, undefined, 'title', 'description', ['keywords'], this.newId, this.controller.finishLoading);
                     expect(ontologyStateSvc.addErrorToUploadItem).toHaveBeenCalledWith(this.newId, 'error');
                     expect(scope.resolve.finishUpload).toHaveBeenCalled();
                 });

@@ -24,15 +24,15 @@
 @import "./variables";
 
 $primary: (
-    color: $mobi-primary-500,
-    dark: $mobi-primary-700,
-    light: $mobi-primary-100
+    color: map-get($mobi-primary, 500),
+    dark: map-get($mobi-primary, 700),
+    light: map-get($mobi-primary, 100)
 );
 
 $secondary: (
-    color: $mobi-secondary-500,
-    dark: $mobi-secondary-700,
-    light: $mobi-secondary-100
+    color: map-get($mobi-secondary, 500),
+    dark: map-get($mobi-secondary, 700),
+    light: map-get($mobi-secondary, 100)
 );
 
 $colors: (

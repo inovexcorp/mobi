@@ -28,7 +28,6 @@ import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
-import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
@@ -41,6 +40,7 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.osgi.service.component.annotations.Reference;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
@@ -49,10 +49,14 @@ import java.util.concurrent.Semaphore;
 public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
 
-    protected ModelFactory modelFactory;
-    protected OntologyManager ontologyManager;
-    protected VersioningManager versioningManager;
-    protected SesameTransformer sesameTransformer;
+    @Reference
+    public ModelFactory modelFactory;
+
+    @Reference
+    public OntologyManager ontologyManager;
+
+    @Reference
+    public SesameTransformer sesameTransformer;
 
     /**
      * Semaphore for protecting ontology IRI uniqueness checks.

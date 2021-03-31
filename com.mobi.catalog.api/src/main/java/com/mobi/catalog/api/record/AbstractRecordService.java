@@ -45,6 +45,7 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.osgi.service.component.annotations.Reference;
 
 import java.time.OffsetDateTime;
 import java.util.Set;
@@ -58,11 +59,19 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractRecordService<T extends Record> implements RecordService<T> {
 
-    protected CatalogProvUtils provUtils;
-    protected CatalogUtilsService utilsService;
-    protected OrmFactory<T> recordFactory;
-    protected ValueFactory valueFactory;
-    protected CatalogFactory catalogFactory;
+    @Reference
+    public CatalogProvUtils provUtils;
+
+    @Reference
+    public CatalogUtilsService utilsService;
+
+    @Reference
+    public ValueFactory valueFactory;
+
+    @Reference
+    public CatalogFactory catalogFactory;
+
+    public OrmFactory<T> recordFactory;
 
     @Override
     public T create(User user, RecordOperationConfig config, RepositoryConnection conn) {

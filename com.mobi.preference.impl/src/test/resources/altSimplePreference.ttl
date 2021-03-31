@@ -1,0 +1,5 @@
+@prefix test: <http://example.com/>.
+@prefix pref: <http://mobi.com/ontologies/preference#>.
+
+test:AltSimplePreference a test:ExampleSimplePreference, pref:Preference;
+    pref:hasDataValue "alt"@en .
