@@ -16,6 +16,7 @@ import { PreferenceFormComponent } from '../preferenceForm/preferenceForm.compon
 import { KeyValuePipe } from '../../../shared/pipes/keyvalue.pipe';
 import { PreferenceConstants } from '../../classes/preferenceConstants.class';
 import { SimplePreference } from '../../classes/simplePreference.class';
+import { By } from '@angular/platform-browser';
 
 describe('Preference Group component', function() {
     let component: PreferenceGroupComponent;
@@ -239,6 +240,23 @@ describe('Preference Group component', function() {
             component.updateUserPreference(pref);
             expect(preferenceManagerStub.updateUserPreference).not.toHaveBeenCalled();
             expect(preferenceManagerStub.createUserPreference).toHaveBeenCalled();
+        }));
+    });
+    describe('contains the correct html', function() {
+        it('when preferences are retrieved successfully', fakeAsync(function() {
+            component.retrievePreferences();
+            tick();
+            fixture.detectChanges();
+            expect(element.queryAll(By.css('div')).length).toEqual(2);
+            expect(element.queryAll(By.css('error-display')).length).toEqual(0);
+        }));
+        it('when preferences are can not be retrieved', fakeAsync(function() {
+            preferenceManagerStub.getUserPreferences.and.returnValue(Promise.reject('Error message'));
+            component.retrievePreferences();
+            tick();
+            fixture.detectChanges();
+            expect(element.queryAll(By.css('div')).length).toEqual(0);
+            expect(element.queryAll(By.css('error-display')).length).toEqual(1);
         }));
     });
 });
