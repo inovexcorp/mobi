@@ -873,7 +873,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             cm.getRecordBranches(recordId, catalogId),
             cm.getRecordVersions(recordId, catalogId)
         ]).then(response => {
-            // process getOntologyStuff
             listItem.ontologyId = response[0].ontologyIRI;
             listItem.editorTabStates.project.entityIRI = response[0].ontologyIRI;    
             forEach(response[0].propertyToRanges, (ranges, propertyIRI) => {
@@ -931,7 +930,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             listItem.flatEverythingTree = self.createFlatEverythingTree(listItem);
             concat(pm.ontologyProperties, keys(listItem.dataProperties.iris), keys(listItem.objectProperties.iris), listItem.derivedSemanticRelations, pm.conceptSchemeRelationshipList, pm.schemeRelationshipList).forEach(iri => delete listItem.annotations.iris[iri]);
             listItem.failedImports = get(response[0], 'failedImports', []);
-            // process getRecordBranches
             listItem.branches = response[1].data;
             var branch = find(listItem.branches, { '@id': listItem.ontologyRecord.branchId })
             listItem.userBranch = cm.isUserBranch(branch);
@@ -939,7 +937,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 listItem.createdFromExists = some(listItem.branches, {'@id': util.getPropertyId(branch, prefixes.catalog + 'createdFrom')});
             }
             listItem.masterBranchIRI = find(listItem.branches, {[prefixes.dcterms + 'title']: [{'@value': 'MASTER'}]})['@id'];
-            // process getRecordVersions
             listItem.tags = filter(response[2].data, version => includes(get(version, '@type'), prefixes.catalog + 'Tag'));
             return pe.evaluateRequest(modifyRequest);
         },  $q.reject)
@@ -953,7 +950,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             return listItem;
         }, $q.reject);
     }
-    // TODO add info d
+
     function addInfo(listItem, iri, ontologyId) {
         var info = merge((listItem.entityInfo[iri] || {}), {
             imported: listItem.ontologyId !== ontologyId,

@@ -99,7 +99,6 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
                 if (dvm.os.isIriDeprecated(node.entityIRI)) {
                     match = false;
                 }
-                console.log( "-=-=-=-=" + node.entityIRI + "-match:" + match);
                 return match;
             }
         };

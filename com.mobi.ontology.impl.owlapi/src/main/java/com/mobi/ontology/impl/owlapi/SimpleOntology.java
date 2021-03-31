@@ -1017,12 +1017,7 @@ public class SimpleOntology implements Ontology {
         tupleQueryResult.forEach(r -> r.getBinding("s")
                 .ifPresent(b -> {
                     if (!(b.getValue() instanceof BNode)) {
-//                        System.out.println(b);
-
                         iris.add(this.valueFactory.createIRI(b.getValue().stringValue()));
-
-//                        SimpleOntologyValues.mobiIRI(b.getValue().stringValue());
-
                     }
                 }));
         return iris;
