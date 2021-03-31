@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,15 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/* Core variables */
-@import "../../../css/variables";
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
-.profile-tab {
-    .block {
-        height: 100%;
-
-        .block-content {
-            padding: 10px;
+/**
+ * Validator for emails that accepts empty or null values.
+ * 
+ * @param control The FormControl to apply this validator to
+ */
+export function uniqueValue(arr: any[]): ValidatorFn {
+    console.log('inside factory');
+    return (control: AbstractControl): { [key: string]: boolean } | null => {
+    // return (control: AbstractControl): ValidationErrors | null => {
+        if (control.value === '' || arr === null || arr.length) {
+            return null;
         }
-    }
+        console.log('in validator', arr);
+        return arr.includes(control.value) ? {'uniqueValue': true} : null;
+    };
 }

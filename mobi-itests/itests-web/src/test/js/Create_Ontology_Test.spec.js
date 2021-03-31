@@ -151,8 +151,8 @@ module.exports = {
     'Step 10: Verify no changes are shown': function(browser) {
         browser
             .assert.containsText('.nav-link.active span', 'Changes')
-            .waitForElementVisible('info-message span')
-            .assert.containsText('info-message span', 'You don\'t have any uncommitted changes.')
+            .waitForElementVisible('info-message p')
+            .assert.containsText('info-message p', 'You don\'t have any uncommitted changes.')
             .assert.elementNotPresent('saved-changes-tab .expansion-panel')
     },
 

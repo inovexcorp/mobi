@@ -132,7 +132,7 @@ module.exports = {
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]'})
             .click('xpath', '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]')
             .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox')
-            .waitForElementVisible('info-message span')
-            .assert.containsText('info-message span', 'No entities match your filter.')
+            .waitForElementVisible('info-message p')
+            .assert.containsText('info-message p', 'No entities match your filter.')
     }
 }
