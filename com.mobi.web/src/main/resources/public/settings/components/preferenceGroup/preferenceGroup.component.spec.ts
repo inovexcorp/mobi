@@ -221,5 +221,24 @@ describe('Preference Group component', function() {
                 }));
             });
         });
+        it('should update a preference', fakeAsync(function() {
+            component.retrievePreferences();
+            tick();
+            const pref: SimplePreference = component.preferences['http://mobi.com/ontologies/preference#SomeSimpleBooleanPreference'];
+            preferenceManagerStub.updateUserPreference.and.returnValue(Promise.resolve());
+            component.updateUserPreference(pref);
+            expect(preferenceManagerStub.updateUserPreference).toHaveBeenCalled();
+            expect(preferenceManagerStub.createUserPreference).not.toHaveBeenCalled();
+        }));
+        it('should create a preference', fakeAsync(function() {
+            preferenceManagerStub.getUserPreferences.and.returnValue(Promise.resolve({data: []}));
+            component.retrievePreferences();
+            tick();
+            const pref: SimplePreference = component.preferences['http://mobi.com/ontologies/preference#SomeSimpleBooleanPreference'];
+            preferenceManagerStub.createUserPreference.and.returnValue(Promise.resolve());
+            component.updateUserPreference(pref);
+            expect(preferenceManagerStub.updateUserPreference).not.toHaveBeenCalled();
+            expect(preferenceManagerStub.createUserPreference).toHaveBeenCalled();
+        }));
     });
 });
