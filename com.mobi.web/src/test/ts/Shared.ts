@@ -99,6 +99,14 @@ export class mockUtil {
     startDownload = jasmine.createSpy('startDownload');
 }
 
+export class mockPreferenceManager {
+    getUserPreferences = jasmine.createSpy('getUserPreferences').and.returnValue(Promise.resolve(''));
+    updateUserPreference = jasmine.createSpy('updateUserPreference').and.returnValue(Promise.resolve(''));
+    createUserPreference = jasmine.createSpy('createUserPreference').and.returnValue(Promise.resolve(''));
+    getPreferenceGroups = jasmine.createSpy('getPreferenceGroups').and.returnValue(Promise.resolve(''));
+    getPreferenceDefinitions = jasmine.createSpy('getPreferenceDefinitions').and.returnValue(Promise.resolve(''));
+}
+
 export class mockPrefixes {
     owl = '';
     delim = '';
