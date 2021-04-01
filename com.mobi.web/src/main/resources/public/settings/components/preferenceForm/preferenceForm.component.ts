@@ -54,7 +54,7 @@ export class PreferenceFormComponent implements OnChanges {
 
     ngOnChanges(): void {
         if (this.preference.requiredPropertyShape['http://www.w3.org/ns/shacl#maxCount']) {
-            this.maxBlocks = this.preference.requiredPropertyShape['http://www.w3.org/ns/shacl#maxCount'][0]['@value'];
+            this.maxBlocks = Number(this.preference.requiredPropertyShape['http://www.w3.org/ns/shacl#maxCount'][0]['@value']);
         }
 
         this.numValues = this.preference.numValues();
@@ -67,7 +67,6 @@ export class PreferenceFormComponent implements OnChanges {
             this.shaclShapes[formFieldProperty] = shaclShape;
         });
 
-        this.formBlocks.setValue([]);
         this.form = this.preference.buildForm();
     }
 

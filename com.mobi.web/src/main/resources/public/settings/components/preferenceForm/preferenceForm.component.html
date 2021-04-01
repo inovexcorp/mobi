@@ -29,12 +29,12 @@
           <div *ngFor="let formField of formBlock.controls | keyvalue">
               <preference-form-field [fieldShaclProperty]="formField.key" [fieldFormGroup]="formField.value" [shaclShape]="shaclShapes[formField.key]"></preference-form-field>
           </div>
-          <button mat-icon-button *ngIf="numValues > 1" type="button" (click)="deleteFormBlock(n)"><mat-icon>clear</mat-icon></button>
+          <button class="delete-block-button" mat-icon-button *ngIf="numValues > 1" type="button" (click)="deleteFormBlock(n)"><mat-icon>clear</mat-icon></button>
         </div>
       </div>
     </div>
     <button mat-raised-button color="primary" type="submit" [disabled]="form.pristine || form.invalid">Save</button>
-    <button mat-icon-button type="button" *ngIf="numValues < maxBlocks" (click)="addFormBlock()" aria-label="Add another value">
+    <button class="add-block-button" mat-icon-button type="button" *ngIf="numValues < maxBlocks" (click)="addFormBlock()" aria-label="Add another value">
         <mat-icon>add</mat-icon>
     </button>
   </form>

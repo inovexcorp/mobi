@@ -21,7 +21,7 @@
  * #L%
  */
 import { Preference } from '../interfaces/preference.interface';
-import { forEach, filter } from 'lodash';
+import { forEach, filter, sortBy } from 'lodash';
 import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
 import { PreferenceUtils } from './preferenceUtils.class';
 import { PreferenceConstants } from './preferenceConstants.class';
@@ -49,10 +49,12 @@ export class SimplePreference implements Preference {
     }
 
     public populate(userPreference): void {
-        this.values = filter(userPreference, this.formFieldProperties[0]).sort(PreferenceUtils.userPrefComparator(this));
+        this.values = filter(userPreference, this.formFieldProperties[0]);
 
         if (!this.values.length) {
             this.addBlankValue();
+        } else {
+            this.values[0][PreferenceConstants.HAS_DATA_VALUE] = sortBy(this.values[0][PreferenceConstants.HAS_DATA_VALUE], '@value');
         }
 
         // Find Node that corresponds to the top level instance of nodeshape of the given user preference 
