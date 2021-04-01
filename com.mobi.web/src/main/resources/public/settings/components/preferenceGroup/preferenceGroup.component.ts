@@ -78,20 +78,7 @@ export class PreferenceGroupComponent implements OnChanges {
                                 preference = new ComplexPreference(preferenceJson, shapeDefinitions);
                             }
 
-                            preference.values = filter(userPreferences[preferenceType], preference.formFieldProperties[0]).sort(this.userPrefComparator(preference));
-
-                            if (!preference.values.length) {
-                                preference.addBlankValue();
-                            }
-
-                            // Find Node that corresponds to the top level instance of nodeshape of the given user preference 
-                            preference.topLevelPreferenceNodeshapeInstance = filter(userPreferences[preferenceType], entity => {
-                                return entity['@type'].includes('http://mobi.com/ontologies/preference#Preference');
-                            });
-
-                            if (preference.topLevelPreferenceNodeshapeInstance.length) {
-                                preference.topLevelPreferenceNodeshapeInstanceId = preference.topLevelPreferenceNodeshapeInstance[0]['@id']; 
-                            }
+                            preference.populate(userPreferences[preferenceType]);
                             this.preferences[preferenceType] = preference;
                         });
                         
@@ -118,17 +105,5 @@ export class PreferenceGroupComponent implements OnChanges {
 
     isTopLevelNodeShape(shape): boolean {
         return Object.prototype.hasOwnProperty.call(shape, 'http://mobi.com/ontologies/preference#inGroup');
-    }
-
-    userPrefComparator(preference: Preference) {
-        return function(a, b) {
-            if (a[preference.formFieldProperties[0]][0]['@value'] < b[preference.formFieldProperties[0]][0]['@value']) {
-                return -1;
-            } else if (a[preference.formFieldProperties[0]][0]['@value'] > b[preference.formFieldProperties[0]][0]['@value']) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
     }
 }

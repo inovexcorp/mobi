@@ -33,6 +33,7 @@ export interface Preference {
     topLevelPreferenceNodeshapeInstance: any;
     label: string;
     type: string;
+    populate(userPreference): void;
     numValues(): number;
     addValue(value): void;
     addBlankValue(): void;

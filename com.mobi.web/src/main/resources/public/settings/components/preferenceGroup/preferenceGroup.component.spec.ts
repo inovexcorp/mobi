@@ -22,7 +22,6 @@ describe('Preference Group component', function() {
     let component: PreferenceGroupComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<PreferenceGroupComponent>;
-    let utilStub;
     let preferenceManagerStub;
     let testUserPreferences;
     let testPreferenceDefinitions;
@@ -181,7 +180,6 @@ describe('Preference Group component', function() {
         element = null;
         fixture = null;
         preferenceManagerStub = null;
-        utilStub = null;
     });
 
     describe('controller methods', function() {

@@ -22,6 +22,7 @@
  */
 import { v4 as uuid } from 'uuid';
 import { PreferenceConstants } from './preferenceConstants.class';
+import { Preference } from '../interfaces/preference.interface';
 
 export class PreferenceUtils {
     static isSimplePreference(preferenceJson, shapeDefinitions): boolean {
@@ -50,5 +51,17 @@ export class PreferenceUtils {
 
     static getShaclPath(object) {
         return object['http://www.w3.org/ns/shacl#path'][0]['@id'];
+    }
+
+    static userPrefComparator(preference: Preference) {
+        return function(a, b) {
+            if (a[preference.formFieldProperties[0]][0]['@value'] < b[preference.formFieldProperties[0]][0]['@value']) {
+                return -1;
+            } else if (a[preference.formFieldProperties[0]][0]['@value'] > b[preference.formFieldProperties[0]][0]['@value']) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
     }
 }

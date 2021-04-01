@@ -21,7 +21,7 @@
  * #L%
  */
 import { Preference } from '../interfaces/preference.interface';
-import { forEach, remove } from 'lodash';
+import { forEach, remove, filter } from 'lodash';
 import { FormGroup, FormControl, FormArray, Validators } from '@angular/forms';
 import { PreferenceUtils } from './preferenceUtils.class';
 import { PreferenceConstants } from './preferenceConstants.class';
@@ -54,6 +54,23 @@ export class ComplexPreference implements Preference {
             formFieldProperties.push(PreferenceUtils.getShaclPath(formField));
         });
         this.formFieldProperties = formFieldProperties;
+    }
+
+    public populate(userPreference): void {
+        this.values = filter(userPreference, this.formFieldProperties[0]).sort(PreferenceUtils.userPrefComparator(this));
+
+        if (!this.values.length) {
+            this.addBlankValue();
+        }
+
+        // Find Node that corresponds to the top level instance of nodeshape of the given user preference 
+        this.topLevelPreferenceNodeshapeInstance = filter(userPreference, entity => {
+            return entity['@type'].includes('http://mobi.com/ontologies/preference#Preference');
+        });
+
+        if (this.topLevelPreferenceNodeshapeInstance.length) {
+            this.topLevelPreferenceNodeshapeInstanceId = this.topLevelPreferenceNodeshapeInstance[0]['@id'];
+        }
     }
 
     public get targetClass() {

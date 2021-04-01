@@ -21,7 +21,7 @@
  * #L%
  */
 import { Preference } from '../interfaces/preference.interface';
-import { forEach } from 'lodash';
+import { forEach, filter } from 'lodash';
 import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
 import { PreferenceUtils } from './preferenceUtils.class';
 import { PreferenceConstants } from './preferenceConstants.class';
@@ -46,6 +46,23 @@ export class SimplePreference implements Preference {
 
     public get type(): string {
         return this.json['@id'];
+    }
+
+    public populate(userPreference): void {
+        this.values = filter(userPreference, this.formFieldProperties[0]).sort(PreferenceUtils.userPrefComparator(this));
+
+        if (!this.values.length) {
+            this.addBlankValue();
+        }
+
+        // Find Node that corresponds to the top level instance of nodeshape of the given user preference 
+        this.topLevelPreferenceNodeshapeInstance = filter(userPreference, entity => {
+            return entity['@type'].includes('http://mobi.com/ontologies/preference#Preference');
+        });
+
+        if (this.topLevelPreferenceNodeshapeInstance.length) {
+            this.topLevelPreferenceNodeshapeInstanceId = this.topLevelPreferenceNodeshapeInstance[0]['@id'];
+        }
     }
 
     public get formFieldPropertyShapes(): Array<any> {
