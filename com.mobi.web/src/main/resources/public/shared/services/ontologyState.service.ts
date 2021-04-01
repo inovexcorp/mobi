@@ -1985,25 +1985,36 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             } else if (annotationValue === "false" || annotationValue === null) {
                 unset(listItem, "deprecated.iris['" + iri + "']");
             }
-            triggerTreeRender(listItem);
+            self.triggerTreeRender(listItem);
         }
     }
     /**
-    Method to trigger re-rendering of trees
-    */
-    function triggerTreeRender(listItem = self.listItem) {
+     * @ngdoc method
+     * @name annotationModified
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Method to trigger re-rendering of trees
+     *
+     * @param {function} mapper function
+     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
+     */
+    self.triggerTreeRender = function(mapper = identityMapper, listItem = self.listItem) {
         var flatLists = ['classes', 'dataProperties', 'objectProperties', 'annotations',
             'concepts', 'conceptSchemes', 'dataProperties', 'individuals'];
 
         forEach(flatLists, listKey =>{
-            if('flat' in listItem[listKey]){
-                listItem[listKey].flat = listItem[listKey].flat.map(x => x);
+            if(listKey in listItem && 'flat' in listItem[listKey]){
+                listItem[listKey].flat = listItem[listKey].flat.map(mapper);
             }
         });
 
         if('flatEverythingTree' in listItem){
-            listItem['flatEverythingTree'] = listItem['flatEverythingTree'].map(x => x);
+            listItem['flatEverythingTree'] = listItem['flatEverythingTree'].map(mapper);
         }
+    }
+    function identityMapper(x){
+        return x
     }
     /**
      * @ngdoc method
