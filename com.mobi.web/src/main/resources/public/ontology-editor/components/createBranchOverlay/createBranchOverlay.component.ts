@@ -95,10 +95,10 @@ function createBranchOverlayComponentCtrl($q, catalogManagerService, ontologySta
 
     function collapseFlatLists() {
         var flatLists = ['classes', 'dataProperties', 'objectProperties', 'annotations', 
-            'concepts', 'conceptSchemes', 'dataProperties'];
+            'concepts', 'conceptSchemes', 'dataProperties', 'individuals'];
 
         forEach(flatLists, listKey =>{
-            if('flat' in dvm.os.listItem[listKey]){
+            if(listKey in dvm.os.listItem &&  'flat' in dvm.os.listItem[listKey]){
                 dvm.os.listItem[listKey].flat = dvm.os.listItem[listKey].flat.map(closeNodeMapper);
             }
         });
