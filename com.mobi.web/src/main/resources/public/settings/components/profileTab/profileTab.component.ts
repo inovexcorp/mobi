@@ -20,56 +20,78 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { find } from 'lodash';
+import { find, cloneDeep, replace } from 'lodash';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
 
-import './profileTab.component.scss';
-
-const template = require('./profileTab.component.html');
+import { emailOrEmpty } from '../../../shared/validators/emailOrEmpty.validator';
 
 /**
- * @ngdoc component
- * @name settings.component:profileTab
- * @requires shared.service:userManagerService
- * @requires shared.service:loginManagerService
- * @requires shared.service:prefixes
+ * @name settings.ProfileTabComponent
  *
- * @description
- * `profileTab` is a component that creates a Bootstrap `row` with a {@link shared.component:block block} that contains a
- * form allowing the current user to change their profile information. This information includes their first name, last
- * name, and email address.
+ * `profileTab` is a component that creates a Bootstrap `row` with a form allowing the current user to change their
+ * profile information. This information includes their first name, last name, and email address.
  */
-const profileTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: profileTabComponentCtrl
-};
+@Component({
+    selector: 'profile-tab',
+    templateUrl: './profileTab.component.html',
+})
+export class ProfileTabComponent implements OnInit {
+    currentUser: any = {};
+    errorMessage: string;
+    success: boolean;
+    profileForm = this.fb.group({
+        firstName: [''],
+        lastName: [''],
+        email: ['', [ emailOrEmpty ]] // TODO: Replace Validators.email after Angular 6
+    });
 
-profileTabComponentCtrl.$inject = ['userManagerService', 'loginManagerService', 'prefixes'];
+    constructor(@Inject('userManagerService') private um, @Inject('loginManagerService') private lm,
+        @Inject('prefixes') private prefixes, private fb: FormBuilder) {}
 
-function profileTabComponentCtrl(userManagerService, loginManagerService, prefixes) {
-    var dvm = this;
-    dvm.um = userManagerService;
-    dvm.lm = loginManagerService;
-    dvm.currentUser = undefined;
-
-    dvm.$onInit = function() {
-        dvm.currentUser = angular.copy(find(dvm.um.users, {username: dvm.lm.currentUser}));
-    }
-    dvm.save = function() {
-        dvm.currentUser.jsonld[prefixes.foaf + 'firstName'] = [{'@value': dvm.currentUser.firstName}];
-        dvm.currentUser.jsonld[prefixes.foaf + 'lastName'] = [{'@value': dvm.currentUser.lastName}];
-        dvm.currentUser.jsonld[prefixes.foaf + 'mbox'] = [{'@id': dvm.currentUser.email}];
-        dvm.um.updateUser(dvm.currentUser.username, dvm.currentUser).then(response => {
-            dvm.errorMessage = '';
-            dvm.success = true;
-            dvm.form.$setPristine();
-        }, error => {
-            dvm.errorMessage = error;
-            dvm.success = false;
+    ngOnInit(): void {
+        this.currentUser = cloneDeep(find(this.um.users, { username: this.lm.currentUser }));
+        this.errorMessage = '';
+        this.profileForm.setValue({
+            firstName: this.currentUser.firstName,
+            lastName: this.currentUser.lastName,
+            email: replace(this.currentUser.email, 'mailto:', '')
         });
+        if (this.currentUser.external) {
+            Object.keys(this.profileForm.controls).forEach(controlName => {
+                this.profileForm.controls[controlName].disable();
+            });
+        }
+    }
+
+    reset(): void {
+        this.profileForm.markAsPristine();
+    }
+    
+    save(): void {
+        if (this.profileForm.controls.firstName.value) {
+            this.currentUser.jsonld[this.prefixes.foaf + 'firstName'] = [{'@value': this.profileForm.controls.firstName.value}];
+        } else {
+            delete this.currentUser.jsonld[this.prefixes.foaf + 'firstName'];
+        }
+        if (this.profileForm.controls.lastName.value) {
+            this.currentUser.jsonld[this.prefixes.foaf + 'lastName'] = [{'@value': this.profileForm.controls.lastName.value}];
+        } else {
+            delete this.currentUser.jsonld[this.prefixes.foaf + 'lastName'];
+        }
+        if (this.profileForm.controls.email.value) {
+            this.currentUser.jsonld[this.prefixes.foaf + 'mbox'] = [{'@id': 'mailto:' + this.profileForm.controls.email.value}];
+        } else {
+            delete this.currentUser.jsonld[this.prefixes.foaf + 'mbox'];
+        }
+        this.um.updateUser(this.currentUser.username, this.currentUser)
+            .then(() => {
+                this.errorMessage = '';
+                this.success = true;
+                this.profileForm.markAsPristine();
+            }, error => {
+                this.errorMessage = error;
+                this.success = false;
+            });
     }
 }
-
-export default profileTabComponent;

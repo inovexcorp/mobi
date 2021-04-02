@@ -21,18 +21,17 @@
   #L%
   -->
 <div class="settings-page h-100">
-    <material-tabset centered>
-        <material-tab heading="'Profile'" active="dvm.tabs.profile" set-active="dvm.tabs.profile = value">
+    <!-- NOTE: Loads each tab content eagerly, i.e. right away. Starting with Angular Material 6, we can switch this to
+        lazy loading (with manual destroy) which will be critical for modules like the Ontology Editor -->
+    <mat-tab-group dynamicHeight="true" (selectedTabChange)="onTabChanged($event)">
+        <mat-tab label="Profile">
             <profile-tab></profile-tab>
-        </material-tab>
-        <material-tab heading="'Groups'" active="dvm.tabs.group" set-active="dvm.tabs.group = value">
+        </mat-tab>
+        <mat-tab label="Groups">
             <group-tab></group-tab>
-        </material-tab>
-        <material-tab heading="'Password'" active="dvm.tabs.password" set-active="dvm.tabs.password = value">
+        </mat-tab>
+        <mat-tab label="Password">
             <password-tab></password-tab>
-        </material-tab>
-        <!-- <material-tab heading="'Preferences'" active="dvm.tabs.preferences" set-active="dvm.tabs.preferences = value">
-            <preferences-tab></preferences-tab>
-        </material-tab> -->
-    </material-tabset>
+        </mat-tab>
+    </mat-tab-group>
 </div>
