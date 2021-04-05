@@ -50,6 +50,7 @@ import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
+import com.mobi.catalog.api.builder.KeywordCount;
 import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
@@ -71,6 +72,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
+import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
@@ -111,6 +113,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -365,6 +368,8 @@ public class CatalogRest {
             @Parameter(description = "The type of Records you want to get back "
                     + "(unversioned, versioned, ontology, mapping, or dataset)", required = true)
             @QueryParam("type") String recordType,
+            @Parameter(description = "List of keywords", required = false)
+            @QueryParam("keywords") String keywords,
             @Parameter(description = "Offset for the page", required = true)
             @QueryParam("offset") int offset,
             @Parameter(description = "Number of Records to return in one page", required = true)
@@ -390,6 +395,9 @@ public class CatalogRest {
             }
             if (searchText != null) {
                 builder.searchText(searchText);
+            }
+            if(StringUtils.isNotEmpty(keywords)){
+                builder.keywords(Arrays.asList(ResourceUtils.decode(keywords).split(",")));
             }
 
             PaginatedSearchResults<Record> records = catalogManager.findRecord(vf.createIRI(catalogId),
@@ -637,6 +645,69 @@ public class CatalogRest {
                     factoryRegistry.getFactoryOfType(Record.class).get());
             catalogManager.updateRecord(vf.createIRI(catalogId), newRecord);
             return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    /**
+     * Retrieves a list of all the Keywords in the Catalog.
+     * Parameters can be passed to control paging.
+     *
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param offset The offset for the page.
+     * @param limit The number of Records to return in one page.
+     * @return List of Keywords in the catalog.
+     */
+    @GET
+    @Path("{catalogId}/keywords")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(
+            tags = "catalogs",
+            summary = "Retrieves the Keywords in the Catalog",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "List of Keywords in catalog"),
+                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+            }
+    )
+    public Response getKeywords(
+            @Context UriInfo uriInfo,
+            @Parameter(description = "String representing the Catalog ID", required = true)
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "Offset for the page", required = true)
+            @QueryParam("offset") int offset,
+            @Parameter(description = "Number of Records to return in one page", required = true)
+            @QueryParam("limit") int limit
+            ) {
+        try {
+            LinksUtils.validateParams(limit, offset);
+
+            PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder().offset(offset);
+
+            if (limit > 0) {
+                builder.limit(limit);
+            }
+
+            PaginatedSearchResults<KeywordCount> records = catalogManager.getKeywords(vf.createIRI(catalogId),
+                    builder.build());
+
+            ArrayNode keywordsArrayNode = mapper.createArrayNode();
+
+            for (KeywordCount keywordCount: records.getPage()) {
+                ObjectNode keywordObject = mapper.createObjectNode();
+                keywordObject.put(Record.keyword_IRI, keywordCount.getKeyword().stringValue());
+                keywordObject.put("count", keywordCount.getRecordCount());
+                keywordsArrayNode.add(keywordObject);
+            }
+
+            return createPaginatedResponseWithJsonNode(uriInfo, keywordsArrayNode, records.getTotalSize(), limit, offset);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {

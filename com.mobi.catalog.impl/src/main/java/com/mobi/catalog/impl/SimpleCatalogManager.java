@@ -35,6 +35,7 @@ import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
+import com.mobi.catalog.api.builder.KeywordCount;
 import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
@@ -247,12 +248,15 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     private static final String PROV_AT_TIME = "http://www.w3.org/ns/prov#atTime";
-
     private static final String FIND_RECORDS_QUERY;
     private static final String COUNT_RECORDS_QUERY;
+    private static final String GET_KEYWORD_QUERY;
+    private static final String GET_KEYWORD_COUNT_QUERY;
     private static final String RECORD_BINDING = "record";
     private static final String CATALOG_BINDING = "catalog";
+    private static final String KEYWORD_BINDING = "keyword";
     private static final String RECORD_COUNT_BINDING = "record_count";
+    private static final String KEYWORD_COUNT_BINDING = "keyword_count";
     private static final String TYPE_FILTER_BINDING = "type_filter";
     private static final String SEARCH_BINDING = "search_text";
 
@@ -264,6 +268,14 @@ public class SimpleCatalogManager implements CatalogManager {
             );
             COUNT_RECORDS_QUERY = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/count-records.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_KEYWORD_QUERY = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/get-keywords.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_KEYWORD_COUNT_QUERY = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/get-keywords-count.rq"),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -301,8 +313,9 @@ public class SimpleCatalogManager implements CatalogManager {
             Optional<Resource> typeParam = searchParams.getTypeFilter();
             Optional<String> searchTextParam = searchParams.getSearchText();
 
+            String countQueryString = replaceKeywordFilter(searchParams, COUNT_RECORDS_QUERY);
             // Get Total Count
-            TupleQuery countQuery = conn.prepareTupleQuery(COUNT_RECORDS_QUERY);
+            TupleQuery countQuery = conn.prepareTupleQuery(countQueryString);
             countQuery.setBinding(CATALOG_BINDING, catalogId);
             typeParam.ifPresent(resource -> countQuery.setBinding(TYPE_FILTER_BINDING, resource));
             searchTextParam.ifPresent(s -> countQuery.setBinding(SEARCH_BINDING, vf.createLiteral(s)));
@@ -347,12 +360,16 @@ public class SimpleCatalogManager implements CatalogManager {
             querySuffix.append("\nLIMIT ").append(limit).append("\nOFFSET ").append(offset);
 
             String queryString = FIND_RECORDS_QUERY + querySuffix.toString();
+
+            queryString = replaceKeywordFilter(searchParams, queryString);
+
+            log.debug("Query String:\n" + queryString);
+
             TupleQuery query = conn.prepareTupleQuery(queryString);
             query.setBinding(CATALOG_BINDING, catalogId);
             typeParam.ifPresent(resource -> query.setBinding(TYPE_FILTER_BINDING, resource));
             searchTextParam.ifPresent(searchText -> query.setBinding(SEARCH_BINDING, vf.createLiteral(searchText)));
 
-            log.debug("Query String:\n" + queryString);
             log.debug("Query Plan:\n" + query);
 
             // Get Results
@@ -363,6 +380,101 @@ public class SimpleCatalogManager implements CatalogManager {
                 Resource resource = vf.createIRI(Bindings.requiredResource(bindings, RECORD_BINDING)
                         .stringValue());
                 records.add(utils.getRecord(catalogId, resource, recordFactory, conn));
+            });
+
+            result.close();
+
+            log.debug("Result set size: " + records.size());
+
+            int pageNumber = (limit > 0) ? (offset / limit) + 1 : 1;
+
+            return records.size() > 0 ? new SimpleSearchResults<>(records, totalCount, limit, pageNumber) :
+                    SearchResults.emptyResults();
+        }
+    }
+
+    private String replaceKeywordFilter(PaginatedSearchParams searchParams, String queryString) {
+        if(searchParams.getKeywords().isPresent()){
+            StringBuilder keywordFilter = new StringBuilder();
+
+            keywordFilter.append("\n");
+            keywordFilter.append("?record mcat:keyword ?keyword ;\n");
+            keywordFilter.append("FILTER(?keyword IN (");
+
+            List<String> tempKeywords = searchParams.getKeywords().get();
+
+            for(int i = 0; i< tempKeywords.size(); i++){
+                keywordFilter.append("'");
+                keywordFilter.append(tempKeywords.get(i));
+                keywordFilter.append("'");
+
+                if(i < tempKeywords.size() - 1){
+                    keywordFilter.append(",");
+                }
+            }
+            keywordFilter.append("))\n");
+
+            queryString = queryString.replace("%keywords_filter%", keywordFilter.toString());
+        }else{
+            queryString = queryString.replace("%keywords_filter%", "");
+        }
+        return queryString;
+    }
+
+    @Override
+    public PaginatedSearchResults<KeywordCount> getKeywords(Resource catalogId, PaginatedSearchParams searchParams) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            // Get Total Count
+            TupleQuery countQuery = conn.prepareTupleQuery(GET_KEYWORD_COUNT_QUERY);
+            countQuery.setBinding(CATALOG_BINDING, catalogId);
+
+            TupleQueryResult countResults = countQuery.evaluate();
+
+            int totalCount;
+            BindingSet countBindingSet;
+            if (countResults.hasNext()
+                    && (countBindingSet = countResults.next()).getBindingNames().contains(KEYWORD_COUNT_BINDING)) {
+                totalCount = Bindings.requiredLiteral(countBindingSet, KEYWORD_COUNT_BINDING).intValue();
+                countResults.close();
+            } else {
+                countResults.close();
+                conn.close();
+                return SearchResults.emptyResults();
+            }
+
+            log.debug("Record count: " + totalCount);
+
+            // Prepare Query
+            int offset = searchParams.getOffset();
+            int limit = searchParams.getLimit().orElse(totalCount);
+            if (offset > totalCount) {
+                throw new IllegalArgumentException("Offset exceeds total size");
+            }
+
+            StringBuilder querySuffix = new StringBuilder("\n");
+            querySuffix.append("\nLIMIT ").append(limit).append("\nOFFSET ").append(offset);
+
+            String queryString = GET_KEYWORD_QUERY + querySuffix.toString();
+
+            log.debug("Query String:\n" + queryString);
+
+            TupleQuery query = conn.prepareTupleQuery(queryString);
+            query.setBinding(CATALOG_BINDING, catalogId);
+
+            log.debug("Query Plan:\n" + query);
+
+            // Get Results
+            TupleQueryResult result = query.evaluate();
+
+            List<KeywordCount> records = new ArrayList<>();
+            result.forEach(bindings -> {
+                KeywordCount.Builder keywordBuilder = new KeywordCount.Builder();
+
+                keywordBuilder.keyword(vf.createLiteral(Bindings.requiredLiteral(bindings, KEYWORD_BINDING)
+                        .stringValue()));
+                keywordBuilder.count(Bindings.requiredLiteral(bindings, RECORD_COUNT_BINDING).intValue());
+
+                records.add(keywordBuilder.build());
             });
 
             result.close();

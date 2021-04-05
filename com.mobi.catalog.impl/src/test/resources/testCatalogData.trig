@@ -78,6 +78,7 @@ GRAPH records:unversioned-record-missing-distribution {
         dc:issued "2016-05-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-12-02T00:00:00Z"^^xsd:dateTime ;
         dc:publisher muser:tester ;
+        mcat:keyword "111" ;
         mcat:unversionedDistribution <http://mobi.com/test#random> .
 }
 
@@ -89,6 +90,7 @@ GRAPH records:versioned-record {
         dc:issued "2017-03-03T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-12-02T00:00:00Z"^^xsd:dateTime ;
         dc:publisher muser:tester ;
+        mcat:keyword "111" ;
         mcat:version versions:version ;
         mcat:version versions:latest-version ;
         mcat:latestVersion versions:latest-version .
@@ -100,7 +102,8 @@ GRAPH records:versioned-record-no-catalog {
         dc:description "Description" ;
         dc:issued "2015-01-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-12-02T00:00:00Z"^^xsd:dateTime ;
-        dc:publisher muser:tester .
+        dc:publisher muser:tester ;
+        mcat:keyword "111" .
 }
 
 GRAPH records:versioned-record-missing-version {
@@ -111,6 +114,7 @@ GRAPH records:versioned-record-missing-version {
         dc:issued "2016-02-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2016-12-02T00:00:00Z"^^xsd:dateTime ;
         dc:publisher muser:tester ;
+        mcat:keyword "222";
         mcat:version <http://mobi.com/test#random> ;
         mcat:version versions:version-missing-distribution .
 }
@@ -123,6 +127,7 @@ GRAPH records:versioned-rdf-record {
         dc:issued "2017-01-01T00:00:00Z"^^xsd:dateTime ;
         dc:modified "2017-05-01T00:00:00Z"^^xsd:dateTime ;
         dc:publisher muser:tester ;
+        mcat:keyword "222";
         mcat:version versions:tag ;
         mcat:version versions:latest-tag ;
         mcat:latestVersion versions:latest-tag ;

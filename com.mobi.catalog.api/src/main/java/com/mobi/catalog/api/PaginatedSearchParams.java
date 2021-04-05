@@ -25,6 +25,7 @@ package com.mobi.catalog.api;
 
 import com.mobi.rdf.api.Resource;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -34,6 +35,7 @@ import java.util.Optional;
 public class PaginatedSearchParams {
     private String searchText;
     private Resource typeFilter;
+    private List<String> keywords;
     private Resource sortBy;
     private Boolean ascending;
     private Integer limit;
@@ -42,6 +44,7 @@ public class PaginatedSearchParams {
     private PaginatedSearchParams(Builder builder) {
         this.searchText = builder.searchText;
         this.typeFilter = builder.typeFilter;
+        this.keywords = builder.keywords;
         this.sortBy = builder.sortBy;
         this.ascending = builder.ascending;
         this.limit = builder.limit;
@@ -54,6 +57,10 @@ public class PaginatedSearchParams {
 
     public Optional<Resource> getTypeFilter() {
         return Optional.ofNullable(typeFilter);
+    }
+
+    public Optional<List<String>> getKeywords() {
+        return Optional.ofNullable(keywords);
     }
 
     public Optional<Resource> getSortBy() {
@@ -78,6 +85,7 @@ public class PaginatedSearchParams {
         private Resource sortBy = null;
         private String searchText = null;
         private Resource typeFilter = null;
+        private List<String> keywords = null;
         private Boolean ascending = null;
 
         public Builder() {}
@@ -104,6 +112,11 @@ public class PaginatedSearchParams {
 
         public Builder typeFilter(Resource val) {
             this.typeFilter = val;
+            return this;
+        }
+
+        public Builder keywords(List<String> keywords) {
+            this.keywords = keywords;
             return this;
         }
 

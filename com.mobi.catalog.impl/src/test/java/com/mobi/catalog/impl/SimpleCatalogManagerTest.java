@@ -39,6 +39,7 @@ import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.builder.KeywordCount;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
@@ -306,6 +307,25 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testFindRecordsReturnsCorrectDataKeywordFirstPage() throws Exception {
+        // Setup:
+        int limit = 1;
+        int offset = 0;
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .limit(limit)
+                .offset(offset).keywords(Arrays.asList(new String[]{"111"})).build();
+
+        // when
+        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
+
+        // then
+        assertEquals(1, records.getPage().size());
+        assertEquals(2, records.getTotalSize());
+        assertEquals(1, records.getPageSize());
+        assertEquals(1, records.getPageNumber());
+    }
+
+    @Test
     public void testFindRecordsReturnsCorrectDataSecondPage() throws Exception {
         // Setup:
         int limit = 1;
@@ -318,6 +338,25 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // then
         assertEquals(1, records.getPage().size());
         assertEquals(TOTAL_SIZE, records.getTotalSize());
+        assertEquals(1, records.getPageSize());
+        assertEquals(2, records.getPageNumber());
+    }
+
+    @Test
+    public void testFindRecordsReturnsCorrectDataKeywordSecondPage() throws Exception {
+        // Setup:
+        int limit = 1;
+        int offset = 1;
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .limit(limit)
+                .offset(offset).keywords(Arrays.asList(new String[]{"111"})).build();
+
+        // when
+        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
+
+        // then
+        assertEquals(1, records.getPage().size());
+        assertEquals(2, records.getTotalSize());
         assertEquals(1, records.getPageSize());
         assertEquals(2, records.getPageNumber());
     }
@@ -380,6 +419,22 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // then
         assertEquals(2, records.getPage().size());
         assertEquals(2, records.getTotalSize());
+        assertEquals(10, records.getPageSize());
+        assertEquals(1, records.getPageNumber());
+    }
+
+    @Test
+    public void testFindRecordsWithSearchTextKeyword() throws Exception {
+        // given
+        int limit = 10;
+        int offset = 0;
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset)
+                .searchText("Unversioned").keywords(Arrays.asList(new String[]{"111"})).build();
+        // when
+        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams);
+        // then
+        assertEquals(1, records.getPage().size());
+        assertEquals(1, records.getTotalSize());
         assertEquals(10, records.getPageSize());
         assertEquals(1, records.getPageNumber());
     }
@@ -449,6 +504,58 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
         // when
         manager.findRecord(distributedCatalogId, searchParams);
+    }
+
+    /* getKeywords */
+    @Test
+    public void testGeKeywords() throws Exception {
+        // given
+        int limit = 10;
+        int offset = 0;
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .limit(limit).offset(offset).build();
+        // when
+        PaginatedSearchResults<KeywordCount> records = manager.getKeywords(distributedCatalogId, searchParams);
+        // then
+        assertEquals(2, records.getPage().size());
+        assertEquals("[KC(111, 2), KC(222, 2)]", records.getPage().toString());
+        assertEquals(2, records.getTotalSize());
+        assertEquals(10, records.getPageSize());
+        assertEquals(1, records.getPageNumber());
+    }
+
+    @Test
+    public void testGeKeywordsPage1() throws Exception {
+        // given
+        int limit = 1;
+        int offset = 0;
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .limit(limit).offset(offset).build();
+        // when
+        PaginatedSearchResults<KeywordCount> records = manager.getKeywords(distributedCatalogId, searchParams);
+        // then
+        assertEquals(1, records.getPage().size());
+        assertEquals("[KC(111, 2)]", records.getPage().toString());
+        assertEquals(2, records.getTotalSize());
+        assertEquals(1, records.getPageSize());
+        assertEquals(1, records.getPageNumber());
+    }
+
+    @Test
+    public void testGeKeywordsPage2() throws Exception {
+        // given
+        int limit = 1;
+        int offset = 1;
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .limit(limit).offset(offset).build();
+        // when
+        PaginatedSearchResults<KeywordCount> records = manager.getKeywords(distributedCatalogId, searchParams);
+        // then
+        assertEquals(1, records.getPage().size());
+        assertEquals("[KC(222, 2)]", records.getPage().toString());
+        assertEquals(2, records.getTotalSize());
+        assertEquals(1, records.getPageSize());
+        assertEquals(2, records.getPageNumber());
     }
 
     /* getRecordIds */

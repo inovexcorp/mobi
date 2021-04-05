@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get } from 'lodash';
+import { get, map } from 'lodash';
 
 import './recordsView.component.scss';
 
@@ -56,45 +56,48 @@ function recordsViewComponentCtrl(catalogStateService, catalogManagerService, ut
     dvm.state = catalogStateService;
     dvm.util = utilService;
     dvm.records = [];
-    var catalogId = get(cm.localCatalog, '@id', '');
+    dvm.catalogId = get(cm.localCatalog, '@id', '');
 
     dvm.$onInit = function() {
         dvm.state.currentRecordPage = 1;
-        dvm.setRecords(dvm.state.recordSearchText, dvm.state.recordFilterType, dvm.state.recordSortOption);
+        dvm.setRecords(dvm.state.recordSearchText, dvm.state.recordFilterType, dvm.state.keywordFilterList, dvm.state.recordSortOption);
     }
     dvm.openRecord = function(record) {
         dvm.state.selectedRecord = record;
     }
     dvm.changeSort = function(sortOption) {
         dvm.state.currentRecordPage = 1;
-        dvm.setRecords(dvm.state.recordSearchText, dvm.state.recordFilterType, sortOption);
+        dvm.setRecords(dvm.state.recordSearchText, dvm.state.recordFilterType, dvm.state.keywordFilterList, sortOption);
     }
-    dvm.changeFilter = function(recordType) {
+    dvm.changeFilter = function(recordType, keywordFilterList) {
         dvm.state.currentRecordPage = 1;
-        dvm.setRecords(dvm.state.recordSearchText, recordType, dvm.state.recordSortOption);
+        dvm.setRecords(dvm.state.recordSearchText, recordType, keywordFilterList, dvm.state.recordSortOption);
     }
     dvm.searchRecords = function() {
         dvm.search(dvm.state.recordSearchText);
     }
     dvm.search = function(searchText) {
         dvm.state.currentRecordPage = 1;
-        dvm.setRecords(searchText, dvm.state.recordFilterType, dvm.state.recordSortOption);
+        dvm.setRecords(searchText, dvm.state.recordFilterType, dvm.state.keywordFilterList, dvm.state.recordSortOption);
     }
     dvm.getRecordPage = function(page) {
         dvm.state.currentRecordPage = page;
-        dvm.setRecords(dvm.state.recordSearchText, dvm.state.recordFilterType, dvm.state.recordSortOption);
+        dvm.setRecords(dvm.state.recordSearchText, dvm.state.recordFilterType, dvm.state.keywordFilterList,  dvm.state.recordSortOption);
     }
-    dvm.setRecords = function(searchText, recordType, sortOption) {
+    dvm.setRecords = function(searchText, recordType, keywordFilterList, sortOption) {
         var paginatedConfig = {
             pageIndex: dvm.state.currentRecordPage - 1,
             limit: dvm.state.recordLimit,
             sortOption,
             recordType,
-            searchText
+            searchText,
+            keywords: keywordFilterList
         };
-        cm.getRecords(catalogId, paginatedConfig)
+
+        cm.getRecords(dvm.catalogId, paginatedConfig)
             .then(response => {
                 dvm.state.recordFilterType = recordType;
+                dvm.state.keywordFilterList = keywordFilterList;
                 dvm.state.recordSearchText = searchText;
                 dvm.state.recordSortOption = sortOption;
                 dvm.records = response.data;

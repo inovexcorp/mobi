@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { forEach, map } from 'lodash';
+import { forEach, map, filter, find, get, includes} from 'lodash';
 
 const template = require('./recordFilters.component.html');
 
@@ -45,40 +45,138 @@ const recordFiltersComponent = {
     template,
     bindings: {
         changeFilter: '&',
-        recordType: '<'
+        recordType: '<',
+        keywordFilterList: '<',
+        catalogId: '<'
     },
     controllerAs: 'dvm',
     controller: recordFiltersComponentCtrl
 };
 
-recordFiltersComponentCtrl.$inject = ['catalogManagerService', 'utilService'];
+recordFiltersComponentCtrl.$inject = ['catalogManagerService', 'utilService', 'prefixes'];
 
-function recordFiltersComponentCtrl(catalogManagerService, utilService) {
+function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes) {
     var dvm = this;
     dvm.cm = catalogManagerService;
     dvm.util = utilService;
-    dvm.hide = false;
-    dvm.recordTypes = [];
+    const keywordPrefix = prefixes.catalog + 'keyword';
+
+    function isEmpty(val){
+        return (val === undefined || val == null || val.length <= 0) ? true : false;
+    }
+
+    dvm.filters = [];
 
     dvm.$onInit = function() {
-        dvm.recordTypes = map(dvm.cm.recordTypes, type => ({
-            value: type,
-            checked: type === dvm.recordType
-        }));
-    }
-    dvm.filter = function(filter) {
-        if (filter.checked) {
-            forEach(dvm.recordTypes, typeFilter => {
-                if (typeFilter.value !== filter.value) {
-                    typeFilter.checked = false;
+        const recordTypeFilter = {
+            title: 'Record Type',
+            hide: false,
+            pageable: false,
+            filterItems: [],
+            metaData: {},
+            onInit: function(){
+                this.setFilterItems();
+            },
+            getItemText: function(filterItem){
+                return dvm.util.getBeautifulIRI(filterItem.value);
+            },
+            setFilterItems: function(){
+               this.filterItems = map(dvm.cm.recordTypes, type => ({
+                   value: type,
+                   checked: type === dvm.recordType,
+               }));
+            },
+            filter: function(filterItem){
+                if (filterItem.checked) {
+                    forEach(this.filterItems, typeFilter => {
+                        if (typeFilter.value !== filterItem.value) {
+                            typeFilter.checked = false;
+                        }
+                    });
+                    dvm.changeFilter({recordType: filterItem.value, keywordFilterList: dvm.keywordFilterList});
+                } else {
+                    if (dvm.recordType === filterItem.value) {
+                        dvm.changeFilter({recordType: '', keywordFilterList: dvm.keywordFilterList});
+                    }
                 }
-            });
-            dvm.changeFilter({recordType: filter.value});
-        } else {
-            if (dvm.recordType === filter.value) {
-                dvm.changeFilter({recordType: ''});
+             }
+         };
+
+        const keywordsFilter = {
+            title: 'Keywords',
+            hide: false,
+            pageable: true,
+            pagingData:{
+                limit: 2,
+                totalRecordSize: 0,
+                currentRecordPage: 1,
+                hasNextPage: false
+            },
+            filterItems: [],
+            onInit: function(){
+                const filterInstance = this;
+                filterInstance.nextPage();
+                console.log("onInit");
+                console.log(filterInstance);
+            },
+            nextPage: function(){
+                const filterInstance = this;
+
+                const paginatedConfig = {
+                    pageIndex: filterInstance.pagingData.currentRecordPage - 1,
+                    limit: filterInstance.pagingData.limit,
+                };
+
+                dvm.cm.getKeywords(dvm.catalogId, paginatedConfig)
+                    .then(response => {
+                         if (filterInstance.pagingData.currentRecordPage === 1) {
+                            dvm.cm.keywordObjects = response.data
+                         } else {
+                            dvm.cm.keywordObjects = dvm.cm.keywordObjects.concat(response.data);
+                         }
+
+                         filterInstance.setFilterItems();
+
+                         filterInstance.pagingData["totalRecordSize"] = get(response.headers(), 'x-total-count', 0);
+                         filterInstance.pagingData["hasNextPage"] = filterInstance.filterItems.length < filterInstance.pagingData.totalRecordSize;
+                         filterInstance.pagingData["currentRecordPage"] = filterInstance.pagingData["currentRecordPage"] + 1;
+
+                         console.log("getKeywords");
+                         console.log(filterInstance);
+                    }, dvm.util.createErrorToast);
+            },
+            getItemText: function(filterItem){
+                const keywordString = filterItem.value[keywordPrefix];
+                const keywordCount = filterItem.value['count'];
+                return `${keywordString} (${keywordCount})`;
+            },
+            setFilterItems: function(){
+                this.filterItems = map(dvm.cm.keywordObjects, keywordObject => ({
+                    value: keywordObject,
+                    checked: includes(dvm.keywordFilterList, keywordObject[keywordPrefix])
+                }));
+            },
+            filter: function(filterItem){
+                const checkedKeywordObjects = filter(this.filterItems, currentFilterItem => currentFilterItem.checked);
+                const keywords = map(checkedKeywordObjects, currentFilterItem => currentFilterItem.value[keywordPrefix]);
+                dvm.changeFilter({recordType: dvm.recordType, keywordFilterList: keywords});
             }
-        }
+        };
+
+        dvm.filters = [recordTypeFilter, keywordsFilter];
+        forEach(dvm.filters, filter => {
+            if('onInit' in filter){
+                filter.onInit();
+            }
+        });
+    }
+    dvm.$onChanges = function(changeObj){
+        console.log(changeObj);
+    }
+    dvm.$onDestroy = function(){
+        console.log("d");
+        dvm.cm.keywordObjects = []
+
     }
 }
 

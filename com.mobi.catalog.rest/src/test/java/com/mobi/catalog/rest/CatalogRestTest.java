@@ -54,6 +54,7 @@ import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
+import com.mobi.catalog.api.builder.KeywordCount;
 import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
@@ -185,7 +186,10 @@ public class CatalogRestTest extends MobiRestTestNg {
     private SesameTransformer transformer;
 
     @Mock
-    private PaginatedSearchResults<Record> results;
+    private PaginatedSearchResults<Record> recordResults;
+
+    @Mock
+    private PaginatedSearchResults<KeywordCount> keywordResults;
 
     @Mock
     private Conflict conflict;
@@ -313,10 +317,17 @@ public class CatalogRestTest extends MobiRestTestNg {
         when(bNodeService.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
         when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
 
-        when(results.getPage()).thenReturn(Collections.singletonList(testRecord));
-        when(results.getPageNumber()).thenReturn(0);
-        when(results.getPageSize()).thenReturn(10);
-        when(results.getTotalSize()).thenReturn(50);
+        when(recordResults.getPage()).thenReturn(Collections.singletonList(testRecord));
+        when(recordResults.getPageNumber()).thenReturn(0);
+        when(recordResults.getPageSize()).thenReturn(10);
+        when(recordResults.getTotalSize()).thenReturn(50);
+
+        KeywordCount keywordCount1 = new KeywordCount.Builder().keyword(vf.createLiteral("1")).count(4).build();
+
+        when(keywordResults.getPage()).thenReturn(Collections.singletonList(keywordCount1));
+        when(keywordResults.getPageNumber()).thenReturn(0);
+        when(keywordResults.getPageSize()).thenReturn(10);
+        when(keywordResults.getTotalSize()).thenReturn(50);
 
         when(catalogUtils.commitInRecord(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(false);
         when(catalogUtils.commitInRecord(eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class))).thenReturn(true);
@@ -324,7 +335,8 @@ public class CatalogRestTest extends MobiRestTestNg {
         when(catalogManager.getLocalCatalog()).thenReturn(localCatalog);
         when(catalogManager.getDistributedCatalog()).thenReturn(distributedCatalog);
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(testRecord.getResource()));
-        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(results);
+        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(recordResults);
+        when(catalogManager.getKeywords(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(keywordResults);
         when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(recordFactory)))
                 .thenReturn(Optional.of(testRecord));
         when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(unversionedRecordFactory)))
@@ -418,7 +430,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @AfterMethod
     public void resetMocks() {
-        reset(catalogManager, versioningManager, engineManager, transformer, conflict, difference, results, bNodeService, provUtils);
+        reset(catalogManager, versioningManager, engineManager, transformer, conflict, difference, recordResults, bNodeService, provUtils);
     }
 
     // GET catalogs
@@ -537,11 +549,11 @@ public class CatalogRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class));
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + results.getTotalSize());
+        assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.getTotalSize());
         assertEquals(response.getLinks().size(), 0);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), results.getPage().size());
+            assertEquals(result.size(), recordResults.getPage().size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -550,7 +562,7 @@ public class CatalogRestTest extends MobiRestTestNg {
     @Test
     public void getRecordsWithLinksTest() {
         // Setup:
-        when(results.getPageNumber()).thenReturn(1);
+        when(recordResults.getPageNumber()).thenReturn(1);
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
                 .queryParam("offset", 1)
@@ -878,6 +890,29 @@ public class CatalogRestTest extends MobiRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
                 .request().put(Entity.json(record.toString()));
         assertEquals(response.getStatus(), 500);
+    }
+
+    // GET catalogs/{catalogId}/keywords
+
+    @Test
+    public void getKeywordsTest() {
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/keywords")
+                .queryParam("offset", 0)
+                .queryParam("limit", 10)
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getKeywords(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class));
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + keywordResults.getTotalSize());
+        assertEquals(response.getLinks().size(), 0);
+        try {
+            String responseString = response.readEntity(String.class);
+            JSONArray result = JSONArray.fromObject(responseString);
+            assertEquals(result.size(), keywordResults.getPage().size());
+            assertEquals("[{\"http://mobi.com/ontologies/catalog#keyword\":\"1\",\"count\":4}]", responseString);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/distributions

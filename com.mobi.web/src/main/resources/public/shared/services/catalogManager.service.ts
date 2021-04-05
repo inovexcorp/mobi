@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import { identity, has, find, get, forEach, includes } from 'lodash';
+import { identity, has, find, get, forEach, includes, map } from 'lodash';
 
 catalogManagerService.$inject = ['$http', '$httpParamSerializer', 'httpService', '$q', 'prefixes', 'utilService', 'REST_PREFIX'];
 
@@ -90,6 +90,17 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.recordTypes = [];
     /**
      * @ngdoc property
+     * @name recordTypes
+     * @propertyOf shared.service:catalogManagerService
+     * @type {string[]}
+     *
+     * @description
+     * `recordTypes` contains a list of IRI strings of all types of records contained in both Catalogs.
+     * This list is populated by the `initialize` method.
+     */
+    self.keywordObjects =  [];
+    /**
+     * @ngdoc property
      * @name localCatalog
      * @propertyOf shared.service:catalogManagerService
      * @type {Object}
@@ -148,6 +159,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
                     return $q.reject('Could not find distributed catalog');
                 }
                 self.recordTypes = responses[0];
+                self.keywords = responses[3];
                 forEach(responses[1], option => {
                     const label = util.getBeautifulIRI(option);
                     if (!find(self.sortOptions, {field: option})) {
@@ -216,6 +228,35 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         return $http.get(url).then($q.resolve, util.rejectError);
     };
 
+    /** TODO erivera finish
+     * @ngdoc method
+     * @name getKeywords
+     * @methodOf shared.service:catalogManagerService
+     *
+     * @description
+     * Calls the GET /mobirest/catalogs/{catalogId}/keywords endpoint and returns the paginated
+     * response for the query using the passed page index, limit, sort option from the `sortOptions`
+     * array, and Record type filter IRI from the `recordTypes` array. The data of the response will
+     * be the array of Records, the "x-total-count" headers will contain the total number of Records
+     * matching the query, and the "link" header will contain the URLs for the next and previous page
+     * if present.
+     *
+     * @param {string} catalogId The id of the Catalog to retrieve Records from
+     * @param {Object} paginatedConfig A configuration object for paginated requests
+     * @param {number} paginatedConfig.pageIndex The index of the page of results to retrieve
+     * @param {number} paginatedConfig.limit The number of results per page
+     * @returns {Promise} A promise that either resolves with the paginated response or is rejected
+     * with a error message
+     */
+    self.getKeywords = function(catalogId, paginatedConfig, id = '') {
+        const config = {
+            params: util.paginatedConfigToParams(paginatedConfig)
+        };
+        const url = prefix + '/' + encodeURIComponent(catalogId) + '/keywords';
+        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        return promise.then($q.resolve, util.rejectError);
+    };
+
     /**
      * @ngdoc method
      * @name getRecords
@@ -236,6 +277,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @param {Object} paginatedConfig.sortOption A sort option object from the `sortOptions` array
      * @param {string} paginatedConfig.recordType A record type IRI string from the `recordTypes` array
      * @param {string} paginatedConfig.searchText The text to search for within the list of Records
+     * @param {string} paginatedConfig.keywords The keywords for within the list of Records
      * @returns {Promise} A promise that either resolves with the paginated response or is rejected
      * with a error message
      */
@@ -249,6 +291,9 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         }
         if (get(paginatedConfig, 'recordType')) {
             config.params.type = paginatedConfig.recordType;
+        }
+        if (get(paginatedConfig, 'keywords')) {
+           config.params.keywords = encodeURIComponent(paginatedConfig.keywords.join(','));
         }
         const url = prefix + '/' + encodeURIComponent(catalogId) + '/records';
         const promise = id ? httpService.get(url, config, id) : $http.get(url, config);

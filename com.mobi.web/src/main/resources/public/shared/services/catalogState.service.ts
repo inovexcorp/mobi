@@ -94,6 +94,19 @@ function catalogStateService(catalogManagerService, prefixes) {
      * {@link catalog.component:recordsView}.
      */
     self.recordFilterType = '';
+
+    /**
+     * @ngdoc property
+     * @name keywordFilterList
+     * @propertyOf shared.service:catalogStateService
+     * @type {list}
+     *
+     * @description
+     * `keywordFilterList` holds a list of keyword string values to be used to filter the results in the
+     * {@link catalog.component:recordsView}.
+     */
+    self.keywordFilterList = [];
+
     /**
      * @ngdoc property
      * @name recordSearchText
@@ -185,6 +198,7 @@ function catalogStateService(catalogManagerService, prefixes) {
         self.totalRecordSize = 0;
         self.currentRecordPage = 1;
         self.recordFilterType = '';
+        self.keywordFilterList = [];
         self.recordSearchText = '';
         self.initializeRecordSortOption();
         self.selectedRecord = undefined;
