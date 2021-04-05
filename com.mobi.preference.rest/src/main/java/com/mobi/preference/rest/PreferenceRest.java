@@ -52,7 +52,6 @@ import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
@@ -122,26 +121,48 @@ public class PreferenceRest {
     }
 
     /**
-     * Returns a JSON object of a user preference and it's referenced entities with the provided resource id.
+     * Returns a JSON array of shacl shapes that define all preferences in the passed in preference group.
      *
      * @param context The context of the request.
-     * @param preferenceId The resource id of the user preference to be retrieved
-     * @return A JSON object of user preferences for the active user
+     * @param preferenceGroup The resource id of the preference group to retrieve definitions for
+     * @return A JSON array of shacl shapes that define all preferences in the passed in preference group
      */
     @GET
-    @Path("groups/{preferenceGroup}/definitions")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @Operation(
+            tags = "preference",
+            summary = "Retrieves all preference definitions in the repo that are part of the passed in preference group",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success of the request"),
+            }
+    )
     public Response getPreferenceDefinitions(@Context ContainerRequestContext context,
                                              @PathParam("preferenceGroup") String preferenceGroup) {
         Model preferenceDefinitions = preferenceService.getPreferenceDefinitions(vf.createIRI(preferenceGroup));
         return Response.ok(RestUtils.modelToJsonld(preferenceDefinitions, transformer)).build();
     }
 
+
+    /**
+     * Retrieves all preference groups defined in the repo
+     *
+     * @param context The context of the request.
+     * @return A JSON array of preference groups
+     */
     @GET
     @Path("groups")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @Operation(
+            tags = "preference",
+            summary = "Retrieves all preference groups defined in the repo",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Response indicating the success of the request"),
+            }
+    )
     public Response getPreferenceGroups(@Context ContainerRequestContext context) {
         Model preferenceGroups = preferenceService.getPreferenceGroups();
         return Response.ok(RestUtils.modelToJsonld(preferenceGroups, transformer)).build();

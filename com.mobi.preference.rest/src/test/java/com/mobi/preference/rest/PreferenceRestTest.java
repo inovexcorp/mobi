@@ -328,4 +328,29 @@ public class PreferenceRestTest extends MobiRestTestNg {
                 .request().put(Entity.json("fdas"));
         assertEquals(400, response.getStatus());
     }
+
+    @Test
+    public void getPreferenceGroupsTest() throws Exception {
+        InputStream inputStream = getClass().getResourceAsStream("/preferenceGroups.ttl");
+        Model model = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+
+        when(preferenceService.getPreferenceGroups()).thenReturn(model);
+        Response response = target().path("preference/groups").request().get();
+        JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(200, response.getStatus());
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    public void getPreferenceDefinitions() throws Exception {
+        InputStream inputStream = getClass().getResourceAsStream("/preferenceDefinitions.ttl");
+        Model model = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+
+        when(preferenceService.getPreferenceDefinitions(any())).thenReturn(model);
+        Response response = target().path("preference/groups/" +
+                encode("http://example.com/SomeOtherPreferenceGroup") + "/definitions").request().get();
+        JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(200, response.getStatus());
+        assertEquals(4, result.size());
+    }
 }

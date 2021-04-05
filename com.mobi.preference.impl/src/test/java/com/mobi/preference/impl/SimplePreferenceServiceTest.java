@@ -12,12 +12,12 @@ package com.mobi.preference.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -41,7 +41,6 @@ import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
-
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
@@ -75,24 +74,12 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private OrmFactoryRegistry registry;
-
-    private interface TestComplexPreference extends Thing, Setting, Preference {
-        String TYPE = "http://example.com/ExampleComplexPreference";
-    }
-
-    private interface TestSimplePreference extends Thing, Setting, Preference {
-        String TYPE = "http://example.com/ExampleSimplePreference";
-    }
-
     @Mock
     private OrmFactory<TestComplexPreference> testComplexPreferenceFactory;
-
     @Mock
     private OrmFactory<TestSimplePreference> testSimplePreferenceFactory;
-
     @Mock
     private CatalogConfigProvider configProvider;
-
 
     @Before
     public void setUp() throws Exception {
@@ -115,14 +102,12 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         injectOrmFactoryReferencesIntoService(service);
         notificationService = new SimpleNotificationService();
         injectOrmFactoryReferencesIntoService(notificationService);
-        service.vf =  VALUE_FACTORY;
+        service.vf = VALUE_FACTORY;
         service.mf = MODEL_FACTORY;
         service.configProvider = configProvider;
         service.factoryRegistry = registry;
         service.start();
     }
-
-    // addPreference
 
     @Test
     public void addPreferenceWithObjectValueTest() throws Exception {
@@ -130,11 +115,13 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.addPreference(user, preference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
     }
 
@@ -144,13 +131,17 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/simplePreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"), testDataModel).get();
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MySimplePreference"), testDataModel).get();
 
         service.addPreference(user, preference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
     }
+
+    // addPreference
 
     @Test(expected = IllegalArgumentException.class)
     public void addPreferenceWithExistingPreferenceTest() throws Exception {
@@ -158,12 +149,12 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/simplePreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"), testDataModel).get();
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MySimplePreference"), testDataModel).get();
         repo.getConnection().add(preference.getModel(), VALUE_FACTORY.createIRI(PreferenceService.GRAPH));
 
         service.addPreference(user, preference);
     }
-
 
     @Test(expected = IllegalArgumentException.class)
     public void addPreferenceWithExistingPreferenceTypeTest() throws Exception {
@@ -171,13 +162,15 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/simplePreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"), testDataModel).get();
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MySimplePreference"), testDataModel).get();
 
         service.addPreference(user, preference);
 
         InputStream secondInputStream = getClass().getResourceAsStream("/altSimplePreference.ttl");
         Model secondTestDataModel = Values.mobiModel(Rio.parse(secondInputStream, "", RDFFormat.TURTLE));
-        Preference secondPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/AltSimplePreference"), secondTestDataModel).get();
+        Preference secondPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/AltSimplePreference"), secondTestDataModel).get();
 
         service.addPreference(user, secondPreference);
     }
@@ -188,24 +181,31 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/simplePreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        testDataModel.add(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"), VALUE_FACTORY.createIRI("http://mobi.com/ontologies/preference#forUser"), VALUE_FACTORY.createIRI("http://test.com/injectedUser"));
-        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"), testDataModel).get();
+        testDataModel.add(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"), VALUE_FACTORY.createIRI(
+                "http://mobi.com/ontologies/preference#forUser"), VALUE_FACTORY.createIRI("http://test" +
+                ".com/injectedUser"));
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MySimplePreference"), testDataModel).get();
 
         service.addPreference(user, preference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
-            assertTrue(conn.contains(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"), VALUE_FACTORY.createIRI("http://mobi.com/ontologies/preference#forUser"), VALUE_FACTORY.createIRI("http://test.com/user")));
-            assertFalse(conn.contains(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"), VALUE_FACTORY.createIRI("http://mobi.com/ontologies/preference#forUser"), VALUE_FACTORY.createIRI("http://test.com/injectedUser")));
+            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
+            assertTrue(conn.contains(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"),
+                    VALUE_FACTORY.createIRI("http://mobi.com/ontologies/preference#forUser"),
+                    VALUE_FACTORY.createIRI("http://test.com/user")));
+            assertFalse(conn.contains(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"),
+                    VALUE_FACTORY.createIRI("http://mobi.com/ontologies/preference#forUser"),
+                    VALUE_FACTORY.createIRI("http://test.com/injectedUser")));
         }
     }
-
-    // validatePreference
 
     @Test
     public void validatePreferenceTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.validatePreference(preference); // Should not throw exception
     }
@@ -214,35 +214,40 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
     public void validatePreferenceWithoutReferenceTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/complexPreferenceMissingReference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.validatePreference(preference);
     }
+
+    // validatePreference
 
     @Test(expected = IllegalArgumentException.class)
     public void validatePreferenceWithoutValueTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/preferenceNoValue.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.validatePreference(preference);
     }
-
-    // getUserPreference
 
     @Test
     public void getSettingTest() throws Exception {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.addPreference(user, preference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
 
-        Setting retrievedSetting = service.getSetting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference")).get();
+        Setting retrievedSetting = service.getSetting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"
+        )).get();
         Model retrievedSettingModel = retrievedSetting.getModel();
         assertTrue(retrievedSettingModel.contains(complexPreferenceIRI, VALUE_FACTORY.createIRI(Preference.forUser_IRI),
                 user.getResource()));
@@ -252,25 +257,32 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void getSettingResourceDoesNotExistTest() throws Exception {
-        Optional<Setting> retrievedPreference = service.getSetting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"));
+        Optional<Setting> retrievedPreference = service.getSetting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"));
         assertFalse(retrievedPreference.isPresent());
     }
+
+    // getUserPreference
 
     @Test
     public void getUserPreferenceByTypeTest() throws Exception {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.addPreference(user, preference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
 
-        Preference retrievedPreference = service.getUserPreference(user, VALUE_FACTORY.createIRI(TestComplexPreference.TYPE)).get();
+        Preference retrievedPreference = service.getUserPreference(user,
+                VALUE_FACTORY.createIRI(TestComplexPreference.TYPE)).get();
         Model retrievedPreferenceModel = retrievedPreference.getModel();
-        assertTrue(retrievedPreferenceModel.contains(complexPreferenceIRI, VALUE_FACTORY.createIRI(Preference.forUser_IRI),
+        assertTrue(retrievedPreferenceModel.contains(complexPreferenceIRI,
+                VALUE_FACTORY.createIRI(Preference.forUser_IRI),
                 user.getResource()));
 
         preference.getModel().forEach(statement -> assertTrue(retrievedPreference.getModel().contains(statement)));
@@ -279,33 +291,34 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
     @Test
     public void getUserPreferenceThatDoesNotExistTest() throws Exception {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
-        Optional<Preference> retrievedPreference = service.getUserPreference(user, VALUE_FACTORY.createIRI(EmailNotificationPreference.TYPE));
+        Optional<Preference> retrievedPreference = service.getUserPreference(user,
+                VALUE_FACTORY.createIRI(EmailNotificationPreference.TYPE));
         assertFalse(retrievedPreference.isPresent());
     }
-
-    // TODO: test for Preference when multiple preferences of the same type exist in the repo. Assert RepositoryException
-
-    // getUserPreferences
 
     @Test
     public void getUserPreferencesTest() throws Exception {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.addPreference(user, firstPreference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
 
         InputStream secondInputStream = getClass().getResourceAsStream("/simplePreference.ttl");
         Model secondTestModel = Values.mobiModel(Rio.parse(secondInputStream, "", RDFFormat.TURTLE));
-        Preference secondPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"), secondTestModel).get();
+        Preference secondPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MySimplePreference"), secondTestModel).get();
 
         service.addPreference(user, secondPreference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            secondPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            secondPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
 
         service.getUserPreferences(user);
@@ -316,9 +329,11 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
             retrievedPreferencesModel.addAll(retrievedPreference.getModel());
         });
 
-        assertTrue(retrievedPreferencesModel.contains(simplePreferenceIRI, VALUE_FACTORY.createIRI(Preference.forUser_IRI),
+        assertTrue(retrievedPreferencesModel.contains(simplePreferenceIRI,
+                VALUE_FACTORY.createIRI(Preference.forUser_IRI),
                 user.getResource()));
-        assertTrue(retrievedPreferencesModel.contains(complexPreferenceIRI, VALUE_FACTORY.createIRI(Preference.forUser_IRI),
+        assertTrue(retrievedPreferencesModel.contains(complexPreferenceIRI,
+                VALUE_FACTORY.createIRI(Preference.forUser_IRI),
                 user.getResource()));
 
         Model combinedModel = MODEL_FACTORY.createModel();
@@ -332,37 +347,49 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.addPreference(user, firstPreference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.remove((Resource) null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(TestComplexPreference.TYPE));
-            conn.remove((Resource) null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Preference.TYPE));
+            conn.remove((Resource) null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
+                    VALUE_FACTORY.createIRI(TestComplexPreference.TYPE));
+            conn.remove((Resource) null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
+                    VALUE_FACTORY.createIRI(Preference.TYPE));
         }
 
         service.getUserPreferences(user);
     }
+
+    // TODO: test for Preference when multiple preferences of the same type exist in the repo. Assert
+    //  RepositoryException
+
+    // getUserPreferences
 
     @Test
     public void deleteUserPreferenceTest() throws Exception {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.addPreference(user, firstPreference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
 
         service.deletePreference(user, VALUE_FACTORY.createIRI(TestComplexPreference.TYPE));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstPreference.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            firstPreference.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
     }
 
@@ -371,17 +398,20 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.addPreference(user, firstPreference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
 
         service.deletePreference(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstPreference.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            firstPreference.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
     }
 
@@ -390,11 +420,13 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.addPreference(user, firstPreference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
 
         service.deletePreference(user, VALUE_FACTORY.createIRI(TestSimplePreference.TYPE));
@@ -405,17 +437,20 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference firstPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.addPreference(user, firstPreference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            firstPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
 
         service.deletePreference(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstPreference.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            firstPreference.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
     }
 
@@ -425,28 +460,31 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.addPreference(user, preference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
 
         InputStream secondInputStream = getClass().getResourceAsStream("/updatedComplexPreference.ttl");
         Model secondTestDataModel = Values.mobiModel(Rio.parse(secondInputStream, "", RDFFormat.TURTLE));
-        Preference secondPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), secondTestDataModel).get();
+        Preference secondPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), secondTestDataModel).get();
 
         service.updatePreference(user, secondPreference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            secondPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            secondPreference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
-        
+
         try (RepositoryConnection conn = repo.getConnection()) {
             assertFalse(conn.contains(null, null, preference.getHasObjectValue_resource().iterator().next()));
             assertFalse(conn.contains(preference.getHasObjectValue_resource().iterator().next(), null, null));
         }
     }
-
 
     @Test(expected = IllegalArgumentException.class)
     public void updatePreferenceForDifferentUserTest() throws Exception {
@@ -454,16 +492,19 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.addPreference(user, preference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
 
         InputStream secondInputStream = getClass().getResourceAsStream("/updatedComplexPreference.ttl");
         Model secondTestDataModel = Values.mobiModel(Rio.parse(secondInputStream, "", RDFFormat.TURTLE));
-        Preference secondPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), secondTestDataModel).get();
+        Preference secondPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), secondTestDataModel).get();
 
         User differentUser = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/differentUser"));
         service.updatePreference(differentUser, secondPreference);
@@ -475,17 +516,62 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
         Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
-        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MyComplexPreference"), testDataModel).get();
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
 
         service.addPreference(user, preference);
         try (RepositoryConnection conn = repo.getConnection()) {
-            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            preference.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
         }
 
         InputStream secondInputStream = getClass().getResourceAsStream("/simplePreference.ttl");
         Model secondTestDataModel = Values.mobiModel(Rio.parse(secondInputStream, "", RDFFormat.TURTLE));
-        Preference secondPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example.com/MySimplePreference"), secondTestDataModel).get();
+        Preference secondPreference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MySimplePreference"), secondTestDataModel).get();
 
         service.updatePreference(user, secondPreference);
+    }
+
+    @Test
+    public void getPreferenceGroupsTest() throws Exception {
+        InputStream inputStream = getClass().getResourceAsStream("/preferenceDefinitions.ttl");
+        Model preferenceDefinitionsModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+
+        InputStream groupsInputStream = getClass().getResourceAsStream("/preferenceDefinitions.ttl");
+        Model preferenceGroupsModel = Values.mobiModel(Rio.parse(groupsInputStream, "", RDFFormat.TURTLE));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(preferenceDefinitionsModel);
+        }
+        service.getPreferenceGroups().forEach(statement -> {
+            assertTrue(preferenceGroupsModel.contains(statement));
+        });
+    }
+
+    @Test
+    public void getPreferenceDefinitions() throws Exception {
+        InputStream inputStream = getClass().getResourceAsStream("/preferenceDefinitions.ttl");
+        Model preferenceDefinitionsModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(preferenceDefinitionsModel);
+        }
+        assertTrue(service.getPreferenceDefinitions(VALUE_FACTORY.createIRI("http://example" +
+                ".com/SomeOtherPreferenceGroup"))
+                .subjects().size() == 4);
+        assertTrue(service.getPreferenceDefinitions(VALUE_FACTORY.createIRI("http://example.com/SomePreferenceGroup"))
+                .subjects().size() == 2);
+        assertTrue(service.getPreferenceDefinitions(VALUE_FACTORY.createIRI("http://example" +
+                ".com/SomeNonexistentPreferenceGroup"))
+                .subjects().size() == 0);
+    }
+
+    private interface TestComplexPreference extends Thing, Setting, Preference {
+        String TYPE = "http://example.com/ExampleComplexPreference";
+    }
+
+    private interface TestSimplePreference extends Thing, Setting, Preference {
+        String TYPE = "http://example.com/ExampleSimplePreference";
     }
 }

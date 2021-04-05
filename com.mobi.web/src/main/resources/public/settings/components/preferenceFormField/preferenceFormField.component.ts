@@ -82,7 +82,7 @@ export class PreferenceFormFieldComponent implements OnChanges {
                 }
                 break;
             case 'http://www.w3.org/2001/XMLSchema#integer':
-                this.fieldFormControl.setValidators(Validators.pattern("^[0-9]+$"));
+                this.validators.push(Validators.pattern("^[0-9]+$"));
                 break;
             case 'http://www.w3.org/2001/XMLSchema#string':
                 break;
