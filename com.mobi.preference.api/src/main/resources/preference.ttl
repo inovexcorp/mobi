@@ -27,11 +27,6 @@
     rdfs:comment "A preference that a user can have within the Mobi framework"@en;
     rdfs:subClassOf :Setting .
 
-:ApplicationSetting a owl:Class;
-    rdfs:label "Application Setting"@en;
-    rdfs:comment "An application setting that applies for all users within the Mobi framework"@en;
-    rdfs:subClassOf :Setting .
-
 :hasDataValue a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "Has Data Value"@en;
     rdfs:domain :Setting;
@@ -46,15 +41,6 @@
     rdfs:domain sh:NodeShape;
     rdfs:range :PreferenceGroup .
 
-:PrefixPreferencePropertyShape a sh:PropertyShape;
-    sh:node :PrefixNodeShape;
-    sh:path :hasObjectValue .
-
-:PrefixNodeShape a sh:NodeShape;
-    sh:property :PrefixPropertyShape;
-    sh:property :NamespacePropertyShape;
-    sh:targetClass :Prefix .
-
 :forUser a owl:ObjectProperty;
     rdfs:label "For User"@en;
     rdfs:domain :Preference;
@@ -63,8 +49,6 @@
 :PreferenceGroup a owl:Class;
     rdfs:label "Preference Group"@en;
     rdfs:comment "The group of preferences that this preference belongs to"@en.
-
-# Define FormField
 
 :FormField a owl:Class .
 
@@ -78,10 +62,3 @@
    rdfs:label "For User"@en;
    rdfs:domain sh:PropertyShape;
    rdfs:range :FormField.
-
-:instantSubmit a owl:ObjectProperty;
-   rdfs:label "Instant Submit"@en;
-   rdfs:domain sh:PropertyShape;
-   rdfs:range xsd:boolean.
-
-# Define TextInput, TextAreaInput, Checkbox, Radio instances of FormField class

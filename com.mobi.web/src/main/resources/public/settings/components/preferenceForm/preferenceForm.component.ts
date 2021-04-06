@@ -59,7 +59,7 @@ export class PreferenceFormComponent implements OnChanges {
 
         this.numValues = this.preference.numValues();
 
-        // Temporary code. Put this somewhere else eventually. Open to suggestions. The point of this code is to create a lookup object to get the associated property shape for a given formFieldProperty.
+        // The point of this code is to create a lookup object to get the associated property shape for a given formFieldProperty.
         this.preference.formFieldProperties.forEach(formFieldProperty => {
             const shaclShape = filter(this.preference.formFieldPropertyShapes, formFieldPropertyShape => {
                 return formFieldPropertyShape['http://www.w3.org/ns/shacl#path'][0]['@id'] === formFieldProperty;
@@ -78,7 +78,6 @@ export class PreferenceFormComponent implements OnChanges {
         this.form.markAsDirty(); // Enable the submit button
     }
 
-    // Might be a better way to do this
     deleteFormBlock(index: number): void {
         this.formBlocks.removeAt(index); // Modify the angular form contents
         this.preference.updateWithFormValues(this.form); // modify the preference object to make it in sync with the form

@@ -128,6 +128,7 @@ public class PreferenceRest {
      * @return A JSON array of shacl shapes that define all preferences in the passed in preference group
      */
     @GET
+    @Path("groups/{preferenceGroup}/definitions")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @Operation(
@@ -146,7 +147,7 @@ public class PreferenceRest {
 
 
     /**
-     * Retrieves all preference groups defined in the repo
+     * Retrieves all preference groups defined in the repo.
      *
      * @param context The context of the request.
      * @return A JSON array of preference groups
@@ -168,6 +169,13 @@ public class PreferenceRest {
         return Response.ok(RestUtils.modelToJsonld(preferenceGroups, transformer)).build();
     }
 
+    /**
+     * Returns a JSON-LD representation of a user preference and referenced entities for the specific resource id.
+     *
+     * @param context The context of the request.
+     * @param preferenceId The resource id of the user preference to retrieve
+     * @return A JSON object of user preferences for the active user
+     */
     @GET
     @Path("{preferenceId}")
     @Produces(MediaType.APPLICATION_JSON)

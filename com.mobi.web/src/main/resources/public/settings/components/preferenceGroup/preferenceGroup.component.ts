@@ -20,13 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { forEach, filter } from 'lodash';
+import { forEach } from 'lodash';
 
 import { Input, Component, OnChanges, Inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { PreferenceUtils } from '../../classes/preferenceUtils.class'
 import { Preference } from '../../interfaces/preference.interface';
 import { SimplePreference } from '../../classes/simplePreference.class';
-import { ComplexPreference } from '../../classes/complexPreference.class';
 
 @Component({
     selector: 'preference-group',
@@ -48,7 +47,7 @@ export class PreferenceGroupComponent implements OnChanges {
     errorMessage = '';
     preferences = {};
 
-    constructor(@Inject('preferenceManagerService') private pm, private ref: ChangeDetectorRef) {}
+    constructor(@Inject('preferenceManagerService') private pm, @Inject('preferenceManagerService') private util, private ref: ChangeDetectorRef) {}
 
     ngOnChanges(): void {
         this.retrievePreferences();
@@ -74,14 +73,12 @@ export class PreferenceGroupComponent implements OnChanges {
                             let preference: Preference;
                             if (PreferenceUtils.isSimplePreference(preferenceJson, shapeDefinitions)) {
                                 preference = new SimplePreference(preferenceJson, shapeDefinitions);
+                                preference.populate(userPreferences[preferenceType]);
+                                this.preferences[preferenceType] = preference;
                             } else {
-                                preference = new ComplexPreference(preferenceJson, shapeDefinitions);
+                                preference = this.util.createErrorToast('Complex Preferences are not yet supported.');
                             }
-
-                            preference.populate(userPreferences[preferenceType]);
-                            this.preferences[preferenceType] = preference;
                         });
-                        
                         this.ref.markForCheck();
                     }, error => this.errorMessage = error);
             }, error => this.errorMessage = error);

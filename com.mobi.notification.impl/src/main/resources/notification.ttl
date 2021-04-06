@@ -4,7 +4,6 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix sh: <http://www.w3.org/ns/shacl#>.
-@prefix um: <http://mobi.com/ontologies/user/management#>.
 @prefix pref: <http://mobi.com/ontologies/preference#>.
 @prefix : <http://mobi.com/ontologies/notification#>.
 @base <http://mobi.com/ontologies/notification>.
@@ -32,70 +31,5 @@
     sh:maxCount 1 ;
     pref:usesFormField pref:ToggleInput .
 
-:SomeSimpleTextPreference a owl:Class, sh:NodeShape;
-    rdfs:subClassOf pref:Preference;
-    sh:description "Enter a value for this simple text preference"@en;
-    rdfs:comment "A preference that a user can have within the Mobi framework that signifies whether they want to receive email notifications."@en;
-    sh:property :SomeSimpleTextPreferencePropertyShape;
-    pref:inGroup :NotificationPreferenceGroup .
-
-:SomeSimpleTextPreferencePropertyShape a sh:PropertyShape;
-    sh:path pref:hasDataValue;
-    sh:datatype xsd:string;
-    sh:minCount 1 ;
-    sh:maxCount 2 ;
-    pref:usesFormField pref:TextInput .
-
 :NotificationPreferenceGroup a pref:PreferenceGroup ;
     rdfs:label "Notifications"@en .
-
-:PrefixPreference a owl:Class, sh:NodeShape;
-    rdfs:subClassOf pref:Preference;
-    sh:description "Provide a list of prefixes that you would like Mobi to recognize"@en;
-    rdfs:comment "A preference that a user can have within the Mobi framework that signifies the prefixes they want defined."@en;
-    sh:property :PrefixPreferencePropertyShape;
-    pref:inGroup :PrefixPreferenceGroup .
-
-:PrefixPreferenceGroup a pref:PreferenceGroup ;
-    rdfs:label "Prefixes"@en .
-
-:PrefixPreferencePropertyShape a sh:PropertyShape;
-    sh:node :PrefixNodeShape;
-    sh:path pref:hasObjectValue .
-
-:PrefixNodeShape a sh:NodeShape;
-    sh:property :PrefixPropertyShape;
-    sh:property :NamespacePropertyShape;
-    sh:targetClass :Prefix .
-
-:PrefixPropertyShape a sh:PropertyShape ;
-    sh:name "Prefix" ;
-    sh:path :hasPrefix ;
-    sh:datatype xsd:string ;
-    sh:order 0 ;
-    sh:minCount 1 ;
-    sh:maxCount 1 ;
-    pref:usesFormField pref:TextInput .
-
-:NamespacePropertyShape a sh:PropertyShape ;
-    sh:name "Namespace" ;
-    sh:path :hasNamespace ;
-    sh:datatype xsd:string ;
-    sh:pattern "((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+(:[0-9]+)?|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)" ;
-    sh:order 1 ;
-    sh:minCount 1 ;
-    sh:maxCount 1 ;
-    pref:usesFormField pref:TextInput .
-
-:Prefix a owl:Class;
-    rdfs:label "Prefix"@en.
-
-:hasPrefix a owl:DatatypeProperty, owl:FunctionalProperty;
-   rdfs:label "Has Prefix"@en;
-   rdfs:domain :Prefix;
-   rdfs:range xsd:string .
-
-:hasNamespace a owl:DatatypeProperty, owl:FunctionalProperty;
-   rdfs:label "Has Namespace"@en;
-   rdfs:domain :Prefix;
-   rdfs:range xsd:string .
