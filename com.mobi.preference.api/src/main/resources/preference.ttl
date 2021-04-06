@@ -27,6 +27,11 @@
     rdfs:comment "A preference that a user can have within the Mobi framework"@en;
     rdfs:subClassOf :Setting .
 
+:ApplicationSetting a owl:Class;
+    rdfs:label "Application Setting"@en;
+    rdfs:comment "An application setting that applies for all users within the Mobi framework"@en;
+    rdfs:subClassOf :Setting .
+
 :hasDataValue a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "Has Data Value"@en;
     rdfs:domain :Setting;
