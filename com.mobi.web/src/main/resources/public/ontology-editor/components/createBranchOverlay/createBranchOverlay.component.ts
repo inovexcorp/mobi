@@ -92,7 +92,6 @@ function createBranchOverlayComponentCtrl($q, catalogManagerService, ontologySta
     function onError(errorMessage) {
         dvm.error = errorMessage;
     }
-
 }
 
 export default createBranchOverlayComponent;

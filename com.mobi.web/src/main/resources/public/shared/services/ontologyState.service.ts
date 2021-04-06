@@ -1966,7 +1966,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {object} [listItem=self.listItem] The listItem to execute these actions against
      */
     self.collapseFlatLists = function(listItem = self.listItem) {
-        self.triggerTreeRender(closeNodeMapper, listItem);
+        self.alterTreeHierarchy(closeNodeMapper, listItem);
     }
     function closeNodeMapper(item) {
         if ('isOpened' in item) {
@@ -1980,12 +1980,12 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Method to trigger re-rendering of trees
+     * Method to alter tree hierarchy flat list
      *
      * @param {function} mapper function
      * @param {object} [listItem=self.listItem] The listItem to execute these actions against
      */
-    self.triggerTreeRender = function(mapperFunction, listItem = self.listItem) {
+    self.alterTreeHierarchy = function(mapperFunction, listItem = self.listItem) {
         var flatLists = ['classes', 'dataProperties', 'objectProperties', 'annotations',
             'concepts', 'conceptSchemes', 'dataProperties', 'individuals'];
 
