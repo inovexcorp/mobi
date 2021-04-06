@@ -269,7 +269,7 @@ public class DatasetRest {
                     description = "Optional description for the new DatasetRecord"))
             @FormDataParam("description") String description,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Optional list of keywords strings for the new DatasetRecord"))
+                    description = "Optional markdown abstract for the new DatasetRecord"))
             @FormDataParam("markdown") String markdown,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional list of keywords strings for the new DatasetRecord"))
