@@ -22,9 +22,9 @@
  */
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var Onto1 = process.cwd()+ '/src/test/resources/ontologies/active-entity-filter-1.ttl'
-var Onto2 = process.cwd()+ '/src/test/resources/ontologies/active-entity-filter-2.ttl'
-var Onto3 = process.cwd()+ '/src/test/resources/ontologies/active-entity-filter-3.ttl'
+var Onto1 = process.cwd()+ '/src/test/resources/ontologies/deprecated-entity-filter-1.ttl'
+var Onto2 = process.cwd()+ '/src/test/resources/ontologies/deprecated-entity-filter-2.ttl'
+var Onto3 = process.cwd()+ '/src/test/resources/ontologies/deprecated-entity-filter-3.ttl'
 
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
@@ -37,7 +37,7 @@ module.exports = {
         browser.globals.upload_ontologies(browser, Onto1, Onto2, Onto3)
     },
 
-    'Step 3: Open active-entity-filter-1 Ontology' : function (browser) {
+    'Step 3: Open deprecated-entity-filter-1 Ontology' : function (browser) {
         browser.globals.open_ontology(browser, Onto1)
     },
 
@@ -51,11 +51,11 @@ module.exports = {
         browser
             .waitForElementVisible('div.tree')
             .useXpath()
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 0")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]'})
-            .assert.elementNotPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1a")]]'})
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2a")]]'})
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3a")]]'})
+//            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]'})
+//            .assert.elementNotPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
     },
 
     'Step 6: Click on an imported class' : function (browser) {
@@ -100,7 +100,7 @@ module.exports = {
             .assert.containsText('selected-details .entity-name', 'Other Class')
     },
 
-    'Step 12: Remove the Active Entity filter' : funcHGItion(browser) {
+    'Step 12: Remove the Active Entity filter' : function(browser) {
         browser
             .click('.hierarchy-filter a')
             .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox')

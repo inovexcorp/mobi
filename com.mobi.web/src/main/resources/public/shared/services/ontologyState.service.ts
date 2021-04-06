@@ -1999,18 +1999,18 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {function} mapper function
      * @param {object} [listItem=self.listItem] The listItem to execute these actions against
      */
-    self.triggerTreeRender = function(mapper = identityMapper, listItem = self.listItem) {
+    self.triggerTreeRender = function(listItem = self.listItem) {
         var flatLists = ['classes', 'dataProperties', 'objectProperties', 'annotations',
             'concepts', 'conceptSchemes', 'dataProperties', 'individuals'];
 
         forEach(flatLists, listKey =>{
             if(listKey in listItem && 'flat' in listItem[listKey]){
-                listItem[listKey].flat = listItem[listKey].flat.map(mapper);
+                listItem[listKey].flat = listItem[listKey].flat.map(identityMapper);
             }
         });
 
         if('flatEverythingTree' in listItem){
-            listItem['flatEverythingTree'] = listItem['flatEverythingTree'].map(mapper);
+            listItem['flatEverythingTree'] = listItem['flatEverythingTree'].map(identityMapper);
         }
     }
     function identityMapper(x){
