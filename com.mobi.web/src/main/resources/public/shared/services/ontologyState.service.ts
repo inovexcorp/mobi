@@ -1976,7 +1976,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     /**
      * @ngdoc method
-     * @name triggerTreeRender
+     * @name alterTreeHierarchy
      * @methodOf shared.service:ontologyStateService
      *
      * @description
