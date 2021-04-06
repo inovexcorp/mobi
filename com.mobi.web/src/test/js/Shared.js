@@ -798,6 +798,8 @@ export function mockOntologyState() {
             this.handleNewProperty = jasmine.createSpy('handleNewProperty');
             this.handleDeletedProperty = jasmine.createSpy('handleDeletedProperty');
             this.addPropertyToClasses = jasmine.createSpy('addPropertyToClasses');
+            this.collapseFlatLists = jasmine.createSpy('collapseFlatLists');
+            this.alterTreeHierarchy = jasmine.createSpy('alterTreeHierarchy');
             this.handleDeletedClass = jasmine.createSpy('handleDeletedClass');
             this.removePropertyFromClass = jasmine.createSpy('removePropertyFromClass');
             this.getBnodeIndex = jasmine.createSpy('getBnodeIndex');

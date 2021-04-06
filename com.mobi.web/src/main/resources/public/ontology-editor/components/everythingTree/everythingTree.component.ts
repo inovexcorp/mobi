@@ -99,7 +99,7 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         update();
     }
     dvm.$onChanges = function(changesObj) {
-        if (!changesObj.hierarchy.isFirstChange()) {
+        if (changesObj.hierarchy && !changesObj.hierarchy.isFirstChange()) {
             if (changesObj.branchId) {
                 removeFilters();
             }

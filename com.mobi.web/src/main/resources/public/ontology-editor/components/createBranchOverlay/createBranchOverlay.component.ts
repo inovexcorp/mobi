@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { unset, get } from 'lodash';
+import { unset, get} from 'lodash';
 
 const template = require('./createBranchOverlay.component.html');
 
@@ -75,7 +75,9 @@ function createBranchOverlayComponentCtrl($q, catalogManagerService, ontologySta
             dvm.os.listItem.branches.push(branch);
             dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
             commitId = branch[prefixes.catalog + 'head'][0]['@id'];
+            dvm.os.collapseFlatLists();
             dvm.os.listItem.upToDate = true;
+            dvm.os.resetStateTabs();
             return dvm.os.updateOntologyState({recordId: dvm.os.listItem.ontologyRecord.recordId, commitId, branchId: dvm.os.listItem.ontologyRecord.branchId});
         }, $q.reject)
         .then(() => {
