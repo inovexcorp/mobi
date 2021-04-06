@@ -50,10 +50,10 @@ import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 public abstract class AbstractOntologyManager implements OntologyManager  {
     protected Logger log;
