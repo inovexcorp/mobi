@@ -710,10 +710,14 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<OClass> getAllClasses() {
         try (DatasetConnection conn = getDatasetConnection()) {
-            return getIRISet(runQueryOnOntology(GET_ALL_CLASSES, null, "getAllClasses()", false))
+            long start = getStartTime();
+            Set<OClass> classes = getIRISet(runQueryOnOntology(GET_ALL_CLASSES, null, "getAllClasses()", false))
                     .stream()
                     .map(SimpleClass::new)
                     .collect(Collectors.toSet());
+            undoApplyDifferenceIfPresent(conn);
+            logTrace("getAllClasses()", start);
+            return classes;
         }
     }
 
