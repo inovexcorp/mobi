@@ -75,7 +75,7 @@ function createBranchOverlayComponentCtrl($q, catalogManagerService, ontologySta
             dvm.os.listItem.branches.push(branch);
             dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
             commitId = branch[prefixes.catalog + 'head'][0]['@id'];
-            collapseFlatLists();
+            dvm.os.collapseFlatLists();
             dvm.os.listItem.upToDate = true;
             dvm.os.resetStateTabs();
             return dvm.os.updateOntologyState({recordId: dvm.os.listItem.ontologyRecord.recordId, commitId, branchId: dvm.os.listItem.ontologyRecord.branchId});
@@ -91,28 +91,6 @@ function createBranchOverlayComponentCtrl($q, catalogManagerService, ontologySta
 
     function onError(errorMessage) {
         dvm.error = errorMessage;
-    }
-
-    function collapseFlatLists() {
-        var flatLists = ['classes', 'dataProperties', 'objectProperties', 'annotations', 
-            'concepts', 'conceptSchemes', 'dataProperties', 'individuals'];
-
-        forEach(flatLists, listKey =>{
-            if(listKey in dvm.os.listItem &&  'flat' in dvm.os.listItem[listKey]){
-                dvm.os.listItem[listKey].flat = dvm.os.listItem[listKey].flat.map(closeNodeMapper);
-            }
-        });
-        
-        if('flatEverythingTree' in dvm.os.listItem){
-            dvm.os.listItem['flatEverythingTree'] = dvm.os.listItem['flatEverythingTree'].map(closeNodeMapper);
-        }
-    }
-
-    function closeNodeMapper(item){
-        if('isOpened' in item){
-            item.isOpened = false;
-        }
-        return item;
     }
 
 }

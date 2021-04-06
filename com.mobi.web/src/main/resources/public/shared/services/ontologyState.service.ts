@@ -1957,6 +1957,50 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     /**
      * @ngdoc method
+     * @name collapseFlatLists
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Method to collapse flat list
+     *
+     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
+     */
+    self.collapseFlatLists = function(listItem = self.listItem) {
+        self.triggerTreeRender(closeNodeMapper, listItem);
+    }
+    function closeNodeMapper(item) {
+        if ('isOpened' in item) {
+            item.isOpened = false;
+        }
+        return item;
+    }
+    /**
+     * @ngdoc method
+     * @name triggerTreeRender
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Method to trigger re-rendering of trees
+     *
+     * @param {function} mapper function
+     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
+     */
+    self.triggerTreeRender = function(mapperFunction, listItem = self.listItem) {
+        var flatLists = ['classes', 'dataProperties', 'objectProperties', 'annotations',
+            'concepts', 'conceptSchemes', 'dataProperties', 'individuals'];
+
+        forEach(flatLists, listKey => {
+            if (listKey in listItem && 'flat' in listItem[listKey]) {
+                listItem[listKey].flat = listItem[listKey].flat.map(mapperFunction);
+            }
+        });
+
+        if ('flatEverythingTree' in listItem) {
+            listItem['flatEverythingTree'] = listItem['flatEverythingTree'].map(mapperFunction);
+        }
+    }
+    /**
+     * @ngdoc method
      * @name handleDeletedClass
      * @methodOf shared.service:ontologyStateService
      *
