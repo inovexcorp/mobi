@@ -165,7 +165,6 @@ public class SimpleOntology implements Ontology {
     private Set<Annotation> annotations;
     private Set<AnnotationProperty> annotationProperties;
     private Set<IRI> missingImports = new HashSet<>();
-    private Set<IRI> deprecatedIris = new HashSet<>();
     private org.eclipse.rdf4j.model.Model sesameModel;
     private ForkJoinPool threadPool;
 

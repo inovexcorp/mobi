@@ -647,6 +647,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<IRI> getDeprecatedIRIs() {
+        assert GET_ALL_DEPRECATED_IRIS != null;
         return getIRISet(runQueryOnOntology(GET_ALL_DEPRECATED_IRIS, null,
                 "getDeprecatedIRIs()", true));
     }
