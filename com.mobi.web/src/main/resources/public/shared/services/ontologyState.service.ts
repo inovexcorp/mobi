@@ -1985,35 +1985,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             } else if (annotationValue === "false" || annotationValue === null) {
                 unset(listItem, "deprecated.iris['" + iri + "']");
             }
-            self.triggerTreeRender(listItem);
+            self.alterTreeHierarchy(identityMapper, listItem);
         }
     }
-    /**
-     * @ngdoc method
-     * @name annotationModified
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Method to trigger re-rendering of trees
-     *
-     * @param {function} mapper function
-     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
-     */
-    self.triggerTreeRender = function(listItem = self.listItem) {
-        var flatLists = ['classes', 'dataProperties', 'objectProperties', 'annotations',
-            'concepts', 'conceptSchemes', 'dataProperties', 'individuals'];
-
-        forEach(flatLists, listKey =>{
-            if(listKey in listItem && 'flat' in listItem[listKey]){
-                listItem[listKey].flat = listItem[listKey].flat.map(identityMapper);
-            }
-        });
-
-        if('flatEverythingTree' in listItem){
-            listItem['flatEverythingTree'] = listItem['flatEverythingTree'].map(identityMapper);
-        }
-    }
-    function identityMapper(x){
+    function identityMapper(x) {
         return x
     }
     /**
