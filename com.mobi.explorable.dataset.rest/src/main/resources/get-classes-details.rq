@@ -12,4 +12,5 @@ WHERE {
         ?example rdfs:label ?label .
         FILTER(lang(?label) = "" || langMatches(lang(?label), "EN"))
     }
+    FILTER(!isBlank(?example))
 } LIMIT 3
