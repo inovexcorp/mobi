@@ -54,81 +54,68 @@ module.exports = {
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1a")]]'})
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2a")]]'})
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3a")]]'})
-//            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]'})
-//            .assert.elementNotPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
+            .assert.elementNotPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1b")]]'})
     },
 
-    'Step 6: Click on an imported class' : function (browser) {
+    'Step 6: Click on a deprecated class' : function (browser) {
         browser
             .useCss()
-            .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]//parent::a')
+            .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3a")]]//parent::a')
             .waitForElementNotPresent('.spinner')
             .waitForElementVisible('selected-details .entity-name')
-            .assert.containsText('selected-details .entity-name', 'Other Class')
+            .assert.containsText('selected-details .entity-name', 'Class 3a')
     },
 
-    'Step 7: Apply the Active Entity Filter' : function (browser) {
+    'Step 7: Apply the Deprecated Filter' : function (browser) {
         browser
             .waitForElementVisible('.hierarchy-filter a')
             .click('.hierarchy-filter a')
             .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox')
-            .click('class-hierarchy-block .dropdown-menu checkbox input')
+            .click('xpath', '//class-hierarchy-block//hierarchy-tree//hierarchy-filter//checkbox//label[text()[contains(., "Hide deprecated classes")]]')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]'})
             .click('xpath', '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]')
             .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox')
     },
 
-    'Step 8: Ensure that imported entities have been filtered out' : function(browser) {
+    'Step 8: Ensure that correct classes are shown' : function(browser) {
         browser
-            .waitForElementNotPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3")]]'})
-            .waitForElementNotPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]'})
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1a")]]'})
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1b")]]'})
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1c")]]'})
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2a")]]'})
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2b")]]'})
+            .assert.elementNotPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3a")]]'})
     },
 
-    'Step 9: Ensure that all active entities are visible' : function(browser) {
-        browser
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
-            .assert.visible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 0")]]'})
-    },
-
-    'Step 10: Ensure that imported parents of active entities are visible' : function(browser) {
-        browser
-            .assert.visible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]'})
-    },
-
-    'Step 11: Ensure the selected entity view is still visible to the user, even if the entity is filtered out of the active list.': function(browser) {
-        browser
-            .assert.containsText('selected-details .entity-name', 'Other Class')
-    },
-
-    'Step 12: Remove the Active Entity filter' : function(browser) {
-        browser
+    'Step 9: Remove the Active Entity filter' : function(browser) {
+       browser
+            .waitForElementVisible('.hierarchy-filter a')
             .click('.hierarchy-filter a')
             .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox')
-            .click('class-hierarchy-block .dropdown-menu checkbox input')
+            .click('xpath', '//class-hierarchy-block//hierarchy-tree//hierarchy-filter//checkbox//label[text()[contains(., "Hide deprecated classes")]]')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]'})
             .click('xpath', '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]')
             .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox')
-
     },
 
-    'Step 13: Verify the Active Entity filtered state was applied to the pre-filtered state' : function(browser) {
+   'Step 10: Ensure that correct classes are shown' : function(browser) {
         browser
-            .useXpath()
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 0")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
-    },
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1a")]]'})
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1b")]]'})
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1c")]]'})
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2a")]]'})
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2b")]]'})
+            . waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3a")]]'})
+   },
 
-    'Step 14: Verify that a message is displayed when no entities match the filter criteria' : function(browser) {
+    'Step 11: Verify that a message is displayed when no entities match the filter criteria' : function(browser) {
         browser
             .useCss()
             .assert.visible('search-bar input')
-            .setValue('search-bar input', '3')
+            .setValue('search-bar input', 'ddadf')
             .click('.hierarchy-filter a')
             .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox')
-            .click('class-hierarchy-block .dropdown-menu checkbox input')
+            .click('xpath', '//class-hierarchy-block//hierarchy-tree//hierarchy-filter//checkbox//label[text()[contains(., "Hide deprecated classes")]]')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]'})
             .click('xpath', '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]')
             .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox')

@@ -100,7 +100,7 @@ module.exports = {
             .assert.containsText('selected-details .entity-name', 'Other Class')
     },
 
-    'Step 12: Remove the Active Entity filter' : funcHGItion(browser) {
+    'Step 12: Remove the Active Entity filter' : function(browser) {
         browser
             .click('.hierarchy-filter a')
             .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox')
