@@ -1,18 +1,26 @@
 @import "../../../css/variables";
 
 .preferences-tab {
+    .preferences-sidebar {
+        min-width: 150px;
+    }
+
     .material-tabset {
         padding-top: 15px; 
-        padding-left: 150px;
+        align-items: flex-end;
 
-        .preference-group-item {
-            border-right: solid gray; 
-            display: block; 
-            padding: .5rem .1rem; 
-            font-weight: 500;
+        .sidebar-list {
+            min-width: 100px;
 
-            a {
-                color: gray;
+            .preference-group-item {
+                border-right: solid gray; 
+                display: block; 
+                padding: .5rem .1rem; 
+                font-weight: 500;
+    
+                a {
+                    color: gray;
+                }
             }
         }
     }

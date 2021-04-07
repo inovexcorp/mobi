@@ -24,9 +24,9 @@
     <div *ngIf="!tabs.length">
         <info-message>No Preference Groups could be found</info-message>
     </div>
-    <div class="col-3">
+    <div class="col-3 preference-sidebar">
         <div class="material-tabset h-100 d-flex flex-column">
-            <ul>
+            <ul class="sidebar-list">
                 <li class="preference-group-item" *ngFor="let tab of tabs">
                     <a style="color: gray;" [ngClass]="{'active': tab.active}" (click)="select(tab)">
                         <span [innerHtml]="tab.heading | safeHtml: 'html'" class="ng-binding"></span>
