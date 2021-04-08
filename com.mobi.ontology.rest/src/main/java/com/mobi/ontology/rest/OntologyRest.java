@@ -3460,27 +3460,21 @@ public class OntologyRest {
     private void writeEntityNamesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
         Map<String, EntityNames> entityNamesMap = new HashMap<>();
         String entityBinding = "entity";
-        String enPrefNamesBinding = "en_pref_names_array";
-        String prefNamesBinding = "pref_names_array";
         String namesBinding = "names_array";
         tupleQueryResults.forEach(bindings -> {
-            String entity = Bindings.requiredResource(bindings, entityBinding).stringValue();
-            String enlabelsString = Bindings.requiredLiteral(bindings, enPrefNamesBinding).stringValue();
-            String labelsString = Bindings.requiredLiteral(bindings, prefNamesBinding).stringValue();
-            String namesString = Bindings.requiredLiteral(bindings, namesBinding).stringValue();
-            EntityNames entityNames = new EntityNames();
+            if (bindings.getBinding(entityBinding).isPresent()) {
+                String entity = Bindings.requiredResource(bindings, entityBinding).stringValue();
+                String namesString = Bindings.requiredLiteral(bindings, namesBinding).stringValue();
+                EntityNames entityNames = new EntityNames();
 
-            String[] enLabels = StringUtils.split(enlabelsString, NAME_SPLITTER);
-            if (enLabels.length > 0) {
-                entityNames.label = enLabels[0];
-            } else {
-                entityNames.label = StringUtils.split(labelsString, NAME_SPLITTER)[0];
+                String[] names = StringUtils.split(namesString, NAME_SPLITTER);
+                entityNames.label = names[0];
+
+                Set<String> namesSet = new HashSet<>();
+                CollectionUtils.addAll(namesSet, names);
+                entityNames.setNames(namesSet);
+                entityNamesMap.putIfAbsent(entity, entityNames);
             }
-
-            Set<String> namesSet = new HashSet<>();
-            CollectionUtils.addAll(namesSet, StringUtils.split(namesString, NAME_SPLITTER));
-            entityNames.setNames(namesSet);
-            entityNamesMap.putIfAbsent(entity, entityNames);
         });
 
         outputStream.write(mapper.valueToTree(entityNamesMap).toString().getBytes());
