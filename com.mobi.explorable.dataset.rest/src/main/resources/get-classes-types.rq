@@ -6,4 +6,5 @@ WHERE {
     MINUS {
         ?thing a rdf:Statement
     }
+    FILTER(!isBlank(?thing))
 } GROUP BY ?type
