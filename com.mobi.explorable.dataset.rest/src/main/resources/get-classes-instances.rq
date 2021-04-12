@@ -9,6 +9,7 @@ SELECT
     (SAMPLE(?comment_value) as ?comment)
 WHERE {
     ?inst a ?classIRI .
+    FILTER(!isBlank(?inst))
     OPTIONAL {
         ?inst dcterms:title ?title_value .
         FILTER(lang(?title_value) = "" || langMatches(lang(?title_value), "EN"))
