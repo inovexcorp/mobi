@@ -81,7 +81,7 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         }
     };
     dvm.deprecatedEntityFilter = {
-        name: 'Hide deprecated entities', // TODO erivera classes/properties/individual
+        name: 'Hide deprecated entities',
         checked: false,
         flag: false,
         filter: function(node) {

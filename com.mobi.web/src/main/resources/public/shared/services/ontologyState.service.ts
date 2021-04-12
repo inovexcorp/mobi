@@ -188,9 +188,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         derivedConcepts: [],
         derivedConceptSchemes: [],
         derivedSemanticRelations: [],
-        deprecated: {
-            iris: {},
-        },
+        deprecatedIris: {},
         classes: {
             iris: {},
             parentMap: {},
@@ -891,7 +889,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             get(responseIriList, 'namedIndividuals', []).forEach(iri => addIri(listItem, 'individuals.iris', iri, listItem.ontologyId));
             get(responseIriList, 'concepts', []).forEach(iri => addIri(listItem, 'concepts.iris', iri, listItem.ontologyId));
             get(responseIriList, 'conceptSchemes', []).forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, listItem.ontologyId));
-            get(responseIriList, 'deprecatedIris', []).forEach(iri => self.annotationModified(iri, prefixes.owl + 'deprecated', "true", listItem));
+            get(responseIriList, 'deprecatedIris', []).forEach(iri => self.annotationModified(iri, prefixes.owl + 'deprecated', 'true', listItem));
             listItem.derivedConcepts = get(responseIriList, 'derivedConcepts', []);
             listItem.derivedConceptSchemes = get(responseIriList, 'derivedConceptSchemes', []);
             listItem.derivedSemanticRelations = get(responseIriList, 'derivedSemanticRelations', []);
@@ -1962,7 +1960,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         if (iri === listItem.ontologyId) {
             return false;
         }
-        var isDep = has(listItem, "deprecated.iris['" + iri + "']");
+        var isDep = has(listItem, "deprecatedIris['" + iri + "']");
         return isDep;
     }
    /**
@@ -1981,9 +1979,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.annotationModified = function(iri, annotationIri, annotationValue, listItem = self.listItem){
         if (annotationIri === prefixes.owl + 'deprecated') {
             if (annotationValue === "true") {
-                set(listItem, "deprecated.iris['" + iri + "']", listItem.ontologyId);
+                set(listItem, "deprecatedIris['" + iri + "']", listItem.ontologyId);
             } else if (annotationValue === "false" || annotationValue === null) {
-                unset(listItem, "deprecated.iris['" + iri + "']");
+                unset(listItem, "deprecatedIris['" + iri + "']");
             }
             self.alterTreeHierarchy(identityMapper, listItem);
         }

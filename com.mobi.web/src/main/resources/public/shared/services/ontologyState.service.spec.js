@@ -4765,60 +4765,44 @@ describe('Ontology State Service', function() {
                 expect(ontologyStateSvc.isIriDeprecated('ontologyId')).toBe(false);
             });
             it('iri is not in the iris object', function() {
-                ontologyStateSvc.listItem.deprecated = {
-                    iris: { iri1: ""}
-                };
+                ontologyStateSvc.listItem.deprecatedIris = { iri1: "" };
                 expect(ontologyStateSvc.isIriDeprecated('iri')).toBe(false);
             });
         });
         describe('true when', function() {
             it('iri is in the iris object', function() {
-                ontologyStateSvc.listItem.deprecated = {
-                   iris: { iri: "ontId"}
-                };
+                ontologyStateSvc.listItem.deprecatedIris = { iri: "ontId" };
                 expect(ontologyStateSvc.isIriDeprecated('iri')).toBe(true);
             });
 
         });
     });
     describe('annotationModified should', function() {
-        describe('add to listItem.deprecated.iris when', function() {
+        describe('add to listItem.deprecatedIris when', function() {
             it('annotationIri is owl:deprecated and value is true', function() {
                 ontologyStateSvc.listItem.ontologyId = 'ontologyId';
-                ontologyStateSvc.listItem.deprecated = {
-                    iris: {}
-                };
-                var expected = {
-                    iris: { iri: ontologyStateSvc.listItem.ontologyId }
-                };
+                ontologyStateSvc.listItem.deprecatedIris = {};
+                var expected = { iri: ontologyStateSvc.listItem.ontologyId };
                 ontologyStateSvc.annotationModified('iri', prefixes.owl + "deprecated", "true");
-                expect(ontologyStateSvc.listItem.deprecated).toEqual(expected);
+                expect(ontologyStateSvc.listItem.deprecatedIris).toEqual(expected);
             });
         });
-        describe('remove from listItem.deprecated.iris when', function() {
+        describe('remove from listItem.deprecatedIris when', function() {
             it('annotationIri is owl:deprecated and value is false', function() {
                 ontologyStateSvc.listItem.ontologyId = 'ontologyId';
-                ontologyStateSvc.listItem.deprecated = {
-                    iris: { iri: ontologyStateSvc.listItem.ontologyId }
-                };
-                var expected = {
-                    iris: {}
-                };
+                ontologyStateSvc.listItem.deprecatedIris = { iri: ontologyStateSvc.listItem.ontologyId };
+                var expected = {};
                 ontologyStateSvc.annotationModified('iri', prefixes.owl + "deprecated", "false");
-                expect(ontologyStateSvc.listItem.deprecated).toEqual(expected);
+                expect(ontologyStateSvc.listItem.deprecatedIris).toEqual(expected);
             });
         });
-       describe('listItem.deprecated.iris should stay the same when', function() {
+       describe('listItem.deprecatedIris should stay the same when', function() {
             it('annotationIri is not owl:deprecated and value is something', function() {
                 ontologyStateSvc.listItem.ontologyId = 'ontologyId';
-                ontologyStateSvc.listItem.deprecated = {
-                    iris: { iri: ontologyStateSvc.listItem.ontologyId }
-                };
-                var expected = {
-                    iris: { iri: ontologyStateSvc.listItem.ontologyId }
-                };
+                ontologyStateSvc.listItem.deprecatedIris = { iri: ontologyStateSvc.listItem.ontologyId };
+                var expected = { iri: ontologyStateSvc.listItem.ontologyId };
                 ontologyStateSvc.annotationModified('iri', prefixes.owl + "annotation1", "false");
-                expect(ontologyStateSvc.listItem.deprecated).toEqual(expected);
+                expect(ontologyStateSvc.listItem.deprecatedIris).toEqual(expected);
             });
        });
     });
