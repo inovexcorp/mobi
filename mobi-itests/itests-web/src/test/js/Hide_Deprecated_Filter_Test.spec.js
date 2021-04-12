@@ -87,7 +87,7 @@ module.exports = {
             .assert.elementNotPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3a")]]'})
     },
 
-    'Step 9: Remove the Active Entity filter' : function(browser) {
+    'Step 9: Remove Deprecated Entity Filter' : function(browser) {
        browser
             .waitForElementVisible('.hierarchy-filter a')
             .click('.hierarchy-filter a')

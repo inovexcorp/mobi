@@ -67,7 +67,7 @@ function annotationBlockComponentCtrl($filter, ontologyStateService, ontologyUti
     }
     dvm.updatePropertiesFiltered = function(){
         dvm.annotations = union(Object.keys(dvm.os.listItem.annotations.iris), pm.defaultAnnotations, pm.owlAnnotations);
-        dvm.annotationsFiltered = $filter("orderBy")($filter("showProperties")(dvm.os.listItem.selected, dvm.annotations), dvm.ontoUtils.getLabelForIRI);
+        dvm.annotationsFiltered = $filter('orderBy')($filter('showProperties')(dvm.os.listItem.selected, dvm.annotations), dvm.ontoUtils.getLabelForIRI);
     }
     dvm.openAddOverlay = function() {
         dvm.os.editingAnnotation = false;
@@ -82,7 +82,7 @@ function annotationBlockComponentCtrl($filter, ontologyStateService, ontologyUti
         modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
             dvm.ontoUtils.removeProperty(key, index);
             dvm.updatePropertiesFiltered();
-            dvm.os.annotationModified(dvm.os.listItem.selected["@id"], key, null);
+            dvm.os.annotationModified(dvm.os.listItem.selected['@id'], key, null);
         });
     }
     dvm.editClicked = function(annotation, index) {
