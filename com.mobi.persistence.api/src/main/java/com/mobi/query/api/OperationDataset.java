@@ -29,7 +29,7 @@ import java.util.Set;
 
 public interface OperationDataset {
     /**
-     * Gets the default remove graph URIs of this dataset. An empty set indicates the the store's default behaviour
+     * Gets the default remove graph URIs of this dataset. An empty set indicates the store's default behaviour
      * should be used, if not otherwise indicated in the operation.
      */
     Set<IRI> getDefaultRemoveGraphs();

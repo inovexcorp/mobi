@@ -44,7 +44,7 @@ public class OntologyUtils {
      * Gets the imported ontologies for the Ontology identified, excluding the base Ontology.
      *
      * @param importedOntologies set of ontologies from the imports closure which includes the base ontology.
-     * @param baseOntology the {@link Ontology} of the base Ontology to exclude from the {@link Set}.
+     * @param baseOntology the base {@link Ontology} to exclude from the {@link Set}.
      * @return the Set of imported Ontologies without the base Ontology.
      */
     public static Set<Ontology> getImportedOntologies(Set<Ontology> importedOntologies, Ontology baseOntology) {

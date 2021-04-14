@@ -25,5 +25,10 @@ package com.mobi.query.api;
 
 public interface OperationDatasetFactory {
 
+    /**
+     * Creates an {@link OperationDataset}.
+     *
+     * @return A new instance of {@link OperationDataset}
+     */
     OperationDataset createOperationDataset();
 }
