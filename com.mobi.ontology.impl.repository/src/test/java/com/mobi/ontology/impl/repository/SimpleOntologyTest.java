@@ -917,6 +917,16 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testGetDeprecatedIris() {
+        // Setup:
+        Set<IRI> expected = Stream.of(vf.createIRI("http://mobi.com/ontology#Class3a")).collect(Collectors.toSet());
+
+        Set<IRI> results = queryOntology.getDeprecatedIRIs();
+        assertEquals(results, expected);
+    }
+
+
+    @Test
     public void testGetSubDatatypePropertiesOf() throws Exception {
         // Setup:
         Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#dataProperty1a"), vf.createIRI("http://mobi.com/ontology#dataProperty1b"))

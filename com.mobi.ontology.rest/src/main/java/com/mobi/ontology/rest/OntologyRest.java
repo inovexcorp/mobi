@@ -3460,27 +3460,21 @@ public class OntologyRest {
     private void writeEntityNamesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
         Map<String, EntityNames> entityNamesMap = new HashMap<>();
         String entityBinding = "entity";
-        String enPrefNamesBinding = "en_pref_names_array";
-        String prefNamesBinding = "pref_names_array";
         String namesBinding = "names_array";
         tupleQueryResults.forEach(bindings -> {
-            String entity = Bindings.requiredResource(bindings, entityBinding).stringValue();
-            String enlabelsString = Bindings.requiredLiteral(bindings, enPrefNamesBinding).stringValue();
-            String labelsString = Bindings.requiredLiteral(bindings, prefNamesBinding).stringValue();
-            String namesString = Bindings.requiredLiteral(bindings, namesBinding).stringValue();
-            EntityNames entityNames = new EntityNames();
+            if (bindings.getBinding(entityBinding).isPresent()) {
+                String entity = Bindings.requiredResource(bindings, entityBinding).stringValue();
+                String namesString = Bindings.requiredLiteral(bindings, namesBinding).stringValue();
+                EntityNames entityNames = new EntityNames();
 
-            String[] enLabels = StringUtils.split(enlabelsString, NAME_SPLITTER);
-            if (enLabels.length > 0) {
-                entityNames.label = enLabels[0];
-            } else {
-                entityNames.label = StringUtils.split(labelsString, NAME_SPLITTER)[0];
+                String[] names = StringUtils.split(namesString, NAME_SPLITTER);
+                entityNames.label = names[0];
+
+                Set<String> namesSet = new HashSet<>();
+                CollectionUtils.addAll(namesSet, names);
+                entityNames.setNames(namesSet);
+                entityNamesMap.putIfAbsent(entity, entityNames);
             }
-
-            Set<String> namesSet = new HashSet<>();
-            CollectionUtils.addAll(namesSet, StringUtils.split(namesString, NAME_SPLITTER));
-            entityNames.setNames(namesSet);
-            entityNamesMap.putIfAbsent(entity, entityNames);
         });
 
         outputStream.write(mapper.valueToTree(entityNamesMap).toString().getBytes());
@@ -3663,6 +3657,30 @@ public class OntologyRest {
                 .map(AnnotationProperty::getIRI)
                 .collect(Collectors.toSet());
     }
+
+    /**
+     * Gets a JSONArray of Deprecated from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Deprecated from.
+     * @return a JSONArray of Deprecated from the provided Ontology.
+     */
+    private ObjectNode getDeprecatedIRIObject(Ontology ontology) {
+        Set<IRI> iris = getDeprecatedIRIs(ontology);
+        return getObjectArray("deprecatedIris", irisToJsonArray(iris));
+    }
+
+    /**
+     * Gets a Set of Deprecated IRIs from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Deprecated from.
+     * @return a Set of Deprecated IRIs from the provided Ontology.
+     */
+    private Set<IRI> getDeprecatedIRIs(Ontology ontology) {
+        return ontology.getDeprecatedIRIs()
+                .stream()
+                .collect(Collectors.toSet());
+    }
+
 
     /**
      * Gets a JSONObject of Class IRIs from the provided Ontology.
@@ -4007,11 +4025,18 @@ public class OntologyRest {
      * @return the JSONObject with the IRIs for all components of an ontology.
      */
     private ObjectNode getAllIRIs(Ontology ontology) {
-        return combineJsonObjects(getAnnotationIRIObject(ontology), getClassIRIArray(ontology),
-                getDatatypeIRIObject(ontology), getObjectPropertyIRIObject(ontology),
-                getDataPropertyIRIObject(ontology), getNamedIndividualIRIObject(ontology),
-                getConceptIRIObject(ontology), getConceptSchemeIRIObject(ontology),
-                getDerivedConceptTypeIRIObject(ontology), getDerivedConceptSchemeTypeIRIObject(ontology),
+        return combineJsonObjects(
+                getAnnotationIRIObject(ontology),
+                getDeprecatedIRIObject(ontology),
+                getClassIRIArray(ontology),
+                getDatatypeIRIObject(ontology),
+                getObjectPropertyIRIObject(ontology),
+                getDataPropertyIRIObject(ontology),
+                getNamedIndividualIRIObject(ontology),
+                getConceptIRIObject(ontology),
+                getConceptSchemeIRIObject(ontology),
+                getDerivedConceptTypeIRIObject(ontology),
+                getDerivedConceptSchemeTypeIRIObject(ontology),
                 getDerivedSemanticRelationIRIObject(ontology));
     }
 

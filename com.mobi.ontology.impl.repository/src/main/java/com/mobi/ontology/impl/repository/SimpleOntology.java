@@ -141,6 +141,7 @@ public class SimpleOntology implements Ontology {
     private static final String GET_ALL_NO_DOMAIN_DATA_PROPERTIES;
     private static final String GET_ALL_INDIVIDUALS;
     private static final String GET_ONTOLOGY_ID;
+    private static final String GET_ALL_DEPRECATED_IRIS;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
 
@@ -231,6 +232,10 @@ public class SimpleOntology implements Ontology {
             );
             GET_ALL_INDIVIDUALS = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-all-individuals.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_ALL_DEPRECATED_IRIS = IOUtils.toString(
+                    SimpleOntology.class.getResourceAsStream("/get-all-deprecated-iris.rq"),
                     StandardCharsets.UTF_8
             );
             GET_ONTOLOGY_ID = IOUtils.toString(
@@ -644,6 +649,12 @@ public class SimpleOntology implements Ontology {
             logTrace("getImportedOntologyIRIs()", start);
             return imports;
         }
+    }
+
+    @Override
+    public Set<IRI> getDeprecatedIRIs() {
+        return getIRISet(runQueryOnOntology(GET_ALL_DEPRECATED_IRIS, null,
+                "getDeprecatedIRIs()", true));
     }
 
     /**

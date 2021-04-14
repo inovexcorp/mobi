@@ -232,6 +232,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private Set<Individual> namedIndividuals;
     private Set<Individual> concepts;
     private Set<Individual> conceptSchemes;
+    private Set<IRI> deprecatedIris;
     private Set<IRI> derivedConcepts;
     private Set<IRI> derivedConceptSchemes;
     private Set<IRI> derivedSemanticRelations;
@@ -331,6 +332,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         namedIndividuals = Collections.singleton(new SimpleIndividual(individualIRI));
         concepts = Collections.singleton(new SimpleIndividual(conceptIRI));
         conceptSchemes = Collections.singleton(new SimpleIndividual(conceptSchemeIRI));
+        deprecatedIris = Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#DeprecatedIRI1"));
         derivedConcepts = Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#ConceptSubClass"));
         derivedConceptSchemes = Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#ConceptSchemeSubClass"));
         derivedSemanticRelations = Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#SemanticRelationSubProperty"));
@@ -407,6 +409,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(ontology.getAllObjectProperties()).thenReturn(objectProperties);
         when(ontology.getAllDataProperties()).thenReturn(dataProperties);
         when(ontology.getAllIndividuals()).thenReturn(namedIndividuals);
+        when(ontology.getDeprecatedIRIs()).thenReturn(deprecatedIris);
         when(ontology.getIndividualsOfType(Values.mobiIRI(SKOS.CONCEPT))).thenReturn(concepts);
         when(ontology.getIndividualsOfType(Values.mobiIRI(SKOS.CONCEPT_SCHEME))).thenReturn(conceptSchemes);
         when(ontology.getImportsClosure()).thenReturn(importedOntologies);
@@ -433,6 +436,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(importedOntology.getAllClasses()).thenReturn(importedClasses);
         when(importedOntology.getAllDatatypes()).thenReturn(datatypes);
         when(importedOntology.getAllObjectProperties()).thenReturn(objectProperties);
+
         when(importedOntology.getAllDataProperties()).thenReturn(dataProperties);
         when(importedOntology.getAllIndividuals()).thenReturn(namedIndividuals);
         when(importedOntology.getIndividualsOfType(Values.mobiIRI(SKOS.CONCEPT))).thenReturn(concepts);
@@ -675,6 +679,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(jsonConcepts.size(), set.size());
     }
 
+    private void assertDeprecatedIris(JSONObject responseObject, Set<IRI> set) {
+        JSONArray jsonConcepts = responseObject.optJSONArray("deprecatedIris");
+        assertNotNull(jsonConcepts);
+        assertEquals(jsonConcepts.size(), set.size());
+    }
+
     private void assertDerivedConceptSchemes(JSONObject responseObject, Set<IRI> set) {
         JSONArray jsonConceptSchemes = responseObject.optJSONArray("derivedConceptSchemes");
         assertNotNull(jsonConceptSchemes);
@@ -747,6 +757,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertIndividuals(iriList, namedIndividuals);
         assertConcepts(iriList, concepts);
         assertConceptSchemes(iriList, conceptSchemes);
+        assertDeprecatedIris(iriList, deprecatedIris);
         assertDerivedConcepts(iriList, derivedConcepts);
         assertDerivedConceptSchemes(iriList, derivedConceptSchemes);
         assertDerivedSemanticRelations(iriList, derivedSemanticRelations);
@@ -1616,6 +1627,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertObjectPropertyIRIs(responseObject, objectProperties);
         assertDataPropertyIRIs(responseObject, dataProperties);
         assertIndividuals(responseObject, namedIndividuals);
+        assertDeprecatedIris(responseObject, deprecatedIris);
         assertDerivedConcepts(responseObject, derivedConcepts);
         assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
         assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
