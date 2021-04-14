@@ -63,7 +63,7 @@ function datatypePropertyBlockComponentCtrl($filter, ontologyStateService, prefi
     }
     dvm.updatePropertiesFiltered = function(){
         dvm.dataProperties = Object.keys(dvm.os.listItem.dataProperties.iris);
-        dvm.dataPropertiesFiltered = $filter("orderBy")($filter("showProperties")(dvm.os.listItem.selected, dvm.dataProperties), dvm.ontoUtils.getLabelForIRI);
+        dvm.dataPropertiesFiltered = $filter('orderBy')($filter('showProperties')(dvm.os.listItem.selected, dvm.dataProperties), dvm.ontoUtils.getLabelForIRI);
     }
     dvm.openAddDataPropOverlay = function() {
         dvm.os.editingProperty = false;

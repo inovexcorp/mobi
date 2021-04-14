@@ -152,6 +152,13 @@ public interface Ontology {
     Set<IRI> getImportedOntologyIRIs();
 
     /**
+     * Gets the set of IRIs for deprecated properties of this ontology.
+     *
+     * @return set of ontology deprecated IRIs
+     */
+    Set<IRI> getDeprecatedIRIs();
+
+    /**
      * Gets the ontology annotations, excluding annotations for other objects such as classes and entities.
      *
      * @return ontology annotations

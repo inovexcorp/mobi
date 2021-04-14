@@ -85,15 +85,17 @@
          <http://purl.org/dc/terms/title> "Class 2a"^^xsd:string .
 
 
-###  http://mobi.com/ontology#Class2b
-:Class2b rdf:type owl:Class ;
-         rdfs:subClassOf :Class2a ;
-         <http://purl.org/dc/terms/title> "Class 2b"^^xsd:string .
+ ###  http://mobi.com/ontology#Class2b
+ :Class2b rdf:type owl:Class ;
+          rdfs:subClassOf :Class2a ;
+          <http://purl.org/dc/terms/title> "Class 2b"^^xsd:string ;
+          owl:deprecated "false"^^xsd:boolean .
 
-
-###  http://mobi.com/ontology#Class3a
-:Class3a rdf:type owl:Class ;
-         <http://purl.org/dc/terms/title> "Class 3a"^^xsd:string .
+ 
+ ###  http://mobi.com/ontology#Class3a
+ :Class3a rdf:type owl:Class ;
+          <http://purl.org/dc/terms/title> "Class 3a"^^xsd:string ;
+          owl:deprecated "true"^^xsd:boolean .
 
 
 #################################################################

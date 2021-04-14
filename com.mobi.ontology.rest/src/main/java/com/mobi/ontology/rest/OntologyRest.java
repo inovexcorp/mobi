@@ -3668,6 +3668,30 @@ public class OntologyRest {
     }
 
     /**
+     * Gets a JSONArray of Deprecated from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Deprecated from.
+     * @return a JSONArray of Deprecated from the provided Ontology.
+     */
+    private ObjectNode getDeprecatedIRIObject(Ontology ontology) {
+        Set<IRI> iris = getDeprecatedIRIs(ontology);
+        return getObjectArray("deprecatedIris", irisToJsonArray(iris));
+    }
+
+    /**
+     * Gets a Set of Deprecated IRIs from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Deprecated from.
+     * @return a Set of Deprecated IRIs from the provided Ontology.
+     */
+    private Set<IRI> getDeprecatedIRIs(Ontology ontology) {
+        return ontology.getDeprecatedIRIs()
+                .stream()
+                .collect(Collectors.toSet());
+    }
+
+
+    /**
      * Gets a JSONObject of Class IRIs from the provided Ontology.
      *
      * @param ontology the Ontology to get the Classes from.
@@ -4010,11 +4034,18 @@ public class OntologyRest {
      * @return the JSONObject with the IRIs for all components of an ontology.
      */
     private ObjectNode getAllIRIs(Ontology ontology) {
-        return combineJsonObjects(getAnnotationIRIObject(ontology), getClassIRIArray(ontology),
-                getDatatypeIRIObject(ontology), getObjectPropertyIRIObject(ontology),
-                getDataPropertyIRIObject(ontology), getNamedIndividualIRIObject(ontology),
-                getConceptIRIObject(ontology), getConceptSchemeIRIObject(ontology),
-                getDerivedConceptTypeIRIObject(ontology), getDerivedConceptSchemeTypeIRIObject(ontology),
+        return combineJsonObjects(
+                getAnnotationIRIObject(ontology),
+                getDeprecatedIRIObject(ontology),
+                getClassIRIArray(ontology),
+                getDatatypeIRIObject(ontology),
+                getObjectPropertyIRIObject(ontology),
+                getDataPropertyIRIObject(ontology),
+                getNamedIndividualIRIObject(ontology),
+                getConceptIRIObject(ontology),
+                getConceptSchemeIRIObject(ontology),
+                getDerivedConceptTypeIRIObject(ontology),
+                getDerivedConceptSchemeTypeIRIObject(ontology),
                 getDerivedSemanticRelationIRIObject(ontology));
     }
 
