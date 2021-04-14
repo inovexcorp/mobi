@@ -133,6 +133,6 @@ module.exports = {
             .click('xpath', '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]')
             .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox')
             .waitForElementVisible('info-message p')
-            .assert.containsText('info-message p', 'No entities match your filter.')
+            .assert.containsText('info-message p', 'No classes match your filter.')
     }
 }

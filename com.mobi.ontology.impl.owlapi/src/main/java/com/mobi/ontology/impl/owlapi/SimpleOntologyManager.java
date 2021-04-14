@@ -160,12 +160,12 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
     @Override
     public Ontology createOntology(InputStream inputStream, boolean resolveImports) {
         return new SimpleOntology(inputStream, this, sesameTransformer, bNodeService, repositoryManager,
-                resolveImports, threadPool);
+                resolveImports, threadPool, valueFactory);
     }
 
     @Override
     public Ontology createOntology(Model model) {
-        return new SimpleOntology(model, this, sesameTransformer, bNodeService, repositoryManager, threadPool);
+        return new SimpleOntology(model, this, sesameTransformer, bNodeService, repositoryManager, threadPool, valueFactory);
     }
 
     @Override

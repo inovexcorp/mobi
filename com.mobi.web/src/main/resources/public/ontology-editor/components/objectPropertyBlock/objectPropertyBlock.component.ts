@@ -60,7 +60,7 @@ function objectPropertyBlockComponentCtrl($filter, ontologyStateService, ontolog
     }
     dvm.updatePropertiesFiltered = function(){
         dvm.objectProperties = Object.keys(dvm.os.listItem.objectProperties.iris);
-        dvm.objectPropertiesFiltered = $filter("orderBy")($filter("showProperties")(dvm.os.listItem.selected, dvm.objectProperties), dvm.ontoUtils.getLabelForIRI);
+        dvm.objectPropertiesFiltered = $filter('orderBy')($filter('showProperties')(dvm.os.listItem.selected, dvm.objectProperties), dvm.ontoUtils.getLabelForIRI);
     }
     dvm.openAddObjectPropOverlay = function() {
         dvm.os.editingProperty = false;

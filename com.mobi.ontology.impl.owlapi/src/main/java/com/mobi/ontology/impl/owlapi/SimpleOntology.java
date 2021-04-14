@@ -51,6 +51,7 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.api.BNode;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
@@ -159,7 +160,7 @@ import javax.annotation.Nullable;
 public class SimpleOntology implements Ontology {
 
     private static final Logger LOG = LoggerFactory.getLogger(SimpleOntology.class);
-
+    private ValueFactory valueFactory;
     private OntologyId ontologyId;
     private OntologyManager ontologyManager;
     private SesameTransformer transformer;
@@ -189,6 +190,7 @@ public class SimpleOntology implements Ontology {
     private static final String SELECT_ENTITY_USAGES;
     private static final String CONSTRUCT_ENTITY_USAGES;
     private static final String GET_SEARCH_RESULTS;
+    private static final String GET_ALL_DEPRECATED_IRIS;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
 
@@ -204,6 +206,10 @@ public class SimpleOntology implements Ontology {
             );
             GET_SEARCH_RESULTS = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-search-results.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_ALL_DEPRECATED_IRIS = IOUtils.toString(
+                    SimpleOntology.class.getResourceAsStream("/get-all-deprecated-iris.rq"),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -222,8 +228,8 @@ public class SimpleOntology implements Ontology {
      */
     public SimpleOntology(InputStream inputStream, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService, RepositoryManager repoManager, boolean resolveImports,
-                          ForkJoinPool threadPool) throws MobiOntologyException {
-        initialize(ontologyManager, transformer, bNodeService, repoManager, resolveImports, threadPool);
+                          ForkJoinPool threadPool, ValueFactory valueFactory) throws MobiOntologyException {
+        initialize(ontologyManager, transformer, bNodeService, repoManager, resolveImports, threadPool, valueFactory);
         byte[] bytes = inputStreamToByteArray(inputStream);
         try {
             sesameModel = createSesameModel(new ByteArrayInputStream(bytes));
@@ -243,9 +249,9 @@ public class SimpleOntology implements Ontology {
      * @throws MobiOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(Model model, OntologyManager ontologyManager, SesameTransformer transformer,
-                          BNodeService bNodeService, RepositoryManager repoManager, ForkJoinPool threadPool)
+                          BNodeService bNodeService, RepositoryManager repoManager, ForkJoinPool threadPool, ValueFactory valueFactory)
             throws MobiOntologyException {
-        initialize(ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        initialize(ontologyManager, transformer, bNodeService, repoManager, true, threadPool, valueFactory);
         sesameModel = new LinkedHashModel();
         sesameModel = this.transformer.sesameModel(model);
         createOntologyFromSesameModel();
@@ -253,13 +259,14 @@ public class SimpleOntology implements Ontology {
     }
 
     private void initialize(OntologyManager ontologyManager, SesameTransformer transformer, BNodeService bNodeService,
-                            RepositoryManager repoManager, boolean resolveImports, ForkJoinPool threadPool) {
+                            RepositoryManager repoManager, boolean resolveImports, ForkJoinPool threadPool, ValueFactory valueFactory) {
         this.threadPool = threadPool;
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
         this.repoManager = repoManager;
         this.owlManager = OWLManager.createOWLOntologyManager();
+        this.valueFactory = valueFactory;
         owlManager.addMissingImportListener((MissingImportListener) arg0 -> {
             missingImports.add(SimpleOntologyValues.mobiIRI(arg0.getImportedOntologyURI()));
             LOG.warn("Missing import {} ", arg0.getImportedOntologyURI());
@@ -395,6 +402,12 @@ public class SimpleOntology implements Ontology {
                 .map(OWLImportsDeclaration::getIRI)
                 .map(SimpleOntologyValues::mobiIRI)
                 .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<IRI> getDeprecatedIRIs() {
+        return getIRISet(runQueryOnOntology(GET_ALL_DEPRECATED_IRIS, null,
+                "getDeprecatedIRIs()", true));
     }
 
     @Override
@@ -994,6 +1007,23 @@ public class SimpleOntology implements Ontology {
     public Model getGraphQueryResults(String queryString, boolean includeImports, ModelFactory modelFactory) {
         return runGraphQueryOnOntology(queryString, null, "getGraphQueryResults(ontology, queryString)", includeImports,
                 modelFactory);
+    }
+
+    /**
+     * Uses the provided TupleQueryResult to construct a set of the entities provided.
+     *
+     * @param tupleQueryResult the TupleQueryResult that contains IRIs
+     * @return a Set of IRIs from the TupleQueryResult
+     */
+    private Set<IRI> getIRISet(TupleQueryResult tupleQueryResult) {
+        Set<IRI> iris = new HashSet<>();
+        tupleQueryResult.forEach(r -> r.getBinding("s")
+                .ifPresent(b -> {
+                    if (!(b.getValue() instanceof BNode)) {
+                        iris.add(this.valueFactory.createIRI(b.getValue().stringValue()));
+                    }
+                }));
+        return iris;
     }
 
     /**

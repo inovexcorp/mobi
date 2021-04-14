@@ -48,6 +48,7 @@ const template = require('./hierarchyTree.component.html');
 const hierarchyTreeComponent = {
     template,
     bindings: {
+        parentLabel: '@',
         hierarchy: '<',
         index: '<',
         updateSearch: '&',
@@ -73,28 +74,41 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     dvm.midFilteredHierarchy = [];
     dvm.activeTab = '';
     dvm.dropdownFilterActive = false;
-    dvm.activeEntityFilter = {
-        name: 'Active Entities Only',
-        checked: false,
-        flag: false, 
-        filter: function(node) {
-            var match = true;
-            if (dvm.os.isImported(node.entityIRI)) {
-                match = false;
-            }
-            return match;
-        }
-    };
-
-    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
+    dvm.dropdownFilters = []
 
     dvm.$onInit = function() {
+        dvm.activeEntityFilter = {
+            name: 'Hide unused imports',
+            checked: false,
+            flag: false,
+            filter: function(node) {
+                var match = true;
+                if (dvm.os.isImported(node.entityIRI)) {
+                    match = false;
+                }
+                return match;
+            }
+        };
+        dvm.deprecatedEntityFilter = {
+            name: "Hide deprecated " + dvm.parentLabel,
+            checked: false,
+            flag: false,
+            filter: function(node) {
+                var match = true;
+                if (dvm.os.isIriDeprecated(node.entityIRI)) {
+                    match = false;
+                }
+                return match;
+            }
+        };
+        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter), angular.copy(dvm.deprecatedEntityFilter)];
+
         dvm.activeTab = dvm.os.getActiveKey();
         update();
     }
     function removeFilters() {
         dvm.dropdownFilterActive = false;
-        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
+        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter), angular.copy(dvm.deprecatedEntityFilter)];;
         dvm.searchText = '';
         dvm.filterText = '';
     }
