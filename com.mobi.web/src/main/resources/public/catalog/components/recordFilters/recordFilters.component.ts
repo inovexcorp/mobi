@@ -98,16 +98,16 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
                     if (dvm.recordType === filterItem.value) {
                         dvm.changeFilter({recordType: '', keywordFilterList: dvm.keywordFilterList});
                     }
-                }
-             }
-         };
+               }
+            }
+        };
 
         const keywordsFilter = {
             title: 'Keywords',
             hide: false,
             pageable: true,
             pagingData:{
-                limit: 2,
+                limit: 15,
                 totalRecordSize: 0,
                 currentRecordPage: 1,
                 hasNextPage: false
@@ -116,8 +116,7 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
             onInit: function(){
                 const filterInstance = this;
                 filterInstance.nextPage();
-                console.log("onInit");
-                console.log(filterInstance);
+                console.log("filterInstance.nextPage();");
             },
             nextPage: function(){
                 const filterInstance = this;
@@ -140,10 +139,11 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
                          filterInstance.pagingData["totalRecordSize"] = get(response.headers(), 'x-total-count', 0);
                          filterInstance.pagingData["hasNextPage"] = filterInstance.filterItems.length < filterInstance.pagingData.totalRecordSize;
                          filterInstance.pagingData["currentRecordPage"] = filterInstance.pagingData["currentRecordPage"] + 1;
-
-                         console.log("getKeywords");
-                         console.log(filterInstance);
                     }, dvm.util.createErrorToast);
+
+                    console.log("keywordPrefix");
+                   console.log(keywordPrefix);
+
             },
             getItemText: function(filterItem){
                 const keywordString = filterItem.value[keywordPrefix];
@@ -174,9 +174,7 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
         console.log(changeObj);
     }
     dvm.$onDestroy = function(){
-        console.log("d");
         dvm.cm.keywordObjects = []
-
     }
 }
 

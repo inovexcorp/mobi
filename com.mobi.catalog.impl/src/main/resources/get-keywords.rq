@@ -13,5 +13,3 @@ WHERE {
 }
 GROUP BY ?keyword
 ORDER BY ?keyword
-
-# count(DISTINCT.. make sure paging works correctly

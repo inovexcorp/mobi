@@ -421,24 +421,32 @@ public class SimpleCatalogManager implements CatalogManager {
         return queryString;
     }
 
+    private int getKeywordCount(RepositoryConnection conn, Resource catalogId){
+        TupleQuery countQuery = conn.prepareTupleQuery(GET_KEYWORD_COUNT_QUERY);
+        countQuery.setBinding(CATALOG_BINDING, catalogId);
+
+        TupleQueryResult countResults = countQuery.evaluate();
+
+        int totalCount;
+        BindingSet countBindingSet;
+        if (countResults.hasNext()
+                && (countBindingSet = countResults.next()).getBindingNames().contains(KEYWORD_COUNT_BINDING)) {
+            totalCount = Bindings.requiredLiteral(countBindingSet, KEYWORD_COUNT_BINDING).intValue();
+            countResults.close();
+        } else {
+            countResults.close();
+            conn.close();
+            totalCount = 0;
+        }
+        return totalCount;
+    }
+
     @Override
     public PaginatedSearchResults<KeywordCount> getKeywords(Resource catalogId, PaginatedSearchParams searchParams) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            // Get Total Count
-            TupleQuery countQuery = conn.prepareTupleQuery(GET_KEYWORD_COUNT_QUERY);
-            countQuery.setBinding(CATALOG_BINDING, catalogId);
+            int totalCount = getKeywordCount(conn, catalogId);
 
-            TupleQueryResult countResults = countQuery.evaluate();
-
-            int totalCount;
-            BindingSet countBindingSet;
-            if (countResults.hasNext()
-                    && (countBindingSet = countResults.next()).getBindingNames().contains(KEYWORD_COUNT_BINDING)) {
-                totalCount = Bindings.requiredLiteral(countBindingSet, KEYWORD_COUNT_BINDING).intValue();
-                countResults.close();
-            } else {
-                countResults.close();
-                conn.close();
+            if (totalCount == 0) {
                 return SearchResults.emptyResults();
             }
 

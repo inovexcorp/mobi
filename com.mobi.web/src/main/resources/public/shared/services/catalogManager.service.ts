@@ -90,13 +90,13 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.recordTypes = [];
     /**
      * @ngdoc property
-     * @name recordTypes
+     * @name keywordObjects
      * @propertyOf shared.service:catalogManagerService
-     * @type {string[]}
+     * @type {[]}
      *
      * @description
-     * `recordTypes` contains a list of IRI strings of all types of records contained in both Catalogs.
-     * This list is populated by the `initialize` method.
+     * `keywordObjects` contains a list of objects containing keywords with counts for both Catalogs.
+     * This list is populated by the catalog component.
      */
     self.keywordObjects =  [];
     /**
@@ -159,7 +159,6 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
                     return $q.reject('Could not find distributed catalog');
                 }
                 self.recordTypes = responses[0];
-                self.keywords = responses[3];
                 forEach(responses[1], option => {
                     const label = util.getBeautifulIRI(option);
                     if (!find(self.sortOptions, {field: option})) {
@@ -228,16 +227,15 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         return $http.get(url).then($q.resolve, util.rejectError);
     };
 
-    /** TODO erivera finish
+    /**
      * @ngdoc method
      * @name getKeywords
      * @methodOf shared.service:catalogManagerService
      *
      * @description
      * Calls the GET /mobirest/catalogs/{catalogId}/keywords endpoint and returns the paginated
-     * response for the query using the passed page index, limit, sort option from the `sortOptions`
-     * array, and Record type filter IRI from the `recordTypes` array. The data of the response will
-     * be the array of Records, the "x-total-count" headers will contain the total number of Records
+     * response for the query using the passed page index and limit. The data of the response will
+     * be the array of Keywords with counts, the "x-total-count" headers will contain the total number of Records
      * matching the query, and the "link" header will contain the URLs for the next and previous page
      * if present.
      *

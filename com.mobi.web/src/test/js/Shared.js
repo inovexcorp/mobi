@@ -940,12 +940,14 @@ export function mockCatalogManager() {
             this.coreRecordTypes = [];
             this.sortOptions = [];
             this.recordTypes = [];
+            this.keywordObjects =  [];
             this.localCatalog = undefined;
             this.distributedCatalog = undefined;
             this.initialize = jasmine.createSpy('initialize').and.returnValue($q.when());
             this.getSortOptions = jasmine.createSpy('getSortOptions').and.returnValue($q.when([]));
             this.getRecordTypes = jasmine.createSpy('getRecordTypes').and.returnValue($q.when([]));
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
+            this.getKeywords = jasmine.createSpy('getKeywords').and.returnValue($q.when({}));
             this.getRecords = jasmine.createSpy('getRecords').and.returnValue($q.when({}));
             this.getRecord = jasmine.createSpy('getRecord').and.returnValue($q.when({}));
             this.createRecord = jasmine.createSpy('createRecord').and.returnValue($q.when());
@@ -1016,6 +1018,7 @@ export function mockCatalogState() {
             this.recordLimit = 10;
             this.recordSortOption = undefined;
             this.recordFilterType = '';
+            this.keywordFilterList = [];
             this.recordSearchText = '';
             this.recordIcons = {};
             this.initialize = jasmine.createSpy('initialize');

@@ -222,6 +222,74 @@ describe('Catalog Manager service', function() {
             });
         });
     });
+    describe('should retrieve a list of Keyword', function() {
+        beforeEach(function() {
+            this.promiseId = 'id';
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/keywords';
+            this.config = {
+                limit: 10,
+                offset: 0
+            };
+        });
+        describe('unless an error occurs', function() {
+            it('with no promise id set', function() {
+                var params = $httpParamSerializer(this.config);
+                $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+                catalogManagerSvc.getKeywords(this.catalogId, this.config)
+                    .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
+                flushAndVerify($httpBackend);
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+            });
+            it('with a promise id set', function() {
+                httpSvc.get.and.returnValue($q.reject({}));
+                catalogManagerSvc.getKeywords(this.catalogId, this.config, this.promiseId)
+                    .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
+                scope.$apply();
+                expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: this.config}, this.promiseId);
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.any(Object));
+            });
+        });
+        describe('successfully', function() {
+            describe('with no promise id set', function() {
+                it('and all config passed', function() {
+                    var params = $httpParamSerializer(this.config);
+                    $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+                    catalogManagerSvc.getKeywords(this.catalogId, this.config)
+                        .then(response =>expect(response.data).toEqual([]), response => fail('Promise should have resolved'));
+                    flushAndVerify($httpBackend);
+                });
+                it('and no config passed', function() {
+                    var params = $httpParamSerializer({
+
+                    });
+                    $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+                    catalogManagerSvc.getKeywords(this.catalogId, {})
+                        .then(response => expect(response.data).toEqual([]), response =>fail('Promise should have resolved'));
+                    flushAndVerify($httpBackend);
+                });
+            });
+            describe('with a promise id set', function() {
+                beforeEach(function() {
+                    httpSvc.get.and.returnValue($q.when({data: []}));
+                });
+                it('and all config passed', function() {
+                    catalogManagerSvc.getKeywords(this.catalogId, this.config, this.promiseId)
+                        .then(response => expect(response.data).toEqual([]), response => fail('Promise should have resolved'));
+                    scope.$apply();
+                    expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: this.config}, this.promiseId);
+                });
+                it('and no config passed', function() {
+                    var params = {
+
+                    };
+                    catalogManagerSvc.getKeywords(this.catalogId, {}, this.promiseId)
+                        .then(response => expect(response.data).toEqual([]), response => fail('Promise should have resolved'));
+                    scope.$apply();
+                            expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: params}, this.promiseId);
+                });
+            });
+        });
+    });
     describe('should retrieve a Record', function() {
         beforeEach(function() {
             this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId);

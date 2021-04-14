@@ -21,22 +21,19 @@
   #L%
   -->
 <div class="record-filters w-100">
-    <div class="filter-container" ng-repeat="currentFilter in dvm.filters ">
+    <div class="filter-container" ng-repeat="currentFilter in dvm.filters">
         <h5 class="record-filter-header text-muted d-flex justify-content-between" ng-click="currentFilter.hide = !currentFilter.hide" data-toggle="collapse" data-target="#filter_options_{{$id}}" aria-expanded="true" aria-controls="filter_options_{{$id}}">
             <span>{{ currentFilter.title }}</span>
             <span><i class="material-icons">{{currentFilter.hide ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}}</i></span>
         </h5>
         <div class="filter-options collapse show" id="filter_options_{{$id}}">
-
             <info-message ng-if="!currentFilter.filterItems.length">No {{ currentFilter.title }} available</info-message>
-
             <div class="filter-option my-2" ng-repeat="filterItem in currentFilter.filterItems track by $index">
                 <div class="custom-control custom-checkbox">
                     <input type="checkbox" class="custom-control-input" id="filter-checkbox_{{$id}}" ng-model="filterItem.checked" ng-change="currentFilter.filter(filterItem)">
                     <label class="custom-control-label" for="filter-checkbox_{{$id}}">{{ currentFilter.getItemText(filterItem) }}</label>
                 </div>
             </div>
-
             <div ng-if="currentFilter.pageable && currentFilter.pagingData.hasNextPage">
                 <button class="btn btn-primary">
                     <strong ng-click="currentFilter.nextPage()">Show More</strong>
