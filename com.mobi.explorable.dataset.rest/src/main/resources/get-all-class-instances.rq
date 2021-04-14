@@ -10,6 +10,7 @@ SELECT
 WHERE {
     VALUES ?type {%s}
     ?inst a ?type .
+    FILTER(!isBlank(?inst))
     OPTIONAL {
         ?inst dcterms:title ?title_value .
         FILTER(lang(?title_value) = "" || langMatches(lang(?title_value), "EN"))

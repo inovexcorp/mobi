@@ -976,7 +976,7 @@ additiveExpression
   multiplicativeExpression
   (
     PLUS multiplicativeExpression
-    | 'minus' multiplicativeExpression
+    | MINUS_SIGN multiplicativeExpression
     |
     (
       numericLiteralPositive
@@ -1006,7 +1006,7 @@ unaryExpression
   :
   NOT_SIGN primaryExpression
   | PLUS primaryExpression
-  | 'minus' primaryExpression
+  | MINUS_SIGN primaryExpression
   | primaryExpression
   ;
 
@@ -1561,3 +1561,5 @@ LINE_FEED: '\n';
 CARRIAGE_RETURN: '\r';
 
 EOL_COMMENT: '#'.*?(CARRIAGE_RETURN?LINE_FEED) -> skip;
+
+MINUS_SIGN: '-';
