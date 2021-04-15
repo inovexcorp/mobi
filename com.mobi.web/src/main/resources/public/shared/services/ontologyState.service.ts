@@ -2009,7 +2009,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Method to collapse flat list
+     * Method to collapse all of the nodes in hierarchy flat list under following tabs: 'classes', 'dataProperties',
+     * 'objectProperties', 'annotations', 'concepts', 'conceptSchemes', 'dataProperties', 'individuals', 'flatEverythingTree'
+     * The mapper function checks to see if the hierarchy node is open, if it is open, then it will close node.
      *
      * @param {object} [listItem=self.listItem] The listItem to execute these actions against
      */
@@ -2028,9 +2030,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Method to alter tree hierarchy flat list
+     * Method to alter tree hierarchy flat lists give a mapper function under following tabs: 'classes', 'dataProperties',
+     * 'objectProperties', 'annotations', 'concepts', 'conceptSchemes', 'dataProperties', 'individuals', 'flatEverythingTree'
      *
-     * @param {function} mapper function
+     * @param {function} mapper function - use to alter the node state
      * @param {object} [listItem=self.listItem] The listItem to execute these actions against
      */
     self.alterTreeHierarchy = function(mapperFunction, listItem = self.listItem) {
