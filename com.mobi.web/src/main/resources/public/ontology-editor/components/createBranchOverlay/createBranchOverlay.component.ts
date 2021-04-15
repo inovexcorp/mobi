@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { unset, get} from 'lodash';
+import { unset, get } from 'lodash';
 
 const template = require('./createBranchOverlay.component.html');
 
