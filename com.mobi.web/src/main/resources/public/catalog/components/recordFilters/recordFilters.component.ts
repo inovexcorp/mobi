@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import './recordFilters.component.scss';
+
 import { forEach, map, filter, find, get, includes} from 'lodash';
 
 const template = require('./recordFilters.component.html');

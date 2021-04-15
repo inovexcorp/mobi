@@ -34,11 +34,12 @@
                     <label class="custom-control-label" for="filter-checkbox_{{$id}}">{{ currentFilter.getItemText(filterItem) }}</label>
                 </div>
             </div>
-            <div ng-if="currentFilter.pageable && currentFilter.pagingData.hasNextPage">
-                <button class="btn btn-primary">
-                    <strong ng-click="currentFilter.nextPage()">Show More</strong>
-                </button>
-            </div>
+            
+        </div>
+        <div ng-if="currentFilter.pageable && currentFilter.pagingData.hasNextPage">
+            <button class="btn btn-primary">
+                <strong ng-click="currentFilter.nextPage()">Show More</strong>
+            </button>
         </div>
     </div>
 </div>
