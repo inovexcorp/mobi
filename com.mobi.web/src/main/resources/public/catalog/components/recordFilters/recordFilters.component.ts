@@ -23,6 +23,7 @@
 import './recordFilters.component.scss';
 
 import { forEach, map, filter, find, get, includes} from 'lodash';
+import './recordFilters.component.scss';
 
 const template = require('./recordFilters.component.html');
 

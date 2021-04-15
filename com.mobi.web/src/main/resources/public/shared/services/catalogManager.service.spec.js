@@ -259,10 +259,8 @@ describe('Catalog Manager service', function() {
                     flushAndVerify($httpBackend);
                 });
                 it('and no config passed', function() {
-                    var params = $httpParamSerializer({
-
-                    });
-                    $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+                    var params = {};
+                    $httpBackend.whenGET(this.url).respond(200, []);
                     catalogManagerSvc.getKeywords(this.catalogId, {})
                         .then(response => expect(response.data).toEqual([]), response =>fail('Promise should have resolved'));
                     flushAndVerify($httpBackend);
