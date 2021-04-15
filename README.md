@@ -1,10 +1,9 @@
 ![Mobi Logo](com.mobi.web/src/main/resources/public/images/mobi-primary-logo.png?raw=true "Mobi")
 ***
 
-Mobi is a decentralized, federated, and distributed graph data platform for teams and communities to publish and discover data and data models that are instantly consumable.
+Mobi is a collaborative knowledge graph platform for teams and communities to develop and publish semantic data and models.
 
-Mobi is built on semantic web technologies (RDF, OWL, SPARQL) at its core. It provides a collaborative environment for creating, publishing, and consuming OWL ontology and SKOS vocabulary data models.
-
+Mobi is built on open semantic web technologies and standards like RDF, OWL, and SPARQL. It provides a collaborative environment for creating, publishing, and consuming OWL ontologies and SKOS vocabularies.
 See https://mobi.inovexcorp.com/ for more information.
 
 ## Getting Started
@@ -16,7 +15,7 @@ To build the Mobi source code, you must have the following software and tools in
 | Java        | 8        | http://www.oracle.com/technetwork/java/javase/downloads/index.html  |
 | Maven       | 3.1+      | https://maven.apache.org/download.cgi  |
 | Node.js     | 10+      | https://nodejs.org/en/download/  |
-| Google Chrome | 59+ | https://www.google.com/chrome/ |
+| Google Chrome | 87+ | https://www.google.com/chrome/ |
 
 Clone the Mobi project from git and navigate to that directory on your machine. Run the following command to build the source:
 
