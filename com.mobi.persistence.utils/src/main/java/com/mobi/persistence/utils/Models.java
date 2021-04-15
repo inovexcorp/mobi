@@ -422,7 +422,6 @@ public class Models {
     }
 
     /**
-     *
      * Create a Skolemized Mobi Model from an InputStream. Will attempt to parse the stream using the passed in
      * RDFParsers
      *

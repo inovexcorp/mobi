@@ -101,7 +101,6 @@ public class MobiStringUtils {
         return fileExtension;
     }
 
-
     /*
      * Uses Regex to address the language tag issue in OWL2 RDF mapping  where
      * RDF-1.1 it is not allowed to have a datatype in the Turtle document
