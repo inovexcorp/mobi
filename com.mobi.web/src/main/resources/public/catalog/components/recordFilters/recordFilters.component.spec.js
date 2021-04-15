@@ -27,7 +27,7 @@ import {
     injectSplitIRIFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Record Filters component', function() {
+describe('Record Filters component', function() {
     var $compile, scope, $q, catalogManagerSvc, prefixes;
 
     beforeEach(function() {
@@ -113,31 +113,34 @@ fdescribe('Record Filters component', function() {
         });
     });
     describe('filter methods', function() {
+        beforeEach(function() {
+            this.firstRecordFilterItem = {value: 'test1', checked: true};
+            this.secondRecordFilterItem = {value: 'test2', checked: true};
+            this.recordTypeFilter.filterItems = [this.firstRecordFilterItem, this.secondRecordFilterItem];
+
+            this.firstFilterItem = {value: this.keywordObject('keyword1', 6), checked: true};
+            this.secondFilterItem = {value: this.keywordObject('keyword2', 7), checked: true};
+            this.keywordsFilter.filterItems = [this.firstFilterItem, this.secondFilterItem];
+        });
         describe('recordTypeFilter should filter records', function() {
-            beforeEach(function() {
-                this.firstFilter = {value: 'test1', checked: true};
-                this.secondFilter = {value: 'test2', checked: true};
-                this.recordTypeFilter.filterItems = [this.firstFilter, this.secondFilter];
-            });
             it('if the filter has been checked', function() {
-                this.recordTypeFilter.filter(this.firstFilter);
-                expect(this.secondFilter.checked).toEqual(false);
-                expect(scope.changeFilter).toHaveBeenCalledWith(this.firstFilter.value, ['keyword1']);
+                this.recordTypeFilter.filter(this.firstRecordFilterItem);
+                expect(this.secondRecordFilterItem.checked).toEqual(false);
+                expect(scope.changeFilter).toHaveBeenCalledWith(this.firstRecordFilterItem.value, ['keyword1']);
             });
             it('if the filter has been unchecked', function() {
-                this.firstFilter.checked = false;
-                this.controller.recordType = this.firstFilter.value;
-                this.recordTypeFilter.filter(this.firstFilter);
+                this.firstRecordFilterItem.checked = false;
+                this.controller.recordType = this.firstRecordFilterItem.value;
+                this.recordTypeFilter.filter(this.firstRecordFilterItem);
                 expect(scope.changeFilter).toHaveBeenCalledWith('', ['keyword1']);
             });
         });
-
-        describe('keywordsFilter should filter records', function() {
-            beforeEach(function() {
-                this.firstFilterItem = {value: this.keywordObject('keyword1', 6), checked: true};
-                this.secondFilterItem = {value: this.keywordObject('keyword2', 7), checked: true};
-                this.keywordsFilter.filterItems = [this.firstFilterItem, this.secondFilterItem];
+        describe('recordTypeFilter filter text method', function() {
+            it('text is correct', function() {
+                expect(this.recordTypeFilter.getItemText(this.firstRecordFilterItem)).toEqual("test1");
             });
+        });
+        describe('keywordsFilter should filter records', function() {
             it('if the filter has been checked', function() {
                 this.keywordsFilter.filter(this.firstFilter);
                 expect(this.secondFilterItem.checked).toEqual(true);
@@ -148,6 +151,11 @@ fdescribe('Record Filters component', function() {
                 this.controller.keywordFilterList = [];
                 this.keywordsFilter.filter(this.firstFilter);
                 expect(scope.changeFilter).toHaveBeenCalledWith('test1', [ 'keyword2' ]);
+            });
+        });
+        describe('keywordsFilter filter text method', function() {
+            it('text is correct', function() {
+                 expect(this.keywordsFilter.getItemText(this.firstFilterItem)).toEqual("keyword1 (6)");
             });
         });
     });
