@@ -31,11 +31,11 @@ import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactor
 import com.mobi.ontology.core.api.record.AbstractOntologyRecordService;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.core.utils.MobiOntologyException;
+import com.mobi.ontology.core.utils.MobiStringUtils;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Models;
 import com.mobi.rdf.api.Model;
 import com.mobi.repository.api.RepositoryConnection;
-import org.apache.commons.io.FilenameUtils;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -93,16 +93,8 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
 
         if (fileName != null && inputStream != null) {
             try {
-                String fileExtension = FilenameUtils.getExtension(fileName);
-                if (fileExtension.equals("gz") || fileExtension.endsWith("zip")) {
-                    String fileExtensionNoCompress = FilenameUtils.getExtension(
-                            FilenameUtils.removeExtension(fileName));
-                    if (fileExtensionNoCompress.equals("tar")) {
-                        throw new IllegalArgumentException("File must not be a tar");
-                    }
-                    fileExtension = fileExtensionNoCompress + "." + fileExtension;
-                }
-                ontologyModel = Models.createModel(fileExtension, inputStream, sesameTransformer);
+                ontologyModel = Models.createModel(MobiStringUtils.getFileExtension(fileName), inputStream,
+                        sesameTransformer);
             } catch (IOException e) {
                 throw new MobiOntologyException("Could not parse Ontology input stream.", e);
             }

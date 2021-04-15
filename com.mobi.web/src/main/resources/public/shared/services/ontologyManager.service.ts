@@ -142,7 +142,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
                 let resolver = promise.then(response => response.data, util.rejectErrorObject);
                 callback(id, resolver, title);
             } else {
-                return promise.then(response => response.data, util.rejectErrorObject);;
+                return promise.then(response => response.data, util.rejectErrorObject);
             }    
         }).then(response => { return response});
     };
@@ -184,7 +184,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
                 } else {
                     return response.data;
                 }
-            }, util.rejectError);
+            }, util.rejectErrorObject);
     };
     /**
      * @ngdoc method
