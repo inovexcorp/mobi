@@ -1,6 +1,9 @@
-# Mobi
+![Mobi Logo](com.mobi.web/src/main/resources/public/images/mobi-primary-logo.png?raw=true "Mobi")
+***
 
 Mobi is a decentralized, federated, and distributed graph data platform for teams and communities to publish and discover data and data models that are instantly consumable.
+
+Mobi is built on semantic web technologies (RDF, OWL, SPARQL) at its core. It provides a collaborative environment for creating, publishing, and consuming OWL ontology and SKOS vocabulary data models.
 
 See https://mobi.inovexcorp.com/ for more information.
 
@@ -12,7 +15,7 @@ To build the Mobi source code, you must have the following software and tools in
 | ----------- | -------- | -------------- |
 | Java        | 8        | http://www.oracle.com/technetwork/java/javase/downloads/index.html  |
 | Maven       | 3.1+      | https://maven.apache.org/download.cgi  |
-| Node.js     | 6+      | https://nodejs.org/en/download/  |
+| Node.js     | 10+      | https://nodejs.org/en/download/  |
 | Google Chrome | 59+ | https://www.google.com/chrome/ |
 
 Clone the Mobi project from git and navigate to that directory on your machine. Run the following command to build the source:
@@ -60,26 +63,17 @@ Integration tests are controlled by the `skipITs` system property and are disabl
 mvn clean install -DskipITs=false
 ```
 
-### Image Caching
+### Running Function Tests
 
-The build caches minified image files to improve performance. If you build the project in more than one location on your machine, you may have to clear the frontend cache of optimized images. To do this, you will have to run a Gulp command. If you have Node.js installed, run the following command to install `gulp` globally.
-
-```
-npm install -g gulp
+Functional tests run tests against a browser and are controlled by the `skipFunction` system property and are disabled by default. To run integration tests as part of the build, set the property to false:
 
 ```
-
-*NOTE: This action may have to be run as root.*
-
-Once `gulp` is installed, the image cache can be cleared by navigating into the `com.mobi.web` directory and running the following command.
-
-```
-gulp clearcache
+mvn clean install -DskipITs=false
 ```
 
 ## Docker
 
-Mobi is also availble as a Docker image. Visit https://hub.docker.com/r/inovexis/mobi/ to find available images. Images can also be built locally. See the `mobi-distribution` module for more information.
+Mobi is also available as a Docker image. Visit https://hub.docker.com/r/inovexis/mobi/ to find available images. Images can also be built locally. See the `mobi-distribution` module for more information.
 
 ## License
 
