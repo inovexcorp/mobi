@@ -64,10 +64,10 @@ mvn clean install -DskipITs=false
 
 ### Running Function Tests
 
-Functional tests run tests against a browser and are controlled by the `skipFunction` system property and are disabled by default. To run integration tests as part of the build, set the property to false:
+Functional tests run tests against a browser and are controlled by the `skipFunctional` system property and are disabled by default. To run integration tests as part of the build, set the property to false:
 
 ```
-mvn clean install -DskipITs=false
+mvn clean install -DskipFunctional=false
 ```
 
 ## Docker
