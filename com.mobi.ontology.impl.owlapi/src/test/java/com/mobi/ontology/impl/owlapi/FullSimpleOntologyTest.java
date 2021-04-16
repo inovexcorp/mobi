@@ -118,7 +118,6 @@ public class FullSimpleOntologyTest {
 
     @Before
     public void setUp() {
-
         vf = SimpleValueFactory.getInstance();
         mf = LinkedHashModelFactory.getInstance();
         IRI ontologyIRI = vf.createIRI("http://test.com/ontology1");
@@ -152,11 +151,11 @@ public class FullSimpleOntologyTest {
         when(ontologyId.getOntologyIdentifier()).thenReturn(vf.createIRI("https://mobi.com/ontology-id"));
 
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
-        ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool, vf);
         Resource ont3IRI = vf.createIRI("http://mobi.com/ontology/test-local-imports-3");
         Resource ont3RecordIRI = vf.createIRI("https://mobi.com/record/test-local-imports-3");
         InputStream stream3 = this.getClass().getResourceAsStream("/test-local-imports-3.ttl");
-        Ontology ont3 = new SimpleOntology(stream3, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        Ontology ont3 = new SimpleOntology(stream3, ontologyManager, transformer, bNodeService, repoManager, true, threadPool, vf);
         when(ontologyManager.getOntologyRecordResource(ont3IRI)).thenReturn(Optional.of(ont3RecordIRI));
         when(ontologyManager.retrieveOntology(ont3RecordIRI)).thenReturn(Optional.of(ont3));
         com.mobi.rdf.api.Model ont3Model = ont3.asModel(mf);
@@ -165,7 +164,7 @@ public class FullSimpleOntologyTest {
         Resource ont2IRI = vf.createIRI("http://mobi.com/ontology/test-local-imports-2");
         Resource ont2RecordIRI = vf.createIRI("https://mobi.com/record/test-local-imports-2");
         InputStream stream2 = this.getClass().getResourceAsStream("/test-local-imports-2.ttl");
-        Ontology ont2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        Ontology ont2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, repoManager, true, threadPool, vf);
         when(ontologyManager.getOntologyRecordResource(ont2IRI)).thenReturn(Optional.of(ont2RecordIRI));
         when(ontologyManager.retrieveOntology(ont2RecordIRI)).thenReturn(Optional.of(ont2));
         com.mobi.rdf.api.Model ont2Model = ont2.asModel(mf);
@@ -174,7 +173,7 @@ public class FullSimpleOntologyTest {
         Resource dctermsIRI = vf.createIRI("http://purl.org/dc/terms/");
         Resource dctermsRecordIRI = vf.createIRI("https://mobi.com/record/dcterms");
         InputStream dctermsStream = this.getClass().getResourceAsStream("/dcterms.rdf");
-        Ontology dcterms = new SimpleOntology(dctermsStream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        Ontology dcterms = new SimpleOntology(dctermsStream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool, vf);
         when(ontologyManager.getOntologyRecordResource(dctermsIRI)).thenReturn(Optional.of(dctermsRecordIRI));
         when(ontologyManager.retrieveOntology(dctermsRecordIRI)).thenReturn(Optional.of(dcterms));
         com.mobi.rdf.api.Model dctermsModel = dcterms.asModel(mf);
@@ -183,23 +182,23 @@ public class FullSimpleOntologyTest {
         Resource skosIRI = vf.createIRI("http://www.w3.org/2004/02/skos/core");
         Resource skosRecordIRI = vf.createIRI("https://mobi.com/record/skos");
         InputStream skosStream = this.getClass().getResourceAsStream("/skos.rdf");
-        Ontology skos = new SimpleOntology(skosStream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        Ontology skos = new SimpleOntology(skosStream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool, vf);
         when(ontologyManager.getOntologyRecordResource(skosIRI)).thenReturn(Optional.of(skosRecordIRI));
         when(ontologyManager.retrieveOntology(skosRecordIRI)).thenReturn(Optional.of(skos));
         com.mobi.rdf.api.Model skosModel = skos.asModel(mf);
         when(ontologyManager.getOntologyModel(skosRecordIRI)).thenReturn(skosModel);
 
         InputStream stream1 = this.getClass().getResourceAsStream("/test-local-imports-1.ttl");
-        ont1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        ont1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repoManager, true, threadPool, vf);
 
         InputStream streamQueryOntology = this.getClass().getResourceAsStream("/test-ontology.ttl");
-        queryOntology = new SimpleOntology(streamQueryOntology, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        queryOntology = new SimpleOntology(streamQueryOntology, ontologyManager, transformer, bNodeService, repoManager, true, threadPool, vf);
 
         InputStream streamQueryVocabulary = this.getClass().getResourceAsStream("/test-vocabulary.ttl");
-        queryVocabulary= new SimpleOntology(streamQueryVocabulary, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        queryVocabulary= new SimpleOntology(streamQueryVocabulary, ontologyManager, transformer, bNodeService, repoManager, true, threadPool, vf);
 
         InputStream streamOnlyDeclared = this.getClass().getResourceAsStream("/only-declared.ttl");
-        onlyDeclared = new SimpleOntology(streamOnlyDeclared, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        onlyDeclared = new SimpleOntology(streamOnlyDeclared, ontologyManager, transformer, bNodeService, repoManager, true, threadPool, vf);
 
         values.setOntologyManager(ontologyManager);
         values.setTransformer(transformer);
@@ -245,7 +244,7 @@ public class FullSimpleOntologyTest {
     public void withDctermsImport() throws Exception {
         // Setup:
         InputStream stream = this.getClass().getResourceAsStream("/skos-kgaa.ttl");
-        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool, vf);
         Set<String> expectedClasses = Stream.of("http://www.w3.org/2004/02/skos/core#ConceptScheme",
                 "http://www.w3.org/2004/02/skos/core#Concept", "http://www.w3.org/2004/02/skos/core#Collection",
                 "http://www.w3.org/2004/02/skos/core#OrderedCollection").collect(Collectors.toSet());
@@ -636,7 +635,7 @@ public class FullSimpleOntologyTest {
         blankNodeService.setValueFactory(vf);
         InputStream stream = this.getClass().getResourceAsStream("/list-ontology.ttl");
         InputStream expected = this.getClass().getResourceAsStream("/list-ontology-skolemize.jsonld");
-        Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, repoManager, true, threadPool);
+        Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, repoManager, true, threadPool, vf);
 
         String jsonld = listOntology.asJsonLD(true).toString();
         assertEquals(removeWhitespace(replaceBlankNodeSuffix(IOUtils.toString(expected, Charset.defaultCharset()))), removeWhitespace(replaceBlankNodeSuffix(jsonld)));
@@ -652,7 +651,7 @@ public class FullSimpleOntologyTest {
         blankNodeService.setValueFactory(vf);
         InputStream stream = this.getClass().getResourceAsStream("/list-ontology.ttl");
         InputStream expected = this.getClass().getResourceAsStream("/list-ontology.jsonld");
-        Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, repoManager, true, threadPool);
+        Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, repoManager, true, threadPool, vf);
 
         String jsonld = listOntology.asJsonLD(false).toString();
         assertEquals(removeWhitespace(IOUtils.toString(expected, Charset.defaultCharset()).replaceAll("_:node[a-zA-Z0-9]+\"", "\"")),

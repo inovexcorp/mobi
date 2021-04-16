@@ -4758,6 +4758,54 @@ describe('Ontology State Service', function() {
             });
         });
     });
+    describe('isDeprecated should return', function() {
+        describe('false when', function() {
+            it('iri matches listItem.ontologyId', function() {
+                ontologyStateSvc.listItem.ontologyId = 'ontologyId';
+                expect(ontologyStateSvc.isIriDeprecated('ontologyId')).toBe(false);
+            });
+            it('iri is not in the iris object', function() {
+                ontologyStateSvc.listItem.deprecatedIris = { iri1: "" };
+                expect(ontologyStateSvc.isIriDeprecated('iri')).toBe(false);
+            });
+        });
+        describe('true when', function() {
+            it('iri is in the iris object', function() {
+                ontologyStateSvc.listItem.deprecatedIris = { iri: "ontId" };
+                expect(ontologyStateSvc.isIriDeprecated('iri')).toBe(true);
+            });
+
+        });
+    });
+    describe('annotationModified should', function() {
+        describe('add to listItem.deprecatedIris when', function() {
+            it('annotationIri is owl:deprecated and value is true', function() {
+                ontologyStateSvc.listItem.ontologyId = 'ontologyId';
+                ontologyStateSvc.listItem.deprecatedIris = {};
+                var expected = { iri: ontologyStateSvc.listItem.ontologyId };
+                ontologyStateSvc.annotationModified('iri', prefixes.owl + "deprecated", "true");
+                expect(ontologyStateSvc.listItem.deprecatedIris).toEqual(expected);
+            });
+        });
+        describe('remove from listItem.deprecatedIris when', function() {
+            it('annotationIri is owl:deprecated and value is false', function() {
+                ontologyStateSvc.listItem.ontologyId = 'ontologyId';
+                ontologyStateSvc.listItem.deprecatedIris = { iri: ontologyStateSvc.listItem.ontologyId };
+                var expected = {};
+                ontologyStateSvc.annotationModified('iri', prefixes.owl + "deprecated", "false");
+                expect(ontologyStateSvc.listItem.deprecatedIris).toEqual(expected);
+            });
+        });
+       describe('listItem.deprecatedIris should stay the same when', function() {
+            it('annotationIri is not owl:deprecated and value is something', function() {
+                ontologyStateSvc.listItem.ontologyId = 'ontologyId';
+                ontologyStateSvc.listItem.deprecatedIris = { iri: ontologyStateSvc.listItem.ontologyId };
+                var expected = { iri: ontologyStateSvc.listItem.ontologyId };
+                ontologyStateSvc.annotationModified('iri', prefixes.owl + "annotation1", "false");
+                expect(ontologyStateSvc.listItem.deprecatedIris).toEqual(expected);
+            });
+       });
+    });
     describe('isSelectedImported calls the correct method when', function() {
         it('listItem.selected is defined', function() {
             ontologyStateSvc.listItem.selected = {'@id': 'selected'};
