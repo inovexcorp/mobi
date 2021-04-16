@@ -110,7 +110,7 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
             hide: false,
             pageable: true,
             pagingData:{
-                limit: 15,
+                limit: 12,
                 totalRecordSize: 0,
                 currentRecordPage: 1,
                 hasNextPage: false
@@ -119,16 +119,13 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
             onInit: function(){
                 const filterInstance = this;
                 filterInstance.nextPage();
-                console.log("filterInstance.nextPage();");
             },
             nextPage: function(){
                 const filterInstance = this;
-
                 const paginatedConfig = {
                     pageIndex: filterInstance.pagingData.currentRecordPage - 1,
                     limit: filterInstance.pagingData.limit,
                 };
-
                 dvm.cm.getKeywords(dvm.catalogId, paginatedConfig)
                     .then(response => {
                          if (filterInstance.pagingData.currentRecordPage === 1) {
@@ -136,17 +133,11 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
                          } else {
                             dvm.cm.keywordObjects = dvm.cm.keywordObjects.concat(response.data);
                          }
-
                          filterInstance.setFilterItems();
-
                          filterInstance.pagingData["totalRecordSize"] = get(response.headers(), 'x-total-count', 0);
                          filterInstance.pagingData["hasNextPage"] = filterInstance.filterItems.length < filterInstance.pagingData.totalRecordSize;
                          filterInstance.pagingData["currentRecordPage"] = filterInstance.pagingData["currentRecordPage"] + 1;
                     }, dvm.util.createErrorToast);
-
-                    console.log("keywordPrefix");
-                   console.log(keywordPrefix);
-
             },
             getItemText: function(filterItem){
                 const keywordString = filterItem.value[keywordPrefix];
@@ -174,7 +165,6 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
         });
     }
     dvm.$onChanges = function(changeObj){
-        console.log(changeObj);
     }
     dvm.$onDestroy = function(){
         dvm.cm.keywordObjects = []

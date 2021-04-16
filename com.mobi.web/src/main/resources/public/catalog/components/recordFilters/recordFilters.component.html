@@ -26,7 +26,7 @@
             <span>{{ currentFilter.title }}</span>
             <span><i class="material-icons">{{currentFilter.hide ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}}</i></span>
         </h5>
-        <div class="filter-options collapse show" id="filter_options_{{$id}}">
+        <div class="filter-options collapse show" id="filter_options_{{$id}}" ng-class="{pageable: currentFilter.pageable}">
             <info-message ng-if="!currentFilter.filterItems.length">No {{ currentFilter.title }} available</info-message>
             <div class="filter-option my-2" ng-repeat="filterItem in currentFilter.filterItems track by $index">
                 <div class="custom-control custom-checkbox">
@@ -34,7 +34,6 @@
                     <label class="custom-control-label" for="filter-checkbox_{{$id}}">{{ currentFilter.getItemText(filterItem) }}</label>
                 </div>
             </div>
-            
         </div>
         <div ng-if="currentFilter.pageable && currentFilter.pagingData.hasNextPage">
             <button class="btn btn-primary">

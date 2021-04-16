@@ -25,8 +25,10 @@
 
 .record-filters {
     .filter-options {
-        max-height: 280px;
-        overflow-y: auto;
-        margin-bottom: .5rem;
     }
+   .pageable {
+       height: 350px;
+       overflow-y: auto;
+       margin-bottom: .5rem;
+   }
 }
