@@ -180,7 +180,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         return $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
             .then(response => {
                 if (get(response, 'status') === 204) {
-                    return $q.reject('Uploaded file is identical to current branch.');
+                    return $q.reject({warningMessage: 'Uploaded file is identical to current branch.'});
                 } else {
                     return response.data;
                 }

@@ -94,7 +94,7 @@ import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
-import com.mobi.rest.util.MobiWebException;
+import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import io.swagger.v3.oas.annotations.Operation;
@@ -135,7 +135,6 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -708,13 +707,13 @@ public class OntologyRest {
 
             return Response.ok().build();
         } catch (IllegalArgumentException | RDFParseException ex) {
-            throw getErrorObjBadRequest(ex);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | ExecutionException | InterruptedException | CompletionException ex) {
             if (ex instanceof ExecutionException && (ex.getCause() instanceof IllegalArgumentException
                     || ex.getCause() instanceof RDFParseException)) {
-                throw getErrorObjBadRequest(new IllegalStateException(ex.getCause().getMessage()));
+                throw RestUtils.getErrorObjBadRequest(new IllegalStateException(ex.getCause().getMessage()));
             }
-            throw getErrorObjInternalServerError(ex);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
             log.trace("uploadChangesToOntology took " + (System.currentTimeMillis() - totalTime));
@@ -4217,9 +4216,9 @@ public class OntologyRest {
                 commitId = (Resource) commitStmt.next().getObject();
             }
         } catch (IllegalArgumentException | RDFParseException ex) {
-            throw getErrorObjBadRequest(ex);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException ex) {
-            throw getErrorObjInternalServerError(ex);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
 
         ObjectNode objectNode = mapper.createObjectNode();
@@ -4230,49 +4229,5 @@ public class OntologyRest {
         objectNode.put("commitId", commitId.toString());
 
         return Response.status(Response.Status.CREATED).entity(objectNode.toString()).build();
-    }
-
-    private static ObjectNode createJsonErrorObject(Exception ex) {
-        return createJsonErrorObject(ex, null);
-    }
-
-    private static ObjectNode createJsonErrorObject(Exception ex, String delimiter) {
-        ObjectNode objectNode = mapper.createObjectNode();
-        ArrayNode arrayNode = mapper.createArrayNode();
-        objectNode.put("error", ex.getClass().getSimpleName());
-
-        String errorMessage = ex.getMessage();
-
-        if (delimiter == null) {
-            objectNode.put("errorMessage", errorMessage);
-        } else if (errorMessage.contains(delimiter)) {
-            String[] errorMessages = errorMessage.split(delimiter);
-            objectNode.put("errorMessage", errorMessages[0].trim());
-
-            String[] errorMessagesSlice = Arrays.copyOfRange(errorMessages, 1 ,errorMessages.length);
-
-            for (String currentErrorMessage: errorMessagesSlice) {
-                arrayNode.add(currentErrorMessage.trim());
-            }
-        } else {
-            objectNode.put("errorMessage", errorMessage);
-        }
-
-        objectNode.set("errorDetails", arrayNode);
-
-        return objectNode;
-    }
-
-    private MobiWebException getErrorObjBadRequest(Exception ex) {
-        ObjectNode objectNode = createJsonErrorObject(ex, Models.ERROR_OBJECT_DELIMITER);
-        Response response = Response.status(Response.Status.BAD_REQUEST).entity(objectNode.toString()).build();
-        return ErrorUtils.sendError(ex, ex.getMessage(), response);
-    }
-
-    private MobiWebException getErrorObjInternalServerError(Exception ex) {
-        ObjectNode objectNode = createJsonErrorObject(ex);
-        Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(objectNode.toString())
-                .build();
-        return ErrorUtils.sendError(ex, ex.getMessage(), response);
     }
 }

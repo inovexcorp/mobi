@@ -89,10 +89,12 @@ public class MobiStringUtils {
      * @return The extension of a file
      */
     public static String getFileExtension(String fileName) {
+        if (StringUtils.isEmpty(fileName)) {
+            throw new IllegalArgumentException("Filename must not be empty");
+        }
         String fileExtension = FilenameUtils.getExtension(fileName);
         if (fileExtension.equals("gz") || fileExtension.endsWith("zip")) {
-            String fileExtensionNoCompress = FilenameUtils.getExtension(
-                    FilenameUtils.removeExtension(fileName));
+            String fileExtensionNoCompress = FilenameUtils.getExtension(FilenameUtils.removeExtension(fileName));
             if (fileExtensionNoCompress.equals("tar")) {
                 throw new IllegalArgumentException("File must not be a tar");
             }
