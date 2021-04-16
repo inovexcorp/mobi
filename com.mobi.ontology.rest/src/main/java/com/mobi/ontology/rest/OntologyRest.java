@@ -66,6 +66,7 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.core.utils.MobiOntologyException;
+import com.mobi.ontology.core.utils.MobiStringUtils;
 import com.mobi.ontology.rest.json.EntityNames;
 import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.ontology.utils.OntologyUtils;
@@ -93,6 +94,7 @@ import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import io.swagger.v3.oas.annotations.Operation;
@@ -120,9 +122,6 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
-import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
-import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
-import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,7 +135,6 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -620,7 +618,9 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(schema = @Schema(type = "string", format = "binary",
                     description = "Ontology file to upload", required = true))
-            @FormDataParam("file") InputStream fileInputStream) {
+            @FormDataParam("file") InputStream fileInputStream,
+            @Parameter(description = "File details", hidden = true)
+            @FormDataParam("file") FormDataContentDisposition fileDetail) {
         long totalTime = System.currentTimeMillis();
 
         if (fileInputStream == null) {
@@ -659,7 +659,8 @@ public class OntologyRest {
             final CompletableFuture<Model> uploadedModelFuture = CompletableFuture.supplyAsync(() -> {
                 try {
                     long startTimeF = System.currentTimeMillis();
-                    Model temp = getUploadedModel(fileInputStream, uploadedBNodes);
+                    Model temp = getUploadedModel(fileInputStream,
+                            MobiStringUtils.getFileExtension(fileDetail.getFileName()), uploadedBNodes);
                     log.trace("uploadedModelFuture took {} ms", System.currentTimeMillis() - startTimeF);
                     return temp;
                 } catch (IOException e) {
@@ -705,9 +706,14 @@ public class OntologyRest {
                     System.currentTimeMillis() - startTime);
 
             return Response.ok().build();
-        } catch (IllegalArgumentException | MobiException | ExecutionException
-                | InterruptedException | CompletionException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException | RDFParseException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (MobiException | ExecutionException | InterruptedException | CompletionException ex) {
+            if (ex instanceof ExecutionException && (ex.getCause() instanceof IllegalArgumentException
+                    || ex.getCause() instanceof RDFParseException)) {
+                throw RestUtils.getErrorObjBadRequest(new IllegalStateException(ex.getCause().getMessage()));
+            }
+            throw RestUtils.getErrorObjInternalServerError(ex);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
             log.trace("uploadChangesToOntology took " + (System.currentTimeMillis() - totalTime));
@@ -732,17 +738,17 @@ public class OntologyRest {
      * Gets a {@link Model} of the provided {@link InputStream}. Deterministically skolemizes any BNode in the model.
      *
      * @param fileInputStream The {@link InputStream} to process.
+     * @param fileExtension The extension of the file associated with the fileInputStream.
      * @param bNodesMap The {@link Map} of BNodes to their deterministically skolemized IRIs. Will be populated in
      *                  method.
      * @return A {@link Model} with deterministically skolemized BNodes.
      * @throws IOException When an error occurs processing the {@link InputStream}
      */
-    private Model getUploadedModel(InputStream fileInputStream, Map<BNode, IRI> bNodesMap) throws IOException {
+    private Model getUploadedModel(InputStream fileInputStream, String fileExtension, Map<BNode, IRI> bNodesMap)
+            throws IOException {
         // Load uploaded ontology into a skolemized model
-        return Models.createSkolemizedModel(fileInputStream, modelFactory, sesameTransformer, bNodeService, bNodesMap,
-                new RioFunctionalSyntaxParserFactory().getParser(),
-                new RioManchesterSyntaxParserFactory().getParser(),
-                new RioOWLXMLParserFactory().getParser());
+        return Models.createSkolemizedModel(fileExtension, fileInputStream, modelFactory, sesameTransformer,
+                bNodeService, bNodesMap);
     }
 
     /**
@@ -4210,14 +4216,9 @@ public class OntologyRest {
                 commitId = (Resource) commitStmt.next().getObject();
             }
         } catch (IllegalArgumentException | RDFParseException ex) {
-            ObjectNode objectNode = createJsonErrorObject(ex, Models.ERROR_OBJECT_DELIMITER);
-            Response response = Response.status(Response.Status.BAD_REQUEST).entity(objectNode.toString()).build();
-            throw ErrorUtils.sendError(ex, ex.getMessage(), response);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException ex) {
-            ObjectNode objectNode = createJsonErrorObject(ex);
-            Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(objectNode.toString()).build();
-            throw ErrorUtils.sendError(ex, ex.getMessage(), response);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
 
         ObjectNode objectNode = mapper.createObjectNode();
@@ -4229,36 +4230,4 @@ public class OntologyRest {
 
         return Response.status(Response.Status.CREATED).entity(objectNode.toString()).build();
     }
-
-    private static ObjectNode createJsonErrorObject(Exception ex) {
-        return createJsonErrorObject(ex, null);
-    }
-
-    private static ObjectNode createJsonErrorObject(Exception ex, String delimiter) {
-        ObjectNode objectNode = mapper.createObjectNode();
-        ArrayNode arrayNode = mapper.createArrayNode();
-        objectNode.put("error", ex.getClass().getSimpleName());
-
-        String errorMessage = ex.getMessage();
-
-        if (delimiter == null) {
-            objectNode.put("errorMessage", errorMessage);
-        } else if (errorMessage.contains(delimiter)) {
-            String[] errorMessages = errorMessage.split(delimiter);
-            objectNode.put("errorMessage", errorMessages[0].trim());
-
-            String[] errorMessagesSlice = Arrays.copyOfRange(errorMessages, 1 ,errorMessages.length);
-
-            for (String currentErrorMessage: errorMessagesSlice) {
-                arrayNode.add(currentErrorMessage.trim());
-            }
-        } else {
-            objectNode.put("errorMessage", errorMessage);
-        }
-
-        objectNode.set("errorDetails", arrayNode);
-
-        return objectNode;
-    }
-
 }

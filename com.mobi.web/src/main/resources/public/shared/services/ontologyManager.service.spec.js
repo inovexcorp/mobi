@@ -2319,18 +2319,15 @@ describe('Ontology Manager service', function() {
                     return data instanceof FormData;
                 }, function(headers) {
                     return headers['Content-Type'] === undefined;
-                }).respond(400, null, null, this.error);
+                }).respond(400, this.errorObject, null, this.error);
             ontologyManagerSvc.uploadChangesFile(this.file, this.recordId, this.branchId, this.commitId)
                 .then(() => {
                     fail('Promise should have rejected');
                 }, response => {
-                    expect(response).toEqual(this.error);
+                    expect(response).toEqual(this.errorObject);
                 });
             flushAndVerify($httpBackend);
-            expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
-                status: 400,
-                statusText: this.error
-            }));
+            expect(util.rejectErrorObject).toHaveBeenCalledWith(jasmine.objectContaining({data: this.errorObject}));
         });
     });
 });

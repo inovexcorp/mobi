@@ -26,7 +26,15 @@
 </div>
 <div class="modal-body">
     <form name="dvm.form" novalidate autocomplete="off">
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+        <error-display ng-if="dvm.error.errorMessage">
+            {{dvm.error.errorMessage}}
+            <ul>
+                <li class="text-danger m-0" ng-repeat="detailError in dvm.error.errorDetails">
+                    {{ detailError }}
+                </li>
+            </ul>
+        </error-display>
+        <warning-message ng-if="dvm.error.warningMessage">{{dvm.error.warningMessage}}</warning-message>
         <file-input display-text="'Select a file'" bind-model="dvm.file" change-event="dvm.update(value)" accept="'.owl,.ttl,.xml,.jsonld,.owx,.rdf,.obo'" required></file-input>
     </form>
 </div>
