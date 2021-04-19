@@ -26,17 +26,21 @@
             <span>{{ currentFilter.title }}</span>
             <span><i class="material-icons">{{currentFilter.hide ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}}</i></span>
         </h5>
-        <div class="filter-options collapse show" id="filter_options_{{$id}}" ng-class="{pageable: currentFilter.pageable}">
+        <div class="filter-options collapse show" id="filter_options_{{$id}}" >
             <info-message ng-if="!currentFilter.filterItems.length">No {{ currentFilter.title }} available</info-message>
-            <div class="filter-option my-2" ng-repeat="filterItem in currentFilter.filterItems track by $index">
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="filter-checkbox_{{$id}}" ng-model="filterItem.checked" ng-change="currentFilter.filter(filterItem)">
-                    <label class="custom-control-label" for="filter-checkbox_{{$id}}">{{ currentFilter.getItemText(filterItem) }}</label>
+
+            <div ng-class="{pageable: currentFilter.pageable}">
+                <div class="filter-option my-2" ng-repeat="filterItem in currentFilter.filterItems track by $index">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="filter-checkbox_{{$id}}" ng-model="filterItem.checked" ng-change="currentFilter.filter(filterItem)">
+                        <label class="custom-control-label" for="filter-checkbox_{{$id}}">{{ currentFilter.getItemText(filterItem) }}</label>
+                    </div>
                 </div>
             </div>
+            <a ng-if="currentFilter.pageable && currentFilter.pagingData.hasNextPage" ng-click="currentFilter.nextPage()">
+                <i class="fa fa-fw fa-plus"></i><span>Load More</span>
+            </a>
         </div>
-        <a ng-if="currentFilter.pageable && currentFilter.pagingData.hasNextPage" ng-click="currentFilter.nextPage()">
-            <i class="fa fa-fw fa-plus"></i><span>Load More</span>
-        </a>
+
     </div>
 </div>
