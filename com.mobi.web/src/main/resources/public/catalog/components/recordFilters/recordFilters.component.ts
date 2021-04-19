@@ -36,13 +36,18 @@ const template = require('./recordFilters.component.html');
  * @description
  * `recordFilters` is a component which creates a div with collapsible containers for various filters that can be
  * performed on catalog Records. Each filter option has a checkbox to indicate whether that filter is active. These
- * filter categories currently only include {@link shared.service:catalogManagerService record types}. The
- * `recordType` will be the selected record type filter, but is one way bound. The `changeFilter` function is
- * expected to update the `recordType` binding.
+ * filter categories currently only include {@link shared.service:catalogManagerService record types}.
+ * The `recordType` will be the selected record type filter, it is one way bound.
+ * The `keywordFilterList` will be the selected keywords filter, it is one way bound.
+ * The `changeFilter` function is expected to update the `recordType` and `keywordFilterList` binding.
+ * The `catalogId` will be the catalog id for the current recordViews, it is one way bound.
  * 
- * @param {Function} changeFilter A function that expects a parameter called `recordType` and will be called when
- * the value of the select is changed. This function should update the `recordType` binding.
+ * @param {Function} changeFilter A function that expect parameters called `recordType` and `keywordFilterList`.
+ * It will be called when the value of the select is changed. This function should update the `recordType` binding and
+ * `keywordFilterList` binding.
  * @param {string} recordType The selected record type filter. Should be a catalog Record type string.
+ * @param {list} keywordFilterList The selected keywords list for filter. Should be a list of strings.
+ * @param {catalogId} the catalog id for the current recordViews
  */
 const recordFiltersComponent = {
     template,
@@ -77,19 +82,19 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
             pageable: false,
             filterItems: [],
             metaData: {},
-            onInit: function(){
+            onInit: function() {
                 this.setFilterItems();
             },
-            getItemText: function(filterItem){
+            getItemText: function(filterItem) {
                 return dvm.util.getBeautifulIRI(filterItem.value);
             },
-            setFilterItems: function(){
+            setFilterItems: function() {
                this.filterItems = map(dvm.cm.recordTypes, type => ({
                    value: type,
                    checked: type === dvm.recordType,
                }));
             },
-            filter: function(filterItem){
+            filter: function(filterItem) {
                 if (filterItem.checked) {
                     forEach(this.filterItems, typeFilter => {
                         if (typeFilter.value !== filterItem.value) {
@@ -116,11 +121,11 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
                 hasNextPage: false
             },
             filterItems: [],
-            onInit: function(){
+            onInit: function() {
                 const filterInstance = this;
                 filterInstance.nextPage();
             },
-            nextPage: function(){
+            nextPage: function() {
                 const filterInstance = this;
                 const paginatedConfig = {
                     pageIndex: filterInstance.pagingData.currentRecordPage - 1,
@@ -139,18 +144,18 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
                          filterInstance.pagingData["currentRecordPage"] = filterInstance.pagingData["currentRecordPage"] + 1;
                     }, dvm.util.createErrorToast);
             },
-            getItemText: function(filterItem){
+            getItemText: function(filterItem) {
                 const keywordString = filterItem.value[keywordPrefix];
                 const keywordCount = filterItem.value['count'];
                 return `${keywordString} (${keywordCount})`;
             },
-            setFilterItems: function(){
+            setFilterItems: function() {
                 this.filterItems = map(dvm.cm.keywordObjects, keywordObject => ({
                     value: keywordObject,
                     checked: includes(dvm.keywordFilterList, keywordObject[keywordPrefix])
                 }));
             },
-            filter: function(filterItem){
+            filter: function(filterItem) {
                 const checkedKeywordObjects = filter(this.filterItems, currentFilterItem => currentFilterItem.checked);
                 const keywords = map(checkedKeywordObjects, currentFilterItem => currentFilterItem.value[keywordPrefix]);
                 dvm.changeFilter({recordType: dvm.recordType, keywordFilterList: keywords});
@@ -159,14 +164,12 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
 
         dvm.filters = [recordTypeFilter, keywordsFilter];
         forEach(dvm.filters, filter => {
-            if('onInit' in filter){
+            if ('onInit' in filter) {
                 filter.onInit();
             }
         });
     }
-    dvm.$onChanges = function(changeObj){
-    }
-    dvm.$onDestroy = function(){
+    dvm.$onDestroy = function() {
         dvm.cm.keywordObjects = []
     }
 }

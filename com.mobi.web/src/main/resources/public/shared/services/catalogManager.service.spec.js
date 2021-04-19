@@ -277,9 +277,7 @@ describe('Catalog Manager service', function() {
                     expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: this.config}, this.promiseId);
                 });
                 it('and no config passed', function() {
-                    var params = {
-
-                    };
+                    var params = { };
                     catalogManagerSvc.getKeywords(this.catalogId, {}, this.promiseId)
                         .then(response => expect(response.data).toEqual([]), response => fail('Promise should have resolved'));
                     scope.$apply();

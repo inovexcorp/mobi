@@ -166,6 +166,7 @@ describe('Record Filters component', function() {
             expect(this.element.querySelectorAll('.filter-container').length).toEqual(2);
             expect(this.element.querySelectorAll('.record-filter-header').length).toEqual(2);
             expect(this.element.querySelectorAll('.filter-options').length).toEqual(2);
+            expect(this.element.querySelectorAll('.pageable').length).toEqual(1);
         });
         it('depending on the number of sort options', function() {
             var expectedFilterOptions = catalogManagerSvc.recordTypes.length + catalogManagerSvc.keywordObjects.length;
