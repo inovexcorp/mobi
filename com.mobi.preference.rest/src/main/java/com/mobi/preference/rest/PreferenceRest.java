@@ -140,6 +140,8 @@ public class PreferenceRest {
             }
     )
     public Response getPreferenceDefinitions(@Context ContainerRequestContext context,
+                                             @Parameter(description = "The resource id for the preference group to "
+                                                     + "retrieve preference definitions for", required = true)
                                              @PathParam("preferenceGroup") String preferenceGroup) {
         Model preferenceDefinitions = preferenceService.getPreferenceDefinitions(vf.createIRI(preferenceGroup));
         return Response.ok(RestUtils.modelToJsonld(preferenceDefinitions, transformer)).build();

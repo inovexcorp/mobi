@@ -10,7 +10,7 @@ CONSTRUCT { ?preferenceDef ?p ?o .
 }
 WHERE {
     ?preferenceDef a sh:NodeShape ;
-        pref:inGroup %GROUP% ;
+        pref:inGroup ?group ;
         rdfs:subClassOf pref:Preference ;
         sh:property ?mainPropertyShape ;
         ?p ?o .

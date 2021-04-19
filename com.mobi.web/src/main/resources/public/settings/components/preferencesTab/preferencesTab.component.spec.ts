@@ -30,13 +30,16 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import {
     cleanStylesFromDOM,
     mockPreferenceManager,
-    mockUtil
+    mockUtil,
+    mockPrefixes
 } from '../../../../../../test/ts/Shared';
 import { SharedModule } from "../../../shared/shared.module";
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { PreferencesTabComponent } from './preferencesTab.component';
 import { PreferenceGroupComponent } from '../preferenceGroup/preferenceGroup.component';
 import { TrustedHtmlPipe } from '../../../shared/pipes/trustedHtml.pipe';
+import utilService from '../../../shared/services/util.service';
+import { get } from 'lodash';
 
 describe('Preferences Tab component', function() {
     let component: PreferencesTabComponent;
@@ -60,6 +63,7 @@ describe('Preferences Tab component', function() {
             providers: [
                 { provide: 'preferenceManagerService', useClass: mockPreferenceManager },
                 { provide: 'utilService', useClass: mockUtil },
+                { provide: 'prefixes', useClass: mockPrefixes },
                 { provide: 'ErrorDisplayComponent', useClass: MockComponent(ErrorDisplayComponent) }
             ]
         });
@@ -71,18 +75,24 @@ describe('Preferences Tab component', function() {
         element = fixture.debugElement;
         preferenceManagerStub = TestBed.get('preferenceManagerService');
         utilStub = TestBed.get('utilService');
+        utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
+            return get(entity, "['" + propertyIRI + "'][0]['@value']", '');
+        });
 
+        utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {
+            return get(entity, "['" + propertyIRI + "'][0]['@id']", '');
+        });
         testGroups = [ {
-            "@id" : "http://mobi.com/ontologies/preference#TestGroupA",
-            "@type" : [ "http://mobi.com/ontologies/preference#PreferenceGroup" ],
-            "http://www.w3.org/2000/01/rdf-schema#label" : [ {
+            "@id" : "preference:TestGroupA",
+            "@type" : [ "preference:PreferenceGroup" ],
+            "rdfs:label" : [ {
               "@language" : "en",
               "@value" : "Test Group A"
             } ]
           }, {
-            "@id" : "http://mobi.com/ontologies/preference#TestGroupB",
-            "@type" : [ "http://mobi.com/ontologies/preference#PreferenceGroup" ],
-            "http://www.w3.org/2000/01/rdf-schema#label" : [ {
+            "@id" : "preference:#TestGroupB",
+            "@type" : [ "preference:PreferenceGroup" ],
+            "rdfs:label" : [ {
               "@language" : "en",
               "@value" : "Test Group B"
             } ]
@@ -121,8 +131,8 @@ describe('Preferences Tab component', function() {
         describe('should add a preference group to the sidebar', function() {
             it('unless the group has no label', function() {
                 const testPreferenceGroup = {
-                    "@id" : "http://mobi.com/ontologies/preference#TestGroupA",
-                    "@type" : [ "http://mobi.com/ontologies/preference#PreferenceGroup" ]
+                    "@id" : "preference:TestGroupA",
+                    "@type" : [ "preference:PreferenceGroup" ]
                 };
                 component.addTab(testPreferenceGroup);
                 expect(component.tabs.length).toEqual(0);
@@ -130,9 +140,9 @@ describe('Preferences Tab component', function() {
             });
             it('with the correct properties', function() {
                 const testPreferenceGroup = {
-                    "@id" : "http://mobi.com/ontologies/preference#TestGroupA",
-                    "@type" : [ "http://mobi.com/ontologies/preference#PreferenceGroup" ],
-                    "http://www.w3.org/2000/01/rdf-schema#label" : [ {
+                    "@id" : "preference:TestGroupA",
+                    "@type" : [ "preference:PreferenceGroup" ],
+                    "rdfs:label" : [ {
                       "@language" : "en",
                       "@value" : "Test Group A"
                     } ]
@@ -140,7 +150,7 @@ describe('Preferences Tab component', function() {
                 component.addTab(testPreferenceGroup);
                 expect(component.tabs.length).toEqual(1);
                 expect(component.tabs[0]).toEqual({
-                    type: 'http://mobi.com/ontologies/preference#TestGroupA',
+                    type: 'preference:TestGroupA',
                     heading: 'Test Group A',
                     active: false
                 });
@@ -149,12 +159,12 @@ describe('Preferences Tab component', function() {
         it('should change which tab is active', function() {
             component.tabs = [
                 {
-                    type: 'http://mobi.com/ontologies/preference#TestGroupA',
+                    type: 'preference:TestGroupA',
                     heading: 'Test Group A',
                     active: true
                 },
                 {
-                    type: 'http://mobi.com/ontologies/preference#TestGroupB',
+                    type: 'preference:TestGroupB',
                     heading: 'Test Group B',
                     active: false
                 }
@@ -173,12 +183,12 @@ describe('Preferences Tab component', function() {
         beforeEach(function() {
             component.tabs = [
                 {
-                    type: 'http://mobi.com/ontologies/preference#TestGroupA',
+                    type: 'preference:TestGroupA',
                     heading: 'Test Group A',
                     active: true
                 },
                 {
-                    type: 'http://mobi.com/ontologies/preference#TestGroupB',
+                    type: 'preference:TestGroupB',
                     heading: 'Test Group B',
                     active: false
                 }

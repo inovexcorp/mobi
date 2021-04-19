@@ -4,13 +4,14 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import {
-    cleanStylesFromDOM, mockUtil
+    cleanStylesFromDOM, mockUtil, mockPrefixes
 } from '../../../../../../test/ts/Shared';
 import { SharedModule } from "../../../shared/shared.module";
 import { PreferenceConstants } from '../../classes/preferenceConstants.class';
 import { PreferenceFormFieldComponent } from '../preferenceFormField/preferenceFormField.component';
 import { FormGroup, FormControl } from '@angular/forms';
 import { By } from '@angular/platform-browser';
+import { get } from 'lodash';
 
 describe('Preference Form Field component', function() {
     let component: PreferenceFormFieldComponent;
@@ -31,7 +32,8 @@ describe('Preference Form Field component', function() {
                 PreferenceFormFieldComponent
             ],
             providers: [
-                { provide: 'utilService', useClass: mockUtil }
+                { provide: 'utilService', useClass: mockUtil },
+                { provide: 'prefixes', useClass: mockPrefixes }
             ]
         });
     });
@@ -41,6 +43,14 @@ describe('Preference Form Field component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         utilStub = TestBed.get('utilService');
+        
+        utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
+            return get(entity, "['" + propertyIRI + "'][0]['@value']", '');
+        });
+
+        utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {
+            return get(entity, "['" + propertyIRI + "'][0]['@id']", '');
+        });
 
         formGroup = new FormGroup({
             'http://mobi.com/ontologies/preference#hasDataValue': new FormControl('firstVal')
@@ -49,26 +59,26 @@ describe('Preference Form Field component', function() {
         field = PreferenceConstants.HAS_DATA_VALUE;
 
         shaclShape = {
-            "@id" : "http://mobi.com/ontologies/preference#SomeSimpleTextPreferencePropertyShape",
-            "@type" : [ "http://www.w3.org/ns/shacl#PropertyShape" ],
-            "http://mobi.com/ontologies/preference#usesFormField" : [ {
-              "@id" : "http://mobi.com/ontologies/preference#TextInput"
+            "@id" : "preference:SomeSimpleTextPreferencePropertyShape",
+            "@type" : [ "shacl:PropertyShape" ],
+            "preference:usesFormField" : [ {
+              "@id" : "preference:TextInput"
             } ],
-            "http://www.w3.org/ns/shacl#datatype" : [ {
-              "@id" : "http://www.w3.org/2001/XMLSchema#string"
+            "shacl:datatype" : [ {
+              "@id" : "xsd:string"
             } ],
-            "http://www.w3.org/ns/shacl#name" : [ {
+            "shacl:name" : [ {
               "@value" : "Some simple text field"
             } ],
-            "http://www.w3.org/ns/shacl#maxCount" : [ {
-              "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+            "shacl:maxCount" : [ {
+              "@type" : "xsd:integer",
               "@value" : "2"
             } ],
-            "http://www.w3.org/ns/shacl#minCount" : [ {
-              "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+            "shacl:minCount" : [ {
+              "@type" : "xsd:integer",
               "@value" : "1"
             } ],
-            "http://www.w3.org/ns/shacl#path" : [ {
+            "shacl:path" : [ {
               "@id" : "http://mobi.com/ontologies/preference#hasDataValue"
             } ]
         };
@@ -95,7 +105,7 @@ describe('Preference Form Field component', function() {
                     expect(component.label).toEqual('Some simple text field');
                 });
                 it('when a shacl name does not exist', function() {
-                    delete component.shaclShape['http://www.w3.org/ns/shacl#name'];
+                    delete component.shaclShape['shacl:name'];
                     fixture.detectChanges();
                     component.ngOnChanges();
                     expect(component.label).toEqual('');
@@ -107,29 +117,29 @@ describe('Preference Form Field component', function() {
                     expect(component.formType).toEqual('textInput');
                 });
                 it('when rdf declares a toggle input field', function() {
-                    component.shaclShape['http://mobi.com/ontologies/preference#usesFormField'] = [{
-                        "@id" : "http://mobi.com/ontologies/preference#ToggleInput"
+                    component.shaclShape['preference:usesFormField'] = [{
+                        "@id" : "preference:ToggleInput"
                     }];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('toggle');
                 });
                 it('when rdf declares a radio input field', function() {
-                    component.shaclShape['http://mobi.com/ontologies/preference#usesFormField'] = [{
-                        "@id" : "http://mobi.com/ontologies/preference#RadioInput"
+                    component.shaclShape['preference:usesFormField'] = [{
+                        "@id" : "preference:RadioInput"
                     }];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('radio');
                 });
                 it('when rdf declares an unsupported input field', function() {
-                    component.shaclShape['http://mobi.com/ontologies/preference#usesFormField'] = [{
-                        "@id" : "http://mobi.com/ontologies/preference#UnknownInput"
+                    component.shaclShape['preference:usesFormField'] = [{
+                        "@id" : "preference:UnknownInput"
                     }];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('');
                     expect(utilStub.createErrorToast).toHaveBeenCalled();
                 });
                 it('when rdf declares no input field', function() {
-                    delete component.shaclShape['http://mobi.com/ontologies/preference#usesFormField'];
+                    delete component.shaclShape['preference:usesFormField'];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('');
                     expect(utilStub.createErrorToast).toHaveBeenCalled();
@@ -137,7 +147,7 @@ describe('Preference Form Field component', function() {
             });
             describe('should set validators correctly', function() {
                 it('when a min count exists', function() {
-                    component.shaclShape['http://www.w3.org/ns/shacl#pattern'] = [{
+                    component.shaclShape['shacl:pattern'] = [{
                         "@value" : "[a-zA-Z ]*"
                     }];
                     component.ngOnChanges();
@@ -145,13 +155,13 @@ describe('Preference Form Field component', function() {
                     expect(component.fieldFormControl.valid).toEqual(false);
                 });
                 it('when a min count does not exist', function() {
-                    delete component.shaclShape['http://www.w3.org/ns/shacl#minCount'];
+                    delete component.shaclShape['shacl:minCount'];
                     component.ngOnChanges();
                     component.fieldFormControl.setValue('');
                     expect(component.fieldFormControl.valid).toEqual(true);
                 });
                 it('when a shacl pattern exists', function() {
-                    component.shaclShape['http://www.w3.org/ns/shacl#pattern'] = [{
+                    component.shaclShape['shacl:pattern'] = [{
                         "@value" : "[a-zA-Z ]*"
                     }];
                     component.ngOnChanges();
@@ -170,8 +180,8 @@ describe('Preference Form Field component', function() {
                     expect(component.fieldFormControl.valid).toEqual(true);
                 });
                 it('when shacl datatype is integer', function() {
-                    component.shaclShape['http://www.w3.org/ns/shacl#datatype'] = [{
-                        '@id' : 'http://www.w3.org/2001/XMLSchema#integer'
+                    component.shaclShape['shacl:datatype'] = [{
+                        '@id' : 'xsd:integer'
                     }];
                     component.ngOnChanges();
 

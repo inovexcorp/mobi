@@ -479,6 +479,8 @@ export function mockPrefixes() {
             this.policy = 'policy:';
             this.roles = "roles:";
             this.foaf = "foaf:";
+            this.shacl = "shacl:";
+            this.preference = "preference:";
         });
     });
 }

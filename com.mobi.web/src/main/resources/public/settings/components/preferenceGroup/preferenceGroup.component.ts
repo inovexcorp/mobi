@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { forEach } from 'lodash';
+import { forEach, has } from 'lodash';
 
 import { Input, Component, OnChanges, Inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { PreferenceUtils } from '../../classes/preferenceUtils.class'
@@ -47,7 +47,7 @@ export class PreferenceGroupComponent implements OnChanges {
     errorMessage = '';
     preferences = {};
 
-    constructor(@Inject('preferenceManagerService') private pm, @Inject('preferenceManagerService') private util, private ref: ChangeDetectorRef) {}
+    constructor(@Inject('preferenceManagerService') private pm, @Inject('utilService') private util, @Inject('prefixes') private prefixes, private ref: ChangeDetectorRef) {}
 
     ngOnChanges(): void {
         this.retrievePreferences();
@@ -72,11 +72,11 @@ export class PreferenceGroupComponent implements OnChanges {
                         forEach(preferencesJson, (preferenceJson:any, preferenceType: string) => {
                             let preference: Preference;
                             if (PreferenceUtils.isSimplePreference(preferenceJson, shapeDefinitions)) {
-                                preference = new SimplePreference(preferenceJson, shapeDefinitions);
+                                preference = new SimplePreference(preferenceJson, shapeDefinitions, this.util, this.prefixes);
                                 preference.populate(userPreferences[preferenceType]);
                                 this.preferences[preferenceType] = preference;
                             } else {
-                                preference = this.util.createErrorToast('Complex Preferences are not yet supported.');
+                                this.util.createErrorToast('Complex Preferences are not yet supported.');
                             }
                         });
                         this.ref.markForCheck();
@@ -101,6 +101,6 @@ export class PreferenceGroupComponent implements OnChanges {
     }
 
     isTopLevelNodeShape(shape): boolean {
-        return Object.prototype.hasOwnProperty.call(shape, 'http://mobi.com/ontologies/preference#inGroup');
+        return has(shape, this.prefixes.preference + 'inGroup');
     }
 }

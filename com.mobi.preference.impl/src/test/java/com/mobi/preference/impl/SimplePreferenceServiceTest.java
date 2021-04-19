@@ -109,6 +109,8 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         service.start();
     }
 
+    // addPreference
+
     @Test
     public void addPreferenceWithObjectValueTest() throws Exception {
         // Setup:
@@ -140,8 +142,6 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
                     statement.getPredicate(), statement.getObject())));
         }
     }
-
-    // addPreference
 
     @Test(expected = IllegalArgumentException.class)
     public void addPreferenceWithExistingPreferenceTest() throws Exception {
@@ -200,6 +200,8 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         }
     }
 
+    // validatePreference
+
     @Test
     public void validatePreferenceTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
@@ -220,8 +222,6 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         service.validatePreference(preference);
     }
 
-    // validatePreference
-
     @Test(expected = IllegalArgumentException.class)
     public void validatePreferenceWithoutValueTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/preferenceNoValue.ttl");
@@ -231,6 +231,8 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
 
         service.validatePreference(preference);
     }
+
+    // getSetting
 
     @Test
     public void getSettingTest() throws Exception {
@@ -295,6 +297,8 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI(EmailNotificationPreference.TYPE));
         assertFalse(retrievedPreference.isPresent());
     }
+
+    // getUserPreferences
 
     @Test
     public void getUserPreferencesTest() throws Exception {
@@ -366,10 +370,7 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         service.getUserPreferences(user);
     }
 
-    // TODO: test for Preference when multiple preferences of the same type exist in the repo. Assert
-    //  RepositoryException
-
-    // getUserPreferences
+    // deleteUserPreference
 
     @Test
     public void deleteUserPreferenceTest() throws Exception {
@@ -454,6 +455,8 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         }
     }
 
+    // updatePreference
+
     @Test
     public void updatePreferenceTest() throws Exception {
         // Setup:
@@ -533,6 +536,8 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         service.updatePreference(user, secondPreference);
     }
 
+    // getPreferenceGroups
+
     @Test
     public void getPreferenceGroupsTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/preferenceDefinitions.ttl");
@@ -548,6 +553,8 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
             assertTrue(preferenceGroupsModel.contains(statement));
         });
     }
+
+    // getPreferenceDefinitions
 
     @Test
     public void getPreferenceDefinitions() throws Exception {

@@ -21,15 +21,10 @@
  * #L%
  */
 
-import { Component, Input, EventEmitter, Output, OnChanges } from '@angular/core';
+import { Component, Input, EventEmitter, Output, OnChanges, Inject } from '@angular/core';
 import { FormArray, FormGroup } from '@angular/forms';
 import { Preference } from '../../interfaces/preference.interface';
 import { filter } from 'lodash';
-
-@Component({
-    selector: 'preference-form',
-    templateUrl: './preferenceForm.component.html'
-})
 
 /**
  * @ngdoc component
@@ -38,6 +33,10 @@ import { filter } from 'lodash';
  * @description
  * `preferenceForm` is a component that contains a form allowing a user to change their preferences
  */
+@Component({
+    selector: 'preference-form',
+    templateUrl: './preferenceForm.component.html'
+})
 export class PreferenceFormComponent implements OnChanges {
     @Input() preference: Preference;
     @Output() updateEvent = new EventEmitter<Preference>();
@@ -50,19 +49,19 @@ export class PreferenceFormComponent implements OnChanges {
         formBlocks: new FormArray([])
     });
         
-    constructor() {}
+    constructor(@Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
 
     ngOnChanges(): void {
-        if (this.preference.requiredPropertyShape['http://www.w3.org/ns/shacl#maxCount']) {
-            this.maxBlocks = Number(this.preference.requiredPropertyShape['http://www.w3.org/ns/shacl#maxCount'][0]['@value']);
+        if (this.preference.requiredPropertyShape[this.prefixes.shacl + 'maxCount']) {
+            this.maxBlocks = Number(this.util.getPropertyValue(this.preference.requiredPropertyShape, this.prefixes.shacl + 'maxCount'));
         }
 
         this.numValues = this.preference.numValues();
 
-        // The point of this code is to create a lookup object to get the associated property shape for a given formFieldProperty.
+        // Create a lookup object to get the associated property shape for a given formFieldProperty.
         this.preference.formFieldProperties.forEach(formFieldProperty => {
             const shaclShape = filter(this.preference.formFieldPropertyShapes, formFieldPropertyShape => {
-                return formFieldPropertyShape['http://www.w3.org/ns/shacl#path'][0]['@id'] === formFieldProperty;
+                return this.util.getPropertyId(formFieldPropertyShape, this.prefixes.shacl + 'path') === formFieldProperty;
             })[0];
             this.shaclShapes[formFieldProperty] = shaclShape;
         });

@@ -22,7 +22,6 @@
  */
 import { Component, Input, OnChanges, Inject } from '@angular/core';
 import { Validators, ValidatorFn, FormControl, FormGroup } from '@angular/forms';
-import { get } from 'lodash';
 
 @Component({
     selector: 'preference-form-field',
@@ -46,24 +45,24 @@ export class PreferenceFormFieldComponent implements OnChanges {
     validators: Array<ValidatorFn> = [];
     label: string = '';
         
-    constructor(@Inject('utilService') private util) {}
+    constructor(@Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
 
     ngOnChanges() {
-        this.label = get(this.shaclShape, ['http://www.w3.org/ns/shacl#name', '0', '@value'], '');
+        this.label = this.util.getPropertyValue(this.shaclShape, this.prefixes.shacl + 'name');
 
-        if (this.shaclShape['http://www.w3.org/ns/shacl#pattern']) {
-            const regex = this.shaclShape['http://www.w3.org/ns/shacl#pattern'][0]['@value'];
+        if (this.shaclShape[this.prefixes.shacl + 'pattern']) {
+            const regex = this.util.getPropertyValue(this.shaclShape, this.prefixes.shacl + 'pattern');
             this.validators.push(Validators.pattern(regex));
         }
 
-        switch(get(this.shaclShape, ['http://mobi.com/ontologies/preference#usesFormField', '0', '@id'], '')) {
-            case 'http://mobi.com/ontologies/preference#TextInput':
+        switch(this.util.getPropertyId(this.shaclShape, this.prefixes.preference + 'usesFormField')) {
+            case this.prefixes.preference + 'TextInput':
                 this.formType = 'textInput';
                 break;
-            case 'http://mobi.com/ontologies/preference#RadioInput':
+            case this.prefixes.preference + 'RadioInput':
                 this.formType = 'radio';
                 break;
-            case 'http://mobi.com/ontologies/preference#ToggleInput':
+            case this.prefixes.preference + 'ToggleInput':
                 this.formType = 'toggle';
                 break;
             case '':
@@ -73,18 +72,18 @@ export class PreferenceFormFieldComponent implements OnChanges {
                 this.util.createErrorToast('Unsupported form field type')
         }
         
-        switch(get(this.shaclShape, ['http://www.w3.org/ns/shacl#datatype', '0', '@id'], '')) {
-            case 'http://www.w3.org/2001/XMLSchema#boolean':
+        switch(this.util.getPropertyId(this.shaclShape, this.prefixes.shacl + 'datatype')) {
+            case this.prefixes.xsd + 'boolean':
                 if (this.formType === 'radio') {
                     this.options = ['true', 'false'];
                 } else if (this.formType === 'toggle') {
                     this.convertFormValueToBoolean();
                 }
                 break;
-            case 'http://www.w3.org/2001/XMLSchema#integer':
+            case this.prefixes.xsd + 'integer':
                 this.validators.push(Validators.pattern("^[0-9]+$"));
                 break;
-            case 'http://www.w3.org/2001/XMLSchema#string':
+            case this.prefixes.xsd + 'string':
                 break;
             case '':
                 this.util.createErrorToast('Form field datatype not configured');
@@ -93,7 +92,9 @@ export class PreferenceFormFieldComponent implements OnChanges {
                 this.util.createErrorToast('Unsupported form field datatype')
         }
 
-        if (this.shaclShape['http://www.w3.org/ns/shacl#minCount'] && this.shaclShape['http://www.w3.org/ns/shacl#minCount'][0]['@value'] > 0) {
+        new Number()
+        if (this.util.getPropertyValue(this.shaclShape, this.prefixes.shacl + 'minCount'))
+        if (this.shaclShape[this.prefixes.shacl + 'minCount'] && Number(this.util.getPropertyValue(this.shaclShape, this.prefixes.shacl + 'minCount')) > 0) {
             this.validators.push(Validators.required);
         }
 

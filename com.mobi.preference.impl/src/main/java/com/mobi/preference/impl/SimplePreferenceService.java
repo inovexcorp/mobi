@@ -231,9 +231,8 @@ public class SimplePreferenceService implements PreferenceService {
     @Override
     public Model getPreferenceDefinitions(Resource preferenceGroup) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            String queryString = GET_PREFERENCE_DEFINITIONS.replace("%GROUP%", "<"
-                    + preferenceGroup.stringValue() + ">");
-            GraphQuery query = conn.prepareGraphQuery(queryString);
+            GraphQuery query = conn.prepareGraphQuery(GET_PREFERENCE_DEFINITIONS);
+            query.setBinding("group", preferenceGroup);
             return QueryResults.asModel(query.evaluate(), mf);
         }
     }

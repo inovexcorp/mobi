@@ -40,20 +40,20 @@ import './preferencesTab.component.scss';
 export class PreferencesTabComponent implements OnInit {
     tabs = [];
     
-    constructor(@Inject('preferenceManagerService') private pm, @Inject('utilService') private util) {}
+    constructor(@Inject('preferenceManagerService') private pm, @Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
     
     ngOnInit(): void {
         this.setPreferenceTabs();
     }
 
     addTab(preferenceGroup: any): void {
-        if (!preferenceGroup['http://www.w3.org/2000/01/rdf-schema#label']) {
+        if (!preferenceGroup[this.prefixes.rdfs + 'label']) {
             this.util.createErrorToast('Preference Group not configured with label.')
             return;
         }
         this.tabs.push({
             type: preferenceGroup['@id'],
-            heading: preferenceGroup['http://www.w3.org/2000/01/rdf-schema#label'][0]['@value'],
+            heading: this.util.getPropertyValue(preferenceGroup, this.prefixes.rdfs + 'label'),
             active: false
         });
     }
