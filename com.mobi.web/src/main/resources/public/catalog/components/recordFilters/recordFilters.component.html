@@ -35,10 +35,8 @@
                 </div>
             </div>
         </div>
-        <div ng-if="currentFilter.pageable && currentFilter.pagingData.hasNextPage">
-            <button class="btn btn-primary">
-                <strong ng-click="currentFilter.nextPage()">Show More</strong>
-            </button>
-        </div>
+        <a ng-if="currentFilter.pageable && currentFilter.pagingData.hasNextPage" ng-click="currentFilter.nextPage()">
+            <i class="fa fa-fw fa-plus"></i><span>Load More</span>
+        </a>
     </div>
 </div>
