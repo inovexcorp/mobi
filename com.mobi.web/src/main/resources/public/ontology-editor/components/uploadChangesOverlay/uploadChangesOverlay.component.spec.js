@@ -95,9 +95,16 @@ describe('Upload Changes Overlay component', function() {
         it('depending on whether there is an error', function() {
             expect(this.element.find('error-display').length).toEqual(0);
 
-            this.controller.error = true;
+            this.controller.error = {errorMessage: "Message"};
             scope.$digest();
             expect(this.element.find('error-display').length).toEqual(1);
+        });
+        it('depending on whether there is a warning', function() {
+            expect(this.element.find('warning-message').length).toEqual(0);
+
+            this.controller.error = {warningMessage: "Message"};
+            scope.$digest();
+            expect(this.element.find('warning-message').length).toEqual(1);
         });
     });
     describe('controller methods', function() {

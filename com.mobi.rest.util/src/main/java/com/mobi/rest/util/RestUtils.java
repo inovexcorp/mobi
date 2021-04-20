@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.SkolemizedStatementIterable;
 import com.mobi.persistence.utils.StatementIterable;
 import com.mobi.persistence.utils.api.BNodeService;
@@ -55,6 +56,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -789,5 +791,76 @@ public class RestUtils {
             throw ErrorUtils.sendError("Invalid sort property IRI", Response.Status.BAD_REQUEST);
         }
         LinksUtils.validateParams(limit, offset);
+    }
+
+    /**
+     * Creates a JSON error object containing the error message.
+     *
+     * @param exception The {@link Exception} to create a JSON error object from.
+     * @return A {@link ObjectNode} JSON object.
+     */
+    public static ObjectNode createJsonErrorObject(Exception exception) {
+        return createJsonErrorObject(exception, null);
+    }
+
+    /**
+     * Creates a JSON error object containing the error message and a list of the error details.
+     *
+     * @param exception The {@link Exception} to create a JSON error object from.
+     * @param delimiter A String delimiter used to separate the error details
+     * @return A {@link ObjectNode} JSON object.
+     */
+    public static ObjectNode createJsonErrorObject(Exception exception, String delimiter) {
+        ObjectNode objectNode = mapper.createObjectNode();
+        ArrayNode arrayNode = mapper.createArrayNode();
+        objectNode.put("error", exception.getClass().getSimpleName());
+
+        String errorMessage = exception.getMessage();
+
+        if (delimiter == null) {
+            objectNode.put("errorMessage", errorMessage);
+        } else if (errorMessage.contains(delimiter)) {
+            String[] errorMessages = errorMessage.split(delimiter);
+            objectNode.put("errorMessage", errorMessages[0].trim());
+
+            String[] errorMessagesSlice = Arrays.copyOfRange(errorMessages, 1 ,errorMessages.length);
+
+            for (String currentErrorMessage: errorMessagesSlice) {
+                arrayNode.add(currentErrorMessage.trim());
+            }
+        } else {
+            objectNode.put("errorMessage", errorMessage);
+        }
+
+        objectNode.set("errorDetails", arrayNode);
+
+        return objectNode;
+    }
+
+    /**
+     * Creates a {@link MobiWebException} containing a 400 response with the error message and error details provided
+     * in the body of the response.
+     *
+     * @param exception The {@link Exception} to create a JSON error object from.
+     * @return A {@link MobiWebException} of a 400 with error information in the body.
+     */
+    public static MobiWebException getErrorObjBadRequest(Exception exception) {
+        ObjectNode objectNode = createJsonErrorObject(exception, Models.ERROR_OBJECT_DELIMITER);
+        Response response = Response.status(Response.Status.BAD_REQUEST).entity(objectNode.toString()).build();
+        return ErrorUtils.sendError(exception, exception.getMessage(), response);
+    }
+
+    /**
+     * Creates a {@link MobiWebException} containing a 500 response with the error message provided in the body of the
+     * response.
+     *
+     * @param exception The {@link Exception} to create a JSON error object from.
+     * @return A {@link MobiWebException} of a 500 with error information in the body.
+     */
+    public static MobiWebException getErrorObjInternalServerError(Exception exception) {
+        ObjectNode objectNode = createJsonErrorObject(exception);
+        Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(objectNode.toString())
+                .build();
+        return ErrorUtils.sendError(exception, exception.getMessage(), response);
     }
 }
