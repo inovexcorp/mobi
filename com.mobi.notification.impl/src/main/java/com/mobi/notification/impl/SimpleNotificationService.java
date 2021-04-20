@@ -62,6 +62,8 @@ public class SimpleNotificationService {
     @Activate
     @Modified
     protected void start() {
+        // Uncomment the below code when we implement the notification preferences
+        /**
         Model ontologyModel;
         try {
             ontologyModel = Models.createModel("ttl", NOTIFICATION_ONTOLOGY, transformer);
@@ -74,6 +76,7 @@ public class SimpleNotificationService {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             conn.add(ontologyModel, vf.createIRI(PreferenceService.GRAPH));
         }
+         **/
     }
 
     private void removeAttachedBNodes(Model model, Resource subject) {

@@ -23,6 +23,7 @@ package com.mobi.preference.impl;
  * #L%
  */
 
+import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Mockito.when;
@@ -564,14 +565,14 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(preferenceDefinitionsModel);
         }
-        assertTrue(service.getPreferenceDefinitions(VALUE_FACTORY.createIRI("http://example" +
+        assertEquals(4, service.getPreferenceDefinitions(VALUE_FACTORY.createIRI("http://example" +
                 ".com/SomeOtherPreferenceGroup"))
-                .subjects().size() == 4);
-        assertTrue(service.getPreferenceDefinitions(VALUE_FACTORY.createIRI("http://example.com/SomePreferenceGroup"))
-                .subjects().size() == 2);
-        assertTrue(service.getPreferenceDefinitions(VALUE_FACTORY.createIRI("http://example" +
+                .subjects().size());
+        assertEquals(2, service.getPreferenceDefinitions(VALUE_FACTORY.createIRI("http://example.com/SomePreferenceGroup"))
+                .subjects().size());
+        assertEquals(0, service.getPreferenceDefinitions(VALUE_FACTORY.createIRI("http://example" +
                 ".com/SomeNonexistentPreferenceGroup"))
-                .subjects().size() == 0);
+                .subjects().size());
     }
 
     private interface TestComplexPreference extends Thing, Setting, Preference {

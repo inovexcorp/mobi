@@ -21,7 +21,6 @@
  * #L%
  */
 import { forEach, has } from 'lodash';
-
 import { Input, Component, OnChanges, Inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { PreferenceUtils } from '../../classes/preferenceUtils.class'
 import { Preference } from '../../interfaces/preference.interface';

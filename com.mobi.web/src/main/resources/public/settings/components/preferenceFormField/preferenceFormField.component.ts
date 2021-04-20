@@ -60,9 +60,6 @@ export class PreferenceFormFieldComponent implements OnChanges {
             case this.prefixes.preference + 'TextInput':
                 this.formType = 'textInput';
                 break;
-            case this.prefixes.preference + 'RadioInput':
-                this.formType = 'radio';
-                break;
             case this.prefixes.preference + 'ToggleInput':
                 this.formType = 'toggle';
                 break;
@@ -89,8 +86,6 @@ export class PreferenceFormFieldComponent implements OnChanges {
                 this.util.createErrorToast('Unsupported form field datatype')
         }
 
-        new Number()
-        if (this.util.getPropertyValue(this.shaclShape, this.prefixes.shacl + 'minCount'))
         if (this.shaclShape[this.prefixes.shacl + 'minCount'] && Number(this.util.getPropertyValue(this.shaclShape, this.prefixes.shacl + 'minCount')) > 0) {
             this.validators.push(Validators.required);
         }
