@@ -2075,7 +2075,6 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         return Models.createModel(this.getClass().getResourceAsStream(filename), transformer);
     }
 
-
     private String removeWhitespace(String s) {
         return s.replaceAll("\\s+", "");
     }
