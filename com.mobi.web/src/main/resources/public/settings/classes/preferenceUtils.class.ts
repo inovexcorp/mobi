@@ -25,6 +25,13 @@ import { PreferenceConstants } from './preferenceConstants.class';
 import { Preference } from '../interfaces/preference.interface';
 import { has } from 'lodash';
 
+/**
+ * @ngdoc class
+ * @name settings.classes:preferenceUtils
+ *
+ * @description
+ * `PreferenceUtils` is a helper class that contains methods used by the Preference implementations
+ */
 export class PreferenceUtils {
     static isSimplePreference(preferenceJson, shapeDefinitions): boolean {
         const requiredPropertyShape = shapeDefinitions[preferenceJson['http://www.w3.org/ns/shacl#property'][0]['@id']];

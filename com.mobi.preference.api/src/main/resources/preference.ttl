@@ -59,8 +59,6 @@
 
 :TextInput a :FormField .
 
-:RadioInput a :FormField .
-
 :ToggleInput a :FormField .
 
 :usesFormField a owl:ObjectProperty;

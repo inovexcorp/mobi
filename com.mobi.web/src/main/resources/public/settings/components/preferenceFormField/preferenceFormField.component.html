@@ -22,12 +22,6 @@
   -->
 
 <form [formGroup]="fieldFormGroup">
-    <div class="radio-group" *ngIf="formType === 'radio'">
-        {{label}}
-        <div *ngFor="let option of options">
-            <input type="radio" [value]="option" [formControlName]="fieldShaclProperty">{{option}}
-        </div>
-    </div>
     <div class="toggle-field" style="padding-bottom: 20px;" *ngIf="formType === 'toggle'">
         <mat-slide-toggle [formControlName]="fieldShaclProperty">{{label}}</mat-slide-toggle>
     </div>

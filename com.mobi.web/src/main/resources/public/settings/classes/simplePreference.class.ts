@@ -26,6 +26,14 @@ import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
 import { PreferenceUtils } from './preferenceUtils.class';
 import { PreferenceConstants } from './preferenceConstants.class';
 
+/**
+ * @ngdoc class
+ * @name settings.classes:simplePreference
+ *
+ * @description
+ * `SimplePreference` is an implementation of the Preference interface used for Preferences that will always have
+ * exactly one form field (there may be multiple instances of that form field) that can only hold a literal value.
+ */
 export class SimplePreference implements Preference {
     private _topLevelPreferenceNodeshapeInstanceId: string;
     private _topLevelPreferenceNodeshapeInstance: any;

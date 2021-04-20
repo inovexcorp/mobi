@@ -75,11 +75,7 @@ export class PreferenceFormFieldComponent implements OnChanges {
         
         switch(this.util.getPropertyId(this.shaclShape, this.prefixes.shacl + 'datatype')) {
             case this.prefixes.xsd + 'boolean':
-                if (this.formType === 'radio') {
-                    this.options = ['true', 'false'];
-                } else if (this.formType === 'toggle') {
-                    this.convertFormValueToBoolean();
-                }
+                this.convertFormValueToBoolean();
                 break;
             case this.prefixes.xsd + 'integer':
                 this.validators.push(Validators.pattern("^[0-9]+$"));

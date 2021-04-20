@@ -123,13 +123,6 @@ describe('Preference Form Field component', function() {
                     component.ngOnChanges();
                     expect(component.formType).toEqual('toggle');
                 });
-                it('when rdf declares a radio input field', function() {
-                    component.shaclShape['preference:usesFormField'] = [{
-                        "@id" : "preference:RadioInput"
-                    }];
-                    component.ngOnChanges();
-                    expect(component.formType).toEqual('radio');
-                });
                 it('when rdf declares an unsupported input field', function() {
                     component.shaclShape['preference:usesFormField'] = [{
                         "@id" : "preference:UnknownInput"
@@ -200,15 +193,6 @@ describe('Preference Form Field component', function() {
             component.label = 'Toggle field label';
             fixture.detectChanges();
             expect(element.queryAll(By.css('.toggle-field')).length).toEqual(1);
-            expect(element.queryAll(By.css('.radio-group')).length).toEqual(0);
-            expect(element.queryAll(By.css('.text-input-field')).length).toEqual(0);
-        });
-        it('when the formType is radio', function() {
-            component.formType = 'radio';
-            component.label = 'Radio group label';
-            fixture.detectChanges();
-            expect(element.queryAll(By.css('.toggle-field')).length).toEqual(0);
-            expect(element.queryAll(By.css('.radio-group')).length).toEqual(1);
             expect(element.queryAll(By.css('.text-input-field')).length).toEqual(0);
         });
         it('when the formType is text input', function() {
@@ -216,7 +200,6 @@ describe('Preference Form Field component', function() {
             component.label = 'Text field label';
             fixture.detectChanges();
             expect(element.queryAll(By.css('.toggle-field')).length).toEqual(0);
-            expect(element.queryAll(By.css('.radio-group')).length).toEqual(0);
             expect(element.queryAll(By.css('.text-input-field')).length).toEqual(1);
         });
     });
