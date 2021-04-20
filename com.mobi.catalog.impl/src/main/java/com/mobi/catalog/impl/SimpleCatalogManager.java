@@ -394,34 +394,32 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     private String replaceKeywordFilter(PaginatedSearchParams searchParams, String queryString) {
-        if(searchParams.getKeywords().isPresent()){
+        if (searchParams.getKeywords().isPresent()) {
             StringBuilder keywordFilter = new StringBuilder();
-
-            keywordFilter.append("\n");
-            keywordFilter.append("?record mcat:keyword ?keyword ;\n");
+            keywordFilter.append("?record mcat:keyword ?keyword .\n");
             keywordFilter.append("FILTER(?keyword IN (");
 
             List<String> tempKeywords = searchParams.getKeywords().get();
 
-            for(int i = 0; i< tempKeywords.size(); i++){
+            for (int i = 0; i < tempKeywords.size(); i++) {
                 keywordFilter.append("'");
                 keywordFilter.append(tempKeywords.get(i));
                 keywordFilter.append("'");
 
-                if(i < tempKeywords.size() - 1){
+                if (i < tempKeywords.size() - 1) {
                     keywordFilter.append(",");
                 }
             }
-            keywordFilter.append("))\n");
+            keywordFilter.append("))");
 
-            queryString = queryString.replace("%keywords_filter%", keywordFilter.toString());
-        }else{
-            queryString = queryString.replace("%keywords_filter%", "");
+            queryString = queryString.replace("%KEYWORDS_FILTER%", keywordFilter.toString());
+        } else {
+            queryString = queryString.replace("%KEYWORDS_FILTER%", "");
         }
         return queryString;
     }
 
-    private int getKeywordCount(RepositoryConnection conn, Resource catalogId){
+    private int getKeywordCount(RepositoryConnection conn, Resource catalogId) {
         TupleQuery countQuery = conn.prepareTupleQuery(GET_KEYWORD_COUNT_QUERY);
         countQuery.setBinding(CATALOG_BINDING, catalogId);
 

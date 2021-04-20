@@ -2,7 +2,7 @@ PREFIX mcat: <http://mobi.com/ontologies/catalog#>
 PREFIX dataset: <http://mobi.com/ontologies/dataset#>
 
 SELECT
-	?keyword (count(DISTINCT(?record)) as ?record_count) (count(DISTINCT(?type)) as ?type_count)
+    ?keyword (count(DISTINCT(?record)) as ?record_count) (count(DISTINCT(?type)) as ?type_count)
 WHERE {
     ?record a ?type ;
         mcat:catalog ?catalog ;

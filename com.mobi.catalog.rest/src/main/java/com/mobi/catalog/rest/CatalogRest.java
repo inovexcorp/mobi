@@ -396,13 +396,11 @@ public class CatalogRest {
             if (searchText != null) {
                 builder.searchText(searchText);
             }
-            if(StringUtils.isNotEmpty(keywords)){
+            if (StringUtils.isNotEmpty(keywords)) {
                 builder.keywords(Arrays.asList(ResourceUtils.decode(keywords).split(",")));
             }
-
             PaginatedSearchResults<Record> records = catalogManager.findRecord(vf.createIRI(catalogId),
                     builder.build());
-
             return createPaginatedResponseJackson(uriInfo, records.getPage(), records.getTotalSize(), limit, offset,
                     Record.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -651,8 +649,7 @@ public class CatalogRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
-
-
+    
     /**
      * Retrieves a list of all the Keywords in the Catalog.
      * Parameters can be passed to control paging.
@@ -684,8 +681,7 @@ public class CatalogRest {
             @Parameter(description = "Offset for the page", required = true)
             @QueryParam("offset") int offset,
             @Parameter(description = "Number of Records to return in one page", required = true)
-            @QueryParam("limit") int limit
-            ) {
+            @QueryParam("limit") int limit) {
         try {
             LinksUtils.validateParams(limit, offset);
 

@@ -4,14 +4,13 @@ PREFIX dataset: <http://mobi.com/ontologies/dataset#>
 SELECT
     (COUNT(distinct ?record) as ?record_count)
 WHERE {
-	?record a ?type ;
-	    mcat:catalog ?catalog ;
-		?p ?o .
+    ?record a ?type ;
+        mcat:catalog ?catalog ;
+        ?p ?o .
 
-    %keywords_filter%
-
-	FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord,
-	    mcat:VersionedRDFRecord, mcat:OntologyRecord, mcat:MappingRecord, dataset:DatasetRecord))
+    %KEYWORDS_FILTER%
+    FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord,
+        mcat:VersionedRDFRecord, mcat:OntologyRecord, mcat:MappingRecord, dataset:DatasetRecord))
     FILTER EXISTS { ?record a ?type_filter . }
     FILTER IF(bound(?search_text), CONTAINS(lcase(?o), lcase(?search_text)), true)
 }
