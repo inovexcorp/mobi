@@ -40,6 +40,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
@@ -85,8 +86,10 @@ import com.mobi.repository.impl.core.SimpleRepositoryManager;
 import com.mobi.vocabularies.xsd.XSD;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.vocabulary.DC;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -212,24 +215,16 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         when(ontologyId.getVersionIRI()).thenReturn(Optional.of(versionIRI));
         when(ontologyManager.createOntologyId(any(IRI.class), any(IRI.class))).thenReturn(ontologyId);
         when(ontologyManager.createOntologyId(any(IRI.class))).thenReturn(ontologyId);
+        ArgumentCaptor<Model> iriModel = ArgumentCaptor.forClass(Model.class);
+        when(ontologyManager.createOntologyId(iriModel.capture())).thenAnswer(inovcation -> new SimpleOntologyId.Builder(vf).model(iriModel.getValue()).build());
         when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
         when(ontologyId.getOntologyIdentifier()).thenReturn(vf.createIRI("https://mobi.com/ontology-id"));
 
         when(catalogConfigProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
 
         Model skosModel = Models.createModel(getClass().getResourceAsStream("/skos.rdf"), transformer);
-        Path skosPath = Files.createTempFile(null, null);
-        Rio.write(Values.sesameModel(skosModel), Files.newOutputStream(skosPath), RDFFormat.TRIG);
-        File skosFile = skosPath.toFile();
-        skosFile.deleteOnExit();
+        File skosFile = setupOntologyMocks(skosModel);
         when(importsResolver.retrieveOntologyFromWebFile(skosIRI)).thenReturn(Optional.of(skosFile));
-        doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(2, Resource.class);
-            try (RepositoryConnection conn = repo.getConnection()) {
-                conn.add(skosModel, graph);
-            }
-            return null;
-        }).when(importService).importFile(any(ImportServiceConfig.class), eq(skosFile), any(Resource.class));
 
         doNothing().when(datasetManager).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
         ArgumentCaptor<String> datasetIRIStr = ArgumentCaptor.forClass(String.class);
@@ -249,39 +244,18 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         });
 
         Model ontologyModel = Models.createModel(this.getClass().getResourceAsStream("/test.owl"), transformer);
-        Path ontologyPath = Files.createTempFile(null, null);
-        Rio.write(Values.sesameModel(ontologyModel), Files.newOutputStream(ontologyPath), RDFFormat.TRIG);
-        File ontologyFile = ontologyPath.toFile();
-        ontologyFile.deleteOnExit();
         Resource ontologyRecordIRI = vf.createIRI("https://mobi.com/record/testowl");
         Resource ontologyHeadCommitIRI = vf.createIRI("https://mobi.com/commit/testowl/head");
         String ontologyKey = OntologyDatasets.createRecordKey(ontologyRecordIRI, ontologyHeadCommitIRI);
-        doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(2, Resource.class);
-            try (RepositoryConnection conn = repo.getConnection()) {
-                conn.add(ontologyModel, graph);
-            }
-            return null;
-        }).when(importService).importFile(any(ImportServiceConfig.class), eq(ontologyFile), any(Resource.class));
+        File ontologyFile = setupOntologyMocks(ontologyModel);
         ontology = new SimpleOntology(ontologyKey, ontologyFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
 
-
         Model ont3Model = Models.createModel(this.getClass().getResourceAsStream("/test-local-imports-3.ttl"), transformer);
-        Path ont3Path = Files.createTempFile(null, null);
-        Rio.write(Values.sesameModel(ont3Model), Files.newOutputStream(ont3Path), RDFFormat.TRIG);
-        File ont3File = ont3Path.toFile();
-        ont3File.deleteOnExit();
+        File ont3File = setupOntologyMocks(ont3Model);
         Resource ont3IRI = vf.createIRI("http://mobi.com/ontology/test-local-imports-3");
         Resource ont3RecordIRI = vf.createIRI("https://mobi.com/record/test-local-imports-3");
         Resource ont3HeadCommitIRI = vf.createIRI("https://mobi.com/commit/test-local-imports-3/head");
         String ont3Key = OntologyDatasets.createRecordKey(ont3RecordIRI, ont3HeadCommitIRI);
-        doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(2, Resource.class);
-            try (RepositoryConnection conn = repo.getConnection()) {
-                conn.add(ont3Model, graph);
-            }
-            return null;
-        }).when(importService).importFile(any(ImportServiceConfig.class), eq(ont3File), any(Resource.class));
         Ontology ont3 = new SimpleOntology(ont3Key, ont3File, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
         when(ontologyManager.getOntologyRecordResource(ont3IRI)).thenReturn(Optional.of(ont3RecordIRI));
         when(ontologyManager.retrieveOntology(ont3RecordIRI)).thenReturn(Optional.of(ont3));
@@ -292,21 +266,11 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
 
         Model ont2Model = Models.createModel(this.getClass().getResourceAsStream("/test-local-imports-2.ttl"), transformer);
-        Path ont2Path = Files.createTempFile(null, null);
-        Rio.write(Values.sesameModel(ont2Model), Files.newOutputStream(ont2Path), RDFFormat.TRIG);
-        File ont2File = ont2Path.toFile();
-        ont2File.deleteOnExit();
+        File ont2File = setupOntologyMocks(ont2Model);
         Resource ont2IRI = vf.createIRI("http://mobi.com/ontology/test-local-imports-2");
         Resource ont2RecordIRI = vf.createIRI("https://mobi.com/record/test-local-imports-2");
         Resource ont2HeadCommitIRI = vf.createIRI("https://mobi.com/commit/test-local-imports-2/head");
         String ont2Key = OntologyDatasets.createRecordKey(ont2RecordIRI, ont2HeadCommitIRI);
-        doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(2, Resource.class);
-            try (RepositoryConnection conn = repo.getConnection()) {
-                conn.add(ont2Model, graph);
-            }
-            return null;
-        }).when(importService).importFile(any(ImportServiceConfig.class), eq(ont2File), any(Resource.class));
         Ontology ont2 = new SimpleOntology(ont2Key, ont2File, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
         when(ontologyManager.getOntologyRecordResource(ont2IRI)).thenReturn(Optional.of(ont2RecordIRI));
         when(ontologyManager.retrieveOntology(ont2RecordIRI)).thenReturn(Optional.of(ont2));
@@ -318,75 +282,24 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
         Model dctModel = Models.createModel( this.getClass().getResourceAsStream("/dcterms.rdf"), transformer);
         dctModel.add(vf.createIRI("urn:generatedIRI"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ONTOLOGY.stringValue()));
-        Path dctPath = Files.createTempFile(null, null);
-        Rio.write(Values.sesameModel(dctModel), Files.newOutputStream(dctPath), RDFFormat.TRIG);
-        File dctFile = dctPath.toFile();
-        dctFile.deleteOnExit();
+        File dctFile = setupOntologyMocks(dctModel);
         IRI dctermsIRI = vf.createIRI("http://purl.org/dc/terms/");
-        Resource dctermsRecordIRI = vf.createIRI("https://mobi.com/record/dcterms");
-        doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(2, Resource.class);
-            try (RepositoryConnection conn = repo.getConnection()) {
-                conn.add(dctModel, graph);
-            }
-            return null;
-        }).when(importService).importFile(any(ImportServiceConfig.class), eq(dctFile), any(Resource.class));
         Ontology dcterms = new SimpleOntology(dctermsIRI, dctFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
 
         Model ont1Model = Models.createModel( this.getClass().getResourceAsStream("/test-local-imports-1.ttl"), transformer);
-        Path ont1Path = Files.createTempFile(null, null);
-        Rio.write(Values.sesameModel(ont1Model), Files.newOutputStream(ont1Path), RDFFormat.TRIG);
-        File ont1File = ont1Path.toFile();
-        ont1File.deleteOnExit();
-        doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(2, Resource.class);
-            try (RepositoryConnection conn = repo.getConnection()) {
-                conn.add(ont1Model, graph);
-            }
-            return null;
-        }).when(importService).importFile(any(ImportServiceConfig.class), eq(ont1File), any(Resource.class));
+        File ont1File = setupOntologyMocks(ont1Model);
         ont1 = new SimpleOntology(vf.createIRI("http://mobi.com/ontology/test-local-imports-1"), ont1File, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
 
         Model queryOntModel = Models.createModel( this.getClass().getResourceAsStream("/test-ontology.ttl"), transformer);
-        Path queryOntPath = Files.createTempFile(null, null);
-        Rio.write(Values.sesameModel(queryOntModel), Files.newOutputStream(queryOntPath), RDFFormat.TRIG);
-        File queryOntFile = queryOntPath.toFile();
-        queryOntFile.deleteOnExit();
-        doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(2, Resource.class);
-            try (RepositoryConnection conn = repo.getConnection()) {
-                conn.add(queryOntModel, graph);
-            }
-            return null;
-        }).when(importService).importFile(any(ImportServiceConfig.class), eq(queryOntFile), any(Resource.class));
+        File queryOntFile = setupOntologyMocks(queryOntModel);
         queryOntology = new SimpleOntology(vf.createIRI("http://mobi.com/ontology"), queryOntFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
 
         Model queryVocModel = Models.createModel( this.getClass().getResourceAsStream("/test-vocabulary.ttl"), transformer);
-        Path queryVocPath = Files.createTempFile(null, null);
-        Rio.write(Values.sesameModel(queryVocModel), Files.newOutputStream(queryVocPath), RDFFormat.TRIG);
-        File queryVocFile = queryVocPath.toFile();
-        queryVocFile.deleteOnExit();
-        doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(2, Resource.class);
-            try (RepositoryConnection conn = repo.getConnection()) {
-                conn.add(queryVocModel, graph);
-            }
-            return null;
-        }).when(importService).importFile(any(ImportServiceConfig.class), eq(queryVocFile), any(Resource.class));
+        File queryVocFile = setupOntologyMocks(queryVocModel);
         queryVocabulary = new SimpleOntology(vf.createIRI("https://mobi.com/vocabulary"), queryVocFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
 
         Model onlyDeclaredModel = Models.createModel( this.getClass().getResourceAsStream("/only-declared.ttl"), transformer);
-        Path onlyDeclaredPath = Files.createTempFile(null, null);
-        Rio.write(Values.sesameModel(onlyDeclaredModel), Files.newOutputStream(onlyDeclaredPath), RDFFormat.TRIG);
-        File onlyDeclaredFile = onlyDeclaredPath.toFile();
-        onlyDeclaredFile.deleteOnExit();
-        doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(2, Resource.class);
-            try (RepositoryConnection conn = repo.getConnection()) {
-                conn.add(onlyDeclaredModel, graph);
-            }
-            return null;
-        }).when(importService).importFile(any(ImportServiceConfig.class), eq(onlyDeclaredFile), any(Resource.class));
+        File onlyDeclaredFile = setupOntologyMocks(onlyDeclaredModel);
         onlyDeclared = new SimpleOntology(vf.createIRI("http://mobi.com/ontology/only-declared"), onlyDeclaredFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
     }
 
@@ -414,17 +327,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
         InputStream stream = getClass().getResourceAsStream("/skos-kgaa.ttl");
         Model model = Models.createModel(stream, transformer);
-        Path path = Files.createTempFile(null, null);
-        Rio.write(Values.sesameModel(model), Files.newOutputStream(path), RDFFormat.TRIG);
-        File file = path.toFile();
-        file.deleteOnExit();
-        doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(2, Resource.class);
-            try (RepositoryConnection conn = repo.getConnection()) {
-                conn.add(model, graph);
-            }
-            return null;
-        }).when(importService).importFile(any(ImportServiceConfig.class), eq(file), any(Resource.class));
+        File file = setupOntologyMocks(model);
 
         Ontology ont = new SimpleOntology(vf.createIRI("http://www.w3.org/2004/02/skos/core2"), file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
         Set<String> expectedClasses = Stream.of("http://www.w3.org/2004/02/skos/core#ConceptScheme",
@@ -458,12 +361,52 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getAllClassesWithDifferenceTest() throws Exception {
+        // Setup:
+        Set<String> expectedClasses = Stream.of("http://test.com/ontology1#TestClassA",
+                "http://test.com/ontology1#TestClassB", "http://test.com/ontology1#TestClassC",
+                "http://test.com/ontology1#TestClassD").collect(Collectors.toSet());
+
+
+        Model deletions = mf.createModel();
+        IRI owlClass = vf.createIRI("http://test.com/ontology1#TestClassE");
+        deletions.add(owlClass, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()));
+
+        SimpleOntology simpleOntology = (SimpleOntology) ontology;
+        simpleOntology.setDifference(createDifference(null, deletions));
+        Set<OClass> classes = simpleOntology.getAllClasses();
+        assertEquals(expectedClasses.size(), classes.size());
+        classes.stream()
+                .map(oClass -> oClass.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedClasses.contains(iri)));
+    }
+
+    @Test
     public void getAllClassesDeclaredTest() throws Exception {
         // Setup:
         Set<String> expectedClasses = Stream.of("http://mobi.com/ontology/only-declared#ClassA",
                 "http://mobi.com/ontology/only-declared#ClassB", "http://mobi.com/ontology/only-declared#ClassC").collect(Collectors.toSet());
 
         Set<OClass> classes = onlyDeclared.getAllClasses();
+        assertEquals(expectedClasses.size(), classes.size());
+        classes.stream()
+                .map(oClass -> oClass.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedClasses.contains(iri)));
+    }
+
+    @Test
+    public void getAllClassesDeclaredWithDifferenceTest() throws Exception {
+        // Setup:
+        Set<String> expectedClasses = Stream.of("http://mobi.com/ontology/only-declared#ClassA",
+                "http://mobi.com/ontology/only-declared#ClassB").collect(Collectors.toSet());
+
+        Model deletions = mf.createModel();
+        IRI owlClass = vf.createIRI("http://mobi.com/ontology/only-declared#ClassC");
+        deletions.add(owlClass, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()));
+
+        SimpleOntology simpleOnlyDeclared = (SimpleOntology) onlyDeclared;
+        simpleOnlyDeclared.setDifference(createDifference(null, deletions));
+        Set<OClass> classes = simpleOnlyDeclared.getAllClasses();
         assertEquals(expectedClasses.size(), classes.size());
         classes.stream()
                 .map(oClass -> oClass.getIRI().stringValue())
@@ -483,11 +426,49 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getAllClassesNoImportsWithDifferenceTest() throws Exception {
+        // Setup:
+        Set<String> expectedClasses = Stream.of("http://mobi.com/ontology/test-local-imports-1#Class0").collect(Collectors.toSet());
+
+        Model deletions = mf.createModel();
+        IRI owlClass = vf.createIRI("http://mobi.com/ontology/test-local-imports-1#Class1");
+        deletions.add(owlClass, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()));
+
+        SimpleOntology simpleOnt1 = (SimpleOntology) ont1;
+        simpleOnt1.setDifference(createDifference(null, deletions));
+
+        Set<OClass> classes = simpleOnt1.getAllClasses();
+        assertEquals(expectedClasses.size(), classes.size());
+        classes.stream()
+                .map(oClass -> oClass.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedClasses.contains(iri)));
+    }
+
+    @Test
     public void getAllObjectPropertiesTest() throws Exception {
         // Setup:
         Set<String> expectedProps = Stream.of("http://test.com/ontology1#testObjectProperty1", "http://test.com/ontology1#testObjectProperty2").collect(Collectors.toSet());
 
         Set<ObjectProperty> properties = ontology.getAllObjectProperties();
+        assertEquals(expectedProps.size(), properties.size());
+        properties.stream()
+                .map(property -> property.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedProps.contains(iri)));
+    }
+
+    @Test
+    public void getAllObjectPropertiesWithDifferenceTest() throws Exception {
+        // Setup:
+        Set<String> expectedProps = Stream.of("http://test.com/ontology1#testObjectProperty1").collect(Collectors.toSet());
+
+        Model deletions = mf.createModel();
+        IRI prop = vf.createIRI("http://test.com/ontology1#testObjectProperty2");
+        deletions.add(prop, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.OBJECTPROPERTY.stringValue()));
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(null, deletions));
+
+        Set<ObjectProperty> properties = ont.getAllObjectProperties();
         assertEquals(expectedProps.size(), properties.size());
         properties.stream()
                 .map(property -> property.getIRI().stringValue())
@@ -504,6 +485,25 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getAllObjectPropertiesDeclaredWithDifferenceTest() throws Exception {
+        // Setup:
+        IRI prop = vf.createIRI("http://test.com/ontology1#testObjectProperty2");
+        Set<String> expectedProps = Collections.singleton(prop.stringValue());
+
+        Model additions = mf.createModel();
+        additions.add(prop, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.OBJECTPROPERTY.stringValue()));
+
+        SimpleOntology ont = (SimpleOntology) onlyDeclared;
+        ont.setDifference(createDifference(additions, null));
+
+        Set<ObjectProperty> properties = ont.getAllObjectProperties();
+        assertEquals(expectedProps.size(), properties.size());
+        properties.stream()
+                .map(property -> property.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedProps.contains(iri)));
+    }
+
+    @Test
     public void getAllObjectPropertiesNoImportsTest() throws Exception {
         // Setup:
         Set<String> expectedProps = Collections.emptySet();
@@ -513,11 +513,49 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getAllObjectPropertiesNoImportsWithDifferenceTest() throws Exception {
+        // Setup:
+        IRI prop = vf.createIRI("http://test.com/ontology1#testObjectProperty2");
+        Set<String> expectedProps = Collections.singleton(prop.stringValue());
+
+        Model additions = mf.createModel();
+        additions.add(prop, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.OBJECTPROPERTY.stringValue()));
+
+        SimpleOntology ont = (SimpleOntology) ont1;
+        ont.setDifference(createDifference(additions, null));
+
+        Set<ObjectProperty> properties = ont.getAllObjectProperties();
+        assertEquals(expectedProps.size(), properties.size());
+        properties.stream()
+                .map(property -> property.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedProps.contains(iri)));
+    }
+
+    @Test
     public void getAllDataPropertiesTest() throws Exception {
         // Setup:
         Set<String> expectedProps = Stream.of("http://test.com/ontology1#testDataProperty1", "http://test.com/ontology1#testDataProperty2").collect(Collectors.toSet());
 
         Set<DataProperty> properties = ontology.getAllDataProperties();
+        assertEquals(expectedProps.size(), properties.size());
+        properties.stream()
+                .map(property -> property.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedProps.contains(iri)));
+    }
+
+    @Test
+    public void getAllDataPropertiesWithDifferenceTest() throws Exception {
+        // Setup:
+        Set<String> expectedProps = Stream.of("http://test.com/ontology1#testDataProperty1").collect(Collectors.toSet());
+
+        Model deletions = mf.createModel();
+        IRI prop = vf.createIRI("http://test.com/ontology1#testDataProperty2");
+        deletions.add(prop, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue()));
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(null, deletions));
+
+        Set<DataProperty> properties = ont.getAllDataProperties();
         assertEquals(expectedProps.size(), properties.size());
         properties.stream()
                 .map(property -> property.getIRI().stringValue())
@@ -534,6 +572,25 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getAllDataPropertiesDeclaredWithDifferenceTest() throws Exception {
+        // Setup:
+        IRI prop = vf.createIRI("http://test.com/ontology1#testDataProperty2");
+        Set<String> expectedProps = Collections.singleton(prop.stringValue());
+
+        Model additions = mf.createModel();
+        additions.add(prop, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue()));
+
+        SimpleOntology ont = (SimpleOntology) onlyDeclared;
+        ont.setDifference(createDifference(additions, null));
+
+        Set<DataProperty> properties = ont.getAllDataProperties();
+        assertEquals(expectedProps.size(), properties.size());
+        properties.stream()
+                .map(property -> property.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedProps.contains(iri)));
+    }
+
+    @Test
     public void getAllDataPropertiesNoImportsTest() throws Exception {
         // Setup:
         Set<String> expectedProps = Collections.emptySet();
@@ -543,11 +600,49 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getAllDataPropertiesNoImportsWithDifferenceTest() throws Exception {
+        // Setup:
+        IRI prop = vf.createIRI("http://test.com/ontology1#testDataProperty2");
+        Set<String> expectedProps = Collections.singleton(prop.stringValue());
+
+        Model additions = mf.createModel();
+        additions.add(prop, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue()));
+
+        SimpleOntology ont = (SimpleOntology) ont1;
+        ont.setDifference(createDifference(additions, null));
+
+        Set<DataProperty> properties = ont.getAllDataProperties();
+        assertEquals(expectedProps.size(), properties.size());
+        properties.stream()
+                .map(property -> property.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedProps.contains(iri)));
+    }
+
+    @Test
     public void getAllAnnotationPropertiesTest() throws Exception {
         // Setup:
         Set<String> expectedProps = Stream.of("http://test.com/ontology1#testAnnotation").collect(Collectors.toSet());
 
         Set<AnnotationProperty> properties = ontology.getAllAnnotationProperties();
+        assertEquals(expectedProps.size(), properties.size());
+        properties.stream()
+                .map(property -> property.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedProps.contains(iri)));
+    }
+
+    @Test
+    public void getAllAnnotationPropertiesWithDifferenceTest() throws Exception {
+        // Setup:
+        Set<String> expectedProps = Stream.of("http://test.com/ontology1#testAnnotation", "http://test.com/ontology1#testAnnotation2").collect(Collectors.toSet());
+
+        Model additions = mf.createModel();
+        IRI prop = vf.createIRI("http://test.com/ontology1#testAnnotation2");
+        additions.add(prop, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ANNOTATIONPROPERTY.stringValue()));
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(additions, null));
+
+        Set<AnnotationProperty> properties = ont.getAllAnnotationProperties();
         assertEquals(expectedProps.size(), properties.size());
         properties.stream()
                 .map(property -> property.getIRI().stringValue())
@@ -564,10 +659,38 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getAllAnnotationPropertiesNoImportsWithDifferenceTest() throws Exception {
+        // Setup:
+        IRI prop = vf.createIRI("http://test.com/ontology1#testAnnotation2");
+        Set<String> expectedProps = Collections.singleton(prop.stringValue());
+
+        Model additions = mf.createModel();
+        additions.add(prop, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ANNOTATIONPROPERTY.stringValue()));
+
+        SimpleOntology ont = (SimpleOntology) ont1;
+        ont.setDifference(createDifference(additions, null));
+
+        Set<AnnotationProperty> properties = ont.getAllAnnotationProperties();
+        assertEquals(expectedProps.size(), properties.size());
+    }
+
+    @Test
     public void getDataPropertyTest() throws Exception {
         Optional<DataProperty> optional = ontology.getDataProperty(dataProp1IRI);
         assertTrue(optional.isPresent());
         Assert.assertEquals(dataProp1IRI, optional.get().getIRI());
+    }
+
+    @Test
+    public void getDataPropertyWithDifferenceTest() throws Exception {
+        Model deletions = mf.createModel();
+        deletions.add(dataProp1IRI, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue()));
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(null, deletions));
+
+        Optional<DataProperty> optional = ont.getDataProperty(dataProp1IRI);
+        assertFalse(optional.isPresent());
     }
 
     @Test
@@ -584,6 +707,24 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         Set<Resource> ranges = ontology.getDataPropertyRange(dataProperty);
         assertEquals(1, ranges.size());
         assertTrue(ranges.contains(vf.createIRI(XSD.INTEGER)));
+    }
+
+    @Test
+    public void getDataPropertyRangeWithDifferenceTest() throws Exception {
+        // Setup:
+        DataProperty dataProperty = new SimpleDataProperty(dataProp1IRI);
+
+        Model deletions = mf.createModel();
+        deletions.add(dataProp1IRI, vf.createIRI(RDFS.RANGE.stringValue()), vf.createIRI(XSD.INTEGER));
+        Model additions = mf.createModel();
+        additions.add(dataProp1IRI, vf.createIRI(RDFS.RANGE.stringValue()), vf.createIRI(XSD.DATE));
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(additions, deletions));
+
+        Set<Resource> ranges = ont.getDataPropertyRange(dataProperty);
+        assertEquals(1, ranges.size());
+        assertTrue(ranges.contains(vf.createIRI(XSD.DATE)));
     }
 
     @Test
@@ -610,6 +751,18 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getObjectPropertyWithDifferenceTest() throws Exception {
+        Model deletions = mf.createModel();
+        deletions.add(objectProp1IRI, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.OBJECTPROPERTY.stringValue()));
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(null, deletions));
+
+        Optional<ObjectProperty> optional = ont.getObjectProperty(objectProp1IRI);
+        assertFalse(optional.isPresent());
+    }
+
+    @Test
     public void getMissingObjectPropertyTest() throws Exception {
         Optional<ObjectProperty> optional = ontology.getObjectProperty(errorIRI);
         assertFalse(optional.isPresent());
@@ -623,6 +776,24 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         Set<Resource> ranges = ontology.getObjectPropertyRange(objectProperty);
         assertEquals(1, ranges.size());
         assertTrue(ranges.contains(classIRI));
+    }
+
+    @Test
+    public void getObjectPropertyRangeWithDifferenceTest() throws Exception {
+        // Setup:
+        ObjectProperty objectProperty = new SimpleObjectProperty(objectProp1IRI);
+
+        Model deletions = mf.createModel();
+        deletions.add(objectProp1IRI, vf.createIRI(RDFS.RANGE.stringValue()), classIRI);
+        Model additions = mf.createModel();
+        additions.add(objectProp1IRI, vf.createIRI(RDFS.RANGE.stringValue()), classIRIC);
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(additions, deletions));
+
+        Set<Resource> ranges = ont.getObjectPropertyRange(objectProperty);
+        assertEquals(1, ranges.size());
+        assertTrue(ranges.contains(classIRIC));
     }
 
     @Test
@@ -657,6 +828,26 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getAllIndividualsWithDifferenceTest() throws Exception {
+        // Setup:
+        // Ensures a blank node declared as a defined class is not included
+        IRI individualA = vf.createIRI("http://test.com/ontology1#IndividualA");
+        Set<String> expectedIndividuals = Stream.of("http://test.com/ontology1#IndividualD").collect(Collectors.toSet());
+
+        Model deletions = mf.createModel();
+        deletions.add(individualA, vf.createIRI(RDF.TYPE.stringValue()), classIRI);
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(null, deletions));
+
+        Set<Individual> individuals = ont.getAllIndividuals();
+        assertEquals(expectedIndividuals.size(), individuals.size());
+        individuals.stream()
+                .map(individual -> individual.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedIndividuals.contains(iri)));
+    }
+
+    @Test
     public void getAllIndividualsDeclaredTest() throws Exception {
         // Setup:
         Set<String> expectedIndividuals = Stream.of("http://mobi.com/ontology/only-declared#ConceptA").collect(Collectors.toSet());
@@ -666,9 +857,46 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getAllIndividualsDeclaredWithDifferenceTest() throws Exception {
+        // Setup:
+        IRI conceptC = vf.createIRI("http://mobi.com/ontology/only-declared#ConceptC");
+        Set<String> expectedIndividuals = Stream.of("http://mobi.com/ontology/only-declared#ConceptA", "http://mobi.com/ontology/only-declared#ConceptC").collect(Collectors.toSet());
+
+        Model additions = mf.createModel();
+        additions.add(conceptC, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(SKOS.CONCEPT.stringValue()));
+
+        SimpleOntology ont = (SimpleOntology) onlyDeclared;
+        ont.setDifference(createDifference(additions, null));
+
+        Set<Individual> individuals = ont.getAllIndividuals();
+        assertEquals(expectedIndividuals.size(), individuals.size());
+        individuals.stream()
+                .map(individual -> individual.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedIndividuals.contains(iri)));
+    }
+
+    @Test
     public void getIndividualsOfTypeIRITest() throws Exception {
         // Setup:
         Set<String> expectedIndividuals = Stream.of("http://test.com/ontology1#IndividualA").collect(Collectors.toSet());
+
+        Set<Individual> individuals = ontology.getIndividualsOfType(classIRI);
+        assertEquals(expectedIndividuals.size(), individuals.size());
+        individuals.stream()
+                .map(individual -> individual.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedIndividuals.contains(iri)));
+    }
+
+    @Test
+    public void getIndividualsOfTypeIRIWithDifferenceTest() throws Exception {
+        // Setup:
+        Set<String> expectedIndividuals = Stream.of("http://test.com/ontology1#IndividualA", "http://test.com/ontology1#IndividualNew").collect(Collectors.toSet());
+
+        Model additions = mf.createModel();
+        additions.add(vf.createIRI("http://test.com/ontology1#IndividualNew"), vf.createIRI(RDF.TYPE.stringValue()), classIRI);
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(additions, null));
 
         Set<Individual> individuals = ontology.getIndividualsOfType(classIRI);
         assertEquals(expectedIndividuals.size(), individuals.size());
@@ -715,6 +943,25 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getIndividualsOfTypeWithDifferenceTest() throws Exception {
+        // Setup:
+        OClass clazz = new SimpleClass(classIRI);
+        Set<String> expectedIndividuals = Stream.of("http://test.com/ontology1#IndividualA", "http://test.com/ontology1#IndividualNew").collect(Collectors.toSet());
+
+        Model additions = mf.createModel();
+        additions.add(vf.createIRI("http://test.com/ontology1#IndividualNew"), vf.createIRI(RDF.TYPE.stringValue()), classIRI);
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(additions, null));
+
+        Set<Individual> individuals = ontology.getIndividualsOfType(clazz);
+        assertEquals(expectedIndividuals.size(), individuals.size());
+        individuals.stream()
+                .map(individual -> individual.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedIndividuals.contains(iri)));
+    }
+
+    @Test
     public void getIndividualsOfSubClassTypeTest() throws Exception {
         // Setup:
         OClass clazz = new SimpleClass(classIRIC);
@@ -746,6 +993,17 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void containsClassWithDifferenceTest() {
+        Model additions = mf.createModel();
+        additions.add(vf.createIRI("http://test.com/ontology1#NewClass"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()));
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(additions, null));
+        assertTrue(ont.containsClass(classIRI));
+        assertTrue(ont.containsClass(vf.createIRI("http://test.com/ontology1#NewClass")));
+    }
+
+    @Test
     public void containsClassWhenMissingTest() {
         assertFalse(ontology.containsClass(errorIRI));
     }
@@ -756,6 +1014,21 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         assertEquals(1, ontology.getAllClassObjectProperties(classIRIC).size());
         assertEquals(1, ontology.getAllClassObjectProperties(classIRID).size());
         assertEquals(1, ontology.getAllClassObjectProperties(classIRIE).size());
+    }
+
+    @Test
+    public void getAllClassObjectPropertiesWithDifferenceTest() throws Exception {
+        Model additions = mf.createModel();
+        IRI objectProp = vf.createIRI("http://test.com/ontology1#objectPropNew");
+        additions.add(objectProp, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.OBJECTPROPERTY.stringValue()));
+        additions.add(objectProp, vf.createIRI(RDFS.DOMAIN.stringValue()), classIRI);
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(additions, null));
+        assertEquals(3, ont.getAllClassObjectProperties(classIRI).size());
+        assertEquals(1, ont.getAllClassObjectProperties(classIRIC).size());
+        assertEquals(1, ont.getAllClassObjectProperties(classIRID).size());
+        assertEquals(1, ont.getAllClassObjectProperties(classIRIE).size());
     }
 
     @Test
@@ -776,6 +1049,18 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getAllNoDomainObjectPropertiesWithDifferenceTest() {
+        Model additions = mf.createModel();
+        IRI objectProp = vf.createIRI("http://test.com/ontology1#objectPropNew");
+        additions.add(objectProp, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.OBJECTPROPERTY.stringValue()));
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(additions, null));
+
+        assertEquals(2, ont.getAllNoDomainObjectProperties().size());
+    }
+
+    @Test
     public void getAllNoDomainObjectPropertiesWithImportsTest() {
         assertEquals(1, ont1.getAllNoDomainObjectProperties().size());
     }
@@ -786,6 +1071,22 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         assertEquals(1, ontology.getAllClassDataProperties(classIRIC).size());
         assertEquals(1, ontology.getAllClassDataProperties(classIRID).size());
         assertEquals(1, ontology.getAllClassDataProperties(classIRIE).size());
+    }
+
+    @Test
+    public void getAllClassDataPropertiesWithDifferenceTest() throws Exception {
+        Model additions = mf.createModel();
+        IRI dataProp = vf.createIRI("http://test.com/ontology1#dataPropNew");
+        additions.add(dataProp, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue()));
+        additions.add(dataProp, vf.createIRI(RDFS.DOMAIN.stringValue()), classIRI);
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(additions, null));
+
+        assertEquals(3, ont.getAllClassDataProperties(classIRI).size());
+        assertEquals(1, ont.getAllClassDataProperties(classIRIC).size());
+        assertEquals(1, ont.getAllClassDataProperties(classIRID).size());
+        assertEquals(1, ont.getAllClassDataProperties(classIRIE).size());
     }
 
     @Test
@@ -805,6 +1106,17 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getAllNoDomainDataPropertiesWithDifferenceTest() {
+        Model additions = mf.createModel();
+        IRI dataProp = vf.createIRI("http://test.com/ontology1#dataPropNew");
+        additions.add(dataProp, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue()));
+
+        SimpleOntology ont = (SimpleOntology) ontology;
+        ont.setDifference(createDifference(additions, null));
+        assertEquals(2, ontology.getAllNoDomainDataProperties().size());
+    }
+
+    @Test
     public void getAllNoDomainDataPropertiesWithImportsTest() {
         assertEquals(1, ont1.getAllNoDomainDataProperties().size());
     }
@@ -819,18 +1131,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         InputStream expected = this.getClass().getResourceAsStream("/list-ontology-skolemize.jsonld");
 
         Model model = Models.createModel(stream, transformer);
-        Path path = Files.createTempFile(null, null);
-        Rio.write(Values.sesameModel(model), Files.newOutputStream(path), RDFFormat.TRIG);
-        File file = path.toFile();
-        file.deleteOnExit();
-        doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(2, Resource.class);
-            try (RepositoryConnection conn = repo.getConnection()) {
-                conn.add(model, graph);
-            }
-            return null;
-        }).when(importService).importFile(any(ImportServiceConfig.class), eq(file), any(Resource.class));
-
+        File file = setupOntologyMocks(model);
         Ontology listOntology = new SimpleOntology(vf.createIRI("http://mobi.com/ontology/list"), file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, blankNodeService, vf, mf, importService);
 
         String jsonld = listOntology.asJsonLD(true).toString();
@@ -849,17 +1150,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         InputStream expected = this.getClass().getResourceAsStream("/list-ontology.jsonld");
 
         Model model = Models.createModel(stream, transformer);
-        Path path = Files.createTempFile(null, null);
-        Rio.write(Values.sesameModel(model), Files.newOutputStream(path), RDFFormat.TRIG);
-        File file = path.toFile();
-        file.deleteOnExit();
-        doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(2, Resource.class);
-            try (RepositoryConnection conn = repo.getConnection()) {
-                conn.add(model, graph);
-            }
-            return null;
-        }).when(importService).importFile(any(ImportServiceConfig.class), eq(file), any(Resource.class));
+        File file = setupOntologyMocks(model);
 
         Ontology listOntology = new SimpleOntology(vf.createIRI("http://mobi.com/ontology/list"), file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, blankNodeService, vf, mf, importService);
         String jsonld = listOntology.asJsonLD(false).toString();
@@ -898,12 +1189,68 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testGetSubClassesOfWithDifference() throws Exception {
+        // Setup:
+        IRI newClass = vf.createIRI("http://test.com/ontology1#ClassNew");
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#Class1a"), vf.createIRI("http://mobi.com/ontology#Class1b"),
+                vf.createIRI("http://mobi.com/ontology#Class1c"), vf.createIRI("http://mobi.com/ontology#Class2a"), vf.createIRI("http://mobi.com/ontology#Class2b"),
+                vf.createIRI("http://mobi.com/ontology#Class3a"), newClass).collect(Collectors.toSet());
+        Map<String, Set<String>> expectedParentMap = new HashMap<>();
+        expectedParentMap.put("http://mobi.com/ontology#Class1a", Stream.of("http://mobi.com/ontology#Class1b", newClass.stringValue()).collect(Collectors.toSet()));
+        expectedParentMap.put("http://mobi.com/ontology#Class1b", Collections.singleton("http://mobi.com/ontology#Class1c"));
+        expectedParentMap.put("http://mobi.com/ontology#Class2a", Collections.singleton("http://mobi.com/ontology#Class2b"));
+        Map<String, Set<String>> expectedChildMap = new HashMap<>();
+        expectedChildMap.put("http://mobi.com/ontology#Class1b", Collections.singleton("http://mobi.com/ontology#Class1a"));
+        expectedChildMap.put("http://mobi.com/ontology#Class1c", Collections.singleton("http://mobi.com/ontology#Class1b"));
+        expectedChildMap.put("http://mobi.com/ontology#Class2b", Collections.singleton("http://mobi.com/ontology#Class2a"));
+        expectedChildMap.put(newClass.stringValue(), Collections.singleton("http://mobi.com/ontology#Class1a"));
+
+        Model additions = mf.createModel();
+        additions.add(newClass, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()));
+        additions.add(newClass, vf.createIRI(RDFS.SUBCLASSOF.stringValue()), vf.createIRI("http://mobi.com/ontology#Class1a"));
+
+        SimpleOntology ont = (SimpleOntology) queryOntology;
+        ont.setDifference(createDifference(additions, null));
+
+        Hierarchy result = ont.getSubClassesOf(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedParentMap.keySet(), parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expectedParentMap.get(iri), parentMap.get(iri)));
+
+        Map<String, Set<String>> childMap = result.getChildMap();
+        Set<String> childKeys = childMap.keySet();
+        assertEquals(expectedChildMap.keySet(), childKeys);
+        childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
     public void testGetSubClassesFor() {
         // Setup:
         Set<IRI> expected = Stream.of(vf.createIRI("http://mobi.com/ontology#Class1b"), vf.createIRI("http://mobi.com/ontology#Class1c")).collect(Collectors.toSet());
 
         IRI start = vf.createIRI("http://mobi.com/ontology#Class1a");
         Set<IRI> results = queryOntology.getSubClassesFor(start);
+        assertEquals(results, expected);
+    }
+
+    @Test
+    public void testGetSubClassesForWithDifference() {
+        // Setup:
+        IRI newClass = vf.createIRI("http://test.com/ontology1#ClassNew");
+        Set<IRI> expected = Stream.of(vf.createIRI("http://mobi.com/ontology#Class1b"), vf.createIRI("http://mobi.com/ontology#Class1c"), newClass).collect(Collectors.toSet());
+
+        Model additions = mf.createModel();
+        additions.add(newClass, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()));
+        additions.add(newClass, vf.createIRI(RDFS.SUBCLASSOF.stringValue()), vf.createIRI("http://mobi.com/ontology#Class1a"));
+
+        SimpleOntology ont = (SimpleOntology) queryOntology;
+        ont.setDifference(createDifference(additions, null));
+
+        IRI start = vf.createIRI("http://mobi.com/ontology#Class1a");
+        Set<IRI> results = ont.getSubClassesFor(start);
         assertEquals(results, expected);
     }
 
@@ -916,6 +1263,22 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         assertEquals(results, expected);
     }
 
+    @Test
+    public void testGetDeprecatedIrisWithDifference() {
+        // Setup:
+        IRI newClass = vf.createIRI("http://test.com/ontology1#ClassNew");
+        Set<IRI> expected = Stream.of(vf.createIRI("http://mobi.com/ontology#Class3a"), newClass).collect(Collectors.toSet());
+
+        Model additions = mf.createModel();
+        additions.add(newClass, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()));
+        additions.add(newClass, vf.createIRI(OWL.DEPRECATED.stringValue()), vf.createLiteral(true));
+
+        SimpleOntology ont = (SimpleOntology) queryOntology;
+        ont.setDifference(createDifference(additions, null));
+
+        Set<IRI> results = ont.getDeprecatedIRIs();
+        assertEquals(results, expected);
+    }
 
     @Test
     public void testGetSubDatatypePropertiesOf() throws Exception {
@@ -928,6 +1291,40 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         expectedChildMap.put("http://mobi.com/ontology#dataProperty1b", Collections.singleton("http://mobi.com/ontology#dataProperty1a"));
 
         Hierarchy result = queryOntology.getSubDatatypePropertiesOf(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedParentMap.keySet(), parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expectedParentMap.get(iri), parentMap.get(iri)));
+
+        Map<String, Set<String>> childMap = result.getChildMap();
+        Set<String> childKeys = childMap.keySet();
+        assertEquals(expectedChildMap.keySet(), childKeys);
+        childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
+    public void testGetSubDatatypePropertiesOfWithDifference() throws Exception {
+        // Setup:
+        IRI newProp = vf.createIRI("http://test.com/ontology1#PropNew");
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#dataProperty1a"), vf.createIRI("http://mobi.com/ontology#dataProperty1b"), newProp)
+                .collect(Collectors.toSet());
+        Map<String, Set<String>> expectedParentMap = new HashMap<>();
+        expectedParentMap.put("http://mobi.com/ontology#dataProperty1a", Stream.of("http://mobi.com/ontology#dataProperty1b", newProp.stringValue()).collect(Collectors.toSet()));
+
+        Map<String, Set<String>> expectedChildMap = new HashMap<>();
+        expectedChildMap.put("http://mobi.com/ontology#dataProperty1b", Collections.singleton("http://mobi.com/ontology#dataProperty1a"));
+        expectedChildMap.put(newProp.stringValue(), Collections.singleton("http://mobi.com/ontology#dataProperty1a"));
+
+        Model additions = mf.createModel();
+        additions.add(newProp, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue()));
+        additions.add(newProp, vf.createIRI(RDFS.SUBPROPERTYOF.stringValue()), vf.createIRI("http://mobi.com/ontology#dataProperty1a"));
+
+        SimpleOntology ont = (SimpleOntology) queryOntology;
+        ont.setDifference(createDifference(additions, null));
+
+        Hierarchy result = ont.getSubDatatypePropertiesOf(vf, mf);
         Map<String, Set<String>> parentMap = result.getParentMap();
         Set<String> parentKeys = parentMap.keySet();
         assertEquals(expectedParentMap.keySet(), parentKeys);
@@ -966,6 +1363,39 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testGetSubAnnotationPropertiesOfWithDifference() throws Exception {
+        // Setup:
+        IRI newProp = vf.createIRI("http://test.com/ontology1#PropNew");
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#annotationProperty1a"), vf.createIRI("http://mobi.com/ontology#annotationProperty1b"),
+                vf.createIRI("http://purl.org/dc/terms/title"), newProp).collect(Collectors.toSet());
+        Map<String, Set<String>> expectedParentMap = new HashMap<>();
+        expectedParentMap.put("http://mobi.com/ontology#annotationProperty1a", Stream.of("http://mobi.com/ontology#annotationProperty1b", newProp.stringValue()).collect(Collectors.toSet()));
+        Map<String, Set<String>> expectedChildMap = new HashMap<>();
+        expectedChildMap.put("http://mobi.com/ontology#annotationProperty1b", Collections.singleton("http://mobi.com/ontology#annotationProperty1a"));
+        expectedChildMap.put(newProp.stringValue(), Collections.singleton("http://mobi.com/ontology#annotationProperty1a"));
+
+        Model additions = mf.createModel();
+        additions.add(newProp, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ANNOTATIONPROPERTY.stringValue()));
+        additions.add(newProp, vf.createIRI(RDFS.SUBPROPERTYOF.stringValue()), vf.createIRI("http://mobi.com/ontology#annotationProperty1a"));
+
+        SimpleOntology ont = (SimpleOntology) queryOntology;
+        ont.setDifference(createDifference(additions, null));
+
+        Hierarchy result = ont.getSubAnnotationPropertiesOf(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedParentMap.keySet(), parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expectedParentMap.get(iri), parentMap.get(iri)));
+
+        Map<String, Set<String>> childMap = result.getChildMap();
+        Set<String> childKeys = childMap.keySet();
+        assertEquals(expectedChildMap.keySet(), childKeys);
+        childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
     public void testGetSubObjectPropertiesOf() throws Exception {
         // Setup:
         Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#objectProperty1a"), vf.createIRI("http://mobi.com/ontology#objectProperty1b"))
@@ -990,9 +1420,60 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testGetSubObjectPropertiesOfWithDifference() throws Exception {
+        // Setup:
+        IRI newProp = vf.createIRI("http://test.com/ontology1#PropNew");
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#objectProperty1a"), vf.createIRI("http://mobi.com/ontology#objectProperty1b"), newProp)
+                .collect(Collectors.toSet());
+        Map<String, Set<String>> expectedParentMap = new HashMap<>();
+        expectedParentMap.put("http://mobi.com/ontology#objectProperty1a", Stream.of("http://mobi.com/ontology#objectProperty1b", newProp.stringValue()).collect(Collectors.toSet()));
+        Map<String, Set<String>> expectedChildMap = new HashMap<>();
+        expectedChildMap.put("http://mobi.com/ontology#objectProperty1b", Collections.singleton("http://mobi.com/ontology#objectProperty1a"));
+        expectedChildMap.put(newProp.stringValue(), Collections.singleton("http://mobi.com/ontology#objectProperty1a"));
+
+        Model additions = mf.createModel();
+        additions.add(newProp, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.OBJECTPROPERTY.stringValue()));
+        additions.add(newProp, vf.createIRI(RDFS.SUBPROPERTYOF.stringValue()), vf.createIRI("http://mobi.com/ontology#objectProperty1a"));
+
+        SimpleOntology ont = (SimpleOntology) queryOntology;
+        ont.setDifference(createDifference(additions, null));
+
+        Hierarchy result = ont.getSubObjectPropertiesOf(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedParentMap.keySet(), parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expectedParentMap.get(iri), parentMap.get(iri)));
+
+        Map<String, Set<String>> childMap = result.getChildMap();
+        Set<String> childKeys = childMap.keySet();
+        assertEquals(expectedChildMap.keySet(), childKeys);
+        childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
     public void testSubPropertiesFor() {
         // Setup:
         Set<IRI> expected = Collections.singleton(vf.createIRI("http://mobi.com/ontology#annotationProperty1b"));
+
+        IRI start = vf.createIRI("http://mobi.com/ontology#annotationProperty1a");
+        Set<IRI> results = queryOntology.getSubPropertiesFor(start);
+        assertEquals(expected, results);
+    }
+
+    @Test
+    public void testSubPropertiesForWithDifference() {
+        // Setup:
+        IRI newProp = vf.createIRI("http://test.com/ontology1#PropNew");
+        Set<IRI> expected = Stream.of(vf.createIRI("http://mobi.com/ontology#annotationProperty1b"), newProp).collect(Collectors.toSet());
+
+        Model additions = mf.createModel();
+        additions.add(newProp, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ANNOTATIONPROPERTY.stringValue()));
+        additions.add(newProp, vf.createIRI(RDFS.SUBPROPERTYOF.stringValue()), vf.createIRI("http://mobi.com/ontology#annotationProperty1a"));
+
+        SimpleOntology ont = (SimpleOntology) queryOntology;
+        ont.setDifference(createDifference(additions, null));
 
         IRI start = vf.createIRI("http://mobi.com/ontology#annotationProperty1a");
         Set<IRI> results = queryOntology.getSubPropertiesFor(start);
@@ -1036,11 +1517,89 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testGetClassesWithIndividualsWithDifference() throws Exception {
+        // Setup:
+        IRI newIndividual = vf.createIRI("http://test.com/ontology1#IndividualNew");
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#Class1a"), vf.createIRI("http://mobi.com/ontology#Class1b"),
+                vf.createIRI("http://mobi.com/ontology#Class1c"), vf.createIRI("http://mobi.com/ontology#Class2a"),
+                vf.createIRI("http://mobi.com/ontology#Class2b"), vf.createIRI("http://mobi.com/ontology#Individual1a"),
+                vf.createIRI("http://mobi.com/ontology#Individual1b"), vf.createIRI("http://mobi.com/ontology#Individual1c"),
+                vf.createIRI("http://mobi.com/ontology#Individual2a"), vf.createIRI("http://mobi.com/ontology#Individual2b"), newIndividual)
+                .collect(Collectors.toSet());
+        Map<String, Set<String>> expectedParentMap = new HashMap<>();
+        expectedParentMap.put("http://mobi.com/ontology#Class1a", Stream.of("http://mobi.com/ontology#Individual1a", newIndividual.stringValue()).collect(Collectors.toSet()));
+        expectedParentMap.put("http://mobi.com/ontology#Class1b", Collections.singleton("http://mobi.com/ontology#Individual1b"));
+        expectedParentMap.put("http://mobi.com/ontology#Class1c", Collections.singleton("http://mobi.com/ontology#Individual1c"));
+        expectedParentMap.put("http://mobi.com/ontology#Class2a", Collections.singleton("http://mobi.com/ontology#Individual2a"));
+        expectedParentMap.put("http://mobi.com/ontology#Class2b", Collections.singleton("http://mobi.com/ontology#Individual2b"));
+        Map<String, Set<String>> expectedChildMap = new HashMap<>();
+        expectedChildMap.put("http://mobi.com/ontology#Individual1a", Collections.singleton("http://mobi.com/ontology#Class1a"));
+        expectedChildMap.put("http://mobi.com/ontology#Individual1b", Collections.singleton("http://mobi.com/ontology#Class1b"));
+        expectedChildMap.put("http://mobi.com/ontology#Individual1c", Collections.singleton("http://mobi.com/ontology#Class1c"));
+        expectedChildMap.put("http://mobi.com/ontology#Individual2a", Collections.singleton("http://mobi.com/ontology#Class2a"));
+        expectedChildMap.put("http://mobi.com/ontology#Individual2b", Collections.singleton("http://mobi.com/ontology#Class2b"));
+        expectedChildMap.put(newIndividual.stringValue(), Collections.singleton("http://mobi.com/ontology#Class1a"));
+
+        Model additions = mf.createModel();
+        additions.add(newIndividual, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI("http://mobi.com/ontology#Class1a"));
+
+        SimpleOntology ont = (SimpleOntology) queryOntology;
+        ont.setDifference(createDifference(additions, null));
+
+        Hierarchy result = ont.getClassesWithIndividuals(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedParentMap.keySet(), parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expectedParentMap.get(iri), parentMap.get(iri)));
+
+        Map<String, Set<String>> childMap = result.getChildMap();
+        Set<String> childKeys = childMap.keySet();
+        assertEquals(expectedChildMap.keySet(), childKeys);
+        childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
     public void testGetEntityUsages() throws Exception {
         Set<String> subjects = Stream.of("http://mobi.com/ontology#Class1b",
                 "http://mobi.com/ontology#Individual1a").collect(Collectors.toSet());
         Set<String> predicates = Stream.of("http://www.w3.org/2000/01/rdf-schema#subClassOf",
                 "http://www.w3.org/1999/02/22-rdf-syntax-ns#type").collect(Collectors.toSet());
+
+        TupleQueryResult result = queryOntology.getEntityUsages(vf.createIRI("http://mobi.com/ontology#Class1a"));
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            Optional<Binding> optionalSubject = b.getBinding("s");
+            if (optionalSubject.isPresent()) {
+                String subject = optionalSubject.get().getValue().stringValue();
+                assertTrue(subjects.contains(subject));
+                subjects.remove(subject);
+            }
+            Optional<Binding> optionalPredicate = b.getBinding("p");
+            if (optionalPredicate.isPresent()) {
+                String predicate = optionalPredicate.get().getValue().stringValue();
+                assertTrue(predicates.contains(predicate));
+                predicates.remove(predicate);
+            }
+        });
+        assertEquals(0, subjects.size());
+        assertEquals(0, predicates.size());
+    }
+
+    @Test
+    public void testGetEntityUsagesWithDifference() throws Exception {
+        IRI newIndividual = vf.createIRI("http://test.com/ontology1#IndividualNew");
+        List<String> subjects = Stream.of("http://mobi.com/ontology#Class1b",
+                "http://mobi.com/ontology#Individual1a", newIndividual.stringValue()).collect(Collectors.toList());
+        List<String> predicates = Stream.of("http://www.w3.org/2000/01/rdf-schema#subClassOf",
+                "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", "http://www.w3.org/1999/02/22-rdf-syntax-ns#type").collect(Collectors.toList());
+
+        Model additions = mf.createModel();
+        additions.add(newIndividual, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI("http://mobi.com/ontology#Class1a"));
+
+        SimpleOntology ont = (SimpleOntology) queryOntology;
+        ont.setDifference(createDifference(additions, null));
 
         TupleQueryResult result = queryOntology.getEntityUsages(vf.createIRI("http://mobi.com/ontology#Class1a"));
         assertTrue(result.hasNext());
@@ -1077,6 +1636,28 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testConstructEntityUsagesWithDifference() throws Exception {
+        IRI newIndividual = vf.createIRI("http://test.com/ontology1#IndividualNew");
+        Resource class1a = vf.createIRI("http://mobi.com/ontology#Class1a");
+        Resource class1b = vf.createIRI("http://mobi.com/ontology#Class1b");
+        IRI subClassOf = vf.createIRI("http://www.w3.org/2000/01/rdf-schema#subClassOf");
+        Resource individual1a = vf.createIRI("http://mobi.com/ontology#Individual1a");
+        IRI type = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+        com.mobi.rdf.api.Model expected = mf.createModel(Stream.of(vf.createStatement(class1b, subClassOf,
+                class1a), vf.createStatement(individual1a, type, class1a), vf.createStatement(newIndividual, type, class1a))
+                .collect(Collectors.toSet()));
+
+        Model additions = mf.createModel();
+        additions.add(newIndividual, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI("http://mobi.com/ontology#Class1a"));
+
+        SimpleOntology ont = (SimpleOntology) queryOntology;
+        ont.setDifference(createDifference(additions, null));
+
+        com.mobi.rdf.api.Model result = ont.constructEntityUsages(class1a, mf);
+        assertEquals(result, expected);
+    }
+
+    @Test
     public void testGetConceptRelationships() throws Exception {
         // Setup:
         Set<Resource> expectedSubjects = Stream.of(vf.createIRI("https://mobi.com/vocabulary#Concept1"), vf.createIRI("https://mobi.com/vocabulary#Concept2"),
@@ -1089,6 +1670,41 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         expectedChildMap.put("https://mobi.com/vocabulary#Concept3", Collections.singleton("https://mobi.com/vocabulary#Concept1"));
 
         Hierarchy result = queryVocabulary.getConceptRelationships(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedParentMap.keySet(), parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expectedParentMap.get(iri), parentMap.get(iri)));
+
+        Map<String, Set<String>> childMap = result.getChildMap();
+        Set<String> childKeys = childMap.keySet();
+        assertEquals(expectedChildMap.keySet(), childKeys);
+        childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
+    public void testGetConceptRelationshipsWithDifference() throws Exception {
+        // Setup:
+        IRI newIndividual = vf.createIRI("http://test.com/ontology1#IndividualNew");
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("https://mobi.com/vocabulary#Concept1"), vf.createIRI("https://mobi.com/vocabulary#Concept2"),
+                vf.createIRI("https://mobi.com/vocabulary#Concept3"), vf.createIRI("https://mobi.com/vocabulary#Concept4"), newIndividual)
+                .collect(Collectors.toSet());
+        Map<String, Set<String>> expectedParentMap = new HashMap<>();
+        expectedParentMap.put("https://mobi.com/vocabulary#Concept1", Stream.of("https://mobi.com/vocabulary#Concept2", "https://mobi.com/vocabulary#Concept3", newIndividual.stringValue()).collect(Collectors.toSet()));
+        Map<String, Set<String>> expectedChildMap = new HashMap<>();
+        expectedChildMap.put("https://mobi.com/vocabulary#Concept2", Collections.singleton("https://mobi.com/vocabulary#Concept1"));
+        expectedChildMap.put("https://mobi.com/vocabulary#Concept3", Collections.singleton("https://mobi.com/vocabulary#Concept1"));
+        expectedChildMap.put(newIndividual.stringValue(), Collections.singleton("https://mobi.com/vocabulary#Concept1"));
+
+        Model additions = mf.createModel();
+        additions.add(newIndividual, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(SKOS.CONCEPT.stringValue()));
+        additions.add(newIndividual, vf.createIRI(SKOS.BROADER.stringValue()), vf.createIRI("https://mobi.com/vocabulary#Concept1"));
+
+        SimpleOntology ont = (SimpleOntology) queryVocabulary;
+        ont.setDifference(createDifference(additions, null));
+
+        Hierarchy result = ont.getConceptRelationships(vf, mf);
         Map<String, Set<String>> parentMap = result.getParentMap();
         Set<String> parentKeys = parentMap.keySet();
         assertEquals(expectedParentMap.keySet(), parentKeys);
@@ -1148,6 +1764,45 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testGetConceptSchemeRelationshipsWithDifference() throws Exception {
+        // Setup:
+        IRI newIndividual = vf.createIRI("http://test.com/ontology1#IndividualNew");
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("https://mobi.com/vocabulary#ConceptScheme1"), vf.createIRI("https://mobi.com/vocabulary#ConceptScheme2"),
+                vf.createIRI("https://mobi.com/vocabulary#ConceptScheme3"), vf.createIRI("https://mobi.com/vocabulary#Concept1"),
+                vf.createIRI("https://mobi.com/vocabulary#Concept2"), vf.createIRI("https://mobi.com/vocabulary#Concept3"), newIndividual)
+                .collect(Collectors.toSet());
+        Map<String, Set<String>> expectedParentMap = new HashMap<>();
+        expectedParentMap.put("https://mobi.com/vocabulary#ConceptScheme1", Stream.of("https://mobi.com/vocabulary#Concept1", newIndividual.stringValue()).collect(Collectors.toSet()));
+        expectedParentMap.put("https://mobi.com/vocabulary#ConceptScheme2", Collections.singleton("https://mobi.com/vocabulary#Concept2"));
+        expectedParentMap.put("https://mobi.com/vocabulary#ConceptScheme3", Collections.singleton("https://mobi.com/vocabulary#Concept3"));
+        Map<String, Set<String>> expectedChildMap = new HashMap<>();
+        expectedChildMap.put("https://mobi.com/vocabulary#Concept1", Collections.singleton("https://mobi.com/vocabulary#ConceptScheme1"));
+        expectedChildMap.put("https://mobi.com/vocabulary#Concept2", Collections.singleton("https://mobi.com/vocabulary#ConceptScheme2"));
+        expectedChildMap.put("https://mobi.com/vocabulary#Concept3", Collections.singleton("https://mobi.com/vocabulary#ConceptScheme3"));
+        expectedChildMap.put(newIndividual.stringValue(), Collections.singleton("https://mobi.com/vocabulary#ConceptScheme1"));
+
+        Model additions = mf.createModel();
+        additions.add(newIndividual, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(SKOS.CONCEPT.stringValue()));
+        additions.add(newIndividual, vf.createIRI(SKOS.IN_SCHEME.stringValue()), vf.createIRI("https://mobi.com/vocabulary#ConceptScheme1"));
+
+        SimpleOntology ont = (SimpleOntology) queryVocabulary;
+        ont.setDifference(createDifference(additions, null));
+
+        Hierarchy result = ont.getConceptSchemeRelationships(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedParentMap.keySet(), parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expectedParentMap.get(iri), parentMap.get(iri)));
+
+        Map<String, Set<String>> childMap = result.getChildMap();
+        Set<String> childKeys = childMap.keySet();
+        assertEquals(expectedChildMap.keySet(), childKeys);
+        childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
     public void testGetSearchResults() throws Exception {
         Set<String> entities = Stream.of("http://mobi.com/ontology#Class3a", "http://mobi.com/ontology#Class2a",
                 "http://mobi.com/ontology#Class2b", "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
@@ -1165,15 +1820,253 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testGetSearchResultsWithDifference() throws Exception {
+        IRI newClass = vf.createIRI("http://test.com/ontology1#ClassNew");
+        Set<String> entities = Stream.of("http://mobi.com/ontology#Class3a", "http://mobi.com/ontology#Class2a",
+                "http://mobi.com/ontology#Class2b", "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
+                "http://mobi.com/ontology#Class1a", newClass.stringValue()).collect(Collectors.toSet());
+
+        Model additions = mf.createModel();
+        additions.add(newClass, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()));
+        additions.add(newClass, vf.createIRI(DC.TITLE.stringValue()), vf.createLiteral("ClassNew"));
+
+        SimpleOntology ont = (SimpleOntology) queryOntology;
+        ont.setDifference(createDifference(additions, null));
+
+        TupleQueryResult result = ont.getSearchResults("class", vf);
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            String parent = Bindings.requiredResource(b, "entity").stringValue();
+            assertTrue(entities.contains(parent));
+            entities.remove(parent);
+            assertEquals("http://www.w3.org/2002/07/owl#Class", Bindings.requiredResource(b, "type").stringValue());
+        });
+        assertEquals(0, entities.size());
+    }
+
+    @Test
     public void testGetTupleQueryResults() throws Exception {
         List<BindingSet> result = QueryResults.asList(queryOntology.getTupleQueryResults("select distinct ?s where { ?s ?p ?o . }", true));
         assertEquals(19, result.size());
     }
 
     @Test
+    public void testGetTupleQueryResultsWithDifference() throws Exception {
+        IRI newClass = vf.createIRI("http://test.com/ontology1#ClassNew");
+        Model additions = mf.createModel();
+        additions.add(newClass, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()));
+        additions.add(newClass, vf.createIRI(DC.TITLE.stringValue()), vf.createLiteral("ClassNew"));
+
+        SimpleOntology ont = (SimpleOntology) queryOntology;
+        ont.setDifference(createDifference(additions, null));
+        List<BindingSet> result = QueryResults.asList(ont.getTupleQueryResults("select distinct ?s where { ?s ?p ?o . }", true));
+        assertEquals(20, result.size());
+    }
+
+    @Test
     public void testGetGraphQueryResults() throws Exception {
         com.mobi.rdf.api.Model result = queryOntology.getGraphQueryResults("construct {?s ?p ?o} where { ?s ?p ?o . }", true, mf);
         assertEquals(queryOntology.asModel(mf).size(), result.size());
+    }
+
+    @Test
+    public void testGetGraphQueryResultsWithDifference() throws Exception {
+        IRI newClass = vf.createIRI("http://test.com/ontology1#ClassNew");
+        Model additions = mf.createModel();
+        additions.add(newClass, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()));
+        additions.add(newClass, vf.createIRI(DC.TITLE.stringValue()), vf.createLiteral("ClassNew"));
+
+        SimpleOntology ont = (SimpleOntology) queryOntology;
+        ont.setDifference(createDifference(additions, null));
+        com.mobi.rdf.api.Model result = ont.getGraphQueryResults("construct {?s ?p ?o} where { ?s ?p ?o . }", true, mf);
+        assertEquals(ont.asModel(mf).size(), result.size());
+    }
+
+    // Imports Difference Tests
+
+    @Test
+    public void addImportLocalTest() throws Exception {
+        IRI ontIRI = vf.createIRI("http://mobi.com/ontology/ont");
+        Model model = mf.createModel();
+        model.add(ontIRI, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ONTOLOGY.stringValue()));
+        File file = setupOntologyMocks(model);
+        SimpleOntology ontology = new SimpleOntology(ontIRI, file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
+
+        Model additionsModel = mf.createModel();
+        additionsModel.add(ontIRI, vf.createIRI(OWL.IMPORTS.stringValue()), vf.createIRI("http://mobi.com/ontology/test-local-imports-3"));
+        ontology.setDifference(createDifference(additionsModel, null));
+
+        Set<IRI> importsClosureIRIs = ontology.getImportsClosure()
+                .stream()
+                .map(ont -> ont.getOntologyId().getOntologyIRI().get())
+                .collect(Collectors.toSet());
+        assertEquals(2, ontology.getImportsClosure().size());
+        assertTrue(importsClosureIRIs.contains(vf.createIRI("http://mobi.com/ontology/test-local-imports-3")));
+        assertTrue(importsClosureIRIs.contains(ontIRI));
+        assertTrue(ontology.getImportedOntologyIRIs().contains(vf.createIRI("http://mobi.com/ontology/test-local-imports-3")));
+        assertEquals(Collections.emptySet(), ontology.getUnloadableImportIRIs());
+    }
+
+    @Test
+    public void addImportWebTest() throws Exception {
+        IRI ontIRI = vf.createIRI("http://mobi.com/ontology/ont");
+        Model model = mf.createModel();
+        model.add(ontIRI, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ONTOLOGY.stringValue()));
+        File file = setupOntologyMocks(model);
+        SimpleOntology ontology = new SimpleOntology(ontIRI, file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
+
+        Model additionsModel = mf.createModel();
+        additionsModel.add(ontIRI, vf.createIRI(OWL.IMPORTS.stringValue()), skosIRI);
+        ontology.setDifference(createDifference(additionsModel, null));
+
+        Set<IRI> importsClosureIRIs = ontology.getImportsClosure()
+                .stream()
+                .map(ont -> ont.getOntologyId().getOntologyIRI().get())
+                .collect(Collectors.toSet());
+        assertEquals(2, ontology.getImportsClosure().size());
+        assertTrue(importsClosureIRIs.contains(skosIRI));
+        assertTrue(importsClosureIRIs.contains(ontIRI));
+        assertTrue(ontology.getImportedOntologyIRIs().contains(skosIRI));
+        assertEquals(Collections.emptySet(), ontology.getUnloadableImportIRIs());
+    }
+
+    @Test
+    public void addImportUnresolvedWebTest() throws Exception {
+        when(importsResolver.retrieveOntologyLocalFile(eq(vf.createIRI("urn:unresolvable")), any(OntologyManager.class))).thenReturn(Optional.empty());
+        when(importsResolver.retrieveOntologyFromWebFile(eq(vf.createIRI("urn:unresolvable")))).thenReturn(Optional.empty());
+
+        IRI ontIRI = vf.createIRI("http://mobi.com/ontology/ont");
+        Model model = mf.createModel();
+        model.add(ontIRI, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ONTOLOGY.stringValue()));
+        File file = setupOntologyMocks(model);
+        SimpleOntology ontology = new SimpleOntology(ontIRI, file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
+
+        Model additionsModel = mf.createModel();
+        additionsModel.add(ontIRI, vf.createIRI(OWL.IMPORTS.stringValue()), vf.createIRI("urn:unresolvable"));
+        ontology.setDifference(createDifference(additionsModel, null));
+
+        Set<IRI> importsClosureIRIs = ontology.getImportsClosure()
+                .stream()
+                .map(ont -> ont.getOntologyId().getOntologyIRI().get())
+                .collect(Collectors.toSet());
+        assertEquals(1, ontology.getImportsClosure().size());
+        assertFalse(importsClosureIRIs.contains(vf.createIRI("urn:unresolvable")));
+        assertTrue(importsClosureIRIs.contains(ontIRI));
+        assertTrue(ontology.getImportedOntologyIRIs().contains(vf.createIRI("urn:unresolvable")));
+        assertEquals(Collections.singleton(vf.createIRI("urn:unresolvable")), ontology.getUnloadableImportIRIs());
+    }
+
+    @Test
+    public void transitiveRemovalTest() throws Exception {
+        assertEquals(3, ont1.getImportsClosure().size());
+
+        SimpleOntology ont1Simple = (SimpleOntology) ont1;
+        Model deletionsModel = mf.createModel();
+        deletionsModel.add(vf.createIRI("http://mobi.com/ontology/test-local-imports-1"), vf.createIRI(OWL.IMPORTS.stringValue()), vf.createIRI("http://mobi.com/ontology/test-local-imports-2"));
+        ont1Simple.setDifference(createDifference(null, deletionsModel));
+
+        assertEquals(1, ont1Simple.getImportsClosure().size());
+    }
+
+    @Test
+    public void transitiveRemovalDirectImportThatIsAlsoTransitiveTest() throws Exception {
+        IRI ontIRI = vf.createIRI("http://mobi.com/ontology/transitive");
+        Model model = mf.createModel();
+        model.add(ontIRI, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ONTOLOGY.stringValue()));
+        model.add(ontIRI, vf.createIRI(OWL.IMPORTS.stringValue()), vf.createIRI("http://mobi.com/ontology/test-local-imports-1"));
+        model.add(ontIRI, vf.createIRI(OWL.IMPORTS.stringValue()), vf.createIRI("http://mobi.com/ontology/test-local-imports-2"));
+        File file = setupOntologyMocks(model);
+        SimpleOntology transitive = new SimpleOntology(ontIRI, file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
+
+        Set<IRI> importsClosureIRIs = transitive.getImportsClosure()
+                .stream()
+                .map(ont -> ont.getOntologyId().getOntologyIRI().get())
+                .collect(Collectors.toSet());
+        assertEquals(4, transitive.getImportsClosure().size());
+        assertEquals(4, importsClosureIRIs.size());
+        assertTrue(importsClosureIRIs.contains(vf.createIRI("http://mobi.com/ontology/test-local-imports-1")));
+        assertTrue(importsClosureIRIs.contains(vf.createIRI("http://mobi.com/ontology/test-local-imports-2")));
+        assertTrue(importsClosureIRIs.contains(vf.createIRI("http://mobi.com/ontology/test-local-imports-3")));
+        assertTrue(importsClosureIRIs.contains(ontIRI));
+        assertEquals(Collections.emptySet(), transitive.getUnloadableImportIRIs());
+
+        Model deletionsModel = mf.createModel();
+        deletionsModel.add(ontIRI, vf.createIRI(OWL.IMPORTS.stringValue()), vf.createIRI("http://mobi.com/ontology/test-local-imports-2"));
+        transitive.setDifference(createDifference(null, deletionsModel));
+
+        importsClosureIRIs = transitive.getImportsClosure()
+                .stream()
+                .map(ont -> ont.getOntologyId().getOntologyIRI().get())
+                .collect(Collectors.toSet());
+        assertEquals(4, transitive.getImportsClosure().size());
+        assertEquals(4, importsClosureIRIs.size());
+        assertTrue(importsClosureIRIs.contains(vf.createIRI("http://mobi.com/ontology/test-local-imports-1")));
+        assertTrue(importsClosureIRIs.contains(vf.createIRI("http://mobi.com/ontology/test-local-imports-2")));
+        assertTrue(importsClosureIRIs.contains(vf.createIRI("http://mobi.com/ontology/test-local-imports-3")));
+        assertTrue(importsClosureIRIs.contains(ontIRI));
+        assertEquals(Collections.emptySet(), transitive.getUnloadableImportIRIs());
+    }
+
+    @Test
+    public void transitiveAdditionTest() throws Exception {
+        IRI ontIRI = vf.createIRI("http://mobi.com/ontology/transitiveAddition");
+        Model model = mf.createModel();
+        model.add(ontIRI, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ONTOLOGY.stringValue()));
+        File transAddFile = setupOntologyMocks(model);
+        SimpleOntology transitiveAdd = new SimpleOntology(ontIRI, transAddFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
+
+        assertEquals(1, transitiveAdd.getImportsClosure().size());
+
+        Model additionsModel = mf.createModel();
+        additionsModel.add(ontIRI, vf.createIRI(OWL.IMPORTS.stringValue()), vf.createIRI("http://mobi.com/ontology/test-local-imports-1"));
+        transitiveAdd.setDifference(createDifference(additionsModel, null));
+
+        assertEquals(4, transitiveAdd.getImportsClosure().size());
+    }
+
+    @Test
+    public void multUnresolvedFullReplaceWithMultUnresolvedTest() throws Exception {
+        Model model = Models.createModel( this.getClass().getResourceAsStream("/differenceTesting/multiple-unresolved-1.ttl"), transformer);
+        File file = setupOntologyMocks(model);
+        when(importsResolver.retrieveOntologyFromWebFile(any(IRI.class))).thenReturn(Optional.empty());
+        when(importsResolver.retrieveOntologyLocalFile(any(IRI.class), any(OntologyManager.class))).thenReturn(Optional.empty());
+        SimpleOntology multUnresolved1 = new SimpleOntology(vf.createIRI("https://mobi.com/ontologies/multipleunresolved1"), file, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
+
+        Set<IRI> expectedUnresolved = Stream.of(vf.createIRI("https://mobi.com/ontologies/unresolvable1.owl"), vf.createIRI("https://mobi.com/ontologies/unresolvable2.owl"), vf.createIRI("https://mobi.com/ontologies/unresolvable3.owl")).collect(Collectors.toSet());
+        Set<IRI> actualUnresolved = multUnresolved1.getUnloadableImportIRIs();
+        assertEquals(expectedUnresolved.size(), actualUnresolved.size());
+        assertEquals(expectedUnresolved, actualUnresolved);
+
+        Model additionsModel = Models.createModel( this.getClass().getResourceAsStream("/differenceTesting/multiple-unresolved-2.ttl"), transformer);
+        Difference diff = createDifference(additionsModel, model);
+        multUnresolved1.setDifference(diff);
+
+        Set<IRI> diffExpectedUnresolved = Stream.of(vf.createIRI("https://mobi.com/ontologies/unresolvable4.owl"), vf.createIRI("https://mobi.com/ontologies/unresolvable5.owl")).collect(Collectors.toSet());
+        Set<IRI> diffActualUnresolved = multUnresolved1.getUnloadableImportIRIs();
+        assertEquals(diffExpectedUnresolved.size(), diffActualUnresolved.size());
+        assertEquals(diffExpectedUnresolved, diffActualUnresolved);
+    }
+
+    private File setupOntologyMocks(Model model) throws Exception{
+        Path path = Files.createTempFile(null, null);
+        Rio.write(Values.sesameModel(model), Files.newOutputStream(path), RDFFormat.TRIG);
+        File file = path.toFile();
+        file.deleteOnExit();
+        doAnswer(invocation -> {
+            Resource graph = invocation.getArgumentAt(2, Resource.class);
+            try (RepositoryConnection conn = repo.getConnection()) {
+                conn.add(model, graph);
+            }
+            return null;
+        }).when(importService).importFile(any(ImportServiceConfig.class), eq(file), any(Resource.class));
+        return file;
+    }
+
+    private Difference createDifference(Model additions, Model deletions) {
+        Difference.Builder builder = new Difference.Builder();
+        builder.additions(additions == null ? mf.createModel() : additions);
+        builder.deletions(deletions == null ? mf.createModel() : deletions);
+        return builder.build();
     }
 
     private String replaceBlankNodeSuffix(String s) {

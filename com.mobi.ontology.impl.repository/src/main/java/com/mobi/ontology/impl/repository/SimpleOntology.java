@@ -388,6 +388,7 @@ public class SimpleOntology implements Ontology {
             boolean datasetIriExists = conn.containsContext(datasetIRI);
             boolean datasetSdNgExists = conn.containsContext(
                     OntologyDatasets.createSystemDefaultNamedGraphIRI(datasetIRI, vf));
+            boolean catalogImport = datasetIRI.stringValue().startsWith(OntologyDatasets.DEFAULT_DS_NAMESPACE);
 
             // Fully loaded ontology dataset and SdNg
             if (datasetIriExists) {
@@ -407,12 +408,13 @@ public class SimpleOntology implements Ontology {
                         .forEach(unresolvedImports::add);
             }
             // Web import that has yet to have dataset graph created for it, but SdNg exists.
-            else if (datasetSdNgExists) {
+            else if (datasetSdNgExists && !catalogImport) {
                 Map<String, Set<IRI>> imports = loadOntologyIntoCache(null, true);
                 this.importsClosure = imports.get(CLOSURE_KEY);
                 this.unresolvedImports = imports.get(UNRESOLVED_KEY);
             }
             // Import was updated with Catalog version while web versioned exists in cache
+            // Or catalog import whose SDNG has been added to cache but not the dataset graph
             else {
                 IRI commitIri = OntologyDatasets.getCommitFromDatasetIRI(datasetIRI, vf);
                 File ontologyFile = this.catalogManager.getCompiledResourceFile(commitIri);
