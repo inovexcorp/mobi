@@ -27,42 +27,24 @@ import com.mobi.rdf.api.Literal;
 
 public class KeywordCount {
     private Literal keyword;
-    private Integer recordCount;
+    private Integer keywordCount;
 
-    private KeywordCount(Builder builder) {
-        this.keyword = builder.keyword;
-        this.recordCount = builder.recordCount;
+    public KeywordCount(Literal keyword, Integer keywordCount) {
+        this.keyword = keyword;
+        this.keywordCount = keywordCount;
     }
 
     public Literal getKeyword() {
         return keyword;
     }
 
-    public Integer getRecordCount() {
-        return recordCount;
+    public Integer getKeywordCount() {
+        return keywordCount;
     }
 
     @Override
     public String toString() {
-        return "KC(" + keyword + ", " + recordCount + ")";
+        return "KC(" + keyword + ", " + keywordCount + ")";
     }
 
-    public static class Builder {
-        private Literal keyword;
-        private Integer recordCount;
-
-        public Builder keyword(Literal keyword) {
-            this.keyword = keyword;
-            return this;
-        }
-
-        public Builder count(Integer recordCount) {
-            this.recordCount = recordCount;
-            return this;
-        }
-
-        public KeywordCount build() {
-            return new KeywordCount(this);
-        }
-    }
 }

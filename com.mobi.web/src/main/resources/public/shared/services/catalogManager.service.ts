@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import { identity, has, find, get, forEach, includes, map } from 'lodash';
+import { identity, has, find, get, forEach, includes } from 'lodash';
 
 catalogManagerService.$inject = ['$http', '$httpParamSerializer', 'httpService', '$q', 'prefixes', 'utilService', 'REST_PREFIX'];
 
@@ -88,17 +88,6 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * This list is populated by the `initialize` method.
      */
     self.recordTypes = [];
-    /**
-     * @ngdoc property
-     * @name keywordObjects
-     * @propertyOf shared.service:catalogManagerService
-     * @type {[]}
-     *
-     * @description
-     * `keywordObjects` contains a list of objects containing keywords with counts for both Catalogs.
-     * This list is populated by the catalog component.
-     */
-    self.keywordObjects =  [];
     /**
      * @ngdoc property
      * @name localCatalog
@@ -243,6 +232,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @param {Object} paginatedConfig A configuration object for paginated requests
      * @param {number} paginatedConfig.pageIndex The index of the page of results to retrieve
      * @param {number} paginatedConfig.limit The number of results per page
+     * @param {string} [id=''] The identifier for this request
      * @returns {Promise} A promise that either resolves with the paginated response or is rejected
      * with a error message
      */
@@ -276,6 +266,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @param {string} paginatedConfig.recordType A record type IRI string from the `recordTypes` array
      * @param {string} paginatedConfig.searchText The text to search for within the list of Records
      * @param {string} paginatedConfig.keywords The keywords for within the list of Records
+     * @param {string} [id=''] The identifier for this request
      * @returns {Promise} A promise that either resolves with the paginated response or is rejected
      * with a error message
      */
@@ -1091,6 +1082,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @param {string} commitId - The commit id of the commit which should be the most recent commit in
      *      the history.
      * @param {string} entityId - The id of the entity which is used to filter the resource list.
+     * @param {string} [id=''] The identifier for this request
      * @return {Promise} A promise that resolves with the Compiled Resource of a commit or rejects with an error
      *      message.
      */

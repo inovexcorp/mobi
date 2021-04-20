@@ -313,9 +313,8 @@ public class SimpleCatalogManager implements CatalogManager {
             Optional<Resource> typeParam = searchParams.getTypeFilter();
             Optional<String> searchTextParam = searchParams.getSearchText();
 
-            String countQueryString = replaceKeywordFilter(searchParams, COUNT_RECORDS_QUERY);
             // Get Total Count
-            TupleQuery countQuery = conn.prepareTupleQuery(countQueryString);
+            TupleQuery countQuery = conn.prepareTupleQuery(replaceKeywordFilter(searchParams, COUNT_RECORDS_QUERY));
             countQuery.setBinding(CATALOG_BINDING, catalogId);
             typeParam.ifPresent(resource -> countQuery.setBinding(TYPE_FILTER_BINDING, resource));
             searchTextParam.ifPresent(s -> countQuery.setBinding(SEARCH_BINDING, vf.createLiteral(s)));
@@ -339,6 +338,7 @@ public class SimpleCatalogManager implements CatalogManager {
             // Prepare Query
             int offset = searchParams.getOffset();
             int limit = searchParams.getLimit().orElse(totalCount);
+
             if (offset > totalCount) {
                 throw new IllegalArgumentException("Offset exceeds total size");
             }
@@ -359,9 +359,8 @@ public class SimpleCatalogManager implements CatalogManager {
             }
             querySuffix.append("\nLIMIT ").append(limit).append("\nOFFSET ").append(offset);
 
-            String queryString = FIND_RECORDS_QUERY + querySuffix.toString();
-
-            queryString = replaceKeywordFilter(searchParams, queryString);
+            String queryString = replaceKeywordFilter(searchParams,
+                    FIND_RECORDS_QUERY + querySuffix.toString());
 
             log.debug("Query String:\n" + queryString);
 
@@ -423,18 +422,10 @@ public class SimpleCatalogManager implements CatalogManager {
         TupleQuery countQuery = conn.prepareTupleQuery(GET_KEYWORD_COUNT_QUERY);
         countQuery.setBinding(CATALOG_BINDING, catalogId);
 
-        TupleQueryResult countResults = countQuery.evaluate();
-
-        int totalCount;
-        BindingSet countBindingSet;
-        if (countResults.hasNext()
-                && (countBindingSet = countResults.next()).getBindingNames().contains(KEYWORD_COUNT_BINDING)) {
-            totalCount = Bindings.requiredLiteral(countBindingSet, KEYWORD_COUNT_BINDING).intValue();
-            countResults.close();
-        } else {
-            countResults.close();
-            conn.close();
-            totalCount = 0;
+        TupleQueryResult countResults = countQuery.evaluateAndReturn();
+        int totalCount = 0;
+        if (countResults.getBindingNames().contains(KEYWORD_COUNT_BINDING) && countResults.hasNext()) {
+            totalCount = Bindings.requiredLiteral(countResults.next(), KEYWORD_COUNT_BINDING).intValue();
         }
         return totalCount;
     }
@@ -448,7 +439,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 return SearchResults.emptyResults();
             }
 
-            log.debug("Record count: " + totalCount);
+            log.debug("Keyword count: " + totalCount);
 
             // Prepare Query
             int offset = searchParams.getOffset();
@@ -456,11 +447,7 @@ public class SimpleCatalogManager implements CatalogManager {
             if (offset > totalCount) {
                 throw new IllegalArgumentException("Offset exceeds total size");
             }
-
-            StringBuilder querySuffix = new StringBuilder("\n");
-            querySuffix.append("\nLIMIT ").append(limit).append("\nOFFSET ").append(offset);
-
-            String queryString = GET_KEYWORD_QUERY + querySuffix.toString();
+            String queryString = GET_KEYWORD_QUERY + "\nLIMIT " + limit + "\nOFFSET " + offset;
 
             log.debug("Query String:\n" + queryString);
 
@@ -472,24 +459,20 @@ public class SimpleCatalogManager implements CatalogManager {
             // Get Results
             TupleQueryResult result = query.evaluate();
 
-            List<KeywordCount> records = new ArrayList<>();
+            List<KeywordCount> keywordCounts = new ArrayList<>();
             result.forEach(bindings -> {
-                KeywordCount.Builder keywordBuilder = new KeywordCount.Builder();
-
-                keywordBuilder.keyword(vf.createLiteral(Bindings.requiredLiteral(bindings, KEYWORD_BINDING)
-                        .stringValue()));
-                keywordBuilder.count(Bindings.requiredLiteral(bindings, RECORD_COUNT_BINDING).intValue());
-
-                records.add(keywordBuilder.build());
+                keywordCounts.add(new KeywordCount(
+                        vf.createLiteral(Bindings.requiredLiteral(bindings, KEYWORD_BINDING).stringValue()),
+                        Bindings.requiredLiteral(bindings, RECORD_COUNT_BINDING).intValue()));
             });
 
             result.close();
 
-            log.debug("Result set size: " + records.size());
+            log.debug("Result set size: " + keywordCounts.size());
 
             int pageNumber = (limit > 0) ? (offset / limit) + 1 : 1;
 
-            return records.size() > 0 ? new SimpleSearchResults<>(records, totalCount, limit, pageNumber) :
+            return keywordCounts.size() > 0 ? new SimpleSearchResults<>(keywordCounts, totalCount, limit, pageNumber) :
                     SearchResults.emptyResults();
         }
     }

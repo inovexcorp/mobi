@@ -322,7 +322,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         when(recordResults.getPageSize()).thenReturn(10);
         when(recordResults.getTotalSize()).thenReturn(50);
 
-        KeywordCount keywordCount1 = new KeywordCount.Builder().keyword(vf.createLiteral("1")).count(4).build();
+        KeywordCount keywordCount1 = new KeywordCount(vf.createLiteral("1"), 4);
 
         when(keywordResults.getPage()).thenReturn(Collections.singletonList(keywordCount1));
         when(keywordResults.getPageNumber()).thenReturn(0);

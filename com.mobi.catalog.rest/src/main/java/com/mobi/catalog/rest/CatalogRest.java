@@ -680,7 +680,7 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "Offset for the page", required = true)
             @QueryParam("offset") int offset,
-            @Parameter(description = "Number of Records to return in one page", required = true)
+            @Parameter(description = "Number of Keywords to return in one page", required = true)
             @QueryParam("limit") int limit) {
         try {
             LinksUtils.validateParams(limit, offset);
@@ -691,24 +691,30 @@ public class CatalogRest {
                 builder.limit(limit);
             }
 
-            PaginatedSearchResults<KeywordCount> records = catalogManager.getKeywords(vf.createIRI(catalogId),
+            PaginatedSearchResults<KeywordCount> keywordCounts = catalogManager.getKeywords(vf.createIRI(catalogId),
                     builder.build());
 
-            ArrayNode keywordsArrayNode = mapper.createArrayNode();
+            ArrayNode keywordsArrayNode = serializeKeywordCount(keywordCounts);
 
-            for (KeywordCount keywordCount: records.getPage()) {
-                ObjectNode keywordObject = mapper.createObjectNode();
-                keywordObject.put(Record.keyword_IRI, keywordCount.getKeyword().stringValue());
-                keywordObject.put("count", keywordCount.getRecordCount());
-                keywordsArrayNode.add(keywordObject);
-            }
-
-            return createPaginatedResponseWithJsonNode(uriInfo, keywordsArrayNode, records.getTotalSize(), limit, offset);
+            return createPaginatedResponseWithJsonNode(uriInfo, keywordsArrayNode, keywordCounts.getTotalSize(),
+                    limit, offset);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private ArrayNode serializeKeywordCount(PaginatedSearchResults<KeywordCount> keywordCounts) {
+        ArrayNode keywordsArrayNode = mapper.createArrayNode();
+
+        for (KeywordCount keywordCount: keywordCounts.getPage()) {
+            ObjectNode keywordObject = mapper.createObjectNode();
+            keywordObject.put(Record.keyword_IRI, keywordCount.getKeyword().stringValue());
+            keywordObject.put("count", keywordCount.getKeywordCount());
+            keywordsArrayNode.add(keywordObject);
+        }
+        return keywordsArrayNode;
     }
 
     /**

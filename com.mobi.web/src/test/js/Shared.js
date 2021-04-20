@@ -944,7 +944,6 @@ export function mockCatalogManager() {
             this.coreRecordTypes = [];
             this.sortOptions = [];
             this.recordTypes = [];
-            this.keywordObjects =  [];
             this.localCatalog = undefined;
             this.distributedCatalog = undefined;
             this.initialize = jasmine.createSpy('initialize').and.returnValue($q.when());

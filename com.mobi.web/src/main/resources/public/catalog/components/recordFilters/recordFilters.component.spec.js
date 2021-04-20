@@ -54,7 +54,6 @@ describe('Record Filters component', function() {
         this.records = [this.keywordObject('keyword1', 6)];
 
         catalogManagerSvc.recordTypes = ['test1', 'test2'];
-        catalogManagerSvc.keywordObjects = [this.keywordObject('keywords1', 5)];
         catalogManagerSvc.localCatalog = {'@id': this.catalogId};
         catalogManagerSvc.getKeywords.and.returnValue($q.when({
             data: this.records,
@@ -70,6 +69,7 @@ describe('Record Filters component', function() {
         this.controller = this.element.controller('recordFilters');
         this.recordTypeFilter = this.controller.filters[0];
         this.keywordsFilter = this.controller.filters[1];
+        this.keywordsFilter.rawFilterItems = [this.keywordObject('keywords1', 5)];
     });
 
     afterEach(function() {
@@ -169,7 +169,7 @@ describe('Record Filters component', function() {
             expect(this.element.querySelectorAll('.pageable').length).toEqual(1);
         });
         it('depending on the number of sort options', function() {
-            var expectedFilterOptions = catalogManagerSvc.recordTypes.length + catalogManagerSvc.keywordObjects.length;
+            var expectedFilterOptions = catalogManagerSvc.recordTypes.length + this.keywordsFilter.rawFilterItems.length;
             expect(this.element.querySelectorAll('.filter-option').length).toBe(expectedFilterOptions);
         });
     });
