@@ -124,6 +124,8 @@ import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -232,6 +234,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private Set<Individual> namedIndividuals;
     private Set<Individual> concepts;
     private Set<Individual> conceptSchemes;
+    private Set<IRI> deprecatedIris;
     private Set<IRI> derivedConcepts;
     private Set<IRI> derivedConceptSchemes;
     private Set<IRI> derivedSemanticRelations;
@@ -331,6 +334,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         namedIndividuals = Collections.singleton(new SimpleIndividual(individualIRI));
         concepts = Collections.singleton(new SimpleIndividual(conceptIRI));
         conceptSchemes = Collections.singleton(new SimpleIndividual(conceptSchemeIRI));
+        deprecatedIris = Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#DeprecatedIRI1"));
         derivedConcepts = Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#ConceptSubClass"));
         derivedConceptSchemes = Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#ConceptSchemeSubClass"));
         derivedSemanticRelations = Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#SemanticRelationSubProperty"));
@@ -407,6 +411,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(ontology.getAllObjectProperties()).thenReturn(objectProperties);
         when(ontology.getAllDataProperties()).thenReturn(dataProperties);
         when(ontology.getAllIndividuals()).thenReturn(namedIndividuals);
+        when(ontology.getDeprecatedIRIs()).thenReturn(deprecatedIris);
         when(ontology.getIndividualsOfType(Values.mobiIRI(SKOS.CONCEPT))).thenReturn(concepts);
         when(ontology.getIndividualsOfType(Values.mobiIRI(SKOS.CONCEPT_SCHEME))).thenReturn(conceptSchemes);
         when(ontology.getImportsClosure()).thenReturn(importedOntologies);
@@ -433,6 +438,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(importedOntology.getAllClasses()).thenReturn(importedClasses);
         when(importedOntology.getAllDatatypes()).thenReturn(datatypes);
         when(importedOntology.getAllObjectProperties()).thenReturn(objectProperties);
+
         when(importedOntology.getAllDataProperties()).thenReturn(dataProperties);
         when(importedOntology.getAllIndividuals()).thenReturn(namedIndividuals);
         when(importedOntology.getIndividualsOfType(Values.mobiIRI(SKOS.CONCEPT))).thenReturn(concepts);
@@ -675,6 +681,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(jsonConcepts.size(), set.size());
     }
 
+    private void assertDeprecatedIris(JSONObject responseObject, Set<IRI> set) {
+        JSONArray jsonConcepts = responseObject.optJSONArray("deprecatedIris");
+        assertNotNull(jsonConcepts);
+        assertEquals(jsonConcepts.size(), set.size());
+    }
+
     private void assertDerivedConceptSchemes(JSONObject responseObject, Set<IRI> set) {
         JSONArray jsonConceptSchemes = responseObject.optJSONArray("derivedConceptSchemes");
         assertNotNull(jsonConceptSchemes);
@@ -747,6 +759,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertIndividuals(iriList, namedIndividuals);
         assertConcepts(iriList, concepts);
         assertConceptSchemes(iriList, conceptSchemes);
+        assertDeprecatedIris(iriList, deprecatedIris);
         assertDerivedConcepts(iriList, derivedConcepts);
         assertDerivedConceptSchemes(iriList, derivedConceptSchemes);
         assertDerivedSemanticRelations(iriList, derivedSemanticRelations);
@@ -1654,6 +1667,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertObjectPropertyIRIs(responseObject, objectProperties);
         assertDataPropertyIRIs(responseObject, dataProperties);
         assertIndividuals(responseObject, namedIndividuals);
+        assertDeprecatedIris(responseObject, deprecatedIris);
         assertDerivedConcepts(responseObject, derivedConcepts);
         assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
         assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
@@ -4758,7 +4772,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 any(User.class))).thenReturn(Optional.empty());
 
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("test-ontology.ttl")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue())
@@ -4782,7 +4801,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 any(User.class))).thenReturn(Optional.empty());
         when(catalogManager.getMasterBranch(eq(catalogId), eq(recordId))).thenReturn(branch);
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("test-ontology.ttl")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("commitId", commitId.stringValue())
@@ -4805,7 +4829,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 any(User.class))).thenReturn(Optional.empty());
         when(catalogManager.getHeadCommit(eq(catalogId), eq(recordId), eq(branchId))).thenReturn(commit);
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("test-ontology.ttl")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue())
@@ -4826,7 +4855,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId), any(User.class))).thenReturn(Optional.of(inProgressCommit));
 
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/search-results.json"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("search-results.json")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/search-results.json"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue())
@@ -4847,7 +4881,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
 
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("test-ontology.ttl")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue())

@@ -6,7 +6,8 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @base <http://mobi.com/ontology> .
 
-<http://mobi.com/ontology> rdf:type owl:Ontology ;
+
+<http://mobi.com/ontology/deprecated-filter-2> a owl:Ontology ;
                                owl:versionIRI <http://mobi.com/ontology/1.0> ;
                                <http://purl.org/dc/terms/title> "Test Ontology"^^xsd:string ;
                                <http://purl.org/dc/terms/description> "This is a test ontology."^^xsd:string .
@@ -85,17 +86,17 @@
          <http://purl.org/dc/terms/title> "Class 2a"^^xsd:string .
 
 
-###  http://mobi.com/ontology#Class2b
-:Class2b rdf:type owl:Class ;
-         rdfs:subClassOf :Class2a ;
-         <http://purl.org/dc/terms/title> "Class 2b"^^xsd:string ;
-         owl:deprecated "false"^^xsd:boolean .
+ ###  http://mobi.com/ontology#Class2b
+ :Class2b rdf:type owl:Class ;
+          rdfs:subClassOf :Class2a ;
+          <http://purl.org/dc/terms/title> "Class 2b"^^xsd:string ;
+          owl:deprecated "false"^^xsd:boolean .
 
 
-###  http://mobi.com/ontology#Class3a
-:Class3a rdf:type owl:Class ;
-         <http://purl.org/dc/terms/title> "Class 3a"^^xsd:string ;
-         owl:deprecated "true"^^xsd:boolean .
+ ###  http://mobi.com/ontology#Class3a
+ :Class3a rdf:type owl:Class ;
+          <http://purl.org/dc/terms/title> "Class 3a"^^xsd:string ;
+          owl:deprecated "true"^^xsd:boolean .
 
 
 #################################################################
@@ -125,6 +126,3 @@
 ###  http://mobi.com/ontology#Individual2b
 :Individual2b rdf:type owl:NamedIndividual ,
                        :Class2b .
-
-
-

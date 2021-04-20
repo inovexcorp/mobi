@@ -794,6 +794,8 @@ export function mockOntologyState() {
             this.isStateTag = jasmine.createSpy('isStateTag').and.returnValue(false);
             this.isStateBranch = jasmine.createSpy('isStateBranch').and.returnValue(false);
             this.isImported = jasmine.createSpy('isImported').and.returnValue(false);
+            this.isIriDeprecated = jasmine.createSpy('isIriDeprecated').and.returnValue(false);
+            this.annotationModified = jasmine.createSpy('annotationModified');
             this.isSelectedImported = jasmine.createSpy('isSelectedImported').and.returnValue(false);
             this.handleNewProperty = jasmine.createSpy('handleNewProperty');
             this.handleDeletedProperty = jasmine.createSpy('handleDeletedProperty');

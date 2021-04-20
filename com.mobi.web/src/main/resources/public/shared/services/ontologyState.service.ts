@@ -188,6 +188,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         derivedConcepts: [],
         derivedConceptSchemes: [],
         derivedSemanticRelations: [],
+        deprecatedIris: {},
         classes: {
             iris: {},
             parentMap: {},
@@ -888,6 +889,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             get(responseIriList, 'namedIndividuals', []).forEach(iri => addIri(listItem, 'individuals.iris', iri, listItem.ontologyId));
             get(responseIriList, 'concepts', []).forEach(iri => addIri(listItem, 'concepts.iris', iri, listItem.ontologyId));
             get(responseIriList, 'conceptSchemes', []).forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, listItem.ontologyId));
+            get(responseIriList, 'deprecatedIris', []).forEach(iri => self.annotationModified(iri, prefixes.owl + 'deprecated', 'true', listItem));
             listItem.derivedConcepts = get(responseIriList, 'derivedConcepts', []);
             listItem.derivedConceptSchemes = get(responseIriList, 'derivedConceptSchemes', []);
             listItem.derivedSemanticRelations = get(responseIriList, 'derivedSemanticRelations', []);
@@ -1941,6 +1943,52 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         return get(listItem, "entityInfo['" + iri + "'].imported", true);
     }
+
+   /**
+     * @ngdoc method
+     * @name isIriDeprecated
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Determines whether the provided IRI is deprecated or not. Defaults to false.
+     *
+     * @param {string} iri The IRI to search for
+     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
+     * @returns {boolean} True if the IRI is deprecated; false otherwise
+     */
+    self.isIriDeprecated = function(iri, listItem = self.listItem) {
+        if (iri === listItem.ontologyId) {
+            return false;
+        }
+        var isDep = has(listItem, "deprecatedIris['" + iri + "']");
+        return isDep;
+    }
+   /**
+     * @ngdoc method
+     * @name annotationModified
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Modify annotation state, it is being used to ensure deprecated is correct
+     *
+     * @param {string} iri The IRI to search for
+     * @param {annotationIri} annotation iri
+     * @param {annotationValue} annotation value
+     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
+     */
+    self.annotationModified = function(iri, annotationIri, annotationValue, listItem = self.listItem){
+        if (annotationIri === prefixes.owl + 'deprecated') {
+            if (annotationValue === "true") {
+                set(listItem, "deprecatedIris['" + iri + "']", listItem.ontologyId);
+            } else if (annotationValue === "false" || annotationValue === null) {
+                unset(listItem, "deprecatedIris['" + iri + "']");
+            }
+            self.alterTreeHierarchy(identityMapper, listItem);
+        }
+    }
+    function identityMapper(x) {
+        return x
+    }
     /**
      * @ngdoc method
      * @name isSelectedImported
@@ -1961,7 +2009,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Method to collapse flat list
+     * Method to collapse all of the nodes in hierarchy flat list under following tabs: 'classes', 'dataProperties',
+     * 'objectProperties', 'annotations', 'concepts', 'conceptSchemes', 'dataProperties', 'individuals', 'flatEverythingTree'
+     * The mapper function checks to see if the hierarchy node is open, if it is open, then it will close node.
      *
      * @param {object} [listItem=self.listItem] The listItem to execute these actions against
      */
@@ -1980,9 +2030,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Method to alter tree hierarchy flat list
+     * Method to alter tree hierarchy flat lists give a mapper function under following tabs: 'classes', 'dataProperties',
+     * 'objectProperties', 'annotations', 'concepts', 'conceptSchemes', 'dataProperties', 'individuals', 'flatEverythingTree'
      *
-     * @param {function} mapper function
+     * @param {function} mapper function - use to alter the node state
      * @param {object} [listItem=self.listItem] The listItem to execute these actions against
      */
     self.alterTreeHierarchy = function(mapperFunction, listItem = self.listItem) {
