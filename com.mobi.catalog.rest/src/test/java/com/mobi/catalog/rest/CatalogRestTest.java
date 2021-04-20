@@ -169,6 +169,9 @@ public class CatalogRestTest extends MobiRestTestNg {
     private static final String USER_IRI = "http://mobi.com/users/tester";
     private static final String ACTIVITY_IRI = "http://mobi.com/activity/test";
     private static final String CONFLICT_IRI = "http://mobi.com/conflicts/test";
+    private static final String CATALOG_URL_LOCAL = "catalogs/" + encode(LOCAL_IRI);
+    private static final String CATALOG_URL_DISTRIBUTED = "catalogs/" + encode(DISTRIBUTED_IRI);
+    private static final String RECORDS_URL_LOCAL = "catalogs/" + encode(LOCAL_IRI) + "/records";
 
     @Mock
     private CatalogManager catalogManager;
@@ -322,13 +325,6 @@ public class CatalogRestTest extends MobiRestTestNg {
         when(recordResults.getPageSize()).thenReturn(10);
         when(recordResults.getTotalSize()).thenReturn(50);
 
-        KeywordCount keywordCount1 = new KeywordCount(vf.createLiteral("1"), 4);
-
-        when(keywordResults.getPage()).thenReturn(Collections.singletonList(keywordCount1));
-        when(keywordResults.getPageNumber()).thenReturn(0);
-        when(keywordResults.getPageSize()).thenReturn(10);
-        when(keywordResults.getTotalSize()).thenReturn(50);
-
         when(catalogUtils.commitInRecord(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(false);
         when(catalogUtils.commitInRecord(eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class))).thenReturn(true);
 
@@ -336,7 +332,6 @@ public class CatalogRestTest extends MobiRestTestNg {
         when(catalogManager.getDistributedCatalog()).thenReturn(distributedCatalog);
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(testRecord.getResource()));
         when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(recordResults);
-        when(catalogManager.getKeywords(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(keywordResults);
         when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(recordFactory)))
                 .thenReturn(Optional.of(testRecord));
         when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(unversionedRecordFactory)))
@@ -507,11 +502,11 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getCatalogTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI)).request().get();
+        Response response = target().path(CATALOG_URL_LOCAL).request().get();
         assertEquals(response.getStatus(), 200);
         assertResponseIsObjectWithId(response, LOCAL_IRI);
 
-        response = target().path("catalogs/" + encode(DISTRIBUTED_IRI)).request().get();
+        response = target().path(CATALOG_URL_DISTRIBUTED).request().get();
         assertEquals(response.getStatus(), 200);
         assertResponseIsObjectWithId(response, DISTRIBUTED_IRI);
     }
@@ -527,11 +522,11 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getLocalCatalog();
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI)).request().get();
+        Response response = target().path(CATALOG_URL_LOCAL).request().get();
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).getLocalCatalog();
-        response = target().path("catalogs/" + encode(LOCAL_IRI)).request().get();
+        response = target().path(CATALOG_URL_LOCAL).request().get();
         assertEquals(response.getStatus(), 500);
     }
 
@@ -539,7 +534,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getRecordsTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records")
                 .queryParam("sort", DCTERMS.TITLE.stringValue())
                 .queryParam("type", Record.TYPE)
                 .queryParam("offset", 0)
@@ -564,7 +559,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(recordResults.getPageNumber()).thenReturn(1);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records")
                 .queryParam("offset", 1)
                 .queryParam("limit", 1).request().get();
         assertEquals(response.getStatus(), 200);
@@ -572,20 +567,20 @@ public class CatalogRestTest extends MobiRestTestNg {
         Set<Link> links = response.getLinks();
         assertEquals(links.size(), 2);
         links.forEach(link -> {
-            assertTrue(link.getUri().getRawPath().contains("catalogs/" + encode(LOCAL_IRI) + "/records"));
+            assertTrue(link.getUri().getRawPath().contains(CATALOG_URL_LOCAL + "/records"));
             assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
         });
     }
 
     @Test
     public void getRecordsWithNegativeOffsetTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records").queryParam("offset", -1).request().get();
+        Response response = target().path(CATALOG_URL_LOCAL + "/records").queryParam("offset", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getRecordsWithNegativeLimitTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records").queryParam("limit", -1).request().get();
+        Response response = target().path(CATALOG_URL_LOCAL + "/records").queryParam("limit", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
@@ -594,7 +589,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records").queryParam("offset", 9999).request().get();
+        Response response = target().path(CATALOG_URL_LOCAL + "/records").queryParam("offset", 9999).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
@@ -613,7 +608,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
         assertEquals(response.getStatus(), 500);
     }
@@ -650,7 +645,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         //Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(provUtils, times(0)).startCreateActivity(user);
@@ -661,7 +656,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         //Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("type", Record.TYPE);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(provUtils, times(0)).startCreateActivity(user);
@@ -674,7 +669,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("type", Thing.TYPE);
         fd.field("title", "Title");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(provUtils, times(0)).startCreateActivity(user);
@@ -688,7 +683,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("type", Record.TYPE);
         fd.field("title", "Title");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
         verify(provUtils, times(0)).startCreateActivity(user);
@@ -717,7 +712,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("title", "Title");
         doThrow(new MobiException()).when(catalogManager).addRecord(eq(vf.createIRI(LOCAL_IRI)), any(Record.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
         verify(provUtils).startCreateActivity(user);
@@ -728,7 +723,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getRecordTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), recordFactory);
@@ -747,7 +742,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup
         when(catalogManager.getRecord(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(OrmFactory.class))).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI))
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 404);
     }
@@ -760,7 +755,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         recordWithAnotherObject.getModel().add(vf.createIRI("http://test.com/subject"), vf.createIRI("http://test.com/subject"), vf.createLiteral("test"));
         when(catalogManager.getRecord(any(Resource.class), any(Resource.class), any(OrmFactory.class))).thenReturn(Optional.of(recordWithAnotherObject));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(newIRI))
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(newIRI))
                 .request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(newIRI), recordFactory);
@@ -779,7 +774,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getRecord(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(OrmFactory.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI))
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -789,7 +784,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getRecord(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(OrmFactory.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 500);
     }
@@ -798,7 +793,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void removeRecordTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 200);
         IRI recordIri = vf.createIRI(RECORD_IRI);
@@ -814,7 +809,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         doThrow(new IllegalArgumentException()).when(catalogManager)
                 .removeRecord(vf.createIRI(LOCAL_IRI), recordIri, recordFactory);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI))
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 400);
         verify(provUtils).startDeleteActivity(user, recordIri);
@@ -828,7 +823,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         doThrow(new MobiException()).when(catalogManager)
                 .removeRecord(vf.createIRI(LOCAL_IRI), recordIri, recordFactory);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 500);
         verify(provUtils).startDeleteActivity(user, recordIri);
@@ -843,7 +838,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         JSONObject record = new JSONObject().element("@id", RECORD_IRI)
                 .element("@type", new JSONArray().element(Record.TYPE));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().put(Entity.json(record.toString()));
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).updateRecord(eq(vf.createIRI(LOCAL_IRI)), any(Record.class));
@@ -852,7 +847,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void updateRecordWithInvalidJsonTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().put(Entity.json("['test': true]"));
         assertEquals(response.getStatus(), 400);
     }
@@ -863,7 +858,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         JSONObject record = new JSONObject().element("@id", ERROR_IRI)
                 .element("@type", new JSONArray().element(Record.TYPE));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().put(Entity.json(record.toString()));
         assertEquals(response.getStatus(), 400);
     }
@@ -887,7 +882,7 @@ public class CatalogRestTest extends MobiRestTestNg {
                 .element("@type", new JSONArray().element(Record.TYPE));
         doThrow(new MobiException()).when(catalogManager).updateRecord(eq(vf.createIRI(LOCAL_IRI)), any(Record.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().put(Entity.json(record.toString()));
         assertEquals(response.getStatus(), 500);
     }
@@ -896,7 +891,19 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getKeywordsTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/keywords")
+        String[] keywordsCount = {"1,4", "2,1", "3,1", "4,1", "5,1", "6,1", "7,4", "8,1", "9,1", "10,1", "11,2"};
+
+        KeywordCount keywordCount1 = new KeywordCount(vf.createLiteral("1"), 4);
+
+        when(keywordResults.getPage()).thenReturn(Collections.singletonList(keywordCount1));
+        when(keywordResults.getPageNumber()).thenReturn(0);
+        when(keywordResults.getPageSize()).thenReturn(10);
+        when(keywordResults.getTotalSize()).thenReturn(50);
+
+        when(catalogManager.getKeywords(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(keywordResults);
+
+
+        Response response = target().path(CATALOG_URL_LOCAL + "/keywords")
                 .queryParam("offset", 0)
                 .queryParam("limit", 10)
                 .request().get();
@@ -919,7 +926,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getUnversionedDistributionsTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue())
                 .queryParam("offset", 0)
                 .queryParam("limit", 10)
@@ -946,7 +953,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         distributions.forEach(distribution -> distribution.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue())));
         when(catalogManager.getUnversionedDistributions(any(Resource.class), any(Resource.class))).thenReturn(distributions);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue())
                 .queryParam("offset", 1)
                 .queryParam("limit", 1).request().get();
@@ -955,7 +962,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         Set<Link> links = response.getLinks();
         assertEquals(links.size(), 2);
         links.forEach(link -> {
-            assertTrue(link.getUri().getRawPath().contains("catalogs/" + encode(LOCAL_IRI) + "/records/"
+            assertTrue(link.getUri().getRawPath().contains(CATALOG_URL_LOCAL + "/records/"
                     + encode(RECORD_IRI) + "/distributions"));
             assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
         });
@@ -963,28 +970,28 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getUnversionedDistributionsWithInvalidSortIriTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.DESCRIPTION.stringValue()).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getUnversionedRecordsWithNegativeOffsetTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getUnversionedRecordsWithNegativeLimitTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getUnversionedRecordsWithOffsetThatIsTooLargeTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", 100).request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -994,7 +1001,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getUnversionedDistributions(vf.createIRI(LOCAL_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI) + "/distributions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -1004,7 +1011,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getUnversionedDistributions(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
         assertEquals(response.getStatus(), 500);
     }
@@ -1021,7 +1028,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("accessURL", "http://example.com/Example");
         fd.field("downloadURL", "http://example.com/Example");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), DISTRIBUTION_IRI);
@@ -1034,7 +1041,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("description", "Description");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -1045,7 +1052,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
     }
@@ -1056,7 +1063,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         doThrow(new IllegalArgumentException()).when(catalogManager).addUnversionedDistribution(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(Distribution.class));
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI) + "/distributions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/distributions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -1067,7 +1074,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title");
         doThrow(new MobiException()).when(catalogManager).createDistribution(any(DistributionConfig.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/distributions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
@@ -1076,7 +1083,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getUnversionedDistributionTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 200);
@@ -1089,7 +1096,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(catalogManager.getUnversionedDistribution(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI))).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(ERROR_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 404);
@@ -1100,7 +1107,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getUnversionedDistribution(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(ERROR_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 400);
@@ -1111,7 +1118,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getUnversionedDistribution(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(DISTRIBUTED_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(DISTRIBUTED_IRI)).request().get();
         assertEquals(response.getStatus(), 500);
     }
@@ -1120,7 +1127,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void removeUnversionedDistributionTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 200);
@@ -1132,7 +1139,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).removeUnversionedDistribution(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(ERROR_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 400);
@@ -1143,7 +1150,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).removeUnversionedDistribution(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(DISTRIBUTION_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 500);
@@ -1157,7 +1164,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         JSONObject distribution = new JSONObject().element("@id", DISTRIBUTION_IRI)
                 .element("@type", new JSONArray().element(Distribution.TYPE));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().put(Entity.json(distribution.toString()));
         assertEquals(response.getStatus(), 200);
@@ -1167,7 +1174,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void updateUnversionedDistributionWithInvalidJsonTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().put(Entity.json("['test': true]"));
         assertEquals(response.getStatus(), 400);
@@ -1178,7 +1185,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         //Setup:
         JSONObject distribution = new JSONObject().element("@id", ERROR_IRI);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().put(Entity.json(distribution.toString()));
         assertEquals(response.getStatus(), 400);
@@ -1190,7 +1197,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         JSONObject distribution = new JSONObject().element("@id", DISTRIBUTION_IRI);
         doThrow(new IllegalArgumentException()).when(catalogManager).updateUnversionedDistribution(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(Distribution.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI)
                 + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().put(Entity.json(distribution.toString()));
         assertEquals(response.getStatus(), 400);
@@ -1202,7 +1209,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         JSONObject distribution = new JSONObject().element("@id", DISTRIBUTION_IRI);
         doThrow(new MobiException()).when(catalogManager).updateUnversionedDistribution(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Distribution.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(DISTRIBUTION_IRI)).request().put(Entity.json(distribution.toString()));
         assertEquals(response.getStatus(), 400);
     }
@@ -1211,7 +1218,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getVersionsTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue())
                 .queryParam("offset", 0)
                 .queryParam("limit", 10)
@@ -1238,7 +1245,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         versions.forEach(version -> version.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue())));
         when(catalogManager.getVersions(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI))).thenReturn(versions);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue())
                 .queryParam("offset", 1)
                 .queryParam("limit", 1).request().get();
@@ -1247,7 +1254,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         Set<Link> links = response.getLinks();
         assertEquals(links.size(), 2);
         links.forEach(link -> {
-            assertTrue(link.getUri().getRawPath().contains("catalogs/" + encode(LOCAL_IRI) + "/records/"
+            assertTrue(link.getUri().getRawPath().contains(CATALOG_URL_LOCAL + "/records/"
                     + encode(RECORD_IRI) + "/versions"));
             assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
         });
@@ -1255,28 +1262,28 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getVersionsWithInvalidSortIriTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .queryParam("sort", DCTERMS.DESCRIPTION.stringValue()).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getVersionsWithNegativeOffsetTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getVersionsWithNegativeLimitTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getVersionsWithOffsetThatIsTooLargeTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", 100).request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -1286,7 +1293,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getVersions(vf.createIRI(LOCAL_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI) + "/versions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/versions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -1296,7 +1303,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getVersions(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
         assertEquals(response.getStatus(), 500);
     }
@@ -1318,7 +1325,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         //Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("type", Version.TYPE);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -1330,7 +1337,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("type", Thing.TYPE);
         fd.field("title", "Title");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -1343,7 +1350,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("type", Version.TYPE);
         fd.field("title", "Title");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
     }
@@ -1356,7 +1363,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("title", "Title");
         doThrow(new IllegalArgumentException()).when(catalogManager).addVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(Version.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI) + "/versions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/versions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -1369,7 +1376,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("title", "Title");
         doThrow(new MobiException()).when(catalogManager).addVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Version.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
@@ -1385,7 +1392,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("iri", "urn:test");
         fd.field("commit", COMMIT_IRIS[0]);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/tags")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), "urn:test");
@@ -1397,7 +1404,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         //Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("iri", "urn:test").field("commit", COMMIT_IRIS[0]);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/tags")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -1407,7 +1414,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         //Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title").field("commit", COMMIT_IRIS[0]);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/tags")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -1417,7 +1424,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         //Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title").field("iri", "urn:test");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/tags")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -1430,7 +1437,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("iri", "urn:test");
         fd.field("commit", COMMIT_IRIS[1]);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/tags")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -1444,7 +1451,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("iri", "urn:test");
         fd.field("commit", COMMIT_IRIS[0]);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/tags")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
     }
@@ -1458,7 +1465,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("commit", COMMIT_IRIS[0]);
         doThrow(new MobiException()).when(catalogManager).addVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Tag.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/tags")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
@@ -1467,7 +1474,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getLatestVersionTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions/latest")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions/latest")
                 .request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getLatestVersion(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), versionFactory);
@@ -1479,7 +1486,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(catalogManager.getLatestVersion(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), versionFactory)).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions/latest")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions/latest")
                 .request().get();
         assertEquals(response.getStatus(), 404);
     }
@@ -1489,7 +1496,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getLatestVersion(vf.createIRI(LOCAL_IRI), vf.createIRI(ERROR_IRI), versionFactory);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI) + "/versions/latest")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/versions/latest")
                 .request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -1499,7 +1506,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getLatestVersion(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), versionFactory);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions/latest")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions/latest")
                 .request().get();
         assertEquals(response.getStatus(), 500);
     }
@@ -1508,7 +1515,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getVersionTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 200);
@@ -1521,7 +1528,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(catalogManager.getVersion(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI), versionFactory)).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 404);
@@ -1532,7 +1539,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getVersion(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI), versionFactory);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 400);
@@ -1543,7 +1550,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getVersion(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI), versionFactory);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 500);
@@ -1553,7 +1560,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void removeVersionTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 200);
@@ -1565,7 +1572,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).removeVersion(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 400);
@@ -1576,7 +1583,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).removeVersion(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 500);
@@ -1590,7 +1597,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         JSONObject version = new JSONObject().element("@id", VERSION_IRI)
                 .element("@type", new JSONArray().element(Version.TYPE));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
                 .request().put(Entity.json(version.toString()));
         assertEquals(response.getStatus(), 200);
@@ -1600,7 +1607,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void updateVersionWithInvalidJsonTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
                 .request().put(Entity.json("['test': true]"));
         assertEquals(response.getStatus(), 400);
@@ -1611,7 +1618,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         //Setup:
         JSONObject version = new JSONObject().element("@id", ERROR_IRI);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
                 .request().put(Entity.json(version.toString()));
         assertEquals(response.getStatus(), 400);
@@ -1623,7 +1630,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         JSONObject version = new JSONObject().element("@id", VERSION_IRI);
         doThrow(new IllegalArgumentException()).when(catalogManager).updateVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Version.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
                 .request().put(Entity.json(version.toString()));
         assertEquals(response.getStatus(), 400);
@@ -1635,7 +1642,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         JSONObject version = new JSONObject().element("@id", VERSION_IRI).element("@type", new JSONArray().element(Version.TYPE));
         doThrow(new MobiException()).when(catalogManager).updateVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Version.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
                 .request().put(Entity.json(version.toString()));
         assertEquals(response.getStatus(), 500);
@@ -1645,7 +1652,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getVersionedDistributionsTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue())
                 .queryParam("offset", 0)
@@ -1673,7 +1680,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         distributions.forEach(distribution -> distribution.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue())));
         when(catalogManager.getVersionedDistributions(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI))).thenReturn(distributions);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue())
                 .queryParam("offset", 1)
@@ -1683,7 +1690,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         Set<Link> links = response.getLinks();
         assertEquals(links.size(), 2);
         links.forEach(link -> {
-            assertTrue(link.getUri().getRawPath().contains("catalogs/" + encode(LOCAL_IRI) + "/records/"
+            assertTrue(link.getUri().getRawPath().contains(CATALOG_URL_LOCAL + "/records/"
                     + encode(RECORD_IRI) + "/versions/" + encode(VERSION_IRI) + "/distributions"));
             assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
         });
@@ -1691,7 +1698,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getVersionedDistributionsWithInvalidSortIriTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.DESCRIPTION.stringValue()).request().get();
         assertEquals(response.getStatus(), 400);
@@ -1699,7 +1706,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getVersionedDistributionsWithNegativeOffsetTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", -1).request().get();
         assertEquals(response.getStatus(), 400);
@@ -1707,7 +1714,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getVersionedDistributionsWithNonPositiveLimitTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", -1).request().get();
         assertEquals(response.getStatus(), 400);
@@ -1715,7 +1722,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getVersionedDistributionsWithOffsetThatIsTooLargeTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", 100).request().get();
         assertEquals(response.getStatus(), 400);
@@ -1726,7 +1733,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getVersionedDistributions(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
         assertEquals(response.getStatus(), 400);
@@ -1737,7 +1744,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getVersionedDistributions(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
         assertEquals(response.getStatus(), 500);
@@ -1755,7 +1762,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("accessURL", "http://example.com/Example");
         fd.field("downloadURL", "http://example.com/Example");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
@@ -1769,7 +1776,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("description", "Description");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
@@ -1781,7 +1788,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
@@ -1793,7 +1800,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title");
         doThrow(new IllegalArgumentException()).when(catalogManager).addVersionedDistribution(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(ERROR_IRI)), any(Distribution.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI) + "/distributions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
@@ -1805,7 +1812,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title");
         doThrow(new MobiException()).when(catalogManager).addVersionedDistribution(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(VERSION_IRI)), any(Distribution.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
@@ -1815,7 +1822,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getVersionedDistributionTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 200);
@@ -1828,7 +1835,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(catalogManager.getVersionedDistribution(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI), vf.createIRI(ERROR_IRI))).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(ERROR_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 404);
@@ -1839,7 +1846,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getVersionedDistribution(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(ERROR_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 400);
@@ -1850,7 +1857,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getVersionedDistribution(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI), vf.createIRI(DISTRIBUTION_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 500);
@@ -1860,7 +1867,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void removeVersionedDistributionTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 200);
@@ -1872,7 +1879,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).removeVersionedDistribution(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(ERROR_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 400);
@@ -1883,7 +1890,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).removeVersionedDistribution(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI), vf.createIRI(DISTRIBUTION_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 500);
@@ -1897,7 +1904,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         JSONObject distribution = new JSONObject().element("@id", DISTRIBUTION_IRI)
                 .element("@type", new JSONArray().element(Distribution.TYPE));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().put(Entity.json(distribution.toString()));
         assertEquals(response.getStatus(), 200);
@@ -1907,7 +1914,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void updateVersionedDistributionWithInvalidJsonTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().put(Entity.json("['test': true]"));
         assertEquals(response.getStatus(), 400);
@@ -1918,7 +1925,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         //Setup:
         JSONObject distribution = new JSONObject().element("@id", ERROR_IRI);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().put(Entity.json(distribution.toString()));
         assertEquals(response.getStatus(), 400);
@@ -1930,7 +1937,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         JSONObject distribution = new JSONObject().element("@id", DISTRIBUTION_IRI);
         doThrow(new IllegalArgumentException()).when(catalogManager).updateVersionedDistribution(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(ERROR_IRI)), any(Distribution.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().put(Entity.json(distribution.toString()));
         assertEquals(response.getStatus(), 400);
@@ -1942,7 +1949,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         JSONObject distribution = new JSONObject().element("@id", DISTRIBUTION_IRI).element("@type", new JSONArray().element(Distribution.TYPE));
         doThrow(new MobiException()).when(catalogManager).updateVersionedDistribution(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(VERSION_IRI)), any(Distribution.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
                 .request().put(Entity.json(distribution.toString()));
         assertEquals(response.getStatus(), 500);
@@ -1952,7 +1959,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getVersionCommitTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/commit")
                 .request().get();
         assertEquals(response.getStatus(), 200);
@@ -1975,7 +1982,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getTaggedCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI) + "/commit")
                 .request().get();
         assertEquals(response.getStatus(), 400);
@@ -1986,13 +1993,13 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getTaggedCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/commit")
                 .request().get();
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).getTaggedCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI));
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/commit")
                 .request().get();
         assertEquals(response.getStatus(), 500);
@@ -2002,7 +2009,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getBranchesTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .queryParam("sort", DCTERMS.TITLE.stringValue())
                 .queryParam("offset", 0)
                 .queryParam("limit", 10)
@@ -2025,7 +2032,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         testUserBranch.setProperty(vf.createLiteral(USER_IRI + "/0"), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .queryParam("sort", DCTERMS.TITLE.stringValue())
                 .queryParam("offset", 0)
                 .queryParam("limit", 10)
@@ -2054,7 +2061,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         branches.forEach(branch -> branch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue())));
         when(catalogManager.getBranches(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI))).thenReturn(branches);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .queryParam("sort", DCTERMS.TITLE.stringValue())
                 .queryParam("offset", 1)
                 .queryParam("limit", 1).request().get();
@@ -2063,7 +2070,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         Set<Link> links = response.getLinks();
         assertEquals(links.size(), 2);
         links.forEach(link -> {
-            assertTrue(link.getUri().getRawPath().contains("catalogs/" + encode(LOCAL_IRI) + "/records/"
+            assertTrue(link.getUri().getRawPath().contains(CATALOG_URL_LOCAL + "/records/"
                     + encode(RECORD_IRI) + "/branches"));
             assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
         });
@@ -2071,7 +2078,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getBranchesWithoutSortTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .queryParam("offset", 0)
                 .queryParam("limit", 10)
                 .request().get();
@@ -2090,21 +2097,21 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getBranchesWithNegativeOffsetTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getBranchesWithNegativeLimitTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("limit", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getBranchesWithOffsetThatIsTooLargeTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", 100).request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -2114,7 +2121,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getBranches(vf.createIRI(LOCAL_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/branches")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -2124,7 +2131,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getBranches(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
         assertEquals(response.getStatus(), 500);
     }
@@ -2146,7 +2153,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         //Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("type", Branch.TYPE);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -2159,7 +2166,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("title", "Title");
         fd.field("commitId", COMMIT_IRIS[1]);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -2171,7 +2178,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("type", Thing.TYPE);
         fd.field("title", "Title");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -2185,7 +2192,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("title", "Title");
         fd.field("commitId", COMMIT_IRIS[0]);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
     }
@@ -2198,7 +2205,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("title", "Title");
         doThrow(new IllegalArgumentException()).when(catalogManager).addBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(Branch.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/branches")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -2212,7 +2219,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("commitId", COMMIT_IRIS[0]);
         doThrow(new MobiException()).when(catalogManager).addBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Branch.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
@@ -2221,7 +2228,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getMasterBranchTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches/master")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches/master")
                 .request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getMasterBranch(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI));
@@ -2233,7 +2240,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(vf.createIRI(LOCAL_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI) + "/branches/master")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/branches/master")
                 .request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -2243,12 +2250,12 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getMasterBranch(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches/master")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches/master")
                 .request().get();
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).getMasterBranch(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI));
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches/master")
+        response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches/master")
                 .request().get();
         assertEquals(response.getStatus(), 500);
     }
@@ -2257,7 +2264,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getBranchTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 200);
@@ -2270,7 +2277,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(catalogManager.getBranch(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI), branchFactory)).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 404);
@@ -2281,7 +2288,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getBranch(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI), branchFactory);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 400);
@@ -2292,7 +2299,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getBranch(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), branchFactory);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI)).request().get();
         assertEquals(response.getStatus(), 500);
     }
@@ -2301,7 +2308,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void removeBranchTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 200);
@@ -2313,7 +2320,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).removeBranch(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 400);
@@ -2324,7 +2331,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).removeBranch(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 500);
@@ -2338,7 +2345,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         JSONObject branch = new JSONObject().element("@id", BRANCH_IRI)
                 .element("@type", new JSONArray().element(Branch.TYPE));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
                 .request().put(Entity.json(branch.toString()));
         assertEquals(response.getStatus(), 200);
@@ -2348,7 +2355,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void updateBranchWithInvalidJsonTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
                 .request().put(Entity.json("['test': true]"));
         assertEquals(response.getStatus(), 400);
@@ -2359,7 +2366,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         //Setup:
         JSONObject branch = new JSONObject().element("@id", ERROR_IRI);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
                 .request().put(Entity.json(branch.toString()));
         assertEquals(response.getStatus(), 400);
@@ -2371,7 +2378,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         JSONObject branch = new JSONObject().element("@id", BRANCH_IRI);
         doThrow(new IllegalArgumentException()).when(catalogManager).updateBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(Branch.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
                 .request().put(Entity.json(branch.toString()));
         assertEquals(response.getStatus(), 400);
@@ -2383,7 +2390,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         JSONObject branch = new JSONObject().element("@id", BRANCH_IRI).element("@type", new JSONArray().element(Branch.TYPE));
         doThrow(new MobiException()).when(catalogManager).updateBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Branch.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
                 .request().put(Entity.json(branch.toString()));
         assertEquals(response.getStatus(), 500);
@@ -2393,7 +2400,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getCommitChainTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .request().get();
         assertEquals(response.getStatus(), 200);
@@ -2416,7 +2423,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getCommitChainWithPaginationTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits").queryParam("offset", 0).queryParam("limit", 10)
                 .request().get();
         assertEquals(response.getStatus(), 200);
@@ -2439,7 +2446,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getCommitChainWithPaginationAndLinksTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits").queryParam("offset", 1).queryParam("limit", 1)
                 .request().get();
         assertEquals(response.getStatus(), 200);
@@ -2449,7 +2456,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         Set<Link> links = response.getLinks();
         assertEquals(links.size(), 2);
         links.forEach(link -> {
-            assertTrue(link.getUri().getRawPath().contains("catalogs/" + encode(LOCAL_IRI) + "/records/"
+            assertTrue(link.getUri().getRawPath().contains(CATALOG_URL_LOCAL + "/records/"
                     + encode(RECORD_IRI) + "/branches/" + encode(BRANCH_IRI) + "/commits"));
             assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
         });
@@ -2469,7 +2476,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getCommitChain(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/commits")
                 .request().get();
         assertEquals(response.getStatus(), 400);
@@ -2480,13 +2487,13 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getCommitChain(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .request().get();
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).getCommitChain(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI));
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .request().get();
         assertEquals(response.getStatus(), 500);
@@ -2494,7 +2501,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getCommitChainWithTargetIdTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .queryParam("targetId", BRANCH_IRI)
                 .request().get();
@@ -2520,7 +2527,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void createBranchCommitTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 201);
@@ -2533,7 +2540,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 401);
@@ -2544,7 +2551,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(ERROR_IRI)), any(User.class), eq("Message"));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 400);
@@ -2555,13 +2562,13 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"));
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits")
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 500);
@@ -2571,7 +2578,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getHeadTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/head")
                 .request().get();
         assertEquals(response.getStatus(), 200);
@@ -2594,7 +2601,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/commits/head")
                 .request().get();
         assertEquals(response.getStatus(), 400);
@@ -2605,13 +2612,13 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/head")
                 .request().get();
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI));
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/head")
                 .request().get();
         assertEquals(response.getStatus(), 500);
@@ -2621,7 +2628,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getBranchCommitTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[1]))
                 .request().get();
         assertEquals(response.getStatus(), 200);
@@ -2644,7 +2651,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(catalogManager.getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(ERROR_IRI))).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(ERROR_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 404);
@@ -2655,7 +2662,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(ERROR_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 400);
@@ -2666,13 +2673,13 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(COMMIT_IRIS[1]));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[1]))
                 .request().get();
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(COMMIT_IRIS[1]));
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[1]))
                 .request().get();
         assertEquals(response.getStatus(), 500);
@@ -2682,7 +2689,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getDifferenceTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/difference")
                 .queryParam("targetId", BRANCH_IRI).request().get();
         assertEquals(response.getStatus(), 200);
@@ -2699,7 +2706,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getDifferenceWithoutTargetTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/difference").request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -2709,7 +2716,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/difference")
                 .queryParam("targetId", BRANCH_IRI).request().get();
         assertEquals(response.getStatus(), 400);
@@ -2720,13 +2727,13 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getDifference(vf.createIRI(COMMIT_IRIS[0]), vf.createIRI(COMMIT_IRIS[0]));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/difference")
                 .queryParam("targetId", BRANCH_IRI).request().get();
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).getDifference(vf.createIRI(COMMIT_IRIS[0]), vf.createIRI(COMMIT_IRIS[0]));
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/difference")
                 .queryParam("targetId", BRANCH_IRI).request().get();
         assertEquals(response.getStatus(), 500);
@@ -2736,7 +2743,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getConflictsTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts")
                 .queryParam("targetId", BRANCH_IRI).request().get();
         assertEquals(response.getStatus(), 200);
@@ -2761,7 +2768,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getConflictsWithoutTargetTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts").request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -2771,7 +2778,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/conflicts")
                 .queryParam("targetId", BRANCH_IRI).request().get();
         assertEquals(response.getStatus(), 400);
@@ -2782,13 +2789,13 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getConflicts(vf.createIRI(COMMIT_IRIS[0]), vf.createIRI(COMMIT_IRIS[0]));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts")
                 .queryParam("targetId", BRANCH_IRI).request().get();
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).getConflicts(vf.createIRI(COMMIT_IRIS[0]), vf.createIRI(COMMIT_IRIS[0]));
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts")
                 .queryParam("targetId", BRANCH_IRI).request().get();
         assertEquals(response.getStatus(), 500);
@@ -2807,7 +2814,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("additions", adds.toString());
         fd.field("deletions", deletes.toString());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts/resolution")
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
@@ -2824,7 +2831,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("additions", adds.toString());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/conflicts/resolution")
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
@@ -2839,7 +2846,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("additions", adds.toString());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts/resolution")
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
@@ -2854,13 +2861,13 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("additions", adds.toString());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts/resolution")
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(versioningManager).merge(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class));
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts/resolution")
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
@@ -2870,7 +2877,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getCompiledResourceAsJsonldTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .queryParam("format", "jsonld").request().get();
         assertEquals(response.getStatus(), 200);
@@ -2881,7 +2888,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getCompiledResourceAsTurtleTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .queryParam("format", "turtle").request().get();
         assertEquals(response.getStatus(), 200);
@@ -2892,7 +2899,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getCompiledResourceAsRdfxmlTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .queryParam("format", "rdf/xml").request().get();
         assertEquals(response.getStatus(), 200);
@@ -2903,7 +2910,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getCompiledResourceApplyInProgressCommitTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .queryParam("applyInProgressCommit", "true").request().get();
         assertEquals(response.getStatus(), 200);
@@ -2918,7 +2925,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(catalogManager.getInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class))).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .queryParam("applyInProgressCommit", "true").request().get();
         assertEquals(response.getStatus(), 200);
@@ -2933,7 +2940,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .queryParam("applyInProgressCommit", "true").request().get();
         assertEquals(response.getStatus(), 401);
@@ -2944,7 +2951,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(ERROR_IRI) + "/resource")
                 .request().get();
         assertEquals(response.getStatus(), 400);
@@ -2955,13 +2962,13 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(COMMIT_IRIS[0]));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .request().get();
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(COMMIT_IRIS[0]));
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .request().get();
         assertEquals(response.getStatus(), 500);
@@ -2971,7 +2978,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void downloadCompiledResourceAsJsonldTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .queryParam("format", "jsonld").queryParam("fileName", "fileName").request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM).get();
@@ -2984,7 +2991,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void downloadCompiledResourceAsTurtleTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .queryParam("format", "turtle").queryParam("fileName", "fileName").request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM).get();
@@ -2997,7 +3004,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void downloadCompiledResourceAsRdfxmlTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .queryParam("format", "rdf/xml").queryParam("fileName", "fileName").request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM).get();
@@ -3010,7 +3017,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void downloadCompiledResourceApplyInProgressCommitTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .queryParam("applyInProgressCommit", "true").request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
         assertEquals(response.getStatus(), 200);
@@ -3025,7 +3032,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(catalogManager.getInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class))).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .queryParam("applyInProgressCommit", "true").request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
         assertEquals(response.getStatus(), 200);
@@ -3039,7 +3046,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .queryParam("applyInProgressCommit", "true").request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
         assertEquals(response.getStatus(), 401);
@@ -3050,7 +3057,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(ERROR_IRI));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(ERROR_IRI) + "/resource")
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
         assertEquals(response.getStatus(), 400);
@@ -3061,13 +3068,13 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(COMMIT_IRIS[0]));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(COMMIT_IRIS[0]));
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+        response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
         assertEquals(response.getStatus(), 500);
@@ -3077,7 +3084,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void createInProgressCommitTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).createInProgressCommit(any(User.class));
@@ -3089,7 +3096,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).addInProgressCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(ERROR_IRI), testInProgressCommit);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
                 .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
@@ -3099,7 +3106,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 401);
     }
@@ -3109,7 +3116,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).addInProgressCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), testInProgressCommit);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 500);
     }
@@ -3118,7 +3125,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getInProgressCommitInJsonldTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .queryParam("format", "jsonld").request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class));
@@ -3136,7 +3143,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getInProgressCommitInTurtleTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .queryParam("format", "turtle").request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class));
@@ -3154,7 +3161,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void getInProgressCommitInRdfxmlTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .queryParam("format", "rdf/xml").request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class));
@@ -3175,7 +3182,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(catalogManager.getInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(User.class))).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
                 .request().get();
         assertEquals(response.getStatus(), 404);
     }
@@ -3185,7 +3192,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(User.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
                 .request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -3195,7 +3202,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().get();
         assertEquals(response.getStatus(), 401);
     }
@@ -3205,12 +3212,12 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).getInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().get();
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).getInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class));
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().get();
         assertEquals(response.getStatus(), 500);
     }
@@ -3219,7 +3226,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     @Test
     public void removeInProgressCommitTest() {
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().delete();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).removeInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class));
@@ -3230,7 +3237,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).removeInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(User.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
                 .request().delete();
         assertEquals(response.getStatus(), 400);
     }
@@ -3240,7 +3247,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().delete();
         assertEquals(response.getStatus(), 401);
     }
@@ -3250,12 +3257,12 @@ public class CatalogRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new MobiException()).when(catalogManager).removeInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().delete();
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).removeInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class));
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().delete();
         assertEquals(response.getStatus(), 500);
     }
@@ -3273,7 +3280,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("additions", adds.toString());
         fd.field("deletions", deletes.toString());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         verify(bNodeService, atLeastOnce()).deskolemize(any(Model.class));
@@ -3289,7 +3296,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("additions", adds.toString());
         doThrow(new IllegalArgumentException()).when(catalogManager).updateInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(User.class), any(Model.class), any(Model.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
                 .request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -3303,7 +3310,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("additions", adds.toString());
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
     }
@@ -3317,12 +3324,12 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("additions", adds.toString());
         doThrow(new MobiException()).when(catalogManager).updateInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class), any(Model.class), any(Model.class));
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).updateInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class), any(Model.class), any(Model.class));
-        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
+        response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
                 .request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
@@ -3372,7 +3379,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("markdown", "#Markdown");
         fd.field("keywords", "keyword");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), RECORD_IRI);
@@ -3396,7 +3403,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("title", "Title");
         fd.field("description", "Description");
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), VERSION_IRI);
@@ -3412,7 +3419,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("description", "Description");
         fd.field("commitId", COMMIT_IRIS[0]);
 
-        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertTrue(response.readEntity(String.class).contains(BRANCH_IRI));

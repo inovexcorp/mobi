@@ -25,6 +25,8 @@ package com.mobi.catalog.api.builder;
 
 import com.mobi.rdf.api.Literal;
 
+import java.util.Objects;
+
 public class KeywordCount {
     private Literal keyword;
     private Integer keywordCount;
@@ -47,4 +49,16 @@ public class KeywordCount {
         return "KC(" + keyword + ", " + keywordCount + ")";
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        KeywordCount that = (KeywordCount) o;
+        return Objects.equals(keyword, that.keyword) && Objects.equals(keywordCount, that.keywordCount);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(keyword, keywordCount);
+    }
 }
