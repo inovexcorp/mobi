@@ -176,7 +176,7 @@ export class SimplePreference implements Preference {
                 newFormGroup.addControl(control, new FormControl(fieldsTemplate[control], Validators.required));
                 fg.addControl(control, newFormGroup);
             }
-            (form.get('formBlocks') as FormArray).push(fg); // Ask Robert how to write this line better
+            (form.get('formBlocks') as FormArray).push(fg);
         });
 
         return form;

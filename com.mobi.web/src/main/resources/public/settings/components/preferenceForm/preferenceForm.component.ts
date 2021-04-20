@@ -29,6 +29,8 @@ import { filter } from 'lodash';
 /**
  * @ngdoc component
  * @name settings.component:preferenceForm
+ * @requires shared.service.utilService
+ * @requires shared.service.prefixes
  *
  * @description
  * `preferenceForm` is a component that contains a form allowing a user to change their preferences

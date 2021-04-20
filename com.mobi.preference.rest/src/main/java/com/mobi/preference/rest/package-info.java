@@ -1,9 +1,10 @@
-import { FormGroup } from "@angular/forms";
-import { IntegerList } from "antlr4ts/misc/IntegerList";
+@Version("1.0.0.${build}")
+
+package com.mobi.preference.rest;
 
 /*-
  * #%L
- * com.mobi.web
+ * com.mobi.preference.rest
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,23 +24,5 @@ import { IntegerList } from "antlr4ts/misc/IntegerList";
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-export interface Preference {
-    json: any;
-    formFieldPropertyShapes: any;
-    formFieldProperties: Array<string>;
-    values: Array<any>;
-    requiredPropertyShape: any;
-    topLevelPreferenceNodeshapeInstanceId: string;
-    topLevelPreferenceNodeshapeInstance: any;
-    label: string;
-    type: string;
-    populate(userPreference): void;
-    numValues(): number;
-    addValue(value): void;
-    addBlankValue(): void;
-    buildForm(): FormGroup;
-    updateWithFormValues(form: FormGroup): void;
-    stripBlankValues(): void;
-    exists(): boolean;
-    asJsonLD(): Array<any>;
-}
+
+import aQute.bnd.annotation.Version;

@@ -27,20 +27,21 @@ import { PreferenceUtils } from '../../classes/preferenceUtils.class'
 import { Preference } from '../../interfaces/preference.interface';
 import { SimplePreference } from '../../classes/simplePreference.class';
 
+/**
+ * @ngdoc component
+ * @name settings.component:preferenceGroup
+ * @requires shared.service:preferenceManagerService
+ * @requires shared.service.utilService
+ * @requires shared.service.prefixes
+ *
+ * @description
+ * `preferenceGroup` is a component that consisting of a series of {@link settings.component:preferenceForm preferenceForm}.
+ */
 @Component({
     selector: 'preference-group',
     templateUrl: './preferenceGroup.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-
-/**
- * @ngdoc component
- * @name settings.component:preferenceGroup
- * @requires shared.service:preferenceManagerService
- *
- * @description
- * `preferenceGroup` is a component that consisting of a series of {@link settings.component:preferenceForm preferenceForm}.
- */
 export class PreferenceGroupComponent implements OnChanges {
     @Input() group;
 

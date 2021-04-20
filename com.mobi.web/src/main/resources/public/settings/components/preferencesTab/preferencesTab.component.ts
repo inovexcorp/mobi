@@ -29,16 +29,19 @@ import './preferencesTab.component.scss';
 /**
  * @name settings.PreferencesTabComponent
  * @requires shared.service:preferenceManagerService
+ * @requires shared.service.utilService
+ * @requires shared.service.prefixes
  *
- * `preferencesTab` is a component that creates a Bootstrap `row` with a both a sidebar containing Preference Groups configured in the application as well as another section displaying the various preference forms contained within that preference group.
+ * `preferencesTab` is a component that creates a Bootstrap `row` with a both a sidebar 
+ * containing Preference Groups configured in the application as well as another section 
+ * displaying the various preference forms contained within that preference group.
  */
 @Component({
     selector: 'preferences-tab',
     templateUrl: './preferencesTab.component.html'
 })
-
 export class PreferencesTabComponent implements OnInit {
-    tabs = [];
+    tabs: { type: string, heading: string, active: boolean }[] = []
     
     constructor(@Inject('preferenceManagerService') private pm, @Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
     
@@ -58,7 +61,7 @@ export class PreferencesTabComponent implements OnInit {
         });
     }
 
-    select(selectedTab): void {
+    select(selectedTab: { type: string, heading: string, active:boolean }): void {
         forEach(this.tabs, tab => {
             if (tab.active && !isEqual(tab, selectedTab)) {
                 tab.active = false;
@@ -69,14 +72,14 @@ export class PreferencesTabComponent implements OnInit {
 
     setPreferenceTabs(): void {
         this.pm.getPreferenceGroups()
-        .then(response => {
-            this.tabs = [];
-            forEach(response.data, preferenceGroup => {
-                this.addTab(preferenceGroup);
-            });
-            if (this.tabs.length) {
-                this.tabs[0].active = true;
-            }
-        }, (errorMessage) => this.util.createErrorToast(errorMessage));
+            .then(response => {
+                this.tabs = [];
+                forEach(response.data, preferenceGroup => {
+                    this.addTab(preferenceGroup);
+                });
+                if (this.tabs.length) {
+                    this.tabs[0].active = true;
+                }
+            }, (errorMessage) => this.util.createErrorToast(errorMessage));
     }
 }

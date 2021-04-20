@@ -23,18 +23,19 @@
 import { Component, Input, OnChanges, Inject } from '@angular/core';
 import { Validators, ValidatorFn, FormControl, FormGroup } from '@angular/forms';
 
-@Component({
-    selector: 'preference-form-field',
-    templateUrl: './preferenceFormField.component.html'
-})
-
 /**
  * @ngdoc component
  * @name settings.component:preferenceFormField
+ * @requires shared.service.utilService
+ * @requires shared.service.prefixes
  *
  * @description
  * `preferenceFormField` is a component that create form input(s) for a specific form field
  */
+@Component({
+    selector: 'preference-form-field',
+    templateUrl: './preferenceFormField.component.html'
+})
 export class PreferenceFormFieldComponent implements OnChanges {
     @Input() fieldFormGroup: FormGroup;
     @Input() fieldShaclProperty: string;

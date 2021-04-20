@@ -20,6 +20,10 @@
     
                 a {
                     color: gray;
+
+                    &.active {
+                        color: var(--primary) !important;
+                    }
                 }
             }
         }
