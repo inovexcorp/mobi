@@ -39,7 +39,7 @@
     window.onload = function() {
       // Begin Swagger UI call region
       const ui = SwaggerUIBundle({
-        url: "https://localhost:8443/swagger-ui/mobi-swagger.yaml",
+        url: window.location.origin + "/swagger-ui/mobi-swagger.yaml",
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [
@@ -47,7 +47,21 @@
           SwaggerUIStandalonePreset
         ],
         plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl
+          SwaggerUIBundle.plugins.DownloadUrl,
+          {
+            statePlugins: {
+                spec: {
+                    wrapActions: {
+                        updateJsonSpec: function(oriAction, system) {
+                            return (spec) => {
+                                spec.servers = spec.servers.map(server => {return {'url': window.location.origin + server.url }})
+                                return oriAction(spec)
+                            }
+                        }
+                    }
+                }
+            }
+        }
         ],
         layout: "StandaloneLayout",
         apisSorter: "alpha",

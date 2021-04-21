@@ -82,7 +82,6 @@ import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -98,6 +97,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 public class SimpleOntology implements Ontology {
 
@@ -399,6 +399,7 @@ public class SimpleOntology implements Ontology {
             boolean datasetIriExists = conn.containsContext(datasetIRI);
             boolean datasetSdNgExists = conn.containsContext(
                     OntologyDatasets.createSystemDefaultNamedGraphIRI(datasetIRI, vf));
+            boolean catalogImport = datasetIRI.stringValue().startsWith(OntologyDatasets.DEFAULT_DS_NAMESPACE);
 
             // Fully loaded ontology dataset and SdNg
             if (datasetIriExists) {
@@ -418,12 +419,13 @@ public class SimpleOntology implements Ontology {
                         .forEach(unresolvedImports::add);
             }
             // Web import that has yet to have dataset graph created for it, but SdNg exists.
-            else if (datasetSdNgExists) {
+            else if (datasetSdNgExists && !catalogImport) {
                 Map<String, Set<IRI>> imports = loadOntologyIntoCache(null, true);
                 this.importsClosure = imports.get(CLOSURE_KEY);
                 this.unresolvedImports = imports.get(UNRESOLVED_KEY);
             }
             // Import was updated with Catalog version while web versioned exists in cache
+            // Or catalog import whose SDNG has been added to cache but not the dataset graph
             else {
                 IRI commitIri = OntologyDatasets.getCommitFromDatasetIRI(datasetIRI, vf);
                 File ontologyFile = this.catalogManager.getCompiledResourceFile(commitIri);
@@ -1516,11 +1518,25 @@ public class SimpleOntology implements Ontology {
                 .collect(Collectors.toList());
         if (removedImports.size() > 0) {
             // Get all the imports directly on the ontology
+            // Includes newly added direct imports in the Difference
             Set<IRI> directImports = this.getImportedOntologyIRIs(conn);
-            Set<IRI> importClosureIris = new HashSet<>();
-            Set<IRI> unresolved = new HashSet<>();
+
+            // Get all unresolved imports including Difference
+            Set<IRI> updatedUnresolvedImports = conn.getStatements(datasetIRI,
+                    vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), null, datasetIRI)
+                    .stream()
+                    .map(Statement::getObject)
+                    .filter(obj -> obj instanceof IRI)
+                    .map(obj -> vf.createIRI(obj.stringValue()))
+                    .collect(Collectors.toSet());
+            directImports.removeAll(updatedUnresolvedImports);
+
+            // Calculate any newly added unresolved imports and add to temporary unresolved set
+            updatedUnresolvedImports.removeAll(this.unresolvedImports);
+            Set<IRI> unresolved = new HashSet<>(updatedUnresolvedImports);
 
             // Add the ontologyIRI of this to the imports closure
+            Set<IRI> importClosureIris = new HashSet<>();
             conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()),
                     vf.createIRI(OWL.ONTOLOGY.stringValue()), conn.getSystemDefaultNamedGraph())
                     .stream().map(Statement::getSubject)
@@ -1548,6 +1564,9 @@ public class SimpleOntology implements Ontology {
             conn.remove(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), null, datasetIRI);
             conn.remove(datasetIRI, vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), null, datasetIRI);
             conn.remove(datasetIRI, vf.createIRI(Dataset.defaultNamedGraph_IRI), null, datasetIRI);
+
+            // Don't process unresolved imports
+            importClosureIris.removeAll(unresolved);
 
             // Add the default graphs and imports statements for the updated closure
             IRI ontologyIRI = getOntologyIRI(conn);

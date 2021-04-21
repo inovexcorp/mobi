@@ -62,12 +62,23 @@ public class SimplePreferenceService implements PreferenceService {
     private static final String PREFERENCE_TYPE_BINDING = "preferenceType";
     private static final String USER_BINDING = "user";
     private static final String GET_USER_PREFERENCE;
+    private static final String GET_PREFERENCE_DEFINITIONS;
+    private static final String GET_PREFERENCE_GROUPS;
+
     private Resource context;
 
     static {
         try {
             GET_USER_PREFERENCE = IOUtils.toString(
                     SimplePreferenceService.class.getResourceAsStream("/get-user-preference.rq"), StandardCharsets.UTF_8
+            );
+            GET_PREFERENCE_DEFINITIONS = IOUtils.toString(
+                    SimplePreferenceService.class.getResourceAsStream("/get-preference-definitions.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_PREFERENCE_GROUPS = IOUtils.toString(
+                    SimplePreferenceService.class.getResourceAsStream("/get-preference-groups.rq"),
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -214,6 +225,23 @@ public class SimplePreferenceService implements PreferenceService {
             newPreference.addForUser(user);
             conn.add(newPreference.getModel(), context);
             conn.commit();
+        }
+    }
+
+    @Override
+    public Model getPreferenceDefinitions(Resource preferenceGroup) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            GraphQuery query = conn.prepareGraphQuery(GET_PREFERENCE_DEFINITIONS);
+            query.setBinding("group", preferenceGroup);
+            return QueryResults.asModel(query.evaluate(), mf);
+        }
+    }
+
+    @Override
+    public Model getPreferenceGroups() {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            GraphQuery query = conn.prepareGraphQuery(GET_PREFERENCE_GROUPS);
+            return QueryResults.asModel(query.evaluate(), mf);
         }
     }
 

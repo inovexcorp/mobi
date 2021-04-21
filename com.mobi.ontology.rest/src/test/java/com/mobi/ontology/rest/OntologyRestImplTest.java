@@ -124,6 +124,8 @@ import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -4732,7 +4734,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 any(User.class))).thenReturn(Optional.empty());
 
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("test-ontology.ttl")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue())
@@ -4756,7 +4763,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 any(User.class))).thenReturn(Optional.empty());
         when(catalogManager.getMasterBranch(eq(catalogId), eq(recordId))).thenReturn(branch);
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("test-ontology.ttl")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("commitId", commitId.stringValue())
@@ -4779,7 +4791,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 any(User.class))).thenReturn(Optional.empty());
         when(catalogManager.getHeadCommit(eq(catalogId), eq(recordId), eq(branchId))).thenReturn(commit);
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("test-ontology.ttl")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue())
@@ -4800,7 +4817,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId), any(User.class))).thenReturn(Optional.of(inProgressCommit));
 
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/search-results.json"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("search-results.json")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/search-results.json"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue())
@@ -4821,7 +4843,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
 
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("test-ontology.ttl")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue())

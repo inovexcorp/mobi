@@ -1,0 +1,4 @@
+<https://mobi.com/ontologies/multipleunresolved2> a <http://www.w3.org/2002/07/owl#Ontology>;
+  <http://purl.org/dc/terms/title> "multipleunresolved2" ;
+  <http://www.w3.org/2002/07/owl#imports> <https://mobi.com/ontologies/unresolvable4.owl>;
+  <http://www.w3.org/2002/07/owl#imports> <https://mobi.com/ontologies/unresolvable5.owl> .

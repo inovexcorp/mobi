@@ -1,0 +1,35 @@
+@import "../../../css/variables";
+
+.preferences-tab {
+    .preferences-info {
+        font-size: 16px;
+    }
+
+    .preferences-sidebar {
+        min-width: 150px;
+    }
+
+    .material-tabset {
+        padding-top: 15px; 
+        align-items: flex-end;
+
+        .sidebar-list {
+            min-width: 100px;
+
+            .preference-group-item {
+                border-right: solid gray; 
+                display: block; 
+                padding: .5rem .1rem; 
+                font-weight: 500;
+    
+                a {
+                    color: gray;
+
+                    &.active {
+                        color: var(--primary) !important;
+                    }
+                }
+            }
+        }
+    }
+}

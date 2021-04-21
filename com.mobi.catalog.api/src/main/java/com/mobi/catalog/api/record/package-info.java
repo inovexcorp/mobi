@@ -1,4 +1,4 @@
-@Version("3.7.2.${build}")
+@Version("3.7.3.${build}")
 
 package com.mobi.catalog.api.record;
 

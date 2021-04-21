@@ -26,6 +26,7 @@ package com.mobi.preference.api;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.preference.api.ontologies.Preference;
 import com.mobi.preference.api.ontologies.Setting;
+import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 
 import java.util.Optional;
@@ -103,4 +104,21 @@ public interface PreferenceService {
      * @return The {@link Resource} associated with the subclass of preference for the provided {@link Preference}
      */
     Resource getPreferenceType(Preference preference);
+
+    /**
+     * Retrieves all shacl shapes in the repo transitively referenced by {@link Preference}'s that are part of the
+     * passed in {@link com.mobi.preference.api.ontologies.PreferenceGroup}.
+     *
+     * @param preferenceGroup The IRI of a {@link com.mobi.preference.api.ontologies.PreferenceGroup}
+     * @return The shacl shapes transitively referenced by {@link Preference}'s that are part of the passed in
+     * {@link com.mobi.preference.api.ontologies.PreferenceGroup}
+     */
+    Model getPreferenceDefinitions(Resource preferenceGroup);
+
+    /**
+     * Retrieves all {@link com.mobi.preference.api.ontologies.PreferenceGroup}'s defined in the repo.
+     *
+     * @return The {@link com.mobi.preference.api.ontologies.PreferenceGroup}'s defined in the repo
+     */
+    Model getPreferenceGroups();
 }

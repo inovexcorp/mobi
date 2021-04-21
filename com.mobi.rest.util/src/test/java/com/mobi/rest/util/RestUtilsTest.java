@@ -33,6 +33,8 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
@@ -560,6 +562,41 @@ public class RestUtilsTest {
             assertEquals(400, ex.getResponse().getStatus());
         }
 
+    }
+
+    @Test
+    public void createJsonErrorObjectNoDelimiterTest() throws Exception {
+        ObjectNode result = RestUtils.createJsonErrorObject(new IllegalStateException("Exception"));
+        ObjectNode expected = new ObjectMapper().readValue("{\"error\": \"IllegalStateException\", \"errorMessage\" : \"Exception\", \"errorDetails\": []}", ObjectNode.class);
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void createJsonErrorObjectDelimitedTest() throws Exception {
+        ObjectNode result = RestUtils.createJsonErrorObject(new IllegalStateException("Exception;;;detail1;;;detail2"), ";;;");
+        ObjectNode expected = new ObjectMapper().readValue("{\"error\": \"IllegalStateException\", \"errorMessage\" : \"Exception\", \"errorDetails\": [\"detail1\", \"detail2\"]}", ObjectNode.class);
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void createJsonErrorObjectDelimitedWrongDelimiterTest() throws Exception {
+        ObjectNode result = RestUtils.createJsonErrorObject(new IllegalStateException("Exception;;;detail1;;;detail2"), "~~~");
+        ObjectNode expected = new ObjectMapper().readValue("{\"error\": \"IllegalStateException\", \"errorMessage\" : \"Exception;;;detail1;;;detail2\", \"errorDetails\": []}", ObjectNode.class);
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void getErrorObjBadRequestTest() {
+        MobiWebException exception = RestUtils.getErrorObjBadRequest(new IllegalStateException("Exception"));
+        assertEquals("Exception", exception.getMessage());
+        assertEquals(400, exception.getResponse().getStatus());
+    }
+
+    @Test
+    public void getErrorObjInternalServerErrorTest() {
+        MobiWebException exception = RestUtils.getErrorObjInternalServerError(new IllegalStateException("Exception"));
+        assertEquals("Exception", exception.getMessage());
+        assertEquals(500, exception.getResponse().getStatus());
     }
 
     private void setUpModels() {
