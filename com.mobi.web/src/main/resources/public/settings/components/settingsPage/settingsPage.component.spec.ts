@@ -36,6 +36,7 @@ import { GroupTabComponent } from '../groupTab/groupTab.component';
 import { PasswordTabComponent } from '../passwordTab/passwordTab.component';
 import { ProfileTabComponent } from '../profileTab/profileTab.component';
 import { SettingsPageComponent } from './settingsPage.component';
+import { PreferencesTabComponent } from '../preferencesTab/preferencesTab.component';
 
 describe('Settings Page component', function() {
     let component: SettingsPageComponent;
@@ -52,7 +53,8 @@ describe('Settings Page component', function() {
                 SettingsPageComponent,
                 MockComponent(GroupTabComponent),
                 MockComponent(PasswordTabComponent),
-                MockComponent(ProfileTabComponent)
+                MockComponent(ProfileTabComponent),
+                MockComponent(PreferencesTabComponent)
             ]
         });
     });
@@ -93,6 +95,13 @@ describe('Settings Page component', function() {
                 expect(component.profileTab.reset).not.toHaveBeenCalled();
                 expect(component.passwordTab.reset).toHaveBeenCalled();
             });
+            it('to the preferences tab', function() {
+                const event = new MatTabChangeEvent();
+                event.index = 3;
+                component.onTabChanged(event);
+                expect(component.profileTab.reset).not.toHaveBeenCalled();
+                expect(component.passwordTab.reset).not.toHaveBeenCalled();
+            });
         });
     });
     describe('contains the correct html', function() {
@@ -101,7 +110,7 @@ describe('Settings Page component', function() {
         });
         it('with .mat-tab-labels', function() {
             fixture.detectChanges();
-            expect(element.queryAll(By.css('.mat-tab-label')).length).toEqual(3);
+            expect(element.queryAll(By.css('.mat-tab-label')).length).toEqual(4);
         });
         it('with a mat-tab-group', function() {
             fixture.detectChanges();
@@ -110,7 +119,8 @@ describe('Settings Page component', function() {
         [
             {el: 'profile-tab', idx: 0},
             {el: 'group-tab', idx: 1},
-            {el: 'password-tab', idx: 2}
+            {el: 'password-tab', idx: 2},
+            {el: 'preferences-tab', idx: 3}
         ].forEach(test => {
             it('with a ' + test.el, fakeAsync(function() {
                 fixture.detectChanges();

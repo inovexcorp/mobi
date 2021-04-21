@@ -25,7 +25,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { downgradeComponent } from '@angular/upgrade/static';
-import { MatFormFieldModule, MatInputModule, MatButtonModule, ErrorStateMatcher } from '@angular/material';
+import { MatFormFieldModule, MatInputModule, MatButtonModule, ErrorStateMatcher, MatIconModule, MatSlideToggleModule } from '@angular/material';
 
 import actionMenuComponent from './components/actionMenu/actionMenu.component';
 import blockComponent from './components/block/block.component';
@@ -121,6 +121,7 @@ import ontologyManagerService from './services/ontologyManager.service';
 import ontologyStateService from './services/ontologyState.service';
 import policyEnforcementService from './services/policyEnforcement.service';
 import policyManagerService from './services/policyManager.service';
+import preferenceManagerService from './services/preferenceManager.service';
 import prefixes from './services/prefixes.service';
 import propertyManagerService from './services/propertyManager.service';
 import provManagerService from './services/provManager.service';
@@ -139,11 +140,13 @@ import {
     httpServiceProvider,
     loginManagerServiceProvider,
     prefixesProvider,
+    preferenceManagerServiceProvider,
     provManagerServiceProvider,
     userManagerServiceProvider,
     utilServiceProvider,
     ontologyStateServiceProvider,
     discoverStateServiceProvider,
+    settingsManagerServiceProvider,
 } from '../ajs.upgradedProviders';
 
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
@@ -165,7 +168,9 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
         ReactiveFormsModule,
         MatFormFieldModule,
         MatInputModule,
-        MatButtonModule
+        MatButtonModule,
+        MatIconModule,
+        MatSlideToggleModule
     ],
     declarations: [
         ErrorDisplayComponent,
@@ -182,6 +187,8 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
         FormsModule,
         ReactiveFormsModule,
         MatButtonModule,
+        MatIconModule,
+        MatSlideToggleModule,
         MatFormFieldModule,
         MatInputModule,
         ErrorDisplayComponent,
@@ -191,9 +198,11 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
     providers: [
         loginManagerServiceProvider,
         utilServiceProvider,
+        preferenceManagerServiceProvider,
         provManagerServiceProvider,
         prefixesProvider,
         httpServiceProvider,
+        settingsManagerServiceProvider,
         userManagerServiceProvider,
         ontologyStateServiceProvider,
         discoverStateServiceProvider,
@@ -294,6 +303,7 @@ angular.module('shared', [])
     .service('ontologyStateService', ontologyStateService)
     .service('policyEnforcementService', policyEnforcementService)
     .service('policyManagerService', policyManagerService)
+    .service('preferenceManagerService', preferenceManagerService)
     .service('prefixes', prefixes)
     .service('propertyManagerService', propertyManagerService)
     .service('provManagerService', provManagerService)

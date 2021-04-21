@@ -31,6 +31,11 @@ import { GroupTabComponent } from './components/groupTab/groupTab.component';
 import { PasswordTabComponent } from './components/passwordTab/passwordTab.component';
 import { ProfileTabComponent } from './components/profileTab/profileTab.component';
 import { SettingsPageComponent } from './components/settingsPage/settingsPage.component';
+import { PreferencesTabComponent } from './components/preferencesTab/preferencesTab.component';
+import { PreferenceGroupComponent } from './components/preferenceGroup/preferenceGroup.component';
+import { PreferenceFormComponent } from './components/preferenceForm/preferenceForm.component';
+import { PreferenceFormFieldComponent } from './components/preferenceFormField/preferenceFormField.component';
+import { TrustedHtmlPipe } from '../shared/pipes/trustedHtml.pipe';
 
 @NgModule({
     imports: [
@@ -41,7 +46,12 @@ import { SettingsPageComponent } from './components/settingsPage/settingsPage.co
         SettingsPageComponent,
         ProfileTabComponent,
         GroupTabComponent,
-        PasswordTabComponent
+        PasswordTabComponent,
+        PreferencesTabComponent,
+        PreferenceGroupComponent,
+        PreferenceFormComponent,
+        PreferenceFormFieldComponent,
+        TrustedHtmlPipe
     ],
     entryComponents: [
         SettingsPageComponent
@@ -58,4 +68,8 @@ angular.module('settings', [])
     .directive('groupTab', downgradeComponent({component: GroupTabComponent}) as angular.IDirectiveFactory)
     .component('passwordTab', downgradeComponent({component: PasswordTabComponent}) as angular.IDirectiveFactory)
     .directive('profileTab', downgradeComponent({component: ProfileTabComponent}) as angular.IDirectiveFactory)
-    .directive('settingsPage', downgradeComponent({component: SettingsPageComponent}) as angular.IDirectiveFactory);
+    .directive('settingsPage', downgradeComponent({component: SettingsPageComponent}) as angular.IDirectiveFactory)
+    .directive('preferencesTab', downgradeComponent({component: PreferencesTabComponent}) as angular.IDirectiveFactory)
+    .directive('preferenceGroup', downgradeComponent({component: PreferenceGroupComponent}) as angular.IDirectiveFactory)
+    .directive('preferenceForm', downgradeComponent({component: PreferenceFormComponent}) as angular.IDirectiveFactory)
+    .directive('preferenceFormField', downgradeComponent({component: PreferenceFormFieldComponent}) as angular.IDirectiveFactory);

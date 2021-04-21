@@ -20,21 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="settings-page h-100">
-    <!-- NOTE: Loads each tab content eagerly, i.e. right away. Starting with Angular Material 6, we can switch this to
-        lazy loading (with manual destroy) which will be critical for modules like the Ontology Editor -->
-    <mat-tab-group dynamicHeight="true" (selectedTabChange)="onTabChanged($event)">
-        <mat-tab label="Profile">
-            <profile-tab></profile-tab>
-        </mat-tab>
-        <mat-tab label="Groups">
-            <group-tab></group-tab>
-        </mat-tab>
-        <mat-tab label="Password">
-            <password-tab></password-tab>
-        </mat-tab>
-        <mat-tab label="Preferences">
-            <preferences-tab></preferences-tab>
-        </mat-tab>
-    </mat-tab-group>
+<error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+<div *ngFor="let preferenceIRI of preferenceIRIs">
+    <preference-form (updateEvent)="updateUserPreference($event)" [preference]="preferences[preferenceIRI]"></preference-form>
 </div>
