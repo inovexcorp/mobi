@@ -61,12 +61,12 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.io.File;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -217,12 +217,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
     public void noRecordsInCatalogTest() throws Exception {
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.emptySet());
 
-        Path path = getFilePath();
-        OutputStream os = Files.newOutputStream(path);
-        RecordExportConfig exportConfig = new RecordExportConfig.Builder(os, RDFFormat.TRIG).build();
-        service.export(exportConfig);
-
-        Model model = Models.createModel("trig", Files.newInputStream(path), transformer);
+        Model model = callExportAndGetModel();
         assertEquals(0, model.size());
     }
 
@@ -230,12 +225,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
     public void unversionedRecordInCatalogTest() throws Exception {
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(unversionedRecordIRI));
 
-        Path path = getFilePath();
-        OutputStream os = Files.newOutputStream(path);
-        RecordExportConfig exportConfig = new RecordExportConfig.Builder(os, RDFFormat.TRIG).build();
-        service.export(exportConfig);
-
-        Model model = Models.createModel("trig", Files.newInputStream(path), transformer);
+        Model model = callExportAndGetModel();
         assertTrue(model.containsAll(unversionedRecord.getModel()));
         assertFalse(model.containsAll(versionedRDFRecord.getModel()));
     }
@@ -244,13 +234,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
     public void unversionedRecordSpecifiedTest() throws Exception {
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(unversionedRecordIRI));
 
-        Path path = getFilePath();
-        OutputStream os = Files.newOutputStream(path);
-        RecordExportConfig exportConfig = new RecordExportConfig.Builder(os, RDFFormat.TRIG)
-                .records(Collections.singleton(unversionedRecordIRI.stringValue())).build();
-        service.export(exportConfig);
-
-        Model model = Models.createModel("trig", Files.newInputStream(path), transformer);
+        Model model = callExportAndGetModel(unversionedRecordIRI);
         assertTrue(model.containsAll(unversionedRecord.getModel()));
         assertFalse(model.containsAll(versionedRDFRecord.getModel()));
     }
@@ -259,12 +243,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
     public void versionedRDFRecordInCatalogOneBranchTest() throws Exception {
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
 
-        Path path = getFilePath();
-        OutputStream os = Files.newOutputStream(path);
-        RecordExportConfig exportConfig = new RecordExportConfig.Builder(os, RDFFormat.TRIG).build();
-        service.export(exportConfig);
-
-        Model model = Models.createModel("trig", Files.newInputStream(path), transformer);
+        Model model = callExportAndGetModel();
         assertTrue(model.containsAll(baseCommit.getModel()));
         assertTrue(model.containsAll(headCommit.getModel()));
         assertTrue(model.containsAll(masterBranch.getModel()));
@@ -279,12 +258,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
         versionedRDFRecord.addBranch(secondBranch);
 
-        Path path = getFilePath();
-        OutputStream os = Files.newOutputStream(path);
-        RecordExportConfig exportConfig = new RecordExportConfig.Builder(os, RDFFormat.TRIG).build();
-        service.export(exportConfig);
-
-        Model model = Models.createModel("trig", Files.newInputStream(path), transformer);
+        Model model = callExportAndGetModel();
         assertTrue(model.containsAll(baseCommit.getModel()));
         assertTrue(model.containsAll(headCommit.getModel()));
         assertTrue(model.containsAll(masterBranch.getModel()));
@@ -298,14 +272,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
 
     @Test
     public void versionedRDFRecordSpecifiedOneBranchTest() throws Exception {
-
-        Path path = getFilePath();
-        OutputStream os = Files.newOutputStream(path);
-        RecordExportConfig exportConfig = new RecordExportConfig.Builder(os, RDFFormat.TRIG)
-                .records(Collections.singleton(versionedRDFRecordIRI.stringValue())).build();
-        service.export(exportConfig);
-
-        Model model = Models.createModel("trig", Files.newInputStream(path), transformer);
+        Model model = callExportAndGetModel(versionedRDFRecordIRI);
         assertTrue(model.containsAll(baseCommit.getModel()));
         assertTrue(model.containsAll(headCommit.getModel()));
         assertTrue(model.containsAll(masterBranch.getModel()));
@@ -319,13 +286,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
     public void versionedRDFRecordSpecifiedTwoBranchesTest() throws Exception {
         versionedRDFRecord.addBranch(secondBranch);
 
-        Path path = getFilePath();
-        OutputStream os = Files.newOutputStream(path);
-        RecordExportConfig exportConfig = new RecordExportConfig.Builder(os, RDFFormat.TRIG)
-                .records(Collections.singleton(versionedRDFRecordIRI.stringValue())).build();
-        service.export(exportConfig);
-
-        Model model = Models.createModel("trig", Files.newInputStream(path), transformer);
+        Model model = callExportAndGetModel(versionedRDFRecordIRI);
         assertTrue(model.containsAll(baseCommit.getModel()));
         assertTrue(model.containsAll(headCommit.getModel()));
         assertTrue(model.containsAll(masterBranch.getModel()));
@@ -342,12 +303,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
         when(catalogManager.getVersions(eq(catalogIRI), eq(versionedRDFRecordIRI))).thenReturn(Collections.singleton(tag1));
 
-        Path path = getFilePath();
-        OutputStream os = Files.newOutputStream(path);
-        RecordExportConfig exportConfig = new RecordExportConfig.Builder(os, RDFFormat.TRIG).build();
-        service.export(exportConfig);
-
-        Model model = Models.createModel("trig", Files.newInputStream(path), transformer);
+        Model model = callExportAndGetModel();
         assertTrue(model.containsAll(baseCommit.getModel()));
         assertTrue(model.containsAll(headCommit.getModel()));
         assertTrue(model.containsAll(masterBranch.getModel()));
@@ -365,12 +321,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
 
         versionedRDFRecord.addBranch(secondBranch);
 
-        Path path = getFilePath();
-        OutputStream os = Files.newOutputStream(path);
-        RecordExportConfig exportConfig = new RecordExportConfig.Builder(os, RDFFormat.TRIG).build();
-        service.export(exportConfig);
-
-        Model model = Models.createModel("trig", Files.newInputStream(path), transformer);
+        Model model = callExportAndGetModel();
         assertTrue(model.containsAll(baseCommit.getModel()));
         assertTrue(model.containsAll(headCommit.getModel()));
         assertTrue(model.containsAll(masterBranch.getModel()));
@@ -387,10 +338,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
         when(catalogManager.getRecord(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(recordFactory))).thenReturn(Optional.empty());
 
-        Path path = getFilePath();
-        OutputStream os = Files.newOutputStream(path);
-        RecordExportConfig exportConfig = new RecordExportConfig.Builder(os, RDFFormat.TRIG).build();
-        service.export(exportConfig);
+        callExportAndGetModel();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -398,10 +346,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
         when(catalogManager.getRecord(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(versionedRDFRecordFactory))).thenReturn(Optional.empty());
 
-        Path path = getFilePath();
-        OutputStream os = Files.newOutputStream(path);
-        RecordExportConfig exportConfig = new RecordExportConfig.Builder(os, RDFFormat.TRIG).build();
-        service.export(exportConfig);
+        callExportAndGetModel();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -409,10 +354,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
         when(catalogManager.getBranch(eq(catalogIRI), eq(versionedRDFRecordIRI), any(Resource.class), eq(branchFactory))).thenReturn(Optional.empty());
 
-        Path path = getFilePath();
-        OutputStream os = Files.newOutputStream(path);
-        RecordExportConfig exportConfig = new RecordExportConfig.Builder(os, RDFFormat.TRIG).build();
-        service.export(exportConfig);
+        callExportAndGetModel();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -420,14 +362,18 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(versionedRDFRecordIRI));
         when(catalogManager.getCommit(eq(catalogIRI), eq(versionedRDFRecordIRI), any(Resource.class), any(Resource.class))).thenReturn(Optional.empty());
 
-        Path path = getFilePath();
-        OutputStream os = Files.newOutputStream(path);
-        RecordExportConfig exportConfig = new RecordExportConfig.Builder(os, RDFFormat.TRIG).build();
-        service.export(exportConfig);
+        callExportAndGetModel();
     }
 
-    private Path getFilePath() throws Exception {
-        File outputFile = tempFolder.newFile();
-        return outputFile.toPath();
+    private Model callExportAndGetModel(Resource... recordsToExport) throws Exception {
+        Path path = tempFolder.newFile().toPath();
+        OutputStream os = Files.newOutputStream(path);
+        RecordExportConfig.Builder configBuilder = new RecordExportConfig.Builder(os, RDFFormat.TRIG);
+        if (recordsToExport.length > 0) {
+            Set<String> records = Stream.of(recordsToExport).map(Resource::stringValue).collect(Collectors.toSet());
+            configBuilder.records(records);
+        }
+        service.export(configBuilder.build());
+        return Models.createModel("trig", Files.newInputStream(path), transformer);
     }
 }
