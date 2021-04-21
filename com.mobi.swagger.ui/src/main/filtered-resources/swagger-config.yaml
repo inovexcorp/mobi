@@ -20,6 +20,6 @@ openAPI:
     title: Mobi
     description: 'Mobi REST API Documentation'
   servers:
-    - url: https://localhost:8443/mobirest
+    - url: /mobirest
   security:
     - basicAuth: []
