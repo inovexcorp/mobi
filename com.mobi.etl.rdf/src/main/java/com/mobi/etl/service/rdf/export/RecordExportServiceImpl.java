@@ -170,5 +170,9 @@ public class RecordExportServiceImpl implements RecordExportService {
                 revisionChanges.getDeletions().forEach(writer::handleStatement);
             }
         });
+
+        // Write Versions
+        catalogManager.getVersions(localCatalog, resource)
+                .forEach(version -> version.getModel().forEach(writer::handleStatement));
     }
 }
