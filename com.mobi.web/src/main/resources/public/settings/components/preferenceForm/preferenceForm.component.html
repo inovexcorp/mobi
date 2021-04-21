@@ -26,8 +26,8 @@
     <div formArrayName="formBlocks">
       <div *ngFor="let formBlock of formBlocks.controls; let n=index">
         <div [formGroupName]="n">
-          <div *ngFor="let formField of formBlock.controls | keyvalue">
-              <preference-form-field [fieldShaclProperty]="formField.key" [fieldFormGroup]="formField.value" [shaclShape]="shaclShapes[formField.key]"></preference-form-field>
+          <div *ngFor="let formField of formBlockKeys(n)">
+              <preference-form-field [fieldShaclProperty]="formField" [fieldFormGroup]="formBlock.controls[formField]" [shaclShape]="shaclShapes[formField]"></preference-form-field>
           </div>
           <button class="delete-block-button" mat-icon-button *ngIf="numValues > 1" type="button" (click)="deleteFormBlock(n)"><mat-icon>clear</mat-icon></button>
         </div>

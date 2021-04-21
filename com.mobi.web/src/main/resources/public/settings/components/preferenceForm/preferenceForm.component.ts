@@ -91,6 +91,11 @@ export class PreferenceFormComponent implements OnChanges {
         return this.form.get('formBlocks') as FormArray;
     }
 
+    formBlockKeys(n): Array<string> {
+        const formBlock: FormGroup = (this.form.get(['formBlocks', String(n)]) as FormGroup);
+        return Object.keys(formBlock.controls);
+    }
+
     submitForm() {
         this.preference.updateWithFormValues(this.form);
         this.updateEvent.emit(this.preference);

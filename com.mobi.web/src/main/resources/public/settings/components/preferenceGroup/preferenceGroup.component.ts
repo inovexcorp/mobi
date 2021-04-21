@@ -46,6 +46,7 @@ export class PreferenceGroupComponent implements OnChanges {
 
     errorMessage = '';
     preferences = {};
+    preferenceIRIs = [];
 
     constructor(@Inject('preferenceManagerService') private pm, @Inject('utilService') private util, @Inject('prefixes') private prefixes, private ref: ChangeDetectorRef) {}
 
@@ -79,6 +80,7 @@ export class PreferenceGroupComponent implements OnChanges {
                                 this.util.createErrorToast('Complex Preferences are not yet supported.');
                             }
                         });
+                        this.preferenceIRIs = Object.keys(this.preferences);
                         this.ref.markForCheck();
                     }, error => this.errorMessage = error);
             }, error => this.errorMessage = error);
