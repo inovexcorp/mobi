@@ -81,7 +81,7 @@ public interface CatalogManager {
     PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams);
 
     /**
-     * Return a list of keywords using the provided Catalog with provided PaginatedSearchParams
+     * Return a list of keywords using the provided Catalog with provided PaginatedSearchParams.
      *
      * @param catalogId    The Resource identifying the Catalog to find the Records in.
      * @param searchParams Search parameters.
