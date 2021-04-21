@@ -26,6 +26,7 @@ package com.mobi.catalog.api;
 import com.mobi.rdf.api.Resource;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -128,5 +129,34 @@ public class PaginatedSearchParams {
         public PaginatedSearchParams build() {
             return new PaginatedSearchParams(this);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PaginatedSearchParams that = (PaginatedSearchParams) o;
+        return offset == that.offset && Objects.equals(searchText, that.searchText) &&
+                Objects.equals(typeFilter, that.typeFilter) && Objects.equals(keywords, that.keywords) &&
+                Objects.equals(sortBy, that.sortBy) && Objects.equals(ascending, that.ascending) &&
+                Objects.equals(limit, that.limit);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(searchText, typeFilter, keywords, sortBy, ascending, limit, offset);
+    }
+
+    @Override
+    public String toString() {
+        return "PaginatedSearchParams{" +
+                "searchText='" + searchText + '\'' +
+                ", typeFilter=" + typeFilter +
+                ", keywords=" + keywords +
+                ", sortBy=" + sortBy +
+                ", ascending=" + ascending +
+                ", limit=" + limit +
+                ", offset=" + offset +
+                '}';
     }
 }

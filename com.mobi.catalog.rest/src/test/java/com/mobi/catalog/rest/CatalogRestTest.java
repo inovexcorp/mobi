@@ -542,7 +542,49 @@ public class CatalogRestTest extends MobiRestTestNg {
                 .queryParam("ascending", false)
                 .queryParam("searchText", "test").request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class));
+
+        PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder()
+                .searchText("test")
+                .typeFilter(vf.createIRI("http://mobi.com/ontologies/catalog#Record"))
+                .sortBy(vf.createIRI("http://purl.org/dc/terms/title"))
+                .offset(0)
+                .limit(10)
+                .ascending(false);
+
+        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()));
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.getTotalSize());
+        assertEquals(response.getLinks().size(), 0);
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), recordResults.getPage().size());
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getRecordsWithKeywordsTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records")
+                .queryParam("sort", DCTERMS.TITLE.stringValue())
+                .queryParam("type", Record.TYPE)
+                .queryParam("offset", 0)
+                .queryParam("limit", 10)
+                .queryParam("ascending", false)
+                .queryParam("searchText", "test")
+                .queryParam("keywords", "k1,k2,k3").request().get();
+        assertEquals(response.getStatus(), 200);
+
+        PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder()
+                .searchText("test")
+                .typeFilter(vf.createIRI("http://mobi.com/ontologies/catalog#Record"))
+                .keywords(Stream.of("k1", "k2", "k3").collect(Collectors.toList()))
+                .sortBy(vf.createIRI("http://purl.org/dc/terms/title"))
+                .offset(0)
+                .limit(10)
+                .ascending(false);
+
+        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.getTotalSize());
         assertEquals(response.getLinks().size(), 0);
@@ -889,26 +931,36 @@ public class CatalogRestTest extends MobiRestTestNg {
 
     // GET catalogs/{catalogId}/keywords
 
-    @Test
-    public void getKeywordsTest() {
-        String[] keywordsCount = {"1,4", "2,1", "3,1", "4,1", "5,1", "6,1", "7,4", "8,1", "9,1", "10,1", "11,2"};
+    private void setupKeywords(String[] keywordsCount) {
+        List<KeywordCount> keywordCounts = Arrays.stream(keywordsCount)
+                .map(e -> e.split("\\."))
+                .map(split -> new KeywordCount(vf.createLiteral(split[0]), Integer.parseInt(split[1])))
+                .collect(Collectors.toList());
 
-        KeywordCount keywordCount1 = new KeywordCount(vf.createLiteral("1"), 4);
-
-        when(keywordResults.getPage()).thenReturn(Collections.singletonList(keywordCount1));
+        when(keywordResults.getPage()).thenReturn(keywordCounts);
         when(keywordResults.getPageNumber()).thenReturn(0);
-        when(keywordResults.getPageSize()).thenReturn(10);
+        when(keywordResults.getPageSize()).thenReturn(keywordCounts.size());
         when(keywordResults.getTotalSize()).thenReturn(50);
 
         when(catalogManager.getKeywords(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(keywordResults);
+    }
 
+    @Test
+    public void getKeywordsTest() {
+        String[] keywordsCount = {"1.4", "2.1"};
+        setupKeywords(keywordsCount);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/keywords")
                 .queryParam("offset", 0)
                 .queryParam("limit", 10)
                 .request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getKeywords(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class));
+
+        PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder()
+                .offset(0)
+                .limit(10);
+
+        verify(catalogManager).getKeywords(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + keywordResults.getTotalSize());
         assertEquals(response.getLinks().size(), 0);
@@ -916,10 +968,65 @@ public class CatalogRestTest extends MobiRestTestNg {
             String responseString = response.readEntity(String.class);
             JSONArray result = JSONArray.fromObject(responseString);
             assertEquals(result.size(), keywordResults.getPage().size());
-            assertEquals("[{\"http://mobi.com/ontologies/catalog#keyword\":\"1\",\"count\":4}]", responseString);
+
+            String expected = "1.4,2.1";
+            Object actual = result.stream()
+                    .map(e -> ((JSONObject)e).get("http://mobi.com/ontologies/catalog#keyword").toString() + "." + ((JSONObject)e).get("count").toString() )
+                    .collect(Collectors.joining(","));
+            assertEquals(expected, actual);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
+    }
+
+    @Test
+    public void getKeywordsNegativeOffsetTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/keywords")
+                .queryParam("offset", -1)
+                .queryParam("limit", 10)
+                .request().get();
+
+        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatusInfo().toString(), "Bad Request");
+    }
+
+    @Test
+    public void getKeywordsNegativeLimitTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/keywords")
+                .queryParam("offset", 1)
+                .queryParam("limit", -1)
+                .request().get();
+
+        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatusInfo().toString(), "Bad Request");
+    }
+
+    @Test
+    public void getKeywordsIllegalArgumentExceptionTest() {
+        doThrow(new IllegalArgumentException())
+                .when(catalogManager).getKeywords(any(Resource.class), any(PaginatedSearchParams.class));
+
+        Response response = target().path(CATALOG_URL_LOCAL + "/keywords")
+                .queryParam("offset", 1)
+                .queryParam("limit", 1)
+                .request().get();
+
+        assertEquals(response.getStatus(), 400);
+        assertEquals(response.getStatusInfo().toString(), "Bad Request");
+    }
+
+    @Test
+    public void getKeywordsMobiExceptionTest() {
+        doThrow(new MobiException())
+                .when(catalogManager).getKeywords(any(Resource.class), any(PaginatedSearchParams.class));
+
+        Response response = target().path(CATALOG_URL_LOCAL + "/keywords")
+                .queryParam("offset", 1)
+                .queryParam("limit", 1)
+                .request().get();
+
+        assertEquals(response.getStatus(), 500);
+        assertEquals(response.getStatusInfo().toString(), "Internal Server Error");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/distributions
