@@ -158,8 +158,13 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
         baseCommit = commitFactoryOrm.createNew(baseCommitIRI);
         headCommit.setBaseCommit(baseCommit);
         masterBranch.setHead(headCommit);
-        Difference difference = new Difference.Builder().additions(mf.createModel()).deletions(mf.createModel()).build();
         versionedRDFRecord.setMasterBranch(masterBranch);
+        versionedRDFRecord.setBranch(Collections.singleton(masterBranch));
+        Difference difference = new Difference.Builder()
+                .additions(mf.createModel())
+                .deletions(mf.createModel())
+                .build();
+
         when(catalogManager.getBranch(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(masterBranchIRI), eq(branchFactory)))
                 .thenReturn(Optional.of(masterBranch));
         when(catalogManager.getCommitChain(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(masterBranchIRI)))
@@ -177,14 +182,6 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
         secondCommit.setBaseCommit(baseCommit);
         secondBranch.setHead(secondCommit);
 
-        // Setup Tags/Versions
-        tag1 = tagFactoryOrm.createNew(tag1IRI);
-        tag1.setCommit(baseCommit);
-        tag2 = tagFactoryOrm.createNew(tag2IRI);
-        tag2.setCommit(secondCommit);
-        when(catalogManager.getVersions(eq(catalogIRI), eq(versionedRDFRecordIRI))).thenReturn(Collections.emptySet());
-
-        versionedRDFRecord.setBranch(Collections.singleton(masterBranch));
         when(catalogManager.getRecord(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(recordFactory)))
                 .thenReturn(Optional.of(versionedRDFRecord));
         when(catalogManager.getRecord(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(versionedRDFRecordFactory)))
@@ -198,6 +195,14 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
         when(catalogManager.getCommit(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(secondBranchIRI), eq(baseCommitIRI)))
                 .thenReturn(Optional.of(baseCommit));
 
+        // Setup Tags/Versions
+        tag1 = tagFactoryOrm.createNew(tag1IRI);
+        tag1.setCommit(baseCommit);
+        tag2 = tagFactoryOrm.createNew(tag2IRI);
+        tag2.setCommit(secondCommit);
+        when(catalogManager.getVersions(eq(catalogIRI), eq(versionedRDFRecordIRI))).thenReturn(Collections.emptySet());
+
+        // General mock interactions
         when(transformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
         when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
                 .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
