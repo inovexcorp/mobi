@@ -35,11 +35,9 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
-import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -76,10 +74,8 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
     private ValueFactory vf;
     private ModelFactory mf;
 
-    private OrmFactory<Record> recordFactoryOrm = getRequiredOrmFactory(Record.class);
     private OrmFactory<UnversionedRecord> unversionedRecordFactoryOrm = getRequiredOrmFactory(UnversionedRecord.class);
     private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactoryOrm = getRequiredOrmFactory(VersionedRDFRecord.class);
-    private OrmFactory<Version> versionFactoryOrm = getRequiredOrmFactory(Version.class);
     private OrmFactory<Tag> tagFactoryOrm = getRequiredOrmFactory(Tag.class);
     private OrmFactory<Branch> branchFactoryOrm = getRequiredOrmFactory(Branch.class);
     private OrmFactory<Commit> commitFactoryOrm = getRequiredOrmFactory(Commit.class);
