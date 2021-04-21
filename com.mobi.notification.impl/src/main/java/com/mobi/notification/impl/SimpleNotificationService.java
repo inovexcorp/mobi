@@ -35,6 +35,7 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
@@ -59,7 +60,10 @@ public class SimpleNotificationService {
     SesameTransformer transformer;
 
     @Activate
+    @Modified
     protected void start() {
+        // Uncomment the below code when we implement the notification preferences
+        /**
         Model ontologyModel;
         try {
             ontologyModel = Models.createModel("ttl", NOTIFICATION_ONTOLOGY, transformer);
@@ -72,6 +76,7 @@ public class SimpleNotificationService {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             conn.add(ontologyModel, vf.createIRI(PreferenceService.GRAPH));
         }
+         **/
     }
 
     private void removeAttachedBNodes(Model model, Resource subject) {

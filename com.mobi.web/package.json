@@ -93,6 +93,7 @@
     "codemirror-no-newlines": "mnmercer/codemirror-no-newlines#feature/minified",
     "core-js": "~2.5.4",
     "daemonite-material": "^4.1.1",
+    "dompurify": "^2.2.6",
     "font-awesome": "^4.5.0",
     "handsontable": "^0.34.2",
     "jquery": "^3.3.1",

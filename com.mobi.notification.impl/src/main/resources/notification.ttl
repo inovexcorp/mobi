@@ -4,7 +4,6 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix sh: <http://www.w3.org/ns/shacl#>.
-@prefix um: <http://mobi.com/ontologies/user/management#>.
 @prefix pref: <http://mobi.com/ontologies/preference#>.
 @prefix : <http://mobi.com/ontologies/notification#>.
 @base <http://mobi.com/ontologies/notification>.
@@ -20,7 +19,7 @@
 
 :EmailNotificationPreference a owl:Class, sh:NodeShape;
     rdfs:subClassOf pref:Preference;
-    rdfs:label "Email Notification Preference"@en;
+    sh:description "Receive email notifications" ;
     rdfs:comment "A preference that a user can have within the Mobi framework that signifies whether they want to receive email notifications."@en;
     sh:property :EmailNotificationPreferencePropertyShape;
     pref:inGroup :NotificationPreferenceGroup .
@@ -29,6 +28,8 @@
     sh:path pref:hasDataValue;
     sh:datatype xsd:boolean;
     sh:minCount 1 ;
-    sh:maxCount 1 .
+    sh:maxCount 1 ;
+    pref:usesFormField pref:ToggleInput .
 
-:NotificationPreferenceGroup a pref:PreferenceGroup .
+:NotificationPreferenceGroup a pref:PreferenceGroup ;
+    rdfs:label "Notifications"@en .
