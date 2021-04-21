@@ -31,7 +31,6 @@ import {
 } from '../../../../../../test/ts/Shared';
 import { SharedModule } from "../../../shared/shared.module";
 import { PreferenceFormComponent } from '../preferenceForm/preferenceForm.component';
-import { KeyValuePipe } from '../../../shared/pipes/keyvalue.pipe';
 import { PreferenceConstants } from '../../classes/preferenceConstants.class';
 import { SimplePreference } from '../../classes/simplePreference.class';
 import { Preference } from '../../interfaces/preference.interface';
@@ -58,8 +57,7 @@ describe('Preference Form component', function() {
             ],
             declarations: [
                 MockComponent(PreferenceFormFieldComponent),
-                PreferenceFormComponent,
-                KeyValuePipe
+                PreferenceFormComponent
             ],
             providers: [
                 { provide: 'utilService', useClass: mockUtil },

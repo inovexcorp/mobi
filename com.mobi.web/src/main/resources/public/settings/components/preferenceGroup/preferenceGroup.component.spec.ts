@@ -36,7 +36,6 @@ import { SharedModule } from "../../../shared/shared.module";
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { PreferenceGroupComponent } from '../preferenceGroup/preferenceGroup.component';
 import { PreferenceFormComponent } from '../preferenceForm/preferenceForm.component';
-import { KeyValuePipe } from '../../../shared/pipes/keyvalue.pipe';
 import { PreferenceConstants } from '../../classes/preferenceConstants.class';
 import { SimplePreference } from '../../classes/simplePreference.class';
 import { By } from '@angular/platform-browser';
@@ -61,8 +60,7 @@ describe('Preference Group component', function() {
             ],
             declarations: [
                 MockComponent(PreferenceFormComponent),
-                PreferenceGroupComponent,
-                KeyValuePipe
+                PreferenceGroupComponent
             ],
             providers: [
                 { provide: 'preferenceManagerService', useClass: mockPreferenceManager },

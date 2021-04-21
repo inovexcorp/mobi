@@ -36,7 +36,6 @@ import { PreferenceGroupComponent } from './components/preferenceGroup/preferenc
 import { PreferenceFormComponent } from './components/preferenceForm/preferenceForm.component';
 import { PreferenceFormFieldComponent } from './components/preferenceFormField/preferenceFormField.component';
 import { TrustedHtmlPipe } from '../shared/pipes/trustedHtml.pipe';
-import { KeyValuePipe } from '../shared/pipes/keyvalue.pipe';
 
 @NgModule({
     imports: [
@@ -52,8 +51,7 @@ import { KeyValuePipe } from '../shared/pipes/keyvalue.pipe';
         PreferenceGroupComponent,
         PreferenceFormComponent,
         PreferenceFormFieldComponent,
-        TrustedHtmlPipe,
-        KeyValuePipe
+        TrustedHtmlPipe
     ],
     entryComponents: [
         SettingsPageComponent
