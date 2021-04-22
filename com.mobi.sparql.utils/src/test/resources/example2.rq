@@ -1,8 +1,0 @@
-PREFIX test: <http://test.com#>
-
-SELECT
-    ?s
-FROM <:g1>
-WHERE {
-    ?s a test:Thing .
-}

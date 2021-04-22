@@ -23,7 +23,6 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
-import com.google.common.collect.Iterables;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -132,6 +131,7 @@ public class SimpleOntology implements Ontology {
     private static final String GET_CONCEPT_SCHEME_RELATIONSHIPS;
     private static final String GET_SEARCH_RESULTS;
     private static final String GET_SUB_ANNOTATION_PROPERTIES_OF;
+    private static final String GET_ALL_CLASSES;
     private static final String GET_CLASS_DATA_PROPERTIES;
     private static final String GET_CLASS_OBJECT_PROPERTIES;
     private static final String GET_ALL_ANNOTATIONS;
@@ -140,6 +140,7 @@ public class SimpleOntology implements Ontology {
     private static final String GET_ALL_NO_DOMAIN_OBJECT_PROPERTIES;
     private static final String GET_ALL_NO_DOMAIN_DATA_PROPERTIES;
     private static final String GET_ALL_INDIVIDUALS;
+    private static final String GET_ONTOLOGY_ID;
     private static final String GET_ALL_DEPRECATED_IRIS;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
@@ -197,6 +198,10 @@ public class SimpleOntology implements Ontology {
                     SimpleOntology.class.getResourceAsStream("/get-sub-annotation-properties-of.rq"),
                     StandardCharsets.UTF_8
             );
+            GET_ALL_CLASSES = IOUtils.toString(
+                    SimpleOntology.class.getResourceAsStream("/get-all-classes.rq"),
+                    StandardCharsets.UTF_8
+            );
             GET_CLASS_DATA_PROPERTIES = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-class-data-properties.rq"),
                     StandardCharsets.UTF_8
@@ -233,6 +238,10 @@ public class SimpleOntology implements Ontology {
                     SimpleOntology.class.getResourceAsStream("/get-all-deprecated-iris.rq"),
                     StandardCharsets.UTF_8
             );
+            GET_ONTOLOGY_ID = IOUtils.toString(
+                    SimpleOntology.class.getResourceAsStream("/get-ontology-id.rq"),
+                    StandardCharsets.UTF_8
+            );
         } catch (IOException e) {
             throw new MobiException(e);
         }
@@ -255,6 +264,7 @@ public class SimpleOntology implements Ontology {
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
      * @param vf              The {@link ValueFactory} used to create Statements
      * @param mf              The {@link ModelFactory} used to create Models
+     * @param importService   The {@link RDFImportService} used to bulk load an ontology file
      */
     public SimpleOntology(String recordCommitKey, File ontologyFile, Repository cacheRepo,
                           OntologyManager ontologyManager, CatalogManager catalogManager,
@@ -295,6 +305,7 @@ public class SimpleOntology implements Ontology {
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
      * @param vf              The {@link ValueFactory} used to create Statements
      * @param mf              The {@link ModelFactory} used to create Models
+     * @param importService   The {@link RDFImportService} used to bulk load an ontology file
      */
     public SimpleOntology(String recordCommitKey, Repository cacheRepo, OntologyManager ontologyManager,
                           CatalogManager catalogManager, CatalogConfigProvider configProvider,
@@ -547,7 +558,7 @@ public class SimpleOntology implements Ontology {
      * @param skolemize A boolean indicating if blank nodes should be skolemized.
      * @param prettyPrint A boolean indicating if the result should be pretty printed.
      * @param format The {@link RDFFormat} to write to the OutputStream.
-     * @param outputStream The {@link} OutputStream to write to.
+     * @param outputStream The {@link OutputStream} to write to.
      * @return The modified {@link OutputStream}.
      */
     private OutputStream getOntologyOutputStream(boolean skolemize, boolean prettyPrint, RDFFormat format,
@@ -585,12 +596,7 @@ public class SimpleOntology implements Ontology {
     public OntologyId getOntologyId() {
         try (DatasetConnection conn = getDatasetConnection()) {
             long start = getStartTime();
-            Model iris = RepositoryResults.asModelNoContext(
-                    conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()),
-                            vf.createIRI(OWL.ONTOLOGY.stringValue()), conn.getSystemDefaultNamedGraph()), mf);
-            iris.addAll(RepositoryResults.asModelNoContext(
-                    conn.getStatements(null, vf.createIRI(OWL.VERSIONIRI.stringValue()),
-                            null, conn.getSystemDefaultNamedGraph()), mf));
+            Model iris = runGraphQueryOnOntology(GET_ONTOLOGY_ID, null, "getOntologyId()", false, mf);
             OntologyId id = ontologyManager.createOntologyId(iris);
             undoApplyDifferenceIfPresent(conn);
             logTrace("getOntologyId()", start);
@@ -718,26 +724,13 @@ public class SimpleOntology implements Ontology {
     public Set<OClass> getAllClasses() {
         try (DatasetConnection conn = getDatasetConnection()) {
             long start = getStartTime();
-            List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
-                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()),
-                    conn.getSystemDefaultNamedGraph()));
-            Set<OClass> owlClasses = statements.stream()
-                    .map(Statement::getSubject)
-                    .filter(subject -> subject instanceof IRI)
-                    .map(subject -> new SimpleClass((IRI) subject))
+            Set<OClass> classes = getIRISet(runQueryOnOntology(GET_ALL_CLASSES, null, "getAllClasses()", false))
+                    .stream()
+                    .map(SimpleClass::new)
                     .collect(Collectors.toSet());
-            statements = RepositoryResults.asList(conn.getStatements(null,
-                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(RDFS.CLASS.stringValue()),
-                    conn.getSystemDefaultNamedGraph()));
-            Set<OClass> rdfsClasses = statements.stream()
-                    .map(Statement::getSubject)
-                    .filter(subject -> subject instanceof IRI)
-                    .map(subject -> new SimpleClass((IRI) subject))
-                    .collect(Collectors.toSet());
-            owlClasses.addAll(rdfsClasses);
             undoApplyDifferenceIfPresent(conn);
             logTrace("getAllClasses()", start);
-            return owlClasses;
+            return classes;
         }
     }
 
@@ -1111,8 +1104,7 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     * Uses the provided TupleQueryResult to construct a hierarchy of the entities provided. Each BindingSet in the Set
-     * must have the parent set as the first binding and the child set as the second binding.
+     * Uses the provided TupleQueryResult to construct a hierarchy of the entities provided.
      *
      * @param tupleQueryResult the TupleQueryResult that contains the parent-child relationships for creating the
      *                         hierarchy.
@@ -1121,8 +1113,10 @@ public class SimpleOntology implements Ontology {
     private Hierarchy getHierarchy(TupleQueryResult tupleQueryResult) {
         Hierarchy hierarchy = new Hierarchy(vf, mf);
         tupleQueryResult.forEach(queryResult -> {
-            Value key = Iterables.get(queryResult, 0).getValue();
-            Binding value = Iterables.get(queryResult, 1, null);
+            Value key = queryResult.getBinding("parent").orElseThrow(
+                    () -> new RuntimeException("Parent binding must be present for hierarchy")).getValue();
+            Binding value = queryResult.getBinding("child")
+                    .orElse(queryResult.getBinding("individual").orElse(null));
             if (!(key instanceof BNode) && key instanceof IRI) {
                 hierarchy.addIRI((IRI) key);
                 if (value != null && !(value.getValue() instanceof BNode) && value.getValue() instanceof IRI
@@ -1203,6 +1197,7 @@ public class SimpleOntology implements Ontology {
      * @return A {@link Map} of two {@link Set}s of {@link IRI}s of the unresolvedImports and the importsClosure
      */
     private Map<String, Set<IRI>> loadOntologyIntoCache(@Nullable File ontologyFile, boolean webImport) {
+        long start = getStartTime();
         Set<IRI> unresolvedImports = new HashSet<>();
         Set<IRI> processedImports = new HashSet<>();
         List<IRI> importsToProcess = new ArrayList<>();
@@ -1288,6 +1283,7 @@ public class SimpleOntology implements Ontology {
         Map<String, Set<IRI>> imports = new HashMap<>();
         imports.put(UNRESOLVED_KEY, unresolvedImports);
         imports.put(CLOSURE_KEY, processedImports);
+        logTrace("loadOntologyIntoCache()", start);
         return imports;
     }
 
@@ -1305,6 +1301,7 @@ public class SimpleOntology implements Ontology {
      */
     private void addOntologyToRepo(@Nullable File ontologyFile, IRI datasetIRI, IRI ontologyIRI,
                                    RepositoryConnection conn, String repoId, boolean addTimestamp) {
+        long start = getStartTime();
         IRI ontologySdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(ontologyIRI, vf);
         // If SdNg exists already, the file is already loaded. When a null ontologyFile is passed, it indicates a web
         // import that has already been loaded into the cache.
@@ -1318,6 +1315,8 @@ public class SimpleOntology implements Ontology {
                 dsConn.addDefault(datasetIRI, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING),
                         vf.createLiteral(OffsetDateTime.now()), datasetIRI);
             }
+        } finally {
+            logTrace("addOntologyToRepo()", start);
         }
     }
 
@@ -1600,8 +1599,8 @@ public class SimpleOntology implements Ontology {
     private void createTempImportNotInCacheWeb(IRI importedDatasetIRI, IRI importedDatasetSdNg, File ontologyFile,
                                                DatasetConnection conn) {
         if (LOG.isTraceEnabled()) {
-            LOG.trace("Adding import for inProgressCommit for dataset not in cache " +
-                    importedDatasetIRI.stringValue());
+            LOG.trace("Adding import for inProgressCommit for dataset not in cache "
+                    + importedDatasetIRI.stringValue());
         }
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI, ontologyFile, repository,
                 ontologyManager, catalogManager, configProvider, datasetManager, importsResolver, transformer,
@@ -1623,8 +1622,8 @@ public class SimpleOntology implements Ontology {
                                                  IRI imported,
                                                  DatasetConnection conn) {
         if (LOG.isTraceEnabled()) {
-            LOG.trace("Adding import for inProgressCommit for dataset not in cache from catalog" +
-                    importedDatasetIRI.stringValue());
+            LOG.trace("Adding import for inProgressCommit for dataset not in cache from catalog"
+                    + importedDatasetIRI.stringValue());
         }
         Resource recordIRI = ontologyManager.getOntologyRecordResource(imported).orElseThrow(
                 () -> new IllegalStateException("Record must exist in catalog"));
@@ -1637,7 +1636,7 @@ public class SimpleOntology implements Ontology {
                 transformer, bNodeService, vf, mf, importService);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
-    
+
     /**
      * Adds the import of an Ontology that exists the cache to the dataset graph. Updates import statements on
      * datasetIRI graph.
@@ -1649,8 +1648,8 @@ public class SimpleOntology implements Ontology {
     private void createTempImportExistsInCache(IRI importedDatasetIRI, IRI importedDatasetSdNg,
                                                DatasetConnection conn) {
         if (LOG.isTraceEnabled()) {
-            LOG.trace("Adding import for inProgressCommit for dataset exists in cache " +
-                    importedDatasetIRI.stringValue());
+            LOG.trace("Adding import for inProgressCommit for dataset exists in cache "
+                    + importedDatasetIRI.stringValue());
         }
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI, repository,
                 ontologyManager, catalogManager, configProvider, datasetManager, importsResolver, transformer,

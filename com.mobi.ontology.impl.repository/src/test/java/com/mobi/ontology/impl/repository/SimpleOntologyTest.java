@@ -81,6 +81,7 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
+import com.mobi.repository.impl.sesame.query.SesameOperationDatasetFactory;
 import com.mobi.vocabularies.xsd.XSD;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Statement;
@@ -136,6 +137,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     private Ontology onlyDeclared;
     private Repository repo;
     private OrmFactory<Dataset> datasetFactory = getRequiredOrmFactory(Dataset.class);
+    private SesameOperationDatasetFactory operationDatasetFactory = new SesameOperationDatasetFactory();
 
     private static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
     public static IRI TEST_LOCAL_IMPORT_1 = VALUE_FACTORY.createIRI("http://mobi.com/ontology/test-local-imports-1");
@@ -242,7 +244,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
         when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> {
             datasetManager.createDataset(resource.getValue().stringValue(), "ontologyCache");
-            return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY);
+            return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY, operationDatasetFactory);
         });
 
         Model ontologyModel = createModelFromFile("/test.owl");
@@ -301,6 +303,14 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         Model onlyDeclaredModel = createModelFromFile("/only-declared.ttl");
         File onlyDeclaredFile = setupOntologyMocks(onlyDeclaredModel);
         onlyDeclared = new SimpleOntology(vf.createIRI("http://mobi.com/ontology/only-declared"), onlyDeclaredFile, repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf, importService);
+    }
+
+    @Test
+    public void getOntologyId() throws Exception {
+        when(ontologyManager.createOntologyId(any(Model.class))).thenReturn(ontologyId);
+
+        OntologyId id = ont1.getOntologyId();
+        assertEquals(vf.createIRI("https://mobi.com/ontology-id"), id.getOntologyIdentifier());
     }
 
     @Test

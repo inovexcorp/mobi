@@ -3,5 +3,7 @@ PREFIX dataset: <http://mobi.com/ontologies/dataset#>
 SELECT
     DISTINCT ?graph
 WHERE {
-    ?dataset dataset:namedGraph ?graph
+    GRAPH ?g {
+        ?dataset dataset:namedGraph ?graph
+    }
 }

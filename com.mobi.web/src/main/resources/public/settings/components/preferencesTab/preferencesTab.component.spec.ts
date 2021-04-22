@@ -37,7 +37,6 @@ import { SharedModule } from "../../../shared/shared.module";
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { PreferencesTabComponent } from './preferencesTab.component';
 import { PreferenceGroupComponent } from '../preferenceGroup/preferenceGroup.component';
-import { TrustedHtmlPipe } from '../../../shared/pipes/trustedHtml.pipe';
 import utilService from '../../../shared/services/util.service';
 import { get } from 'lodash';
 
@@ -57,8 +56,7 @@ describe('Preferences Tab component', function() {
             ],
             declarations: [
                 PreferencesTabComponent,
-                MockComponent(PreferenceGroupComponent),
-                TrustedHtmlPipe
+                MockComponent(PreferenceGroupComponent)
             ],
             providers: [
                 { provide: 'preferenceManagerService', useClass: mockPreferenceManager },

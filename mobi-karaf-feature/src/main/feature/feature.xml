@@ -165,7 +165,6 @@
         <bundle start-level="80">mvn:com.mobi/platform.config.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/dataset.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/dataset.impl/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/sparql.utils/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/cache/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/cache.impl.core/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/cache.impl.repository/${project.version}</bundle>

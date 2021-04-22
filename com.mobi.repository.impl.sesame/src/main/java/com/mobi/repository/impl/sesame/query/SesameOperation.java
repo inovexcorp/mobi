@@ -25,11 +25,13 @@ package com.mobi.repository.impl.sesame.query;
 
 import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.Operation;
+import com.mobi.query.api.OperationDataset;
 import com.mobi.query.api.processor.OperationProcessor;
 import com.mobi.query.exception.QueryInterruptedException;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.core.utils.Values;
 import org.apache.commons.lang.NotImplementedException;
+import org.eclipse.rdf4j.query.impl.SimpleDataset;
 
 import java.util.List;
 
@@ -58,6 +60,34 @@ public class SesameOperation implements Operation {
     @Override
     public BindingSet getBindings() {
         return new SesameBindingSet(sesameOperation.getBindings());
+    }
+
+    @Override
+    public void setDataset(OperationDataset dataset) {
+        if (dataset instanceof SesameOperationDataset) {
+            sesameOperation.setDataset(((SesameOperationDataset) dataset).getDelegate());
+        } else {
+            SimpleDataset simpleDataset = new SimpleDataset();
+            simpleDataset.setDefaultInsertGraph(Values.sesameIRI(dataset.getDefaultInsertGraph()));
+            dataset.getDefaultGraphs()
+                    .stream()
+                    .map(Values::sesameIRI)
+                    .forEach(simpleDataset::addDefaultGraph);
+            dataset.getDefaultRemoveGraphs()
+                    .stream()
+                    .map(Values::sesameIRI)
+                    .forEach(simpleDataset::addDefaultRemoveGraph);
+            dataset.getNamedGraphs()
+                    .stream()
+                    .map(Values::sesameIRI)
+                    .forEach(simpleDataset::addNamedGraph);
+            sesameOperation.setDataset(simpleDataset);
+        }
+    }
+
+    @Override
+    public OperationDataset getDataset() {
+        return new SesameOperationDataset(sesameOperation.getDataset());
     }
 
     @Override

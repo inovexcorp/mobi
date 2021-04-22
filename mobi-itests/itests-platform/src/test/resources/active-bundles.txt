@@ -18,7 +18,6 @@ com.mobi.repository.impl.sesame
 com.mobi.swagger.ui
 com.mobi.web
 com.mobi.sparql.rest
-com.mobi.sparql.utils
 com.mobi.catalog.api
 com.mobi.catalog.impl
 com.mobi.catalog.rest
