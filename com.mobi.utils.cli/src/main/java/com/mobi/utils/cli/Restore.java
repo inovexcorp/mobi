@@ -87,7 +87,8 @@ public class Restore implements Action {
     private static final Logger LOGGER = LoggerFactory.getLogger(Restore.class);
 
     private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + File.separator + "restoreZip";
-    private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15", "1.16", "1.17", "1.18");
+    private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15", "1.16", "1.17", "1.18",
+            "1.19");
 
     // Service References
 
@@ -234,6 +235,11 @@ public class Restore implements Action {
             // Blacklist also includes PolicyCacheConfiguration config file for change between size to number of entries
             blacklistedFiles.addAll(IOUtils.readLines(getClass().getResourceAsStream("/configBlacklist-1.12.txt"),
                     StandardCharsets.UTF_8));
+        }
+        if (mobiVersions.indexOf(version) < mobiVersions.indexOf("1.19")) {
+            LOGGER.trace("Version lower than 1.19 detected. Blacklisting additional files from backup.");
+            // Blacklist karaf jre.properties file due to javax.xml.bind version for Java 8 in > 1.19
+            blacklistedFiles.add("jre.properties");
         }
 
         // Merge directories, replacing any file that already exists
