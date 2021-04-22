@@ -35,7 +35,6 @@ import { PreferencesTabComponent } from './components/preferencesTab/preferences
 import { PreferenceGroupComponent } from './components/preferenceGroup/preferenceGroup.component';
 import { PreferenceFormComponent } from './components/preferenceForm/preferenceForm.component';
 import { PreferenceFormFieldComponent } from './components/preferenceFormField/preferenceFormField.component';
-import { TrustedHtmlPipe } from '../shared/pipes/trustedHtml.pipe';
 
 @NgModule({
     imports: [
@@ -50,8 +49,7 @@ import { TrustedHtmlPipe } from '../shared/pipes/trustedHtml.pipe';
         PreferencesTabComponent,
         PreferenceGroupComponent,
         PreferenceFormComponent,
-        PreferenceFormFieldComponent,
-        TrustedHtmlPipe
+        PreferenceFormFieldComponent
     ],
     entryComponents: [
         SettingsPageComponent

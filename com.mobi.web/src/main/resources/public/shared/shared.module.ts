@@ -154,6 +154,7 @@ import { InfoMessageComponent } from './components/infoMessage/infoMessage.compo
 import { UnmaskPasswordComponent } from './components/unmaskPassword/unmaskPassword.component';
 import { WindowRef } from "./services/windowRef.service";
 import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
+import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
 
 /**
  * @namespace shared
@@ -175,7 +176,8 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
     declarations: [
         ErrorDisplayComponent,
         InfoMessageComponent,
-        UnmaskPasswordComponent
+        UnmaskPasswordComponent,
+        TrustedHtmlPipe
     ],
     entryComponents: [
         ErrorDisplayComponent,
@@ -193,7 +195,8 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
         MatInputModule,
         ErrorDisplayComponent,
         InfoMessageComponent,
-        UnmaskPasswordComponent
+        UnmaskPasswordComponent,
+        TrustedHtmlPipe
     ],
     providers: [
         loginManagerServiceProvider,
