@@ -5,6 +5,7 @@
   "latedef": true,
   "nonew": true,
   "asi": true,
+  "expr": true,
   /*
    * Globals
    */
