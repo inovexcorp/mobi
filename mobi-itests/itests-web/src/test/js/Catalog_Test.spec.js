@@ -22,13 +22,13 @@
  */
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var CatalogOnto1 = process.cwd()+ '/src/test/resources/ontologies/catalog-ontology-1.ttl'
-var CatalogOnto2 = process.cwd()+ '/src/test/resources/ontologies/catalog-ontology-2.ttl'
-var CatalogOnto3 = process.cwd()+ '/src/test/resources/ontologies/catalog-ontology-3.ttl'
-var CatalogOnto4 = process.cwd()+ '/src/test/resources/ontologies/catalog-ontology-4.ttl'
+var CatalogOnto1 = process.cwd()+ '/src/test/resources/ontologies/z-catalog-ontology-1.ttl'
+var CatalogOnto2 = process.cwd()+ '/src/test/resources/ontologies/z-catalog-ontology-2.ttl'
+var CatalogOnto3 = process.cwd()+ '/src/test/resources/ontologies/z-catalog-ontology-3.ttl'
+var CatalogOnto4 = process.cwd()+ '/src/test/resources/ontologies/z-catalog-ontology-4.ttl'
 
 
-var CatalogPage = function(){
+var CatalogPage = function() {
     this.recordViewSelector = 'catalog-page records-view';
     this.recordFiltersSelector = 'catalog-page records-view record-filters';
 
@@ -57,13 +57,13 @@ CatalogPage.prototype.verifyRecordFilters = function(browser, noKeywords) {
     browser.expect.elements(this.recordFiltersSelector + ' div.filter-container span.ng-binding').count.to.equal(2);
 
     browser.globals.generalUtils.getAllElementsTextValues(browser, 'xpath', this.createRecordFiltersSelector('Record Type'))
-        .then(function(values){
+        .then(function(values) {
             // order of record types can be different sometimes, so sort array of values
             browser.assert.equal(values.sort(), cp.recordTypeFilters.join(','))
         });
 
     browser.globals.generalUtils.getAllElementsTextValues(browser, 'css selector', this.recordFiltersSelector + ' div.filter-container span.ng-binding')
-        .then(function(values){
+        .then(function(values) {
             browser.assert.equal(values, 'Record Type,Keywords')
         });
 
@@ -80,22 +80,16 @@ CatalogPage.prototype.verifyRecordList = function(browser) {
     browser.expect.element(this.recordViewSelector + ' div.col.d-flex.flex-column paging').to.be.present;
 };
 
-CatalogPage.prototype.switchToCatalogPage = function(browser, noKeywords) {
-    browser.globals.generalUtils.switchToPage(browser, 'catalog', this.recordViewSelector);
-    this.verifyRecordFilters(browser, noKeywords);
-    this.verifyRecordList(browser);
-};
-
 CatalogPage.prototype.searchRecords = function(browser, searchObj) {
     browser
        .clearValue(this.recordViewSelector + ' search-bar input')
 
-    if('order' in searchObj){
+    if('order' in searchObj) {
         browser
             .setValue(this.recordViewSelector + ' form sort-options select', searchObj.order)
     }
 
-    if('searchText' in searchObj){
+    if('searchText' in searchObj) {
         browser
            .setValue(this.recordViewSelector + ' search-bar input', searchObj.searchText)
            .keys(browser.Keys.ENTER)
@@ -118,7 +112,7 @@ CatalogPage.prototype.searchRecords = function(browser, searchObj) {
 CatalogPage.prototype.assertRecordList = function(browser, recordList) {
     if (recordList) {
       browser.globals.generalUtils.getAllElementsTextValues(browser, 'css selector', this.recordViewSelector + ' record-card h5 span')
-            .then(function(values){
+            .then(function(values) {
                 browser.assert.equal(values, recordList)
             });
     } else {
@@ -130,7 +124,7 @@ CatalogPage.prototype.assertRecordList = function(browser, recordList) {
 var catalogPage = new CatalogPage();
 
 module.exports = {
-    '@tags': ['sanity', "ontology-editor"],
+    '@tags': ['sanity', "catalog"],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
@@ -141,32 +135,39 @@ module.exports = {
     },
 
     'Step 3: Switch to catalog page' : function(browser) {
-        catalogPage.switchToCatalogPage(browser, true);
+        browser.globals.generalUtils.switchToPage(browser, 'catalog', this.recordViewSelector);
+        catalogPage.verifyRecordFilters(browser, true);
+        catalogPage.verifyRecordList(browser);
     },
 
-    'Step 4: Search catalog page - no records' : function(browser) {
+    'Step 4: Search catalog page Empty' : function(browser) {
         catalogPage.searchRecords(browser, { searchText : 'does-not-exist-record', order: 'Title (asc)'});
         catalogPage.assertRecordList(browser, null);
     },
 
-    'Step 5: Search catalog page - catalog-ontology asc' : function(browser) {
-        catalogPage.searchRecords(browser, { searchText : 'catalog-ontology-', order: 'Title (asc)'});
-        catalogPage.assertRecordList(browser, 'catalog-ontology-1.ttl,catalog-ontology-2.ttl,catalog-ontology-3.ttl,catalog-ontology-4.ttl');
+    'Step 5: Search catalog page ASC' : function(browser) {
+        catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (asc)'});
+        catalogPage.assertRecordList(browser, 'z-catalog-ontology-1.ttl,z-catalog-ontology-2.ttl,z-catalog-ontology-3.ttl,z-catalog-ontology-4.ttl');
     },
 
-    'Step 6: Search catalog page - catalog-ontology desc' : function(browser) {
-        catalogPage.searchRecords(browser, { searchText : 'catalog-ontology-', order: 'Title (desc)'});
-        catalogPage.assertRecordList(browser, 'catalog-ontology-4.ttl,catalog-ontology-3.ttl,catalog-ontology-2.ttl,catalog-ontology-1.ttl');
+    'Step 6: Search catalog page DESC' : function(browser) {
+        catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (desc)'});
+        catalogPage.assertRecordList(browser, 'z-catalog-ontology-4.ttl,z-catalog-ontology-3.ttl,z-catalog-ontology-2.ttl,z-catalog-ontology-1.ttl');
     },
 
-    'Step 7: Search catalog page - catalog-ontology one item asc' : function(browser) {
-        catalogPage.searchRecords(browser, { searchText : 'catalog-ontology-1.ttl', order: 'Title (asc)'});
-        catalogPage.assertRecordList(browser, 'catalog-ontology-1.ttl');
+    'Step 7: Search catalog page one item ASC' : function(browser) {
+        catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-1', order: 'Title (asc)'});
+        catalogPage.assertRecordList(browser, 'z-catalog-ontology-1.ttl');
     },
 
-    'Step 9: Switch to catalog page to see if previous selected filters are selected' : function(browser) {
-        browser.globals.generalUtils.switchToPage(browser, 'home', 'home-page');
-        catalogPage.switchToCatalogPage(browser, true);
-    },
+    'Step Tear Down': function(browser) {
+        browser.globals.generalUtils.switchToPage(browser, 'ontology-editor', 'ontology-editor-page')
+    }
+//    'Step 11: Switch to catalog page to see if previous selected filters are selected' : function(browser) {
+//        browser.globals.generalUtils.switchToPage(browser, 'home', 'home-page');
+//        browser.globals.generalUtils.switchToPage(browser, 'catalog', this.recordViewSelector);
+//        catalogPage.verifyRecordFilters(browser, true);
+//        catalogPage.verifyRecordList(browser);
+//    },
 
 }

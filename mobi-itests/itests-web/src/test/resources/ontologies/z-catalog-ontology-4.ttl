@@ -1,0 +1,2 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+<http://mobi.com/ontology/z-catalog-ontology-4> a owl:Ontology .
