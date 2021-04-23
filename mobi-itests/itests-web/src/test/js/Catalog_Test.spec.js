@@ -22,87 +22,112 @@
  */
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var Onto1 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl'
-var Onto2 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.ttl'
-var Onto3 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.ttl'
+var CatalogOnto1 = process.cwd()+ '/src/test/resources/ontologies/catalog-ontology-1.ttl'
+var CatalogOnto2 = process.cwd()+ '/src/test/resources/ontologies/catalog-ontology-2.ttl'
+var CatalogOnto3 = process.cwd()+ '/src/test/resources/ontologies/catalog-ontology-3.ttl'
+var CatalogOnto4 = process.cwd()+ '/src/test/resources/ontologies/catalog-ontology-4.ttl'
 
 
-var getAllElementsTextValues = function(browser, selector, target){
+var CatalogPage = function(){
+    this.recordViewSelector = 'catalog-page records-view';
+    this.recordFiltersSelector = 'catalog-page records-view record-filters';
 
-    var myPromiseAll = function(browser, result){
-        var elementIdTextPromise = function(elementId){
-            return new Promise(function(resolve, reject) {
-               browser.elementIdText(elementId, function(a){ resolve(a.value) } );
-           });
-        };
-
-        return new Promise(function(resolve, reject) {
-           var elementIdTextPromises = result.value.map(function(webElement){ return elementIdTextPromise(webElement.ELEMENT) });
-           Promise.all(elementIdTextPromises)
-            .then(function(values) { resolve(values) });
-       });
-    };
-
-    return new Promise(function(resolve, reject) {
-         browser.elements(selector, target, function(result){
-                var api = this;
-                myPromiseAll(browser, result)
-                    .then(function(values){ resolve(values) });
-            });
-    });
+    this.recordTypeFilters = ['Dataset Record','Mapping Record','Ontology Record','Record',
+        'Unversioned Record','Versioned RDF Record','Versioned Record']
 };
 
+CatalogPage.prototype.createRecordFiltersSelector = function(filterTypeHeader, filterType) {
+    var selectors = ['//catalog-page',
+        '//records-view','//record-filters','//div[contains(@class, "filter-container")]',
+        '//*[span[contains(@class, "ng-binding")][text()[contains(., "' + filterTypeHeader + '")]]]/parent::*',
+        '//div[contains(@class, "filter-option")][contains(@class, "ng-scope")]',
+        '//div[contains(@class, "custom-control")]']
+    if (filterType) {
+        selectors = selectors.concat([
+            '//label[contains(@class, "ng-binding")][text()[contains(., "' + filterType + '")]]',
+            '/parent::*/label'
+        ])
+    }
+    return selectors.join('');
+}
 
-var CatalogUtils = function(){};
+CatalogPage.prototype.verifyRecordFilters = function(browser, noKeywords) {
+    var cp = this;
+    browser.expect.element(this.recordFiltersSelector).to.be.present;
+    browser.expect.elements(this.recordFiltersSelector + ' div.filter-container span.ng-binding').count.to.equal(2);
 
-CatalogUtils.prototype.switchToPage = function(browser, page){
-    browser
-      .click('sidebar div ul a[class=nav-link][href="#/' + page + '"]')
-      .waitForElementNotPresent('div.spinner');
-};
+    browser.globals.generalUtils.getAllElementsTextValues(browser, 'xpath', this.createRecordFiltersSelector('Record Type'))
+        .then(function(values){
+            // order of record types can be different sometimes, so sort array of values
+            browser.assert.equal(values.sort(), cp.recordTypeFilters.join(','))
+        });
 
-CatalogUtils.prototype.verifyRecordFilters = function(browser, noKeywords) {
-    browser.expect.element('catalog-page records-view record-filters').to.be.present;
-    browser.expect.elements('catalog-page records-view record-filters div.filter-container span.ng-binding').count.to.equal(2);
-
-    getAllElementsTextValues(browser, 'css selector', 'catalog-page records-view record-filters div.filter-container span.ng-binding')
+    browser.globals.generalUtils.getAllElementsTextValues(browser, 'css selector', this.recordFiltersSelector + ' div.filter-container span.ng-binding')
         .then(function(values){
             browser.assert.equal(values, 'Record Type,Keywords')
         });
 
     if (noKeywords) {
-        browser.expect.element('catalog-page records-view record-filters info-message p').text.to.contain('No Keywords available');
+        browser.expect.element(this.recordFiltersSelector + ' info-message p').text.to.contain('No Keywords available');
     } else {
-        browser.expect.element('catalog-page records-view record-filters info-message p').to.not.be.present;
+        browser.expect.element(this.recordFiltersSelector + ' info-message p').to.not.be.present;
     }
+
 };
 
-CatalogUtils.prototype.verifyRecordList = function(browser) {
-    browser.expect.element('catalog-page records-view div.col.d-flex.flex-column').to.be.present;
-    browser.expect.element('catalog-page records-view div.col.d-flex.flex-column paging').to.be.present;
+CatalogPage.prototype.verifyRecordList = function(browser) {
+    browser.expect.element(this.recordViewSelector + ' div.col.d-flex.flex-column').to.be.present;
+    browser.expect.element(this.recordViewSelector + ' div.col.d-flex.flex-column paging').to.be.present;
 };
 
-CatalogUtils.prototype.switchToCatalogPage = function(browser, noKeywords) {
-    this.switchToPage(browser, 'catalog');
-    browser.waitForElementVisible('catalog-page records-view');
+CatalogPage.prototype.switchToCatalogPage = function(browser, noKeywords) {
+    browser.globals.generalUtils.switchToPage(browser, 'catalog', this.recordViewSelector);
     this.verifyRecordFilters(browser, noKeywords);
     this.verifyRecordList(browser);
 };
 
-CatalogUtils.prototype.searchRecords = function(browser, searchObj) {
+CatalogPage.prototype.searchRecords = function(browser, searchObj) {
     browser
-       .clearValue('records-view search-bar input')
-       .setValue('records-view search-bar input', searchObj.searchText)
-       .keys(browser.Keys.ENTER)
-       .waitForElementNotPresent('div.spinner');
+       .clearValue(this.recordViewSelector + ' search-bar input')
+
+    if('order' in searchObj){
+        browser
+            .setValue(this.recordViewSelector + ' form sort-options select', searchObj.order)
+    }
+
+    if('searchText' in searchObj){
+        browser
+           .setValue(this.recordViewSelector + ' search-bar input', searchObj.searchText)
+           .keys(browser.Keys.ENTER)
+           .waitForElementNotPresent('div.spinner');
+    } else {
+        browser
+           .setValue(this.recordViewSelector + ' search-bar input', '')
+           .keys(browser.Keys.ENTER)
+           .waitForElementNotPresent('div.spinner');
+    }
+
+    var recordTypeFilterSelector = this.createRecordFiltersSelector('Record Type', 'Versioned Record');
+    browser.assert.elementPresent({ selector: recordTypeFilterSelector, locateStrategy: 'xpath' });
+    browser
+        .click('xpath', recordTypeFilterSelector)
+        .waitForElementNotPresent('div.spinner');
+
 };
 
-CatalogUtils.prototype.assertNoRecords = function(browser, exist) {
-    browser.waitForElementVisible('catalog-page records-view div.results-list info-message');
-    browser.expect.element('catalog-page records-view div.results-list info-message p').text.to.contain('No records found');
+CatalogPage.prototype.assertRecordList = function(browser, recordList) {
+    if (recordList) {
+      browser.globals.generalUtils.getAllElementsTextValues(browser, 'css selector', this.recordViewSelector + ' record-card h5 span')
+            .then(function(values){
+                browser.assert.equal(values, recordList)
+            });
+    } else {
+        browser.waitForElementVisible(this.recordViewSelector + ' div.results-list info-message');
+        browser.expect.element(this.recordViewSelector + ' div.results-list info-message p').text.to.contain('No records found');
+    }
 };
 
-var cu = new CatalogUtils();
+var catalogPage = new CatalogPage();
 
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
@@ -112,23 +137,36 @@ module.exports = {
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
-        browser.globals.upload_ontologies(browser, Onto1, Onto2, Onto3)
+        browser.globals.upload_ontologies(browser, CatalogOnto1, CatalogOnto2, CatalogOnto3, CatalogOnto4)
     },
 
     'Step 3: Switch to catalog page' : function(browser) {
-        cu.switchToCatalogPage(browser, true);
+        catalogPage.switchToCatalogPage(browser, true);
     },
 
-    'Step 4: Search catalog page' : function(browser) {
-        cu.searchRecords(browser, { searchText : "does-not-exist-record" });
-        cu.assertNoRecords(browser, true);
-        cu.searchRecords(browser, { searchText : "" });
+    'Step 4: Search catalog page - no records' : function(browser) {
+        catalogPage.searchRecords(browser, { searchText : 'does-not-exist-record', order: 'Title (asc)'});
+        catalogPage.assertRecordList(browser, null);
     },
 
-    'Step 5: Switch to catalog page to see if previous selected filters are selected' : function(browser) {
-        cu.switchToPage(browser, "home");
-        cu.switchToCatalogPage(browser, true);
+    'Step 5: Search catalog page - catalog-ontology asc' : function(browser) {
+        catalogPage.searchRecords(browser, { searchText : 'catalog-ontology-', order: 'Title (asc)'});
+        catalogPage.assertRecordList(browser, 'catalog-ontology-1.ttl,catalog-ontology-2.ttl,catalog-ontology-3.ttl,catalog-ontology-4.ttl');
     },
 
+    'Step 6: Search catalog page - catalog-ontology desc' : function(browser) {
+        catalogPage.searchRecords(browser, { searchText : 'catalog-ontology-', order: 'Title (desc)'});
+        catalogPage.assertRecordList(browser, 'catalog-ontology-4.ttl,catalog-ontology-3.ttl,catalog-ontology-2.ttl,catalog-ontology-1.ttl');
+    },
+
+    'Step 7: Search catalog page - catalog-ontology one item asc' : function(browser) {
+        catalogPage.searchRecords(browser, { searchText : 'catalog-ontology-1.ttl', order: 'Title (asc)'});
+        catalogPage.assertRecordList(browser, 'catalog-ontology-1.ttl');
+    },
+
+    'Step 9: Switch to catalog page to see if previous selected filters are selected' : function(browser) {
+        browser.globals.generalUtils.switchToPage(browser, 'home', 'home-page');
+        catalogPage.switchToCatalogPage(browser, true);
+    },
 
 }
