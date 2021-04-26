@@ -1019,8 +1019,7 @@ public class SimpleOntology implements Ontology {
      * @return a Set of IRIs from the TupleQueryResult
      */
     private Set<IRI> getIRISet(TupleQueryResult tupleQueryResult) {
-        return StreamSupport.stream(
-                Spliterators.spliteratorUnknownSize(tupleQueryResult.iterator(), Spliterator.ORDERED), false)
+        return StreamSupport.stream(tupleQueryResult.spliterator(), false)
                 .map(result -> result.getBinding("s") )
                 .filter(resource -> resource.isPresent() && !(resource.get().getValue() instanceof BNode))
                 .map(resource -> (IRI) resource.get().getValue())
