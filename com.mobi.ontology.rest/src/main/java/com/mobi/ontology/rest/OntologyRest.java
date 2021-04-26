@@ -150,7 +150,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
-import javax.cache.Cache;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -1017,9 +1016,10 @@ public class OntologyRest {
         return outputStream -> {
             StopWatch watch = new StopWatch();
 
+            OntologyId ontologyId = ontology.getOntologyId();
             outputStream.write("{ \"ontologyIRI\": ".getBytes());
-            outputStream.write(ontology.getOntologyId().getOntologyIRI().isPresent() ?
-                    ("\"" + ontology.getOntologyId().getOntologyIRI().get().toString() + "\"").getBytes() : "".getBytes());
+            outputStream.write(ontologyId.getOntologyIRI().isPresent() ?
+                    ("\"" + ontologyId.getOntologyIRI().get().toString() + "\"").getBytes() : "".getBytes());
 
             log.trace("Start iriList");
             watch.start();
@@ -3522,30 +3522,21 @@ public class OntologyRest {
                                            String commitIdStr, boolean applyInProgressCommit) {
         checkStringParam(recordIdStr, "The recordIdStr is missing.");
         Optional<Ontology> optionalOntology;
-        Optional<Cache<String, Ontology>> cache = ontologyCache.getOntologyCache();
-        String key = ontologyCache.generateKey(recordIdStr, commitIdStr);
-
         try {
-            if (cache.isPresent() && cache.get().containsKey(key)) {
-                log.trace("cache hit");
-                optionalOntology = Optional.of(cache.get().get(key));
-            } else {
-                log.trace("cache miss");
-                Resource recordId = valueFactory.createIRI(recordIdStr);
+            Resource recordId = valueFactory.createIRI(recordIdStr);
 
-                if (StringUtils.isNotBlank(commitIdStr)) {
-                    if (StringUtils.isNotBlank(branchIdStr)) {
-                        optionalOntology = ontologyManager.retrieveOntology(recordId,
-                                valueFactory.createIRI(branchIdStr), valueFactory.createIRI(commitIdStr));
-                    } else {
-                        optionalOntology = ontologyManager.retrieveOntologyByCommit(recordId,
-                                valueFactory.createIRI(commitIdStr));
-                    }
-                } else if (StringUtils.isNotBlank(branchIdStr)) {
-                    optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
+            if (StringUtils.isNotBlank(commitIdStr)) {
+                if (StringUtils.isNotBlank(branchIdStr)) {
+                    optionalOntology = ontologyManager.retrieveOntology(recordId,
+                            valueFactory.createIRI(branchIdStr), valueFactory.createIRI(commitIdStr));
                 } else {
-                    optionalOntology = ontologyManager.retrieveOntology(recordId);
+                    optionalOntology = ontologyManager.retrieveOntologyByCommit(recordId,
+                            valueFactory.createIRI(commitIdStr));
                 }
+            } else if (StringUtils.isNotBlank(branchIdStr)) {
+                optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
+            } else {
+                optionalOntology = ontologyManager.retrieveOntology(recordId);
             }
 
             if (optionalOntology.isPresent() && applyInProgressCommit) {
@@ -3643,7 +3634,7 @@ public class OntologyRest {
         Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
         if (optionalOntology.isPresent()) {
             Ontology baseOntology = optionalOntology.get();
-            return OntologyUtils.getImportedOntologies(baseOntology.getImportsClosure(), baseOntology.getOntologyId());
+            return OntologyUtils.getImportedOntologies(baseOntology.getImportsClosure(), baseOntology);
         } else {
             throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
         }

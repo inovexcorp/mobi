@@ -12,12 +12,12 @@ package com.mobi.preference.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -178,6 +178,8 @@ public class PreferenceRestTest extends MobiRestTestNg {
         when(preferenceService.getUserPreferences(any())).thenReturn(preferenceSet);
         when(preferenceService.getSetting(simplePreference.getResource())).thenReturn(Optional.of(simplePreference));
         when(preferenceService.getSetting(complexPreference.getResource())).thenReturn(Optional.of(complexPreference));
+        when(preferenceService.getPreferenceType(simplePreference)).thenReturn(vf.createIRI(simplePreference.TYPE));
+        when(preferenceService.getPreferenceType(complexPreference)).thenReturn(vf.createIRI(complexPreference.TYPE));
         when(testComplexPreferenceFactory.getTypeIRI()).thenReturn(vf.createIRI(TestComplexPreference.TYPE));
         when(testComplexPreferenceFactory.getExisting(complexPreference.getResource(), complexPrefModel)).thenReturn(Optional.of(complexPreference));
         when(testComplexPreferenceFactory.getExisting(simplePreference.getResource(), simplePrefModel)).thenReturn(Optional.empty());
@@ -227,8 +229,8 @@ public class PreferenceRestTest extends MobiRestTestNg {
         assertEquals(200, response.getStatus());
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
         assertEquals(2, result.size());
-        assertEquals(1, result.getJSONArray("http://example.com/MySimplePreference").size());
-        assertEquals(2, result.getJSONArray("http://example.com/MyComplexPreference").size());
+        assertEquals(1, result.getJSONArray(TestSimplePreference.TYPE).size());
+        assertEquals(2, result.getJSONArray(TestComplexPreference.TYPE).size());
     }
 
     @Test
@@ -325,5 +327,30 @@ public class PreferenceRestTest extends MobiRestTestNg {
         Response response = target().path("preference/" + encode("http://example.com/MySimplePreference"))
                 .request().put(Entity.json("fdas"));
         assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void getPreferenceGroupsTest() throws Exception {
+        InputStream inputStream = getClass().getResourceAsStream("/preferenceGroups.ttl");
+        Model model = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+
+        when(preferenceService.getPreferenceGroups()).thenReturn(model);
+        Response response = target().path("preference/groups").request().get();
+        JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(200, response.getStatus());
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    public void getPreferenceDefinitions() throws Exception {
+        InputStream inputStream = getClass().getResourceAsStream("/preferenceDefinitions.ttl");
+        Model model = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+
+        when(preferenceService.getPreferenceDefinitions(any())).thenReturn(model);
+        Response response = target().path("preference/groups/" +
+                encode("http://example.com/SomeOtherPreferenceGroup") + "/definitions").request().get();
+        JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(200, response.getStatus());
+        assertEquals(4, result.size());
     }
 }

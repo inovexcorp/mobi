@@ -531,7 +531,6 @@
                     <trimStackTrace>false</trimStackTrace>
                     <forkCount>5</forkCount>
                     <reuseForks>true</reuseForks>
-                    <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
                     <includes>
                         <include>**/*Spec.java</include>
                         <include>**/*Test.java</include>

@@ -54,7 +54,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import javax.annotation.Nonnull;
-import javax.cache.Cache;
 
 public abstract class AbstractOntologyManager implements OntologyManager  {
     protected Logger log;
@@ -169,21 +168,10 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                                @Nonnull Resource commitId) {
-        Optional<Ontology> result;
         long start = getStartTime();
 
-        Optional<Cache<String, Ontology>> optCache = ontologyCache.getOntologyCache();
-        String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
-
-        if (optCache.isPresent() && optCache.get().containsKey(key)) {
-            if (log.isTraceEnabled()) {
-                log.trace("cache hit");
-            }
-            result = Optional.ofNullable(optCache.get().get(key));
-        } else {
-            result = catalogManager.getCommit(configProvider.getLocalCatalogIRI(), recordId, branchId, commitId)
-                    .flatMap(commit -> getOntology(recordId, commitId));
-        }
+        Optional<Ontology> result = catalogManager.getCommit(configProvider.getLocalCatalogIRI(), recordId, branchId,
+                commitId).flatMap(commit -> getOntology(recordId, commitId));
 
         logTrace("retrieveOntology(recordId, branchId, commitId)", start);
         return result;

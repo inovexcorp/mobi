@@ -557,7 +557,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         assertNotNull(optionalOntology.get());
         assertNotEquals(ontology, optionalOntology.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
-        verify(mockCache, times(2)).containsKey(eq(key));
+        verify(mockCache, times(1)).containsKey(eq(key));
         verify(mockCache).put(eq(key), eq(optionalOntology.get()));
     }
 

@@ -144,7 +144,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
             } else {
                 return promise.then(response => response.data, util.rejectErrorObject);
             }    
-        }).then(response => { return response});
+        }).then(response => { return response}, $q.reject);
     };
 
     /**

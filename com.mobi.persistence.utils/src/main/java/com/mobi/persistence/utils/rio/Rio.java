@@ -33,12 +33,11 @@ public class Rio {
 
     /**
      * Writes the given statements to the given {@link RDFHandler}.
-     * <p>
      * If the collection is a {@link Model}, its namespaces will also be written.
      *
      * @param iterable A collection of statements, such as a {@link Model}, to be written.
      */
-    public static void write(Iterable<Statement> iterable, RDFHandler writer, SesameTransformer transformer,
+    public static void write(Iterable<? extends Statement> iterable, RDFHandler writer, SesameTransformer transformer,
                                   StatementHandler... statementHandlers) {
         writer.startRDF();
 
@@ -87,8 +86,8 @@ public class Rio {
      * @param statementHandlers StatementHandler
      * @return boolean if limit has been exceeded
      */
-    public static boolean write(Iterable<Statement> iterable, RDFHandler writer, SesameTransformer transformer,
-                                int limit, StatementHandler... statementHandlers) {
+    public static boolean write(Iterable<? extends Statement> iterable, RDFHandler writer,
+                                SesameTransformer transformer, int limit, StatementHandler... statementHandlers) {
         boolean limitExceeded = false;
         int limitExceededCounter = 0;
         writer.startRDF();

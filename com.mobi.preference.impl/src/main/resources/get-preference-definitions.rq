@@ -1,0 +1,26 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX pref: <http://mobi.com/ontologies/preference#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+
+CONSTRUCT { ?preferenceDef ?p ?o .
+  ?mainPropertyShape ?mainPropertyShapePred ?mainPropertyShapeObj .
+  ?attachedNode ?attachedNodePred ?attachedNodeObj .
+  ?attachedProperty ?attachedPropertyPred ?attachedPropertyObj .
+}
+WHERE {
+    ?preferenceDef a sh:NodeShape ;
+        pref:inGroup ?group ;
+        rdfs:subClassOf pref:Preference ;
+        sh:property ?mainPropertyShape ;
+        ?p ?o .
+
+    ?mainPropertyShape ?mainPropertyShapePred ?mainPropertyShapeObj .
+
+    OPTIONAL {
+        ?mainPropertyShape sh:node ?attachedNode .
+        ?attachedNode sh:property ?attachedProperty ;
+            ?attachedNodePred ?attachedNodeObj .
+        ?attachedProperty ?attachedPropertyPred ?attachedPropertyObj .
+    }
+}

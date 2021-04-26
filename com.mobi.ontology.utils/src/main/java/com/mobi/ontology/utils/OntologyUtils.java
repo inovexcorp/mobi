@@ -24,7 +24,6 @@ package com.mobi.ontology.utils;
  */
 
 import com.mobi.ontology.core.api.Ontology;
-import com.mobi.ontology.core.api.OntologyId;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,21 +37,19 @@ public class OntologyUtils {
      * @return the Set of imported Ontologies without the base Ontology.
      */
     public static Set<Ontology> getImportedOntologies(Ontology baseOntology) {
-        OntologyId baseOntologyId = baseOntology.getOntologyId();
         Set<Ontology> importsClosure = baseOntology.getImportsClosure();
-        return getImportedOntologies(importsClosure, baseOntologyId);
+        return getImportedOntologies(importsClosure, baseOntology);
     }
-
     /**
      * Gets the imported ontologies for the Ontology identified, excluding the base Ontology.
      *
      * @param importedOntologies set of ontologies from the imports closure which includes the base ontology.
-     * @param baseOntologyId     the {@link OntologyId} for the base Ontology to exclude from the {@link Set}.
+     * @param baseOntology the base {@link Ontology} to exclude from the {@link Set}.
      * @return the Set of imported Ontologies without the base Ontology.
      */
-    public static Set<Ontology> getImportedOntologies(Set<Ontology> importedOntologies, OntologyId baseOntologyId) {
+    public static Set<Ontology> getImportedOntologies(Set<Ontology> importedOntologies, Ontology baseOntology) {
         return importedOntologies.stream()
-                .filter(ontology -> !ontology.getOntologyId().equals(baseOntologyId))
+                .filter(ontology -> !ontology.equals(baseOntology))
                 .collect(Collectors.toSet());
     }
 }

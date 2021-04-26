@@ -23,7 +23,6 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -73,6 +72,7 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
+import com.mobi.repository.impl.sesame.query.SesameOperationDatasetFactory;
 import org.apache.commons.lang.NotImplementedException;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -150,6 +150,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
     private OrmFactory<Dataset> datasetFactory = getRequiredOrmFactory(Dataset.class);
+    private SesameOperationDatasetFactory operationDatasetFactory = new SesameOperationDatasetFactory();
     private IRI missingIRI;
     private IRI recordIRI;
     private IRI branchIRI;
@@ -271,7 +272,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
         when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> {
             datasetManager.createDataset(resource.getValue().stringValue(), "ontologyCache");
-            return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY);
+            return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY, operationDatasetFactory);
         });
 
         doAnswer(invocation -> {
@@ -624,7 +625,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         assertNotNull(optionalOntology.get());
         assertNotEquals(ontology, optionalOntology.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
-        verify(mockCache, times(2)).containsKey(eq(key));
+        verify(mockCache).containsKey(eq(key));
     }
 
     @Test
@@ -635,12 +636,9 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
         when(mockCache.containsKey(key)).thenReturn(true);
-        when(mockCache.get(key)).thenReturn(ontology);
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
         assertTrue(optionalOntology.isPresent());
-        assertEquals(ontology, optionalOntology.get());
-        verify(mockCache).get(eq(key));
         verify(mockCache, times(0)).put(eq(key), eq(optionalOntology.get()));
     }
 

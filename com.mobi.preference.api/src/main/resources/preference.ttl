@@ -55,6 +55,13 @@
     rdfs:label "Preference Group"@en;
     rdfs:comment "The group of preferences that this preference belongs to"@en.
 
-# Define FormField
+:FormField a owl:Class .
 
-# Define TextInput, TextAreaInput, Checkbox, Radio instances of FormField class
+:TextInput a :FormField .
+
+:ToggleInput a :FormField .
+
+:usesFormField a owl:ObjectProperty;
+   rdfs:label "For User"@en;
+   rdfs:domain sh:PropertyShape;
+   rdfs:range :FormField.
