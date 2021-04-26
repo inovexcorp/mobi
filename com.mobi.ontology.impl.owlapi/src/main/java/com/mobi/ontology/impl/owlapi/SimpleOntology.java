@@ -149,11 +149,14 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -1016,14 +1019,12 @@ public class SimpleOntology implements Ontology {
      * @return a Set of IRIs from the TupleQueryResult
      */
     private Set<IRI> getIRISet(TupleQueryResult tupleQueryResult) {
-        Set<IRI> iris = new HashSet<>();
-        tupleQueryResult.forEach(r -> r.getBinding("s")
-                .ifPresent(b -> {
-                    if (!(b.getValue() instanceof BNode)) {
-                        iris.add(this.valueFactory.createIRI(b.getValue().stringValue()));
-                    }
-                }));
-        return iris;
+        return StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(tupleQueryResult.iterator(), Spliterator.ORDERED), false)
+                .map(result -> result.getBinding("s") )
+                .filter(resource -> resource.isPresent() && !(resource.get().getValue() instanceof BNode))
+                .map(resource -> (IRI) resource.get().getValue())
+                .collect(Collectors.toSet());
     }
 
     /**

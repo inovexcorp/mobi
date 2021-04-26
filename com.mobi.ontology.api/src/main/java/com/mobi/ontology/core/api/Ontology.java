@@ -152,7 +152,7 @@ public interface Ontology {
     Set<IRI> getImportedOntologyIRIs();
 
     /**
-     * Gets the set of IRIs for deprecated properties of this ontology.
+     * Gets the set of IRIs for deprecated IRIs of this ontology.
      *
      * @return set of ontology deprecated IRIs
      */

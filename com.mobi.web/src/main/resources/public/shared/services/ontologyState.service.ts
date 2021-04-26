@@ -57,9 +57,9 @@ import {
     join,
     replace,
     findIndex,
+    identity,
     isObject,
-    mergeWith,
-    identity
+    mergeWith
 } from 'lodash';
 
 ontologyStateService.$inject = ['$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'policyEnforcementService', 'policyManagerService', 'httpService', 'uuid'];
@@ -1957,9 +1957,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @returns {boolean} True if the IRI is deprecated; false otherwise
      */
     self.isIriDeprecated = function(iri, listItem = self.listItem) {
-        if (iri === listItem.ontologyId) {
-            return false;
-        }
         var isDep = has(listItem, "deprecatedIris['" + iri + "']");
         return isDep;
     }
@@ -1983,11 +1980,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             } else if (annotationValue === "false" || annotationValue === null) {
                 unset(listItem, "deprecatedIris['" + iri + "']");
             }
-            self.alterTreeHierarchy(identityMapper, listItem);
+            self.alterTreeHierarchy(identity, listItem);
         }
-    }
-    function identityMapper(x) {
-        return x
     }
     /**
      * @ngdoc method

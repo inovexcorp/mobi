@@ -79,7 +79,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         name: 'Hide unused imports',
         checked: false,
         flag: false, 
-        filter: function(node) {
+        filter: node => {
             var match = true;
             if (dvm.os.isImported(node.entityIRI)) {
                 match = false;
@@ -91,7 +91,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         name: 'Hide deprecated properties',
         checked: false,
         flag: false,
-        filter: function(node) {
+        filter: node => {
             var match = true;
             if (dvm.os.isIriDeprecated(node.entityIRI)) {
                 match = false;
