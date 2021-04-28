@@ -1157,6 +1157,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         return result;
     }
+
     /**
      * @ngdoc method
      * @name addEntity
@@ -1433,8 +1434,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         if (some(self.listItem.additions, oldEntity)) {
             remove(self.listItem.additions, oldEntity);
             updateRefsService.update(self.listItem, self.listItem.selected['@id'], newIRI);
+            self.recalculateJoinedPaths(self.listItem);
         } else {
             updateRefsService.update(self.listItem, self.listItem.selected['@id'], newIRI);
+            self.recalculateJoinedPaths(self.listItem);
             self.addToDeletions(self.listItem.ontologyRecord.recordId, oldEntity);
         }
         if (self.getActiveKey() !== 'project') {
@@ -2021,6 +2024,21 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     function closeNodeMapper(item) {
         if ('isOpened' in item) {
             item.isOpened = false;
+        }
+        return item;
+    }
+
+    self.recalculateJoinedPaths = function(listItem = self.listItem) {
+        self.alterTreeHierarchy(recalculateJoinedPath, listItem);
+    }
+
+    function recalculateJoinedPath(item) {
+        if ('joinedPath' in item) {
+            const newJoinedPath = self.joinPath(item.path);
+            if (newJoinedPath != item.joinedPath) {
+                updateRefsService.update(self.listItem.editorTabStates, item.joinedPath, newJoinedPath);
+                item.joinedPath = newJoinedPath;
+            }
         }
         return item;
     }
