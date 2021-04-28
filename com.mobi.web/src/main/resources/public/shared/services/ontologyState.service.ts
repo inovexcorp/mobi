@@ -1157,7 +1157,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         return result;
     }
-
     /**
      * @ngdoc method
      * @name addEntity
