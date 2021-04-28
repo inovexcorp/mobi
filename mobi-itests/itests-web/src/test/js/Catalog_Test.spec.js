@@ -31,7 +31,6 @@ var CatalogOnto4 = process.cwd()+ '/src/test/resources/ontologies/z-catalog-onto
 var CatalogPage = function() {
     this.recordViewSelector = 'catalog-page records-view';
     this.recordFiltersSelector = 'catalog-page records-view record-filters';
-
     this.recordTypeFilters = ['Dataset Record','Mapping Record','Ontology Record','Record',
         'Unversioned Record','Versioned RDF Record','Versioned Record']
 };
@@ -159,15 +158,5 @@ module.exports = {
         catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-1', order: 'Title (asc)'});
         catalogPage.assertRecordList(browser, 'z-catalog-ontology-1.ttl');
     },
-
-    'Step Tear Down': function(browser) {
-        browser.globals.generalUtils.switchToPage(browser, 'ontology-editor', 'ontology-editor-page')
-    }
-//    'Step 11: Switch to catalog page to see if previous selected filters are selected' : function(browser) {
-//        browser.globals.generalUtils.switchToPage(browser, 'home', 'home-page');
-//        browser.globals.generalUtils.switchToPage(browser, 'catalog', this.recordViewSelector);
-//        catalogPage.verifyRecordFilters(browser, true);
-//        catalogPage.verifyRecordList(browser);
-//    },
 
 }
