@@ -427,6 +427,8 @@ export class mockOntologyState {
     getCurrentStateIdByRecordId = jasmine.createSpy('getCurrentStateIdByRecordId').and.returnValue('');
     getCurrentStateId = jasmine.createSpy('getCurrentStateId').and.returnValue('');
     getCurrentState = jasmine.createSpy('getCurrentState').and.returnValue({});
+    collapseFlatLists = jasmine.createSpy('collapseFlatLists');
+    recalculateJoinedPaths = jasmine.createSpy('recalculateJoinedPaths');
     isStateTag = jasmine.createSpy('isStateTag').and.returnValue(false);
     isStateBranch = jasmine.createSpy('isStateBranch').and.returnValue(false);
     isImported = jasmine.createSpy('isImported').and.returnValue(false);

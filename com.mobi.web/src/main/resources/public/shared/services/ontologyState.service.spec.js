@@ -3449,6 +3449,40 @@ describe('Ontology State Service', function() {
             });
         });
     });
+    fdescribe('recalculateJoinedPaths sets', function() {
+        beforeEach(function() {
+            this.node = {
+                indent: 1,
+                entityIRI: 'iri',
+                path: [this.recordId, 'otherIRI', 'andAnotherIRI', 'somethingNew'],
+                joinedPath: this.recordId + '.otherIRI.andAnotherIRI.iri'
+            };
+            ontologyStateSvc.listItem.classes = {};
+            ontologyStateSvc.listItem.classes.flat = [];
+            ontologyStateSvc.listItem.individuals = {};
+            ontologyStateSvc.listItem.individuals.flat = [];
+            ontologyStateSvc.listItem.classes.flat.push(this.node);
+            ontologyStateSvc.listItem.individuals.flat.push(this.node);
+            _.set(ontologyStateSvc.listItem.editorTabStates, 'classes.open.' + this.node.joinedPath, true);
+            _.set(ontologyStateSvc.listItem.editorTabStates, 'individuals.open.' + this.node.joinedPath, true);
+        });
+        it('joinedPaths correctly', function() {
+            var classInQuestion = _.filter(ontologyStateSvc.listItem.classes.flat, {'entityIRI': 'iri'});
+            expect(classInQuestion.length).toEqual(1);
+            var individualInQuestion = _.filter(ontologyStateSvc.listItem.individuals.flat, {'entityIRI': 'iri'});
+            expect(individualInQuestion.length).toEqual(1);
+            expect(classInQuestion[0].joinedPath).toEqual(this.recordId + '.otherIRI.andAnotherIRI.iri');
+            expect(individualInQuestion[0].joinedPath).toEqual(this.recordId + '.otherIRI.andAnotherIRI.iri');
+            ontologyStateSvc.recalculateJoinedPaths(ontologyStateSvc.listItem);
+
+            classInQuestion = _.filter(ontologyStateSvc.listItem.classes.flat, {'entityIRI': 'iri'});
+            expect(classInQuestion.length).toEqual(1);
+            individualInQuestion = _.filter(ontologyStateSvc.listItem.individuals.flat, {'entityIRI': 'iri'});
+            expect(individualInQuestion.length).toEqual(1);
+            expect(classInQuestion[0].joinedPath).toEqual(this.recordId + '.otherIRI.andAnotherIRI.somethingNew')
+            expect(individualInQuestion[0].joinedPath).toEqual(this.recordId + '.otherIRI.andAnotherIRI.somethingNew')
+        });
+    });
     describe('onEdit calls the correct manager methods', function() {
         beforeEach(function() {
             this.iriBegin = 'begin';
@@ -3458,9 +3492,11 @@ describe('Ontology State Service', function() {
             spyOn(ontologyStateSvc, 'getActivePage').and.returnValue({});
             spyOn(ontologyStateSvc, 'addToAdditions');
             spyOn(ontologyStateSvc, 'addToDeletions');
+            spyOn(ontologyStateSvc, 'recalculateJoinedPaths');
         });
         it('regardless of getEntityUsages outcome when no match in additions', function() {
             ontologyStateSvc.onEdit(this.iriBegin, this.iriThen, this.iriEnd);
+            expect(ontologyStateSvc.recalculateJoinedPaths).toHaveBeenCalledWith(ontologyStateSvc.listItem);
             expect(updateRefsSvc.update).toHaveBeenCalledWith(ontologyStateSvc.listItem, ontologyStateSvc.listItem.selected['@id'], this.newIRI);
             expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, angular.copy(ontologyStateSvc.listItem.selected));
@@ -3470,6 +3506,7 @@ describe('Ontology State Service', function() {
         it('regardless of getEntityUsages outcome when match in additions', function() {
             ontologyStateSvc.listItem.additions = [angular.copy(ontologyStateSvc.listItem.selected)];
             ontologyStateSvc.onEdit(this.iriBegin, this.iriThen, this.iriEnd);
+            expect(ontologyStateSvc.recalculateJoinedPaths).toHaveBeenCalledWith(ontologyStateSvc.listItem);
             expect(updateRefsSvc.update).toHaveBeenCalledWith(ontologyStateSvc.listItem, ontologyStateSvc.listItem.selected['@id'], this.newIRI);
             expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, angular.copy(ontologyStateSvc.listItem.selected));
@@ -3482,12 +3519,14 @@ describe('Ontology State Service', function() {
                 spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('project');
                 spyOn(ontologyStateSvc, 'setCommonIriParts');
                 ontologyStateSvc.onEdit(this.iriBegin, this.iriThen, this.iriEnd);
+                expect(ontologyStateSvc.recalculateJoinedPaths).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                 expect(ontologyStateSvc.setCommonIriParts).not.toHaveBeenCalled();
             });
             it('not project', function() {
                 spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('other');
                 spyOn(ontologyStateSvc, 'setCommonIriParts');
                 ontologyStateSvc.onEdit(this.iriBegin, this.iriThen, this.iriEnd);
+                expect(ontologyStateSvc.recalculateJoinedPaths).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                 expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith(this.iriBegin, this.iriThen);
             });
         });
@@ -3497,6 +3536,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.getEntityUsages.and.returnValue($q.when(response));
             ontologyStateSvc.onEdit(this.iriBegin, this.iriThen, this.iriEnd);
             scope.$apply();
+            expect(ontologyStateSvc.recalculateJoinedPaths).toHaveBeenCalledWith(ontologyStateSvc.listItem);
             expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, statement);
             expect(updateRefsSvc.update).toHaveBeenCalledWith(response, ontologyStateSvc.listItem.selected['@id'], this.newIRI);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, statement);
@@ -3505,6 +3545,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.getEntityUsages.and.returnValue($q.reject());
             ontologyStateSvc.onEdit(this.iriBegin, this.iriThen, this.iriEnd);
             scope.$apply();
+            expect(ontologyStateSvc.recalculateJoinedPaths).toHaveBeenCalledWith(ontologyStateSvc.listItem);
             expect(util.createErrorToast).toHaveBeenCalled();
         });
     });
