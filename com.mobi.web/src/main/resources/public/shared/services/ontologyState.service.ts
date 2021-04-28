@@ -2026,11 +2026,21 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         return item;
     }
-
+    /**
+     * @ngdoc method
+     * @name recalculateJoinedPaths
+     * @methodOf shared.service:ontologyStateService
+     * 
+     * @description
+     * Method to recalculate the 'joinedPath' field on each of the nodes of the flatlists. If the recalculated 
+     * value differs from the previous value, the editorTabStates on the listItem are adjusted accordingly for
+     * that joinedPath.
+     *
+     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
+    */
     self.recalculateJoinedPaths = function(listItem = self.listItem) {
         self.alterTreeHierarchy(recalculateJoinedPath, listItem);
     }
-
     function recalculateJoinedPath(item) {
         if ('joinedPath' in item) {
             const newJoinedPath = self.joinPath(item.path);
