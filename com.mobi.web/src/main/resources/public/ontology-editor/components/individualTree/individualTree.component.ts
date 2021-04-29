@@ -75,7 +75,7 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         name: 'Hide unused imports',
         checked: false,
         flag: false, 
-        filter: function(node) {
+        filter: node => {
             var match = true;
             if (dvm.os.isImported(node.entityIRI)) {
                 match = false;
@@ -87,7 +87,7 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         name: 'Hide deprecated individuals',
         checked: false,
         flag: false,
-        filter: function(node) {
+        filter: node => {
             var match = true;
             if (dvm.os.isIriDeprecated(node.entityIRI)) {
                 match = false;

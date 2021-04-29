@@ -152,7 +152,7 @@ public interface Ontology {
     Set<IRI> getImportedOntologyIRIs();
 
     /**
-     * Gets the set of IRIs for deprecated properties of this ontology.
+     * Gets the set of IRIs that are annotated with owl:deprecated true within this ontology.
      *
      * @return set of ontology deprecated IRIs
      */

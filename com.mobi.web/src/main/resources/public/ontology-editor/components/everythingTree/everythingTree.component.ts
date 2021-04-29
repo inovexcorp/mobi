@@ -84,7 +84,7 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         name: 'Hide deprecated entities',
         checked: false,
         flag: false,
-        filter: function(node) {
+        filter: node => {
             var match = true;
             if (dvm.os.isIriDeprecated(node.entityIRI)) {
                 match = false;

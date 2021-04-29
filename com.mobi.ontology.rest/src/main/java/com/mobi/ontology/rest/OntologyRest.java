@@ -3671,22 +3671,9 @@ public class OntologyRest {
      * @return a JSONArray of Deprecated from the provided Ontology.
      */
     private ObjectNode getDeprecatedIRIObject(Ontology ontology) {
-        Set<IRI> iris = getDeprecatedIRIs(ontology);
+        Set<IRI> iris = ontology.getDeprecatedIRIs();
         return getObjectArray("deprecatedIris", irisToJsonArray(iris));
     }
-
-    /**
-     * Gets a Set of Deprecated IRIs from the provided Ontology.
-     *
-     * @param ontology the Ontology to get the Deprecated from.
-     * @return a Set of Deprecated IRIs from the provided Ontology.
-     */
-    private Set<IRI> getDeprecatedIRIs(Ontology ontology) {
-        return ontology.getDeprecatedIRIs()
-                .stream()
-                .collect(Collectors.toSet());
-    }
-
 
     /**
      * Gets a JSONObject of Class IRIs from the provided Ontology.

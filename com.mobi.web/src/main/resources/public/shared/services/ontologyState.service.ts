@@ -22,44 +22,44 @@
  */
 import * as angular from 'angular';
 import {
-    forEach,
-    get,
-    find,
-    map,
-    remove,
-    includes,
-    concat,
-    set,
-    isEmpty,
-    union,
-    flatten,
-    values,
-    filter,
-    some,
-    keys,
     assign,
-    has,
-    uniq,
+    concat,
     difference,
-    mapValues,
-    lowerCase,
-    sortBy,
-    merge,
-    unset,
-    head,
+    filter,
+    find,
+    findIndex,
+    findKey,
+    flatten,
+    forEach,
     forOwn,
+    get,
+    has,
+    head,
+    identity,
+    includes,
+    initial,
+    isEmpty,
+    isEqual,
+    isObject,
+    join,
+    keys,
+    lowerCase,
+    map,
+    mapValues,
+    merge,
+    mergeWith,
     omit,
     pull,
-    isEqual,
-    findKey,
-    tail,
-    initial,
-    join,
+    remove,
     replace,
-    findIndex,
-    isObject,
-    mergeWith,
-    identity
+    set,
+    some,
+    sortBy,
+    tail,
+    union,
+    uniq,
+    unset,
+    values
 } from 'lodash';
 
 ontologyStateService.$inject = ['$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'policyEnforcementService', 'policyManagerService', 'httpService', 'uuid'];
@@ -1959,9 +1959,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @returns {boolean} True if the IRI is deprecated; false otherwise
      */
     self.isIriDeprecated = function(iri, listItem = self.listItem) {
-        if (iri === listItem.ontologyId) {
-            return false;
-        }
         var isDep = has(listItem, "deprecatedIris['" + iri + "']");
         return isDep;
     }
@@ -1985,11 +1982,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             } else if (annotationValue === "false" || annotationValue === null) {
                 unset(listItem, "deprecatedIris['" + iri + "']");
             }
-            self.alterTreeHierarchy(identityMapper, listItem);
+            self.alterTreeHierarchy(identity, listItem);
         }
-    }
-    function identityMapper(x) {
-        return x
     }
     /**
      * @ngdoc method
