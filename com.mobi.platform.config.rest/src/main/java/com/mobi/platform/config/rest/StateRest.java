@@ -34,6 +34,8 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -96,9 +98,9 @@ public class StateRest {
      * Retrieves a JSON array of the IDs and associated resources for all State for the User making the request
      * which match the passed criteria. Can filter by associated Application and by the IDs of associated resources.
      *
-     * @param context the context of the request
-     * @param applicationId the ID of the Application to filter State by
-     * @param subjectIds a List of all the IDs of resources that should be associated with the States
+     * @param context Context of the request
+     * @param applicationId ID of the Application to filter State by
+     * @param subjectIds List of all the IDs of resources that should be associated with the States
      * @return a Response with an JSON array of the IDs and JSON-LD serialization of the resources for all States
      *      that match the passed criteria
      */
@@ -119,8 +121,10 @@ public class StateRest {
             @Context ContainerRequestContext context,
             @Parameter(description = "ID of the Application to filter State by", required = true)
             @QueryParam("application") String applicationId,
-            @Parameter(description = "List of all the IDs of resources that should be associated with the States",
-                    required = true)
+            @Parameter(array = @ArraySchema(
+                    arraySchema = @Schema(description = "List of all the IDs of resources that should be " +
+                            "associated with the States"),
+                    schema = @Schema(implementation = String.class, description = "ID")))
             @QueryParam("subjects") List<String> subjectIds) {
         String username = RestUtils.getActiveUsername(context);
         Set<Resource> subjects = subjectIds.stream()
@@ -145,7 +149,7 @@ public class StateRest {
      * Creates a new State for the User making the request using the passed JSON-LD to be associated with the new State.
      * Can pass the ID of an Application to be associated with the new State. Returns the ID of the new State.
      *
-     * @param context the context of the request
+     * @param context Context of the request
      * @param applicationId the ID of the Application to associate the new State with
      * @param stateJson the JSON-LD of all resources to be linked to the new State
      * @return a Response with the ID of the new State
@@ -194,7 +198,7 @@ public class StateRest {
      * Retrieves all resources associated with the State identified by ID. Will only retrieve the State if it belongs
      * to the User making the request; returns a 403 otherwise. If state cannot be found, returns a 400.
      *
-     * @param context the context of the request
+     * @param context Context of the request
      * @param stateId the ID of the State to retrieve
      * @return a Response with the JSON-LD serialization of all resources associated with the specified State
      */
@@ -237,7 +241,7 @@ public class StateRest {
      * the State if it belongs to the User making the request; returns a 403 code otherwise. If state cannot be found,
      * returns a 400.
      *
-     * @param context the context of the request
+     * @param context Context of the request
      * @param stateId the ID of the State to update
      * @param newStateJson the JSON-LD serialization of the new resources to associate with the State
      * @return a Response indicating the success of the request
@@ -291,7 +295,7 @@ public class StateRest {
      * the State if it belongs to the User making the request; returns a 403 code otherwise. If state cannot be found,
      * returns a 400.
      *
-     * @param context the context of the request
+     * @param context Context of the request
      * @param stateId the ID of the State to remove
      * @return a Response indicating the success of the request
      */

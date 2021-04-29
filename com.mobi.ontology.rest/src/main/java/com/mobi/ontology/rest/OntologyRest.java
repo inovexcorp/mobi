@@ -99,6 +99,7 @@ import com.mobi.security.policy.api.ontologies.policy.Delete;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.collections.CollectionUtils;
@@ -264,13 +265,13 @@ public class OntologyRest {
      * and stored with an initial Commit containing the data provided in the ontology file. Only provide either an
      * ontology file or ontology JSON-LD.
      *
-     * @param context         the context of the request.
-     * @param fileInputStream the ontology file to upload.
-     * @param ontologyJson    the ontology JSON-LD to upload.
-     * @param title           the title for the OntologyRecord.
-     * @param description     the optional description for the OntologyRecord.
-     * @param markdown        the optional markdown abstract for the new OntologyRecord.
-     * @param keywords        the optional list of keyword strings for the OntologyRecord.
+     * @param context         Context of the request.
+     * @param fileInputStream Ontology file to upload.
+     * @param ontologyJson    Ontology JSON-LD to upload.
+     * @param title           Title for the OntologyRecord.
+     * @param description     Optional description for the OntologyRecord.
+     * @param markdown        Optional markdown abstract for the new OntologyRecord.
+     * @param keywords        Optional list of keyword strings for the OntologyRecord.
      * @return CREATED with record ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
      *      SERVER ERROR if there is a problem creating the OntologyRecord.
      */
@@ -312,8 +313,10 @@ public class OntologyRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional markdown abstract for the new OntologyRecord"))
             @FormDataParam("markdown") String markdown,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Optional list of keyword strings for the OntologyRecord"))
+            @Parameter(array = @ArraySchema(
+                    arraySchema = @Schema(description =
+                            "Optional list of keyword strings for the OntologyRecord"),
+                    schema = @Schema(implementation = String.class, description = "Keyword")))
             @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
         if (fileInputStream == null && ontologyJson == null) {
@@ -401,7 +404,7 @@ public class OntologyRest {
     /**
      * Deletes the ontology associated with the requested record ID in the requested format.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @return OK.
@@ -439,7 +442,7 @@ public class OntologyRest {
     /**
      * Streams the ontology associated with the requested record ID to an OutputStream.
      *
-     * @param context     the context of the request
+     * @param context     Context of the request
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -509,7 +512,7 @@ public class OntologyRest {
      * Updates the InProgressCommit associated with the User making the request for the OntologyRecord identified
      * by the provided recordId.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -575,7 +578,7 @@ public class OntologyRest {
      * Updates the InProgressCommit associated with the User making the request for the OntologyRecord identified by the
      * provided recordId.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -771,7 +774,7 @@ public class OntologyRest {
      Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is
      * specified. In which case the branch specified by the branchId query parameter will be removed and nothing else.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -819,7 +822,7 @@ public class OntologyRest {
      * skos:ConceptSchemes, an object with the concept hierarchy and index, and an object with the concept scheme
      * hierarchy and index.
      *
-     * @param context the context of the request.
+     * @param context Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -955,7 +958,7 @@ public class OntologyRest {
      * Returns a JSON object with all of the lists and objects needed by the UI to properly display and work with
      * ontologies.
      *
-     * @param context the context of the request.
+     * @param context Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -1155,7 +1158,7 @@ public class OntologyRest {
     /**
      * Returns IRIs in the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -1202,7 +1205,7 @@ public class OntologyRest {
     /**
      * Returns annotation property IRIs in the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -1251,7 +1254,7 @@ public class OntologyRest {
      * Add a new owl annotation property to the ontology identified by the provided IDs associated with the
      * requester's InProgressCommit.
      *
-     * @param context        the context of the request.
+     * @param context        Context of the request.
      * @param recordIdStr    String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                       String begins with "_:".
      * @param annotationJson String representing the new annotation in JSON-LD.
@@ -1294,7 +1297,7 @@ public class OntologyRest {
     /**
      * Delete annotation with requested annotation ID from ontology identified by the provided IDs from the server.
      *
-     * @param context         the context of the request.
+     * @param context         Context of the request.
      * @param recordIdStr     String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                        String begins with "_:".
      * @param annotationIdStr String representing the annotation Resource id. NOTE: Assumes id represents
@@ -1351,7 +1354,7 @@ public class OntologyRest {
     /**
      * Returns class IRIs in the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -1405,7 +1408,7 @@ public class OntologyRest {
      * Add a new class to ontology identified by the provided IDs from the server associated with the requester's
      * InProgressCommit.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param classJson   String representing the new class model.
@@ -1446,7 +1449,7 @@ public class OntologyRest {
     /**
      * Delete class with requested class ID from ontology identified by the provided IDs from the server.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param classIdStr  String representing the class Resource id. NOTE: Assumes id represents
@@ -1499,7 +1502,7 @@ public class OntologyRest {
     /**
      * Returns datatype IRIs in the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -1548,7 +1551,7 @@ public class OntologyRest {
      * Adds a new datatype to the ontology identified by the provided IDs associated with the requester's
      * InProgressCommit.
      *
-     * @param context      the context of the request.
+     * @param context      Context of the request.
      * @param recordIdStr  String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                     String begins with "_:".
      * @param datatypeJson String representing the new datatype model.
@@ -1589,7 +1592,7 @@ public class OntologyRest {
     /**
      * Delete the datatype from the ontology identified by the provided IDs.
      *
-     * @param context       the context of the request.
+     * @param context       Context of the request.
      * @param recordIdStr   String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                      String begins with "_:".
      * @param datatypeIdStr String representing the datatype Resource id. NOTE: Assumes id represents
@@ -1642,7 +1645,7 @@ public class OntologyRest {
     /**
      * Returns object property IRIs in the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -1691,7 +1694,7 @@ public class OntologyRest {
      * Adds a new object property to the ontology identified by the provided IDs from the server associated with the
      * requester's InProgressCommit.
      *
-     * @param context            the context of the request.
+     * @param context            Context of the request.
      * @param recordIdStr        String representing the Record Resource ID. NOTE: Assumes id represents an IRI
      *                           unless String begins with "_:".
      * @param objectPropertyJson String representing the new property model.
@@ -1732,7 +1735,7 @@ public class OntologyRest {
     /**
      * Delete object property with requested class ID from ontology identified by the provided IDs from the server.
      *
-     * @param context             the context of the request.
+     * @param context             Context of the request.
      * @param recordIdStr         String representing the Record Resource ID. NOTE: Assumes id represents an IRI
      *                            unless String begins with "_:".
      * @param objectPropertyIdStr String representing the class Resource id. NOTE: Assumes id represents
@@ -1785,7 +1788,7 @@ public class OntologyRest {
     /**
      * Returns data properties in the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -1834,7 +1837,7 @@ public class OntologyRest {
      * Adds a new data property to the ontology identified by the provided IDs from the server associated with the
      * requester's InProgressCommit.
      *
-     * @param context          the context of the request.
+     * @param context          Context of the request.
      * @param recordIdStr      String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                         String begins with "_:".
      * @param dataPropertyJson String representing the new property model.
@@ -1875,7 +1878,7 @@ public class OntologyRest {
     /**
      * Delete data property with requested class ID from ontology identified by the provided IDs from the server.
      *
-     * @param context           the context of the request.
+     * @param context           Context of the request.
      * @param recordIdStr       String representing the Record Resource ID. NOTE: Assumes id represents an IRI
      *                          unless String begins with "_:".
      * @param dataPropertyIdStr String representing the class Resource id. NOTE: Assumes id represents
@@ -1928,7 +1931,7 @@ public class OntologyRest {
     /**
      * Returns named individual IRIs in the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -1977,7 +1980,7 @@ public class OntologyRest {
      * Adds a new individual to the ontology identified by the provided IDs from the server associated with the
      * requester's InProgressCommit.
      *
-     * @param context        the context of the request.
+     * @param context        Context of the request.
      * @param recordIdStr    String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                       String begins with "_:".
      * @param individualJson String representing the new individual model.
@@ -2018,7 +2021,7 @@ public class OntologyRest {
     /**
      * Delete individual with requested class ID from ontology identified by the provided IDs from the server.
      *
-     * @param context         the context of the request.
+     * @param context         Context of the request.
      * @param recordIdStr     String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                        String begins with "_:".
      * @param individualIdStr String representing the individual Resource id. NOTE: Assumes id represents
@@ -2071,7 +2074,7 @@ public class OntologyRest {
     /**
      * Returns IRIs in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2117,7 +2120,7 @@ public class OntologyRest {
     /**
      * Returns IRIs of the ontologies in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2183,7 +2186,7 @@ public class OntologyRest {
      * Returns an array of the imports closure in the requested format from the ontology
      * with the requested ID.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param rdfFormat   the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
@@ -2238,7 +2241,7 @@ public class OntologyRest {
     /**
      * Returns annotation property IRIs in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2285,7 +2288,7 @@ public class OntologyRest {
     /**
      * Returns class IRIs in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2331,7 +2334,7 @@ public class OntologyRest {
     /**
      * Returns datatype IRIs in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2377,7 +2380,7 @@ public class OntologyRest {
     /**
      * Returns object property IRIs in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2424,7 +2427,7 @@ public class OntologyRest {
     /**
      * Returns data property IRIs in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2472,7 +2475,7 @@ public class OntologyRest {
     /**
      * Returns named individual IRIs in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2521,7 +2524,7 @@ public class OntologyRest {
      * map of parent class IRIs to arrays of children class IRIs and a map of child class IRIs to arrays of parent class
      * IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2576,7 +2579,7 @@ public class OntologyRest {
      * for a map of parent property IRIs to arrays of children property IRIs and a map of child property IRIs to arrays
      * of parent property IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2632,7 +2635,7 @@ public class OntologyRest {
      * for a map of parent property IRIs to arrays of children property IRIs and a map of child property IRIs to arrays
      * of parent property IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2689,7 +2692,7 @@ public class OntologyRest {
      * arrays of parent property IRIs. Optionally can also have a key for a nested JSON-LD representation of the
      * hierarchy.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2745,7 +2748,7 @@ public class OntologyRest {
      * a map of parent concept IRIs to arrays of children concept IRIs and a map of child concept IRIs to arrays of
      * parent concept IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2801,7 +2804,7 @@ public class OntologyRest {
      * to arrays of parent concept scheme IRIs. Optionally can also have a key for a nested JSON-LD representation of
      * the hierarchy.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2856,7 +2859,7 @@ public class OntologyRest {
      * Returns classes with individuals defined in the ontology identified by the provided IDs as a JSON object with a
      * key for a map of class IRIs to arrays of individual IRIs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2911,7 +2914,7 @@ public class OntologyRest {
      * of each result when the queryType is "select". Returns JSON-LD containing statements with the requested entity
      * IRI as the predicate or object of each statement when the queryType is "construct".
      *
-     * @param context      the context of the request.
+     * @param context      Context of the request.
      * @param recordIdStr  String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                     String begins with "_:".
      * @param entityIRIStr String representing the entity Resource IRI.
@@ -2978,7 +2981,7 @@ public class OntologyRest {
      * Returns the JSON String of the resulting entities sorted by type from the ontology with the requested record ID
      * that have statements which contain the requested searchText in a Literal Value.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param searchText  the String for the text that is searched for in all of the Literals within the ontology with
@@ -3054,7 +3057,7 @@ public class OntologyRest {
     /**
      * Returns a list of ontology IRIs that were not imported.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -3102,7 +3105,7 @@ public class OntologyRest {
      * Retrieves the results of the provided SPARQL query, which targets a specific ontology, and its import closures.
      * Accepts SELECT and CONSTRUCT queries.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param queryString SPARQL Query to perform against ontology.
@@ -3189,7 +3192,7 @@ public class OntologyRest {
     /**
      * Retrieves the triples for a specified entity including all of is transitively attached Blank Nodes.
      *
-     * @param context        the context of the request.
+     * @param context        Context of the request.
      * @param recordIdStr    String representing the Record Resource ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @param entityIdStr    String representing the entity Resource ID. NOTE: Assumes ID represents an IRI unless
@@ -3261,7 +3264,7 @@ public class OntologyRest {
     /**
      * Retrieves the map of EntityNames in an Ontology.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -3510,7 +3513,7 @@ public class OntologyRest {
     /**
      * Optionally gets the Ontology based on the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr the record ID String to process.
      * @param branchIdStr the branch ID String to process.
      * @param commitIdStr the commit ID String to process.
@@ -3561,7 +3564,7 @@ public class OntologyRest {
     /**
      * Gets the List of entity IRIs identified by a lambda function in an Ontology identified by the provided IDs.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr the record ID String to process.
      * @param branchIdStr the branch ID String to process.
      * @param commitIdStr the commit ID String to process.
@@ -4068,7 +4071,7 @@ public class OntologyRest {
     /**
      * Adds the provided Model to the requester's InProgressCommit additions.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param recordIdStr the record ID String to process.
      * @param entityModel the Model to add to the additions in the InProgressCommit.
      * @return a Response indicating the success or failure of the addition.
@@ -4087,7 +4090,7 @@ public class OntologyRest {
      * Adds the Statements associated with the entity identified by the provided ID to the requester's InProgressCommit
      * deletions.
      *
-     * @param context     the context of the request.
+     * @param context     Context of the request.
      * @param ontology    the ontology to process.
      * @param entityIdStr the ID of the entity to be deleted.
      * @param recordIdStr the ID of the record which contains the entity to be deleted.
@@ -4159,7 +4162,7 @@ public class OntologyRest {
     /**
      * Creates the OntologyRecord using CatalogManager.
      *
-     * @param context          the context of the request.
+     * @param context          Context of the request.
      * @param title            the title for the OntologyRecord.
      * @param description      the description for the OntologyRecord.
      * @param keywordSet       the comma separated list of keywords associated with the OntologyRecord.

@@ -90,7 +90,7 @@ public interface StateManager {
      *
      * @param stateId the ID of the State to update NOTE: Assumes ID represents an IRI unless String
      *      begins with "_:".
-     * @param newState the new Model of statements to associate with the State
+     * @param newState New Model of statements to associate with the State
      * @throws IllegalArgumentException Thrown if the State could not be found
      */
     void updateState(Resource stateId, Model newState);
@@ -99,10 +99,10 @@ public interface StateManager {
      * Retrieves all State IDs with Models of all associated statements for States that match the passed filters.
      * Can filter by the associated User with the passed username, associated application ID, and associated subjects.
      *
-     * @param username the optional username of a User to filter State by
-     * @param applicationId the optional ID of the Application to filter State by
-     * @param subjects a Set of subject IRIs to filter the State by
-     * @return a Map of State IDs to Models of all the associated statements for all State matching the filter criteria
+     * @param username Optional username of a User to filter State by
+     * @param applicationId Optional ID of the Application to filter State by
+     * @param subjects Set of subject IRIs to filter the State by
+     * @return Map of State IDs to Models of all the associated statements for all State matching the filter criteria
      * @throws IllegalArgumentException Thrown if the User or Application could not be found
      */
     Map<Resource, Model> getStates(@Nullable String username, @Nullable String applicationId,
@@ -111,8 +111,8 @@ public interface StateManager {
     /**
      * Retrieves a State Model by the passed State ID.
      *
-     * @param stateId the ID of the State to retrieve
-     * @return a Model of all the statements associated with the specified State
+     * @param stateId ID of the State to retrieve
+     * @return Model of all the statements associated with the specified State
      * @throws IllegalArgumentException Thrown if the State could not be found
      */
     Model getState(Resource stateId);

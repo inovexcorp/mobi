@@ -141,7 +141,7 @@ public class PolicyRest {
             tags = "policies",
             summary = "Creates a new security policy using the provided JSON body",
             responses = {
-                    @ApiResponse(responseCode = "201", description = "The new policy ID"),
+                    @ApiResponse(responseCode = "201", description = "New policy ID"),
                     @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
                     @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
             }
@@ -212,7 +212,7 @@ public class PolicyRest {
             summary = "Updates an existing security policy using the provided JSON body",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "A Response indicating the success of the request"),
+                            description = "Response indicating the success of the request"),
                     @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
                     @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
             }

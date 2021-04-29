@@ -92,8 +92,11 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
+import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
@@ -333,8 +336,8 @@ public class CatalogRest {
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param sort The field with sort order specified.
-     * @param recordType The type of Records you want to get back (unversioned, versioned, ontology, mapping, or
+     * @param sort IRI field with sort order specified.
+     * @param recordType Type of Records you want to get back (unversioned, versioned, ontology, mapping, or
      *                   dataset).
      * @param offset The offset for the page.
      * @param limit The number of Records to return in one page.
@@ -360,10 +363,21 @@ public class CatalogRest {
             @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "Field with sort order specified (MODIFIED, ISSUED, TITLE)", required = true)
+            @Parameter(schema = @Schema(description = "IRI of the field to use for sort order",
+                    allowableValues = {"http://purl.org/dc/terms/modified",
+                            "http://purl.org/dc/terms/issued",
+                            "http://purl.org/dc/terms/title"},
+                    required = true))
             @QueryParam("sort") String sort,
-            @Parameter(description = "The type of Records you want to get back "
-                    + "(unversioned, versioned, ontology, mapping, or dataset)", required = true)
+            @Parameter(schema = @Schema(description = "IRI of the Type Records you want to get back",
+                    allowableValues = {"http://mobi.com/ontologies/catalog#VersionedRecord",
+                            "http://mobi.com/ontologies/catalog#VersionedRDFRecord",
+                            "http://mobi.com/ontologies/catalog#Record",
+                            "http://mobi.com/ontologies/ontology-editor#OntologyRecord",
+                            "http://mobi.com/ontologies/delimited#MappingRecord",
+                            "http://mobi.com/ontologies/catalog#UnversionedRecord",
+                            "http://mobi.com/ontologies/dataset#DatasetRecord"},
+                    required = true))
             @QueryParam("type") String recordType,
             @Parameter(description = "Offset for the page", required = true)
             @QueryParam("offset") int offset,
@@ -414,10 +428,10 @@ public class CatalogRest {
      * @param typeIRI The required IRI of the type for the new Record. Must be a valid IRI for a Record or one of its
      *                subclasses.
      * @param title The required title for the new Record.
-     * @param identifier The required identifier for the new Record. Must be a valid IRI.
-     * @param description The optional description for the new Record.
-     * @param markdown The optional markdown abstract for the new Record.
-     * @param keywords The optional list of keywords strings for the new Record.
+     * @param identifier Required identifier for the new Record. Must be a valid IRI.
+     * @param description Optional description for the new Record.
+     * @param markdown Optional markdown abstract for the new Record.
+     * @param keywords Optional list of keywords strings for the new Record.
      * @return Response with the IRI string of the created Record.
      */
     @POST
@@ -430,7 +444,8 @@ public class CatalogRest {
             summary = "Creates a new Record in the Catalog",
             responses = {
                     @ApiResponse(responseCode = "201",
-                            description = "Response with the IRI string of the created Record"),
+                            description = "Response with the IRI string of the created Record",
+                            content = @Content(schema = @Schema(implementation = String.class))),
                     @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
                     @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
@@ -442,17 +457,18 @@ public class CatalogRest {
     @ResourceId(value = "catalogId", type = ValueType.PATH)
     public Response createRecord(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID", required = true)
+            @Parameter(schema = @Schema(description = "String representing the Catalog ID", required = true,
+                implementation = String.class))
             @PathParam("catalogId") String catalogId,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Required IRI of the type for the new Record. "
+                    description = "Required IRI of the type for the new Record"
                     + "Must be a valid IRI for a Record or one of its subclasses", required = true))
             @FormDataParam("type") String typeIRI,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required title for the new Record", required = true))
             @FormDataParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Required identifier for the new Record. Must be a valid IRI.", required = true))
+                    description = "Required identifier for the new Record. Must be a valid IRI", required = true))
             @FormDataParam("identifier") String identifier,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional description for the new Record"))
@@ -460,8 +476,10 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional markdown abstract for the new Record"))
             @FormDataParam("markdown") String markdown,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Optional list of keywords strings for the new Record"))
+            @Parameter(array = @ArraySchema(
+                    arraySchema = @Schema(description =
+                            "Optional list of keywords strings for the new Record"),
+                    schema = @Schema(implementation = String.class, description = "keyword")))
             @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
         checkStringParam(title, "Record title is required");
         Map<String, OrmFactory<? extends Record>> recordFactories = getRecordFactories();
@@ -681,7 +699,10 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the UnversionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "Field with sort order specified (MODIFIED, ISSUED, TITLE)", required = true)
+            @Parameter(schema = @Schema(description = "Field with sort order specified",
+                    allowableValues = {"http://purl.org/dc/terms/modified", "http://purl.org/dc/terms/issued",
+                            "http://purl.org/dc/terms/title"},
+                    required = true))
             @QueryParam("sort") String sort,
             @Parameter(description = "Offset for the page")
             @DefaultValue("0") @QueryParam("offset") int offset,
@@ -711,11 +732,11 @@ public class CatalogRest {
      *                  with "_:".
      * @param recordId String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param title The required title for the new Distribution.
-     * @param description The optional description for the new Distribution.
-     * @param format The optional format string for the new Distribution. Expects a MIME type.
-     * @param accessURL The optional access URL for the new Distribution.
-     * @param downloadURL The optional download URL for the new Distribution.
+     * @param title Required title for the new Distribution.
+     * @param description Optional description for the new Distribution.
+     * @param format Optional format string for the new Distribution. Expects a MIME type.
+     * @param accessURL Optional access URL for the new Distribution.
+     * @param downloadURL Optional download URL for the new Distribution.
      * @return Response with the IRI string of the created Distribution.
      */
     @POST
@@ -894,8 +915,8 @@ public class CatalogRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Distribution ID", required = true)
             @PathParam("distributionId") String distributionId,
-            @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution", required = true)
-                    String newDistributionJson) {
+            @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution",
+                    required = true) String newDistributionJson) {
         try {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
                     distributionFactory);
@@ -1418,7 +1439,8 @@ public class CatalogRest {
                     description = "String representing the Version ID", required = true))
             @FormDataParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Required title for the new Distribution", required = true))
+                    description = "Required title for the new Distribution. " +
+                            "If the title is null, throws a 400 Response", required = true))
             @FormDataParam("description") String description,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional format string for the new Distribution. Expects a MIME type"))
@@ -1728,10 +1750,10 @@ public class CatalogRest {
      *                  with "_:".
      * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param typeIRI The required IRI of the type for the new Branch. Must be a valid IRI for a Branch or one of its
+     * @param typeIRI Required IRI of the type for the new Branch. Must be a valid IRI for a Branch or one of its
      *                subclasses.
-     * @param title The required title for the new Branch.
-     * @param description The optional description for the new Branch.
+     * @param title Required title for the new Branch.
+     * @param description Optional description for the new Branch.
      * @param commitId String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
      * @return Response with the IRI string of the created Branch.
@@ -2908,11 +2930,11 @@ public class CatalogRest {
     /**
      * Creates a Distribution object using the provided metadata strings. If the title is null, throws a 400 Response.
      *
-     * @param title       The required title for the new Distribution.
-     * @param description The optional description for the new Distribution.
-     * @param format      The optional format string for the new Distribution.
-     * @param accessURL   The optional access URL for the new Distribution.
-     * @param downloadURL The optional download URL for the Distribution.
+     * @param title       Required title for the new Distribution.
+     * @param description Optional description for the new Distribution.
+     * @param format      Optional format string for the new Distribution.
+     * @param accessURL   Optional access URL for the new Distribution.
+     * @param downloadURL Optional download URL for the Distribution.
      *
      * @return The new Distribution if passed a title.
      */

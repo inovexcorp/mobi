@@ -61,6 +61,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
@@ -225,7 +226,7 @@ public class MergeRequestRest {
     public Response createMergeRequests(
             @Context ContainerRequestContext context,
             @Parameter(schema = @Schema(type = "string",
-                    description = "The required title for the new MergeRequest", required = true))
+                    description = "Required title for the new MergeRequest", required = true))
             @FormDataParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional description for the new MergeRequest"))
@@ -242,8 +243,9 @@ public class MergeRequestRest {
                     description = "Required IRI of the target Branch which will receive the new commits "
                     + "from the source Branch of the new MergeRequest", required = true))
             @FormDataParam("targetBranchId") String targetBranchId,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "List of username of Users to assign the new MergeRequest to", required = true))
+            @Parameter(array = @ArraySchema(
+                    arraySchema = @Schema(description = "List of username of Users to assign the new MergeRequest to"),
+                    schema = @Schema(implementation = String.class, description = "Username")))
             @FormDataParam("assignees") List<FormDataBodyPart> assignees,
             @Parameter(schema = @Schema(type = "string",
                     description = "Boolean value to remove source"))

@@ -333,8 +333,8 @@ public class CommitRest {
     @RolesAllowed("user")
     @Operation(
             tags = "commits",
-            summary = "Gets the {@link Difference} for the specified commit or between the two "
-                    + "specified {@link Commit}s. If a limit and offset are passed in, retrieve the "
+            summary = "Gets the Difference for the specified commit or between the two "
+                    + "specified Commits. If a limit and offset are passed in, retrieve the "
                     + "differences for the paged subjects using the limit and offset. If the offset is "
                     + "greater than the number of subjects, the additions and deletions arrays of the "
                     + "response object will be empty arrays. If limit and offset are provided, a header "

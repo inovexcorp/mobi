@@ -48,6 +48,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
@@ -178,11 +179,13 @@ public class GroupRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "Description of the Group", required = true))
             @FormDataParam("description") String description,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "List of roles of the Group", required = true))
+            @Parameter(array = @ArraySchema(
+                    arraySchema = @Schema(description = "List of roles of the Group", required = true),
+                    schema = @Schema(implementation = String.class, description = "Role")))
             @FormDataParam("roles") List<FormDataBodyPart> roles,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "List of members of the Group", required = true))
+            @Parameter(array = @ArraySchema(
+                    arraySchema = @Schema(description = "List of members of the Group", required = true),
+                    schema = @Schema(implementation = String.class, description = "Member")))
             @FormDataParam("members") List<FormDataBodyPart> members) {
         checkStringParam(title, "Group title is required");
         try {
@@ -423,7 +426,10 @@ public class GroupRest {
     public Response addGroupRoles(
             @Parameter(description = "Title of the Group to add a role to", required = true)
             @PathParam("groupTitle") String groupTitle,
-            @Parameter(description = "Name of the roles to add to the specified Group", required = true)
+            @Parameter(array = @ArraySchema(
+                    arraySchema = @Schema(description = "Name of the roles to add to the specified Group",
+                            required = true),
+                    schema = @Schema(implementation = String.class, description = "Role")))
             @QueryParam("roles") List<String> roles) {
         if (StringUtils.isEmpty(groupTitle) || roles.isEmpty()) {
             throw ErrorUtils.sendError("Both group title and roles must be provided", Response.Status.BAD_REQUEST);
@@ -559,12 +565,14 @@ public class GroupRest {
     public Response addGroupUser(
             @Parameter(description = "Title of the Group to add users to", required = true)
             @PathParam("groupTitle") String groupTitle,
-            @Parameter(description = "List of usernames of users to add to the Group", required = true)
+            @Parameter(array = @ArraySchema(
+                    arraySchema = @Schema(description = "List of usernames of users to add to the Group",
+                            required = true),
+                    schema = @Schema(implementation = String.class, description = "username")))
             @QueryParam("users") List<String> usernames) {
         if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
-
         try {
             Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                     ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
