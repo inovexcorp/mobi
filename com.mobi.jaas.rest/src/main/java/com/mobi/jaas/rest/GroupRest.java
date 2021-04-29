@@ -500,7 +500,7 @@ public class GroupRest {
             summary = "List users of a Mobi Group",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response with a JSON array of the roles of the Group in Mobi"),
+                            description = "Response with a JSON array of the users for the specified Group in Mobi"),
                     @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
                     @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
             }
