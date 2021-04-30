@@ -100,7 +100,7 @@ public class PreferenceRest {
             summary = "Retrieves all of a user's preferences and their referenced entities",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success of the request"),
+                            description = "Success"),
                     @ApiResponse(responseCode = "500",
                             description = "Response indicating Internal Server Error")
             }
@@ -136,7 +136,7 @@ public class PreferenceRest {
             summary = "Retrieves all preference definitions in the repo that are part of the passed in preference group",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success of the request"),
+                            description = "Success"),
             }
     )
     public Response getPreferenceDefinitions(@Context ContainerRequestContext context,
@@ -163,7 +163,7 @@ public class PreferenceRest {
             summary = "Retrieves all preference groups defined in the repo",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success of the request"),
+                            description = "Success"),
             }
     )
     public Response getPreferenceGroups(@Context ContainerRequestContext context) {
@@ -187,7 +187,7 @@ public class PreferenceRest {
             summary = "Retrieves a user preference with the specified resource id and it's referenced entities",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success of the request"),
+                            description = "Success"),
                     @ApiResponse(responseCode = "500",
                             description = "INTERNAL SERVER ERROR")
             }
@@ -225,7 +225,7 @@ public class PreferenceRest {
             summary = "Updates a specific user preference and it's referenced entities",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success of the request"),
+                            description = "Success"),
                     @ApiResponse(responseCode = "400",
                             description = "BAD REQUEST")
             }
@@ -270,7 +270,7 @@ public class PreferenceRest {
             summary = "Creates a specific user preference and it's referenced entities",
             responses = {
                     @ApiResponse(responseCode = "201",
-                            description = "Response indicating the success of the request"),
+                            description = "Success"),
                     @ApiResponse(responseCode = "400",
                             description = "BAD REQUEST")
             }

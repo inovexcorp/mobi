@@ -402,7 +402,7 @@ public class DelimitedRest {
             tags = "delimited-files",
             summary = "ETL an uploaded delimited document using an uploaded Mapping file and load data into a Dataset",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }

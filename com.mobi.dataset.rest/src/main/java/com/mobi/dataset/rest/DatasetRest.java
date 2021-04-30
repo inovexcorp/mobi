@@ -338,7 +338,7 @@ public class DatasetRest {
             summary = "Gets a specific DatasetRecord from the local Catalog",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success of the request",
+                            description = "Success",
                             content = @Content(schema = @Schema(type = "object"))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
@@ -379,8 +379,7 @@ public class DatasetRest {
             tags = "datasets",
             summary = "Deletes a specific DatasetRecord in the local Catalog",
             responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -388,7 +387,8 @@ public class DatasetRest {
     )
     public Response deleteDatasetRecord(
             @Context ContainerRequestContext context,
-            @Parameter(description = "IRI of a DatasetRecord", required = true)
+            @Parameter(schema = @Schema(description = "DatasetRecord IRI", required = true,
+                    ref = "#/components/schemas/IRI"))
             @PathParam("datasetRecordId") String datasetRecordId,
             @Parameter(description = "Whether or not the delete should be forced")
             @DefaultValue("false") @QueryParam("force") boolean force) {
@@ -428,7 +428,7 @@ public class DatasetRest {
             tags = "datasets",
             summary = "Clears the data within a specific DatasetRecord in the local Catalog",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -469,8 +469,7 @@ public class DatasetRest {
             tags = "datasets",
             summary = "Uploads the data within an RDF file to a specific DatasetRecord in the local Catalog",
             responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")

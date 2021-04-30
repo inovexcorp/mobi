@@ -201,7 +201,7 @@ public class RecordPermissionsRest {
             tags = "record-permissions",
             summary = "Updates an existing record security policy using the provided JSON body",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
+                    @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }

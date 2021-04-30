@@ -258,14 +258,15 @@ public class CatalogRest {
             tags = "catalogs",
             summary = "Retrieves the distributed and local Catalogs",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "List of Catalogs within the repository"),
+                    @ApiResponse(responseCode = "200", description = "List of Catalogs within the repository",
+                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObjects"))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getCatalogs(
-            @Parameter(description = "Type of Catalog you want back (local or distributed)", required = false)
+            @Parameter(description = "Optional Type of Catalog you want back (local or distributed)", required = false)
             @QueryParam("type") String catalogType) {
         try {
             Set<Catalog> catalogs = new HashSet<>();
@@ -305,7 +306,8 @@ public class CatalogRest {
             tags = "catalogs",
             summary = "Retrieves the Catalog specified by the provided ID",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Specific Catalog from the repository"),
+                    @ApiResponse(responseCode = "200", description = "Specific Catalog from the repository",
+                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObject"))),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Catalog does not exist"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -2420,7 +2422,7 @@ public class CatalogRest {
                     + "will still point to the original head commit.",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether the Commits were successfully merged"),
+                            description = "Commits were successfully merged"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -2433,13 +2435,13 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response merge(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID", required = true)
+            @Parameter(description = "Catalog IRI", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID", required = true)
+            @Parameter(description = "VersionedRecord IRI", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
+            @Parameter(description = "Source Branch IRI", required = true)
             @PathParam("branchId") String sourceBranchId,
-            @Parameter(description = "String representing the target Branch ID", required = true)
+            @Parameter(description = "Target Branch IRI", required = true)
             @QueryParam("targetId") String targetBranchId,
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that"
@@ -2833,7 +2835,7 @@ public class CatalogRest {
             summary = "Retrieves all the available record types",
             responses = {
                     @ApiResponse(responseCode = "200", description = "All the available record types",
-                            content = @Content(array = @ArraySchema(schema = @Schema(type = "string")))),
+                            content = @Content(schema = @Schema(ref = "#/components/schemas/IRIs"))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -2861,7 +2863,7 @@ public class CatalogRest {
             summary = "Retrieves all the available sorting options",
             responses = {
                     @ApiResponse(responseCode = "200", description = "All the available sorting options",
-                        content = @Content(array = @ArraySchema(schema = @Schema(type = "string")))),
+                        content = @Content(schema = @Schema(ref = "#/components/schemas/IRIs"))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
