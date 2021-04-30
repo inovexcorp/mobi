@@ -28,6 +28,7 @@ import static java.util.Arrays.asList;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.persistence.utils.owlapi.OWLManagerSilent;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
@@ -56,10 +57,12 @@ import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLOntologyManagerFactory;
 import org.semanticweb.owlapi.model.OWLRuntimeException;
 import org.semanticweb.owlapi.model.OntologyConfigurator;
 import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
+import org.semanticweb.owlapi.rio.RioOWLRDFParser;
 import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.semanticweb.owlapi.rio.RioRenderer;
 
@@ -74,10 +77,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -102,12 +107,16 @@ public class Models {
         RDFParser rioFunctionalSyntaxParser = new RioFunctionalSyntaxParserFactory().getParser();
         RDFParser rioManchesterSyntaxParser = new RioManchesterSyntaxParserFactory().getParser();
         RDFParser rioOWLXMLParser = new RioOWLXMLParserFactory().getParser();
+        Set<OWLOntologyManagerFactory> ontologyManagerFactories = Collections.singleton(new OWLManagerSilent());
+        ((RioOWLRDFParser) rioFunctionalSyntaxParser).setOntologyManagerFactories(ontologyManagerFactories);
+        ((RioOWLRDFParser) rioManchesterSyntaxParser).setOntologyManagerFactories(ontologyManagerFactories);
+        ((RioOWLRDFParser) rioOWLXMLParser).setOntologyManagerFactories(ontologyManagerFactories);
 
         rdfParsers = Arrays.asList(rdfJsonParser, jsonLdParser, turtleParser, rdfXmlParser,
                 rioFunctionalSyntaxParser, rioManchesterSyntaxParser, rioOWLXMLParser, trigParser,
                 nTriplesParser, nQuadsParser);
 
-        preferredExtensionParsers = new LinkedHashMap<String, List<RDFParser>>();
+        preferredExtensionParsers = new LinkedHashMap<>();
         preferredExtensionParsers.put("json", Arrays.asList(rdfJsonParser, jsonLdParser));
         preferredExtensionParsers.put("jsonld", Arrays.asList(jsonLdParser));
         preferredExtensionParsers.put("ttl", Arrays.asList(turtleParser));
