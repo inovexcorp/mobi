@@ -274,7 +274,7 @@ public class GroupRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
             }
     )
     @Consumes(MediaType.APPLICATION_JSON)
@@ -341,7 +341,7 @@ public class GroupRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
             }
     )
     public Response deleteGroup(
@@ -379,7 +379,7 @@ public class GroupRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response with a JSON array of the roles of the Group in Mobi"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
             }
     )
     public Response getGroupRoles(
@@ -420,7 +420,7 @@ public class GroupRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
             }
     )
     public Response addGroupRoles(
@@ -465,7 +465,7 @@ public class GroupRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
             }
     )
     public Response removeGroupRole(
@@ -507,8 +507,8 @@ public class GroupRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response with a JSON array of the users for the specified Group in Mobi"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getGroupUsers(
@@ -559,7 +559,7 @@ public class GroupRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
             }
     )
     public Response addGroupUser(
@@ -604,7 +604,7 @@ public class GroupRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
             }
     )
     public Response removeGroupUser(

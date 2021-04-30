@@ -21,5 +21,14 @@ openAPI:
     description: 'Mobi REST API Documentation'
   servers:
     - url: /mobirest
+  components:
+    securitySchemes:
+      bearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+    responses:
+      UnauthorizedError:
+        description: Access token is missing or invalid
   security:
-    - basicAuth: []
+    - bearerAuth: [ ]

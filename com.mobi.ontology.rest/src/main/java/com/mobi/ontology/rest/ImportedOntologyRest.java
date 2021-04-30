@@ -59,7 +59,7 @@ public class ImportedOntologyRest {
             responses = {
                     @ApiResponse(responseCode = "200", description = "URL is resolvable"),
                     @ApiResponse(responseCode = "400", description = "URL is not resolvable"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "An HttpURLConnection cannot be made"),
             })
     @RolesAllowed("user")

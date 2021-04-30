@@ -189,7 +189,7 @@ public class PreferenceRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating the success of the request"),
                     @ApiResponse(responseCode = "500",
-                            description = "Response indicating INTERNAL_SERVER_ERROR")
+                            description = "INTERNAL SERVER ERROR")
             }
     )
     public Response getUserPreference(@Context ContainerRequestContext context,
@@ -227,7 +227,7 @@ public class PreferenceRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating the success of the request"),
                     @ApiResponse(responseCode = "400",
-                            description = "Response indicating BAD_REQUEST")
+                            description = "BAD REQUEST")
             }
     )
     public Response updateUserPreference(@Context ContainerRequestContext context,
@@ -272,7 +272,7 @@ public class PreferenceRest {
                     @ApiResponse(responseCode = "201",
                             description = "Response indicating the success of the request"),
                     @ApiResponse(responseCode = "400",
-                            description = "Response indicating BAD_REQUEST")
+                            description = "BAD REQUEST")
             }
     )
     public Response createUserPreference(@Context ContainerRequestContext context,

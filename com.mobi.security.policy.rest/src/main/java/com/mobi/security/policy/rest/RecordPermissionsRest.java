@@ -149,8 +149,8 @@ public class RecordPermissionsRest {
                                             + "}")
                                     })
                     ),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ActionId(Update.TYPE)
@@ -202,8 +202,8 @@ public class RecordPermissionsRest {
             summary = "Updates an existing record security policy using the provided JSON body",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")

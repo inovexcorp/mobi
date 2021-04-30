@@ -196,9 +196,9 @@ public class DelimitedRest {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the name of the file created on the server"),
                     @ApiResponse(responseCode = "400",
-                            description = "Response indicating BAD_REQUEST"),
+                            description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403",
-                            description = "Response indicating user does not have access"),
+                            description = "Permission Denied"),
             }
     )
     public Response upload(
@@ -243,9 +243,9 @@ public class DelimitedRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the name of the file replaced on the server"),
                     @ApiResponse(responseCode = "400",
-                            description = "Response indicating BAD_REQUEST"),
+                            description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403",
-                            description = "Response indicating user does not have access"),
+                            description = "Permission Denied"),
             }
     )
     public Response upload(
@@ -292,8 +292,8 @@ public class DelimitedRest {
                     @ApiResponse(responseCode = "201",
                             description = "Response with a JSON object containing the mapping "
                             + "file name and a string containing the converted data in the requested format"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
             }
     )
     public Response etlFilePreview(
@@ -340,9 +340,9 @@ public class DelimitedRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the converted data in the requested format to download"),
                     @ApiResponse(responseCode = "400",
-                            description = "Response indicating BAD_REQUEST"),
+                            description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403",
-                            description = "Response indicating user does not have access"),
+                            description = "Permission Denied"),
             }
     )
     public Response etlFile(
@@ -403,8 +403,8 @@ public class DelimitedRest {
             summary = "ETL an uploaded delimited document using an uploaded Mapping file and load data into a Dataset",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response etlFile(
@@ -467,7 +467,7 @@ public class DelimitedRest {
                     @ApiResponse(responseCode = "204",
                             description = "No data committed. Possible duplicate data."),
                     @ApiResponse(responseCode = "403",
-                            description = "Response indicating user does not have access"),
+                            description = "Permission Denied"),
             }
     )
     @ActionId(value = Modify.TYPE)
@@ -608,7 +608,7 @@ public class DelimitedRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
             }
     )

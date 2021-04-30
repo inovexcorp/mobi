@@ -113,8 +113,8 @@ public class StateRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getStates(
@@ -163,10 +163,10 @@ public class StateRest {
             responses = {
                     @ApiResponse(responseCode = "201",
                             description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response createState(
@@ -213,9 +213,9 @@ public class StateRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating the success or failure of the request"),
                     @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getState(
@@ -257,9 +257,9 @@ public class StateRest {
                     @ApiResponse(responseCode = "201",
                             description = "Response indicating the success or failure of the request"),
                     @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response updateState(
@@ -309,9 +309,9 @@ public class StateRest {
                     @ApiResponse(responseCode = "201",
                             description = "Response indicating the success of the request"),
                     @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response deleteState(
