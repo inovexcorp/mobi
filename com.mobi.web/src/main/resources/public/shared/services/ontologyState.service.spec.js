@@ -3449,7 +3449,7 @@ describe('Ontology State Service', function() {
             });
         });
     });
-    fdescribe('recalculateJoinedPaths sets', function() {
+    describe('recalculateJoinedPaths sets', function() {
         beforeEach(function() {
             this.node = {
                 indent: 1,
