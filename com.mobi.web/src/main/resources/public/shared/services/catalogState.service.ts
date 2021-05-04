@@ -109,6 +109,18 @@ function catalogStateService(catalogManagerService, prefixes) {
 
     /**
      * @ngdoc property
+     * @name keywordSearchText
+     * @propertyOf shared.service:catalogStateService
+     * @type {string}
+     *
+     * @description
+     * `keywordSearchText` holds a keyword search string
+     * {@link catalog.component:recordsView}.
+     */
+    self.keywordSearchText = '';
+
+    /**
+     * @ngdoc property
      * @name recordSearchText
      * @propertyOf shared.service:catalogStateService
      * @type {string}

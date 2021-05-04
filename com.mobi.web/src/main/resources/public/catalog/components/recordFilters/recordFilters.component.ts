@@ -62,10 +62,11 @@ const recordFiltersComponent = {
     controller: recordFiltersComponentCtrl
 };
 
-recordFiltersComponentCtrl.$inject = ['catalogManagerService', 'utilService', 'prefixes'];
+recordFiltersComponentCtrl.$inject = ['catalogStateService', 'catalogManagerService', 'utilService', 'prefixes'];
 
-function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes) {
+function recordFiltersComponentCtrl(catalogStateService, catalogManagerService, utilService, prefixes) {
     var dvm = this;
+    dvm.state = catalogStateService;
     dvm.cm = catalogManagerService;
     dvm.util = utilService;
     const keywordPrefix = prefixes.catalog + 'keyword';
@@ -77,6 +78,7 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
             title: 'Record Type',
             hide: false,
             pageable: false,
+            searchable: false,
             filterItems: [],
             onInit: function() {
                 this.setFilterItems();
@@ -110,6 +112,7 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
             title: 'Keywords',
             hide: false,
             pageable: true,
+            searchable: true,
             pagingData:{
                 limit: 12,
                 totalKeywordSize: 0,
@@ -119,13 +122,25 @@ function recordFiltersComponentCtrl(catalogManagerService, utilService, prefixes
             rawFilterItems: [],
             filterItems: [],
             onInit: function() {
-                const filterInstance = this;
-                filterInstance.nextPage();
+                this.nextPage();
+            },
+            searchModel: function(){
+                return dvm.state.keywordSearchText;
+            },
+            searchChanged: function(value){
+                dvm.state.keywordSearchText = value;
+            },
+            searchSubmitted: function(){
+                this.pagingData['totalKeywordSize'] = 0;
+                this.pagingData['currentKeywordPage'] = 1;
+                this.pagingData['hasNextPage'] = false;
+                this.nextPage();
             },
             nextPage: function() {
                 const filterInstance = this;
                 const pagingData = filterInstance.pagingData;
                 const paginatedConfig = {
+                    searchText: dvm.state.keywordSearchText,
                     pageIndex: pagingData.currentKeywordPage - 1,
                     limit: pagingData.limit,
                 };

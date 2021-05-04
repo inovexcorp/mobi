@@ -10,4 +10,5 @@ WHERE {
 
     FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord, mcat:VersionedRDFRecord,
             mcat:OntologyRecord, mcat:MappingRecord, dataset:DatasetRecord))
+    FILTER IF(bound(?search_text), CONTAINS(lcase(?keyword), lcase(?search_text)), true)
 }

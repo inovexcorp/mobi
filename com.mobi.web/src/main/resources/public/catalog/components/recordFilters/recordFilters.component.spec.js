@@ -22,26 +22,29 @@
  */
 import {
     mockCatalogManager,
+    mockCatalogState,
     mockUtil,
     mockPrefixes,
     injectSplitIRIFilter
 } from '../../../../../../test/js/Shared';
 
 describe('Record Filters component', function() {
-    var $compile, scope, $q, catalogManagerSvc, prefixes;
+    var $compile, scope, $q, catalogManagerSvc, catalogStateSvc, prefixes;
 
     beforeEach(function() {
         angular.mock.module('catalog');
         mockCatalogManager();
+        mockCatalogState();
         mockUtil();
         mockPrefixes();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _catalogStateService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
+            catalogStateSvc = _catalogStateService_;
             prefixes = _prefixes_;
         });
 
@@ -162,15 +165,17 @@ describe('Record Filters component', function() {
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('RECORD-FILTERS');
-            expect(this.element.querySelectorAll('.record-filters').length).toEqual(1);
-            expect(this.element.querySelectorAll('.filter-container').length).toEqual(2);
-            expect(this.element.querySelectorAll('.record-filter-header').length).toEqual(2);
-            expect(this.element.querySelectorAll('.filter-options').length).toEqual(2);
-            expect(this.element.querySelectorAll('.pageable').length).toEqual(1);
-        });
-        it('depending on the number of sort options', function() {
-            var expectedFilterOptions = catalogManagerSvc.recordTypes.length + this.keywordsFilter.rawFilterItems.length;
-            expect(this.element.querySelectorAll('.filter-option').length).toBe(expectedFilterOptions);
+
+            var htmlResults = Array.prototype.map.call(this.element.querySelectorAll("div.record-filters .filter-container"), node => {
+                 return [
+                    node.querySelectorAll('h5.record-filter-header span.ng-binding')[0].innerText,
+                    Array.prototype.map.call(node.querySelectorAll('div.filter-options div.filter-option div.custom-control label.custom-control-label'), node => node.innerText).join(','),
+                    node.querySelectorAll('search-bar').length,
+                    node.querySelectorAll('a span').length
+                  ]
+            });
+            var expectedHtmlResults = [[ 'Record Type', 'test1,test2', 0, 0 ], [ 'Keywords', 'keyword1 (6)', 1, 1 ]];
+            expect(htmlResults).toEqual(expectedHtmlResults);
         });
     });
 });

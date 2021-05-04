@@ -518,10 +518,46 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         PaginatedSearchResults<KeywordCount> keywordCounts = manager.getKeywords(distributedCatalogId, searchParams);
         // then
         assertEquals(2, keywordCounts.getPage().size());
-        assertEquals("[KC(111, 2), KC(222, 2)]", keywordCounts.getPage().toString());
         assertEquals(2, keywordCounts.getTotalSize());
+        assertEquals("[KC(111, 2), KC(222, 2)]", keywordCounts.getPage().toString());
         assertEquals(10, keywordCounts.getPageSize());
         assertEquals(1, keywordCounts.getPageNumber());
+    }
+
+    @Test
+    public void testGetKeywordsSearch() throws Exception {
+        // given
+        int limit = 10;
+        int offset = 0;
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .searchText("111")
+                .limit(limit).offset(offset).build();
+        // when
+        PaginatedSearchResults<KeywordCount> keywordCounts = manager.getKeywords(distributedCatalogId, searchParams);
+        // then
+        assertEquals(1, keywordCounts.getPage().size());
+        assertEquals(1, keywordCounts.getTotalSize());
+        assertEquals("[KC(111, 2)]", keywordCounts.getPage().toString());
+        assertEquals(10, keywordCounts.getPageSize());
+        assertEquals(1, keywordCounts.getPageNumber());
+    }
+
+    @Test
+    public void testGetKeywordsSearchNotExist() throws Exception {
+        // given
+        int limit = 10;
+        int offset = 0;
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .searchText("notExist")
+                .limit(limit).offset(offset).build();
+        // when
+        PaginatedSearchResults<KeywordCount> keywordCounts = manager.getKeywords(distributedCatalogId, searchParams);
+        // then
+        assertEquals(0, keywordCounts.getPage().size());
+        assertEquals(0, keywordCounts.getTotalSize());
+        assertEquals("[]", keywordCounts.getPage().toString());
+        assertEquals(0, keywordCounts.getPageSize());
+        assertEquals(0, keywordCounts.getPageNumber());
     }
 
     @Test

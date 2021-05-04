@@ -1025,6 +1025,7 @@ export function mockCatalogState() {
             this.recordSortOption = undefined;
             this.recordFilterType = '';
             this.keywordFilterList = [];
+            this.keywordSearchText = '';
             this.recordSearchText = '';
             this.recordIcons = {};
             this.initialize = jasmine.createSpy('initialize');

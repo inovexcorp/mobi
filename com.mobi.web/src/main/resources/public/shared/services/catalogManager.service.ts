@@ -240,6 +240,11 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         const config = {
             params: util.paginatedConfigToParams(paginatedConfig)
         };
+
+        if (get(paginatedConfig, 'searchText')) {
+            config.params.searchText = paginatedConfig.searchText;
+        }
+
         const url = prefix + '/' + encodeURIComponent(catalogId) + '/keywords';
         const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then($q.resolve, util.rejectError);

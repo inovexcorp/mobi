@@ -980,6 +980,42 @@ public class CatalogRestTest extends MobiRestTestNg {
     }
 
     @Test
+    public void getKeywordsSearchTest() {
+        String[] keywordsCount = {"1.4", "2.1"};
+        setupKeywords(keywordsCount);
+
+        Response response = target().path(CATALOG_URL_LOCAL + "/keywords")
+                .queryParam("searchText", "search")
+                .queryParam("offset", 0)
+                .queryParam("limit", 10)
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+
+        PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder()
+                .searchText("search")
+                .offset(0)
+                .limit(10);
+
+        verify(catalogManager).getKeywords(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()));
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + keywordResults.getTotalSize());
+        assertEquals(response.getLinks().size(), 0);
+        try {
+            String responseString = response.readEntity(String.class);
+            JSONArray result = JSONArray.fromObject(responseString);
+            assertEquals(result.size(), keywordResults.getPage().size());
+
+            String expected = "1.4,2.1";
+            Object actual = result.stream()
+                    .map(e -> ((JSONObject)e).get("http://mobi.com/ontologies/catalog#keyword").toString() + "." + ((JSONObject)e).get("count").toString() )
+                    .collect(Collectors.joining(","));
+            assertEquals(expected, actual);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
     public void getKeywordsNegativeOffsetTest() {
         Response response = target().path(CATALOG_URL_LOCAL + "/keywords")
                 .queryParam("offset", -1)

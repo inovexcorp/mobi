@@ -418,9 +418,10 @@ public class SimpleCatalogManager implements CatalogManager {
         return queryString;
     }
 
-    private int getKeywordCount(RepositoryConnection conn, Resource catalogId) {
+    private int getKeywordCount(RepositoryConnection conn, Resource catalogId, PaginatedSearchParams searchParams) {
         TupleQuery countQuery = conn.prepareTupleQuery(GET_KEYWORD_COUNT_QUERY);
         countQuery.setBinding(CATALOG_BINDING, catalogId);
+        searchParams.getSearchText().ifPresent(s -> countQuery.setBinding(SEARCH_BINDING, vf.createLiteral(s)));
 
         TupleQueryResult countResults = countQuery.evaluateAndReturn();
         int totalCount = 0;
@@ -433,7 +434,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public PaginatedSearchResults<KeywordCount> getKeywords(Resource catalogId, PaginatedSearchParams searchParams) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            int totalCount = getKeywordCount(conn, catalogId);
+            int totalCount = getKeywordCount(conn, catalogId, searchParams);
 
             if (totalCount == 0) {
                 return SearchResults.emptyResults();
@@ -453,6 +454,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
             TupleQuery query = conn.prepareTupleQuery(queryString);
             query.setBinding(CATALOG_BINDING, catalogId);
+            searchParams.getSearchText().ifPresent(s -> query.setBinding(SEARCH_BINDING, vf.createLiteral(s)));
 
             log.debug("Query Plan:\n" + query);
 

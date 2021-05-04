@@ -656,6 +656,7 @@ public class CatalogRest {
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
+     * @param searchText The String used to filter out Records.
      * @param offset The offset for the page.
      * @param limit The number of Records to return in one page.
      * @return List of Keywords in the catalog.
@@ -678,6 +679,8 @@ public class CatalogRest {
             @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
+            @Parameter(description = "String used to filter out Keywords", required = false)
+            @QueryParam("searchText") String searchText,
             @Parameter(description = "Offset for the page", required = true)
             @QueryParam("offset") int offset,
             @Parameter(description = "Number of Keywords to return in one page", required = true)
@@ -689,6 +692,9 @@ public class CatalogRest {
 
             if (limit > 0) {
                 builder.limit(limit);
+            }
+            if (StringUtils.isNotEmpty(StringUtils.stripToEmpty(searchText))) {
+                builder.searchText(searchText);
             }
 
             PaginatedSearchResults<KeywordCount> keywordCounts = catalogManager.getKeywords(vf.createIRI(catalogId),
