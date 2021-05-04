@@ -22,44 +22,44 @@
  */
 import * as angular from 'angular';
 import {
-    forEach,
-    get,
-    find,
-    map,
-    remove,
-    includes,
-    concat,
-    set,
-    isEmpty,
-    union,
-    flatten,
-    values,
-    filter,
-    some,
-    keys,
     assign,
-    has,
-    uniq,
+    concat,
     difference,
-    mapValues,
-    lowerCase,
-    sortBy,
-    merge,
-    unset,
-    head,
+    filter,
+    find,
+    findIndex,
+    findKey,
+    flatten,
+    forEach,
     forOwn,
+    get,
+    has,
+    head,
+    identity,
+    includes,
+    initial,
+    isEmpty,
+    isEqual,
+    isObject,
+    join,
+    keys,
+    lowerCase,
+    map,
+    mapValues,
+    merge,
+    mergeWith,
     omit,
     pull,
-    isEqual,
-    findKey,
-    tail,
-    initial,
-    join,
+    remove,
     replace,
-    findIndex,
-    isObject,
-    mergeWith,
-    identity
+    set,
+    some,
+    sortBy,
+    tail,
+    union,
+    uniq,
+    unset,
+    values
 } from 'lodash';
 
 ontologyStateService.$inject = ['$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'policyEnforcementService', 'policyManagerService', 'httpService', 'uuid'];
@@ -1433,8 +1433,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         if (some(self.listItem.additions, oldEntity)) {
             remove(self.listItem.additions, oldEntity);
             updateRefsService.update(self.listItem, self.listItem.selected['@id'], newIRI);
+            self.recalculateJoinedPaths(self.listItem);
         } else {
             updateRefsService.update(self.listItem, self.listItem.selected['@id'], newIRI);
+            self.recalculateJoinedPaths(self.listItem);
             self.addToDeletions(self.listItem.ontologyRecord.recordId, oldEntity);
         }
         if (self.getActiveKey() !== 'project') {
@@ -1957,9 +1959,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @returns {boolean} True if the IRI is deprecated; false otherwise
      */
     self.isIriDeprecated = function(iri, listItem = self.listItem) {
-        if (iri === listItem.ontologyId) {
-            return false;
-        }
         var isDep = has(listItem, "deprecatedIris['" + iri + "']");
         return isDep;
     }
@@ -1983,11 +1982,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             } else if (annotationValue === "false" || annotationValue === null) {
                 unset(listItem, "deprecatedIris['" + iri + "']");
             }
-            self.alterTreeHierarchy(identityMapper, listItem);
+            self.alterTreeHierarchy(identity, listItem);
         }
-    }
-    function identityMapper(x) {
-        return x
     }
     /**
      * @ngdoc method
@@ -2021,6 +2017,31 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     function closeNodeMapper(item) {
         if ('isOpened' in item) {
             item.isOpened = false;
+        }
+        return item;
+    }
+    /**
+     * @ngdoc method
+     * @name recalculateJoinedPaths
+     * @methodOf shared.service:ontologyStateService
+     * 
+     * @description
+     * Method to recalculate the 'joinedPath' field on each of the nodes of the flatlists. If the recalculated 
+     * value differs from the previous value, the editorTabStates on the listItem are adjusted accordingly for
+     * that joinedPath.
+     *
+     * @param {object} [listItem=self.listItem] The listItem to execute these actions against
+    */
+    self.recalculateJoinedPaths = function(listItem = self.listItem) {
+        self.alterTreeHierarchy(recalculateJoinedPath, listItem);
+    }
+    function recalculateJoinedPath(item) {
+        if ('joinedPath' in item) {
+            const newJoinedPath = self.joinPath(item.path);
+            if (newJoinedPath != item.joinedPath) {
+                updateRefsService.update(self.listItem.editorTabStates, item.joinedPath, newJoinedPath);
+                item.joinedPath = newJoinedPath;
+            }
         }
         return item;
     }

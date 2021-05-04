@@ -801,6 +801,7 @@ export function mockOntologyState() {
             this.handleDeletedProperty = jasmine.createSpy('handleDeletedProperty');
             this.addPropertyToClasses = jasmine.createSpy('addPropertyToClasses');
             this.collapseFlatLists = jasmine.createSpy('collapseFlatLists');
+            this.recalculateJoinedPaths = jasmine.createSpy('recalculateJoinedPaths');
             this.alterTreeHierarchy = jasmine.createSpy('alterTreeHierarchy');
             this.handleDeletedClass = jasmine.createSpy('handleDeletedClass');
             this.removePropertyFromClass = jasmine.createSpy('removePropertyFromClass');

@@ -27,6 +27,7 @@ var Onto1e = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1
 var Onto1s = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1s.ttl'  // same as test-local-imports-1
 var Onto2 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.ttl'
 var Onto3 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.ttl'
+var Onto4 = process.cwd()+ '/src/test/resources/ontologies/unresolvableImport.owl' // OWL Files Processed Differently
 
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
@@ -36,7 +37,7 @@ module.exports = {
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
-        browser.globals.upload_ontologies(browser, Onto1, Onto2, Onto3)
+        browser.globals.upload_ontologies(browser, Onto1, Onto2, Onto3, Onto4)
     },
 
     'Step 3: Upload Corrupt Ontologies' : function (browser) {
