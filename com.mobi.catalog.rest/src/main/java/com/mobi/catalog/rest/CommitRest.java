@@ -130,7 +130,7 @@ public class CommitRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the Commit identified by the provided ID"),
                     @ApiResponse(responseCode = "403",
-                            description = "Response indicating user does not have access"),
+                            description = "Permission Denied"),
                     @ApiResponse(responseCode = "404",
                             description = "Response indicating NOT_FOUND"),
             }
@@ -185,9 +185,9 @@ public class CommitRest {
                     @ApiResponse(responseCode = "200", description = "Response containing a List of "
                             + "Commits starting with the provided commitId which represents "
                             + "the Commit history."),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getCommitHistory(
@@ -268,9 +268,9 @@ public class CommitRest {
                     @ApiResponse(responseCode = "400",
                             description = "Response indicating BAD_REQUEST, Thrown if a CommitId could not be found"),
                     @ApiResponse(responseCode = "403",
-                            description = "Response indicating user does not have access"),
+                            description = "Permission Denied"),
                     @ApiResponse(responseCode = "500",
-                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+                            description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getCompiledResource(
@@ -333,8 +333,8 @@ public class CommitRest {
     @RolesAllowed("user")
     @Operation(
             tags = "commits",
-            summary = "Gets the {@link Difference} for the specified commit or between the two "
-                    + "specified {@link Commit}s. If a limit and offset are passed in, retrieve the "
+            summary = "Gets the Difference for the specified commit or between the two "
+                    + "specified Commits. If a limit and offset are passed in, retrieve the "
                     + "differences for the paged subjects using the limit and offset. If the offset is "
                     + "greater than the number of subjects, the additions and deletions arrays of the "
                     + "response object will be empty arrays. If limit and offset are provided, a header "
@@ -344,9 +344,9 @@ public class CommitRest {
                     @ApiResponse(responseCode = "201",
                             description = "Response containing the Difference for the specified commit or "
                                     + "between the sourceId and targetId"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getDifference(
@@ -424,9 +424,9 @@ public class CommitRest {
             summary = "Retrieves the Difference in the specified commit for the specified subject",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getDifferenceForSubject(

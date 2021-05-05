@@ -89,7 +89,7 @@ public class PreferenceRest {
     /**
      * Returns a JSON object of user preferences and referenced entities for the active user.
      *
-     * @param context The context of the request.
+     * @param context Context of the request.
      * @return A JSON object of user preferences for the active user
      */
     @GET
@@ -100,7 +100,7 @@ public class PreferenceRest {
             summary = "Retrieves all of a user's preferences and their referenced entities",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success of the request"),
+                            description = "Success"),
                     @ApiResponse(responseCode = "500",
                             description = "Response indicating Internal Server Error")
             }
@@ -123,7 +123,7 @@ public class PreferenceRest {
     /**
      * Returns a JSON array of shacl shapes that define all preferences in the passed in preference group.
      *
-     * @param context The context of the request.
+     * @param context Context of the request.
      * @param preferenceGroup The resource id of the preference group to retrieve definitions for
      * @return A JSON array of shacl shapes that define all preferences in the passed in preference group
      */
@@ -136,7 +136,7 @@ public class PreferenceRest {
             summary = "Retrieves all preference definitions in the repo that are part of the passed in preference group",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success of the request"),
+                            description = "Success"),
             }
     )
     public Response getPreferenceDefinitions(@Context ContainerRequestContext context,
@@ -151,7 +151,7 @@ public class PreferenceRest {
     /**
      * Retrieves all preference groups defined in the repo.
      *
-     * @param context The context of the request.
+     * @param context Context of the request.
      * @return A JSON array of preference groups
      */
     @GET
@@ -163,7 +163,7 @@ public class PreferenceRest {
             summary = "Retrieves all preference groups defined in the repo",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success of the request"),
+                            description = "Success"),
             }
     )
     public Response getPreferenceGroups(@Context ContainerRequestContext context) {
@@ -174,7 +174,7 @@ public class PreferenceRest {
     /**
      * Returns a JSON-LD representation of a user preference and referenced entities for the specific resource id.
      *
-     * @param context The context of the request.
+     * @param context Context of the request.
      * @param preferenceId The resource id of the user preference to retrieve
      * @return A JSON object of user preferences for the active user
      */
@@ -187,9 +187,9 @@ public class PreferenceRest {
             summary = "Retrieves a user preference with the specified resource id and it's referenced entities",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success of the request"),
+                            description = "Success"),
                     @ApiResponse(responseCode = "500",
-                            description = "Response indicating INTERNAL_SERVER_ERROR")
+                            description = "INTERNAL SERVER ERROR")
             }
     )
     public Response getUserPreference(@Context ContainerRequestContext context,
@@ -210,7 +210,7 @@ public class PreferenceRest {
     /**
      * Updates a User Preference as well as it's referenced entities.
      *
-     * @param context        The context of the request.
+     * @param context        Context of the request.
      * @param preferenceId   The resource id of the user preference to be updated
      * @param preferenceType The type of preference that will be updated
      * @param jsonld         The jsonld representation of the user preference and it's referenced entities that will
@@ -225,9 +225,9 @@ public class PreferenceRest {
             summary = "Updates a specific user preference and it's referenced entities",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success of the request"),
+                            description = "Success"),
                     @ApiResponse(responseCode = "400",
-                            description = "Response indicating BAD_REQUEST")
+                            description = "BAD REQUEST")
             }
     )
     public Response updateUserPreference(@Context ContainerRequestContext context,
@@ -256,7 +256,7 @@ public class PreferenceRest {
     /**
      * Create a User Preference as well as it's referenced entities.
      *
-     * @param context        The context of the request.
+     * @param context        Context of the request.
      * @param preferenceType The type of preference that will be updated
      * @param jsonld         The jsonld representation of the user preference and it's referenced entities that will
      *                       be created
@@ -270,9 +270,9 @@ public class PreferenceRest {
             summary = "Creates a specific user preference and it's referenced entities",
             responses = {
                     @ApiResponse(responseCode = "201",
-                            description = "Response indicating the success of the request"),
+                            description = "Success"),
                     @ApiResponse(responseCode = "400",
-                            description = "Response indicating BAD_REQUEST")
+                            description = "BAD REQUEST")
             }
     )
     public Response createUserPreference(@Context ContainerRequestContext context,

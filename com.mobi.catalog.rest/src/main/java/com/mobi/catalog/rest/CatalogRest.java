@@ -94,8 +94,11 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -255,14 +258,15 @@ public class CatalogRest {
             tags = "catalogs",
             summary = "Retrieves the distributed and local Catalogs",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "List of Catalogs within the repository"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "200", description = "List of Catalogs within the repository",
+                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObjects"))),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getCatalogs(
-            @Parameter(description = "Type of Catalog you want back (local or distributed)", required = false)
+            @Parameter(description = "Optional Type of Catalog you want back (local or distributed)", required = false)
             @QueryParam("type") String catalogType) {
         try {
             Set<Catalog> catalogs = new HashSet<>();
@@ -302,10 +306,11 @@ public class CatalogRest {
             tags = "catalogs",
             summary = "Retrieves the Catalog specified by the provided ID",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Specific Catalog from the repository"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "200", description = "Specific Catalog from the repository",
+                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObject"))),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Catalog does not exist"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getCatalog(
@@ -333,8 +338,8 @@ public class CatalogRest {
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
-     * @param sort The field with sort order specified.
-     * @param recordType The type of Records you want to get back (unversioned, versioned, ontology, mapping, or
+     * @param sort IRI field with sort order specified.
+     * @param recordType Type of Records you want to get back (unversioned, versioned, ontology, mapping, or
      *                   dataset).
      * @param offset The offset for the page.
      * @param limit The number of Records to return in one page.
@@ -351,19 +356,30 @@ public class CatalogRest {
             summary = "Retrieves the Records in the Catalog",
             responses = {
                     @ApiResponse(responseCode = "200", description = "List of Records that match the search criteria"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getRecords(
             @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "Field with sort order specified (MODIFIED, ISSUED, TITLE)", required = true)
+            @Parameter(schema = @Schema(description = "IRI of the field to use for sort order",
+                    allowableValues = {"http://purl.org/dc/terms/modified",
+                            "http://purl.org/dc/terms/issued",
+                            "http://purl.org/dc/terms/title"},
+                    required = true))
             @QueryParam("sort") String sort,
-            @Parameter(description = "The type of Records you want to get back "
-                    + "(unversioned, versioned, ontology, mapping, or dataset)", required = true)
+            @Parameter(schema = @Schema(description = "IRI of the Type Records you want to get back",
+                    allowableValues = {"http://mobi.com/ontologies/catalog#VersionedRecord",
+                            "http://mobi.com/ontologies/catalog#VersionedRDFRecord",
+                            "http://mobi.com/ontologies/catalog#Record",
+                            "http://mobi.com/ontologies/ontology-editor#OntologyRecord",
+                            "http://mobi.com/ontologies/delimited#MappingRecord",
+                            "http://mobi.com/ontologies/catalog#UnversionedRecord",
+                            "http://mobi.com/ontologies/dataset#DatasetRecord"},
+                    required = true))
             @QueryParam("type") String recordType,
             @Parameter(description = "Offset for the page", required = true)
             @QueryParam("offset") int offset,
@@ -414,10 +430,10 @@ public class CatalogRest {
      * @param typeIRI The required IRI of the type for the new Record. Must be a valid IRI for a Record or one of its
      *                subclasses.
      * @param title The required title for the new Record.
-     * @param identifier The required identifier for the new Record. Must be a valid IRI.
-     * @param description The optional description for the new Record.
-     * @param markdown The optional markdown abstract for the new Record.
-     * @param keywords The optional list of keywords strings for the new Record.
+     * @param identifier Required identifier for the new Record. Must be a valid IRI.
+     * @param description Optional description for the new Record.
+     * @param markdown Optional markdown abstract for the new Record.
+     * @param keywords Optional list of keywords strings for the new Record.
      * @return Response with the IRI string of the created Record.
      */
     @POST
@@ -430,10 +446,11 @@ public class CatalogRest {
             summary = "Creates a new Record in the Catalog",
             responses = {
                     @ApiResponse(responseCode = "201",
-                            description = "Response with the IRI string of the created Record"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                            description = "Response with the IRI string of the created Record",
+                            content = @Content(schema = @Schema(implementation = String.class))),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ActionAttributes(
@@ -442,17 +459,18 @@ public class CatalogRest {
     @ResourceId(value = "catalogId", type = ValueType.PATH)
     public Response createRecord(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID", required = true)
+            @Parameter(schema = @Schema(description = "String representing the Catalog ID", required = true,
+                implementation = String.class))
             @PathParam("catalogId") String catalogId,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Required IRI of the type for the new Record. "
+                    description = "Required IRI of the type for the new Record"
                     + "Must be a valid IRI for a Record or one of its subclasses", required = true))
             @FormDataParam("type") String typeIRI,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required title for the new Record", required = true))
             @FormDataParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Required identifier for the new Record. Must be a valid IRI.", required = true))
+                    description = "Required identifier for the new Record. Must be a valid IRI", required = true))
             @FormDataParam("identifier") String identifier,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional description for the new Record"))
@@ -460,8 +478,10 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional markdown abstract for the new Record"))
             @FormDataParam("markdown") String markdown,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Optional list of keywords strings for the new Record"))
+            @Parameter(array = @ArraySchema(
+                    arraySchema = @Schema(description =
+                            "Optional list of keywords strings for the new Record"),
+                    schema = @Schema(implementation = String.class, description = "keyword")))
             @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
         checkStringParam(title, "Record title is required");
         Map<String, OrmFactory<? extends Record>> recordFactories = getRecordFactories();
@@ -521,10 +541,10 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Array with the contents of the "
                             + "Record’s named graph, including the Record object"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Record could not be found"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -566,9 +586,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating whether or not the Record was deleted"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -618,9 +638,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating whether or not the Record was updated"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -670,9 +690,9 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with a list of all the Distributions of the"
                                     + " requested UnversionedRecord"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getUnversionedDistributions(
@@ -681,7 +701,10 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the UnversionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "Field with sort order specified (MODIFIED, ISSUED, TITLE)", required = true)
+            @Parameter(schema = @Schema(description = "Field with sort order specified",
+                    allowableValues = {"http://purl.org/dc/terms/modified", "http://purl.org/dc/terms/issued",
+                            "http://purl.org/dc/terms/title"},
+                    required = true))
             @QueryParam("sort") String sort,
             @Parameter(description = "Offset for the page")
             @DefaultValue("0") @QueryParam("offset") int offset,
@@ -711,11 +734,11 @@ public class CatalogRest {
      *                  with "_:".
      * @param recordId String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param title The required title for the new Distribution.
-     * @param description The optional description for the new Distribution.
-     * @param format The optional format string for the new Distribution. Expects a MIME type.
-     * @param accessURL The optional access URL for the new Distribution.
-     * @param downloadURL The optional download URL for the new Distribution.
+     * @param title Required title for the new Distribution.
+     * @param description Optional description for the new Distribution.
+     * @param format Optional format string for the new Distribution. Expects a MIME type.
+     * @param accessURL Optional access URL for the new Distribution.
+     * @param downloadURL Optional download URL for the new Distribution.
      * @return Response with the IRI string of the created Distribution.
      */
     @POST
@@ -729,9 +752,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI string of the created Distribution"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response createUnversionedDistribution(
@@ -788,9 +811,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Distribution that was identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getUnversionedDistribution(
@@ -835,9 +858,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating if the Distribution was deleted"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response deleteUnversionedDistribution(
@@ -882,9 +905,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating if the Distribution was updated"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response updateUnversionedDistribution(
@@ -894,8 +917,8 @@ public class CatalogRest {
             @PathParam("recordId") String recordId,
             @Parameter(description = "String representing the Distribution ID", required = true)
             @PathParam("distributionId") String distributionId,
-            @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution", required = true)
-                    String newDistributionJson) {
+            @Parameter(description = "JSON-LD of the new Distribution which will replace the existing Distribution",
+                    required = true) String newDistributionJson) {
         try {
             Distribution newDistribution = getNewThing(newDistributionJson, vf.createIRI(distributionId),
                     distributionFactory);
@@ -933,9 +956,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "List of all the Versions associated with a VersionedRecord"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -992,9 +1015,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI string of the created Version"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ActionId(value = Modify.TYPE)
@@ -1064,9 +1087,9 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "400",
                             description = "Response indicating BAD_REQUEST, likely to be parameter is not set"),
                     @ApiResponse(responseCode = "403",
-                            description = "Response indicating user does not have access"),
+                            description = "Permission Denied"),
                     @ApiResponse(responseCode = "500",
-                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+                            description = "INTERNAL SERVER ERROR"),
             }
     )
     @ActionId(value = Modify.TYPE)
@@ -1142,9 +1165,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Latest Version for the identified VersionedRecord"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getLatestVersion(
@@ -1185,9 +1208,9 @@ public class CatalogRest {
             summary = "Gets a specific Version for the identified VersionedRecord",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Requested Version"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1235,9 +1258,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating whether the Version was deleted"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ActionId(value = Modify.TYPE)
@@ -1283,9 +1306,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating whether the Version was updated"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ActionId(value = Modify.TYPE)
@@ -1339,9 +1362,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "List of Distributions for the identified Version"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getVersionedDistributions(
@@ -1401,9 +1424,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI string of the created Distribution"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response createVersionedDistribution(
@@ -1418,7 +1441,8 @@ public class CatalogRest {
                     description = "String representing the Version ID", required = true))
             @FormDataParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Required title for the new Distribution", required = true))
+                    description = "Required title for the new Distribution. " +
+                            "If the title is null, throws a 400 Response", required = true))
             @FormDataParam("description") String description,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional format string for the new Distribution. Expects a MIME type"))
@@ -1465,9 +1489,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Distribution for the Version identified by the IDs"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getVersionedDistribution(
@@ -1516,9 +1540,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response identifying whether the Distribution was deleted"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response deleteVersionedDistribution(
@@ -1567,9 +1591,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response identifying whether the Distribution was updated"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response updateVersionedDistribution(
@@ -1616,9 +1640,9 @@ public class CatalogRest {
             summary = "Gets the Commit associated with the identified Version using the provided IDs",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Commit associated with the identified Version"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getVersionCommit(
@@ -1672,9 +1696,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "List of Branches for the identified VersionedRDFRecord"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1728,10 +1752,10 @@ public class CatalogRest {
      *                  with "_:".
      * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param typeIRI The required IRI of the type for the new Branch. Must be a valid IRI for a Branch or one of its
+     * @param typeIRI Required IRI of the type for the new Branch. Must be a valid IRI for a Branch or one of its
      *                subclasses.
-     * @param title The required title for the new Branch.
-     * @param description The optional description for the new Branch.
+     * @param title Required title for the new Branch.
+     * @param description Optional description for the new Branch.
      * @param commitId String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
      * @return Response with the IRI string of the created Branch.
@@ -1747,9 +1771,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI string of the created Branch"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ActionId(value = Modify.TYPE)
@@ -1819,9 +1843,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Master Branch for the identified VersionedRDFRecord"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1862,9 +1886,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Identified Branch for the specific VersionedRDFRecord"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -1909,9 +1933,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response identifying whether the Branch was deleted"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ActionId(value = Modify.TYPE)
@@ -1960,9 +1984,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Response identifying whether the Branch was "
                             + "successfully updated"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ActionId(value = Modify.TYPE)
@@ -2020,9 +2044,9 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "List of Commits for the identified Branch which represents"
                                     + " the Commit chain"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -2092,9 +2116,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI of the new Commit added to the Branch"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ActionId(value = Modify.TYPE)
@@ -2148,9 +2172,9 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the Commit which is the HEAD of the "
                                    + "identified Branch"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -2202,10 +2226,10 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the Commit identified by the provided IDs"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Commit could not be found"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -2265,9 +2289,9 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the Difference between the identified"
                                     + " Branches' HEAD Commits as a JSON object"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -2328,9 +2352,9 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the list of Conflicts between the "
                                     + "identified Branches' HEAD Commits"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -2398,10 +2422,10 @@ public class CatalogRest {
                     + "will still point to the original head commit.",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether the Commits were successfully merged"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                            description = "Commits were successfully merged"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ActionId(value = Modify.TYPE)
@@ -2411,13 +2435,13 @@ public class CatalogRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response merge(
             @Context ContainerRequestContext context,
-            @Parameter(description = "String representing the Catalog ID", required = true)
+            @Parameter(description = "Catalog IRI", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID", required = true)
+            @Parameter(description = "VersionedRecord IRI", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
+            @Parameter(description = "Source Branch IRI", required = true)
             @PathParam("branchId") String sourceBranchId,
-            @Parameter(description = "String representing the target Branch ID", required = true)
+            @Parameter(description = "Target Branch IRI", required = true)
             @QueryParam("targetId") String targetBranchId,
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that"
@@ -2470,9 +2494,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response the compiled Resource for the entity at the specific Commit"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -2543,9 +2567,9 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the compiled Resource for the entity"
                                     + " at the specific Commit to download"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -2620,9 +2644,9 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating whether the InProgressCommit"
                                    +  " was created successfully"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response createInProgressCommit(
@@ -2665,9 +2689,9 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the changes from the specific InProgressCommit"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getInProgressCommit(
@@ -2715,9 +2739,9 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "RResponse indicating whether the InProgressCommit "
                                     + "was deleted successfully"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response deleteInProgressCommit(
@@ -2761,11 +2785,10 @@ public class CatalogRest {
                     + "found in the provided form data. If the user does not have an InProgressCommit, one will be"
                     + " created with the provided data.",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating whether or not the "
-                            + "InProgressCommit was updated"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "200", description = "InProgressCommit was updated"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ActionId(value = Modify.TYPE)
@@ -2811,10 +2834,11 @@ public class CatalogRest {
             tags = "catalogs",
             summary = "Retrieves all the available record types",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "All the available record types"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "200", description = "All the available record types",
+                            content = @Content(schema = @Schema(ref = "#/components/schemas/IRIs"))),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getRecordTypes() {
@@ -2838,10 +2862,11 @@ public class CatalogRest {
             tags = "catalogs",
             summary = "Retrieves all the available sorting options",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "All the available sorting options"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "200", description = "All the available sorting options",
+                        content = @Content(schema = @Schema(ref = "#/components/schemas/IRIs"))),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getSortOptions() {
@@ -2908,11 +2933,11 @@ public class CatalogRest {
     /**
      * Creates a Distribution object using the provided metadata strings. If the title is null, throws a 400 Response.
      *
-     * @param title       The required title for the new Distribution.
-     * @param description The optional description for the new Distribution.
-     * @param format      The optional format string for the new Distribution.
-     * @param accessURL   The optional access URL for the new Distribution.
-     * @param downloadURL The optional download URL for the Distribution.
+     * @param title       Required title for the new Distribution.
+     * @param description Optional description for the new Distribution.
+     * @param format      Optional format string for the new Distribution.
+     * @param accessURL   Optional access URL for the new Distribution.
+     * @param downloadURL Optional download URL for the Distribution.
      *
      * @return The new Distribution if passed a title.
      */

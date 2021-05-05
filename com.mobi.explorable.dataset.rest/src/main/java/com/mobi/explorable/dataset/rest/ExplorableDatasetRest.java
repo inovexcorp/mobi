@@ -238,8 +238,8 @@ public class ExplorableDatasetRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getClassDetails(
@@ -284,7 +284,7 @@ public class ExplorableDatasetRest {
                     @ApiResponse(responseCode = "201",
                             description = "Response indicating the success or failure of the request"),
                     @ApiResponse(responseCode = "500",
-                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+                            description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getInstanceDetails(
@@ -340,8 +340,8 @@ public class ExplorableDatasetRest {
             summary = "Retrieves a list of all properties available for a class from a Dataset in the local Catalog",
             responses = {
                     @ApiResponse(responseCode = "201", description = "Response with a JSON array"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getClassPropertyDetails(
@@ -379,8 +379,8 @@ public class ExplorableDatasetRest {
             responses = {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI string of the created Instance"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response createInstance(
@@ -428,8 +428,8 @@ public class ExplorableDatasetRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response with a JSON-LD serialization of the desired instance"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getInstance(
@@ -472,8 +472,8 @@ public class ExplorableDatasetRest {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Response indicating whether or not the "
                             + "Instance was updated"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response updateInstance(
@@ -526,8 +526,8 @@ public class ExplorableDatasetRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating whether or not the Record was deleted"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response deleteInstance(

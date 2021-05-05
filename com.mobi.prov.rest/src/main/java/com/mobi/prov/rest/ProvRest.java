@@ -157,8 +157,8 @@ public class ProvRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "A JSON object with a key for activities and a key for entities"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getActivities(
