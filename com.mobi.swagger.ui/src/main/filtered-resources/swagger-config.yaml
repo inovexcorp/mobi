@@ -21,5 +21,39 @@ openAPI:
     description: 'Mobi REST API Documentation'
   servers:
     - url: /mobirest
+  components:
+    securitySchemes:
+      bearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+    responses:
+      UnauthorizedError:
+        description: Access token is missing or invalid
+    schemas:
+      Keywords:
+        type: array
+        items:
+          type: string
+      IRIs:
+        type: array
+        items:
+          $ref: '#/components/schemas/IRI'
+      IRI:
+        type: string
+        format: uri
+      JsonLdObjects:
+        type: array
+        items:
+          $ref: '#/components/schemas/JsonLdObject'
+      JsonLdObject:
+        type: object
+        properties:
+          "@id":
+            type: string
+          "@type":
+            type: array
+            items:
+              type: string
   security:
-    - basicAuth: []
+    - bearerAuth: [ ]

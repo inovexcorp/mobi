@@ -48,6 +48,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
@@ -156,13 +157,13 @@ public class UserRest {
      * Creates a User in Mobi with the passed username and password. Both are required in order
      * to create the User.
      *
-     * @param username the required username of the User to create
-     * @param password the required password of the User to create
-     * @param roles the roles of the User to create
-     * @param firstName the optional first name of the User to create
-     * @param lastName the optional last name of the User to create
-     * @param email the optional email of the User to create
-     * @return a Response indicating the success or failure of the request
+     * @param username Required username of the User to create
+     * @param password Required password of the User to create
+     * @param roles Roles of the User to create
+     * @param firstName Optional first name of the User to create
+     * @param lastName Optional last name of the User to create
+     * @param email Optional email of the User to create
+     * @return Response indicating the success or failure of the request
      */
     @POST
     @RolesAllowed("admin")
@@ -183,8 +184,9 @@ public class UserRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "Required password of the User to create", required = true))
             @FormDataParam("password") String password,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "List of roles of the User to create", required = true))
+            @Parameter(array = @ArraySchema(
+                    arraySchema = @Schema(description = "List of roles of the User to create"),
+                    schema = @Schema(implementation = String.class, description = "Role")))
             @FormDataParam("roles") List<FormDataBodyPart> roles,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional first name of the User to create"))
@@ -192,7 +194,7 @@ public class UserRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional last name of the User to create"))
             @FormDataParam("lastName") String lastName,
-            @Parameter(schema = @Schema(type = "string",
+            @Parameter(schema = @Schema(type = "string", format = "email",
                     description = "Optional email of the User to create"))
             @FormDataParam("email") String email) {
         if (StringUtils.isEmpty(username)) {
@@ -274,7 +276,7 @@ public class UserRest {
      * Updates the information of the specified User in Mobi. Only the User being updated or an admin can make
      * this request.
      *
-     * @param context the context of the request
+     * @param context Context of the request
      * @param username the current username of the user to update
      * @param newUserStr a JSON-LD string representation of a User with the new information to update
      * @return a Response indicating the success or failure of the request
@@ -345,7 +347,7 @@ public class UserRest {
      * Changes the password of the specified user in Mobi. In order to change the User's password,
      * the current password must be provided.
      *
-     * @param context the context of the request
+     * @param context Context of the request
      * @param username the current username of the user to update
      * @param currentPassword the current password of the user to update
      * @param newPassword a new password for the user
@@ -393,7 +395,7 @@ public class UserRest {
     /**
      * Resets the password of the specified User in Mobi. This action is only allowed by admin Users.
      *
-     * @param context the context of the request
+     * @param context Context of the request
      * @param username the current username of the User to update
      * @param newPassword a new password for the User
      * @return a Response indicating the success or failure of the request
@@ -432,7 +434,7 @@ public class UserRest {
      * Removes the specified User from Mobi. Only the User being deleted or an admin
      * can make this request.
      *
-     * @param context the context of the request
+     * @param context Context of the request
      * @param username the username of the User to remove
      * @return a Response indicating the success or failure of the request
      */
@@ -539,7 +541,9 @@ public class UserRest {
     public Response addUserRoles(
             @Parameter(description = "Username of the User to add a role to", required = true)
             @PathParam("username") String username,
-            @Parameter(description = "List of names of the roles to add to the specified User", required = true)
+            @Parameter(array = @ArraySchema(
+                    arraySchema = @Schema(description = "List of names of the roles to add to the specified User"),
+                    schema = @Schema(implementation = String.class, description = "role name")))
             @QueryParam("roles") List<String> roles) {
         if (StringUtils.isEmpty(username) || roles.isEmpty()) {
             throw ErrorUtils.sendError("Both username and roles must be provided", Response.Status.BAD_REQUEST);

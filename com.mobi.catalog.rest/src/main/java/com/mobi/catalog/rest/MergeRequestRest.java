@@ -61,6 +61,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
@@ -156,9 +157,9 @@ public class MergeRequestRest {
                     @ApiResponse(responseCode = "201",
                             description = "List of all MergeRequests that match the criteria"),
                     @ApiResponse(responseCode = "403",
-                            description = "Response indicating user does not have access"),
+                            description = "Permission Denied"),
                     @ApiResponse(responseCode = "500",
-                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+                            description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getMergeRequests(
@@ -215,17 +216,17 @@ public class MergeRequestRest {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI string of the created MergeRequest"),
                     @ApiResponse(responseCode = "400",
-                            description = "Response indicating BAD_REQUEST"),
+                            description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403",
-                            description = "Response indicating user does not have access"),
+                            description = "Permission Denied"),
                     @ApiResponse(responseCode = "500",
-                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+                            description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response createMergeRequests(
             @Context ContainerRequestContext context,
             @Parameter(schema = @Schema(type = "string",
-                    description = "The required title for the new MergeRequest", required = true))
+                    description = "Required title for the new MergeRequest", required = true))
             @FormDataParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional description for the new MergeRequest"))
@@ -242,8 +243,9 @@ public class MergeRequestRest {
                     description = "Required IRI of the target Branch which will receive the new commits "
                     + "from the source Branch of the new MergeRequest", required = true))
             @FormDataParam("targetBranchId") String targetBranchId,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "List of username of Users to assign the new MergeRequest to", required = true))
+            @Parameter(array = @ArraySchema(
+                    arraySchema = @Schema(description = "List of username of Users to assign the new MergeRequest to"),
+                    schema = @Schema(implementation = String.class, description = "Username")))
             @FormDataParam("assignees") List<FormDataBodyPart> assignees,
             @Parameter(schema = @Schema(type = "string",
                     description = "Boolean value to remove source"))
@@ -298,11 +300,11 @@ public class MergeRequestRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the MergeRequest with the provided ID"),
                     @ApiResponse(responseCode = "403",
-                            description = "Response indicating user does not have access"),
+                            description = "Permission Denied"),
                     @ApiResponse(responseCode = "404",
                             description = "Response indicating NOT_FOUND"),
                     @ApiResponse(responseCode = "500",
-                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+                            description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getMergeRequest(
@@ -339,8 +341,8 @@ public class MergeRequestRest {
                     + "JSONLD of newMergeRequest",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Response indicating the status of the update"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response updateMergeRequest(
@@ -376,11 +378,11 @@ public class MergeRequestRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response indicating the status of the acceptance"),
                     @ApiResponse(responseCode = "400",
-                            description = "Response indicating BAD_REQUEST"),
+                            description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403",
-                            description = "Response indicating user does not have access"),
+                            description = "Permission Denied"),
                     @ApiResponse(responseCode = "500",
-                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+                            description = "INTERNAL SERVER ERROR"),
             }
     )
     @ActionId(Modify.TYPE)
@@ -419,9 +421,9 @@ public class MergeRequestRest {
             summary = "Deletes a MergeRequest that has the provided requestId",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Response indicating the status of the delete"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response deleteMergeRequest(
@@ -458,9 +460,9 @@ public class MergeRequestRest {
             responses = {
                     @ApiResponse(responseCode = "200", description = "list of all Comment chains for the "
                             + "specified MergeRequest"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getComments(
@@ -499,10 +501,10 @@ public class MergeRequestRest {
             summary = "Retrieves a Comment from the application by its ID",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Response with the Comment with the provided ID"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getComment(
@@ -552,11 +554,11 @@ public class MergeRequestRest {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI string of the created Comment"),
                     @ApiResponse(responseCode = "400",
-                            description = "Response indicating BAD_REQUEST"),
+                            description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403",
-                            description = "Response indicating user does not have access"),
+                            description = "Permission Denied"),
                     @ApiResponse(responseCode = "500",
-                            description = "Response indicating INTERNAL_SERVER_ERROR"),
+                            description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response createComment(
@@ -605,9 +607,9 @@ public class MergeRequestRest {
             summary = "Updates a Comment by its ID using the provided String",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Response indicating the status of the update"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response updateComment(
@@ -649,11 +651,11 @@ public class MergeRequestRest {
             summary = "Deletes a Comment that has the provided commentId",
             responses = {
                     @ApiResponse(responseCode = "201", description = "Response indicating the status of the delete"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "401", description = "Response indicating UNAUTHORIZED"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Response indicating NOT_FOUND"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response deleteComment(

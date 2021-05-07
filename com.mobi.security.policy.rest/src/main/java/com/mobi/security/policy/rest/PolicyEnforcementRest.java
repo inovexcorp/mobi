@@ -107,8 +107,8 @@ public class PolicyEnforcementRest {
             summary = "Converts user provided request into XACML and evaluates",
             responses = {
                     @ApiResponse(responseCode = "200", description = "the decision of the XACML request evaluation"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response evaluateRequest(

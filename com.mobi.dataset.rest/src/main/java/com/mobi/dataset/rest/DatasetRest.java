@@ -56,6 +56,8 @@ import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
@@ -157,13 +159,13 @@ public class DatasetRest {
      * Retrieves all the DatasetRecords in the local Catalog in a JSON array. Can optionally be paged if passed a
      * limit and offset. Can optionally be sorted by property value if passed a sort IRI.
      *
-     * @param uriInfo The URI information of the request to be used in creating links to other pages of DatasetRecords
-     * @param offset The offset for a page of DatasetRecords
-     * @param limit The number of DatasetRecords to return in one page
-     * @param sort The IRI of the property to sort by
+     * @param uriInfo URI information of the request to be used in creating links to other pages of DatasetRecords
+     * @param offset Offset for a page of DatasetRecords
+     * @param limit Number of DatasetRecords to return in one page
+     * @param sort IRI of the property to sort by
      * @param asc Whether or not the list should be sorted ascending or descending. Default is ascending
-     * @param searchText The optional search text for the query
-     * @return A Response with a JSON array of DatasetRecords
+     * @param searchText Optional search text for the query
+     * @return Response with a JSON array of DatasetRecords
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -172,10 +174,10 @@ public class DatasetRest {
             tags = "datasets",
             summary = "Retrieves all DatasetRecords in the local Catalog",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "A Response with a JSON array of DatasetRecords"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "200", description = "Response with a JSON array of DatasetRecords"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getDatasetRecords(
@@ -229,15 +231,15 @@ public class DatasetRest {
      * Creates a new DatasetRecord in the local Catalog using the passed information and Dataset with the passed
      * IRI in the repository with the passed id.
      *
-     * @param context The context of the request
+     * @param context Context of the request
      * @param title Required title for the new DatasetRecord
-     * @param repositoryId Required id of a repository in Mobi
-     * @param datasetIRI The optional IRI for the new Dataset
-     * @param description The optional description for the new DatasetRecord
-     * @param markdown The optional markdown abstract for the new DatasetRecord.
-     * @param keywords The optional list of keywords strings for the new DatasetRecord
-     * @param ontologies The optional list of OntologyRecord IRI strings for the new DatasetRecord
-     * @return A Response with the IRI string of the created DatasetRecord
+     * @param repositoryId Required IO of a repository in Mobi
+     * @param datasetIRI Optional IRI for the new Dataset
+     * @param description Optional description for the new DatasetRecord
+     * @param markdown Optional markdown abstract for the new DatasetRecord.
+     * @param keywords Optional list of keywords strings for the new DatasetRecord
+     * @param ontologies Optional list of OntologyRecord IRI strings for the new DatasetRecord
+     * @return Response with the IRI string of the created DatasetRecord
      */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -248,10 +250,11 @@ public class DatasetRest {
             summary = "Creates a new DatasetRecord in the local Catalog and Dataset in the specified repository",
             responses = {
                     @ApiResponse(responseCode = "201",
-                            description = "A Response with the IRI string of the created DatasetRecord"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                            description = "Response with the IRI string of the created DatasetRecord",
+                            content = @Content(schema = @Schema(type = "string"))),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response createDatasetRecord(
@@ -260,10 +263,10 @@ public class DatasetRest {
                     description = "Required title for the new DatasetRecord", required = true))
             @FormDataParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Required id of a repository in Mobi", required = true))
+                    description = "Required ID of a repository in Mobi", required = true))
             @FormDataParam("repositoryId") String repositoryId,
             @Parameter(schema = @Schema(type = "string",
-                    description = "The optional IRI for the new Dataset"))
+                    description = "Optional IRI for the new Dataset"))
             @FormDataParam("datasetIRI") String datasetIRI,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional description for the new DatasetRecord"))
@@ -271,13 +274,16 @@ public class DatasetRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional markdown abstract for the new DatasetRecord"))
             @FormDataParam("markdown") String markdown,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Optional list of keywords strings for the new DatasetRecord"))
+            @Parameter(array = @ArraySchema(
+                    arraySchema = @Schema(description =
+                            "Optional list of keywords strings for the new DatasetRecord"),
+                    schema = @Schema(implementation = String.class, description = "Keyword")))
             @FormDataParam("keywords") List<FormDataBodyPart> keywords,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Optional list of OntologyRecord IRI strings for the new DatasetRecord"))
+            @Parameter(array = @ArraySchema(
+                    arraySchema = @Schema(description =
+                            "Optional list of OntologyRecord IRI strings for the new DatasetRecord"),
+                    schema = @Schema(implementation = String.class, description = "OntologyRecord IRI")))
             @FormDataParam("ontologies") List<FormDataBodyPart> ontologies) {
-
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
         User activeUser = getActiveUser(context, engineManager);
@@ -332,10 +338,11 @@ public class DatasetRest {
             summary = "Gets a specific DatasetRecord from the local Catalog",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "A Response indicating the success of the request"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                            description = "Success",
+                            content = @Content(schema = @Schema(type = "object"))),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response getDatasetRecord(
@@ -360,7 +367,7 @@ public class DatasetRest {
      * Deletes a specific DatasetRecord and its Dataset from the local Catalog. By default only removes named graphs
      * that aren't used by another Dataset, but can be forced to delete them.
      *
-     * @param context The context of the request
+     * @param context Context of the request
      * @param datasetRecordId The IRI of a DatasetRecord
      * @param force Whether or not the delete should be forced
      * @return A Response indicating the success of the request
@@ -372,16 +379,16 @@ public class DatasetRest {
             tags = "datasets",
             summary = "Deletes a specific DatasetRecord in the local Catalog",
             responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "A Response indicating the success of the request"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response deleteDatasetRecord(
             @Context ContainerRequestContext context,
-            @Parameter(description = "IRI of a DatasetRecord", required = true)
+            @Parameter(schema = @Schema(description = "DatasetRecord IRI", required = true,
+                    ref = "#/components/schemas/IRI"))
             @PathParam("datasetRecordId") String datasetRecordId,
             @Parameter(description = "Whether or not the delete should be forced")
             @DefaultValue("false") @QueryParam("force") boolean force) {
@@ -421,10 +428,10 @@ public class DatasetRest {
             tags = "datasets",
             summary = "Clears the data within a specific DatasetRecord in the local Catalog",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating the success of the request"),
-                    @ApiResponse(responseCode = "400", description = "Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "Response indicating INTERNAL_SERVER_ERROR"),
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     public Response clearDatasetRecord(
@@ -462,11 +469,10 @@ public class DatasetRest {
             tags = "datasets",
             summary = "Uploads the data within an RDF file to a specific DatasetRecord in the local Catalog",
             responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "A Response indicating the success of the request"),
-                    @ApiResponse(responseCode = "400", description = "A Response indicating BAD_REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Response indicating user does not have access"),
-                    @ApiResponse(responseCode = "500", description = "A Response indicating INTERNAL_SERVER_ERROR")
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
     public Response uploadData(
