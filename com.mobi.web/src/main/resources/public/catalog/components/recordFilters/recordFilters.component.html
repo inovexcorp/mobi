@@ -28,9 +28,7 @@
         </h5>
         <div class="filter-options collapse show" id="filter_options_{{$id}}" >
             <info-message ng-if="!currentFilter.filterItems.length">No {{ currentFilter.title }} available</info-message>
-
-            <search-bar ng-if="currentFilter.searchable" bind-model="currentFilter.searchModel()" change-event="currentFilter.searchChanged(value)" submit-event="currentFilter.searchSubmitted()"></search-bar>
-
+            <search-bar ng-if="currentFilter.filterItems.length && currentFilter.searchable" bind-model="currentFilter.searchModel()" change-event="currentFilter.searchChanged(value)" submit-event="currentFilter.searchSubmitted()"></search-bar>
             <div ng-class="{pageable: currentFilter.pageable}">
                 <div class="filter-option my-2" ng-repeat="filterItem in currentFilter.filterItems track by $index">
                     <div class="custom-control custom-checkbox">

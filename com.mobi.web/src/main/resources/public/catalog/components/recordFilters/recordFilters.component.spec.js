@@ -73,6 +73,18 @@ describe('Record Filters component', function() {
         this.recordTypeFilter = this.controller.filters[0];
         this.keywordsFilter = this.controller.filters[1];
         this.keywordsFilter.rawFilterItems = [this.keywordObject('keywords1', 5)];
+
+        this.getHtmlResults = function(scope){
+            return Array.prototype.map.call(scope.element.querySelectorAll("div.record-filters .filter-container"), node => {
+                return [
+                    node.querySelectorAll('h5.record-filter-header span.ng-binding')[0].innerText,
+                    Array.prototype.map.call(node.querySelectorAll('div.filter-options div.filter-option div.custom-control label.custom-control-label'), node => node.innerText).join(','),
+                    node.querySelectorAll('search-bar').length,
+                    node.querySelectorAll('a span').length
+                ]
+        })};
+
+
     });
 
     afterEach(function() {
@@ -165,17 +177,8 @@ describe('Record Filters component', function() {
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('RECORD-FILTERS');
-
-            var htmlResults = Array.prototype.map.call(this.element.querySelectorAll("div.record-filters .filter-container"), node => {
-                 return [
-                    node.querySelectorAll('h5.record-filter-header span.ng-binding')[0].innerText,
-                    Array.prototype.map.call(node.querySelectorAll('div.filter-options div.filter-option div.custom-control label.custom-control-label'), node => node.innerText).join(','),
-                    node.querySelectorAll('search-bar').length,
-                    node.querySelectorAll('a span').length
-                  ]
-            });
             var expectedHtmlResults = [[ 'Record Type', 'test1,test2', 0, 0 ], [ 'Keywords', 'keyword1 (6)', 1, 1 ]];
-            expect(htmlResults).toEqual(expectedHtmlResults);
+            expect(this.htmlResults(this)).toEqual(expectedHtmlResults);
         });
     });
 });
