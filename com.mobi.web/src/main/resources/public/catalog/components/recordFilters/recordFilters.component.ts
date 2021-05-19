@@ -177,7 +177,7 @@ function recordFiltersComponentCtrl(catalogStateService, catalogManagerService, 
 
         dvm.filters = [recordTypeFilter, keywordsFilter];
         forEach(dvm.filters, filter => {
-            if ('onInit' in filter) {
+            if (filter.hasOwnProperty('onInit')) {
                 filter.onInit();
             }
         });

@@ -163,7 +163,7 @@ describe('Catalog Manager service', function() {
         });
         describe('unless an error occurs', function() {
             it('with no promise id set', function() {
-                var params = $httpParamSerializer(this.config);
+                let params = $httpParamSerializer(this.config);
                 $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
                 catalogManagerSvc.getRecords(this.catalogId, this.config)
                     .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -182,14 +182,14 @@ describe('Catalog Manager service', function() {
         describe('successfully', function() {
             describe('with no promise id set', function() {
                 it('and all config passed', function() {
-                    var params = $httpParamSerializer(this.config);
+                    let params = $httpParamSerializer(this.config);
                     $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
                     catalogManagerSvc.getRecords(this.catalogId, this.config)
                         .then(response =>expect(response.data).toEqual([]), response => fail('Promise should have resolved'));
                     flushAndVerify($httpBackend);
                 });
                 it('and no config passed', function() {
-                    var params = $httpParamSerializer({
+                    let params = $httpParamSerializer({
                         sort: catalogManagerSvc.sortOptions[0].field,
                         ascending: catalogManagerSvc.sortOptions[0].asc
                     });
@@ -210,7 +210,7 @@ describe('Catalog Manager service', function() {
                     expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: this.config}, this.promiseId);
                 });
                 it('and no config passed', function() {
-                    var params = {
+                    let params = {
                         sort: catalogManagerSvc.sortOptions[0].field,
                         ascending: catalogManagerSvc.sortOptions[0].asc
                     };
@@ -233,7 +233,7 @@ describe('Catalog Manager service', function() {
         });
         describe('unless an error occurs', function() {
             it('with no promise id set', function() {
-                var params = $httpParamSerializer(this.config);
+                let params = $httpParamSerializer(this.config);
                 $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
                 catalogManagerSvc.getKeywords(this.catalogId, this.config)
                     .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -252,14 +252,14 @@ describe('Catalog Manager service', function() {
         describe('successfully', function() {
             describe('with no promise id set', function() {
                 it('and all config passed', function() {
-                    var params = $httpParamSerializer(this.config);
+                    let params = $httpParamSerializer(this.config);
                     $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
                     catalogManagerSvc.getKeywords(this.catalogId, this.config)
                         .then(response =>expect(response.data).toEqual([]), response => fail('Promise should have resolved'));
                     flushAndVerify($httpBackend);
                 });
                 it('and no config passed', function() {
-                    var params = {};
+                    let params = {};
                     $httpBackend.whenGET(this.url).respond(200, []);
                     catalogManagerSvc.getKeywords(this.catalogId, {})
                         .then(response => expect(response.data).toEqual([]), response =>fail('Promise should have resolved'));
@@ -277,7 +277,7 @@ describe('Catalog Manager service', function() {
                     expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: this.config}, this.promiseId);
                 });
                 it('and no config passed', function() {
-                    var params = { };
+                    let params = { };
                     catalogManagerSvc.getKeywords(this.catalogId, {}, this.promiseId)
                         .then(response => expect(response.data).toEqual([]), response => fail('Promise should have resolved'));
                     scope.$apply();
@@ -323,7 +323,7 @@ describe('Catalog Manager service', function() {
         });
         it('with a description and keywords', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.recordId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createRecord(this.catalogId, this.recordConfig)
                 .then(response =>expect(response).toEqual(self.recordId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -332,7 +332,7 @@ describe('Catalog Manager service', function() {
             delete this.recordConfig.description;
             delete this.recordConfig.keywords;
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.recordId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createRecord(this.catalogId, this.recordConfig)
                 .then(response => expect(response).toEqual(self.recordId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -352,7 +352,7 @@ describe('Catalog Manager service', function() {
         });
         it('successfully', function() {
             $httpBackend.expectPUT(this.url, this.newRecord).respond(200);
-            var self = this;
+            let self = this;
             catalogManagerSvc.updateRecord(this.recordId, this.catalogId, this.newRecord)
                 .then(response => expect(response).toEqual(self.recordId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -388,7 +388,7 @@ describe('Catalog Manager service', function() {
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordDistributions(this.recordId, this.catalogId, this.config)
                 .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -396,14 +396,14 @@ describe('Catalog Manager service', function() {
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with all config passed', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getRecordDistributions(this.recordId, this.catalogId, this.config)
                 .then(response => expect(response.data).toEqual([]), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without any config passed', function() {
-            var params = $httpParamSerializer({
+            let params = $httpParamSerializer({
                 sort: catalogManagerSvc.sortOptions[0].field,
                 ascending: catalogManagerSvc.sortOptions[0].asc
             });
@@ -451,7 +451,7 @@ describe('Catalog Manager service', function() {
         });
         it('with a description, format, access URL, and download URL', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.distributionId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createRecordDistribution(this.recordId, this.catalogId, this.distributionConfig)
                 .then(response => expect(response).toEqual(self.distributionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -462,7 +462,7 @@ describe('Catalog Manager service', function() {
             delete this.distributionConfig.accessURL;
             delete this.distributionConfig.downloadURL;
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.distributionId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createRecordDistribution(this.recordId, this.catalogId, this.distributionConfig)
                 .then(response => expect(response).toEqual(self.distributionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -482,7 +482,7 @@ describe('Catalog Manager service', function() {
         });
         it('successfully', function() {
             $httpBackend.expectPUT(this.url, this.newDistribution).respond(200);
-            var self = this;
+            let self = this;
             catalogManagerSvc.updateRecordDistribution(this.distributionId, this.recordId, this.catalogId, this.newDistribution)
                 .then(response => expect(response).toEqual(self.distributionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -518,7 +518,7 @@ describe('Catalog Manager service', function() {
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordVersions(this.recordId, this.catalogId, this.config)
                 .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -526,14 +526,14 @@ describe('Catalog Manager service', function() {
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with all config passed', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getRecordVersions(this.recordId, this.catalogId, this.config)
                 .then(response => expect(response.data).toEqual([]), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without any config', function() {
-            var params = $httpParamSerializer({
+            let params = $httpParamSerializer({
                 sort: catalogManagerSvc.sortOptions[0].field,
                 ascending: catalogManagerSvc.sortOptions[0].asc
             });
@@ -596,7 +596,7 @@ describe('Catalog Manager service', function() {
         });
         it('with a description', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.versionId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createRecordVersion(this.recordId, this.catalogId, this.versionConfig)
                 .then(response => expect(response).toEqual(self.versionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -604,7 +604,7 @@ describe('Catalog Manager service', function() {
         it('without a description', function() {
             delete this.versionConfig.description;
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.versionId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createRecordVersion(this.recordId, this.catalogId, this.versionConfig)
                 .then(response => expect(response).toEqual(self.versionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -630,7 +630,7 @@ describe('Catalog Manager service', function() {
         });
         it('with a description', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.versionId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createRecordTag(this.recordId, this.catalogId, this.tagConfig)
                 .then(response => expect(response).toEqual(self.versionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -638,7 +638,7 @@ describe('Catalog Manager service', function() {
         it('without a description', function() {
             delete this.tagConfig.description;
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.versionId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createRecordTag(this.recordId, this.catalogId, this.tagConfig)
                 .then(response => expect(response).toEqual(self.versionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -686,7 +686,7 @@ describe('Catalog Manager service', function() {
             this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions/' + encodeURIComponent(this.versionId) + '/commit';
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer({format: 'jsonld'});
+            let params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getVersionCommit(this.versionId, this.recordId, this.catalogId, 'jsonld')
                 .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -694,14 +694,14 @@ describe('Catalog Manager service', function() {
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a format', function() {
-            var params = $httpParamSerializer({format: 'turtle'});
+            let params = $httpParamSerializer({format: 'turtle'});
             $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
             catalogManagerSvc.getVersionCommit(this.versionId, this.recordId, this.catalogId, 'turtle')
                 .then(response => expect(response).toEqual({}), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
-            var params = $httpParamSerializer({format: 'jsonld'});
+            let params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
             catalogManagerSvc.getVersionCommit(this.versionId, this.recordId, this.catalogId)
                 .then(response => expect(response).toEqual({}), response => fail('Promise should have resolved'));
@@ -720,7 +720,7 @@ describe('Catalog Manager service', function() {
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getVersionDistributions(this.versionId, this.recordId, this.catalogId, this.config)
                 .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -728,14 +728,14 @@ describe('Catalog Manager service', function() {
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with all config passed', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getVersionDistributions(this.versionId, this.recordId, this.catalogId, this.config)
                 .then(response => expect(response.data).toEqual([]), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without any config', function() {
-            var params = $httpParamSerializer({
+            let params = $httpParamSerializer({
                 sort: catalogManagerSvc.sortOptions[0].field,
                 ascending: catalogManagerSvc.sortOptions[0].asc
             });
@@ -783,7 +783,7 @@ describe('Catalog Manager service', function() {
         });
         it('with a description, format, access URL, and download URL', function() {
             $httpBackend.expectPOST(this.url, data =>  data instanceof FormData).respond(200, this.distributionId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createVersionDistribution(this.versionId, this.recordId, this.catalogId, this.distributionConfig)
                 .then(response => expect(response).toEqual(self.distributionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -794,7 +794,7 @@ describe('Catalog Manager service', function() {
             delete this.distributionConfig.accessURL;
             delete this.distributionConfig.downloadURL;
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.distributionId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createVersionDistribution(this.versionId, this.recordId, this.catalogId, this.distributionConfig)
                 .then(response => expect(response).toEqual(self.distributionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -850,7 +850,7 @@ describe('Catalog Manager service', function() {
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordBranches(this.recordId, this.catalogId, this.config)
                 .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -859,14 +859,14 @@ describe('Catalog Manager service', function() {
         });
         it('with all config passed', function() {
             this.config.applyUserFilter = true;
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getRecordBranches(this.recordId, this.catalogId, this.config, true)
                 .then(response =>  expect(response.data).toEqual([]), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without any config', function() {
-            var params = $httpParamSerializer({
+            let params = $httpParamSerializer({
                 sort: catalogManagerSvc.sortOptions[0].field,
                 ascending: catalogManagerSvc.sortOptions[0].asc,
                 applyUserFilter: false
@@ -935,7 +935,7 @@ describe('Catalog Manager service', function() {
             var expectedBranch = angular.copy(this.branch);
             expectedBranch[prefixes.catalog + 'head'] = [{'@id': this.commitId}];
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.branchId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createRecordBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId)
                 .then(response => expect(response).toEqual(self.branchId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -945,7 +945,7 @@ describe('Catalog Manager service', function() {
             var expectedBranch = angular.copy(this.branch);
             expectedBranch[prefixes.catalog + 'head'] = [{'@id': this.commitId}];
             $httpBackend.expectPOST(this.url,data => data instanceof FormData).respond(200, this.branchId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createRecordBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId)
                 .then(response => expect(response).toEqual(self.branchId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -974,7 +974,7 @@ describe('Catalog Manager service', function() {
             expectedBranch[prefixes.catalog + 'head'] = [{'@id': this.commitId}];
             expectedBranch[prefixes.catalog + 'createdFrom'] = [{'@id': this.branchId}];
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.branchId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createRecordUserBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId, this.branchId)
                 .then(response => expect(response).toEqual(self.branchId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -987,7 +987,7 @@ describe('Catalog Manager service', function() {
             expectedBranch[prefixes.catalog + 'head'] = [{'@id': this.commitId}];
             expectedBranch[prefixes.catalog + 'createdFrom'] = [{'@id': this.branchId}];
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.branchId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createRecordUserBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId, this.branchId)
                 .then(response => expect(response).toEqual(self.branchId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -1009,7 +1009,7 @@ describe('Catalog Manager service', function() {
         });
         it('successfully', function() {
             $httpBackend.expectPUT(this.url, this.newBranch).respond(200);
-            var self = this;
+            let self = this;
             catalogManagerSvc.updateRecordBranch(this.branchId, this.recordId, this.catalogId, this.newBranch)
                 .then(response => expect(response).toEqual(self.branchId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -1051,7 +1051,7 @@ describe('Catalog Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully with target ID', function() {
-            var params = $httpParamSerializer({targetId: this.branchId})
+            let params = $httpParamSerializer({targetId: this.branchId})
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getBranchCommits(this.branchId, this.recordId, this.catalogId, this.branchId)
                 .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
@@ -1083,7 +1083,7 @@ describe('Catalog Manager service', function() {
             });
             describe('with a targetId set', function() {
                 it('with no promise id set', function() {
-                    var params = $httpParamSerializer({targetId: this.commitId});
+                    let params = $httpParamSerializer({targetId: this.commitId});
                     $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
                     catalogManagerSvc.getCommitHistory(this.commitId, this.commitId)
                         .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -1100,7 +1100,7 @@ describe('Catalog Manager service', function() {
             });
             describe('with a entityId set', function() {
                 it('with no promise id set', function() {
-                    var params = $httpParamSerializer({targetId: '', entityId: this.commitId});
+                    let params = $httpParamSerializer({targetId: '', entityId: this.commitId});
                     $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
                     catalogManagerSvc.getCommitHistory(this.commitId, '', this.commitId)
                         .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -1135,7 +1135,7 @@ describe('Catalog Manager service', function() {
             });
             describe('with a targetId set', function() {
                 it('with no promise id set', function() {
-                    var params = $httpParamSerializer({targetId: this.commitId, entityId: ''});
+                    let params = $httpParamSerializer({targetId: this.commitId, entityId: ''});
                     $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
                     catalogManagerSvc.getCommitHistory(this.commitId, this.commitId, '')
                         .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
@@ -1151,7 +1151,7 @@ describe('Catalog Manager service', function() {
             });
             describe('with a entityId set', function() {
                 it('with no promise id set', function() {
-                    var params = $httpParamSerializer({targetId: '', entityId: this.commitId});
+                    let params = $httpParamSerializer({targetId: '', entityId: this.commitId});
                     $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
                     catalogManagerSvc.getCommitHistory(this.commitId, '', this.commitId)
                         .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
@@ -1173,7 +1173,7 @@ describe('Catalog Manager service', function() {
             this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/commits';
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer({message: this.message});
+            let params = $httpParamSerializer({message: this.message});
             $httpBackend.expectPOST(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.createBranchCommit(this.branchId, this.recordId, this.catalogId, this.message)
                 .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -1181,9 +1181,9 @@ describe('Catalog Manager service', function() {
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            var params = $httpParamSerializer({message: this.message});
+            let params = $httpParamSerializer({message: this.message});
             $httpBackend.expectPOST(this.url + '?' + params).respond(200, this.commitId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.createBranchCommit(this.branchId, this.recordId, this.catalogId, this.message)
                 .then(response => expect(response).toEqual(self.commitId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -1194,7 +1194,7 @@ describe('Catalog Manager service', function() {
             this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/commits/head';
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer({format: 'jsonld'});
+            let params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getBranchHeadCommit(this.branchId, this.recordId, this.catalogId, 'jsonld')
                 .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -1202,14 +1202,14 @@ describe('Catalog Manager service', function() {
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a format', function() {
-            var params = $httpParamSerializer({format: 'turtle'});
+            let params = $httpParamSerializer({format: 'turtle'});
             $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
             catalogManagerSvc.getBranchHeadCommit(this.branchId, this.recordId, this.catalogId, 'turtle')
                 .then(response => expect(response).toEqual({}), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
-            var params = $httpParamSerializer({format: 'jsonld'});
+            let params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
             catalogManagerSvc.getBranchHeadCommit(this.branchId, this.recordId, this.catalogId)
                 .then(response => expect(response).toEqual({}), response => fail('Promise should have resolved'));
@@ -1221,7 +1221,7 @@ describe('Catalog Manager service', function() {
             this.url = '/mobirest/commits/' + encodeURIComponent(this.commitId);
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer({format: 'jsonld'});
+            let params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getCommit(this.commitId, 'jsonld')
                 .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -1229,14 +1229,14 @@ describe('Catalog Manager service', function() {
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a format', function() {
-            var params = $httpParamSerializer({format: 'turtle'});
+            let params = $httpParamSerializer({format: 'turtle'});
             $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
             catalogManagerSvc.getCommit(this.commitId, 'turtle')
                 .then(response => expect(response).toEqual({}), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
-            var params = $httpParamSerializer({format: 'jsonld'});
+            let params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
             catalogManagerSvc.getCommit(this.commitId)
                 .then(response => expect(response).toEqual({}), response => fail('Promise should have resolved'));
@@ -1248,7 +1248,7 @@ describe('Catalog Manager service', function() {
             this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/commits/' + encodeURIComponent(this.commitId);
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer({format: 'jsonld'});
+            let params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getBranchCommit(this.commitId, this.branchId, this.recordId, this.catalogId, 'jsonld')
                 .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -1256,14 +1256,14 @@ describe('Catalog Manager service', function() {
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a format', function() {
-            var params = $httpParamSerializer({format: 'turtle'});
+            let params = $httpParamSerializer({format: 'turtle'});
             $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
             catalogManagerSvc.getBranchCommit(this.commitId, this.branchId, this.recordId, this.catalogId, 'turtle')
                 .then(response => expect(response).toEqual({}), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
-            var params = $httpParamSerializer({format: 'jsonld'});
+            let params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
             catalogManagerSvc.getBranchCommit(this.commitId, this.branchId, this.recordId, this.catalogId)
                 .then(response => expect(response).toEqual({}), response => fail('Promise should have resolved'));
@@ -1279,7 +1279,7 @@ describe('Catalog Manager service', function() {
             this.url = '/mobirest/commits/' + encodeURIComponent(this.commitId) + '/difference';
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getDifference(this.commitId, this.commitId, null, null, 'jsonld')
                 .then(() => fail('Promise should have rejected'), response =>  expect(response).toEqual('Error Message'));
@@ -1288,21 +1288,21 @@ describe('Catalog Manager service', function() {
         });
         it('with a format', function() {
             this.config.format = 'turtle';
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getDifference(this.commitId, this.commitId, null, null, 'turtle')
                 .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getDifference(this.commitId, this.commitId)
                 .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a targetId', function() {
-            var params = $httpParamSerializer({format: 'jsonld'});
+            let params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getDifference(this.commitId)
                 .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
@@ -1312,7 +1312,7 @@ describe('Catalog Manager service', function() {
             this.config.format = 'turtle';
             this.config.limit = 100;
             this.config.offset = 0;
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getDifference(this.commitId, this.commitId, 100, 0, 'turtle')
                 .then(response => expect(response.data).toEqual([]), response => fail('Promise should have resolved'));
@@ -1327,7 +1327,7 @@ describe('Catalog Manager service', function() {
             this.url = '/mobirest/commits/' + encodeURIComponent(this.commitId) + '/difference/' + encodeURI(this.entityId);
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getDifferenceForSubject(this.entityId, this.commitId, 'jsonld')
                 .then(() => fail('Promise should have rejected'), response =>  expect(response).toEqual('Error Message'));
@@ -1336,14 +1336,14 @@ describe('Catalog Manager service', function() {
         });
         it('with a format', function() {
             this.config.format = 'turtle';
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getDifferenceForSubject(this.entityId, this.commitId, 'turtle')
                 .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getDifferenceForSubject(this.entityId, this.commitId)
                 .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
@@ -1359,7 +1359,7 @@ describe('Catalog Manager service', function() {
             this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/difference';
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getBranchDifference(this.branchId, this.branchId, this.recordId, this.catalogId, 'jsonld')
                 .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -1368,14 +1368,14 @@ describe('Catalog Manager service', function() {
         });
         it('with a format', function() {
             this.config.format = 'turtle';
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getBranchDifference(this.branchId, this.branchId, this.recordId, this.catalogId, 'turtle')
                 .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getBranchDifference(this.branchId, this.branchId, this.recordId, this.catalogId)
                 .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
@@ -1391,7 +1391,7 @@ describe('Catalog Manager service', function() {
             this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/conflicts';
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getBranchConflicts(this.branchId, this.branchId, this.recordId, this.catalogId, 'jsonld')
                 .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -1400,14 +1400,14 @@ describe('Catalog Manager service', function() {
         });
         it('with a format', function() {
             this.config.format = 'turtle';
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getBranchConflicts(this.branchId, this.branchId, this.recordId, this.catalogId, 'turtle')
                 .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getBranchConflicts(this.branchId, this.branchId, this.recordId, this.catalogId)
                 .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
@@ -1420,7 +1420,7 @@ describe('Catalog Manager service', function() {
         });
         it('unless an error occurs', function() {
             var differenceObj = {};
-            var params = $httpParamSerializer({targetId: this.branchId});
+            let params = $httpParamSerializer({targetId: this.branchId});
             $httpBackend.expectPOST(this.url + '?' + params, data => data instanceof FormData).respond(400, null, null, 'Error Message');
             catalogManagerSvc.mergeBranches(this.branchId, this.branchId, this.recordId, this.catalogId, differenceObj)
                 .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -1429,18 +1429,18 @@ describe('Catalog Manager service', function() {
         });
         it('with additions and deletions', function() {
             var differenceObj = {additions: [], deletions: []};
-            var params = $httpParamSerializer({targetId: this.branchId});
+            let params = $httpParamSerializer({targetId: this.branchId});
             $httpBackend.expectPOST(this.url + '?' + params, data => data instanceof FormData).respond(200, this.commitId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.mergeBranches(this.branchId, this.branchId, this.recordId, this.catalogId, differenceObj)
                 .then(response => expect(response).toEqual(self.commitId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without additions and deletions', function() {
             var differenceObj = {};
-            var params = $httpParamSerializer({targetId: this.branchId});
+            let params = $httpParamSerializer({targetId: this.branchId});
             $httpBackend.expectPOST(this.url + '?' + params, data => data instanceof FormData).respond(200, this.commitId);
-            var self = this;
+            let self = this;
             catalogManagerSvc.mergeBranches(this.branchId, this.branchId, this.recordId, this.catalogId, differenceObj)
                 .then(response => expect(response).toEqual(self.commitId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -1455,7 +1455,7 @@ describe('Catalog Manager service', function() {
             this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/commits/' + encodeURIComponent(this.commitId) + '/resource';
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getResource(this.commitId, this.branchId, this.recordId, this.catalogId, true, 'jsonld')
                 .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
@@ -1464,14 +1464,14 @@ describe('Catalog Manager service', function() {
         });
         it('with a format', function() {
             this.config.format = 'turtle';
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, '');
             catalogManagerSvc.getResource(this.commitId, this.branchId, this.recordId, this.catalogId, true, 'turtle')
                 .then(response => expect(response).toEqual(''), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
-            var params = $httpParamSerializer(this.config);
+            let params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, '');
             catalogManagerSvc.getResource(this.commitId, this.branchId, this.recordId, this.catalogId, true)
                 .then(response => expect(response).toEqual(''), response => fail('Promise should have resolved'));
@@ -1489,12 +1489,12 @@ describe('Catalog Manager service', function() {
         });
         it('with a format', function() {
             this.params.format = 'turtle';
-            var params = $httpParamSerializer(this.params);
+            let params = $httpParamSerializer(this.params);
             catalogManagerSvc.downloadResource(this.commitId, this.branchId, this.recordId, this.catalogId, true, 'turtle');
             expect(utilSvc.startDownload).toHaveBeenCalledWith(this.url + '?' + params);
         });
         it('without a format', function() {
-            var params = $httpParamSerializer(this.params);
+            let params = $httpParamSerializer(this.params);
             catalogManagerSvc.downloadResource(this.commitId, this.branchId, this.recordId, this.catalogId, true);
             expect(utilSvc.startDownload).toHaveBeenCalledWith(this.url + '?' + params);
         });
