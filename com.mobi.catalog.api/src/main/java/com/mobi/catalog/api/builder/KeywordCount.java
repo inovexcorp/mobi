@@ -50,11 +50,12 @@ public class KeywordCount {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        KeywordCount that = (KeywordCount) o;
-        return Objects.equals(keyword, that.keyword) && Objects.equals(keywordCount, that.keywordCount);
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        KeywordCount otherKeywordCount = (KeywordCount) other;
+        return Objects.equals(keyword, otherKeywordCount.keyword) &&
+                Objects.equals(keywordCount, otherKeywordCount.keywordCount);
     }
 
     @Override

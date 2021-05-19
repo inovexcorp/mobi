@@ -421,7 +421,8 @@ public class SimpleCatalogManager implements CatalogManager {
     private int getKeywordCount(RepositoryConnection conn, Resource catalogId, PaginatedSearchParams searchParams) {
         TupleQuery countQuery = conn.prepareTupleQuery(GET_KEYWORD_COUNT_QUERY);
         countQuery.setBinding(CATALOG_BINDING, catalogId);
-        searchParams.getSearchText().ifPresent(s -> countQuery.setBinding(SEARCH_BINDING, vf.createLiteral(s)));
+        searchParams.getSearchText().ifPresent(searchText ->
+                countQuery.setBinding(SEARCH_BINDING, vf.createLiteral(searchText)));
 
         TupleQueryResult countResults = countQuery.evaluateAndReturn();
         int totalCount = 0;

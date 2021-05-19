@@ -132,14 +132,14 @@ public class PaginatedSearchParams {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        PaginatedSearchParams that = (PaginatedSearchParams) o;
-        return offset == that.offset && Objects.equals(searchText, that.searchText) &&
-                Objects.equals(typeFilter, that.typeFilter) && Objects.equals(keywords, that.keywords) &&
-                Objects.equals(sortBy, that.sortBy) && Objects.equals(ascending, that.ascending) &&
-                Objects.equals(limit, that.limit);
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        PaginatedSearchParams otherObject = (PaginatedSearchParams) other;
+        return offset == otherObject.offset && Objects.equals(searchText, otherObject.searchText) &&
+                Objects.equals(typeFilter, otherObject.typeFilter) && Objects.equals(keywords, otherObject.keywords) &&
+                Objects.equals(sortBy, otherObject.sortBy) && Objects.equals(ascending, otherObject.ascending) &&
+                Objects.equals(limit, otherObject.limit);
     }
 
     @Override

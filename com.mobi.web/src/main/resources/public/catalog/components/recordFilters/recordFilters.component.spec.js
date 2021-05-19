@@ -29,7 +29,7 @@ import {
 } from '../../../../../../test/js/Shared';
 
 describe('Record Filters component', function() {
-    var $compile, scope, $q, catalogManagerSvc, catalogStateSvc, prefixes;
+    let $compile, scope, $q, catalogManagerSvc, catalogStateSvc, prefixes;
 
     beforeEach(function() {
         angular.mock.module('catalog');
