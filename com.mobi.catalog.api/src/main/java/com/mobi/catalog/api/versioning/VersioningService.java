@@ -27,6 +27,7 @@ package com.mobi.catalog.api.versioning;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.Model;
@@ -98,6 +99,17 @@ public interface VersioningService<T extends VersionedRDFRecord> {
                         @Nullable Commit auxCommit);
 
     /**
+     * Adds the provided {@link Commit} to the provided {@link Record} and {@link Branch}, updating the head Commit. NOTE: This method
+     * is intended to be used for existing InProgressCommits and assumes the additions and deletions statements already
+     * exist in the Repository.
+     *
+     * @param branch The Branch which will get the new Commit.
+     * @param commit The Commit to add to the Branch.
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void addCommit(Record record, Branch branch, Commit commit, RepositoryConnection conn);
+
+    /**
      * Adds the provided {@link Commit} to the provided {@link Branch}, updating the head Commit. NOTE: This method
      * is intended to be used for existing InProgressCommits and assumes the additions and deletions statements already
      * exist in the Repository.
@@ -107,6 +119,25 @@ public interface VersioningService<T extends VersionedRDFRecord> {
      * @param conn A RepositoryConnection to use for lookup.
      */
     void addCommit(Branch branch, Commit commit, RepositoryConnection conn);
+
+    /**
+     * Adds a new {@link Commit} to the provided {@link Record} and {@link Branch} created for the provided {@link User} using the provided
+     * message, addition and deletion {@link Model Models}, and base and auxiliary Commits. NOTE: This method is
+     * intended to be used with merges and assumes no commit or revision data exists in the Repository.
+     *
+     * @param record The Record which will get the new Commit.
+     * @param branch The Branch which will get the new Commit.
+     * @param user The User who will be associated with the new Commit.
+     * @param message The String with the message text associated with the Commit.
+     * @param additions The statements which were added to the named graph.
+     * @param deletions The statements which were deleted from the named graph.
+     * @param baseCommit The base Commit for the newCommit.
+     * @param auxCommit The auxiliary Commit for the newCommit.
+     * @param conn A RepositoryConnection to use for lookup.
+     * @return The Resource identifying the new Commit.
+     */
+    Resource addCommit(Record record, Branch branch, User user, String message, Model additions, Model deletions,
+                       @Nullable Commit baseCommit, @Nullable Commit auxCommit, RepositoryConnection conn);
 
     /**
      * Adds a new {@link Commit} to the provided {@link Branch} created for the provided {@link User} using the provided
