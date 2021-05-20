@@ -57,6 +57,7 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
+import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.RepositoryResults;
@@ -97,6 +98,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -724,11 +726,19 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public void addCommit(Record record, Branch branch, Commit commit, RepositoryConnection conn) {
+        record.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
+        updateObject(record, conn);
+        addCommit(branch, commit, conn);
+    }
+
+    @Override
     public void addCommit(Branch branch, Commit commit, RepositoryConnection conn) {
         if (conn.containsContext(commit.getResource())) {
             throw throwAlreadyExists(commit.getResource(), commitFactory);
         }
         branch.setHead(commit);
+        branch.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
         updateObject(branch, conn);
         addObject(commit, conn);
     }
