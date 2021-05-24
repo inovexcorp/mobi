@@ -89,13 +89,13 @@ describe('Records View component', function() {
             spyOn(this.controller, 'setRecords');
             this.controller.changeSort({});
             expect(catalogStateSvc.currentRecordPage).toEqual(1);
-            expect(this.controller.setRecords).toHaveBeenCalledWith(catalogStateSvc.recordSearchText, catalogStateSvc.recordFilterType, {});
+            expect(this.controller.setRecords).toHaveBeenCalledWith(catalogStateSvc.recordSearchText, catalogStateSvc.recordFilterType, catalogStateSvc.keywordFilterList, {});
         });
         it('should change the filter', function() {
             spyOn(this.controller, 'setRecords');
-            this.controller.changeFilter('test');
+            this.controller.changeFilter('test', ["keyword1"]);
             expect(catalogStateSvc.currentRecordPage).toEqual(1);
-            expect(this.controller.setRecords).toHaveBeenCalledWith(catalogStateSvc.recordSearchText, 'test', catalogStateSvc.recordSortOption);
+            expect(this.controller.setRecords).toHaveBeenCalledWith(catalogStateSvc.recordSearchText, 'test', ["keyword1"], catalogStateSvc.recordSortOption);
         });
         it('should search for records', function() {
             spyOn(this.controller, 'search');
@@ -106,34 +106,37 @@ describe('Records View component', function() {
             spyOn(this.controller, 'setRecords');
             this.controller.search('test');
             expect(catalogStateSvc.currentRecordPage).toEqual(1);
-            expect(this.controller.setRecords).toHaveBeenCalledWith('test', catalogStateSvc.recordFilterType, catalogStateSvc.recordSortOption);
+            expect(this.controller.setRecords).toHaveBeenCalledWith('test', catalogStateSvc.recordFilterType, catalogStateSvc.keywordFilterList, catalogStateSvc.recordSortOption);
         });
         it('should get the provided page of records', function() {
             spyOn(this.controller, 'setRecords');
             this.controller.getRecordPage(10);
             expect(catalogStateSvc.currentRecordPage).toEqual(10);
-            expect(this.controller.setRecords).toHaveBeenCalledWith(catalogStateSvc.recordSearchText, catalogStateSvc.recordFilterType, catalogStateSvc.recordSortOption);
+            expect(this.controller.setRecords).toHaveBeenCalledWith(catalogStateSvc.recordSearchText, catalogStateSvc.recordFilterType, catalogStateSvc.keywordFilterList, catalogStateSvc.recordSortOption);
         });
         describe('should set the list of records', function() {
             beforeEach(function() {
                 catalogStateSvc.recordFilterType = '';
+                catalogStateSvc.keywordFilterList = []
                 catalogStateSvc.recordSearchText = '';
                 catalogStateSvc.recordSortOption = undefined;
                 catalogStateSvc.totalRecordSize = 0;
                 this.controller.records = [];
                 this.searchText = 'search';
                 this.recordType = 'type';
+                this.keywords = ["keyword1"]
                 this.sortOption = {};
             });
             it('if getRecords resolves', function() {
-                this.controller.setRecords(this.searchText, this.recordType, this.sortOption);
+                this.controller.setRecords(this.searchText, this.recordType, this.keywords, this.sortOption);
                 scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(this.catalogId, {
                     pageIndex: catalogStateSvc.currentRecordPage - 1,
                     limit: catalogStateSvc.recordLimit,
                     sortOption: this.sortOption,
                     recordType: this.recordType,
-                    searchText: this.searchText
+                    searchText: this.searchText,
+                    keywords: this.keywords
                 });
                 expect(catalogStateSvc.recordFilterType).toEqual(this.recordType);
                 expect(catalogStateSvc.recordSearchText).toEqual(this.searchText);
@@ -144,7 +147,7 @@ describe('Records View component', function() {
             });
             it('unless getRecords rejects', function() {
                 catalogManagerSvc.getRecords.and.returnValue($q.reject('Error Message'));
-                this.controller.setRecords(this.searchText, this.recordType, this.sortOption);
+                this.controller.setRecords(this.searchText, this.recordType, this.keywords, this.sortOption);
                 scope.$apply();
                 expect(catalogStateSvc.recordFilterType).toEqual('');
                 expect(catalogStateSvc.recordSearchText).toEqual('');

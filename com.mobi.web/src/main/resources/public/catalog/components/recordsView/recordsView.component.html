@@ -24,7 +24,7 @@
     <div class="col-lg-10 offset-lg-1 h-100">
         <div class="row h-100 flex-nowrap">
             <div class="col-3">
-                <record-filters record-type="dvm.state.recordFilterType" change-filter="dvm.changeFilter(recordType)"></record-filters>
+                <record-filters catalog-id="dvm.catalogId" record-type="dvm.state.recordFilterType" keyword-filter-list="dvm.state.keywordFilterList" change-filter="dvm.changeFilter(recordType, keywordFilterList)"></record-filters>
             </div>
             <div class="col d-flex flex-column remove-min-width">
                 <form name="dvm.form">

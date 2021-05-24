@@ -1,3 +1,42 @@
+
+var GeneralUtils = function(){};
+
+GeneralUtils.prototype.getAllElementsTextValues = function(browser, selector, target){
+
+    var myPromiseAll = function(browser, result){
+        var elementIdTextPromise = function(elementId){
+            return new Promise(function(resolve, reject) {
+               browser.elementIdText(elementId, function(a){ resolve(a.value) } );
+           });
+        };
+
+        return new Promise(function(resolve, reject) {
+           var elementIdTextPromises = result.value.map(function(webElement){ return elementIdTextPromise(webElement.ELEMENT) });
+           Promise.all(elementIdTextPromises)
+            .then(function(values) { resolve(values) });
+       });
+    };
+
+    return new Promise(function(resolve, reject) {
+         browser.elements(selector, target, function(result){
+                var api = this;
+                myPromiseAll(browser, result)
+                    .then(function(values){ resolve(values) });
+            });
+    });
+};
+
+GeneralUtils.prototype.switchToPage = function(browser, page, waitForElement){
+    browser
+      .click('sidebar div ul a[class=nav-link][href="#/' + page + '"]')
+      .waitForElementNotPresent('div.spinner');
+
+    if (waitForElement) {
+        browser.waitForElementVisible(waitForElement);
+    }
+};
+
+
 module.exports = {
   'globalPort' : '${https-port}',
 
@@ -59,5 +98,8 @@ module.exports = {
           .click('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
           .useCss()
           .waitForElementVisible('div.material-tabset li.nav-item')
-  }
+  },
+
+  'generalUtils': new GeneralUtils()
+
 }

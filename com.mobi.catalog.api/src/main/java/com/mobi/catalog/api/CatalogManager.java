@@ -26,6 +26,7 @@ package com.mobi.catalog.api;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
+import com.mobi.catalog.api.builder.KeywordCount;
 import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
@@ -78,6 +79,16 @@ public interface CatalogManager {
      * @throws IllegalArgumentException Thrown if the passed offset is greater than the number of results.
      */
     PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams);
+
+    /**
+     * Return a list of keywords using the provided Catalog with provided PaginatedSearchParams.
+     *
+     * @param catalogId    The Resource identifying the Catalog to find the Records in.
+     * @param searchParams Search parameters.
+     * @return The PaginatedSearchResults for a page matching the search criteria.
+     * @throws IllegalArgumentException Thrown if the passed offset is greater than the number of results.
+     */
+    PaginatedSearchResults<KeywordCount> getKeywords(Resource catalogId, PaginatedSearchParams searchParams);
 
     /**
      * Gets a Set of all Resources identifying Records which exist within the Catalog identified by the provided

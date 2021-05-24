@@ -1,0 +1,16 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX dataset: <http://mobi.com/ontologies/dataset#>
+
+SELECT
+    ?keyword (count(DISTINCT(?record)) as ?record_count) (count(DISTINCT(?type)) as ?type_count)
+WHERE {
+    ?record a ?type ;
+        mcat:catalog ?catalog ;
+        mcat:keyword ?keyword.
+
+     FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord, mcat:VersionedRDFRecord,
+            mcat:OntologyRecord, mcat:MappingRecord, dataset:DatasetRecord))
+     FILTER IF(bound(?search_text), CONTAINS(lcase(?keyword), lcase(?search_text)), true)
+}
+GROUP BY ?keyword
+ORDER BY ?keyword

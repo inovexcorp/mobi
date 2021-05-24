@@ -25,6 +25,8 @@ package com.mobi.catalog.api;
 
 import com.mobi.rdf.api.Resource;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -34,6 +36,7 @@ import java.util.Optional;
 public class PaginatedSearchParams {
     private String searchText;
     private Resource typeFilter;
+    private List<String> keywords;
     private Resource sortBy;
     private Boolean ascending;
     private Integer limit;
@@ -42,6 +45,7 @@ public class PaginatedSearchParams {
     private PaginatedSearchParams(Builder builder) {
         this.searchText = builder.searchText;
         this.typeFilter = builder.typeFilter;
+        this.keywords = builder.keywords;
         this.sortBy = builder.sortBy;
         this.ascending = builder.ascending;
         this.limit = builder.limit;
@@ -54,6 +58,10 @@ public class PaginatedSearchParams {
 
     public Optional<Resource> getTypeFilter() {
         return Optional.ofNullable(typeFilter);
+    }
+
+    public Optional<List<String>> getKeywords() {
+        return Optional.ofNullable(keywords);
     }
 
     public Optional<Resource> getSortBy() {
@@ -78,6 +86,7 @@ public class PaginatedSearchParams {
         private Resource sortBy = null;
         private String searchText = null;
         private Resource typeFilter = null;
+        private List<String> keywords = null;
         private Boolean ascending = null;
 
         public Builder() {}
@@ -107,6 +116,11 @@ public class PaginatedSearchParams {
             return this;
         }
 
+        public Builder keywords(List<String> keywords) {
+            this.keywords = keywords;
+            return this;
+        }
+
         public Builder ascending(boolean val) {
             this.ascending = val;
             return this;
@@ -115,5 +129,34 @@ public class PaginatedSearchParams {
         public PaginatedSearchParams build() {
             return new PaginatedSearchParams(this);
         }
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        PaginatedSearchParams otherObject = (PaginatedSearchParams) other;
+        return offset == otherObject.offset && Objects.equals(searchText, otherObject.searchText) &&
+                Objects.equals(typeFilter, otherObject.typeFilter) && Objects.equals(keywords, otherObject.keywords) &&
+                Objects.equals(sortBy, otherObject.sortBy) && Objects.equals(ascending, otherObject.ascending) &&
+                Objects.equals(limit, otherObject.limit);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(searchText, typeFilter, keywords, sortBy, ascending, limit, offset);
+    }
+
+    @Override
+    public String toString() {
+        return "PaginatedSearchParams{" +
+                "searchText='" + searchText + '\'' +
+                ", typeFilter=" + typeFilter +
+                ", keywords=" + keywords +
+                ", sortBy=" + sortBy +
+                ", ascending=" + ascending +
+                ", limit=" + limit +
+                ", offset=" + offset +
+                '}';
     }
 }
