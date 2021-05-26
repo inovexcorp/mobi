@@ -4864,6 +4864,36 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(catalogManager, never()).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
     }
 
+    @Test
+    public void testUploadChangesTrigToOntologyNoDiff() {
+        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+                .thenReturn(ontologyModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+        Difference difference = new Difference.Builder().additions(mf.createModel()).deletions(mf.createModel()).build();
+        when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("testOntologyData.trig")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/testOntologyData.trig"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+        JSONObject responseObject = getResponse(response);
+        assertEquals(responseObject.get("error"), "IllegalArgumentException");
+        assertEquals(responseObject.get("errorMessage"), "TriG data is not supported for ontology upload changes.");
+        assertNotEquals(responseObject.get("errorDetails"), null);
+    }
+    
     // Test failed-imports
 
     @Test

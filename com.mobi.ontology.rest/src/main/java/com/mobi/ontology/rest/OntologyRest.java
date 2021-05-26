@@ -75,6 +75,7 @@ import com.mobi.persistence.utils.BNodeUtils;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.Models;
+import com.mobi.persistence.utils.ParsedModel;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
@@ -711,9 +712,12 @@ public class OntologyRest {
         } catch (IllegalArgumentException | RDFParseException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | ExecutionException | InterruptedException | CompletionException ex) {
-            if (ex instanceof ExecutionException && (ex.getCause() instanceof IllegalArgumentException
-                    || ex.getCause() instanceof RDFParseException)) {
-                throw RestUtils.getErrorObjBadRequest(new IllegalStateException(ex.getCause().getMessage()));
+            if (ex instanceof ExecutionException) {
+                if (ex.getCause() instanceof IllegalArgumentException) {
+                    throw RestUtils.getErrorObjBadRequest(ex.getCause());
+                } else if(ex.getCause() instanceof RDFParseException) {
+                    throw RestUtils.getErrorObjBadRequest(ex.getCause());
+                }
             }
             throw RestUtils.getErrorObjInternalServerError(ex);
         } finally {
@@ -749,8 +753,14 @@ public class OntologyRest {
     private Model getUploadedModel(InputStream fileInputStream, String fileExtension, Map<BNode, IRI> bNodesMap)
             throws IOException {
         // Load uploaded ontology into a skolemized model
-        return Models.createSkolemizedModel(fileExtension, fileInputStream, modelFactory, sesameTransformer,
-                bNodeService, bNodesMap);
+        ParsedModel parsedModel = Models.createSkolemizedModel(fileExtension, fileInputStream,
+                modelFactory, sesameTransformer, bNodeService, bNodesMap);
+
+        if ("trig".equalsIgnoreCase(parsedModel.getRdfFormatName())) {
+            throw new IllegalArgumentException("TriG data is not supported for ontology upload changes.");
+        }
+
+        return parsedModel.getModel();
     }
 
     /**

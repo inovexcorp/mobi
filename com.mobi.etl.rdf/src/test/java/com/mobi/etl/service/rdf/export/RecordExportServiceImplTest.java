@@ -374,6 +374,6 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
             configBuilder.records(records);
         }
         service.export(configBuilder.build());
-        return Models.createModel("trig", Files.newInputStream(path), transformer);
+        return Models.createModel("trig", Files.newInputStream(path), transformer).getModel();
     }
 }
