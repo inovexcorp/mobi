@@ -270,46 +270,46 @@ public class Models {
     }
 
     /**
-     * Create a Mobi Model from an InputStream.
+     * Create a {@link ParsedModel} instance with Mobi Model from an InputStream.
      *
      * @param preferredExtension the preferred extension as a string
      * @param inputStream the InputStream to parse
      * @param transformer the SesameTransformer to convert a SesameModel to a Mobi Model
-     * @return a Mobi Model from the parsed InputStream
+     * @return {@link ParsedModel} with Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
-    public static Model createModel(String preferredExtension,
-                                    InputStream inputStream,
-                                    SesameTransformer transformer) throws IOException {
+    public static ParsedModel createModel(String preferredExtension,
+                                          InputStream inputStream,
+                                          SesameTransformer transformer) throws IOException {
         return createModel(preferredExtension, inputStream, transformer, new StatementCollector());
     }
 
     /**
-     * Create a Mobi Model from an InputStream.
+     * Create a {@link ParsedModel} instance with Mobi Model from an InputStream.
      *
      * @param preferredExtension the preferred extension as a string
      * @param inputStream the InputStream to parse
      * @param transformer the SesameTransformer to convert a SesameModel to a Mobi Model
      * @param collector the StatementCollector used to aggregate statements
-     * @return a Mobi Model from the parsed InputStream
+     * @return {@link ParsedModel} with Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
-    public static Model createModel(String preferredExtension,
-                                    InputStream inputStream,
-                                    SesameTransformer transformer,
-                                    StatementCollector collector) throws IOException {
+    public static ParsedModel createModel(String preferredExtension,
+                                          InputStream inputStream,
+                                          SesameTransformer transformer,
+                                          StatementCollector collector) throws IOException {
         ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
 
         if (preferredExtension.endsWith("gzip") || preferredExtension.endsWith("gz")) {
             preferredExtension = FilenameUtils.removeExtension(preferredExtension);
             try (BufferedInputStream bis = new BufferedInputStream(rdfData);
-                 GZIPInputStream gzis = new GZIPInputStream(bis)) {
+                    GZIPInputStream gzis = new GZIPInputStream(bis)) {
                 rdfData = toByteArrayInputStream(gzis);
             }
         } else if (preferredExtension.endsWith("zip")) {
             preferredExtension = FilenameUtils.removeExtension(preferredExtension);
             try (BufferedInputStream bis = new BufferedInputStream(rdfData);
-                 ZipInputStream zis = new ZipInputStream(bis)) {
+                    ZipInputStream zis = new ZipInputStream(bis)) {
                 ZipEntry ze;
                 int counter = 0;
                 while ((ze = zis.getNextEntry()) != null) {
@@ -328,81 +328,67 @@ public class Models {
         return buildModel(preferredExtension, rdfData, transformer, collector);
     }
 
-    private static Model buildModel(String preferredExtension, ByteArrayInputStream rdfData,
-                                    SesameTransformer transformer, StatementCollector collector) {
-
+    private static ParsedModel buildModel(String preferredExtension, ByteArrayInputStream rdfData,
+                                          SesameTransformer transformer, StatementCollector collector) {
+        assert preferredExtension != null;
         List<String> triedRDFFormats =  new ArrayList<>();
-        org.eclipse.rdf4j.model.Model model = new LinkedHashModel();
-        RDFParseException rdfParseException = null;
-
+        ParsedModel parsedModel;
         try {
             rdfData.mark(0);
-            // Check OBOFormat
-            if (preferredExtension.equalsIgnoreCase("obo")) {
-                try {
-                    model = parseOBO(rdfData);
-                } catch (OBOFormatParserException e) {
-                    String template = "Error parsing OBO format based on obo extension ;;; %s";
-                    rdfParseException = new RDFParseException(String.format(template, e.getMessage()));
-                    rdfData.reset();
-                } catch (Exception e) {
-                    rdfData.reset();
-                }
+            if ("obo".equalsIgnoreCase(preferredExtension)) {
+                parsedModel = parseOBO(rdfData, triedRDFFormats, transformer);
             } else if (preferredExtensionParsers.containsKey(preferredExtension.toLowerCase())) {
-                for (RDFParser parser : preferredExtensionParsers.get(preferredExtension)) {
-                    try {
-                        model = parse(rdfData, parser, collector);
-                        rdfParseException = null;
-                        break;
-                    } catch (RDFParseException e) {
-                        String template = "Error parsing %s format based on %s extension ;;; %s";
-                        rdfParseException = new RDFParseException(String.format(template,
-                                parser.getRDFFormat().getName(), preferredExtension,  e.getMessage()));
-                        rdfData.reset();
-                    } catch (Exception e) {
-                        rdfData.reset();
-                    }
-                }
+                parsedModel = parseIteration(rdfData, collector, triedRDFFormats,
+                        preferredExtensionParsers.get(preferredExtension), transformer);
             } else {
-                try {
-                    model = parseOBO(rdfData);
-                    rdfParseException = null;
-                } catch (OBOFormatParserException e) {
-                    triedRDFFormats.add("OBO");
-                    String template = "Error parsing OBO format. No Extension provided ;;; %s";
-                    rdfParseException = new RDFParseException(String.format(template, e.getMessage()));
-                    rdfData.reset();
-                } catch (Exception e) {
-                    rdfData.reset();
+                parsedModel = parseOBO(rdfData, triedRDFFormats, transformer);
+                if (parsedModel.getRdfFormatName() == null) {
+                    parsedModel = parseIteration(rdfData, collector, triedRDFFormats, rdfParsers, transformer);
                 }
-                if (rdfParseException != null) {
-                    for (RDFParser parser : rdfParsers) {
-                        try {
-                            model = parse(rdfData, parser, collector);
-                            rdfParseException = null;
-                            break;
-                        } catch (RDFParseException e) {
-                            String parserName = parser.getRDFFormat().getName();
-                            triedRDFFormats.add(parserName);
-                            String template = "File was tried against all formats. No extension provided ;;; "
-                                    + "Formats: %s";
-                            rdfParseException = new RDFParseException(String.format(template, triedRDFFormats));
-                            rdfData.reset();
-                        } catch (Exception e) {
-                            rdfData.reset();
-                        }
-                    }
-                }
-            }
-
-            // at this point throw exception so user will see parse error
-            if (rdfParseException != null) {
-                throw rdfParseException;
             }
         } finally {
             IOUtils.closeQuietly(rdfData);
         }
-        return transformer.mobiModel(model);
+
+        // at this point throw exception so user will see parse error
+        if (parsedModel.getRdfParseException().isPresent()) {
+            throw parsedModel.getRdfParseException().get();
+        }
+
+        return parsedModel;
+    }
+
+    /**
+     * Parsing rdfData ByteArrayInputStream.
+     * @param rdfData InputStream to parse
+     * @param collector StatementCollector used to aggregate statements
+     * @param triedRDFFormats keeps track of all tried rdf formats
+     * @param inputRDFParsers List of RDF parsers to try
+     * @return {@link ParsedModel} results of the model building
+     */
+    private static ParsedModel parseIteration(ByteArrayInputStream rdfData, StatementCollector collector,
+                                              List<String> triedRDFFormats, List<RDFParser> inputRDFParsers,
+                                              SesameTransformer transformer) {
+        ParsedModel parsedModel = new ParsedModel();
+
+        for (RDFParser parser : inputRDFParsers) {
+            String parserName = parser.getRDFFormat().getName();
+            try {
+                org.eclipse.rdf4j.model.Model rdf4jModel = parse(rdfData, parser, collector);
+                parsedModel = new ParsedModel(transformer.mobiModel(rdf4jModel), parserName);
+                break;
+            } catch (RDFParseException e) {
+                triedRDFFormats.add(parserName);
+                String template = "File was tried against all following formats. ;;; Formats: %s";
+                parsedModel = new ParsedModel();
+                parsedModel.setRdfParseException(Optional.of(
+                        new RDFParseException(String.format(template, triedRDFFormats))));
+                rdfData.reset();
+            } catch (Exception e) {
+                rdfData.reset();
+            }
+        }
+        return parsedModel;
     }
 
     private static org.eclipse.rdf4j.model.Model parse(ByteArrayInputStream rdfData, RDFParser parser,
@@ -427,7 +413,7 @@ public class Models {
     public static Model createModel(InputStream inputStream, SesameTransformer transformer, RDFParser... parsers)
             throws IOException {
         StatementCollector stmtCollector = new StatementCollector();
-        return createModel(inputStream, transformer, stmtCollector, parsers);
+        return createModel(inputStream, transformer, stmtCollector, parsers).getModel();
     }
 
     /**
@@ -439,10 +425,10 @@ public class Models {
      * @param transformer the {@link SesameTransformer} to convert a SesameModel to a Mobi Model
      * @param bNodeService the {@link BNodeService} used for skolemizing bnodes
      * @param skolemizedBNodes map of BNodes to their corresponding deterministically skolemized IRI.
-     * @return a Mobi Model from the parsed InputStream
+     * @return {@link ParsedModel} with Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
-    public static Model createSkolemizedModel(InputStream inputStream, ModelFactory modelFactory,
+    public static ParsedModel createSkolemizedModel(InputStream inputStream, ModelFactory modelFactory,
                                               SesameTransformer transformer, BNodeService bNodeService,
                                               Map<BNode, IRI> skolemizedBNodes,
                                               RDFParser... parsers) throws IOException {
@@ -461,10 +447,10 @@ public class Models {
      * @param transformer the {@link SesameTransformer} to convert a SesameModel to a Mobi Model
      * @param bNodeService the {@link BNodeService} used for skolemizing bnodes
      * @param skolemizedBNodes map of BNodes to their corresponding deterministically skolemized IRI.
-     * @return a Mobi Model from the parsed InputStream
+     * @return {@link ParsedModel} with Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
-    public static Model createSkolemizedModel(String preferredExtension, InputStream inputStream,
+    public static ParsedModel createSkolemizedModel(String preferredExtension, InputStream inputStream,
                                               ModelFactory modelFactory, SesameTransformer transformer,
                                               BNodeService bNodeService,
                                               Map<BNode, IRI> skolemizedBNodes) throws IOException {
@@ -473,78 +459,77 @@ public class Models {
         return createModel(preferredExtension, inputStream, transformer, stmtCollector);
     }
 
-    private static Model createModel(InputStream inputStream, SesameTransformer transformer,
+    private static ParsedModel createModel(InputStream inputStream, SesameTransformer transformer,
                                      StatementCollector collector, RDFParser... parsers) throws IOException {
-        org.eclipse.rdf4j.model.Model model = new LinkedHashModel();
-
-        List<RDFFormat> formats = asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
-                RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS);
+        List<String> triedRDFFormats = new ArrayList<>();
+        List<RDFFormat> formats = asList(RDFFormat.JSONLD, RDFFormat.TURTLE,
+                RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS, RDFFormat.TRIG);
 
         List<RDFParser> allParsers = formats.stream().map(Rio::createParser).collect(Collectors.toList());
         allParsers.addAll(Arrays.asList(parsers));
 
         ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
 
+        ParsedModel parsedModel;
         try {
             rdfData.mark(0);
-            for (RDFParser rdfParser : rdfParsers) {
-                try {
-                    rdfParser.setRDFHandler(collector);
-                    rdfParser.setParseErrorListener(new ParseErrorLogger());
-                    rdfParser.setParserConfig(new ParserConfig());
-                    rdfParser.parse(rdfData, "");
-                    model = new LinkedHashModel(collector.getStatements());
-                    break;
-                } catch (Exception e) {
-                    rdfData.reset();
-                }
+            parsedModel = parseIteration(rdfData, collector, triedRDFFormats , rdfParsers, transformer);
+
+            if (parsedModel.getRdfFormatName() == null) {
+                parsedModel = parseOBO(rdfData, triedRDFFormats, transformer);
             }
-            if (model.isEmpty()) {
-                // Check OBOFormat
-                try {
-                    model = parseOBO(rdfData);
-                } catch (Exception e) {
-                    rdfData.reset();
-                }
-            }
+
         } finally {
             IOUtils.closeQuietly(rdfData);
         }
 
-        if (model.isEmpty()) {
-            throw new IllegalArgumentException("InputStream was invalid for all formats.");
+        if (parsedModel.getRdfFormatName() == null) {
+            throw new IllegalArgumentException("InputStream was invalid for all formats " + triedRDFFormats);
         }
-        return transformer.mobiModel(model);
+
+        return parsedModel;
     }
 
-    private static org.eclipse.rdf4j.model.Model parseOBO(ByteArrayInputStream rdfData) throws IOException {
-        OBOFormatParser parser = new OBOFormatParser();
-        OBODoc obodoc;
-        // Parse into an OBODoc
-        try (InputStreamReader isReader = new InputStreamReader(rdfData, StandardCharsets.UTF_8);
-                BufferedReader bufferedReader = new BufferedReader(isReader)) {
-            parser.setReader(new BufferedReader(bufferedReader));
-            obodoc = new OBODoc();
-            parser.parseOBODoc(obodoc);
-        }
-        // Convert to an OWLOntology
-        OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-        manager.setOntologyConfigurator(new OntologyConfigurator());
-        OWLAPIObo2Owl bridge = new OWLAPIObo2Owl(manager);
-        OWLOntology ontology;
+    private static ParsedModel parseOBO(ByteArrayInputStream rdfData, List<String> triedRDFFormats,
+                                        SesameTransformer transformer) {
+        ParsedModel parsedModel;
         try {
-            ontology = bridge.convert(obodoc);
-        } catch (OWLOntologyCreationException e) {
-            throw new OWLRuntimeException(e);
+            OBOFormatParser parser = new OBOFormatParser();
+            OBODoc obodoc;
+            // Parse into an OBODoc
+            try (InputStreamReader isReader = new InputStreamReader(rdfData, StandardCharsets.UTF_8);
+                    BufferedReader bufferedReader = new BufferedReader(isReader)) {
+                parser.setReader(new BufferedReader(bufferedReader));
+                obodoc = new OBODoc();
+                parser.parseOBODoc(obodoc);
+            }
+            // Convert to an OWLOntology
+            OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+            manager.setOntologyConfigurator(new OntologyConfigurator());
+            OWLAPIObo2Owl bridge = new OWLAPIObo2Owl(manager);
+            OWLOntology ontology;
+            try {
+                ontology = bridge.convert(obodoc);
+            } catch (OWLOntologyCreationException e) {
+                throw new OWLRuntimeException(e);
+            }
+            // Render into an RDF4J Model
+            org.eclipse.rdf4j.model.Model sesameModel = new LinkedHashModel();
+            RDFHandler rdfHandler = new StatementCollector(sesameModel);
+            OWLDocumentFormat format = ontology.getFormat();
+            format.setAddMissingTypes(false);
+            RioRenderer renderer = new RioRenderer(ontology, rdfHandler, format);
+            renderer.render();
+            parsedModel = new ParsedModel(transformer.mobiModel(sesameModel), "OBO");
+        } catch (OBOFormatParserException | IOException e) {
+            triedRDFFormats.add("OBO");
+            String template = "File was tried against following formats. ;;; Formats: %s";
+            parsedModel = new ParsedModel();
+            parsedModel.setRdfParseException(Optional.of(
+                    new RDFParseException(String.format(template, triedRDFFormats))));
+            rdfData.reset();
         }
-        // Render into an RDF4J Model
-        org.eclipse.rdf4j.model.Model sesameModel = new LinkedHashModel();
-        RDFHandler rdfHandler = new StatementCollector(sesameModel);
-        OWLDocumentFormat format = ontology.getFormat();
-        format.setAddMissingTypes(false);
-        RioRenderer renderer = new RioRenderer(ontology, rdfHandler, format);
-        renderer.render();
-        return sesameModel;
+        return parsedModel;
     }
 
     /**

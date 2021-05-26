@@ -34,6 +34,7 @@ import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.core.utils.MobiStringUtils;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Models;
+import com.mobi.persistence.utils.ParsedModel;
 import com.mobi.rdf.api.Model;
 import com.mobi.repository.api.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
@@ -52,6 +53,7 @@ import java.io.InputStream;
 public class SimpleOntologyRecordService extends AbstractOntologyRecordService<OntologyRecord> {
 
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyRecordService.class);
+    protected static final String TRIG_NOT_SUPPORTED = "TriG data is not supported for ontology upload.";
 
     @Reference
     public OntologyCache ontologyCache;
@@ -92,9 +94,13 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
         InputStream inputStream = config.get(OntologyRecordCreateSettings.INPUT_STREAM);
 
         if (fileName != null && inputStream != null) {
+            String fileExtension = MobiStringUtils.getFileExtension(fileName);
             try {
-                ontologyModel = Models.createModel(MobiStringUtils.getFileExtension(fileName), inputStream,
-                        sesameTransformer);
+                ParsedModel parsedModel = Models.createModel(fileExtension, inputStream, sesameTransformer);
+                ontologyModel = parsedModel.getModel();
+                if ("trig".equalsIgnoreCase(parsedModel.getRdfFormatName())) {
+                    throw new IllegalArgumentException(TRIG_NOT_SUPPORTED);
+                }
             } catch (IOException e) {
                 throw new MobiOntologyException("Could not parse Ontology input stream.", e);
             }
