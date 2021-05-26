@@ -25,6 +25,8 @@ var adminPassword = 'admin'
 var Onto1 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl'
 var Onto1e = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1e.ttl'  // has syntax issue
 var Onto1s = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1s.ttl'  // same as test-local-imports-1
+var Onto1Trig = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1s.trig'
+var Onto1TrigZip = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1s.trig.zip'
 var Onto2 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.ttl'
 var Onto3 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.ttl'
 var Onto4 = process.cwd()+ '/src/test/resources/ontologies/unresolvableImport.owl' // OWL Files Processed Differently
@@ -46,6 +48,12 @@ module.exports = {
             .click('upload-ontology-overlay div.modal-footer button.btn')
             .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
             .setValue('input[type=file]', Onto1s)
+            .click('upload-ontology-overlay div.modal-footer button.btn')
+            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
+            .setValue('input[type=file]', Onto1TrigZip)
+            .click('upload-ontology-overlay div.modal-footer button.btn')
+            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
+            .setValue('input[type=file]', Onto1Trig)
     },
 
     'Step 4: Submit all ontology files' : function (browser) {

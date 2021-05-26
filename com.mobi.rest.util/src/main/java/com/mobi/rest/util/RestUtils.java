@@ -796,26 +796,26 @@ public class RestUtils {
     /**
      * Creates a JSON error object containing the error message.
      *
-     * @param exception The {@link Exception} to create a JSON error object from.
+     * @param throwable The {@link Throwable} to create a JSON error object from.
      * @return A {@link ObjectNode} JSON object.
      */
-    public static ObjectNode createJsonErrorObject(Exception exception) {
-        return createJsonErrorObject(exception, null);
+    public static ObjectNode createJsonErrorObject(Throwable throwable) {
+        return createJsonErrorObject(throwable, null);
     }
 
     /**
      * Creates a JSON error object containing the error message and a list of the error details.
      *
-     * @param exception The {@link Exception} to create a JSON error object from.
+     * @param throwable The {@link Throwable} to create a JSON error object from.
      * @param delimiter A String delimiter used to separate the error details
      * @return A {@link ObjectNode} JSON object.
      */
-    public static ObjectNode createJsonErrorObject(Exception exception, String delimiter) {
+    public static ObjectNode createJsonErrorObject(Throwable throwable, String delimiter) {
         ObjectNode objectNode = mapper.createObjectNode();
         ArrayNode arrayNode = mapper.createArrayNode();
-        objectNode.put("error", exception.getClass().getSimpleName());
+        objectNode.put("error", throwable.getClass().getSimpleName());
 
-        String errorMessage = exception.getMessage();
+        String errorMessage = throwable.getMessage();
 
         if (delimiter == null) {
             objectNode.put("errorMessage", errorMessage);
@@ -841,26 +841,26 @@ public class RestUtils {
      * Creates a {@link MobiWebException} containing a 400 response with the error message and error details provided
      * in the body of the response.
      *
-     * @param exception The {@link Exception} to create a JSON error object from.
+     * @param throwable The {@link Throwable} to create a JSON error object from.
      * @return A {@link MobiWebException} of a 400 with error information in the body.
      */
-    public static MobiWebException getErrorObjBadRequest(Exception exception) {
-        ObjectNode objectNode = createJsonErrorObject(exception, Models.ERROR_OBJECT_DELIMITER);
+    public static MobiWebException getErrorObjBadRequest(Throwable throwable) {
+        ObjectNode objectNode = createJsonErrorObject(throwable, Models.ERROR_OBJECT_DELIMITER);
         Response response = Response.status(Response.Status.BAD_REQUEST).entity(objectNode.toString()).build();
-        return ErrorUtils.sendError(exception, exception.getMessage(), response);
+        return ErrorUtils.sendError(throwable, throwable.getMessage(), response);
     }
 
     /**
      * Creates a {@link MobiWebException} containing a 500 response with the error message provided in the body of the
      * response.
      *
-     * @param exception The {@link Exception} to create a JSON error object from.
+     * @param throwable The {@link Throwable} to create a JSON error object from.
      * @return A {@link MobiWebException} of a 500 with error information in the body.
      */
-    public static MobiWebException getErrorObjInternalServerError(Exception exception) {
-        ObjectNode objectNode = createJsonErrorObject(exception);
+    public static MobiWebException getErrorObjInternalServerError(Throwable throwable) {
+        ObjectNode objectNode = createJsonErrorObject(throwable);
         Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(objectNode.toString())
                 .build();
-        return ErrorUtils.sendError(exception, exception.getMessage(), response);
+        return ErrorUtils.sendError(throwable, throwable.getMessage(), response);
     }
 }

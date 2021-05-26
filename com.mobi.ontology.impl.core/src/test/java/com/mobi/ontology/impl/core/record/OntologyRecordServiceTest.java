@@ -25,6 +25,7 @@ package com.mobi.ontology.impl.core.record;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -242,7 +243,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
                 .deletions(deletions)
                 .build();
 
-
         tag = tagFactory.createNew(tagIRI);
         tag.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(distributionIRI)));
 
@@ -344,11 +344,8 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     public void createWithoutOntologyIRITest() throws Exception {
         // Setup:
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
-        Set<User> users = new LinkedHashSet<>();
-        users.add(user);
+        Set<String> names = Stream.of("Rick", "Morty").collect(Collectors.toSet());
+        Set<User> users = Stream.of(user).collect(Collectors.toSet());
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology.ttl"));
         config.set(OntologyRecordCreateSettings.FILE_NAME, "test-ontology.ttl");
@@ -456,7 +453,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        // TODO: Maybe this prefix should be on the OntologyId Interface...
         String defaultPrefix = "http://mobi.com/ontologies/";
         IRI identifier = VALUE_FACTORY.createIRI(defaultPrefix + "test");
         OntologyId ontologyId = mock(OntologyId.class);
@@ -506,7 +502,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        // TODO: Maybe this prefix should be on the OntologyId Interface...
         String defaultPrefix = "http://mobi.com/ontologies/";
         IRI identifier = VALUE_FACTORY.createIRI(defaultPrefix + "test");
         OntologyId ontologyId = mock(OntologyId.class);
@@ -586,6 +581,134 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void createTrigWithTrigExtensionTest() throws Exception {
+        // Setup:
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/testData.trig"));
+        config.set(OntologyRecordCreateSettings.FILE_NAME, "testData.trig");
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        // When:
+        try {
+            recordService.create(user, config, connection);
+        } catch(IllegalArgumentException e) {
+            assertEquals(SimpleOntologyRecordService.TRIG_NOT_SUPPORTED, e.getMessage());
+            throw e;
+        }
+        fail("IllegalArgumentException was not thrown");
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void createTrigWithTxtExtensionTest() throws Exception {
+        // Setup:
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/testData.trig"));
+        config.set(OntologyRecordCreateSettings.FILE_NAME, "testData.txt");
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        // When:
+        try {
+            recordService.create(user, config, connection);
+        } catch(IllegalArgumentException e) {
+            assertEquals(SimpleOntologyRecordService.TRIG_NOT_SUPPORTED, e.getMessage());
+            throw e;
+        }
+        fail("IllegalArgumentException was not thrown");
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void createTrigWithTxtZipExtensionTrigZipContentTest() throws Exception {
+        // Setup:
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/testData.trig.zip"));
+        config.set(OntologyRecordCreateSettings.FILE_NAME, "testData.txt.zip");
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        // When:
+        try {
+            recordService.create(user, config, connection);
+        } catch(IllegalArgumentException e) {
+            assertEquals(SimpleOntologyRecordService.TRIG_NOT_SUPPORTED, e.getMessage());
+            throw e;
+        }
+        fail("IllegalArgumentException was not thrown");
+    }
+
+    @Test
+    public void createWithTrigInFileName() {
+        // Setup:
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-oiri.ttl"));
+        config.set(OntologyRecordCreateSettings.FILE_NAME, "test-ontology-no-oiri-trig.ttl");
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        // When:
+        try {
+            recordService.create(user, config, connection);
+        } catch(Exception e) {
+            fail("Exception was thrown");
+        }
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void createTrigWithZipExtensionTTLContentTest() throws Exception {
+        // Setup:
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-oiri.ttl"));
+        config.set(OntologyRecordCreateSettings.FILE_NAME, "test-ontology-no-oiri.trig.zip");
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        // When:
+        try {
+            recordService.create(user, config, connection);
+        } catch(IllegalArgumentException e) {
+            assertEquals(SimpleOntologyRecordService.TRIG_NOT_SUPPORTED, e.getMessage());
+            throw e;
+        }
+        fail("IllegalArgumentException was not thrown");
     }
 
     @Test (expected = IllegalArgumentException.class)
