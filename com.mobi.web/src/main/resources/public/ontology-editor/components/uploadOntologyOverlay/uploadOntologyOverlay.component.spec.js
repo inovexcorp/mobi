@@ -113,7 +113,7 @@ describe('Upload Ontology Overlay component', function() {
                         ontologyStateSvc.uploadList.push({promise: jasmine.any(Object), id: id, title: 'title', error: undefined})
                     });
                     ontologyManagerSvc.uploadOntology.and.callFake(function (file, ontologyJson, title, description, keywords, id = '', callback) {
-                        callback(id, $q.when(), title);
+                        callback(id, $q.when());
                     })
                 });
                 it('less than controller.files.length', function() {
@@ -145,20 +145,19 @@ describe('Upload Ontology Overlay component', function() {
                     this.controller.keywords = [' keywords '];
                     this.controller.index = 0;
                     this.newId = 'upload-' + (ontologyStateSvc.uploadList.length + this.controller.index);
-                    this.controller.finishLoading =  spyOn(this.controller, 'finishLoading').and.callFake(function(id, promise, title) {
+                    this.controller.finishLoading =  spyOn(this.controller, 'finishLoading').and.callFake(function(id, promise) {
                         promise.then(scope.resolve.finishUpload, errorObject => {
                             ontologyStateSvc.addErrorToUploadItem(id, errorObject);
                             scope.resolve.finishUpload();
                         });
-                        ontologyStateSvc.uploadList.push({promise: jasmine.any(Object), id, title, error: undefined})
+                        ontologyStateSvc.uploadList.push({promise: jasmine.any(Object), id, error: undefined})
                     });
                     ontologyManagerSvc.uploadOntology.and.callFake(function (file, ontologyJson, title, description, keywords, id = '', callback) {
-                        callback(id, $q.when(), title);
+                        callback(id, $q.when());
                     })
                 });
                 it('resolved', function() {
                     this.controller.submit();
-                
                     scope.$apply();
                     expect(ontologyManagerSvc.uploadOntology).toHaveBeenCalledWith({name: 'file1'}, undefined, 'title', 'description', ['keywords'], this.newId, this.controller.finishLoading);
                     expect(ontologyStateSvc.addErrorToUploadItem).not.toHaveBeenCalled();
@@ -169,7 +168,7 @@ describe('Upload Ontology Overlay component', function() {
                     this.controller.index = 0;
                     this.newId = 'upload-' + (ontologyStateSvc.uploadList.length + this.controller.index);
                     ontologyManagerSvc.uploadOntology.and.callFake(function (file, ontologyJson, title, description, keywords, id = '', callback) {
-                        callback(id, $q.reject('error'), title);
+                        callback(id, $q.reject('error'));
                     })
                     this.controller.submit();
                     scope.$apply();

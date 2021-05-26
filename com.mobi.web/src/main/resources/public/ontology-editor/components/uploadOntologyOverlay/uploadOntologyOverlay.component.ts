@@ -98,7 +98,7 @@ function uploadOntologyOverlayComponentCtrl(ontologyManagerService, ontologyStat
             dvm.submit();
         }
     }
-    dvm.finishLoading = function(id,promise, title) {
+    dvm.finishLoading = function(id, promise) {
         promise.then(dvm.resolve.finishUpload, errorObject => {
                  os.addErrorToUploadItem(id, errorObject);
                  dvm.resolve.finishUpload();
@@ -107,7 +107,6 @@ function uploadOntologyOverlayComponentCtrl(ontologyManagerService, ontologyStat
         fileInfo.promise = promise;
         fileInfo.isProcessing = false;
     }
-
     dvm.cancel = function() {
         os.uploadFiles.splice(0);
         dvm.total = 0;

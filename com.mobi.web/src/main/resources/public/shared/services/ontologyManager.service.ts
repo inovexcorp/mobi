@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq, fromPairs } from 'lodash';
+import { endsWith, identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq } from 'lodash';
 import * as jszip from 'jszip';
 ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
 
@@ -117,7 +117,9 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         let prepPromise;
         if (file !== undefined) {
             const titleInfo = getFileTitleInfo(title);
-            if (titleInfo.ext !== 'zip' && file.size) {
+            if (endsWith(titleInfo.title, ".trig") || endsWith(titleInfo.title, ".trig.zip") || endsWith(titleInfo.title, ".trig.gzip")) {
+                prepPromise = Promise.reject('TriG data is not supported for ontology upload.');
+            } else if (titleInfo.ext !== 'zip' && file.size) {
                 prepPromise = self.compressFile(file).then(file => {
                     fd.append('file',file);
                 });
@@ -144,7 +146,14 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
             } else {
                 return promise.then(response => response.data, util.rejectErrorObject);
             }    
-        }).then(response => { return response}, $q.reject);
+        }, errorString => {
+            const resolver = Promise.reject({'errorMessage': errorString, 'errorDetails': []});
+            if (typeof(callback) == 'function') {
+                callback(id, resolver, title);
+            } else {
+                return resolver;
+            }
+        }).then(response => { return response }, $q.reject);
     };
 
     /**
@@ -1669,7 +1678,6 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
                             let fl = new File([content], file.name + '.zip')
                             resolve(fl)
                         })
-
                 } catch (error) {
                     reject(error);
                 }
@@ -1680,6 +1688,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     function getFileTitleInfo(title) {
         const fileName = title.toLowerCase().split('.');
         return {
+            title: title.toLowerCase(),
             name: fileName.slice(0,1)[0],
             ext: fileName.slice(-1)[0]
         };

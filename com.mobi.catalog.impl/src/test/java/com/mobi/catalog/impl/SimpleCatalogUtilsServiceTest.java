@@ -1183,7 +1183,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         IRI userBranchIRI = VALUE_FACTORY.createIRI(BRANCHES + "user-branch");
         IRI createdFromIRI = VALUE_FACTORY.createIRI(UserBranch.createdFrom_IRI);
 
-        try (RepositoryConnection conn = repo.getConnection()){
+        try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
             assertTrue(conn.getStatements(BRANCH_IRI, null, null).hasNext());
             assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, userBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
@@ -1205,7 +1205,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         IRI userBranchIRI = VALUE_FACTORY.createIRI(BRANCHES + "user-branch");
         IRI createdFromIRI = VALUE_FACTORY.createIRI(UserBranch.createdFrom_IRI);
 
-        try (RepositoryConnection conn = repo.getConnection()){
+        try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
             assertTrue(conn.getStatements(BRANCH_IRI, null, null).hasNext());
             assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, userBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());

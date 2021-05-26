@@ -220,7 +220,7 @@ describe('Ontology Manager service', function() {
                         }, function(headers) {
                             return headers['Content-Type'] === undefined;
                         }).respond(200, {ontologyId: this.ontologyId, recordId: this.recordId});
-                    const callBack = function(id, promise, title) {
+                    const callBack = function(id, promise) {
                         promise.then(response => {
                             expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
                         }, () => {
@@ -237,7 +237,7 @@ describe('Ontology Manager service', function() {
                         }, function(headers) {
                             return headers['Content-Type'] === undefined;
                         }).respond(200, {ontologyId: this.ontologyId, recordId: this.recordId});
-                    const callBack = function(id, promise, title) {
+                    const callBack = function(id, promise) {
                         promise.t.then(response => {
                             expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
                         }, () => {
@@ -245,7 +245,7 @@ describe('Ontology Manager service', function() {
                         });
                         flushAndVerify($httpBackend);
                     };
-                    ontologyManagerSvc.uploadOntology(this.file, undefined, this.title, callBack)
+                    ontologyManagerSvc.uploadOntology(this.file, undefined, this.title, undefined, undefined, undefined, callBack);
                         
                 });
                 it('unless an error occurs', function() {
@@ -255,7 +255,7 @@ describe('Ontology Manager service', function() {
                         }, function(headers) {
                             return headers['Content-Type'] === undefined;
                         }).respond(400, this.errorObject, null, this.error);
-                    const callBack = function(id, promise, title) {
+                    const callBack = function(id, promise) {
                         promise.then(() => {
                             fail('Promise should have rejected');
                         }, response => {
@@ -267,7 +267,7 @@ describe('Ontology Manager service', function() {
                             statusText: this.error
                         }));
                     };
-                    ontologyManagerSvc.uploadOntology(this.file, undefined, this.title, callBack);
+                    ontologyManagerSvc.uploadOntology(this.file, undefined, this.title, undefined, undefined, undefined, callBack);
                 });
             });
             describe('with an id', function() {
@@ -288,7 +288,7 @@ describe('Ontology Manager service', function() {
                     this.keywords.forEach(word => {
                         this.fd.append('keywords', word);
                     });
-                    const callBack = function(id, promise, title) {
+                    const callBack = function(id, promise) {
                         promise.then(response => {
                             expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
                         }, () => {
@@ -301,7 +301,7 @@ describe('Ontology Manager service', function() {
                 });
                 it('with no description or keywords', function() {
                     httpSvc.post.and.returnValue($q.when({data: {ontologyId: this.ontologyId, recordId: this.recordId}}));
-                    const callBack = function(id, promise, title) {
+                    const callBack = function(id, promise) {
                         promise.then(response => {
                             expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
                         }, () => {
@@ -315,7 +315,7 @@ describe('Ontology Manager service', function() {
                 });
                 it('unless an error occurs', function() {
                     httpSvc.post.and.returnValue($q.reject({statusText: this.error}));
-                    const callBack = function(id, promise, title) {
+                    const callBack = function(id, promise) {
                         promise.then(() => {
                             fail('Promise should have rejected');
                         });
@@ -336,7 +336,7 @@ describe('Ontology Manager service', function() {
                         }, function(headers) {
                             return headers['Content-Type'] === undefined;
                         }).respond(200, {ontologyId: this.ontologyId, recordId: this.recordId});
-                    const callBack = function(id, promise, title) {
+                    const callBack = function(id, promise) {
                         promise.then(response => {
                             expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
                         }, () => {
@@ -353,7 +353,7 @@ describe('Ontology Manager service', function() {
                         }, function(headers) {
                             return headers['Content-Type'] === undefined;
                         }).respond(200, {ontologyId: this.ontologyId, recordId: this.recordId});
-                    const callBack = function(id, promise, title) {
+                    const callBack = function(id, promise) {
                         promise.then(response => {
                             expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
                         }, () => {
@@ -361,7 +361,7 @@ describe('Ontology Manager service', function() {
                         });
                         flushAndVerify($httpBackend);
                     }
-                    ontologyManagerSvc.uploadOntology(undefined, this.ontologyObj, this.title, callBack);
+                    ontologyManagerSvc.uploadOntology(undefined, this.ontologyObj, this.title, undefined, undefined, undefined, callBack);
                 });
                 it('unless an error occurs', function() {
                     $httpBackend.expectPOST('/mobirest/ontologies',
@@ -382,7 +382,7 @@ describe('Ontology Manager service', function() {
                             statusText: this.error
                         }));
                     };
-                    ontologyManagerSvc.uploadOntology(undefined, this.ontologyObj, this.title, callBack);
+                    ontologyManagerSvc.uploadOntology(undefined, this.ontologyObj, this.title, undefined, undefined, undefined, callBack);
                 });
             });
             describe('with an id', function() {
@@ -403,7 +403,7 @@ describe('Ontology Manager service', function() {
                     this.keywords.forEach(word => {
                         this.fd.append('keywords', word);
                     });
-                    const callBack = function(id, promise, title) {
+                    const callBack = function(id, promise) {
                         promise.then(response => {
                             expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
                         }, () => {
@@ -416,7 +416,7 @@ describe('Ontology Manager service', function() {
                 });
                 it('with no description or keywords', function() {
                     httpSvc.post.and.returnValue($q.when({data: {ontologyId: this.ontologyId, recordId: this.recordId}}));
-                    const callBack = function(id, promise, title) {
+                    const callBack = function(id, promise) {
                         promise.then(response => {
                             expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
                         }, () => {
@@ -429,7 +429,7 @@ describe('Ontology Manager service', function() {
                 });
                 it('unless an error occurs', function() {
                     httpSvc.post.and.returnValue($q.reject({statusText: this.error}));
-                    const callBack = function(id, promise, title) {
+                    const callBack = function(id, promise) {
                         promise.then(() => {
                             fail('Promise should have rejected');
                         });
@@ -440,6 +440,38 @@ describe('Ontology Manager service', function() {
                     ontologyManagerSvc.uploadOntology(undefined, this.ontologyObj, this.title, undefined, undefined, 'id', callBack);
                 });
             });
+        });
+    });
+    describe('uploadOntology file not supported', function() {
+         it('trig with title, description and keywords', function() {
+            const callback = function(id, promise) {
+                promise.then(response => {
+                    fail('Promise should have not resolved');
+                }, errorObject => {
+                    expect(errorObject).toEqual({'errorMessage': 'TriG data is not supported for ontology upload.', 'errorDetails': []});
+                });
+            }
+            ontologyManagerSvc.uploadOntology(this.file, undefined, 'title.trig', this.description, this.keywords, 'id', callback);
+        });
+        it('trig.zip with title, description and keywords', function() {
+           const callback = function(id, promise) {
+               promise.then(response => {
+                   fail('Promise should have not resolved');
+               }, errorObject => {
+                   expect(errorObject).toEqual({'errorMessage': 'TriG data is not supported for ontology upload.', 'errorDetails': []});
+               });
+           }
+           ontologyManagerSvc.uploadOntology(this.file, undefined, 'title.trig.zip', this.description, this.keywords, 'id', callback);
+        });
+        it('trig.gzip with title, description and keywords', function() {
+           const callback = function(id, promise) {
+               promise.then(response => {
+                   fail('Promise should have not resolved');
+               }, errorObject => {
+                   expect(errorObject).toEqual({'errorMessage': 'TriG data is not supported for ontology upload.', 'errorDetails': []});
+               });
+           }
+           ontologyManagerSvc.uploadOntology(this.file, undefined, 'title.trig.gzip', this.description, this.keywords, 'id', callback);
         });
     });
     describe('deleteOntology hits the proper endpoint', function() {
