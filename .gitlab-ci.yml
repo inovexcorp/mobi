@@ -158,7 +158,7 @@ support_branch_increment_micro_version:
     - git config --global user.email 'gitlab.runner@inovexcorp.com'
     - git config --global user.name 'Gitlab Runner'
     # Set working branch
-    - $BRANCH="support/$MAJOR.$MINOR"
+    - BRANCH="support/$MAJOR.$MINOR"
     # Ensure working on latest commit on branch
     - git fetch
     - git pull origin $BRANCH
