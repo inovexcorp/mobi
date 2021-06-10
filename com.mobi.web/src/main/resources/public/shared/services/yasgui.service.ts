@@ -201,6 +201,23 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
                 }
             }
 
+            if (drawnPlugin === 'error') {
+                const error = yasgui.getTab().getYasr().results?.getError();
+                if (error.text) {
+                    const errTextEl = yasrRootElement.querySelector("pre");
+                    try {
+                        const errorJson = JSON.parse(decodeURIComponent(error.text));
+                        if (errorJson.hasOwnProperty('details')) {
+                            errTextEl.textContent = errorJson['details'];
+                        } else {
+                            errTextEl.textContent = 'Could not find error details from response object.';
+                        }
+                    } catch(e) {
+                        errTextEl.textContent = 'Could not parse error response as JSON.';
+                    }
+                }
+            }
+
             if (tab.yasr.getSelectedPluginName() !== drawnPlugin) {
                 tab.yasr.selectPlugin(drawnPlugin);
             }
@@ -348,6 +365,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
             }
             return `${visibleString}`;
         }
+
         // dont show response plugin
         yasr.plugins['response'].canHandleResults = function() {
             return false;
