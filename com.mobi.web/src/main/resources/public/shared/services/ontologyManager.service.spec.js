@@ -1053,13 +1053,14 @@ describe('Ontology Manager service', function() {
             this.params = paramSerializer({
                 branchId: this.branchId,
                 commitId: this.commitId,
-                rdfFormat: this.format
+                rdfFormat: this.format,
+                applyInProgressCommit: false
             });
         });
         it('when get succeeds', function() {
             $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/imported-ontologies?' + this.params)
                 .respond(200, [this.ontology]);
-            ontologyManagerSvc.getImportedOntologies(this.recordId, this.branchId, this.commitId)
+            ontologyManagerSvc.getImportedOntologies(this.recordId, this.branchId, this.commitId, this.applyInProgressCommit)
                 .then(response => {
                     expect(response).toEqual([this.ontology]);
                 }, () => {
@@ -1070,7 +1071,7 @@ describe('Ontology Manager service', function() {
         it('when get is empty', function() {
             $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/imported-ontologies?' + this.params)
                 .respond(204);
-            ontologyManagerSvc.getImportedOntologies(this.recordId, this.branchId, this.commitId)
+            ontologyManagerSvc.getImportedOntologies(this.recordId, this.branchId, this.commitId, this.applyInProgressCommit)
                 .then(response => {
                     expect(response).toEqual([]);
                 }, () => {
@@ -1081,7 +1082,7 @@ describe('Ontology Manager service', function() {
         it('when another success response', function() {
             $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/imported-ontologies?' + this.params)
                 .respond(201, null, null, this.error);
-            ontologyManagerSvc.getImportedOntologies(this.recordId, this.branchId, this.commitId)
+            ontologyManagerSvc.getImportedOntologies(this.recordId, this.branchId, this.commitId, this.applyInProgressCommit)
                 .then(() => {
                     fail('Promise should have rejected');
                 }, response => {
@@ -1092,7 +1093,7 @@ describe('Ontology Manager service', function() {
         it('when get fails', function() {
             $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/imported-ontologies?' + this.params)
                 .respond(400, null, null, this.error);
-            ontologyManagerSvc.getImportedOntologies(this.recordId, this.branchId, this.commitId)
+            ontologyManagerSvc.getImportedOntologies(this.recordId, this.branchId, this.commitId, this.applyInProgressCommit)
                 .then(() => {
                     fail('Promise should have rejected');
                 }, response => {
@@ -1100,6 +1101,17 @@ describe('Ontology Manager service', function() {
                 });
             flushAndVerify($httpBackend);
             expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
+        });
+        it('when apply-in-progress is not passed in', function () {
+            $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/imported-ontologies?' + this.params)
+                .respond(200, [this.ontology]);
+            ontologyManagerSvc.getImportedOntologies(this.recordId, this.branchId, this.commitId)
+                .then(response => {
+                    expect(response).toEqual([this.ontology]);
+                }, () => {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
         });
     });
     describe('getEntityUsages should call the proper functions', function() {

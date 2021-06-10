@@ -628,11 +628,12 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param {string} branchId The branch ID of the ontology you want to get from the repository.
      * @param {string} commitId The commit ID of the ontology you want to get from the repository.
      * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
+     * @param {boolean} [applyInProgressCommit=false] Whether to apply the in-progress commit when getting imported ontologies
      * @returns {Promise} A promise containing the list of ontologies that are imported by the requested
      * ontology.
      */
-    self.getImportedOntologies = function(recordId, branchId, commitId, rdfFormat = 'jsonld') {
-        const config = {params: {rdfFormat, branchId, commitId}};
+    self.getImportedOntologies = function(recordId, branchId, commitId, rdfFormat = 'jsonld', applyInProgressCommit = false) {
+        const config = {params: {rdfFormat, branchId, commitId, applyInProgressCommit}};
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-ontologies', config)
             .then(response => {
                 if (get(response, 'status') === 200) {

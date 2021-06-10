@@ -23,6 +23,7 @@
 var adminUsername = 'admin'
 var adminPassword = 'admin'
 var OntoSample = process.cwd()+ '/src/test/resources/ontologies/uhtc-ontology.ttl'
+var skosOnt = process.cwd()+ '/src/test/resources/ontologies/skos.rdf'
 var OntoCSV= process.cwd()+ '/src/test/resources/ontology_csv\'s/uhtc-compounds.csv'
 
 module.exports = {
@@ -33,15 +34,27 @@ module.exports = {
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
-        browser.globals.upload_ontologies(browser, OntoSample)
+        browser.globals.upload_ontologies(browser, OntoSample, skosOnt)
     },
 
-    'Step 3: Navigate to datasets tab' : function (browser) {
+    'Step 3: Link ontologies' : function(browser) {
+        browser.globals.open_ontology(browser, OntoSample)
+        browser
+            .waitForElementVisible('imports-block div.section-header')
+            .click('imports-block div.section-header a.float-right.fa.fa-fw.fa-plus.ng-scope')
+            .waitForElementVisible('imports-overlay form')
+            .click('xpath', '//imports-overlay//li//span[text()[contains(.,"On Server")]]')
+            .click('xpath', '//imports-overlay//h4[text()[contains(.,"skos.rdf")]]')
+            .click('imports-overlay div.modal-footer button.btn-primary')
+            .waitForElementNotPresent('imports-overlay')
+    },
+
+    'Step 4: Navigate to datasets tab' : function (browser) {
         browser
             .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/datasets"]')
     },
 
-    'Step 4: Create a new Dataset' : function (browser) {
+    'Step 5: Create a new Dataset' : function (browser) {
         browser
             .waitForElementNotPresent('div.spinner')
             .click('div.datasets-tabset button.btn-primary')
@@ -53,20 +66,20 @@ module.exports = {
             .click('div.modal-footer button.btn-primary')
     },
 
-    'Step 5: Validate dataset Appearance' : function (browser) {
+    'Step 6: Validate dataset Appearance' : function (browser) {
         browser
             .useXpath()
             .assert.visible('//div[contains(@class, "dataset-info")]//h3[text()[contains(.,"UHTC ontology data")]]')
             .useCss()
     },
 
-    'Step 6: Navigate to Mapping page' : function (browser) {
+    'Step 7: Navigate to Mapping page' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/mapper"]')
     },
 
-    'Step 7: Create new mapping' : function (browser) {
+    'Step 8: Create new mapping' : function (browser) {
         browser
             .click('block-header button.btn')
             .setValue('div.form-group input[name=title]', "UHTC material Mapping")
@@ -74,7 +87,7 @@ module.exports = {
             .click('div.modal-footer button.btn-primary')
     },
 
-    'Step 8: Attach csv to mapping' : function (browser) {
+    'Step 9: Attach csv to mapping' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('div.file-input button.btn-light')
@@ -83,7 +96,7 @@ module.exports = {
             .click('div.block-footer button.continue-btn')
     },
 
-    'Step 9: Click on uploaded ontology' : function (browser) {
+    'Step 10: Click on uploaded ontology' : function (browser) {
         browser
             .waitForElementNotPresent('div.spinner')
             .waitForElementVisible('mapping-config-overlay')
@@ -98,23 +111,26 @@ module.exports = {
             .click('button.btn-primary')
     },
 
-    'Step 10: Add class to mapping' : function (browser) {
+    'Step 11: Add class to mapping' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .waitForElementVisible('form.edit-mapping-form')
             .waitForElementNotPresent('span.ui-select-choices-row-inner.uis-transclude-append')
             .click('div.class-mappings button.btn-link')
             .click('div.ui-select-match  span.btn')
+            .expect.elements('div.class-select span.ui-select-choices-row-inner').count.to.equal(3);
+
+        browser
             .click('div[title="http://matonto.org/ontologies/uhtc#Material"]')
             .click('button.btn-primary')
     },
 
-    'Step 11: Verify Mapping has been selected' : function (browser) {
+    'Step 12: Verify Mapping has been selected' : function (browser) {
         browser
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "ui-select-match")]//span[text()[contains(., "UHTC Material")]]'})
     },
 
-    'Step 12: Choose new IRI template' : function (browser) {
+    'Step 13: Choose new IRI template' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('label.control-label button.btn.btn-link')
@@ -122,7 +138,7 @@ module.exports = {
             .click('div.modal-footer button.btn-primary')
     },
 
-    'Step 13: Add Property Mappings and verify addition' : function (browser) {
+    'Step 14: Add Property Mappings and verify addition' : function (browser) {
         var properties = ["Chemical Formula", "Density", "Melting Point", "Title", "Description"]
 
         for (var i = 0 ; i < properties.length; i++)
@@ -153,7 +169,7 @@ module.exports = {
         }
     },
 
-    'Step 14: Verify Edit Property modal auto selects correct property' : function (browser){
+    'Step 15: Verify Edit Property modal auto selects correct property' : function (browser){
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('xpath', '//div[contains(@class, "prop-list")]//h4[text()="Chemical Formula"]/preceding-sibling::div[contains(@class, "prop-actions")]/a[contains(@class, "edit-prop")]')
@@ -165,7 +181,7 @@ module.exports = {
             .click('xpath', '//div[contains(@class, "modal-footer")]/button[text()="Cancel"]')
     },
 
-    'Step 15: Add Crystal Mapping' : function (browser){
+    'Step 16: Add Crystal Mapping' : function (browser){
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('div.properties-field-name button.btn.btn-link')
@@ -176,7 +192,7 @@ module.exports = {
             .click('div.modal-footer button.btn-primary')
     },
 
-    'Step 16: Verify Crystal Class addition' : function (browser) {
+    'Step 17: Verify Crystal Class addition' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .useXpath()
@@ -184,14 +200,14 @@ module.exports = {
             .useCss()
     },
 
-    'Step 17: Switch to crystal structure class' : function (browser) {
+    'Step 18: Switch to crystal structure class' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('div.ui-select-match span.form-control')
             .click('xpath', '//span[@class="ui-select-choices-row-inner"]//span[text()[contains(., "Crystal Structure")]]')
     },
 
-    'Step 18: Add crystal structure name property' : function (browser) {
+    'Step 19: Add crystal structure name property' : function (browser) {
         browser
             .click('div.properties-field-name button.btn.btn-link')
             .click('div.ui-select-match span.ui-select-toggle')
@@ -201,7 +217,7 @@ module.exports = {
             .click('div.modal-footer button.btn-primary')
     },
 
-    'Step 19: Verify visibility of crystal structure name property' : function (browser) {
+    'Step 20: Verify visibility of crystal structure name property' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .useXpath()
@@ -209,13 +225,13 @@ module.exports = {
             .useCss()
     },
 
-    'Step 20: Save Mapping' : function (browser) {
+    'Step 21: Save Mapping' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('button.btn.dropdown-toggle')
     },
 
-    'Step 21: Upload mapping to dataset' : function (browser) {
+    'Step 22: Upload mapping to dataset' : function (browser) {
         browser
             .click('button.run-dataset')
             .click('div.ui-select-container')
@@ -224,12 +240,12 @@ module.exports = {
             browser.click('div.modal-footer button.btn-primary')
     },
 
-    'Step 22: Verify user is back on main mapping page' : function (browser) {
+    'Step 23: Verify user is back on main mapping page' : function (browser) {
         browser
             .assert.visible('p.lead')
     },
 
-    'Step 23: Explore dataset mapping' : function (browser) {
+    'Step 24: Explore dataset mapping' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/discover"]')
@@ -237,7 +253,7 @@ module.exports = {
             .click('xpath' ,'//ul[contains(@class, "ui-select-choices")]//div[text()[contains(., "UHTC")]]')
     },
 
-    'Step 24: Check for Material and Crystal structure cards' : function (browser) {
+    'Step 25: Check for Material and Crystal structure cards' : function (browser) {
         browser
             .useXpath()
             .assert.visible('//md-card//md-card-title//span[text()[contains(., "Crystal Structure")]]')

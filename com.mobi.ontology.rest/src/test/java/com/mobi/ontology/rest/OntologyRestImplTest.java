@@ -3277,6 +3277,22 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     }
 
     @Test
+    public void testgetImportsClosureWhenApplyInProgressCommitFalse() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-ontologies")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("applyInProgressCommit", false).request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        verify(engineManager, times(0)).retrieveUser(anyString());
+        verify(catalogManager, times(0)).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
+        verify(catalogManager, times(0)).applyInProgressCommit(any(Resource.class), any(Model.class));
+        verify(ontologyManager, times(0)).createOntology(any(Model.class));
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
+        assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importsClosureResults);
+    }
+
+    @Test
     public void testGetImportsClosureWhenNoInProgressCommit() {
         setNoInProgressCommit();
 

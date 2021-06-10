@@ -2235,9 +2235,12 @@ public class OntologyRest {
             @Parameter(description = "String representing the Branch Resource ID", required = false)
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
-            @QueryParam("commitId") String commitIdStr) {
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
-            Set<Ontology> importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr);
+            Set<Ontology> importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+                    applyInProgressCommit);
             ArrayNode arrayNode = mapper.createArrayNode();
             importedOntologies.stream()
                     .map(ontology -> getOntologyAsJsonObject(ontology, rdfFormat))
@@ -3613,7 +3616,7 @@ public class OntologyRest {
                                               Function<Ontology, ObjectNode> iriFunction) {
         Set<Ontology> importedOntologies;
         try {
-            importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr);
+            importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, true);
         } catch (MobiOntologyException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -3640,11 +3643,13 @@ public class OntologyRest {
      * @param recordIdStr the record ID String to process.
      * @param branchIdStr the branch ID String to process.
      * @param commitIdStr the commit ID String to process.
+     * @param applyInProgressCommit whether to apply uncommitted changes when grabbing the ontologies
      * @return the Set of imported Ontologies.
      */
     private Set<Ontology> getImportedOntologies(ContainerRequestContext context, String recordIdStr,
-                                                String branchIdStr, String commitIdStr) {
-        Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
+                                                String branchIdStr, String commitIdStr, boolean applyInProgressCommit) {
+        Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr,
+                applyInProgressCommit);
         if (optionalOntology.isPresent()) {
             Ontology baseOntology = optionalOntology.get();
             return OntologyUtils.getImportedOntologies(baseOntology.getImportsClosure(), baseOntology);
