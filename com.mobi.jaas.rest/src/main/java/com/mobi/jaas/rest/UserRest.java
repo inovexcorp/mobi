@@ -595,6 +595,11 @@ public class UserRest {
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
             Role roleObj = engineManager.getRole(role).orElseThrow(() ->
                     ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
+            if (ADMIN_USER_IRI.equals(savedUser.getResource().stringValue())
+                    && roleObj.getResource().stringValue().contains("admin")) {
+                throw ErrorUtils.sendError("Cannot remove admin role from admin user",
+                        Response.Status.BAD_REQUEST);
+            }
             savedUser.removeHasUserRole(roleObj);
             engineManager.updateUser(savedUser);
             logger.info("Role " + role + " removed from user " + username);

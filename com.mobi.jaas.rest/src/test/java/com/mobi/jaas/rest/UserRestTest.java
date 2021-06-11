@@ -94,6 +94,7 @@ public class UserRestTest extends MobiRestTestNg {
     private User user;
     private Group group;
     private Role role;
+    private Role adminRole;
     private Thing email;
     private Set<User> users;
     private Set<Group> groups;
@@ -137,7 +138,7 @@ public class UserRestTest extends MobiRestTestNg {
         users = Collections.singleton(user);
 
         group = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/testGroup"), role.getModel());
-        Role adminRole = roleFactory.createNew(vf.createIRI("http://mobi.com/roles/admin"), role.getModel());
+        adminRole = roleFactory.createNew(vf.createIRI("http://mobi.com/roles/admin"), role.getModel());
         adminRole.setProperty(vf.createLiteral("admin"), vf.createIRI(DCTERMS.TITLE.stringValue()));
         group.setHasGroupRole(Collections.singleton(adminRole));
         group.setMember(Collections.singleton(user));
@@ -544,6 +545,17 @@ public class UserRestTest extends MobiRestTestNg {
         User updatedUser = captor.getValue();
         assertEquals(user.getResource(), updatedUser.getResource());
         assertEquals(0, updatedUser.getHasUserRole_resource().size());
+    }
+
+    @Test
+    public void removeAdminRoleFromAdminTest() {
+        when(engineManager.retrieveUser("admin")).thenReturn(Optional.of(adminUserMock));
+        when(engineManager.getRole(eq("admin"))).thenReturn(Optional.of(adminRole));
+        when(adminUserMock.getResource()).thenReturn(vf.createIRI(UserRest.ADMIN_USER_IRI));
+        Response response = target().path("users/" + UsernameTestFilter.ADMIN_USER + "/roles")
+                .queryParam("role", "admin")
+                .request().delete();
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
