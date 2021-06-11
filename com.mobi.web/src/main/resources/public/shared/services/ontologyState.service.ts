@@ -1571,6 +1571,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         listItem.editorTabStates.search.errorMessage = '';
         listItem.editorTabStates.search.highlightText = '';
         listItem.editorTabStates.search.infoMessage = '';
+        listItem.editorTabStates.search.warningMessage = '';
         listItem.editorTabStates.search.results = {};
         listItem.editorTabStates.search.searchText = '';
         listItem.editorTabStates.search.selected = {};
