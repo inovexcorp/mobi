@@ -69,11 +69,13 @@ function searchTabComponentCtrl(ontologyStateService, ontologyUtilsManagerServic
                         arr.sort((iri1, iri2) => dvm.os.getEntityNameByListItem(iri1, dvm.os.listItem).localeCompare(dvm.os.getEntityNameByListItem(iri2, dvm.os.listItem)));
                     });
                     state.search.results = results;
+                    countResults();
                     state.search.infoMessage = !isEmpty(results) ? '' : 'There were no results for your search text.';
                     state.search.highlightText = state.search.searchText;
                 }, errorMessage => {
                     state.search.errorMessage = errorMessage;
                     state.search.infoMessage = '';
+                    state.search.warningMessage = '';
                 });
         } else {
             dvm.os.resetSearchTab();
@@ -96,6 +98,13 @@ function searchTabComponentCtrl(ontologyStateService, ontologyUtilsManagerServic
     dvm.unselectItem = function() {
         dvm.os.unSelectItem();
         dvm.os.listItem.editorTabStates.search.selected = undefined;
+    }
+    function countResults() {
+        let count = 0;
+        for (let key of Object.keys(dvm.os.listItem.editorTabStates.search.results)) {
+            count += dvm.os.listItem.editorTabStates.search.results[key].length;
+        }
+        dvm.os.listItem.editorTabStates.search.warningMessage = (count === 500) ? 'Search results truncated because they exceeded 500 items.' : '';
     }
 }
 

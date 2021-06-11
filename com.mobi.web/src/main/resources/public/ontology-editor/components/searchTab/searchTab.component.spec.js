@@ -84,6 +84,7 @@ describe('Search Tab component', function() {
             entityIRI: 'entityIRI',
             highlightText: 'highlight',
             infoMessage: 'info',
+            warningMessage: 'warning',
             results: {
                 key: [{
                     entity: {
@@ -126,7 +127,7 @@ describe('Search Tab component', function() {
                 expect(this.element.querySelectorAll(test).length).toEqual(1);
             });
         });
-        ['error-display', 'info-message', 'tree-item'].forEach(test => {
+        ['error-display', 'info-message', 'tree-item', 'warning-message'].forEach(test => {
             it('with a ' + test, function() {
                 expect(this.element.find(test).length).toEqual(1);
             });
@@ -176,6 +177,24 @@ describe('Search Tab component', function() {
                         scope.$apply();
                         expect(ontologyStateSvc.listItem.editorTabStates.search.results).toEqual(results);
                         expect(ontologyStateSvc.listItem.editorTabStates.search.infoMessage).toEqual('');
+                        expect(ontologyStateSvc.listItem.editorTabStates.search.warningMessage).toEqual('');
+                    });
+                    it('where the response has limited results, sets the correct variables', function() {
+                        var results = {
+                            'http://www.w3.org/2002/07/owl#Class': [],
+                            'http://www.w3.org/2002/07/owl#Concept': []
+                        };
+                        for (var i = 1; i <= 250; i++) {
+                            results['http://www.w3.org/2002/07/owl#Class'].push('class' + i);
+                            results['http://www.w3.org/2002/07/owl#Concept'].push('concept' + i);
+                        }
+                        ontologyStateSvc.getEntityNameByListItem.and.returnValue('');
+                        ontologyManagerSvc.getSearchResults.and.returnValue($q.when(results));
+                        this.controller.onKeyup({keyCode: 13});
+                        scope.$apply();
+                        expect(ontologyStateSvc.listItem.editorTabStates.search.results).toEqual(results);
+                        expect(ontologyStateSvc.listItem.editorTabStates.search.infoMessage).toEqual('');
+                        expect(ontologyStateSvc.listItem.editorTabStates.search.warningMessage).toEqual('Search results truncated because they exceeded 500 items.');
                     });
                     it('where the response does not have results, sets the correct variables', function() {
                         ontologyManagerSvc.getSearchResults.and.returnValue($q.when({}));
@@ -183,6 +202,7 @@ describe('Search Tab component', function() {
                         scope.$apply();
                         expect(ontologyStateSvc.listItem.editorTabStates.search.results).toEqual({});
                         expect(ontologyStateSvc.listItem.editorTabStates.search.infoMessage).toEqual('There were no results for your search text.')
+                        expect(ontologyStateSvc.listItem.editorTabStates.search.warningMessage).toEqual('');
                     });
                 });
                 it('when rejected, it sets the correct variables', function() {
@@ -191,6 +211,7 @@ describe('Search Tab component', function() {
                     scope.$apply();
                     expect(ontologyStateSvc.listItem.editorTabStates.search.errorMessage).toEqual('error message');
                     expect(ontologyStateSvc.listItem.editorTabStates.search.infoMessage).toEqual('');
+                    expect(ontologyStateSvc.listItem.editorTabStates.search.warningMessage).toEqual('');
                 });
             });
         });
