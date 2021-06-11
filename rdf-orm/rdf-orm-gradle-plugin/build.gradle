@@ -17,7 +17,7 @@ repositories {
         url "~/.m2/repository"
     }
     maven {
-        url "https://artifactory.inovexcorp.com/artifactory/mobi-releases/"
+        url "http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/"
     }
 }
 
