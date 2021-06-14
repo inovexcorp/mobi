@@ -88,7 +88,7 @@ public class Restore implements Action {
 
     private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + File.separator + "restoreZip";
     private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15", "1.16", "1.17", "1.18",
-            "1.19");
+            "1.19", "1.20");
 
     // Service References
 
