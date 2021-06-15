@@ -31,7 +31,6 @@ import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.Model;
@@ -79,27 +78,12 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
     }
 
     @Override
-    public Resource addCommit(Record record, Branch branch, User user, String message, Model additions, Model deletions,
+    public Resource addCommit(Branch branch, User user, String message, Model additions, Model deletions,
                               @Nullable Commit baseCommit, @Nullable Commit auxCommit, RepositoryConnection conn) {
         Commit newCommit = createCommit(catalogManager.createInProgressCommit(user), message, baseCommit, auxCommit);
         catalogUtils.updateCommit(newCommit, additions, deletions, conn);
-        if (record != null) {
-            catalogUtils.addCommit(record, branch, newCommit, conn);
-        } else {
-            catalogUtils.addCommit(branch, newCommit, conn);
-        }
+        catalogUtils.addCommit(branch, newCommit, conn);
         return newCommit.getResource();
-    }
-
-    @Override
-    public Resource addCommit(Branch branch, User user, String message, Model additions, Model deletions,
-                              @Nullable Commit baseCommit, @Nullable Commit auxCommit, RepositoryConnection conn) {
-        return addCommit(null, branch, user, message, additions, deletions, baseCommit, auxCommit, conn);
-    }
-
-    @Override
-    public void addCommit(Record record, Branch branch, Commit commit, RepositoryConnection conn) {
-        catalogUtils.addCommit(record, branch, commit, conn);
     }
 
     @Override

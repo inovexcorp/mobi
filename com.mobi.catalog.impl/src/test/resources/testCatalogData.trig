@@ -16,6 +16,7 @@
 @prefix deletions: <https://mobi.com/deletions#> .
 @prefix graphs: <http://mobi.com/test/graphs#> .
 @prefix mergereqs: <http://mobi.com/ontologies/merge-requests#> .
+@prefix ontedit: <http://mobi.com/ontologies/ontology-editor#> .
 
 GRAPH <http://mobi.com/test#empty> { }
 
@@ -120,7 +121,7 @@ GRAPH records:versioned-record-missing-version {
 }
 
 GRAPH records:versioned-rdf-record {
-    records:versioned-rdf-record a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+    records:versioned-rdf-record a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record;
         mcat:catalog catalogs:catalog-distributed ;
         dc:title "Versioned RDF Record" ;
         dc:description "Description" ;
@@ -133,6 +134,18 @@ GRAPH records:versioned-rdf-record {
         mcat:latestVersion versions:latest-tag ;
         mcat:branch branches:user-branch ;
         mcat:branch branches:no-head-branch ;
+        mcat:branch branches:branch ;
+        mcat:branch branches:master ;
+        mcat:masterBranch branches:master .
+}
+
+GRAPH records:simple-versioned-rdf-record {
+    records:simple-versioned-rdf-record a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record, ontedit:OntologyRecord;
+        mcat:catalog catalogs:catalog-distributed ;
+        dc:title "Simple Versioned RDF Record" ;
+        dc:description "Description" ;
+        dc:issued "2017-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2017-05-01T00:00:00Z"^^xsd:dateTime ;
         mcat:branch branches:branch ;
         mcat:branch branches:master ;
         mcat:masterBranch branches:master .
@@ -216,6 +229,7 @@ GRAPH branches:lone-branch {
 
 GRAPH branches:branch {
     branches:branch a mcat:Branch ;
+        dc:modified "2017-05-01T00:00:00Z"^^xsd:dateTime ;
         mcat:head commits:commitA1 .
 }
 

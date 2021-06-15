@@ -46,7 +46,7 @@ module.exports = {
             .waitForElementNotPresent('new-ontology-overlay .modal-header h3')
     },
 
-    'Step 3: A new ontology is created' : function(browser) {
+    'Step 3: Verify new ontology properties' : function(browser) {
         browser
             .waitForElementVisible('.imports-block')
             .useXpath()
@@ -57,7 +57,34 @@ module.exports = {
             .useCss()       
     },
 
-    'Step 4: Create a new branch' : function(browser) {
+    'Step 4: Ensure IRI changes are successful' : function(browser) {
+        browser
+            .click('static-iri i.fa.fa-pencil')
+            .setValue('edit-iri-overlay div.form-group.ends-container input', 'myOntology')
+            .click('xpath', '//edit-iri-overlay//button[text()="Submit"]')
+            .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
+            .waitForElementVisible('circle-button-stack .fa-git')
+            .click('circle-button-stack .fa-git')
+            .waitForElementVisible('commit-overlay .modal-header h3')
+            .assert.containsText('commit-overlay .modal-header h3', 'Commit')
+            .setValue('commit-overlay textarea[name=comment]', 'Changed IRI')
+            .useXpath()
+            .click('//commit-overlay//button[text()="Submit"]')
+            .useCss()
+            .waitForElementNotPresent('commit-overlay .modal-header h3', 5000)
+            .click('ontology-sidebar button.btn.btn-primary')
+            .click('xpath', '//search-bar')
+            .keys('myTitle')
+            .keys(browser.Keys.ENTER)
+            .pause(1000)
+            .useXpath()
+            .assert.containsText('//open-ontology-tab//small', 'MyTitlemyOntology')
+            .click('//open-ontology-tab//small[text()[contains(.,"MyTitlemyOntology")]]')
+            .useCss()
+            .waitForElementVisible('.imports-block')
+    },
+
+    'Step 5: Create a new branch' : function(browser) {
         browser
             .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
             .waitForElementVisible('circle-button-stack .fa-code-fork')
@@ -74,14 +101,14 @@ module.exports = {
             .waitForElementNotPresent('create-branch-overlay .modal-title')
     },
 
-    'Step 5: Verify a new branch was created' : function(browser) {
+    'Step 6: Verify a new branch was created' : function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"newBranchTitle")]]')
             .useCss()
     },
 
-    'Step 6: Create a new Class': function(browser) {
+    'Step 7: Create a new Class': function(browser) {
         browser
             .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
             .waitForElementVisible('circle-button-stack .fa-code-fork')
@@ -103,7 +130,7 @@ module.exports = {
             .waitForElementNotPresent('create-class-overlay .modal-header h3', 5000)
     },
 
-    'Step 7: Verify class was created': function(browser) {
+    'Step 8: Verify class was created': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Classes")]]')
@@ -112,7 +139,7 @@ module.exports = {
             .waitForElementVisible('//class-hierarchy-block//tree-item//span[text()[contains(.,"firstClass")]]')
     },
 
-    'Step 8: Verify changes are shown': function(browser) {
+    'Step 9: Verify changes are shown': function(browser) {
         browser
             .useXpath() // Must use Xpath when checking does an element with a certain value exist among other like elements
             .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Changes")]]')
@@ -134,7 +161,7 @@ module.exports = {
             .assert.containsText('saved-changes-tab .additions .statement-display div[title*="ns#type"] ~ div[title*="owl#Class"]', 'owl#Class')
     },
 
-    'Step 9: Commit Changes': function(browser) {
+    'Step 10: Commit Changes': function(browser) {
         browser
             .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
             .waitForElementVisible('circle-button-stack .fa-git')
@@ -148,7 +175,7 @@ module.exports = {
             .waitForElementNotPresent('commit-overlay .modal-header h3', 5000)
     },
 
-    'Step 10: Verify no changes are shown': function(browser) {
+    'Step 11: Verify no changes are shown': function(browser) {
         browser
             .assert.containsText('.nav-link.active span', 'Changes')
             .waitForElementVisible('info-message p')
@@ -156,7 +183,7 @@ module.exports = {
             .assert.elementNotPresent('saved-changes-tab .expansion-panel')
     },
 
-    'Step 11: Verify Commit': function(browser) {
+    'Step 12: Verify Commit': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Commits")]]')
@@ -169,7 +196,7 @@ module.exports = {
             .assert.containsText('commit-history-table .commit-message[title="commit123"] span', 'commit123')
     },
 
-    'Step 11: Verify Master Branch only has initial commit': function(browser) {
+    'Step 13: Verify Master Branch only has initial commit': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"newBranchTitle")]]')
@@ -185,7 +212,7 @@ module.exports = {
             .assert.containsText('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
     },
 
-    'Step 12: Switch back to the other branch': function(browser) {
+    'Step 14: Switch back to the other branch': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"MASTER")]]')
@@ -198,7 +225,7 @@ module.exports = {
             .useCss()
     },
     
-    'Step 13: Perform a merge': function(browser) {
+    'Step 15: Perform a merge': function(browser) {
         browser
             .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
             .waitForElementVisible('circle-button-stack .fa-random')
@@ -215,7 +242,7 @@ module.exports = {
             .waitForElementVisible('merge-block commit-changes-display p[title*="FirstClass"]')
             .assert.containsText('merge-block commit-changes-display p[title*="FirstClass"]', 'firstClass')
             .waitForElementVisible('merge-block commit-changes-display p[title*="FirstClass"] ~ small')
-            .assert.containsText('merge-block commit-changes-display p[title*="FirstClass"] ~ small', 'MyTitle#FirstClass')
+            .assert.containsText('merge-block commit-changes-display p[title*="FirstClass"] ~ small', 'MyTitlemyOntology#FirstClass')
             .assert.containsText('merge-block .additions h5', 'Added Statements')
             .assert.containsText('merge-block .additions .statement-display div[title*="terms/description"]', "description")
             .assert.containsText('merge-block .additions .statement-display div[title*="terms/description"] ~ div[title=firstClassDescription]', 'firstClassDescription')
@@ -228,7 +255,7 @@ module.exports = {
             .useCss()
     },
 
-    'Step 14: Validate Merged Commits': function(browser) {
+    'Step 16: Validate Merged Commits': function(browser) {
         browser
             .waitForElementNotPresent('.spinner')
             .useXpath()

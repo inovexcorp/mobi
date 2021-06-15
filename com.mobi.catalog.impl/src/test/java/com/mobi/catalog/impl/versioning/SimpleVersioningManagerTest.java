@@ -35,7 +35,6 @@ import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.VersioningService;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -128,7 +127,6 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         when(baseService.getInProgressCommit(any(Resource.class), any(User.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
         when(baseService.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
         when(baseService.addCommit(any(Branch.class), any(User.class), anyString(), any(Model.class), any(Model.class), any(Commit.class), any(Commit.class), any(RepositoryConnection.class))).thenReturn(commit.getResource());
-        when(baseService.addCommit(any(Record.class), any(Branch.class), any(User.class), anyString(), any(Model.class), any(Model.class), any(Commit.class), any(Commit.class), any(RepositoryConnection.class))).thenReturn(commit.getResource());
 
         when(ontologyService.getTypeIRI()).thenReturn(OntologyRecord.TYPE);
         when(ontologyService.getTargetBranch(any(OntologyRecord.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(targetBranch);
@@ -137,7 +135,6 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         when(ontologyService.getInProgressCommit(any(Resource.class), any(User.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
         when(ontologyService.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
         when(ontologyService.addCommit(any(Branch.class), any(User.class), anyString(), any(Model.class), any(Model.class), any(Commit.class), any(Commit.class), any(RepositoryConnection.class))).thenReturn(commit.getResource());
-        when(ontologyService.addCommit(any(Record.class), any(Branch.class), any(User.class), anyString(), any(Model.class), any(Model.class), any(Commit.class), any(Commit.class), any(RepositoryConnection.class))).thenReturn(commit.getResource());
 
         when(config.getRepository()).thenReturn(repo);
 
@@ -161,7 +158,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
         verify(baseService).getInProgressCommit(eq(record.getResource()), eq(user), any(RepositoryConnection.class));
         verify(baseService).createCommit(inProgressCommit, "Message", commit, null);
-        verify(baseService).addCommit(eq(record), eq(targetBranch), eq(commit), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(commit), any(RepositoryConnection.class));
         verify(baseService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
     }
 
@@ -174,7 +171,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(ontologyService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
         verify(ontologyService).getInProgressCommit(eq(ontologyRecord.getResource()), eq(user), any(RepositoryConnection.class));
         verify(ontologyService).createCommit(inProgressCommit, "Message", commit, null);
-        verify(ontologyService).addCommit(eq(ontologyRecord), eq(targetBranch), eq(commit), any(RepositoryConnection.class));
+        verify(ontologyService).addCommit(eq(targetBranch), eq(commit), any(RepositoryConnection.class));
         verify(ontologyService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
     }
 
@@ -190,7 +187,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
         verify(baseService).getInProgressCommit(eq(ontologyRecord.getResource()), eq(user), any(RepositoryConnection.class));
         verify(baseService).createCommit(inProgressCommit, "Message", commit, null);
-        verify(baseService).addCommit(eq(ontologyRecord), eq(targetBranch), eq(commit), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(commit), any(RepositoryConnection.class));
         verify(baseService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
     }
 
@@ -205,7 +202,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
         verify(baseService).getInProgressCommit(eq(record.getResource()), eq(user), any(RepositoryConnection.class));
         verify(baseService).createCommit(inProgressCommit, "Message", commit, null);
-        verify(baseService).addCommit(eq(record), eq(targetBranch), eq(commit), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(commit), any(RepositoryConnection.class));
         verify(baseService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
     }
 
@@ -218,7 +215,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(ontologyService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
         verify(ontologyService).getInProgressCommit(eq(ontologyRecord.getResource()), eq(user), any(RepositoryConnection.class));
         verify(ontologyService).createCommit(inProgressCommit, "Message", commit, null);
-        verify(ontologyService).addCommit(eq(ontologyRecord), eq(targetBranch), eq(commit), any(RepositoryConnection.class));
+        verify(ontologyService).addCommit(eq(targetBranch), eq(commit), any(RepositoryConnection.class));
         verify(ontologyService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
     }
 
@@ -234,7 +231,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
         verify(baseService).getInProgressCommit(eq(ontologyRecord.getResource()), eq(user), any(RepositoryConnection.class));
         verify(baseService).createCommit(inProgressCommit, "Message", commit, null);
-        verify(baseService).addCommit(eq(ontologyRecord), eq(targetBranch), eq(commit), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(commit), any(RepositoryConnection.class));
         verify(baseService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
     }
 
@@ -252,7 +249,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(record.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
         verify(baseService).getTargetBranch(eq(record), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
-        verify(baseService).addCommit(eq(record), eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
     }
 
     @Test
@@ -266,7 +263,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
         verify(ontologyService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(ontologyService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
-        verify(ontologyService).addCommit(eq(ontologyRecord), eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
+        verify(ontologyService).addCommit(eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
     }
 
     @Test
@@ -281,7 +278,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
         verify(baseService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
-        verify(baseService).addCommit(eq(ontologyRecord), eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
     }
 
     /* commit(Resource, Resource, Resource, User, String, Model, Model, RepositoryConnection) */
@@ -297,7 +294,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(record.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
         verify(baseService).getTargetBranch(eq(record), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
-        verify(baseService).addCommit(eq(record), eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
     }
 
     @Test
@@ -311,7 +308,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
         verify(ontologyService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(ontologyService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
-        verify(ontologyService).addCommit(eq(ontologyRecord), eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
+        verify(ontologyService).addCommit(eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
     }
 
     @Test
@@ -326,7 +323,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
         verify(baseService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
-        verify(baseService).addCommit(eq(ontologyRecord), eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
     }
 
     /* merge(Resource, Resource, Resource, Resource, User, Model, Model) */
@@ -344,7 +341,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(baseService).getTargetBranch(eq(record), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(baseService).getBranchHeadCommit(eq(sourceBranch), any(RepositoryConnection.class));
         verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
-        verify(baseService).addCommit(eq(record), eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
     }
 
     @Test
@@ -360,7 +357,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(ontologyService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(ontologyService).getBranchHeadCommit(eq(sourceBranch), any(RepositoryConnection.class));
         verify(ontologyService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
-        verify(ontologyService).addCommit(eq(ontologyRecord), eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
+        verify(ontologyService).addCommit(eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
     }
 
     @Test
@@ -377,7 +374,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(baseService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(baseService).getBranchHeadCommit(eq(sourceBranch), any(RepositoryConnection.class));
         verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
-        verify(baseService).addCommit(eq(ontologyRecord), eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
     }
 
     /* merge(Resource, Resource, Resource, Resource, User, Model, Model, RepositoryConnection) */
@@ -395,7 +392,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(baseService).getTargetBranch(eq(record), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(baseService).getBranchHeadCommit(eq(sourceBranch), any(RepositoryConnection.class));
         verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
-        verify(baseService).addCommit(eq(record), eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
     }
 
     @Test
@@ -411,7 +408,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(ontologyService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(ontologyService).getBranchHeadCommit(eq(sourceBranch), any(RepositoryConnection.class));
         verify(ontologyService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
-        verify(ontologyService).addCommit(eq(ontologyRecord), eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
+        verify(ontologyService).addCommit(eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
     }
 
     @Test
@@ -428,6 +425,6 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(baseService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(baseService).getBranchHeadCommit(eq(sourceBranch), any(RepositoryConnection.class));
         verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
-        verify(baseService).addCommit(eq(ontologyRecord), eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
     }
 }

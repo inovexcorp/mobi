@@ -45,7 +45,6 @@ import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.repository.api.RepositoryConnection;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 
-import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -187,7 +186,7 @@ public class SimpleVersioningManager implements VersioningManager {
         Commit head = service.getBranchHeadCommit(branch, conn);
         InProgressCommit inProgressCommit = service.getInProgressCommit(record.getResource(), user, conn);
         Commit newCommit = service.createCommit(inProgressCommit, message, head, null);
-        service.addCommit(record, branch, newCommit, conn);
+        service.addCommit(branch, newCommit, conn);
         service.removeInProgressCommit(inProgressCommit, conn);
 
         return newCommit.getResource();
@@ -213,7 +212,7 @@ public class SimpleVersioningManager implements VersioningManager {
         Branch branch = service.getTargetBranch(record, branchId, conn);
         Commit head = service.getBranchHeadCommit(branch, conn);
 
-        return service.addCommit(record, branch, user, message, additions, deletions, head, null, conn);
+        return service.addCommit(branch, user, message, additions, deletions, head, null, conn);
     }
 
     /**
@@ -236,7 +235,7 @@ public class SimpleVersioningManager implements VersioningManager {
         Branch source = service.getSourceBranch(record, sourceBranchId, conn);
         Branch target = service.getTargetBranch(record, targetBranchId, conn);
 
-        return service.addCommit(record, target, user, getMergeMessage(source, target), additions, deletions,
+        return service.addCommit(target, user, getMergeMessage(source, target), additions, deletions,
                 service.getBranchHeadCommit(target, conn), service.getBranchHeadCommit(source, conn), conn);
     }
 

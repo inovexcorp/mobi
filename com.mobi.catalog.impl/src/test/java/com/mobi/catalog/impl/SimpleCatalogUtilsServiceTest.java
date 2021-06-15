@@ -35,10 +35,12 @@ import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.MCAT_Thing;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.UserBranch;
@@ -56,6 +58,7 @@ import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -70,7 +73,6 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.time.OffsetDateTime;
@@ -116,6 +118,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     private final IRI VERSIONED_RECORD_NO_CATALOG_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-record-no-catalog");
     private final IRI VERSIONED_RECORD_MISSING_VERSION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-record-missing-version");
     private final IRI VERSIONED_RDF_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record");
+    private final IRI SIMPLE_VERSIONED_RDF_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#simple-versioned-rdf-record");
     private final IRI VERSIONED_RDF_RECORD_NO_CATALOG_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record-no-catalog");
     private final IRI VERSIONED_RDF_RECORD_MISSING_BRANCH_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record-missing-branch");
     private final IRI LATEST_VERSION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#latest-version");
@@ -185,6 +188,13 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         service.setVf(VALUE_FACTORY);
     }
 
+    private String getModifiedIriValue(IRI entity, RepositoryConnection conn) {
+        RepositoryResult<Statement> statements = conn.getStatements(entity,
+                getValueFactory().createIRI(_Thing.modified_IRI), null);
+
+        return statements.next().toString();
+    }
+
     /* validateResource */
 
     @Test
@@ -205,10 +215,6 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void testObjectIdOfDifferent() {
         testBadRecordId(DIFFERENT_IRI);
-    }
-
-    private String getModifiedIriValue(Thing thing) {
-        return thing.getProperty(getValueFactory().createIRI(_Thing.modified_IRI)).get().toString();
     }
 
     /* addObject */
@@ -1758,52 +1764,32 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         IRI newIRI = VALUE_FACTORY.createIRI("http://mobi.com/test#new");
         IRI headCommitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commitA1");
         IRI headIRI = VALUE_FACTORY.createIRI(Branch.head_IRI);
-        Branch branch = branchFactory.createNew(BRANCH_IRI);
-        branch.setProperty(getValueFactory().createLiteral(OffsetDateTime.now().minusDays(1)), getValueFactory().createIRI(_Thing.modified_IRI));
-        String previousBranchModDate = getModifiedIriValue(branch);
+
         Commit commit = commitFactory.createNew(newIRI);
         try (RepositoryConnection conn = repo.getConnection()) {
+            Record record = service.getRecord(CATALOG_IRI, SIMPLE_VERSIONED_RDF_RECORD_IRI, recordFactory, conn);
+            String previousRecordModDate = getModifiedIriValue(SIMPLE_VERSIONED_RDF_RECORD_IRI, conn);
+
+            Branch branch = service.getBranch(CATALOG_IRI, SIMPLE_VERSIONED_RDF_RECORD_IRI, BRANCH_IRI, branchFactory, conn);
+            String previousBranchModDate = getModifiedIriValue(BRANCH_IRI, conn);
+
             assertFalse(conn.getStatements(null, null, null, newIRI).hasNext());
             assertTrue(conn.getStatements(BRANCH_IRI, headIRI, headCommitIRI, BRANCH_IRI).hasNext());
 
             service.addCommit(branch, commit, conn);
+
             assertTrue(branch.getHead_resource().isPresent());
             assertEquals(newIRI, branch.getHead_resource().get());
             assertTrue(conn.getStatements(null, null, null, newIRI).hasNext());
             assertTrue(conn.getStatements(BRANCH_IRI, headIRI, newIRI, BRANCH_IRI).hasNext());
-            assertNotSame(getModifiedIriValue(branch), previousBranchModDate);
+            assertNotSame(getModifiedIriValue(BRANCH_IRI, conn), previousBranchModDate);
+            assertNotSame(getModifiedIriValue(SIMPLE_VERSIONED_RDF_RECORD_IRI, conn), previousRecordModDate);
         }
     }
-
-    @Test
-    public void addCommitWithRecordtest() {
-        IRI newIRI = VALUE_FACTORY.createIRI("http://mobi.com/test#new");
-        IRI headCommitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commitA1");
-        IRI headIRI = VALUE_FACTORY.createIRI(Branch.head_IRI);
-        Record record = recordFactory.createNew(RECORD_IRI);
-        record.setProperty(getValueFactory().createLiteral(OffsetDateTime.now().minusDays(1)), getValueFactory().createIRI(_Thing.modified_IRI));
-        String previousRecordModDate = getModifiedIriValue(record);
-        Branch branch = branchFactory.createNew(BRANCH_IRI);
-        branch.setProperty(getValueFactory().createLiteral(OffsetDateTime.now().minusDays(1)), getValueFactory().createIRI(_Thing.modified_IRI));
-        String previousBranchModDate = getModifiedIriValue(branch);
-        Commit commit = commitFactory.createNew(newIRI);
-        try (RepositoryConnection conn = repo.getConnection()) {
-            assertFalse(conn.getStatements(null, null, null, newIRI).hasNext());
-            assertTrue(conn.getStatements(BRANCH_IRI, headIRI, headCommitIRI, BRANCH_IRI).hasNext());
-
-            service.addCommit(record, branch, commit, conn);
-            assertTrue(branch.getHead_resource().isPresent());
-            assertEquals(newIRI, branch.getHead_resource().get());
-            assertTrue(conn.getStatements(null, null, null, newIRI).hasNext());
-            assertTrue(conn.getStatements(BRANCH_IRI, headIRI, newIRI, BRANCH_IRI).hasNext());
-            assertNotSame(getModifiedIriValue(record), previousRecordModDate);
-            assertNotSame(getModifiedIriValue(branch), previousBranchModDate);
-        }
-    }
-
 
     @Test
     public void addCommitWithTakenResourceTest() {
+        // Setup:
         Branch branch = branchFactory.createNew(BRANCH_IRI);
         Commit commit = commitFactory.createNew(COMMIT_IRI);
         thrown.expect(IllegalArgumentException.class);
@@ -1814,19 +1800,6 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         }
     }
 
-    @Test
-    public void addCommitWithTakenResourceWithRecordTest() {
-        Record record = recordFactory.createNew(RECORD_IRI);
-        Branch branch = branchFactory.createNew(BRANCH_IRI);
-        Commit commit = commitFactory.createNew(COMMIT_IRI);
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("Commit " + COMMIT_IRI + " already exists");
-
-        try (RepositoryConnection conn = repo.getConnection()) {
-            service.addCommit(record, branch, commit, conn);
-        }
-    }
-    
     /* getRevision() */
 
     @Test

@@ -57,8 +57,8 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.exception.MobiException;
+import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
@@ -155,6 +155,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private static final String RECORD_BINDING = "record";
     private static final String COMMIT_BINDING = "commit";
     private static final String ENTITY_BINDING = "entity";
+    private static final String ONTOLOGY_IRI_QUERY;
+    private static final String BRANCH_BINDING = "branch";
 
     static {
         try {
@@ -208,6 +210,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             );
             GET_FILTERED_DELETIONS_SUBQUERY = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-filtered-deletions-subquery.rq"),
+                    StandardCharsets.UTF_8
+            );
+            ONTOLOGY_IRI_QUERY = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-record-from-branch.rq"),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -726,17 +732,18 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public void addCommit(Record record, Branch branch, Commit commit, RepositoryConnection conn) {
-        record.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
-        updateObject(record, conn);
-        addCommit(branch, commit, conn);
-    }
-
-    @Override
     public void addCommit(Branch branch, Commit commit, RepositoryConnection conn) {
         if (conn.containsContext(commit.getResource())) {
             throw throwAlreadyExists(commit.getResource(), commitFactory);
         }
+
+        Optional<Resource> recordOpt = getRecordFromBranch(branch, conn);
+        recordOpt.ifPresent(recordId -> {
+            conn.getStatements(recordId, vf.createIRI(_Thing.modified_IRI), null)
+                    .forEach(statement -> conn.remove(statement));
+            conn.add(recordId, vf.createIRI(_Thing.modified_IRI), vf.createLiteral(OffsetDateTime.now()), recordId);
+        });
+
         branch.setHead(commit);
         branch.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
         updateObject(branch, conn);
@@ -1606,5 +1613,15 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .leftDifference(leftDifference.build())
                 .rightDifference(rightDifference.build())
                 .build();
+    }
+
+    private Optional<Resource> getRecordFromBranch(Branch branch, RepositoryConnection conn) {
+        TupleQuery query = conn.prepareTupleQuery(ONTOLOGY_IRI_QUERY);
+        query.setBinding(BRANCH_BINDING, branch.getResource());
+        TupleQueryResult result = query.evaluateAndReturn();
+        if (!result.hasNext()) {
+            return Optional.empty();
+        }
+        return Optional.of(Bindings.requiredResource(result.next(), RECORD_BINDING));
     }
 }
