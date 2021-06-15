@@ -135,7 +135,7 @@ increment_minor_version:
     # Push change to master (gitlab)
     - git push origin HEAD:master
     # Push release to github
-    - git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com:inovexcorp/mobi.git
+    - git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com/inovexcorp/mobi.git
     - git push github HEAD:master
     - git push github $CI_COMMIT_REF_NAME #pushing release tag
 
@@ -171,6 +171,6 @@ support_branch_increment_micro_version:
     # Push change to master (gitlab)
     - git push origin HEAD:$BRANCH
     # Push release to github
-    - git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com:inovexcorp/mobi.git
+    - git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com/inovexcorp/mobi.git
     - git push github HEAD:$BRANCH
     - git push github $CI_COMMIT_REF_NAME #pushing release tag
