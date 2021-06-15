@@ -30,7 +30,6 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
-import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.versioning.BaseVersioningService;
 import com.mobi.catalog.api.versioning.VersioningService;
 import com.mobi.exception.MobiException;
@@ -44,7 +43,6 @@ import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
@@ -54,7 +52,6 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -138,26 +135,16 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
     }
 
     @Override
-    public void addCommit(Record record, Branch branch, Commit commit, RepositoryConnection conn) {
+    public void addCommit(Branch branch, Commit commit, RepositoryConnection conn) {
         Optional<com.mobi.rdf.api.Resource> recordOpt = getRecordIriIfMaster(branch, conn);
         recordOpt.ifPresent(recordId -> commit.getBaseCommit_resource().ifPresent(baseCommit ->
                 updateOntologyIRI(recordId, commit, conn)));
-
-        if (record != null) {
-            catalogUtils.addCommit(record, branch, commit, conn);
-        } else {
-            catalogUtils.addCommit(branch, commit, conn);
-        }
+        catalogUtils.addCommit(branch, commit, conn);
     }
 
     @Override
-    public void addCommit(Branch branch, Commit commit, RepositoryConnection conn) {
-        addCommit(null, branch, commit, conn);
-    }
-
-    @Override
-    public Resource addCommit(Record record, Branch branch, User user, String message, Model additions, Model deletions,
-                              @Nullable Commit baseCommit, @Nullable Commit auxCommit, RepositoryConnection conn) {
+    public com.mobi.rdf.api.Resource addCommit(Branch branch, User user, String message, Model additions, Model deletions,
+                                               Commit baseCommit, Commit auxCommit, RepositoryConnection conn) {
         Commit newCommit = createCommit(catalogManager.createInProgressCommit(user), message, baseCommit, auxCommit);
         // Determine if branch is the master branch of a record
         Optional<com.mobi.rdf.api.Resource> recordOpt = getRecordIriIfMaster(branch, conn);
@@ -179,19 +166,9 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
                 updateOntologyIRI(recordId, model.stream(), conn);
             }
         });
-        if (record != null) {
-            catalogUtils.addCommit(record, branch, newCommit, conn);
-        } else {
-            catalogUtils.addCommit(branch, newCommit, conn);
-        }
+        catalogUtils.addCommit(branch, newCommit, conn);
         catalogUtils.updateCommit(newCommit, additions, deletions, conn);
         return newCommit.getResource();
-    }
-
-    @Override
-    public Resource addCommit(Branch branch, User user, String message, Model additions, Model deletions,
-                              @Nullable Commit baseCommit, @Nullable Commit auxCommit, RepositoryConnection conn) {
-        return addCommit(null, branch, user, message, additions, deletions, baseCommit, auxCommit, conn);
     }
 
     private void updateOntologyIRI(com.mobi.rdf.api.Resource recordId, Commit commit, RepositoryConnection conn) {

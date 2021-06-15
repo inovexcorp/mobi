@@ -451,17 +451,6 @@ public interface CatalogUtilsService {
     void updateCommit(Commit commit, Model additions, Model deletions, RepositoryConnection conn);
 
     /**
-     * Adds the provided Commit to the provided Record and Branch, updating the head Commit in the process.
-     *
-     * @param record The record which will get the new Commit.
-     * @param branch The Branch which will get the new Commit.
-     * @param commit The Commit to add to the Branch.
-     * @param conn   A RepositoryConnection to use for lookup.
-     * @throws IllegalArgumentException Thrown if the Commit already exists.
-     */
-    void addCommit(Record record, Branch branch, Commit commit, RepositoryConnection conn);
-
-    /**
      * Adds the provided Commit to the provided Branch, updating the head Commit in the process.
      *
      * @param branch The Branch which will get the new Commit.

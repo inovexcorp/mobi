@@ -151,7 +151,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
             "http://mobi.com/commits/2"
     };
 
-    private static final int TOTAL_SIZE = 9;
+    private static final int TOTAL_SIZE = 10;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -488,8 +488,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
         // then
         assertTrue(true);
-        assertEquals(6, versionedRecords.getPage().size());
-        assertEquals(6, versionedRecords.getTotalSize());
+        assertEquals(7, versionedRecords.getPage().size());
+        assertEquals(7, versionedRecords.getTotalSize());
         assertEquals(2, unversionedRecords.getPage().size());
         assertEquals(2, unversionedRecords.getTotalSize());
         assertEquals(TOTAL_SIZE, fullRecords.getPage().size());
