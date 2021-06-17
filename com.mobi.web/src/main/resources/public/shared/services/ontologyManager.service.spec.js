@@ -868,11 +868,15 @@ describe('Ontology Manager service', function() {
     });
     describe('getClassHierarchies retrieves all IRIs in an ontology', function() {
         beforeEach(function() {
-            this.params = paramSerializer({ branchId: this.branchId, commitId: this.commitId });
+            this.params = paramSerializer({ 
+                branchId: this.branchId, 
+                commitId: this.commitId, 
+                applyInProgressCommit: true 
+            });
         });
         it('unless an error occurs', function() {
             $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/class-hierarchies?' + this.params).respond(400, null, null, this.error);
-            ontologyManagerSvc.getClassHierarchies(this.recordId, this.branchId, this.commitId)
+            ontologyManagerSvc.getClassHierarchies(this.recordId, this.branchId, this.commitId, this.applyInProgressCommit)
                 .then(() => {
                     fail('Promise should have rejected');
                 }, response => {
@@ -883,7 +887,7 @@ describe('Ontology Manager service', function() {
         });
         it('successfully', function() {
             $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/class-hierarchies?' + this.params).respond(200, {});
-            ontologyManagerSvc.getClassHierarchies(this.recordId, this.branchId, this.commitId)
+            ontologyManagerSvc.getClassHierarchies(this.recordId, this.branchId, this.commitId, this.applyInProgressCommit)
                 .then(response => {
                     expect(response).toEqual({});
                 }, () => {

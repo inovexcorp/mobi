@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,27 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/* Core variables */
-@import "../../../css/variables";
+import { Component, Input, OnInit } from '@angular/core';
+import './spinner.component.scss';
+/**
+ * @title progress-spinner
+ * @description
+ * `progress-spinner` is a component that creates a spinning icon with a transparent background
+ */
+@Component({
+    selector: 'progress-spinner',
+    templateUrl: 'spinner.component.html',
+})
+export class SpinnerComponent implements OnInit {
+    @Input()  diameter: number;
 
-.spinner {
-    background: #fff;
-    opacity: .4;
-    height: 100%;
-    width: 100%;
-    position: absolute;
-    left: 0;
-    top: 0;
-    z-index: 9001;
-
-    /* spinner icon styles */
-    .icon-wrapper {
-        left: 50%;
-        position: absolute;
-        top: 50%;
-        -webkit-transform: translate(-50%, -50%);
-           -moz-transform: translate(-50%, -50%);
-            -ms-transform: translate(-50%, -50%);
-                transform: translate(-50%, -50%);
+    ngOnInit(): void {
+        this.diameter =  this.diameter || 50;
     }
 }

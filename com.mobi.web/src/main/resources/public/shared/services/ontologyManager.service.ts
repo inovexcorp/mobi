@@ -387,10 +387,11 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
+     * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes.                                              should be applied to the return value
      * @return {Promise} A promise with an object containing the class hierarchy and an index of IRIs to parent IRIs
      */
-    self.getClassHierarchies = function(recordId, branchId, commitId) {
-        const config = { params: { branchId, commitId } };
+    self.getClassHierarchies = function(recordId, branchId, commitId, applyInProgressCommit = true) {
+        var config = { params: { branchId, commitId, applyInProgressCommit } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/class-hierarchies', config)
             .then(response => response.data, util.rejectError);
     };

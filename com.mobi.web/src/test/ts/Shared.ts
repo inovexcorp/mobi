@@ -21,7 +21,7 @@
  * #L%
  */
 
-import { identity, get } from 'lodash';
+import { identity, get, has } from 'lodash';
 
 export function cleanStylesFromDOM(): void {
     const head: HTMLHeadElement = document.getElementsByTagName('head')[0];
@@ -78,6 +78,7 @@ export class mockUtil {
     createErrorToast = jasmine.createSpy('createErrorToast').and.returnValue({});
     createSuccessToast = jasmine.createSpy('createSuccessToast');
     createWarningToast = jasmine.createSpy('createWarningToast');
+    clearToast =  jasmine.createSpy('clearToast');
     createJson = jasmine.createSpy('createJson').and.returnValue({});
     getIRINamespace = jasmine.createSpy('getIRINamespace').and.returnValue('');
     getIRILocalName = jasmine.createSpy('getIRILocalName').and.returnValue('');
@@ -493,4 +494,184 @@ export class mockDiscoverState {
     clickCrumb = jasmine.createSpy('clickCrumb');
     getInstance = jasmine.createSpy('getInstance').and.returnValue({});
     resetSearchQueryConfig = jasmine.createSpy('resetSearchQueryConfig');
+}
+
+export class mockOntologyManager {
+    ontologyRecords = [];
+    entityNameProps = [];
+    reset = jasmine.createSpy('reset');
+    initialize = jasmine.createSpy('initialize');
+    uploadOntology = jasmine.createSpy('uploadOntology');
+    getOntology = jasmine.createSpy('getOntology').and.returnValue(Promise.resolve());
+    getVocabularyStuff = jasmine.createSpy('getVocabularyStuff').and.returnValue(Promise.resolve());
+    getOntologyStuff = jasmine.createSpy('getOntologyStuff').and.returnValue(Promise.resolve());
+    getIris = jasmine.createSpy('getIris').and.returnValue(Promise.resolve());
+    getImportedIris = jasmine.createSpy('getImportedIris').and.returnValue(Promise.resolve());
+    getClassHierarchies = jasmine.createSpy('getClassHierarchies').and.returnValue(Promise.resolve());
+    getClassesWithIndividuals = jasmine.createSpy('getClassesWithIndividuals').and.returnValue(Promise.resolve());
+    getDataPropertyHierarchies = jasmine.createSpy('getDataPropertyHierarchies').and.returnValue(Promise.resolve());
+    getObjectPropertyHierarchies = jasmine.createSpy('getObjectPropertyHierarchies').and.returnValue(Promise.resolve());
+    getConceptHierarchies = jasmine.createSpy('getConceptHierarchies').and.returnValue(Promise.resolve());
+    getConceptSchemeHierarchies = jasmine.createSpy('getConceptSchemeHierarchies').and.returnValue(Promise.resolve());
+    getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue(Promise.resolve());
+    getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue(Promise.resolve());
+    getOntologyEntityNames = jasmine.createSpy('getOntologyEntityNames').and.returnValue(Promise.resolve());
+    getSearchResults = jasmine.createSpy('getSearchResults');
+    getQueryResults = jasmine.createSpy('getQueryResults').and.returnValue(Promise.resolve());
+    getEntityAndBlankNodes = jasmine.createSpy('getEntityAndBlankNodes').and.returnValue(Promise.resolve());
+    isDeprecated = jasmine.createSpy('isDeprecated');
+    isOntology = jasmine.createSpy('isOntology');
+    isOntologyRecord = jasmine.createSpy('isOntologyRecord');
+    hasOntologyEntity = jasmine.createSpy('hasOntologyEntity');
+    getOntologyEntity = jasmine.createSpy('getOntologyEntity').and.returnValue({});
+    getOntologyIRI = jasmine.createSpy('getOntologyIRI').and.returnValue('');
+    isDatatype = jasmine.createSpy('isDatatype');
+    isClass = jasmine.createSpy('isClass');
+    hasClasses = jasmine.createSpy('hasClasses').and.returnValue(true);
+    getClasses = jasmine.createSpy('getClasses').and.returnValue([]);
+    getClassIRIs = jasmine.createSpy('getClassIRIs').and.returnValue([]);
+    getClassProperties = jasmine.createSpy('getClassProperties').and.returnValue([]);
+    getClassPropertyIRIs = jasmine.createSpy('getClassPropertyIRIs').and.returnValue([]);
+    getClassProperty = jasmine.createSpy('getClassProperty').and.returnValue({});
+    getOntologyClasses = jasmine.createSpy('getOntologyClasses').and.returnValue(Promise.resolve());
+
+    getOntologyById = jasmine.createSpy('getOntologyById').and.returnValue([]);
+    isObjectProperty = jasmine.createSpy('isObjectProperty');
+    hasObjectProperties = jasmine.createSpy('hasObjectProperties').and.returnValue(true);
+    getObjectProperties = jasmine.createSpy('getObjectProperties').and.returnValue([]);
+    getObjectPropertyIRIs = jasmine.createSpy('getObjectPropertyIRIs').and.returnValue([]);
+    isDataTypeProperty = jasmine.createSpy('isDataTypeProperty');
+    hasDataTypeProperties = jasmine.createSpy('hasDataTypeProperties').and.returnValue(true);
+    getDataTypeProperties = jasmine.createSpy('getDataTypeProperties').and.returnValue([]);
+    getDataTypePropertyIRIs = jasmine.createSpy('getDataTypePropertyIRIs').and.returnValue([]);
+    isProperty = jasmine.createSpy('isProperty').and.returnValue(true);
+    hasNoDomainProperties = jasmine.createSpy('hasNoDomainProperties').and.returnValue(true);
+    getNoDomainProperties = jasmine.createSpy('getNoDomainProperties').and.returnValue([]);
+    getNoDomainPropertyIRIs = jasmine.createSpy('getNoDomainPropertyIRIs').and.returnValue([]);
+    isAnnotation = jasmine.createSpy('isAnnotation');
+    hasAnnotations = jasmine.createSpy('hasAnnotations').and.returnValue(true);
+    getAnnotations = jasmine.createSpy('getAnnotations').and.returnValue([]);
+    getAnnotationIRIs = jasmine.createSpy('getAnnotationIRIs').and.returnValue([]);
+    isIndividual = jasmine.createSpy('isIndividual').and.returnValue(true);
+    hasIndividuals = jasmine.createSpy('hasIndividuals').and.returnValue(true);
+    getIndividuals = jasmine.createSpy('getIndividuals').and.returnValue([]);
+    hasNoTypeIndividuals = jasmine.createSpy('hasIndividuals').and.returnValue(true);
+    getNoTypeIndividuals = jasmine.createSpy('getIndividuals').and.returnValue([]);
+    hasClassIndividuals = jasmine.createSpy('hasClassIndividuals').and.returnValue(true);
+    getClassIndividuals = jasmine.createSpy('getClassIndividuals').and.returnValue([]);
+    isRestriction = jasmine.createSpy('isRestriction').and.returnValue(true);
+    getRestrictions = jasmine.createSpy('getRestrictions').and.returnValue([]);
+    isBlankNode = jasmine.createSpy('isBlankNode').and.returnValue(true);
+    isBlankNodeId = jasmine.createSpy('isBlankNodeId').and.returnValue(false);
+    getBlankNodes = jasmine.createSpy('getBlankNodes').and.returnValue([]);
+    getEntity = jasmine.createSpy('getEntity').and.returnValue({});
+    getEntityName = jasmine.createSpy('getEntityName').and.callFake((ontology, entity) => has(entity, '@id') ? entity['@id'] : '');
+    getEntityNames = jasmine.createSpy('getEntityNames').and.callFake((ontology, entity) => has(entity, '@id') ? [entity['@id']] : ['']);
+    getEntityDescription = jasmine.createSpy('getEntityDescription').and.returnValue('');
+    isConcept = jasmine.createSpy('isConcept').and.returnValue(true);
+    hasConcepts = jasmine.createSpy('hasConcepts').and.returnValue(true);
+    getConcepts = jasmine.createSpy('getConcepts').and.returnValue([]);
+    getConceptIRIs = jasmine.createSpy('getConceptIRIs').and.returnValue([]);
+    isConceptScheme = jasmine.createSpy('isConceptScheme').and.returnValue(true);
+    hasConceptSchemes = jasmine.createSpy('hasConceptSchemes').and.returnValue(true);
+    getConceptSchemes = jasmine.createSpy('getConceptSchemes').and.returnValue([]);
+    getConceptSchemeIRIs = jasmine.createSpy('getConceptSchemeIRIs').and.returnValue([]);
+    downloadOntology = jasmine.createSpy('downloadOntology');
+    deleteOntology = jasmine.createSpy('deleteOntology').and.returnValue(Promise.resolve());
+    deleteOntologyBranch = jasmine.createSpy('deleteOntologyBranch').and.returnValue(Promise.resolve());
+    getAnnotationPropertyHierarchies = jasmine.createSpy('getAnnotationPropertyHierarchies');
+    uploadChangesFile = jasmine.createSpy('uploadChangesFile').and.returnValue(Promise.resolve());
+    getFailedImports = jasmine.createSpy('getFailedImports').and.returnValue(Promise.resolve());
+    getDataProperties = jasmine.createSpy('getDataProperties').and.returnValue(Promise.resolve());
+    getObjProperties = jasmine.createSpy('getObjProperties').and.returnValue(Promise.resolve());
+}
+
+export class MockOntologyVisualization {
+    init = jasmine.createSpy('init').and.returnValue(Promise.resolve());
+    getGraphData = jasmine.createSpy('getGraphData').and.returnValue([
+        {
+            "selectable": true,
+            "locked": false,
+            "grabbed": false,
+            "grabbable": true,
+            "data": {
+                "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#Pizza",
+                "idInt": "http://www.co-ode.org/ontologies/pizza/pizza.owl#Pizza",
+                "weight": 0,
+                "name": "Pizza"
+            },
+            "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#Pizza",
+            "group": "nodes",
+            "ontologyId": "http://www.co-ode.org/ontologies/pizza/pizza.owl"
+        },
+        {
+            "selectable": true,
+            "locked": false,
+            "grabbed": false,
+            "grabbable": true,
+            "data": {
+                "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping",
+                "idInt": "http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping",
+                "weight": 0,
+                "name": "CoberturaDeVegetais"
+            },
+            "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping",
+            "group": "nodes",
+            "ontologyId": "http://www.co-ode.org/ontologies/pizza/pizza.owl"
+        },
+        {
+            "selectable": true,
+            "locked": false,
+            "grabbed": false,
+            "grabbable": true,
+            "data": {
+                "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping",
+                "idInt": "http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping",
+                "weight": 0,
+                "name": "CoberturaDeTomate"
+            },
+            "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping",
+            "group": "nodes",
+            "ontologyId": "http://www.co-ode.org/ontologies/pizza/pizza.owl"
+        },
+        {
+            "position": {},
+            "group": "edges",
+            "removed": false,
+            "selected": false,
+            "selectable": true,
+            "locked": false,
+            "grabbed": false,
+            "grabbable": true,
+            "data": {
+                "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping-http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping",
+                "idInt": "http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping-http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping",
+                "source": "http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping",
+                "target": "http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping",
+                "arrow": "triangle",
+                "weight": 0
+            },
+            "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping-http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping"
+        },
+        {
+            "selectable": true,
+            "locked": false,
+            "grabbed": false,
+            "grabbable": true,
+            "data": {
+                "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#SweetPepperTopping",
+                "idInt": "http://www.co-ode.org/ontologies/pizza/pizza.owl#SweetPepperTopping",
+                "weight": 0,
+                "name": "CoberturaDePimentaoDoce"
+            },
+            "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#SweetPepperTopping",
+            "group": "nodes",
+            "ontologyId": "http://www.co-ode.org/ontologies/pizza/pizza.owl"
+        }
+    ]);
+    hasPositions = jasmine.createSpy('hasPositions').and.returnValue(false);
+    hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(false);
+    isOverLimit = jasmine.createSpy('isOverLimit').and.returnValue(false);
+    setGraphState = jasmine.createSpy('setGraphState');
+    updateGraphData = jasmine.createSpy('updateGraphData');
 }

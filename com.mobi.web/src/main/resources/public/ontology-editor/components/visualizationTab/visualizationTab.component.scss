@@ -1,0 +1,78 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
+.links line {
+  stroke: #999;
+  stroke-opacity: 0.6;
+}
+
+.nodes circle {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+text {
+  font-family: sans-serif;
+  font-size: 10px;
+}
+
+.chart-container {
+  width: 100vw;
+  height: 100vh;
+}
+
+.chart-wrapper {
+  display: flex;
+  flex: 1;
+  position: relative;
+  padding: 0;
+
+  ontology-visualization {
+    display: flex;
+    flex: 1;
+  }
+
+  .chartController {
+      background: #f2f5f7;
+      height: unset;
+
+      .controls-content {
+          overflow: auto;
+          margin: 0px 8px 8px 8px;
+          padding-bottom: 0px;
+      }
+  }
+
+  .chartContent{
+      overflow: auto;
+      display: flex;
+      flex: 1;
+  }
+
+  .r-side {
+      margin-left: 14px;
+      min-width: 360px;
+      transition: tranform ease .5s;
+      z-index: 1000;
+  }
+}

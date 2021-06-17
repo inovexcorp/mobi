@@ -149,6 +149,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         },
         commits: {
             active: false
+        },
+        visualization: {
+            active: false,
+            targetedSpinnerId: 'visualization-spinner'
         }
     };
 

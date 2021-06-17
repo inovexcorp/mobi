@@ -49,14 +49,14 @@ module.exports = {
     // opening curly brace of a block is placed on the same line as its corresponding statement or declaration
     'brace-style': 2,
     // Allow empty functions
-    // 'no-empty-function': 'off',
-    // '@typescript-eslint/no-empty-function': ['error'],
-    'no-empty-function': {
+    //note you must disable the base rule as it can report incorrect errors
+    'no-empty-function': 'off',
+    '@typescript-eslint/no-empty-function': [
+      'error',
+      {
         'allow': ['constructors', 'arrowFunctions']
-    },
-    '@typescript-eslint/no-empty-function': {
-        'allow': ['constructors', 'arrowFunctions']
-    },
+      }
+    ],
     '@typescript-eslint/no-this-alias': [
       'error',
       {

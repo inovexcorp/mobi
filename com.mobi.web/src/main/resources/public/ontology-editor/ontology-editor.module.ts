@@ -106,6 +106,7 @@ import uploadOntologyOverlayComponent from './components/uploadOntologyOverlay/u
 import uploadErrorsOverlayComponent from './components/uploadErrorsOverlay/uploadErrorsOverlay.component';
 import uploadSnackbarComponent from './components/uploadSnackbar/uploadSnackbar.component';
 import usagesBlockComponent from './components/usagesBlock/usagesBlock.component';
+import visualizationTabComponent from './components/visualizationTab/visualizationTab.component'
 
 /**
  * @ngdoc overview
@@ -198,4 +199,5 @@ angular.module('ontology-editor', [])
     .component('uploadErrorsOverlay', uploadErrorsOverlayComponent)
     .component('uploadOntologyOverlay', uploadOntologyOverlayComponent)
     .component('uploadSnackbar', uploadSnackbarComponent)
-    .component('usagesBlock', usagesBlockComponent);
+    .component('usagesBlock', usagesBlockComponent)
+    .component('visualizationTab', visualizationTabComponent);

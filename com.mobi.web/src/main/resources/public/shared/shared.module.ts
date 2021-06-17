@@ -25,7 +25,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { downgradeComponent } from '@angular/upgrade/static';
-import { MatFormFieldModule, MatInputModule, MatButtonModule, ErrorStateMatcher, MatIconModule, MatSlideToggleModule } from '@angular/material';
+import { MatFormFieldModule, MatInputModule, MatButtonModule, ErrorStateMatcher, MatIconModule, MatSlideToggleModule, MatProgressSpinnerModule } from '@angular/material';
 
 import actionMenuComponent from './components/actionMenu/actionMenu.component';
 import blockComponent from './components/block/block.component';
@@ -64,7 +64,6 @@ import recordKeywordsComponent from './components/recordKeywords/recordKeywords.
 import resolveConflictsFormComponent from './components/resolveConflictsForm/resolveConflictsForm.component';
 import searchBarComponent from './components/searchBar/searchBar.component';
 import sidebarComponent from './components/sidebar/sidebar.component';
-import spinnerComponent from './components/spinner/spinner.component';
 import statementContainerComponent from './components/statementContainer/statementContainer.component';
 import statementDisplayComponent from './components/statementDisplay/statementDisplay.component';
 import stepProgressBarComponent from './components/stepProgressBar/stepProgressBar.component';
@@ -134,6 +133,7 @@ import userManagerService from './services/userManager.service';
 import userStateService from './services/userState.service';
 import utilService from './services/util.service';
 import yasguiService from './services/yasgui.service';
+import { OntologyVisualizationService } from '../ontology-visualization/services/ontologyVisualizaton.service';
 
 // NgUpgrade
 import {
@@ -146,6 +146,7 @@ import {
     utilServiceProvider,
     ontologyStateServiceProvider,
     discoverStateServiceProvider,
+    ontologyManagerServiceProvider,
     settingsManagerServiceProvider,
 } from '../ajs.upgradedProviders';
 
@@ -154,6 +155,7 @@ import { InfoMessageComponent } from './components/infoMessage/infoMessage.compo
 import { UnmaskPasswordComponent } from './components/unmaskPassword/unmaskPassword.component';
 import { WindowRef } from "./services/windowRef.service";
 import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
+import { SpinnerComponent } from './components/progress-spinner/spinner.component';
 import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
 
 /**
@@ -170,6 +172,7 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
         MatFormFieldModule,
         MatInputModule,
         MatButtonModule,
+        MatProgressSpinnerModule,
         MatIconModule,
         MatSlideToggleModule
     ],
@@ -177,17 +180,20 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
         ErrorDisplayComponent,
         InfoMessageComponent,
         UnmaskPasswordComponent,
+        SpinnerComponent,
         TrustedHtmlPipe
     ],
     entryComponents: [
         ErrorDisplayComponent,
         InfoMessageComponent,
-        UnmaskPasswordComponent
+        UnmaskPasswordComponent,
+        SpinnerComponent
     ],
     exports: [
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
+        MatProgressSpinnerModule,
         MatButtonModule,
         MatIconModule,
         MatSlideToggleModule,
@@ -196,6 +202,7 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
         ErrorDisplayComponent,
         InfoMessageComponent,
         UnmaskPasswordComponent,
+        SpinnerComponent,
         TrustedHtmlPipe
     ],
     providers: [
@@ -209,7 +216,9 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
         userManagerServiceProvider,
         ontologyStateServiceProvider,
         discoverStateServiceProvider,
+        ontologyManagerServiceProvider,
         WindowRef,
+        OntologyVisualizationService,
         { provide: ErrorStateMatcher, useClass: MobiErrorStateMatcher }
     ]
 })
@@ -253,7 +262,6 @@ angular.module('shared', [])
     .component('resolveConflictsForm', resolveConflictsFormComponent)
     .component('searchBar', searchBarComponent)
     .component('sidebar', sidebarComponent)
-    .component('spinner', spinnerComponent)
     .component('statementContainer', statementContainerComponent)
     .component('statementDisplay', statementDisplayComponent)
     .component('stepProgressBar', stepProgressBarComponent)
@@ -322,4 +330,5 @@ angular.module('shared', [])
     .service('yasguiService',yasguiService)
     .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory)
     .directive('infoMessage', downgradeComponent({component: InfoMessageComponent}) as angular.IDirectiveFactory)
-    .directive('unmaskPassword', downgradeComponent({component: UnmaskPasswordComponent}) as angular.IDirectiveFactory);
+    .directive('unmaskPassword', downgradeComponent({component: UnmaskPasswordComponent}) as angular.IDirectiveFactory)
+    .directive('progressSpinner', downgradeComponent({component: SpinnerComponent}) as angular.IDirectiveFactory);
