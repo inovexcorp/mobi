@@ -389,6 +389,22 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
     }
     /**
      * @ngdoc method
+     * @name clearToast
+     * @methodOf shared.service:utilService
+     *
+     * @description
+     * Close open toastr
+     *
+     */
+    self.clearToast = function(id) {
+        if (id) {
+            toastr.clear(id);
+        } else {
+            toastr.clear();
+        }
+    };
+    /**
+     * @ngdoc method
      * @name getIRINamespace
      * @methodOf shared.service:utilService
      *

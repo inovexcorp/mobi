@@ -978,6 +978,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
      * @return JSON object with keys .
      */
     @GET
@@ -1004,13 +1006,15 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Boolean to decide to clear cache")
-            @DefaultValue("false") @QueryParam("clearCache") boolean clearCache) {
+            @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
+            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
             if (clearCache) {
                 ontologyCache.removeFromCache(recordIdStr, commitIdStr);
             }
             Optional<Ontology> optionalOntology = getOntology(context,
-                    recordIdStr, branchIdStr, commitIdStr, true);
+                    recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit);
             if (optionalOntology.isPresent()) {
                 StreamingOutput output = getOntologyStuffStream(optionalOntology.get());
                 return Response.ok(output).build();
@@ -2548,6 +2552,8 @@ public class OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @param nested      Whether to return the nested JSON-LD version of the hierarchy.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
      * @return A JSON object that represents the class hierarchy for the ontology identified by the provided IDs.
      */
     @GET
@@ -2576,9 +2582,12 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
-            @DefaultValue("false") @QueryParam("nested") boolean nested) {
+            @DefaultValue("false") @QueryParam("nested") boolean nested,
+            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
+            ) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getSubClassesOf(valueFactory, modelFactory);
             return Response.ok(getHierarchyStream(hierarchy, nested, getClassIRIs(ontology))).build();
@@ -2919,7 +2928,7 @@ public class OntologyRest {
             return Response.ok(objectNode.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        }
+        } 
     }
 
     /**

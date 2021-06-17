@@ -47,6 +47,7 @@ describe('Ontology Tab component', function() {
         mockComponent('ontology-editor', 'commitsTab');
         mockComponent('ontology-editor', 'ontologyButtonStack');
         mockComponent('ontology-editor', 'openEntitySnackbar');
+        mockComponent('ontology-editor', 'visualizationTab');
         mockOntologyState();
         mockCatalogManager();
         mockUtil();
@@ -172,7 +173,7 @@ describe('Ontology Tab component', function() {
             expect(this.element.find('material-tabset').length).toEqual(1);
         });
         it('with material-tabs', function() {
-            expect(this.element.find('material-tab').length).toEqual(10);
+            expect(this.element.find('material-tab').length).toEqual(11);
         });
         ['material-tabset', 'ontology-button-stack', 'project-tab', 'overview-tab', 'classes-tab', 'properties-tab', 'individuals-tab', 'concepts-tab', 'concept-schemes-tab', 'search-tab', 'saved-changes-tab', 'commits-tab'].forEach(tag => {
             it('with a ' + tag, function() {

@@ -88,6 +88,7 @@ import './datasets/datasets.module';
 import './discover/discover.module';
 import './home/home.module';
 import './login/login.module';
+import './ontology-visualization/ontologyVisualization.module';
 import './mapper/mapper.module';
 import './merge-requests/merge-requests.module';
 import './ontology-editor/ontology-editor.module';
@@ -121,6 +122,7 @@ angular
         'discover',
         'home',
         'login',
+        'visualization',
         'mapper',
         'merge-requests',
         'ontology-editor',

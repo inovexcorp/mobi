@@ -73,6 +73,10 @@
                  set-active="dvm.os.listItem.editorTabStates.commits.active = value">
                 <commits-tab></commits-tab>
             </material-tab>
+            <material-tab heading="'Visualization'" active="dvm.os.listItem.editorTabStates.visualization.active"
+                          set-active="dvm.os.listItem.editorTabStates.visualization.active = value">
+                <visualization-tab></visualization-tab>
+            </material-tab>
         </material-tabset>
         <span ng-if="dvm.os.listItem.isSaved" class="saved-text text-muted">Saved</span>
         <ontology-button-stack></ontology-button-stack>

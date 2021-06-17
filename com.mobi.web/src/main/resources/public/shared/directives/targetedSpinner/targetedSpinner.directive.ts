@@ -52,9 +52,9 @@ function targetedSpinner($compile, httpService) {
             el.addClass('spinner-container');
             if (attrs.diameter) {
                 scope.diameter = scope.$eval(attrs.diameter);
-                el.append($compile('<spinner ng-if="httpService.isPending(id)" diameter="diameter"></spinner>')(scope));
+                el.append($compile('<progress-spinner ng-if="httpService.isPending(id)" diameter="diameter"></progress-spinner>')(scope));
             } else {
-                el.append($compile('<spinner ng-if="httpService.isPending(id)"></spinner>')(scope));
+                el.append($compile('<progress-spinner ng-if="httpService.isPending(id)"></progress-spinner>')(scope));
             }
 
             scope.$on('$destroy', () => {
