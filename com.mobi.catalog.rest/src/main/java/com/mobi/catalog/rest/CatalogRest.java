@@ -662,7 +662,8 @@ public class CatalogRest {
             Record newRecord = getNewThing(newRecordJson, vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get());
             catalogManager.updateRecord(vf.createIRI(catalogId), newRecord);
-            return Response.ok().build();
+            return Response.ok(modelToSkolemizedJsonld(removeContext(newRecord.getModel()), transformer,
+                    bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {

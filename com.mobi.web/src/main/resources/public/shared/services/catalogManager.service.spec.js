@@ -341,7 +341,7 @@ describe('Catalog Manager service', function() {
     describe('should update a Record', function() {
         beforeEach(function() {
             this.newRecord = {};
-            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId);
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId)
         });
         it('unless an error occurs', function() {
             $httpBackend.expectPUT(this.url, this.newRecord).respond(400, null, null, 'Error Message');
@@ -351,10 +351,11 @@ describe('Catalog Manager service', function() {
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.expectPUT(this.url, this.newRecord).respond(200);
-            let self = this;
+            let expectedRecords = [{"@id" : "https://mobi.com/records#`b669d6fd-8137-4899-8f93-4969a99cf6bb`"}];
+            $httpBackend.expectPUT(this.url, this.newRecord).respond(200, expectedRecords);
+
             catalogManagerSvc.updateRecord(this.recordId, this.catalogId, this.newRecord)
-                .then(response => expect(response).toEqual(self.recordId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(expectedRecords), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });

@@ -367,7 +367,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      */
     self.updateRecord = function(recordId, catalogId, newRecord) {
         return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId), angular.toJson(newRecord))
-            .then(response => recordId, util.rejectError);
+            .then(response => response.data, util.rejectError);
     };
 
     /**

@@ -24,7 +24,10 @@ package com.mobi.catalog.impl;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertNotNull;
+import static junit.framework.TestCase.assertSame;
 import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.assertNotSame;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.eq;
@@ -71,6 +74,7 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
@@ -88,6 +92,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -267,6 +272,10 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @After
     public void tearDown() throws Exception {
         repo.shutDown();
+    }
+
+    private String getModifiedIriValue(Thing property) {
+        return property.getProperty(vf.createIRI(_Thing.modified_IRI)).get().toString();
     }
 
     /* getDistributedCatalog */
@@ -765,21 +774,27 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Setup:
         Record record = recordFactory.createNew(RECORD_IRI);
         record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
+        record.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
+        String previousModifiedValue = getModifiedIriValue(record);
 
         manager.updateRecord(distributedCatalogId, record);
         verify(utilsService).validateRecord(eq(distributedCatalogId), eq(RECORD_IRI), eq(VALUE_FACTORY.createIRI(Record.TYPE)), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
+        assertNotSame(getModifiedIriValue(record), previousModifiedValue);
     }
-
+    
     @Test
     public void testUpdateUnversionedRecord() throws Exception {
         // Setup:
         UnversionedRecord record = unversionedRecordFactory.createNew(UNVERSIONED_RECORD_IRI);
         record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
+        record.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
+        String previousModifiedValue = getModifiedIriValue(record);
 
         manager.updateRecord(distributedCatalogId, record);
         verify(utilsService).validateRecord(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(VALUE_FACTORY.createIRI(Record.TYPE)), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
+        assertNotSame(getModifiedIriValue(record), previousModifiedValue);
     }
 
     @Test
@@ -787,10 +802,13 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Setup:
         VersionedRecord record = versionedRecordFactory.createNew(VERSIONED_RECORD_IRI);
         record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
+        record.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
+        String previousModifiedValue = getModifiedIriValue(record);
 
         manager.updateRecord(distributedCatalogId, record);
         verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VALUE_FACTORY.createIRI(Record.TYPE)), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
+        assertNotSame(getModifiedIriValue(record), previousModifiedValue);
     }
 
     @Test
@@ -798,10 +816,13 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Setup:
         VersionedRDFRecord record = versionedRDFRecordFactory.createNew(VERSIONED_RDF_RECORD_IRI);
         record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
+        record.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
+        String previousModifiedValue = getModifiedIriValue(record);
 
         manager.updateRecord(distributedCatalogId, record);
         verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(VALUE_FACTORY.createIRI(Record.TYPE)), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
+        assertNotSame(getModifiedIriValue(record), previousModifiedValue);
     }
 
     /* removeRecord */
@@ -1169,10 +1190,13 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Setup:
         Version version = versionFactory.createNew(VERSION_IRI);
         version.getModel().add(VERSION_IRI, titleIRI, VALUE_FACTORY.createLiteral("New Title"));
+        version.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
+        String previousModifiedValue = getModifiedIriValue(version);
 
         manager.updateVersion(distributedCatalogId, VERSIONED_RECORD_IRI, version);
         verify(utilsService).validateVersion(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VERSION_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(version), any(RepositoryConnection.class));
+        assertSame(getModifiedIriValue(version), previousModifiedValue);
     }
 
     @Test
@@ -1180,10 +1204,13 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Setup:
         Tag tag = tagFactory.createNew(TAG_IRI);
         tag.getModel().add(TAG_IRI, titleIRI, VALUE_FACTORY.createLiteral("New Title"));
+        tag.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
+        String previousModifiedValue = getModifiedIriValue(tag);
 
         manager.updateVersion(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, tag);
         verify(utilsService).validateVersion(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(TAG_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(tag), any(RepositoryConnection.class));
+        assertSame(getModifiedIriValue(tag), previousModifiedValue);
     }
 
     /* removeVersion */
@@ -1429,14 +1456,21 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     public void testAddBranch() throws Exception {
         // Setup:
         VersionedRDFRecord record = versionedRDFRecordFactory.createNew(VERSIONED_RDF_RECORD_IRI);
+        record.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
+        String previousModifiedValue = getModifiedIriValue(record);
         doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+
         Branch branch = branchFactory.createNew(NEW_IRI);
+        branch.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
 
         manager.addBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, branch);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(branch), any(RepositoryConnection.class));
         assertEquals(1, record.getBranch_resource().size());
+
+        assertNotSame(getModifiedIriValue(record), previousModifiedValue);
+        assertNotNull(getModifiedIriValue(branch));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -1485,10 +1519,13 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Setup:
         Branch branch = branchFactory.createNew(BRANCH_IRI);
         branch.getModel().add(BRANCH_IRI, titleIRI, VALUE_FACTORY.createLiteral("New Title"));
+        branch.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
+        String previousModifiedValue = getModifiedIriValue(branch);
 
         manager.updateBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, branch);
         verify(utilsService).validateBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(branch), any(RepositoryConnection.class));
+        assertNotSame(getModifiedIriValue(branch), previousModifiedValue);
     }
 
     @Test
@@ -1496,10 +1533,13 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Setup:
         UserBranch branch = userBranchFactory.createNew(USER_BRANCH_IRI);
         branch.getModel().add(USER_BRANCH_IRI, titleIRI, VALUE_FACTORY.createLiteral("New Title"));
+        branch.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
+        String previousModifiedValue = getModifiedIriValue(branch);
 
         manager.updateBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, branch);
         verify(utilsService).validateBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(USER_BRANCH_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(branch), any(RepositoryConnection.class));
+        assertNotSame(getModifiedIriValue(branch), previousModifiedValue);
     }
 
     @Test
@@ -1508,9 +1548,12 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         Branch branch = branchFactory.createNew(MASTER_BRANCH_IRI);
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Branch " + MASTER_BRANCH_IRI + " is the master Branch and cannot be updated.");
+        branch.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
+        String previousModifiedValue = getModifiedIriValue(branch);
 
         manager.updateBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, branch);
         verify(utilsService, times(0)).updateObject(eq(branch), any(RepositoryConnection.class));
+        assertNotSame(getModifiedIriValue(branch), previousModifiedValue);
     }
 
     /* updateHead */
@@ -1533,10 +1576,16 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveBranch() throws Exception {
+        VersionedRDFRecord record = versionedRDFRecordFactory.createNew(VERSIONED_RDF_RECORD_IRI);
+        record.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
+        String previousModifiedValue = getModifiedIriValue(record);
+        doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+
         manager.removeBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI);
         verify(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
         verify(utilsService).removeBranch(eq(VERSIONED_RDF_RECORD_IRI), any(Branch.class), any(RepositoryConnection.class));
         verify(mergeRequestManager).cleanMergeRequests(eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), any(RepositoryConnection.class));
+        assertNotSame(getModifiedIriValue(record), previousModifiedValue);
     }
 
     @Test

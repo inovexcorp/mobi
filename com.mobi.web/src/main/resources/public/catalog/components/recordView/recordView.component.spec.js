@@ -74,6 +74,7 @@ describe('Record View component', function() {
         utilSvc.updateDctermsValue.and.callFake((obj, prop, newVal) => obj[prefixes.dcterms + prop] = [{'@value': newVal}]);
         catalogStateSvc.selectedRecord = this.record;
         catalogManagerSvc.getRecord.and.returnValue($q.when([this.record]));
+        catalogManagerSvc.updateRecord.and.returnValue($q.when([this.record]));
         this.element = $compile(angular.element('<record-view></record-view>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('recordView');
