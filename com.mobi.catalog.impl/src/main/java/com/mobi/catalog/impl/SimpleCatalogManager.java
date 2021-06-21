@@ -532,6 +532,7 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateRecord(catalogId, newRecord.getResource(), recordFactory.getTypeIRI(), conn);
             conn.begin();
+            newRecord.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
             utils.updateObject(newRecord, conn);
             conn.commit();
         }
@@ -891,6 +892,7 @@ public class SimpleCatalogManager implements CatalogManager {
             branches.add(branch);
             record.setBranch(branches);
             conn.begin();
+            record.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
             utils.updateObject(record, conn);
             utils.addObject(branch, conn);
             conn.commit();
@@ -933,6 +935,7 @@ public class SimpleCatalogManager implements CatalogManager {
                         + " is the master Branch and cannot be updated.");
             }
             conn.begin();
+            newBranch.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
             utils.updateObject(newBranch, conn);
             conn.commit();
         }
@@ -953,12 +956,16 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public List<Resource> removeBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
+                    conn);
             Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
             IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
             if (conn.contains(versionedRDFRecordId, masterBranchIRI, branchId, versionedRDFRecordId)) {
                 throw new IllegalStateException("Branch " + branchId + " is the master Branch and cannot be removed.");
             }
             conn.begin();
+            record.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
+            utils.updateObject(record, conn);
             List<Resource> deletedCommits = utils.removeBranch(versionedRDFRecordId, branch, conn);
             mergeRequestManager.cleanMergeRequests(versionedRDFRecordId, branchId, conn);
             conn.commit();

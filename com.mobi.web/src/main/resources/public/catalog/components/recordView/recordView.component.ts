@@ -93,10 +93,10 @@ function recordViewComponentCtrl($q, catalogStateService, catalogManagerService,
         }
         
         return cm.updateRecord(newRecord['@id'], util.getPropertyId(newRecord, prefixes.catalog + 'catalog'), dvm.completeRecord)
-            .then(() => {
+            .then((response) => {
+                setInfo(response);
                 util.createSuccessToast('Successfully updated the record');
                 state.selectedRecord = newRecord;
-                setInfo(dvm.completeRecord);
             }, errorMessage => {
                 util.createErrorToast(errorMessage);
                 return $q.reject();

@@ -104,6 +104,31 @@
                         </configuration>
                     </plugin>
                     <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>copy-resource-one</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.basedir}/target/distribution</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${project.basedir}/src/test/resources/filtered-resources</directory>
+                                            <includes>
+                                                <include>z-catalog-ontology-9p-records.trig</include>
+                                                <include>import.sh</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
                         <groupId>com.cj.jshintmojo</groupId>
                         <artifactId>jshint-maven-plugin</artifactId>
                         <version>1.6.0</version>
@@ -128,7 +153,7 @@
                     <plugin>
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
-                        <version>0.31.0</version>
+                        <version>0.36.0</version>
                         <extensions>true</extensions>
                         <executions>
                             <execution>
@@ -167,6 +192,9 @@
                                                 <url>https://localhost:${https-port}/mobi/index.html#/home</url>
                                             </http>
                                             <time>300000</time>
+                                            <exec>
+                                                <postStart>sh /opt/mobi/import.sh</postStart>
+                                            </exec>
                                         </wait>
                                     </run>
                                 </image>
