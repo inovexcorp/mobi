@@ -155,7 +155,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private static final String RECORD_BINDING = "record";
     private static final String COMMIT_BINDING = "commit";
     private static final String ENTITY_BINDING = "entity";
-    private static final String ONTOLOGY_IRI_QUERY;
+    private static final String VERSIONED_RDF_RECORD_IRI_QUERY;
     private static final String BRANCH_BINDING = "branch";
 
     static {
@@ -212,7 +212,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-filtered-deletions-subquery.rq"),
                     StandardCharsets.UTF_8
             );
-            ONTOLOGY_IRI_QUERY = IOUtils.toString(
+            VERSIONED_RDF_RECORD_IRI_QUERY = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-record-from-branch.rq"),
                     StandardCharsets.UTF_8
             );
@@ -1616,7 +1616,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     private Optional<Resource> getRecordFromBranch(Branch branch, RepositoryConnection conn) {
-        TupleQuery query = conn.prepareTupleQuery(ONTOLOGY_IRI_QUERY);
+        TupleQuery query = conn.prepareTupleQuery(VERSIONED_RDF_RECORD_IRI_QUERY);
         query.setBinding(BRANCH_BINDING, branch.getResource());
         TupleQueryResult result = query.evaluateAndReturn();
         if (!result.hasNext()) {

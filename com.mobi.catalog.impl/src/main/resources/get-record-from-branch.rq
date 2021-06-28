@@ -5,6 +5,6 @@ SELECT ?record
 WHERE {
 	?branch a mcat:Branch .
 
-    ?record a ontedit:OntologyRecord ;
+    ?record a mcat:VersionedRDFRecord ;
         mcat:branch ?branch ;
 }

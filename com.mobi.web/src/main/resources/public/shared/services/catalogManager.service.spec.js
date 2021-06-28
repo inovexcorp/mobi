@@ -341,7 +341,7 @@ describe('Catalog Manager service', function() {
     describe('should update a Record', function() {
         beforeEach(function() {
             this.newRecord = {};
-            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId)
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId);
         });
         it('unless an error occurs', function() {
             $httpBackend.expectPUT(this.url, this.newRecord).respond(400, null, null, 'Error Message');
