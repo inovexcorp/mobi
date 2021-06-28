@@ -958,7 +958,7 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
                     conn);
-            Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
+            Branch branch = utils.getBranch(record, branchId, branchFactory, conn);
             IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
             if (conn.contains(versionedRDFRecordId, masterBranchIRI, branchId, versionedRDFRecordId)) {
                 throw new IllegalStateException("Branch " + branchId + " is the master Branch and cannot be removed.");

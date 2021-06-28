@@ -631,7 +631,8 @@ public class CatalogRest {
      * @param recordId String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
      * @param newRecordJson The JSON-LD of the new Record which will replace the existing Record.
-     * @return A Response indicating whether or not the Record was updated.
+     * @return A Response indicating whether or not the Record was updated along with the updated model represented
+     *         as JSON if successful
      */
     @PUT
     @Path("{catalogId}/records/{recordId}")
@@ -640,10 +641,10 @@ public class CatalogRest {
     @RolesAllowed("user")
     @Operation(
             tags = "catalogs",
-            summary = "Updates the Catalog Record by its ID using the provided Record JSON-LD",
+            summary = "Updates the Catalog Record by its ID using the provided Record JSON-LD ",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response indicating whether or not the Record was updated"),
+                            description = "Returns the updated model represented as Json"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
