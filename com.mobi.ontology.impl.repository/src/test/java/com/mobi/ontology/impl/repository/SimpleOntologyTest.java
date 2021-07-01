@@ -99,8 +99,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -267,6 +269,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         when(catalogManager.getMasterBranch(catalogIRI, ont3RecordIRI)).thenReturn(localBranch3);
         when(catalogManager.getCompiledResource(ont3HeadCommitIRI)).thenReturn(ont3Model);
 
+        when(bNodeService.skolemize(any(com.mobi.rdf.api.Statement.class))).thenAnswer(i -> i.getArgumentAt(0, com.mobi.rdf.api.Statement.class));
+        when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
 
         Model ont2Model = createModelFromFile("/test-local-imports-2.ttl");
         File ont2File = setupOntologyMocks(ont2Model);
@@ -1874,6 +1878,65 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     public void testGetGraphQueryResults() throws Exception {
         Model result = queryOntology.getGraphQueryResults("construct {?s ?p ?o} where { ?s ?p ?o . }", true, mf);
         assertEquals(queryOntology.asModel(mf).size(), result.size());
+    }
+
+    private void getGraphQueryResultStreamHelper(RDFFormat rdfFormat, int actualLength) {
+        OutputStream stream = queryOntology.getGraphQueryResultsStream("construct {?s ?p ?o} where { ?s ?p ?o . }", true, rdfFormat, false);
+        assertEquals(stream.toString().length(), actualLength);
+
+        stream = queryOntology.getGraphQueryResultsStream("construct {?s ?p ?o} where { ?s ?p ?o . }", false, rdfFormat, false);
+        assertEquals(stream.toString().length(), actualLength);
+
+        stream = queryOntology.getGraphQueryResultsStream("construct {?s ?p ?o} where { ?s ?p ?o . }", false, rdfFormat, true);
+        assertEquals(stream.toString().length(), actualLength);
+
+        stream = queryOntology.getGraphQueryResultsStream("construct {?s ?p ?o} where { ?s ?p ?o . }", true, rdfFormat, true);
+        assertEquals(stream.toString().length(), actualLength);
+    }
+
+    private void getGraphQueryResultStreamParameterHelper(RDFFormat rdfFormat, int actualLength) {
+        OutputStream inputStream = new ByteArrayOutputStream();
+        queryOntology.getGraphQueryResultsStream("construct {?s ?p ?o} where { ?s ?p ?o . }", true, rdfFormat, false, inputStream);
+        assertEquals(inputStream.toString().length(), actualLength);
+
+        inputStream = new ByteArrayOutputStream();
+        queryOntology.getGraphQueryResultsStream("construct {?s ?p ?o} where { ?s ?p ?o . }", false, rdfFormat, false, inputStream);
+        assertEquals(inputStream.toString().length(), actualLength);
+
+        inputStream = new ByteArrayOutputStream();
+        queryOntology.getGraphQueryResultsStream("construct {?s ?p ?o} where { ?s ?p ?o . }", false, rdfFormat, true, inputStream);
+        assertEquals(inputStream.toString().length(), actualLength);
+
+        inputStream = new ByteArrayOutputStream();
+        queryOntology.getGraphQueryResultsStream("construct {?s ?p ?o} where { ?s ?p ?o . }", true, rdfFormat, true, inputStream);
+        assertEquals(inputStream.toString().length(), actualLength);
+    }
+
+    @Test
+    public void testGetGraphQueryResultsStreamJsonLd() throws Exception {
+        RDFFormat rdfFormat = RDFFormat.JSONLD;
+        int actualLength = 4597;
+
+        getGraphQueryResultStreamHelper(rdfFormat, actualLength);
+        getGraphQueryResultStreamParameterHelper(rdfFormat, actualLength);
+    }
+
+    @Test
+    public void testGetGraphQueryResultsStreamRDFXml() throws Exception {
+        RDFFormat rdfFormat = RDFFormat.RDFXML;
+        int actualLength = 7798;
+
+        getGraphQueryResultStreamHelper(rdfFormat, actualLength);
+        getGraphQueryResultStreamParameterHelper(rdfFormat, actualLength);
+    }
+
+    @Test
+    public void testGetGraphQueryResultsStreamTurtle() throws Exception {
+        RDFFormat rdfFormat = RDFFormat.TURTLE;
+        int actualLength = 3362;
+
+        getGraphQueryResultStreamHelper(rdfFormat, actualLength);
+        getGraphQueryResultStreamParameterHelper(rdfFormat, actualLength);
     }
 
     @Test

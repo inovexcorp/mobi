@@ -28,6 +28,8 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
+import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
+import static com.mobi.rest.util.RestUtils.modelToString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
@@ -258,6 +260,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private OutputStream importedOntologyJsonLd;
     private Repository repo;
     private static String INVALID_JSON = "{id: 'invalid";
+    private static String constructJsonLd = "[ {\n  \"@id\" : \"urn:test\",\n  \"urn:prop\" : [ {\n    \"@value\" : \"test\"\n  } ]\n} ]";
     private IRI missingIRI;
     private Repository testQueryRepo;
     private SimpleBNodeService bNodeService;
@@ -517,6 +520,19 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         testQueryRepo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         testQueryRepo.initialize();
+    }
+
+    private void mockGraphQueryResultStream(String outputStreamResult) {
+        when(ontology.getGraphQueryResultsStream(anyString(), anyBoolean(), any(RDFFormat.class), anyBoolean(), any(OutputStream.class))).thenAnswer(
+            (Answer) invocation -> {
+                OutputStream graphQueryOutputStream = (OutputStream) invocation.getArguments()[4];
+                try {
+                    graphQueryOutputStream.write(outputStreamResult.getBytes(StandardCharsets.UTF_8));
+                } catch (IOException e) {
+                    fail("Failed to create outputStream");
+                }
+                return graphQueryOutputStream;
+            });
     }
 
     @AfterMethod
@@ -809,8 +825,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     private void assertConstructQuery(String queryResults) {
         assertNotNull(queryResults);
-        System.out.println(queryResults);
-        assertEquals(queryResults.replaceAll("\\r\\n?", "\n"), "[ {\n  \"@id\" : \"urn:test\",\n  \"urn:prop\" : [ {\n    \"@value\" : \"test\"\n  } ]\n} ]");
+        assertEquals(queryResults.replaceAll("\\r\\n?", "\n"), constructJsonLd);
     }
 
     private void assertEntityNames(Response response, boolean fromNode, Set<String> keys) throws Exception {
@@ -5014,6 +5029,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testQueryOntologyWithConstruct() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
         String query = "construct where { ?s ?p ?o }";
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
@@ -5021,23 +5038,24 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 200);
-        verify(ontology).getGraphQueryResults(query, true, mf);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), any(OutputStream.class));
         assertConstructQuery(response.readEntity(String.class));
     }
 
     @Test
     public void testQueryOntologyWithEmptyConstruct() {
+        mockGraphQueryResultStream(constructJsonLd);
         // Setup:
         String query = "construct where { ?s <urn:test> ?o }";
-        when(ontology.getGraphQueryResults(query, true, mf)).thenReturn(mf.createModel());
-
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("query", encode(query))
                 .request().get();
 
-        assertEquals(response.getStatus(), 204);
-        verify(ontology).getGraphQueryResults(query, true, mf);
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), any(OutputStream.class));
+
+        assertConstructQuery(response.readEntity(String.class));
     }
 
     @Test
@@ -5556,6 +5574,30 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 return QueryResults.asModel(graphQuery.evaluate(), mf);
             }
         });
+
+        when(ontology.getGraphQueryResultsStream(any(String.class), eq(true), any(RDFFormat.class), eq(true), any(OutputStream.class))).thenAnswer(invocationOnMock -> {
+            String query = invocationOnMock.getArgumentAt(0, String.class);
+            boolean skolemize = true;
+            RDFFormat format = RDFFormat.JSONLD;
+
+            try(RepositoryConnection conn = testQueryRepo.getConnection()) {
+                GraphQuery graphQuery = conn.prepareGraphQuery(query);
+                Model entityData = QueryResults.asModel(graphQuery.evaluate(), mf);
+
+                String modelStr;
+                if (skolemize) {
+                    modelStr = modelToSkolemizedString(entityData, format, sesameTransformer, bNodeService);
+                } else {
+                    modelStr = modelToString(entityData, format, sesameTransformer);
+                }
+
+                OutputStream outputStream = invocationOnMock.getArgumentAt(4, OutputStream.class);
+
+                outputStream.write(modelStr.getBytes(StandardCharsets.UTF_8));
+                return outputStream;
+            }
+        });
+
     }
 
     private void setupTupleQueryMock() {

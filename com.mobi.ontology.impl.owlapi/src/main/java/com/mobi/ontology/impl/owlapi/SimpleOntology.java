@@ -1012,6 +1012,16 @@ public class SimpleOntology implements Ontology {
                 modelFactory);
     }
 
+    @Override
+    public OutputStream getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format, boolean skolemize) {
+        throw new MobiException("Method is not supported");
+    }
+
+    @Override
+    public OutputStream getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format, boolean skolemize, OutputStream outputStream) {
+        throw new MobiException("Method is not supported");
+    }
+
     /**
      * Uses the provided TupleQueryResult to construct a set of the entities provided.
      *
