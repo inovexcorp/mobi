@@ -30,8 +30,6 @@ import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
-import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
-import static com.mobi.rest.util.RestUtils.modelToString;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -105,6 +103,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
@@ -117,6 +116,7 @@ import org.eclipse.rdf4j.query.parser.ParsedOperation;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.QueryParserUtil;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -3197,7 +3197,7 @@ public class OntologyRest {
                         return Response.noContent().build();
                     }
                 } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    return getReponseForGraphQuery(ontology, queryString, includeImports, false, format);
+                    return getResponseForGraphQuery(ontology, queryString, includeImports, false, format);
                 } else {
                     throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
                 }
@@ -3277,7 +3277,7 @@ public class OntologyRest {
             IRI entity = valueFactory.createIRI(entityIdStr);
             String queryString = GET_ENTITY_QUERY.replace("%ENTITY%", "<" + entity.stringValue() + ">");
 
-            return getReponseForGraphQuery(ontology, queryString, includeImports, format.equals("jsonld"), format);
+            return getResponseForGraphQuery(ontology, queryString, includeImports, format.equals("jsonld"), format);
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -3373,22 +3373,28 @@ public class OntologyRest {
         }
     }
 
-    private Response getReponseForGraphQuery(Ontology ontology, String query, boolean includeImports, boolean skolemize,
-                                             String format) {
-        Model entityData = ontology.getGraphQueryResults(query, includeImports, modelFactory);
-
-        if (entityData.size() >= 1) {
-            String modelStr;
-            if (skolemize) {
-                modelStr = modelToSkolemizedString(entityData, format, sesameTransformer, bNodeService);
-            } else {
-                modelStr = modelToString(entityData, format, sesameTransformer);
-            }
-            MediaType type = format.equals("jsonld") ? MediaType.APPLICATION_JSON_TYPE : MediaType.TEXT_PLAIN_TYPE;
-            return Response.ok(modelStr, type).build();
-        } else {
-            return Response.noContent().build();
+    private RDFFormat getRdfFormat(String format){
+        switch (format.toLowerCase()) {
+            case "rdf/xml":
+                return RDFFormat.RDFXML;
+            case "owl/xml":
+                throw new NotImplementedException("OWL/XML format is not yet implemented.");
+            case "turtle":
+                return  RDFFormat.TURTLE;
+            default:
+                return RDFFormat.JSONLD;
         }
+    }
+
+    private Response getResponseForGraphQuery(Ontology ontology, String query, boolean includeImports, boolean skolemize,
+                                              String format) {
+        RDFFormat rdfFormat = getRdfFormat(format);
+
+        StreamingOutput output = outputStream -> {
+            ontology.getGraphQueryResultsStream(query, includeImports, rdfFormat, skolemize, outputStream);
+        };
+        MediaType type = format.equals("jsonld") ? MediaType.APPLICATION_JSON_TYPE : MediaType.TEXT_PLAIN_TYPE;
+        return Response.ok(output, type).build();
     }
 
     private Set<String> getUnloadableImportIRIs(Ontology ontology) {

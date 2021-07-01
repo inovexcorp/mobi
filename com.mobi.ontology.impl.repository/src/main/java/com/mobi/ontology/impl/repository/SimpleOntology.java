@@ -54,6 +54,7 @@ import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.rio.RemoveContextHandler;
 import com.mobi.persistence.utils.rio.SkolemizeHandler;
+import com.mobi.query.GraphQueryResult;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.query.api.GraphQuery;
@@ -95,8 +96,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -1019,6 +1018,47 @@ public class SimpleOntology implements Ontology {
     public Model getGraphQueryResults(String queryString, boolean includeImports, ModelFactory modelFactory) {
         return runGraphQueryOnOntology(queryString, null, "getGraphQueryResults(ontology, queryString)", includeImports,
                 modelFactory);
+    }
+
+    @Override
+    public OutputStream getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format,
+                                                   boolean skolemize) {
+        OutputStream outputStream = new ByteArrayOutputStream();
+        return getGraphQueryResultsStream(queryString, includeImports, format, skolemize, outputStream);
+    }
+
+    @Override
+    public OutputStream getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format,
+                                                   boolean skolemize, OutputStream outputStream) {
+        try (DatasetConnection conn = getDatasetConnection()) {
+            long start = getStartTime();
+            try {
+                GraphQuery query;
+                if (includeImports) {
+                    query = conn.prepareGraphQuery(queryString);
+                } else {
+                    query = conn.prepareGraphQuery(queryString, conn.getSystemDefaultNamedGraph());
+                }
+                GraphQueryResult statements = query.evaluate();
+
+                RDFHandler rdfWriter = Rio.createWriter(format, outputStream);
+
+                RemoveContextHandler removeContextSH = new RemoveContextHandler(vf);
+                if (skolemize) {
+                    SkolemizeHandler skolemizeSH = new SkolemizeHandler(bNodeService);
+                    assert statements != null;
+                    com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, transformer, skolemizeSH,
+                            removeContextSH);
+                } else {
+                    com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, transformer, removeContextSH);
+                }
+                undoApplyDifferenceIfPresent(conn);
+            } finally {
+                logTrace("getGraphQueryResults", start);
+            }
+
+            return outputStream;
+        }
     }
 
     @Override

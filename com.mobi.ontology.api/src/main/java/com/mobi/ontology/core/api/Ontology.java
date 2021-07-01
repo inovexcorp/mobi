@@ -30,6 +30,7 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.OutputStream;
 import java.util.Optional;
@@ -434,6 +435,29 @@ public interface Ontology {
      * @return a model with the query results.
      */
     Model getGraphQueryResults(String queryString, boolean includeImports, ModelFactory modelFactory);
+
+    /**
+     * Searches the Ontology & its import closures using the provided SPARQL query.
+     *
+     * @param queryString Sparql query string you want to execute.
+     * @param includeImports Include data from ontology imports when querying
+     * @param format Specified format for the return of queries
+     * @param skolemize Whether or not the Ontology should be skoelmized before serialized
+     * @return OutputStream OutputStream that the rdf should be written to
+     */
+    OutputStream getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format, boolean skolemize);
+
+    /**
+     * Searches the Ontology & its import closures using the provided SPARQL query.
+     *
+     * @param queryString the Sparql query string you want to execute.
+     * @param includeImports include data from ontology imports when querying
+     * @param format the specified format for the return of queries
+     * @param skolemize whether or not the Ontology should be skoelmized before serialized
+     * @param outputStream OutputStream that the rdf should be written to
+     * @return OutputStream
+     */
+    OutputStream getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format, boolean skolemize, OutputStream outputStream);
 
     /**
      * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects,
