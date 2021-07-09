@@ -22,17 +22,31 @@
  */
 var adminUsername = "admin"
 var adminPassword = "admin"
-var newUsername = "newUser"
-var newUserPassword = "test"
-var newName = "tester"
-var newUserRole = "admin"
+
+var newUser = { 'username': 'newUser', 'password': 'test',
+    'firstName': 'firstTester', 'lastName': 'lastTester', 'email': 'test@gmail.com', 'role': 'admin' };
+
+var newUserChanged = { 'firstName': 'fcTester', 'lastName': 'lcTester', 'email': 'testc@gmail.com', 'role': 'admin' };
+
+var selectors = {
+    'profileTabFirstName': '//settings-page//mat-tab-group//profile-tab//form//mat-form-field//input[@name="firstName"]',
+    'profileTabLastName': '//settings-page//mat-tab-group//profile-tab//form//mat-form-field//input[@name="lastName"]',
+    'profileTabEmail': '//settings-page//mat-tab-group//profile-tab//form//mat-form-field//input[@name="email"]',
+};
+
+var verifyProfileTab = function(browser, userObject){
+    browser.useXpath().waitForElementVisible(selectors.profileTabFirstName)
+    browser.expect.element(selectors.profileTabFirstName).to.have.value.that.equals(userObject.firstName)
+    browser.expect.element(selectors.profileTabLastName).to.have.value.that.equals(userObject.lastName)
+    browser.expect.element(selectors.profileTabEmail).to.have.value.that.equals(userObject.email)
+};
 
 module.exports = {
     '@tags': ['login', 'administration', 'sanity'],
 
     'Step 1: login as admin' : function(browser) {
         browser
-            .url('https://localhost:' +browser.globals.globalPort+ '/mobi/index.html#/home')
+            .url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home')
             .useXpath()
             .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
             .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
@@ -59,13 +73,13 @@ module.exports = {
             .waitForElementVisible("//button[text() [contains(., 'Create User')]]")
             .click("//button[text() [contains(., 'Create User')]]")
             .useCss()
-            .setValue('input[name=username]', newUsername )
-            .setValue('input[name=password]', newUserPassword )
-            .setValue('input[name=firstName]', '' + newName )
-            .setValue('input[name=lastName]', 'testerly')
-            .setValue('input[name=email]', 'test@gmail.com')
+            .setValue('input[name=username]', newUser.username)
+            .setValue('input[name=password]', newUser.password)
+            .setValue('input[name=firstName]', newUser.firstName)
+            .setValue('input[name=lastName]', newUser.lastName)
+            .setValue('input[name=email]', newUser.email)
 
-        if (newUserRole == "admin"){
+        if (newUser.role == "admin"){
             browser.click("input[type='checkbox']")
         }
 
@@ -78,7 +92,7 @@ module.exports = {
     'Step 5: The new user is displayed in users list' : function(browser) {
         browser
             .useXpath()
-            .assert.visible("//div[@class= 'users-list tree scroll-without-buttons']//ul//li//a//span[text() [contains(., '" + newName + "')]]", "new user is displayed")
+            .assert.visible("//div[@class= 'users-list tree scroll-without-buttons']//ul//li//a//span[text() [contains(., '" + newUser.firstName + "')]]", "new user is displayed")
     },
 
     'Step 6: The user clicks logout' : function(browser) {
@@ -92,8 +106,8 @@ module.exports = {
         browser
             .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
             .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-            .setValue('//div[@class="form-group"]//input[@id="username"]', newUsername )
-            .setValue('//div[@class="form-group"]//input[@id="password"]', newUserPassword )
+            .setValue('//div[@class="form-group"]//input[@id="username"]', newUser.username )
+            .setValue('//div[@class="form-group"]//input[@id="password"]', newUser.password )
             .click('//button[@type="submit"]')
     },
 
@@ -106,15 +120,69 @@ module.exports = {
     'Step 9: New User name is displayed in sidebar on left' : function(browser) {
         browser
             .useCss()
-            .assert.visible('a.current-user-box')
-            .getText('a.current-user-box', function(result) {browser.assert.ok(result.value == newName)})
+            .assert.visible('a.current-user-box div.user-title')
+            .assert.containsText('a.current-user-box div.user-title', newUser.firstName)
     },
 
-    'Step 10: The user successfully logs out' : function(browser) {
+    'Step 10: Go to profile tab and verify user info' : function(browser) {
+        browser
+            .useCss()
+            .click('div.sidebar a.current-user-box')
+            .waitForElementVisible('div.settings-page div.profile-tab')
+
+        verifyProfileTab(browser, newUser)
+    },
+
+    'Step 11: Edit User ' : function(browser) {
+        browser
+            .useXpath()
+            .clearValue(selectors.profileTabFirstName)
+            .setValue(selectors.profileTabFirstName, newUserChanged.firstName )
+            .clearValue(selectors.profileTabLastName)
+            .setValue(selectors.profileTabLastName, newUserChanged.lastName)
+            .clearValue(selectors.profileTabEmail)
+            .setValue(selectors.profileTabEmail, newUserChanged.email )
+            .click('//mat-tab-group//profile-tab//form//button[@type="submit"]')
+            .waitForElementNotPresent('div.spinner')
+            .useCss()
+            .assert.visible('a.current-user-box div.user-title')
+            .assert.containsText('a.current-user-box div.user-title', newUserChanged.firstName)
+
+        verifyProfileTab(browser, newUserChanged)
+    },
+
+    'Step 12: The user successfully logs out' : function(browser) {
+        browser
+            .useXpath()
+            .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
+            .assert.visible('//div[@class="form-group"]//input[@id="username"]')
+            .assert.visible('//div[@class="form-group"]//input[@id="password"]')
+    },
+
+    'Step 13: Test logins as the newly created user after name change' : function(browser) {
+        browser
+            .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
+            .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
+            .setValue('//div[@class="form-group"]//input[@id="username"]', newUser.username)
+            .setValue('//div[@class="form-group"]//input[@id="password"]', newUser.password)
+            .click('//button[@type="submit"]')
+    },
+
+    'Step 14: Go to profile tab and verify user info' : function(browser) {
+        browser
+            .useCss()
+            .click('div.sidebar a.current-user-box')
+            .waitForElementVisible('div.settings-page div.profile-tab')
+
+        verifyProfileTab(browser, newUserChanged)
+    },
+
+    'Step 15: The user successfully logs out' : function(browser) {
         browser
             .useXpath()
             .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
             .assert.visible('//div[@class="form-group"]//input[@id="username"]')
             .assert.visible('//div[@class="form-group"]//input[@id="password"]')
     }
+
 }

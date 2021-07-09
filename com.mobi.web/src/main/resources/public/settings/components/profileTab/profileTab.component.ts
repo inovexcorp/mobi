@@ -71,18 +71,24 @@ export class ProfileTabComponent implements OnInit {
     save(): void {
         if (this.profileForm.controls.firstName.value) {
             this.currentUser.jsonld[this.prefixes.foaf + 'firstName'] = [{'@value': this.profileForm.controls.firstName.value}];
+            this.currentUser.firstName = this.profileForm.controls.firstName.value;
         } else {
             delete this.currentUser.jsonld[this.prefixes.foaf + 'firstName'];
+            this.currentUser.firstName = '';
         }
         if (this.profileForm.controls.lastName.value) {
             this.currentUser.jsonld[this.prefixes.foaf + 'lastName'] = [{'@value': this.profileForm.controls.lastName.value}];
+            this.currentUser.lastName = this.profileForm.controls.lastName.value;
         } else {
             delete this.currentUser.jsonld[this.prefixes.foaf + 'lastName'];
+            this.currentUser.lastName = '';
         }
         if (this.profileForm.controls.email.value) {
             this.currentUser.jsonld[this.prefixes.foaf + 'mbox'] = [{'@id': 'mailto:' + this.profileForm.controls.email.value}];
+            this.currentUser.email = this.profileForm.controls.email.value;
         } else {
             delete this.currentUser.jsonld[this.prefixes.foaf + 'mbox'];
+            this.currentUser.email = '';
         }
         this.um.updateUser(this.currentUser.username, this.currentUser)
             .then(() => {
