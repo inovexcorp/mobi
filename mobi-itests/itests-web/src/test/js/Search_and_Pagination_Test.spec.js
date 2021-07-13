@@ -59,7 +59,7 @@ module.exports = {
             .useCss()
             .waitForElementNotPresent('div.spinner')
             .useXpath()
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"uhtc-ontology.ttl")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"pagination-ontology-4.ttl")]]')
     },
 
     'Step 4: Go Back to Previous Page': function (browser) {
@@ -81,7 +81,7 @@ module.exports = {
             .waitForElementNotPresent('div.spinner')
             .useXpath()
             .waitForElementVisible('//div[contains(@class, "ontologies")]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"uhtc-ontology.ttl")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"pagination-ontology-4.ttl")]]')
     },
 
     'Step 6: Validate Search Function': function (browser) {

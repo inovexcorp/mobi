@@ -78,12 +78,7 @@ module.exports = {
             .setValue('input[name=firstName]', newUser.firstName)
             .setValue('input[name=lastName]', newUser.lastName)
             .setValue('input[name=email]', newUser.email)
-
-        if (newUser.role == "admin"){
-            browser.click("input[type='checkbox']")
-        }
-
-        browser
+            .click("input[type='checkbox']")
             .useXpath()
             .click("//button[text() [contains(., 'Submit')]]")
             .waitForElementNotVisible("//button[text() [contains(., 'Submit')]]")
@@ -92,7 +87,8 @@ module.exports = {
     'Step 5: The new user is displayed in users list' : function(browser) {
         browser
             .useXpath()
-            .assert.visible("//div[@class= 'users-list tree scroll-without-buttons']//ul//li//a//span[text() [contains(., '" + newUser.firstName + "')]]", "new user is displayed")
+            .assert.visible("//div[@class= 'users-list tree scroll-without-buttons']//ul//li//a//span[text() " +
+                "[contains(., '" + newUser.firstName + "')]]", "new user is displayed")
     },
 
     'Step 6: The user clicks logout' : function(browser) {
@@ -177,12 +173,60 @@ module.exports = {
         verifyProfileTab(browser, newUserChanged)
     },
 
-    'Step 15: The user successfully logs out' : function(browser) {
+    'Step 15: The new user can create an ontology' : function(browser) {
+        browser
+            .useXpath()
+            .click('//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
+            .useCss()
+            .waitForElementNotPresent('div.spinner')
+            .waitForElementVisible('div.btn-container button')
+            .useXpath()
+            .waitForElementVisible('//button[text()="New Ontology"]')
+            .click('//button[text()="New Ontology"]')
+            .useCss()
+            .waitForElementVisible('new-ontology-overlay text-input[display-text="\'Title\'"] input')
+            .setValue('new-ontology-overlay text-input[display-text="\'Title\'"] input', 'testOntology')
+            .waitForElementVisible('new-ontology-overlay text-area[display-text="\'Description\'"] textarea')
+            .setValue('new-ontology-overlay text-area[display-text="\'Description\'"] textarea', 'testDescription')
+            .useXpath()
+            .click('//new-ontology-overlay//button[text()="Submit"]')
+            .useCss()
+            .waitForElementNotPresent('new-ontology-overlay .modal-header h3')
+    },
+
+    'Step 16: The user successfully logs out' : function(browser) {
         browser
             .useXpath()
             .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
             .assert.visible('//div[@class="form-group"]//input[@id="username"]')
             .assert.visible('//div[@class="form-group"]//input[@id="password"]')
+    },
+
+    'Step 17: The admin user logs in' : function(browser) {
+        browser
+            .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
+            .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
+            .setValue('//div[@class="form-group"]//input[@id="username"]', adminUsername )
+            .setValue('//div[@class="form-group"]//input[@id="password"]', adminPassword )
+            .click('//button[@type="submit"]')
+            .useCss()
+            .waitForElementVisible('.home-page')
+    },
+
+    'Step 18: The admin user can manage the newly created ontology' : function(browser) {
+        browser
+            .useXpath()
+            .click('//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
+            .useCss()
+            .waitForElementNotPresent('div.spinner')
+            .useXpath()
+            .click('xpath', '//search-bar')
+            .keys("testOntology")
+            .keys(browser.Keys.ENTER)
+            .waitForElementNotPresent('css selector', 'div.spinner')
+            .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "TestOntology")]')
+            .click('css selector', 'div.action-menu.dropdown')
+            .assert.visible('//div//div[contains(@class, "action-menu")]//i[contains(@class, "fa-lock")]')
     }
 
 }
