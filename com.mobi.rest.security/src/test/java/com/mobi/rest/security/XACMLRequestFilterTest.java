@@ -58,6 +58,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.HashMap;
 import java.util.Optional;
 import javax.ws.rs.container.ResourceInfo;
+import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.UriInfo;
@@ -74,6 +75,10 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
     private static final String FORM_DATA_FIELD = "testFormDataField";
     private static final String FORM_DATA_TWO_FIELD = "testFormDataTwoField";
     private static final String FORM_DATA_VALUE = "http://mobi.com/formDataField#formDataValue";
+
+    private static final String URL_ENCODED_FORM_FIELD = "testFormField";
+    private static final String URL_ENCODED_FORM_TWO_FIELD = "testFormTwoField";
+    private static final String URL_ENCODED_FORM_VALUE = "http://mobi.com/formField#formValue";
 
     private static final String DEFAULT_RESOURCE_ID_IRI = "http://mobi.com/test-default";
 
@@ -354,6 +359,111 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void resourceIdFormExistsNoDefaultTest() throws Exception {
+        Form form = new Form();
+        when(context.readEntity(Form.class)).thenReturn(form);
+        form.param(URL_ENCODED_FORM_FIELD, URL_ENCODED_FORM_VALUE);
+        when(context.readEntity(Form.class)).thenReturn(form);
+        when(context.hasEntity()).thenReturn(true);
+        when(context.getMediaType()).thenReturn(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdURLEncodedFormClass.class.getDeclaredMethod("formNoDefault"));
+
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(URL_ENCODED_FORM_VALUE);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
+
+        filter.filter(context);
+        Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
+    }
+
+    @Test
+    public void resourceIdFormExistsWithDefaultTest() throws Exception {
+        Form form = new Form();
+        form.param(URL_ENCODED_FORM_FIELD, URL_ENCODED_FORM_VALUE);
+        when(context.readEntity(Form.class)).thenReturn(form);
+        when(context.hasEntity()).thenReturn(true);
+        when(context.getMediaType()).thenReturn(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdURLEncodedFormClass.class.getDeclaredMethod("formWithDefault"));
+
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(URL_ENCODED_FORM_VALUE);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
+
+        filter.filter(context);
+        Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
+    }
+
+    @Test
+    public void resourceIdEmptyFormNoDefaultTest() throws Exception {
+        exceptionRule.expect(MobiWebException.class);
+        exceptionRule.expectMessage("Form parameters do not contain testFormField");
+        Form form = new Form();
+        when(context.readEntity(Form.class)).thenReturn(form);
+        when(context.hasEntity()).thenReturn(true);
+        when(context.getMediaType()).thenReturn(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdURLEncodedFormClass.class.getDeclaredMethod("formNoDefault"));
+
+        filter.filter(context);
+    }
+
+    @Test
+    public void resourceIdEmptyFormWithDefaultTest() throws Exception {
+        Form form = new Form();
+        when(context.readEntity(Form.class)).thenReturn(form);
+        when(context.hasEntity()).thenReturn(true);
+        when(context.getMediaType()).thenReturn(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdURLEncodedFormClass.class.getDeclaredMethod("formWithDefault"));
+
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(DEFAULT_RESOURCE_ID_IRI);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
+
+        filter.filter(context);
+
+        Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
+    }
+
+    @Test
+    public void resourceIdEmptyFormWithDefaultNotExistsTest() throws Exception {
+        exceptionRule.expect(MobiWebException.class);
+        exceptionRule.expectMessage("Form parameters do not contain testFormTwoField");
+
+        Form form = new Form();
+        when(context.readEntity(Form.class)).thenReturn(form);
+        when(context.hasEntity()).thenReturn(true);
+        when(context.getMediaType()).thenReturn(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdURLEncodedFormClass.class.getDeclaredMethod("formWithDefaultNotExists"));
+
+        filter.filter(context);
+    }
+
+    @Test
+    public void resourceIdMissingFormNoDefaultTest() throws Exception {
+        exceptionRule.expect(MobiWebException.class);
+        exceptionRule.expectMessage("Expected Request to have form data");
+
+        Form form = new Form();
+        when(context.readEntity(Form.class)).thenReturn(form);
+        when(context.hasEntity()).thenReturn(false);
+        when(context.getMediaType()).thenReturn(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdURLEncodedFormClass.class.getDeclaredMethod("formNoDefault"));
+
+        filter.filter(context);
+    }
+
+    @Test
     public void resourceIdFormDataExistsNoDefaultTest() throws Exception {
         FormDataMultiPart formPart = new FormDataMultiPart();
         formPart.field(FORM_DATA_FIELD, FORM_DATA_VALUE);
@@ -458,6 +568,7 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
         filter.filter(context);
     }
 
+
     private static class MockResourceIdQueryParamClass {
         @ResourceId(type = ValueType.QUERY, value = QUERY_PARAM_KEY, defaultValue = @DefaultResourceId(DEFAULT_RESOURCE_ID_IRI))
         public void queryParamWithDefault() {}
@@ -489,6 +600,18 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
 
         @ResourceId(type = ValueType.BODY, value = FORM_DATA_FIELD, defaultValue = @DefaultResourceId(type = ValueType.BODY, value = FORM_DATA_TWO_FIELD))
         public void formDataWithDefaultNotExists() {}
+    }
+
+
+    private static class MockResourceIdURLEncodedFormClass {
+        @ResourceId(type = ValueType.BODY, value = URL_ENCODED_FORM_FIELD, defaultValue = @DefaultResourceId(DEFAULT_RESOURCE_ID_IRI))
+        public void formWithDefault() {}
+
+        @ResourceId(type = ValueType.BODY, value = URL_ENCODED_FORM_FIELD)
+        public void formNoDefault() {}
+
+        @ResourceId(type = ValueType.BODY, value = URL_ENCODED_FORM_FIELD, defaultValue = @DefaultResourceId(type = ValueType.BODY, value = URL_ENCODED_FORM_TWO_FIELD))
+        public void formWithDefaultNotExists() {}
     }
 
     private static class MockResourceIdStringClass {

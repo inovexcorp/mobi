@@ -50,6 +50,10 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.MobiWebException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -82,9 +86,12 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -151,8 +158,8 @@ public class SparqlRest {
     }
 
     /**
-     * Set Limit Results
-     * @param limitResults
+     * Set Limit Results.
+     * @param limitResults the size to limit sparql query results to on the limited endpoints
      */
     public void setLimitResults(int limitResults) {
         this.limitResults = limitResults;
@@ -163,6 +170,7 @@ public class SparqlRest {
      * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
+     *
      * @param queryString String representing a SPARQL query.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param acceptString used to specify certain media types which are acceptable for the response
@@ -172,56 +180,16 @@ public class SparqlRest {
     @Produces({XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE,
             JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
-    @Operation(
-            tags = "sparql",
-            summary = "Retrieves the results of the provided SPARQL query",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "The SPARQL 1.1 results in mime type specified by accept header"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response queryRdf(
-            @Parameter(description = "String representing a SPARQL query", required = true)
             @QueryParam("query") String queryString,
-            @Parameter(description = "An optional DatasetRecord IRI representing the Dataset to query")
             @QueryParam("dataset") String datasetRecordId,
-            @Parameter(description = "Used to specify certain media types which are acceptable for the response", required = true)
             @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
-            throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
 
-        ParsedOperation parsedOperation = getParsedOperation(queryString);
-        try {
-            if (parsedOperation instanceof ParsedQuery) {
-                if (parsedOperation instanceof ParsedTupleQuery) {
-                    return handleSelectQuery(queryString, datasetRecordId, acceptString, null, null);
-                } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    return handleConstructQuery(queryString, datasetRecordId, acceptString, null, null);
-                } else {
-                    throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
-                }
-            } else {
-                throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
-            }
-        } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MalformedQueryException ex) {
-            String statusText = "Query is invalid. Please change the query and re-execute.";
-            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
-            ObjectNode entity = mapper.createObjectNode();
-            entity.put("details", ex.getCause().getMessage());
-            Response response = Response.status(status)
-                    .entity(entity.toString())
-                    .build();
-            throw ErrorUtils.sendError(ex, statusText, response);
-        } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        }
+        return handleQuery(queryString, datasetRecordId, acceptString, null, null);
     }
 
     /**
@@ -244,10 +212,24 @@ public class SparqlRest {
     @RolesAllowed("user")
     @Operation(
             tags = "sparql",
-            summary = "Query and Download the results of the provided SPARQL query",
+            operationId = "rdfQuery",
+            summary = "Retrieves the results of the provided SPARQL query",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "The SPARQL 1.1 Response in the format of fileType query parameter"),
+                            description = "The SPARQL 1.1 results in mime type specified by accept header",
+                            content = {
+                                    @Content(mediaType = "*/*"),
+                                    @Content(mediaType = TURTLE_MIME_TYPE),
+                                    @Content(mediaType = LDJSON_MIME_TYPE),
+                                    @Content(mediaType = RDFXML_MIME_TYPE),
+                                    @Content(mediaType = JSON_MIME_TYPE),
+                                    @Content(mediaType = XLSX_MIME_TYPE),
+                                    @Content(mediaType = XLS_MIME_TYPE),
+                                    @Content(mediaType = CSV_MIME_TYPE),
+                                    @Content(mediaType = TSV_MIME_TYPE),
+                                    @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM)
+                            }
+                    ),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -255,25 +237,381 @@ public class SparqlRest {
     )
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response downloadRdfQuery(
-            @Parameter(description = "The SPARQL query to execute", required = true)
+            @Parameter(description = "String representing a SPARQL query", required = true)
             @QueryParam("query") String queryString,
             @Parameter(description = "An optional DatasetRecord IRI representing the Dataset to query")
             @QueryParam("dataset") String datasetRecordId,
-            @Parameter(description = "Used to specify certain media types which are acceptable for the response",
-                    required = true)
+            @Parameter(description = "Format of the downloaded results file when the `ACCEPT` header is set to "
+                    + "`application/octet-stream`",
+                    schema = @Schema(allowableValues = {"xlsx", "csv", "tsv", "ttl", "jsonld", "rdf", "json"}))
             @QueryParam("fileType") String fileType,
-            @Parameter(description = "Used to specify certain media types which are acceptable for the response",
-                    required = true)
+            @Parameter(hidden = true)
             @HeaderParam("accept") String acceptString,
-            @Parameter(description = "The optional file name for the download file")
+            @Parameter(description = "File name of the downloaded results file when the `ACCEPT` header is set to "
+                    + "`application/octet-stream`")
             @DefaultValue("results") @QueryParam("fileName") String fileName) {
         if (queryString == null) {
-            throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
 
-        ParsedOperation parsedOperation = getParsedOperation(queryString);
+        return handleQuery(queryString, datasetRecordId, convertFileExtensionToMimeType(fileType), fileName,
+                acceptString);
+    }
 
-        String mimeType = convertFileExtensionToMimeType(fileType);
+    /**
+     * Retrieves the results of the provided SPARQL query. Can optionally limit the query to a Dataset.
+     * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
+     * For select queries the default type is JSON and for construct queries default type is Turtle.
+     * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
+     *
+     * @param queryString String representing a SPARQL query.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 results in mime type specified by accept header
+     */
+    @POST
+    @Consumes("application/sparql-query")
+    @Produces({XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE,
+            JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @RolesAllowed("user")
+    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
+    public Response postQueryRdf(
+            @QueryParam("dataset") String datasetRecordId,
+            @HeaderParam("accept") String acceptString,
+            String queryString) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("SPARQL query must be provided in request body.", Response.Status.BAD_REQUEST);
+        }
+
+        return handleQuery(queryString, datasetRecordId, acceptString, null, null);
+    }
+
+    /**
+     * Retrieves the results of the provided SPARQL.query Can optionally limit the query to a Dataset.
+     * Downloads a delimited, binary file, or text file with the results of the provided SPARQL query.
+     * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
+     * For select queries the default type is JSON and for construct queries default type is Turtle.
+     * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
+     * https://github.com/eclipse/rdf4j/blob/master/core/rio/api/src/main/java/org/eclipse/rdf4j/rio/RDFFormat.java
+     *
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param fileType used to specify certain media types which are acceptable for the response
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @param fileName The optional file name for the download file
+     * @return The SPARQL 1.1 Response in the format of fileType query parameter
+     */
+    @POST
+    @Consumes("application/sparql-query")
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
+    @RolesAllowed("user")
+    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
+    public Response postDownloadRdfQuery(
+            @QueryParam("dataset") String datasetRecordId,
+            @QueryParam("fileType") String fileType,
+            @HeaderParam("accept") String acceptString,
+            @DefaultValue("results") @QueryParam("fileName") String fileName,
+            String queryString) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("Body must contain a query.", Response.Status.BAD_REQUEST);
+        }
+
+        return handleQuery(queryString, datasetRecordId, convertFileExtensionToMimeType(fileType), fileName,
+                acceptString);
+    }
+
+    /**
+     * Retrieves the results of the provided SPARQL query. Can optionally limit the query to a Dataset.
+     * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
+     * For select queries the default type is JSON and for construct queries default type is Turtle.
+     * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
+     *
+     * @param queryString String representing a SPARQL query.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 results in mime type specified by accept header
+     */
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces({XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE,
+            JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @RolesAllowed("user")
+    @ResourceId(type = ValueType.BODY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
+    public Response postUrlEncodedQueryRdf(
+            @FormParam("query") String queryString,
+            @FormParam("dataset") String datasetRecordId,
+            @HeaderParam("accept") String acceptString) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("Form parameter 'query' must be set.", Response.Status.BAD_REQUEST);
+        }
+
+        return handleQuery(queryString, datasetRecordId, acceptString, null, null);
+    }
+
+    /**
+     * Retrieves the results of the provided SPARQL.query Can optionally limit the query to a Dataset.
+     * Downloads a delimited, binary file, or text file with the results of the provided SPARQL query.
+     * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
+     * For select queries the default type is JSON and for construct queries default type is Turtle.
+     * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
+     * https://github.com/eclipse/rdf4j/blob/master/core/rio/api/src/main/java/org/eclipse/rdf4j/rio/RDFFormat.java
+     *
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param fileType used to specify certain media types which are acceptable for the response
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @param fileName The optional file name for the download file
+     * @return The SPARQL 1.1 Response in the format of fileType query parameter
+     */
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "sparql",
+            operationId = "postRdfQuery",
+            summary = "Retrieves the results of the provided SPARQL query",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "The SPARQL 1.1 Response in the format of fileType query parameter",
+                            content = {
+                                    @Content(mediaType = "*/*"),
+                                    @Content(mediaType = TURTLE_MIME_TYPE),
+                                    @Content(mediaType = LDJSON_MIME_TYPE),
+                                    @Content(mediaType = RDFXML_MIME_TYPE),
+                                    @Content(mediaType = JSON_MIME_TYPE),
+                                    @Content(mediaType = XLSX_MIME_TYPE),
+                                    @Content(mediaType = XLS_MIME_TYPE),
+                                    @Content(mediaType = CSV_MIME_TYPE),
+                                    @Content(mediaType = TSV_MIME_TYPE),
+                                    @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
+                                    @Content(mediaType = "text/*"),
+                                    @Content(mediaType = "application/*")
+                            }
+                    ),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            },
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(
+                                    mediaType = "application/sparql-query",
+                                    schema = @Schema(
+                                            name = "query", type = "string",
+                                            description = "A sparql query",
+                                            example = "SELECT * WHERE { ?s ?p ?o . }"
+                                    )
+                            ),
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_FORM_URLENCODED,
+                                    schema = @Schema(implementation = EncodedParams.class)
+                            )
+                    }
+            ),
+            parameters = {
+                    @Parameter(name = "dataset", description = "Optional DatasetRecord IRI representing the Dataset to "
+                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
+                            in = ParameterIn.QUERY)
+            }
+    )
+    @ResourceId(type = ValueType.BODY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
+    public Response postUrlEncodedDownloadRdfQuery(
+            @FormParam("query") String queryString,
+            @FormParam("dataset") String datasetRecordId,
+            @Parameter(description = "Format of the downloaded results file when the `ACCEPT` header is set to "
+                    + "`application/octet-stream`",
+                    schema = @Schema(allowableValues = {"xlsx", "csv", "tsv", "ttl", "jsonld", "rdf", "json"}))
+            @QueryParam("fileType") String fileType,
+            @Parameter(hidden = true)
+            @HeaderParam("accept") String acceptString,
+            @Parameter(description = "File name of the downloaded results file when the `ACCEPT` header is set to "
+                    + "`application/octet-stream`")
+            @DefaultValue("results") @QueryParam("fileName") String fileName) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("Form parameter 'query' must be set.", Response.Status.BAD_REQUEST);
+        }
+
+        return handleQuery(queryString, datasetRecordId, convertFileExtensionToMimeType(fileType), fileName,
+                acceptString);
+    }
+
+    /**
+     * Retrieves the results of the provided SPARQL query, number of records limited to configurable
+     * limit field variable under SparqlRestConfig.
+     * Can optionally limit the query to a Dataset. Supports JSON, Turtle, JSON-LD, and RDF/XML mime types.
+     * For select queries the default type is JSON and for construct queries default type is Turtle.
+     * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
+     *
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 results in mime type specified by accept header
+     */
+    @GET
+    @Path("/limited-results")
+    @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "sparql",
+            summary = "Retrieves the limited results of the provided SPARQL query",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "The SPARQL 1.1 results in mime type specified by accept header",
+                            content = {
+                                    @Content(mediaType = "*/*"),
+                                    @Content(mediaType = TURTLE_MIME_TYPE),
+                                    @Content(mediaType = LDJSON_MIME_TYPE),
+                                    @Content(mediaType = RDFXML_MIME_TYPE),
+                                    @Content(mediaType = JSON_MIME_TYPE)
+                            }),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
+    public Response getLimitedResults(
+            @Parameter(description = "The SPARQL query to execute", required = true)
+            @QueryParam("query") String queryString,
+            @Parameter(description = "Optional DatasetRecord IRI representing the Dataset to query")
+            @QueryParam("dataset") String datasetRecordId,
+            @Parameter(hidden = true)
+            @HeaderParam("accept") String acceptString) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("Parameter 'query' must be set.", Response.Status.BAD_REQUEST);
+        }
+
+        return handleQueryEagerly(queryString, datasetRecordId, acceptString);
+    }
+
+    /**
+     * Retrieves the results of the provided SPARQL query, number of records limited to configurable
+     * limit field variable under SparqlRestConfig.
+     * Can optionally limit the query to a Dataset. Supports JSON, Turtle, JSON-LD, and RDF/XML mime types.
+     * For select queries the default type is JSON and for construct queries default type is Turtle.
+     * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
+     *
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 results in mime type specified by accept header
+     */
+    @POST
+    @Consumes("application/sparql-query")
+    @Path("/limited-results")
+    @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @RolesAllowed("user")
+    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
+    public Response postLimitedResults(@QueryParam("dataset") String datasetRecordId,
+                                       @HeaderParam("accept") String acceptString, String queryString) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("Body must contain a query.", Response.Status.BAD_REQUEST);
+        }
+
+        return handleQueryEagerly(queryString, datasetRecordId, acceptString);
+    }
+
+    /**
+     * Retrieves the results of the provided SPARQL query, number of records limited to configurable
+     * limit field variable under SparqlRestConfig.
+     * Can optionally limit the query to a Dataset. Supports JSON, Turtle, JSON-LD, and RDF/XML mime types.
+     * For select queries the default type is JSON and for construct queries default type is Turtle.
+     * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
+     *
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 results in mime type specified by accept header
+     */
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Path("/limited-results")
+    @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "sparql",
+            operationId = "postRdfQueryLimited",
+            summary = "Retrieves the results of the provided SPARQL query",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "The SPARQL 1.1 Response in the format of fileType query parameter",
+                            content = {
+                                    @Content(mediaType = "*/*"),
+                                    @Content(mediaType = TURTLE_MIME_TYPE),
+                                    @Content(mediaType = LDJSON_MIME_TYPE),
+                                    @Content(mediaType = RDFXML_MIME_TYPE),
+                                    @Content(mediaType = JSON_MIME_TYPE),
+                                    @Content(mediaType = XLSX_MIME_TYPE),
+                                    @Content(mediaType = XLS_MIME_TYPE),
+                                    @Content(mediaType = CSV_MIME_TYPE),
+                                    @Content(mediaType = TSV_MIME_TYPE),
+                                    @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
+                                    @Content(mediaType = "text/*"),
+                                    @Content(mediaType = "application/*")
+                            }
+                    ),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            },
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(
+                                    mediaType = "application/sparql-query",
+                                    schema = @Schema(
+                                            name = "query", type = "string",
+                                            description = "A sparql query",
+                                            example = "SELECT * WHERE { ?s ?p ?o . }"
+                                    )
+                            ),
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_FORM_URLENCODED,
+                                    schema = @Schema(implementation = EncodedParams.class)
+                            )
+                    }
+            ),
+            parameters = {
+                    @Parameter(name = "dataset", description = "Optional DatasetRecord IRI representing the Dataset to "
+                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
+                            in = ParameterIn.QUERY)
+            }
+    )
+    @ResourceId(type = ValueType.BODY, value = "dataset",defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
+    public Response postUrlEncodedLimitedResults(@FormParam("query") String queryString,
+                                                 @FormParam("dataset") String datasetRecordId,
+                                                 @Parameter(hidden = true) @HeaderParam("accept") String acceptString) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("Form parameter 'query' must be set.", Response.Status.BAD_REQUEST);
+        }
+
+        return handleQueryEagerly(queryString, datasetRecordId, acceptString);
+    }
+
+    /**
+     * Class used for OpenAPI documentation for encoded url endpoint.
+     */
+    private static class EncodedParams {
+        @Schema(type = "string", description = "The SPARQL query to execute", required = true)
+        public String query;
+        @Schema(type = "string", description = "Optional DatasetRecord IRI representing the Dataset to query")
+        public String dataset;
+    }
+
+    /**
+     * Handle SPARQL Query based on query type.
+     * Output: JSON, XLS, XLSX, CSV, TSV
+     *
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param mimeType used to specify certain media types which are acceptable for the response
+     * @param fileName The optional file name for the download file.
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
+     */
+    public Response handleQuery(String queryString, String datasetRecordId, String mimeType, String fileName,
+                                String acceptString) {
+        ParsedOperation parsedOperation = getParsedOperation(queryString);
 
         try {
             if (parsedOperation instanceof ParsedQuery) {
@@ -304,52 +642,22 @@ public class SparqlRest {
     }
 
     /**
-     * Retrieves the results of the provided SPARQL query, number of records limited to configurable
-     * limit field variable under SparqlRestConfig.
-     * Can optionally limit the query to a Dataset. Supports JSON, Turtle, JSON-LD, and RDF/XML mime types.
-     * For select queries the default type is JSON and for construct queries default type is Turtle.
-     * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
+     * Handle SPARQL Query eagerly based on query type.
+     * Output: JSON
      *
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param acceptString used to specify certain media types which are acceptable for the response
-     * @return The SPARQL 1.1 results in mime type specified by accept header
+     * @param mimeType used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
-    @GET
-    @Path("/limited-results")
-    @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
-    @RolesAllowed("user")
-    @Operation(
-            tags = "sparql",
-            summary = "Retrieves the limited results of the provided SPARQL query",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "The SPARQL 1.1 results in mime type specified by accept header"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
-    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
-    public Response getLimitedResults(
-            @Parameter(description = "The SPARQL query to execute", required = true)
-            @QueryParam("query") String queryString,
-            @Parameter(description = "Optional DatasetRecord IRI representing the Dataset to query")
-            @QueryParam("dataset") String datasetRecordId,
-            @Parameter(description = "Specify certain media types which are acceptable for the response",
-                    required = true)
-            @HeaderParam("accept") String acceptString) {
-        if (queryString == null) {
-            throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
-        }
-
+    public Response handleQueryEagerly(String queryString, String datasetRecordId, String mimeType) {
         ParsedOperation parsedOperation = getParsedOperation(queryString);
         try {
             if (parsedOperation instanceof ParsedQuery) {
                 if (parsedOperation instanceof ParsedTupleQuery) {
-                    return handleSelectQueryEagerly(queryString, datasetRecordId, acceptString, limitResults);
+                    return handleSelectQueryEagerly(queryString, datasetRecordId, mimeType, limitResults);
                 } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    return handleConstructQueryEagerly(queryString, datasetRecordId, acceptString, limitResults);
+                    return handleConstructQueryEagerly(queryString, datasetRecordId, mimeType, limitResults);
                 } else {
                     throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
                 }
@@ -367,9 +675,7 @@ public class SparqlRest {
                     .entity(entity.toString())
                     .build();
             throw ErrorUtils.sendError(ex, statusText, response);
-        } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        } catch (IOException ex) {
+        } catch (MobiException | IOException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -450,7 +756,7 @@ public class SparqlRest {
      */
     private Response handleSelectQueryEagerly(String queryString, String datasetRecordId, String mimeType, int limit)
             throws IOException {
-        if (mimeType == null || mimeType != JSON_MIME_TYPE) {
+        if (!JSON_MIME_TYPE.equals(mimeType)) {
             log.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", mimeType, JSON_MIME_TYPE));
         }
         return getSelectQueryResponseEagerly(queryString, datasetRecordId,
@@ -841,5 +1147,4 @@ public class SparqlRest {
             os.close();
         };
     }
-
 }
