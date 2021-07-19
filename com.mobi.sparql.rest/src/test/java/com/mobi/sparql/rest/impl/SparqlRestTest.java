@@ -38,10 +38,8 @@ import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.ResourceUtils;
-import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
-import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -78,8 +76,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -89,8 +89,6 @@ public class SparqlRestTest extends MobiRestTestNg {
     private Repository repo;
     private ValueFactory vf;
     private ModelFactory mf;
-    private SesameTransformer st;
-    private BNodeService bns;
 
     private String ALL_QUERY;
     private String CONSTRUCT_QUERY;
@@ -125,7 +123,6 @@ public class SparqlRestTest extends MobiRestTestNg {
     protected Application configureApp() throws Exception {
         vf = SimpleValueFactory.getInstance();
         mf = LinkedHashModelFactory.getInstance();
-        st = new SimpleSesameTransformer();
 
         SimpleBNodeService bns = new SimpleBNodeService();
         bns.setModelFactory(mf);
@@ -315,6 +312,127 @@ public class SparqlRestTest extends MobiRestTestNg {
     }
 
     @Test
+    public void postQueryRdfTest() {
+        Assert.assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        int minNumberOfInvocations = 0;
+
+        for (String dataset : datasets) {
+            for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
+                minNumberOfInvocations += 1;
+                String type = (String) mapEntry.getKey();
+                String[] dataArray = (String[]) mapEntry.getValue();
+                String mimeType = dataArray[0];
+
+                WebTarget webTarget = target().path(SPARQL_URL);
+
+                if (dataset != null) {
+                    webTarget = webTarget.queryParam("dataset", DATASET_ID);
+                }
+                Response response = webTarget.request().accept(mimeType).post(Entity.entity(
+                        ResourceUtils.decode(dataArray[1]), "application/sparql-query"));
+
+                assertEquals(response.getStatus(), 200);
+
+                verify(rest, atLeast(minNumberOfInvocations)).postQueryRdf(anyString(), anyString(), anyString());
+
+                if (dataset != null) {
+                    verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
+                    if (dataArray[1].equals(CONSTRUCT_QUERY)) {
+                        verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
+                    } else {
+                        verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
+                    }
+                } else {
+                    verify(repositoryManager, atLeastOnce()).getRepository("system");
+                }
+
+                MultivaluedMap<String, Object> headers = response.getHeaders();
+                assertEquals(headers.get("Content-Type").get(0), mimeType);
+
+                if (type.equals("sWrongType")) {
+                    type = "json";
+                } else if (type.equals("cWrongType")) {
+                    type = "ttl";
+                }
+
+                Assert.assertEquals(null, response.getHeaderString("Content-Disposition"));
+
+                if (type.equals("json")) {
+                    JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+                    assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
+                    assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+                } else {
+                    String responseString = response.readEntity(String.class);
+                    Assert.assertNotEquals(responseString, "");
+                }
+            }
+        }
+        Assert.assertEquals("Verify minNumberOfInvocations", 20, minNumberOfInvocations);
+    }
+
+    @Test
+    public void postUrlEncodedQueryRdfTest() {
+        Assert.assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        int minNumberOfInvocations = 0;
+
+        for (String dataset : datasets) {
+            for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
+                minNumberOfInvocations += 1;
+                String type = (String) mapEntry.getKey();
+                String[] dataArray = (String[]) mapEntry.getValue();
+                String mimeType = dataArray[0];
+
+                WebTarget webTarget = target().path(SPARQL_URL);
+
+                Form form = new Form();
+                form.param("query", ResourceUtils.decode(dataArray[1]));
+                if (dataset != null) {
+                    form.param("dataset", DATASET_ID);
+                }
+                Response response = webTarget.request().accept(mimeType).post(Entity.entity(form,
+                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+                assertEquals(response.getStatus(), 200);
+
+                verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedQueryRdf(anyString(), anyString(),
+                        anyString());
+
+                if (dataset != null) {
+                    verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
+                    if (dataArray[1].equals(CONSTRUCT_QUERY)) {
+                        verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
+                    } else {
+                        verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
+                    }
+                } else {
+                    verify(repositoryManager, atLeastOnce()).getRepository("system");
+                }
+
+                MultivaluedMap<String, Object> headers = response.getHeaders();
+                assertEquals(headers.get("Content-Type").get(0), mimeType);
+
+                if (type.equals("sWrongType")) {
+                    type = "json";
+                } else if (type.equals("cWrongType")) {
+                    type = "ttl";
+                }
+
+                Assert.assertEquals(null, response.getHeaderString("Content-Disposition"));
+
+                if (type.equals("json")) {
+                    JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+                    assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
+                    assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+                } else {
+                    String responseString = response.readEntity(String.class);
+                    Assert.assertNotEquals(responseString, "");
+                }
+            }
+        }
+        Assert.assertEquals("Verify minNumberOfInvocations", 20, minNumberOfInvocations);
+    }
+
+    @Test
     public void downloadQueryTest() {
         Assert.assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
@@ -339,6 +457,152 @@ public class SparqlRestTest extends MobiRestTestNg {
                     Response response = webTarget.request().get();
 
                     verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(),
+                            anyString(), anyString(), anyString());
+
+                    if (dataset != null) {
+                        verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
+                        if (dataArray[1].equals(CONSTRUCT_QUERY)) {
+                            verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
+                        } else {
+                            verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
+                        }
+                    } else {
+                        verify(repositoryManager, atLeastOnce()).getRepository("system");
+                    }
+
+                    MultivaluedMap<String, Object> headers = response.getHeaders();
+                    assertEquals(headers.get("Content-Type").get(0), dataArray[0]);
+
+                    if (type.equals("sWrongType")) {
+                        type = "json";
+                    } else if (type.equals("cWrongType")) {
+                        type = "ttl";
+                    }
+
+                    if (filename != null) {
+                        assertEquals(headers.get("Content-Disposition").get(0),
+                                "attachment;filename=" + filename + "." + type);
+                    } else {
+                        assertEquals(headers.get("Content-Disposition").get(0),
+                                "attachment;filename=results." + type);
+                    }
+
+                    assertEquals(response.getStatus(), 200);
+
+                    if (type.equals("json")) {
+                        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+                        assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
+                        assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+                    } else {
+                        String responseString = response.readEntity(String.class);
+                        Assert.assertNotEquals(responseString, "");
+                    }
+                }
+            }
+        }
+        Assert.assertEquals("Verify minNumberOfInvocations", 40, minNumberOfInvocations);
+    }
+
+    @Test
+    public void downloadQueryPostTest() {
+        Assert.assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        int minNumberOfInvocations = 0;
+        for (String filename : filenames) {
+            for (String dataset : datasets) {
+                for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
+                    minNumberOfInvocations += 1;
+
+                    String type = (String) mapEntry.getKey();
+                    String[] dataArray = (String[]) mapEntry.getValue();
+
+                    WebTarget webTarget = target().path(SPARQL_URL)
+                            .queryParam("fileType", type);
+
+                    if (filename != null) {
+                        webTarget = webTarget.queryParam("fileName", filename);
+                    }
+
+                    if (dataset != null) {
+                        webTarget = webTarget.queryParam("dataset", DATASET_ID);
+                    }
+                    Response response = webTarget.request().post(Entity.entity(ResourceUtils.decode(dataArray[1]),
+                            "application/sparql-query"));
+
+                    verify(rest, atLeast(minNumberOfInvocations)).postDownloadRdfQuery(anyString(), anyString(),
+                            anyString(), anyString(), anyString());
+
+                    if (dataset != null) {
+                        verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
+                        if (dataArray[1].equals(CONSTRUCT_QUERY)) {
+                            verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
+                        } else {
+                            verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
+                        }
+                    } else {
+                        verify(repositoryManager, atLeastOnce()).getRepository("system");
+                    }
+
+                    MultivaluedMap<String, Object> headers = response.getHeaders();
+                    assertEquals(headers.get("Content-Type").get(0), dataArray[0]);
+
+                    if (type.equals("sWrongType")) {
+                        type = "json";
+                    } else if (type.equals("cWrongType")) {
+                        type = "ttl";
+                    }
+
+                    if (filename != null) {
+                        assertEquals(headers.get("Content-Disposition").get(0),
+                                "attachment;filename=" + filename + "." + type);
+                    } else {
+                        assertEquals(headers.get("Content-Disposition").get(0),
+                                "attachment;filename=results." + type);
+                    }
+
+                    assertEquals(response.getStatus(), 200);
+
+                    if (type.equals("json")) {
+                        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+                        assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
+                        assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+                    } else {
+                        String responseString = response.readEntity(String.class);
+                        Assert.assertNotEquals(responseString, "");
+                    }
+                }
+            }
+        }
+        Assert.assertEquals("Verify minNumberOfInvocations", 40, minNumberOfInvocations);
+    }
+
+    @Test
+    public void downloadQueryPostUrlEncodedTest() {
+        Assert.assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        int minNumberOfInvocations = 0;
+        for (String filename : filenames) {
+            for (String dataset : datasets) {
+                for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
+                    minNumberOfInvocations += 1;
+
+                    String type = (String) mapEntry.getKey();
+                    String[] dataArray = (String[]) mapEntry.getValue();
+
+                    Form form = new Form();
+                    form.param("query", ResourceUtils.decode(dataArray[1]));
+                    if (dataset != null) {
+                        form.param("dataset", DATASET_ID);
+                    }
+
+                    WebTarget webTarget = target().path(SPARQL_URL)
+                            .queryParam("fileType", type);
+
+                    if (filename != null) {
+                        webTarget = webTarget.queryParam("fileName", filename);
+                    }
+
+                    Response response = webTarget.request().post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+                    verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedDownloadRdfQuery(anyString(), anyString(),
                             anyString(), anyString(), anyString());
 
                     if (dataset != null) {
@@ -638,6 +902,75 @@ public class SparqlRestTest extends MobiRestTestNg {
     }
 
     @Test
+    public void selectQueryPostDefaultLimitedTest() {
+        int minNumberOfInvocations = 0;
+        for (String dataset : datasets) {
+            minNumberOfInvocations += 1;
+            WebTarget webTarget = target().path(SPARQL_LIMITED_RESULTS_URL);
+
+            if (dataset != null) {
+                webTarget = webTarget.queryParam("dataset", DATASET_ID);
+            }
+
+            Response response = webTarget.request().post(Entity.entity(ResourceUtils.decode(ALL_QUERY),
+                    "application/sparql-query"));
+
+            verify(rest, atLeast(minNumberOfInvocations)).postLimitedResults(anyString(), anyString(), anyString());
+
+            if (dataset != null) {
+                verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
+                verify(datasetConnection).prepareTupleQuery(anyString());
+            } else {
+                verify(repositoryManager).getRepository("system");
+            }
+            assertEquals(response.getStatus(), 200);
+            assertEquals(response.getHeaderString("Content-Type"), MediaType.APPLICATION_JSON);
+            assertEquals(response.getHeaderString("X-LIMIT-EXCEEDED"), null);
+
+            String responseString = response.readEntity(String.class);
+            JSONObject result = JSONObject.fromObject(responseString);
+            assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
+            assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+        }
+    }
+
+    @Test
+    public void selectQueryPostUrlEncodedDefaultLimitedTest() {
+        int minNumberOfInvocations = 0;
+        for (String dataset : datasets) {
+            minNumberOfInvocations += 1;
+            WebTarget webTarget = target().path(SPARQL_LIMITED_RESULTS_URL);
+
+            Form form = new Form();
+            form.param("query", ResourceUtils.decode(ALL_QUERY));
+
+            if (dataset != null) {
+                form.param("dataset", DATASET_ID);
+            }
+
+            Response response = webTarget.request().post(Entity.entity(form,
+                    MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+            verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedLimitedResults(anyString(), anyString(), anyString());
+
+            if (dataset != null) {
+                verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
+                verify(datasetConnection).prepareTupleQuery(anyString());
+            } else {
+                verify(repositoryManager).getRepository("system");
+            }
+            assertEquals(response.getStatus(), 200);
+            assertEquals(response.getHeaderString("Content-Type"), MediaType.APPLICATION_JSON);
+            assertEquals(response.getHeaderString("X-LIMIT-EXCEEDED"), null);
+
+            String responseString = response.readEntity(String.class);
+            JSONObject result = JSONObject.fromObject(responseString);
+            assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
+            assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+        }
+    }
+
+    @Test
     public void selectQueryDefaultLimitExceededTest() {
         setupLargeRepo();
 
@@ -892,5 +1225,4 @@ public class SparqlRestTest extends MobiRestTestNg {
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(response.getStatus(), 500);
     }
-
 }

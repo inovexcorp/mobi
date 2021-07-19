@@ -516,6 +516,7 @@ export function mockSparqlManager() {
             this.query = jasmine.createSpy('query').and.returnValue($q.when({}));
             this.queryRdf = jasmine.createSpy('queryRdf');
             this.downloadResults = jasmine.createSpy('downloadResults');
+            this.downloadResultsPost = jasmine.createSpy('downloadResultsPost');
             this.setResults = jasmine.createSpy('setResults');
             this.pagedQuery = jasmine.createSpy('pagedQuery').and.returnValue($q.when({}));
         });

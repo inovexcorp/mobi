@@ -49,7 +49,7 @@ yasguiService.$inject = ['REST_PREFIX','sparqlManagerService', 'modalService', '
 
 function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discoverStateService, $window, utilService) {
     const self = this;
-    const defaultUrl : URL = new URL(REST_PREFIX + 'sparql/limited-results', $window.location.origin);;
+    const defaultUrl : URL = new URL(REST_PREFIX + 'sparql/limited-results', $window.location.origin);
     let yasgui : any = {};
     let customURL = null;
     let dataset = '';
@@ -268,29 +268,17 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
 
     // update yasr request configuration
     function setRequestConfig() {
-        let url =  customURL || getUrl();
+        let url =  customURL || defaultUrl.href;
         const { headers } = yasgui.getTab().getRequestConfig();
         headers.Accept = getFormat(yasgui.getTab().yasr.selectedPlugin);
-        yasgui.getTab().setRequestConfig({
-            endpoint: url, 
-            headers: headers
-        });
-    }
-
-    function getUrl(datSetUri = dataset) {
-        const searchValue = 'dataset';
-        if (datSetUri) {
-            if (!defaultUrl.searchParams.has(searchValue)) {
-                defaultUrl.searchParams.append(searchValue, datSetUri)
-            } else {
-                defaultUrl.searchParams.set(searchValue, datSetUri)
-            }
-        } else  {
-            if (defaultUrl.searchParams.has(searchValue)) {
-                defaultUrl.searchParams.delete(searchValue)
-            }
-        }
-        return defaultUrl.href;
+        headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        let requestConfig = {
+            endpoint: url,
+            headers: headers,
+            method: 'POST'
+        };
+        requestConfig['args'] = (dataset !== '') ? [{ name: 'dataset', value: dataset }] : [];
+        yasgui.getTab().setRequestConfig(requestConfig);
     }
 
     function refreshPluginData ()  {
@@ -302,9 +290,9 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
 
     function getDefaultConfig() {
         return {
-            requestConfig : {
-                method: 'GET',
-                endpoint: getUrl()
+            requestConfig: {
+                method: 'POST',
+                endpoint: defaultUrl.href
             },
             populateFromUrl: false,
             copyEndpointOnNewTab: false

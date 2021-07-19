@@ -121,9 +121,81 @@ module.exports = {
     'Step 11: Submit custom query' : function (browser) {
         browser
             .execute(function updateYasqe() {
-                var value = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n\
-                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> \n\
-                SELECT * WHERE { ?sub ?pred ?obj .}";
+                var value = 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \
+                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> \
+                     SELECT * WHERE { \
+                       #Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut \
+                        labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco \
+                        laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in \
+                        voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat \
+                        cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. \
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut \
+                         labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco \
+                         laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in \
+                         voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat \
+                         cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. \
+                         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt \
+                         ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation \
+                         ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in \
+                         reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. \
+                         Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit \
+                         anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do \
+                         eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis \
+                         nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute \
+                         irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla \
+                         pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia \
+                         deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing \
+                         elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim \
+                         veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \
+                         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat \
+                         nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia \
+                         deserunt mollit anim id est laborum. v Lorem ipsum dolor sit amet, consectetur adipiscing \
+                         elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim \
+                         veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \
+                         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat \
+                         nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia \
+                         deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing \
+                         elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim \
+                         veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \
+                         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat \
+                         nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia \
+                         deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing \
+                         elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim \
+                         veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \
+                         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat \
+                         nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia \
+                         deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing \
+                         elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim \
+                         veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \
+                         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat \
+                         nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia \
+                         deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing \
+                         elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim \
+                         veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \
+                         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat \
+                         nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia \
+                         deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing \
+                         elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim \
+                         veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \
+                         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat \
+                         nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia \
+                         deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing \
+                         elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim \
+                         veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \
+                         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat \
+                         nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia \
+                         deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing \
+                         elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim \
+                         veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \
+                         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat \
+                         nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia \
+                         deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing \
+                         elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim \
+                         veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \
+                         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat \
+                         nulla pariatur. \n \
+                       ?sub ?pred ?obj . \n \
+                     }';
                 document.getElementsByClassName('CodeMirror')[0].CodeMirror.setValue(value);
             }, [])
             .click('//query-tab//form//button')

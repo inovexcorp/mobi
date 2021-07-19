@@ -74,7 +74,7 @@ function downloadQueryOverlayComponentCtrl(sparqlManagerService) {
     }
 
     dvm.download = function() {
-        sparql.downloadResults(dvm.fileType, dvm.fileName);
+        sparql.downloadResultsPost(dvm.fileType, dvm.fileName);
         dvm.close();
     }
     dvm.cancel = function() {

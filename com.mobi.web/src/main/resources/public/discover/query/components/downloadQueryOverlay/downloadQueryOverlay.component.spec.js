@@ -63,7 +63,7 @@ describe('Download Query Overlay component', function() {
     describe('controller methods', function() {
         it('should download the results of a query', function() {
             this.controller.download();
-            expect(sparqlManagerSvc.downloadResults).toHaveBeenCalledWith(this.controller.fileType, this.controller.fileName);
+            expect(sparqlManagerSvc.downloadResultsPost).toHaveBeenCalledWith(this.controller.fileType, this.controller.fileName);
             expect(scope.close).toHaveBeenCalled();
         });
         it('should set the correct state for canceling', function() {

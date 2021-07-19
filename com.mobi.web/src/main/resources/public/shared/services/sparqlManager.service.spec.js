@@ -84,96 +84,195 @@ describe('SPARQL Manager service', function() {
                 this.dataset = 'dataset';
             });
             describe('when id is set', function() {
-                it('unless an error occurs', function() {
-                    httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
-                    sparqlManagerSvc.query(this.query, this.dataset, this.id).then(function() {
-                        fail('Promise should have rejected');
-                    });
-                    scope.$apply();
-                    expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: {query: this.query, dataset: this.dataset}}, this.id);
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                });
-                it('successfully', function() {
-                    httpSvc.get.and.returnValue($q.when({data: this.data}));
-                    var self = this;
-                    sparqlManagerSvc.query(this.query, this.dataset, this.id)
-                        .then(function(response) {
-                            expect(response).toEqual(self.data);
-                        }, function() {
-                            fail('Promise should have resolved');
+                describe('unless an error occurs', function() {
+                    it('via GET', function() {
+                        httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
+                        sparqlManagerSvc.query(this.query, this.dataset, this.id).then(function() {
+                            fail('Promise should have rejected');
                         });
-                    scope.$apply();
-                    expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: {query: this.query, dataset: this.dataset}}, this.id);
+                        scope.$apply();
+                        expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: {query: this.query, dataset: this.dataset}}, this.id);
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    });
+                    it('via POST', function() {
+                        httpSvc.post.and.returnValue($q.reject({statusText: 'Error Message'}));
+                        sparqlManagerSvc.postQuery(this.query, this.dataset, this.id).then(function() {
+                            fail('Promise should have rejected');
+                        });
+                        scope.$apply();
+                        expect(httpSvc.post).toHaveBeenCalledWith(this.url, this.query, {params: {dataset: this.dataset}}, this.id);
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    });
+                });
+                describe('successfully', function() {
+                    it('via GET', function() {
+                        httpSvc.get.and.returnValue($q.when({data: this.data}));
+                        var self = this;
+                        sparqlManagerSvc.query(this.query, this.dataset, this.id)
+                            .then(function(response) {
+                                expect(response).toEqual(self.data);
+                            }, function() {
+                                fail('Promise should have resolved');
+                            });
+                        scope.$apply();
+                        expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: {query: this.query, dataset: this.dataset}}, this.id);
+                    });
+                    it('via POST', function() {
+                        httpSvc.post.and.returnValue($q.when({data: this.data}));
+                        var self = this;
+                        sparqlManagerSvc.postQuery(this.query, this.dataset, this.id)
+                            .then(function(response) {
+                                expect(response).toEqual(self.data);
+                            }, function() {
+                                fail('Promise should have resolved');
+                            });
+                        scope.$apply();
+                        expect(httpSvc.post).toHaveBeenCalledWith(this.url, this.query, {params: {dataset: this.dataset}}, this.id);
+                    });
                 });
             });
             describe('when id is not set', function() {
-                it('unless an error occurs', function() {
-                    $httpBackend.expectGET(this.url + '?' + $httpParamSerializer({query: this.query})).respond(400, null, null, 'Error Message');
-                    sparqlManagerSvc.query(this.query)
-                        .then(function(response) {
-                            fail('Promise should have rejected');
-                        });
-                    flushAndVerify($httpBackend);
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                describe('unless an error occurs', function() {
+                    it('via GET', function() {
+                        $httpBackend.expectGET(this.url + '?' + $httpParamSerializer({query: this.query})).respond(400, null, null, 'Error Message');
+                        sparqlManagerSvc.query(this.query)
+                            .then(function(response) {
+                                fail('Promise should have rejected');
+                            });
+                        flushAndVerify($httpBackend);
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    });
+                    it('via POST', function() {
+                        $httpBackend.expectPOST(this.url).respond(400, null, null, 'Error Message');
+                        sparqlManagerSvc.postQuery(this.query)
+                            .then(function(response) {
+                                fail('Promise should have rejected');
+                            });
+                        flushAndVerify($httpBackend);
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    });
                 });
-                it('successfully', function() {
-                    $httpBackend.expectGET(this.url + '?' + $httpParamSerializer({query: this.query})).respond(200, this.data);
-                    var self = this;
-                    sparqlManagerSvc.query(this.query)
-                        .then(function(response) {
-                            expect(response).toEqual(self.data);
-                        }, function(error) {
-                            fail('Promise should have resolved');
-                        });
-                    flushAndVerify($httpBackend);
+                describe('successfully', function() {
+                    it('via GET', function() {
+                        $httpBackend.expectGET(this.url + '?' + $httpParamSerializer({query: this.query})).respond(200, this.data);
+                        var self = this;
+                        sparqlManagerSvc.query(this.query)
+                            .then(function(response) {
+                                expect(response).toEqual(self.data);
+                            }, function(error) {
+                                fail('Promise should have resolved');
+                            });
+                        flushAndVerify($httpBackend);
+                    });
+                    it('via POST', function() {
+                        $httpBackend.expectPOST(this.url).respond(200, this.data);
+                        var self = this;
+                        sparqlManagerSvc.postQuery(this.query)
+                            .then(function(response) {
+                                expect(response).toEqual(self.data);
+                            }, function(error) {
+                                fail('Promise should have resolved');
+                            });
+                        flushAndVerify($httpBackend);
+                    });
                 });
             });
         });
         describe('without a dataset', function() {
             describe('when id is set', function() {
-                it('unless an error occurs', function() {
-                    httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
-                    sparqlManagerSvc.query(this.query, '', this.id)
-                        .then(function() {
-                            fail('Promise should have rejected');
-                        });
-                    scope.$apply();
-                    expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: {query: this.query}}, this.id);
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                describe('unless an error occurs', function() {
+                    it('via GET', function() {
+                        httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
+                        sparqlManagerSvc.query(this.query, '', this.id)
+                            .then(function() {
+                                fail('Promise should have rejected');
+                            });
+                        scope.$apply();
+                        expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: {query: this.query}}, this.id);
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    });
+                    it('via POST', function() {
+                        httpSvc.post.and.returnValue($q.reject({statusText: 'Error Message'}));
+                        sparqlManagerSvc.postQuery(this.query, '', this.id)
+                            .then(function() {
+                                fail('Promise should have rejected');
+                            });
+                        scope.$apply();
+                        expect(httpSvc.post).toHaveBeenCalledWith(this.url, this.query, {params: {}}, this.id);
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    });
                 });
-                it('successfully', function() {
-                    httpSvc.get.and.returnValue($q.when({data: this.data}));
-                    var self = this;
-                    sparqlManagerSvc.query(this.query, '', this.id)
-                        .then(function(response) {
-                            expect(response).toEqual(self.data);
-                        }, function() {
-                            fail('Promise should have resolved');
-                        });
-                    scope.$apply();
-                    expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: {query: this.query}}, this.id);
+                describe('successfully', function() {
+                    it('via GET', function() {
+                        httpSvc.get.and.returnValue($q.when({data: this.data}));
+                        var self = this;
+                        sparqlManagerSvc.query(this.query, '', this.id)
+                            .then(function(response) {
+                                expect(response).toEqual(self.data);
+                            }, function() {
+                                fail('Promise should have resolved');
+                            });
+                        scope.$apply();
+                        expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: {query: this.query}}, this.id);
+                    });
+                    it('via POST', function() {
+                        httpSvc.post.and.returnValue($q.when({data: this.data}));
+                        var self = this;
+                        sparqlManagerSvc.postQuery(this.query, '', this.id)
+                            .then(function(response) {
+                                expect(response).toEqual(self.data);
+                            }, function() {
+                                fail('Promise should have resolved');
+                            });
+                        scope.$apply();
+                        expect(httpSvc.post).toHaveBeenCalledWith(this.url, this.query, {params: {}}, this.id);
+                    });
                 });
             });
             describe('when id is not set', function() {
-                it('unless an error occurs', function() {
-                    $httpBackend.expectGET(this.url + '?' + $httpParamSerializer({query: this.query})).respond(400, null, null, 'Error Message');
-                    sparqlManagerSvc.query(this.query)
-                        .then(function(response) {
-                            fail('Promise should have rejected');
-                        });
-                    flushAndVerify($httpBackend);
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                describe('unless an error occurs', function() {
+                    it('via GET', function() {
+                        $httpBackend.expectGET(this.url + '?' + $httpParamSerializer({query: this.query})).respond(400, null, null, 'Error Message');
+                        sparqlManagerSvc.query(this.query)
+                            .then(function(response) {
+                                fail('Promise should have rejected');
+                            });
+                        flushAndVerify($httpBackend);
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    });
+                    it('via POST', function() {
+                        $httpBackend.expectPOST(this.url).respond(400, null, null, 'Error Message');
+                        sparqlManagerSvc.postQuery(this.query)
+                            .then(function(response) {
+                                fail('Promise should have rejected');
+                            });
+                        flushAndVerify($httpBackend);
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    });
                 });
                 it('successfully', function() {
-                    $httpBackend.expectGET(this.url + '?' + $httpParamSerializer({query: this.query})).respond(200, this.data);
-                    var self = this;
-                    sparqlManagerSvc.query(this.query)
-                        .then(function(response) {
-                            expect(response).toEqual(self.data);
-                        }, function(error) {
-                            fail('Promise should have resolved');
-                        });
-                    flushAndVerify($httpBackend);
+                    it('via GET', function() {
+                        $httpBackend.expectGET(this.url + '?' + $httpParamSerializer({query: this.query})).respond(200, this.data);
+                        var self = this;
+                        sparqlManagerSvc.query(this.query)
+                            .then(function(response) {
+                                expect(response).toEqual(self.data);
+                            }, function(error) {
+                                fail('Promise should have resolved');
+                            });
+                        flushAndVerify($httpBackend);
+                    });
+                    it('via POST', function() {
+                        $httpBackend.expectPOST(this.url).respond(200, this.data);
+                        var self = this;
+                        sparqlManagerSvc.postQuery(this.query)
+                            .then(function(response) {
+                                expect(response).toEqual(self.data);
+                            }, function(error) {
+                                fail('Promise should have resolved');
+                            });
+                        flushAndVerify($httpBackend);
+                    });
                 });
             });
         });
@@ -329,24 +428,45 @@ describe('SPARQL Manager service', function() {
     describe('should download query results', function() {
         beforeEach(function() {
             this.params.fileType = 'csv';
+            this.url = '/mobirest/sparql';
+            this.data = {head: {}};
         });
-        it('with a dataset', function() {
-            sparqlManagerSvc.datasetRecordIRI = 'dataset';
-            this.params.dataset = sparqlManagerSvc.datasetRecordIRI;
-            sparqlManagerSvc.downloadResults(this.params.fileType);
-            expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/sparql?' + $httpParamSerializer(this.params));
-        });
-        it('with a file name', function() {
-            this.params.fileName = 'test';
-            sparqlManagerSvc.downloadResults(this.params.fileType, this.params.fileName);
-            expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/sparql?' + $httpParamSerializer(this.params));
-        });
-        it('without a file name', function() {
-            sparqlManagerSvc.downloadResults(this.params.fileType);
-            expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/sparql?' + $httpParamSerializer(this.params));
+        describe('via GET', function() {
+            it('with a dataset', function() {
+                sparqlManagerSvc.datasetRecordIRI = 'dataset';
+                this.params.dataset = sparqlManagerSvc.datasetRecordIRI;
+                sparqlManagerSvc.downloadResults(this.params.fileType);
+                expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/sparql?' + $httpParamSerializer(this.params));
+            });
+            it('with a file name', function() {
+                this.params.fileName = 'test';
+                sparqlManagerSvc.downloadResults(this.params.fileType, this.params.fileName);
+                expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/sparql?' + $httpParamSerializer(this.params));
+            });
+            it('without a file name', function() {
+                sparqlManagerSvc.downloadResults(this.params.fileType);
+                expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/sparql?' + $httpParamSerializer(this.params));
 
-            sparqlManagerSvc.downloadResults(this.params.fileType, '');
-            expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/sparql?' + $httpParamSerializer(this.params));
+                sparqlManagerSvc.downloadResults(this.params.fileType, '');
+                expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/sparql?' + $httpParamSerializer(this.params));
+            });
+        });
+        describe('via POST', function() {
+            it('with a dataset', function() {
+                $httpBackend.expectPOST(this.url).respond(200, this.data);
+                sparqlManagerSvc.datasetRecordIRI = 'dataset';
+                this.params.dataset = sparqlManagerSvc.datasetRecordIRI;
+                sparqlManagerSvc.downloadResultsPost(this.params.fileType);
+            });
+            it('with a file name', function() {
+                $httpBackend.expectPOST(this.url).respond(200, this.data);
+                this.params.fileName = 'test';
+                sparqlManagerSvc.downloadResultsPost(this.params.fileType, this.params.fileName);
+            });
+            it('without a file name', function() {
+                $httpBackend.expectPOST(this.url).respond(200, this.data);
+                sparqlManagerSvc.downloadResultsPost(this.params.fileType);
+            });
         });
     });
 });

@@ -71,6 +71,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import javax.annotation.Priority;
@@ -79,6 +80,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
@@ -247,17 +249,37 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                     resourceIdIri = vf.createIRI(queryParameters.getFirst(resourceValueStr));
                     break;
                 case BODY:
-                    FormDataMultiPart form = getFormData(context);
-                    validateFormParam(resourceValueStr, form, true);
-                    resourceIdIri = vf.createIRI(form.getField(resourceValueStr).getValue());
-                    break;
+                    if (context instanceof ContainerRequest) {
+                        ContainerRequest request = (ContainerRequest) context;
+                        if (request.hasEntity()) {
+                            if (MediaTypes.typeEqual(MediaType.MULTIPART_FORM_DATA_TYPE, request.getMediaType())) {
+                                FormDataMultiPart form = getFormDataMultiPart(request);
+                                validateFormDataMultipartParam(resourceValueStr, form, true);
+                                resourceIdIri = vf.createIRI(form.getField(resourceValueStr).getValue());
+                                break;
+                            } else if (MediaTypes.typeEqual(MediaType.APPLICATION_FORM_URLENCODED_TYPE,
+                                    request.getMediaType())) {
+                                Form form = getFormData(request);
+                                validateFormParam(resourceValueStr, form, true);
+                                List<String> resourceVal = form.asMap().get(resourceValueStr);
+                                if (resourceVal == null) {
+                                    throw ErrorUtils.sendError("Could not find request resource",
+                                            INTERNAL_SERVER_ERROR);
+                                }
+                                resourceIdIri = vf.createIRI(resourceVal.get(0));
+                                break;
+                            }
+                        }
+                    }
+                    throw ErrorUtils.sendError("Expected Request to have form data", INTERNAL_SERVER_ERROR);
                 case PROP_PATH:
                     IRI pathStart = getPropPathStart(validatePropPathValue(resourceIdAnnotation.start()),
                             pathParameters, queryParameters, context, true);
                     try (RepositoryConnection conn = repository.getConnection()) {
                         TupleQueryResult result = getPropPathResult(pathStart, resourceIdAnnotation.value(), conn);
                         if (!result.hasNext()) {
-                            throw ErrorUtils.sendError("No results returned for property path", INTERNAL_SERVER_ERROR);
+                            throw ErrorUtils.sendError("No results returned for property path",
+                                    INTERNAL_SERVER_ERROR);
                         }
                         resourceIdIri = (IRI) Bindings.requiredResource(result.next(), "value");
                     }
@@ -323,7 +345,14 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         return params.containsKey(key);
     }
 
-    private boolean validateFormParam(String key, FormDataMultiPart params, boolean isRequired) {
+    private boolean validateFormParam(String key, Form params, boolean isRequired) {
+        if (!params.asMap().containsKey(key) && isRequired) {
+            throw ErrorUtils.sendError("Form parameters do not contain " + key, INTERNAL_SERVER_ERROR);
+        }
+        return params.asMap().containsKey(key);
+    }
+
+    private boolean validateFormDataMultipartParam(String key, FormDataMultiPart params, boolean isRequired) {
         if (params.getField(key) == null && isRequired) {
             throw ErrorUtils.sendError("Form parameters do not contain " + key, INTERNAL_SERVER_ERROR);
         }
@@ -338,16 +367,14 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         return values[0];
     }
 
-    private FormDataMultiPart getFormData(ContainerRequestContext context) {
-        if (context instanceof ContainerRequest) {
-            ContainerRequest request = (ContainerRequest) context;
-            if (request.hasEntity()
-                    && MediaTypes.typeEqual(MediaType.MULTIPART_FORM_DATA_TYPE, request.getMediaType())) {
-                request.bufferEntity();
-                return request.readEntity(FormDataMultiPart.class);
-            }
-        }
-        throw ErrorUtils.sendError("Expected Request to have form data", INTERNAL_SERVER_ERROR);
+    private Form getFormData(ContainerRequest request) {
+        request.bufferEntity();
+        return request.readEntity(Form.class);
+    }
+
+    private FormDataMultiPart getFormDataMultiPart(ContainerRequest request) {
+        request.bufferEntity();
+        return request.readEntity(FormDataMultiPart.class);
     }
 
     private void setAttributes(Map<String, Literal> attrs, AttributeValue[] values,
@@ -371,11 +398,33 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                                     : null;
                             break;
                         case BODY:
-                            FormDataMultiPart form = getFormData(context);
-                            value = validateFormParam(valueStr, form, isRequired)
-                                    ? getLiteral(form.getField(valueStr).getValue(), datatype)
-                                    : null;
-                            break;
+                            if (context instanceof ContainerRequest) {
+                                ContainerRequest request = (ContainerRequest) context;
+                                if (request.hasEntity()) {
+                                    if (MediaTypes.typeEqual(MediaType.MULTIPART_FORM_DATA_TYPE,
+                                            request.getMediaType())) {
+                                        FormDataMultiPart form = getFormDataMultiPart(request);
+                                        value = validateFormDataMultipartParam(valueStr, form, true)
+                                                ? getLiteral(form.getField(valueStr).getValue(), datatype)
+                                                : null;
+                                        break;
+                                    } else if (MediaTypes.typeEqual(MediaType.APPLICATION_FORM_URLENCODED_TYPE,
+                                            request.getMediaType())) {
+                                        Form form = getFormData(request);
+                                        validateFormParam(valueStr, form, true);
+                                        List<String> resourceVal = form.asMap().get(valueStr);
+                                        if (resourceVal == null) {
+                                            throw ErrorUtils.sendError("Could not find request resource",
+                                                    INTERNAL_SERVER_ERROR);
+                                        }
+                                        value = validateFormParam(valueStr, form, true)
+                                                ? getLiteral(form.asMap().get(valueStr).get(0), datatype)
+                                                : null;
+                                        break;
+                                    }
+                                }
+                            }
+                            throw ErrorUtils.sendError("Expected Request to have form data", INTERNAL_SERVER_ERROR);
                         case PROP_PATH:
                             IRI pathStart = getPropPathStart(validatePropPathValue(attributeValue.start()),
                                     pathParameters, queryParameters, context, isRequired);
@@ -425,11 +474,32 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                         : null;
                 break;
             case BODY:
-                FormDataMultiPart form = getFormData(context);
-                propPathStart = validateFormParam(propPathValue, form, isRequired)
-                        ? vf.createIRI(form.getField(propPathValue).getValue())
-                        : null;
-                break;
+                if (context instanceof ContainerRequest) {
+                    ContainerRequest request = (ContainerRequest) context;
+                    if (request.hasEntity()) {
+                        if (MediaTypes.typeEqual(MediaType.MULTIPART_FORM_DATA_TYPE, request.getMediaType())) {
+                            FormDataMultiPart form = getFormDataMultiPart(request);
+                            propPathStart = validateFormDataMultipartParam(propPathValue, form, true)
+                                    ? vf.createIRI(form.getField(propPathValue).getValue())
+                                    : null;
+                            break;
+                        } else if (MediaTypes.typeEqual(MediaType.APPLICATION_FORM_URLENCODED_TYPE,
+                                request.getMediaType())) {
+                            Form form = getFormData(request);
+                            validateFormParam(propPathValue, form, true);
+                            List<String> resourceVal = form.asMap().get(propPathValue);
+                            if (resourceVal == null) {
+                                throw ErrorUtils.sendError("Could not find request resource",
+                                        INTERNAL_SERVER_ERROR);
+                            }
+                            propPathStart = validateFormParam(propPathValue, form, true)
+                                    ? vf.createIRI(form.asMap().get(propPathValue).get(0))
+                                    : null;
+                            break;
+                        }
+                    }
+                }
+                throw ErrorUtils.sendError("Expected Request to have form data", INTERNAL_SERVER_ERROR);
             case PROP_PATH:
                 throw ErrorUtils.sendError("Property Path not supported as a property path starting point",
                         INTERNAL_SERVER_ERROR);

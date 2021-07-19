@@ -22,7 +22,7 @@
  */
 import { has, get, join } from 'lodash';
 
-sparqlManagerService.$inject = ['$http', '$q', '$httpParamSerializer', 'utilService', 'httpService', 'REST_PREFIX'];
+sparqlManagerService.$inject = ['$http', '$q', '$httpParamSerializer', '$rootScope', 'utilService', 'httpService', 'REST_PREFIX'];
 
 /**
  * @ngdoc service
@@ -34,7 +34,7 @@ sparqlManagerService.$inject = ['$http', '$q', '$httpParamSerializer', 'utilServ
  * `sparqlManagerService` is a service that provides access to the Mobi SPARQL query
  * REST endpoint and various state variables for the SPARQL Editor.
  */
-function sparqlManagerService($http, $q, $httpParamSerializer, utilService, httpService, REST_PREFIX) {
+function sparqlManagerService($http, $q, $httpParamSerializer, $rootScope, utilService, httpService, REST_PREFIX) {
     var prefix = REST_PREFIX + 'sparql';
     var self = this;
     var util = utilService;
@@ -217,6 +217,31 @@ function sparqlManagerService($http, $q, $httpParamSerializer, utilService, http
         var promise = id ? httpService.get(prefix, config, id) : $http.get(prefix, config);
         return promise.then(response => response.data, util.rejectError);
     }
+
+    /**
+     * @ngdoc method
+     * @name postQuery
+     * @methodOf shared.service:sparqlManagerService
+     *
+     * @description
+     * Calls the POST /sparql REST endpoint to conduct a SPARQL query using the provided query
+     * and optionally using the provided DatasetRecord IRI to limit the query to a dataset.
+     *
+     * @param {string} query The SPARQL query string to submit
+     * @param {string} datasetRecordIRI The IRI of the DatasetRecord to restrict the query to
+     * @param {string} id The identifier for this call
+     * @return {Promise} A Promise that resolves to the data from the response or rejects with an
+     * error message.
+     */
+    self.postQuery = function(query, datasetRecordIRI = '', id = '') {
+        var config: any = { params: { } };
+        if (datasetRecordIRI) {
+            config.params.dataset = datasetRecordIRI;
+        }
+        var promise = id ? httpService.post(prefix, query, config, id) : $http.post(prefix, query, config);
+        return promise.then(response => response.data, util.rejectError);
+    }
+
     /**
      * @ngdoc method
      * @name pagedQuery
@@ -252,6 +277,7 @@ function sparqlManagerService($http, $q, $httpParamSerializer, utilService, http
         var promise = has(paramObj, 'id') ? httpService.get(url, config, paramObj.id) : $http.get(url, config);
         return promise.then($q.when, util.rejectError);
     }
+
     /**
      * @ngdoc method
      * @name downloadResults
@@ -281,6 +307,58 @@ function sparqlManagerService($http, $q, $httpParamSerializer, utilService, http
         }
         util.startDownload(prefix + '?' + $httpParamSerializer(paramsObj));
     }
+
+    /**
+     * @ngdoc method
+     * @name downloadResultsPost
+     * @methodOf shared.service:sparqlManagerService
+     *
+     * @description
+     * Calls the POST /mobirest/sparql endpoint with an Accept Header of application/octet-stream which
+     * will start a download of the results of running the current
+     * {@link shared.service:sparqlManagerService#queryString query} and
+     * {@link shared.service:sparqlManagerService#prefixes prefixes}, optionally using
+     * the selected {@link shared.service:sparqlManagerService#datasetRecordIRI dataset},
+     * in the specified file type with an optional file name.
+     *
+     * @param {string} fileType The type of file to download based on file extension
+     * @param {string=''} fileName The optional name of the downloaded file
+     */
+    self.downloadResultsPost = function(fileType, fileName = '') {
+        const config: any = {
+            params: { 
+                fileType, fileName 
+            },
+            headers: {
+                'Accept': 'application/octet-stream',
+                'Content-Type': 'application/sparql-query'
+            },
+            responseType: 'arraybuffer'
+        };
+        
+        if (self.datasetRecordIRI) {
+            config.params.dataset = self.datasetRecordIRI;
+        }
+        
+        $rootScope.isDownloading = true;
+        const promise = $http.post(prefix, getPrefixString() + this.queryString, config);
+
+        return promise.then(response => {
+            const file = new Blob([response.data], {
+                type: response.headers('content-type')
+            });
+            const fileURL = URL.createObjectURL(file);
+            const a = document.createElement('a');
+            a.href = fileURL;
+            a.target = '_blank';
+            a.download = fileName;
+            document.body.appendChild(a); //create the link "a"
+            a.click(); //click the link "a"
+            document.body.removeChild(a); //remove the link "a"
+            return response.data;
+        }, util.rejectError);
+    };
+
     self.initialQueryRdf = function() {
         self.currentPage = 1;
         self.data = undefined;
