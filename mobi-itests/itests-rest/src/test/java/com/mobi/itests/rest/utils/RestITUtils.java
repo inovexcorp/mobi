@@ -26,13 +26,22 @@ package com.mobi.itests.rest.utils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicAuthCache;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 
@@ -52,6 +61,25 @@ public class RestITUtils {
         builder.loadTrustMaterial(null, (TrustStrategy) (chain, authType) -> true);
         SSLConnectionSocketFactory factory = new SSLConnectionSocketFactory(builder.build(), (s, sslSession) -> true);
         return HttpClients.custom().setSSLSocketFactory(factory).build();
+    }
+
+    public static CloseableHttpClient createBasicAuthHttpClient(HttpClientContext context, int port) throws GeneralSecurityException {
+        SSLContextBuilder builder = new SSLContextBuilder();
+        builder.loadTrustMaterial(null, (TrustStrategy) (chain, authType) -> true);
+        SSLConnectionSocketFactory factory = new SSLConnectionSocketFactory(builder.build(), (s, sslSession) -> true);
+        CredentialsProvider provider = new BasicCredentialsProvider();
+        UsernamePasswordCredentials credentials
+                = new UsernamePasswordCredentials(username, password);
+        provider.setCredentials(AuthScope.ANY, credentials);
+
+        AuthCache authCache = new BasicAuthCache();
+
+        BasicScheme basicAuth = new BasicScheme();
+        authCache.put(new HttpHost("localhost", port, "https"), basicAuth);
+
+        context.setCredentialsProvider(provider);
+        context.setAuthCache(authCache);
+        return HttpClients.custom().setSSLSocketFactory(factory).setDefaultCredentialsProvider(provider).build();
     }
 
     public static void authenticateUser(HttpClientContext context, String port)
