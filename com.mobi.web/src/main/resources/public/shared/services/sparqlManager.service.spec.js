@@ -250,7 +250,7 @@ describe('SPARQL Manager service', function() {
                         expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                     });
                 });
-                it('successfully', function() {
+                describe('successfully', function() {
                     it('via GET', function() {
                         $httpBackend.expectGET(this.url + '?' + $httpParamSerializer({query: this.query})).respond(200, this.data);
                         var self = this;
