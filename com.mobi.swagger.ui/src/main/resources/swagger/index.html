@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8">
     <title>Swagger UI</title>
-    <link rel="stylesheet" type="text/css" href="./swagger-ui.css" >
+    <link rel="stylesheet" type="text/css" href="./swagger-ui.css" />
     <link rel="icon" type="image/png" href="./favicon-32x32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="./favicon-16x16.png" sizes="16x16" />
     <style>
@@ -61,16 +61,36 @@
                     }
                 }
             }
-        }
+          }
         ],
         layout: "StandaloneLayout",
         apisSorter: "alpha",
-        operationsSorter: "alpha"
-      })
+        operationsSorter: "alpha",
+        requestInterceptor: function(request) {
+          if('headers' in request){
+            const contentType = request.headers['content-type'] || request.headers['Content-Type'];
+            if(contentType === 'multipart/form-data' && 'body' in request){
+              const newFormData = new FormData();
+              for (const [key, value] of request.body.entries()) {
+                if(key.endsWith('s') && (typeof value === 'string' || value instanceof String)){
+                  const splitValueArray = value.split(',');
+                  for ( splitValue of splitValueArray ){
+                     newFormData.append(key, splitValue);
+                  }
+                } else {
+                  newFormData.append(key, value);
+                }
+              }
+              request.body = newFormData;
+              return request;
+            }
+          }
+        } // end requestInterceptor
+      });
       // End Swagger UI call region
 
-      window.ui = ui
-    }
+      window.ui = ui;
+    };
   </script>
   </body>
 </html>
