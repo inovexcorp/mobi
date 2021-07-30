@@ -83,6 +83,18 @@ function createObjectPropertyOverlayComponentCtrl($filter, ontologyStateService,
             typeIRI: prefixes.owl + 'TransitiveProperty',
             displayText: 'Transitive Property',
             objectOnly: true
+        },
+        {
+            checked: false,
+            typeIRI: prefixes.owl + 'ReflexiveProperty',
+            displayText: 'Reflexive Property',
+            objectOnly: true
+        },
+        {
+            checked: false,
+            typeIRI: prefixes.owl + 'IrreflexiveProperty',
+            displayText: 'Irreflexive Property',
+            objectOnly: true
         }
     ];
     dvm.prefixes = prefixes;
