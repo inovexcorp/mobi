@@ -33,13 +33,7 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.repository.base.RepositoryResult;
-import com.mobi.query.api.*;
-import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.exception.RepositoryException;
 
 public interface RepositoryConnection extends AutoCloseable {
