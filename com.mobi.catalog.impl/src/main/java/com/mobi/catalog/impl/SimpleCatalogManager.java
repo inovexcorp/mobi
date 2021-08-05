@@ -314,12 +314,14 @@ public class SimpleCatalogManager implements CatalogManager {
             Optional<String> searchTextParam = searchParams.getSearchText();
 
             // Get Total Count
-            TupleQuery countQuery = conn.prepareTupleQuery(replaceKeywordFilter(searchParams, COUNT_RECORDS_QUERY));
-            countQuery.setBinding(CATALOG_BINDING, catalogId);
-            typeParam.ifPresent(resource -> countQuery.setBinding(TYPE_FILTER_BINDING, resource));
-            searchTextParam.ifPresent(s -> countQuery.setBinding(SEARCH_BINDING, vf.createLiteral(s)));
+            String countQuery = replaceKeywordFilter(searchParams, COUNT_RECORDS_QUERY);
+            log.debug("Count Query String:\n" + countQuery);
+            TupleQuery countTupleQuery = conn.prepareTupleQuery(countQuery);
+            countTupleQuery.setBinding(CATALOG_BINDING, catalogId);
+            typeParam.ifPresent(resource -> countTupleQuery.setBinding(TYPE_FILTER_BINDING, resource));
+            searchTextParam.ifPresent(s -> countTupleQuery.setBinding(SEARCH_BINDING, vf.createLiteral(s)));
 
-            TupleQueryResult countResults = countQuery.evaluate();
+            TupleQueryResult countResults = countTupleQuery.evaluate();
 
             int totalCount;
             BindingSet countBindingSet;
@@ -392,7 +394,11 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
-    private String replaceKeywordFilter(PaginatedSearchParams searchParams, String queryString) {
+    protected static String escapeKeyword(String keyword){
+        return keyword.replace("\\", "\\\\").replace("'", "\\'");
+    }
+
+    protected static String replaceKeywordFilter(PaginatedSearchParams searchParams, String queryString) {
         if (searchParams.getKeywords().isPresent()) {
             StringBuilder keywordFilter = new StringBuilder();
             keywordFilter.append("?record mcat:keyword ?keyword .\n");
@@ -401,9 +407,7 @@ public class SimpleCatalogManager implements CatalogManager {
             List<String> tempKeywords = searchParams.getKeywords().get();
 
             for (int i = 0; i < tempKeywords.size(); i++) {
-                keywordFilter.append("'");
-                keywordFilter.append(tempKeywords.get(i));
-                keywordFilter.append("'");
+                keywordFilter.append(String.format("'%s'" ,escapeKeyword(tempKeywords.get(i))));
 
                 if (i < tempKeywords.size() - 1) {
                     keywordFilter.append(",");
