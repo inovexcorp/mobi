@@ -287,7 +287,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
             config.params.type = paginatedConfig.recordType;
         }
         if (get(paginatedConfig, 'keywords')) {
-           config.params.keywords = encodeURIComponent(paginatedConfig.keywords.join(','));
+           config.params.keywords = paginatedConfig.keywords;
         }
         const url = prefix + '/' + encodeURIComponent(catalogId) + '/records';
         const promise = id ? httpService.get(url, config, id) : $http.get(url, config);

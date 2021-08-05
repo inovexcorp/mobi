@@ -31,7 +31,7 @@ var CatalogPage = function() {
     this.recordsViewCssSelector = 'catalog-page records-view';
     this.recordViewCssSelector = 'catalog-page record-view';
     this.recordFiltersCssSelector = this.recordsViewCssSelector + ' record-filters';
-    this.recordsViewSearchBarCssSelector = this.recordsViewCssSelector + ' search-bar input'
+    this.recordsViewSearchBarCssSelector = this.recordsViewCssSelector + ' div.d-flex search-bar input'
     this.recordBodyTitleSelector = this.recordViewCssSelector + ' div.record-body h2.record-title div.inline-edit';
     this.recordBodyDescriptionSelector = this.recordViewCssSelector + ' div.record-body p inline-edit';
 
@@ -71,13 +71,40 @@ CatalogPage.prototype.openRecordItem = function(browser, titleOfRecord) {
     browser.expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain(titleOfRecord);
 };
 
-CatalogPage.prototype.changeRecordDescription = function(browser, titleOfRecord, description) {
-    browser.expect.element(this.recordBodyTitleSelector).text.to.contain(titleOfRecord);
-    browser
-        .click('css selector', this.recordBodyDescriptionSelector, function(result) { this.assert.strictEqual(result.status, 0) })
-        .setValue(this.recordBodyDescriptionSelector + ' textarea', [description, browser.Keys.ENTER])
-    browser.expect.element(this.recordBodyDescriptionSelector).text.to.contain(description);
+CatalogPage.prototype.changeRecordFields = function(browser, titleOfRecord, changeObj) {
+    if('description' in changeObj) {
+        var description = changeObj.description;
+        browser.expect.element(this.recordBodyTitleSelector).text.to.contain(titleOfRecord);
+        browser
+            .click('css selector', this.recordBodyDescriptionSelector, function(result) { this.assert.strictEqual(result.status, 0) })
+            .setValue(this.recordBodyDescriptionSelector + ' textarea', [description, browser.Keys.ENTER])
+            .waitForElementNotPresent('div.spinner');
+        browser.expect.element(this.recordBodyDescriptionSelector).text.to.contain(description);
+    }
+
+    if('keywords' in changeObj) {
+        var keywords = changeObj.keywords;
+        browser.expect.element(this.recordBodyTitleSelector).text.to.contain(titleOfRecord);
+        browser
+            .click('css selector', 'catalog-page record-view catalog-record-keywords', function(result) { this.assert.strictEqual(result.status, 0) })
+            .waitForElementNotPresent('div.spinner');
+
+        for(var keyword in keywords){ // keyword acts like index number instead of value
+            browser.setValue('catalog-page record-view catalog-record-keywords keyword-select input', [keywords[keyword], browser.Keys.ENTER]);
+        }
+
+        browser
+            .click('css selector', 'catalog-page record-view catalog-record-keywords a', function(result) { this.assert.strictEqual(result.status, 0) })
+            .waitForElementNotPresent('div.spinner');
+    }
 }
+
+CatalogPage.prototype.leaveCatalogRecord = function(browser, titleOfRecord, changeObj) {
+    browser
+        .click('css selector', 'catalog-page record-view div button', function(result) { this.assert.strictEqual(result.status, 0) })
+        .waitForElementNotPresent('div.spinner')
+        .waitForElementVisible(this.recordsViewSearchBarCssSelector);
+};
 
 // verifyRecordFilters is used to verify filters on the catalog page,
 // noKeywords is a boolean value to check if page has available keywords
@@ -102,7 +129,6 @@ CatalogPage.prototype.verifyRecordFilters = function(browser, noKeywords) {
     } else {
         browser.expect.element(this.recordFiltersCssSelector + ' info-message p').to.not.be.present;
     }
-
 };
 
 CatalogPage.prototype.verifyRecordList = function(browser) {
@@ -110,11 +136,29 @@ CatalogPage.prototype.verifyRecordList = function(browser) {
     browser.expect.element(this.recordsViewCssSelector + ' div.col.d-flex.flex-column paging').to.be.present;
 };
 
-// searchRecords is used to search page give searchObj object
-CatalogPage.prototype.searchRecords = function(browser, searchObj) {
+CatalogPage.prototype.clearCatalogSearchBar = function(browser, searchObj) {
     browser
+        .click('css selector', this.recordsViewSearchBarCssSelector, function(result) { this.assert.strictEqual(result.status, 0) })
+        .waitForElementNotPresent('div.spinner')
         .waitForElementVisible(this.recordsViewSearchBarCssSelector)
         .clearValue(this.recordsViewSearchBarCssSelector);
+    browser.expect.element(this.recordsViewSearchBarCssSelector).text.to.contain('');
+}
+
+// searchRecords is used to search page give searchObj object
+CatalogPage.prototype.searchRecords = function(browser, searchObj) {
+    this.clearCatalogSearchBar(browser);
+
+    if('searchText' in searchObj) {
+        browser
+           .click('css selector', this.recordsViewSearchBarCssSelector, function(result) { this.assert.strictEqual(result.status, 0) })
+           .waitForElementVisible(this.recordsViewSearchBarCssSelector)
+           .setValue(this.recordsViewSearchBarCssSelector, [searchObj.searchText, browser.Keys.ENTER])
+           .waitForElementNotPresent('div.spinner');
+        browser.expect.element(this.recordsViewSearchBarCssSelector).value.to.contain(searchObj.searchText);
+    } else {
+        this.clearCatalogSearchBar(browser);
+    }
 
     if('order' in searchObj) {
         browser
@@ -122,16 +166,16 @@ CatalogPage.prototype.searchRecords = function(browser, searchObj) {
             .setValue(this.recordsViewCssSelector + ' form sort-options select', searchObj.order)
     }
 
-    if('searchText' in searchObj) {
-        browser
-           .waitForElementVisible(this.recordsViewSearchBarCssSelector)
-           .setValue(this.recordsViewSearchBarCssSelector, [searchObj.searchText, browser.Keys.ENTER])
-           .waitForElementNotPresent('div.spinner');
-    } else {
-        browser
-           .waitForElementVisible(this.recordsViewSearchBarCssSelector)
-           .setValue(this.recordsViewSearchBarCssSelector, [searchObj.searchText, browser.Keys.ENTER])
-           .waitForElementNotPresent('div.spinner');
+    if('keywords' in searchObj) {
+        var keywords = searchObj.keywords;
+        var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
+
+        for(var keyword in keywords){ // keyword acts like index number instead of value
+            var keywordFilterXPathSelector = this.createRecordFiltersXPathSelector('Keywords', keywords[keyword]);
+            browser.assert.elementPresent({ selector: keywordFilterXPathSelector, locateStrategy: 'xpath' });
+            browser.click('xpath', keywordFilterXPathSelector, clickFunc).waitForElementNotPresent('div.spinner');
+
+        }
     }
 
     var recordTypeFilterXPathSelector = this.createRecordFiltersXPathSelector('Record Type', 'Versioned Record');
@@ -153,6 +197,8 @@ CatalogPage.prototype.assertRecordList = function(browser, recordList) {
 };
 
 var catalogPage = new CatalogPage();
+
+var keywordsList = ['1', '1,1', '1\'1', '1"1', 'keyword2', '\\/', '/\\' ];
 
 module.exports = {
     '@tags': ['sanity', "catalog"],
@@ -195,10 +241,18 @@ module.exports = {
         catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (desc)'});
         catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl,z-catalog-ontology-4.ttl,z-catalog-ontology-3.ttl,z-catalog-ontology-2.ttl,z-catalog-ontology-1.ttl');
         catalogPage.openRecordItem(browser, 'z-catalog-ontology-9p.ttl');
-        catalogPage.changeRecordDescription(browser, 'z-catalog-ontology-9p.ttl', 'new description')
+        catalogPage.changeRecordFields(browser, 'z-catalog-ontology-9p.ttl', {'description': 'new description', 'keywords': keywordsList});
+
         browser.expect.element({
             locateStrategy: 'xpath',
             selector: '//catalog-page//record-view//div[contains(@class, "record-sidebar")]//dd[contains(@class, "ng-binding")][1]'}).text.to.not.contain('5/27/21 1:12 PM');
-    }
+
+        catalogPage.leaveCatalogRecord(browser);
+    },
+
+    'Step 9: Search catalog page one item ASC' : function(browser) {
+        catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (asc)', keywords: ['1,1', '1\'1', '\\/', '/\\']});
+        catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl');
+    },
 
 }

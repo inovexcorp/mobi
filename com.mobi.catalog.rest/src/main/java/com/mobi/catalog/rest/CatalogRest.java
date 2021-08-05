@@ -385,7 +385,7 @@ public class CatalogRest {
                     required = true))
             @QueryParam("type") String recordType,
             @Parameter(description = "List of keywords", required = false)
-            @QueryParam("keywords") String keywords,
+            @QueryParam("keywords") List<String> keywords,
             @Parameter(description = "Offset for the page", required = true)
             @QueryParam("offset") int offset,
             @Parameter(description = "Number of Records to return in one page", required = true)
@@ -412,8 +412,8 @@ public class CatalogRest {
             if (searchText != null) {
                 builder.searchText(searchText);
             }
-            if (StringUtils.isNotEmpty(keywords)) {
-                builder.keywords(Arrays.asList(ResourceUtils.decode(keywords).split(",")));
+            if (keywords != null && keywords.size() > 0) {
+                builder.keywords(keywords);
             }
             PaginatedSearchResults<Record> records = catalogManager.findRecord(vf.createIRI(catalogId),
                     builder.build());

@@ -74,6 +74,7 @@ import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
@@ -572,13 +573,17 @@ public class CatalogRestTest extends MobiRestTestNg {
                 .queryParam("limit", 10)
                 .queryParam("ascending", false)
                 .queryParam("searchText", "test")
-                .queryParam("keywords", "k1,k2,k3").request().get();
+                .queryParam("keywords", "k1")
+                .queryParam("keywords", "k2")
+                .queryParam("keywords", "k3")
+                .queryParam("keywords", "k4,5")
+                .request().get();
         assertEquals(response.getStatus(), 200);
 
         PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder()
                 .searchText("test")
                 .typeFilter(vf.createIRI("http://mobi.com/ontologies/catalog#Record"))
-                .keywords(Stream.of("k1", "k2", "k3").collect(Collectors.toList()))
+                .keywords(Stream.of("k1", "k2", "k3", "k4,5").collect(Collectors.toList()))
                 .sortBy(vf.createIRI("http://purl.org/dc/terms/title"))
                 .offset(0)
                 .limit(10)

@@ -28,6 +28,7 @@ import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertSame;
 import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.assertNotSame;
+import static junit.framework.TestCase.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.eq;
@@ -37,6 +38,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Streams;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
@@ -68,6 +70,7 @@ import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.ontologies.provo.InstantaneousEvent;
 import com.mobi.persistence.utils.RepositoryResults;
+import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -513,6 +516,58 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
         // when
         manager.findRecord(distributedCatalogId, searchParams);
+    }
+
+    /* findRecord - replaceKeywordFilter */
+    @Test
+    public void testReplaceKeywordFilter() throws Exception {
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .searchText("searchText").limit(1).offset(2)
+                .keywords(Arrays.asList("111", "222")).build();
+
+        String keywordFilterExpect = "?record mcat:keyword ?keyword .\nFILTER(?keyword IN ('111','222'))";
+        String keywordFilterActual = SimpleCatalogManager.replaceKeywordFilter(searchParams, "%KEYWORDS_FILTER%");
+        assertEquals(keywordFilterExpect, keywordFilterActual);
+
+        String queryTest = "PREFIX mcat: <http://mobi.com/ontologies/catalog#>\n" +
+                "SELECT * WHERE { %KEYWORDS_FILTER% }".replace("%KEYWORDS_FILTER%", keywordFilterActual);
+
+        try(RepositoryConnection conn = repo.getConnection()) {
+            conn.prepareTupleQuery(queryTest);
+        }catch(MalformedQueryException e){
+            fail("Query is Malformed: " + queryTest);
+        }
+    }
+
+    @Test
+    public void testReplaceKeywordFilterComma() throws Exception {
+        String[] characters = new String[]{ "'", "~", "`", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_",
+                "=", "+", "[", "{", "]", "}", "\\", "|", ";", ":", ",", "<", ".", ">", "?"};
+
+        for(String character: characters){
+            PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                    .searchText("searchText").limit(1).offset(2)
+                    .keywords(Arrays.asList("111", "22,2", character)).build();
+
+            String keywordFilterExpect = String.format("?record mcat:keyword ?keyword .\nFILTER(?keyword IN ('111','22,2','%s'))", SimpleCatalogManager.escapeKeyword(character));
+            String keywordFilterActual = SimpleCatalogManager.replaceKeywordFilter(searchParams, "%KEYWORDS_FILTER%");
+            assertEquals(keywordFilterExpect, keywordFilterActual);
+
+            String queryTest = "PREFIX mcat: <http://mobi.com/ontologies/catalog#>\n" +
+                    "SELECT * WHERE { %KEYWORDS_FILTER% }".replace("%KEYWORDS_FILTER%", keywordFilterActual);
+
+            try(RepositoryConnection conn = repo.getConnection()) {
+                conn.prepareTupleQuery(queryTest);
+            }catch(MalformedQueryException e){
+                fail("Query is Malformed: " + queryTest);
+            }
+        }
+    }
+
+    @Test
+    public void testEscapeKeywordComma() throws Exception {
+        assertEquals("\\'", SimpleCatalogManager.escapeKeyword("'"));
+        assertEquals("\\\\", SimpleCatalogManager.escapeKeyword("\\"));
     }
 
     /* getKeywords */
