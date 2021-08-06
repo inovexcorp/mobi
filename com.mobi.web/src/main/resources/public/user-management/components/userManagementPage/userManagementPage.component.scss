@@ -24,8 +24,24 @@
 @import "../../../css/variables";
 
 .user-management-page {
-    background-color: var(--light);
+    .mat-tab-labels {
+        justify-content: center;
+    }
+    .section-header {
+        border-bottom: 1px solid var(--light-dark);
+        padding-bottom: 0.5rem;
+        overflow: hidden;
 
+        h5 {
+            font-weight: bold;
+            display: inline-block;
+            margin: 0;
+        }
+        button {
+            line-height: inherit;
+            height: inherit;
+        }
+    }
     .user-management-container {
         display: flex;
         flex-direction: column;
@@ -34,6 +50,9 @@
             flex: 1;
             min-height: 0;
         }
+    }
+    .tab-box {
+        background-color: white;
     }
     .tree a {
         display: inherit;

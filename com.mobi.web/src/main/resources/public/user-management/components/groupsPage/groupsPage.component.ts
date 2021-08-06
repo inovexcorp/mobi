@@ -20,88 +20,107 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Inject, OnInit } from '@angular/core';
+import { MatDialog, MatSlideToggleChange } from '@angular/material';
 import { includes, get, noop } from 'lodash';
 
-const template = require('./groupsPage.component.html');
+import { UserStateService } from '../../../shared/services/userState.service';
+import { UserManagerService } from '../../../shared/services/userManager.service';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { CreateGroupOverlayComponent } from '../createGroupOverlay/createGroupOverlay.component';
+import { EditGroupInfoOverlayComponent } from '../editGroupInfoOverlay/editGroupInfoOverlay.component';
+import { Group } from '../../../shared/models/group.interface';
+import { User } from '../../../shared/models/user.interface';
+
+import './groupsPage.component.scss';
 
 /**
- * @ngdoc component
- * @name groupsPage.component:groupsPage
- * @requires shared.service:userStateService
- * @requires shared.service:userManagerService
- * @requires shared.service:loginManagerService
- * @requires shared.service:utilService
- * @requires shared.service:modalService
+ * @class groupsPage.GroupsPageComponent
  *
- * @description
- * `groupsPage` is a component that creates a Bootstrap `row` div with two columns containing
- * {@link shared.component:block blocks} for selecting and editing a group. The left column contains a
- * {@link user-management.component:groupsList groupsList} block for selecting the current
- * {@link shared.service:userStateService#selectedGroup group} and buttons for creating, deleting, and searching for
- * a group. The right column contains a block for previewing and editing a group's description, a block for editing
- * the group's {@link user-management.component:permissionsInput permission}, and a block for viewing and editing
- * the {@link user-management.component:memberTable members} of the group. The component houses the methods for
- * deleting a group, removing group members, and adding group members.
+ * A component that creates a Bootstrap `row` div with functionality to select and edit a group. The left column
+ * contains a {@link user-management.GroupsListComponent list of groups} for selecting the current
+ * {@link shared.UserStateService#selectedGroup group} and a button to create a Group. On the right is a display of the
+ * group's title, description, the {@link user-management.MemberTableComponent members} of the group, and buttons to
+ * toggle user the group is an admin and deleting the group.
  */
-const groupsPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: groupsPageComponentCtrl
-};
+@Component({
+    selector: 'groups-page',
+    templateUrl: './groupsPage.component.html'
+})
+export class GroupsPageComponent implements OnInit {
+    isAdmin = false;
+    filteredGroups: Group[] = [];
+    selectedAdmin = false;
 
-groupsPageComponentCtrl.$inject = ['userStateService', 'userManagerService', 'loginManagerService', 'utilService', 'modalService'];
-
-function groupsPageComponentCtrl(userStateService, userManagerService, loginManagerService, utilService, modalService) {
-    var dvm = this;
-    dvm.state = userStateService;
-    dvm.um = userManagerService;
-    dvm.lm = loginManagerService;
-    dvm.util = utilService;
-    dvm.roles = { admin: false };
-
-    dvm.$onInit = function() {
-        setRoles();
+    constructor(private dialog: MatDialog, public state: UserStateService,
+        private um: UserManagerService, @Inject('loginManagerService') private lm,
+        @Inject('utilService') private util) {}
+    
+    ngOnInit(): void {
+        this.filteredGroups = this.um.groups;
+        this.setAdmin();
+        this.isAdmin = this.um.isAdmin(this.lm.currentUser);
     }
-    dvm.selectGroup = function(group) {
-        dvm.state.selectedGroup = group;
-        setRoles();
+    selectGroup(group: Group): void {
+        this.state.selectedGroup = group;
     }
-    dvm.createGroup = function() {
-        modalService.openModal('createGroupOverlay');
+    createGroup(): void {
+        this.dialog.open(CreateGroupOverlayComponent);
     }
-    dvm.confirmDeleteGroup = function() {
-        modalService.openConfirmModal('Are you sure you want to remove <strong>' + dvm.state.selectedGroup.title + '</strong>?', dvm.deleteGroup);
+    onSearch(searchString: string): void {
+        this.state.groupSearchString = searchString;
+        this.setGroups();
     }
-    dvm.deleteGroup = function() {
-        dvm.um.deleteGroup(dvm.state.selectedGroup.title)
+    changeAdmin(event: MatSlideToggleChange): void {
+        const request = event.checked ? this.um.addGroupRoles(this.state.selectedGroup.title, ['admin']) : this.um.deleteGroupRole(this.state.selectedGroup.title, 'admin');
+        request.then(noop, this.util.createErrorToast);
+    }
+    confirmDeleteGroup(): void {
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: 'Are you sure you want to remove <strong>' + this.state.selectedGroup.title + '</strong>?'
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.deleteGroup();
+            }
+        });
+    }
+    editDescription(): void {
+        this.dialog.open(EditGroupInfoOverlayComponent);
+    }
+    setAdmin(): void {
+        this.selectedAdmin = includes(get(this.state.selectedGroup, 'roles', []), 'admin');
+    }
+    deleteGroup(): void {
+        this.um.deleteGroup(this.state.selectedGroup.title)
             .then(() => {
-                dvm.state.selectedGroup = undefined;
-                setRoles();
-            }, dvm.util.createErrorToast);
+                this.state.selectedGroup = undefined;
+                this.setAdmin();
+            }, this.util.createErrorToast);
     }
-    dvm.editDescription = function() {
-        modalService.openModal('editGroupInfoOverlay');
+    addMember(member: User): void {
+        this.um.addUserGroup(member.username, this.state.selectedGroup.title).then(() => {
+            this.util.createSuccessToast('Successfully added member');
+        }, this.util.createErrorToast);
     }
-    dvm.changeRoles = function(value) {
-        var request = value.admin ? dvm.um.addGroupRoles(dvm.state.selectedGroup.title, ['admin']) : dvm.um.deleteGroupRole(dvm.state.selectedGroup.title, 'admin');
-        request.then(() => {
-            dvm.roles = value;
-        }, dvm.util.createErrorToast);
+    confirmRemoveMember(member: string): void {
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: 'Are you sure you want to remove <strong>' + member + '</strong> from <strong>' + this.state.selectedGroup.title + '</strong>?'
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.removeMember(member);
+            }
+        });
     }
-    dvm.confirmRemoveMember = function(member) {
-        modalService.openConfirmModal('Are you sure you want to remove <strong>' + member + '</strong> from <strong>' + dvm.state.selectedGroup.title + '</strong>?', () => dvm.removeMember(member));
+    removeMember(member: string): void {
+        this.um.deleteUserGroup(member, this.state.selectedGroup.title).then(() => {
+            this.util.createSuccessToast('Successfully removed member');
+        }, this.util.createErrorToast);
     }
-    dvm.removeMember = function(member) {
-        dvm.um.deleteUserGroup(member, dvm.state.selectedGroup.title).then(noop, dvm.util.createErrorToast);
-    }
-    dvm.addMember = function(member) {
-        dvm.um.addUserGroup(member, dvm.state.selectedGroup.title).then(noop, dvm.util.createErrorToast);
-    }
-
-    function setRoles() {
-        dvm.roles.admin = includes(get(dvm.state.selectedGroup, 'roles', []), 'admin');
+    private setGroups(): void {
+        this.filteredGroups = this.um.filterGroups(this.um.groups, this.state.groupSearchString);
     }
 }
-
-export default groupsPageComponent;

@@ -43,24 +43,11 @@
             }
         }
     }
-    md-autocomplete[hide-label] label {
-        display: none;
-    }
-    md-autocomplete-wrap {
-        height: 40px !important;
-    }
-    md-switch {
-        margin-left: 0;
-        margin-top: 0;
-    }
     .save-container {
         height: auto;
         bottom: 25px;
         position: absolute;
         right: 25px;
-        z-index: 5001;
-    }
-    .selector-container {
         z-index: 5001;
     }
 }

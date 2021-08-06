@@ -41,14 +41,14 @@ export class PreferenceFormFieldComponent implements OnChanges {
     @Input() fieldShaclProperty: string;
     @Input() shaclShape: any;
 
-    formType: string = '';
+    formType = '';
     options: Array<string> = [];
     validators: Array<ValidatorFn> = [];
-    label: string = '';
+    label = '';
         
     constructor(@Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
 
-    ngOnChanges() {
+    ngOnChanges(): void {
         this.label = this.util.getPropertyValue(this.shaclShape, this.prefixes.shacl + 'name');
 
         if (this.shaclShape[this.prefixes.shacl + 'pattern']) {
@@ -56,7 +56,7 @@ export class PreferenceFormFieldComponent implements OnChanges {
             this.validators.push(Validators.pattern(regex));
         }
 
-        switch(this.util.getPropertyId(this.shaclShape, this.prefixes.preference + 'usesFormField')) {
+        switch (this.util.getPropertyId(this.shaclShape, this.prefixes.preference + 'usesFormField')) {
             case this.prefixes.preference + 'TextInput':
                 this.formType = 'textInput';
                 break;
@@ -67,15 +67,15 @@ export class PreferenceFormFieldComponent implements OnChanges {
                 this.util.createErrorToast('Form field type not configured');
                 break;
             default:
-                this.util.createErrorToast('Unsupported form field type')
+                this.util.createErrorToast('Unsupported form field type');
         }
         
-        switch(this.util.getPropertyId(this.shaclShape, this.prefixes.shacl + 'datatype')) {
+        switch (this.util.getPropertyId(this.shaclShape, this.prefixes.shacl + 'datatype')) {
             case this.prefixes.xsd + 'boolean':
                 this.convertFormValueToBoolean();
                 break;
             case this.prefixes.xsd + 'integer':
-                this.validators.push(Validators.pattern("^[0-9]+$"));
+                this.validators.push(Validators.pattern('^[0-9]+$'));
                 break;
             case this.prefixes.xsd + 'string':
                 break;
@@ -83,7 +83,7 @@ export class PreferenceFormFieldComponent implements OnChanges {
                 this.util.createErrorToast('Form field datatype not configured');
                 break;
             default:
-                this.util.createErrorToast('Unsupported form field datatype')
+                this.util.createErrorToast('Unsupported form field datatype');
         }
 
         if (this.shaclShape[this.prefixes.shacl + 'minCount'] && Number(this.util.getPropertyValue(this.shaclShape, this.prefixes.shacl + 'minCount')) > 0) {
@@ -94,7 +94,7 @@ export class PreferenceFormFieldComponent implements OnChanges {
         this.fieldFormControl.updateValueAndValidity();
     }
 
-    convertFormValueToBoolean() {
+    convertFormValueToBoolean(): void {
         this.fieldFormControl.setValue(this.fieldFormControl.value === 'true');
     }
 

@@ -21,20 +21,21 @@
  * #L%
  */
 
-import { DebugElement } from "@angular/core";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { configureTestSuite } from "ng-bullet";
-import { By } from "@angular/platform-browser";
+import { DebugElement } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureTestSuite } from 'ng-bullet';
+import { By } from '@angular/platform-browser';
+import { MockProvider } from 'ng-mocks';
 
 import {
     mockProvManager,
     mockUtil,
-    mockUserManager,
     mockPrefixes,
     cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
-import { SharedModule } from "../../../shared/shared.module";
-import { ActivityTitleComponent } from "./activityTitle.component";
+import { SharedModule } from '../../../shared/shared.module';
+import { ActivityTitleComponent } from './activityTitle.component';
+import { UserManagerService } from '../../../shared/services/userManager.service';
 
 describe('Activity Title component', function() {
     let component: ActivityTitleComponent;
@@ -43,7 +44,7 @@ describe('Activity Title component', function() {
     let provManagerStub;
     let utilStub;
     let prefixesStub;
-    let userManagerStub;
+    let userManagerStub: jasmine.SpyObj<UserManagerService>;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -55,7 +56,7 @@ describe('Activity Title component', function() {
                 { provide: 'provManagerService', useClass: mockProvManager },
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: 'prefixes', useClass: mockPrefixes },
-                { provide: 'userManagerService', useClass: mockUserManager }
+                MockProvider(UserManagerService)
             ]
         });
     });
@@ -67,7 +68,7 @@ describe('Activity Title component', function() {
         provManagerStub = TestBed.get('provManagerService');
         utilStub = TestBed.get('utilService');
         prefixesStub = TestBed.get('prefixes');
-        userManagerStub = TestBed.get('userManagerService');
+        userManagerStub = TestBed.get(UserManagerService);
 
         provManagerStub.activityTypes = [{type: 'type1', word: 'word1', pred: 'pred'}, {type: 'type', word: 'word', pred: 'pred'}];
         component.activity = { '@type': [], pred: [{'@id': 'entity'}, {'@id': 'entity1'}] };
@@ -99,7 +100,7 @@ describe('Activity Title component', function() {
                     expect(component.username).toEqual('(None)');
                 });
                 it('and the user was found', function() {
-                    userManagerStub.users = [{iri: 'iri', username: 'username'}];
+                    userManagerStub.users = [{iri: 'iri', username: 'username', external: false, roles: [], firstName: 'John', lastName: 'Doe', email: ''}];
                     component.setUsername(iri);
                     expect(component.username).toEqual('username');
                 });

@@ -1,0 +1,7 @@
+/* Core variables */
+@import "../../../css/variables";
+
+// override mat-menu-content padding
+.menu-form-wrapper .mat-menu-content:not(:empty) {
+    padding: 0;
+}

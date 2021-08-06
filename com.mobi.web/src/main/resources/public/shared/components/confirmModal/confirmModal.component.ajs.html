@@ -20,7 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="permissions-input form-group">
-    <custom-label>Role</custom-label>
-    <checkbox bind-model="dvm.roles.admin" display-text="'Admin'" is-disabled="dvm.isDisabledWhen" change-event="dvm.onChange(value)"></checkbox>
+<div class="modal-body" ng-bind-html="dvm.resolve.body | trusted"></div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-dismiss="modal" ng-click="dvm.no()">Cancel</button>
+    <button type="button" class="btn btn-primary" ng-click="dvm.yes()">Yes</button>
 </div>

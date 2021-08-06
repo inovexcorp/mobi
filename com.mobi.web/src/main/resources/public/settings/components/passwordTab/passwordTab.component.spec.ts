@@ -22,45 +22,49 @@
  */
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { configureTestSuite } from 'ng-bullet';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule, MatFormFieldModule, MatInputModule } from '@angular/material';
 
 import {
-    mockUserManager,
     mockLoginManager,
     mockUtil,
     cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
-import { SharedModule } from '../../../shared/shared.module';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { UnmaskPasswordComponent } from '../../../shared/components/unmaskPassword/unmaskPassword.component';
+import { UserManagerService } from '../../../shared/services/userManager.service';
 import { PasswordTabComponent } from './passwordTab.component';
 
 describe('Password Tab component', function() {
     let component: PasswordTabComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<PasswordTabComponent>;
-    let userManagerStub;
+    let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let loginManagerStub;
     let utilStub;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [
-                SharedModule,
+                ReactiveFormsModule,
+                MatButtonModule,
+                MatInputModule,
+                MatFormFieldModule,
                 NoopAnimationsModule
              ],
             declarations: [
-                PasswordTabComponent
+                PasswordTabComponent,
+                MockComponent(ErrorDisplayComponent),
+                MockComponent(UnmaskPasswordComponent)
             ],
             providers: [
                 { provide: 'loginManagerService', useClass: mockLoginManager },
-                { provide: 'userManagerService', useClass: mockUserManager },
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'ErrorDisplayComponent', useClass: MockComponent(ErrorDisplayComponent) },
-                { provide: 'UnmaskPasswordComponent', useClass: MockComponent(UnmaskPasswordComponent) }
+                MockProvider(UserManagerService),
+                { provide: 'utilService', useClass: mockUtil }
             ]
         });
     });
@@ -70,11 +74,11 @@ describe('Password Tab component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         loginManagerStub = TestBed.get('loginManagerService');
-        userManagerStub = TestBed.get('userManagerService');
+        userManagerStub = TestBed.get(UserManagerService);
         utilStub = TestBed.get('utilService');
 
         loginManagerStub.currentUser = 'user';
-        userManagerStub.users = [{ username: 'user' }];
+        userManagerStub.users = [{ external: false, firstName: 'John', lastName: 'Doe', email: '', roles: [], username: 'user' }];
     });
 
     afterEach(function() {
@@ -90,7 +94,6 @@ describe('Password Tab component', function() {
     describe('should initialize with the current user', function() {
         it('and form values', function() {
             component.ngOnInit();
-            expect(component.currentUser).not.toBe(userManagerStub.users[0]);
             expect(component.currentUser).toEqual(userManagerStub.users[0]);
             expect(component.passwordForm.controls.currentPassword).toBeTruthy();
             expect(component.passwordForm.controls.unmaskPassword).toBeTruthy();
@@ -114,7 +117,6 @@ describe('Password Tab component', function() {
                 expect(control.value).toEqual('test');
                 expect(control.dirty).toBeTrue();
             });
-            // console.log(component.formGroupDirective);
             component.reset();
             Object.keys(component.passwordForm.controls).forEach(key => {
                 const control = component.passwordForm.get(key);
@@ -135,8 +137,9 @@ describe('Password Tab component', function() {
                 expect(component.errorMessage).toEqual('Error message');
             }));
             it('successfully', fakeAsync(function() {
-                let currentPassword = component.passwordForm.controls.currentPassword.value;
-                let password = component.passwordForm.controls.unmaskPassword.value;
+                userManagerStub.changePassword.and.returnValue(Promise.resolve());
+                const currentPassword = component.passwordForm.controls.currentPassword.value;
+                const password = component.passwordForm.controls.unmaskPassword.value;
                 component.save();
                 tick();
                 expect(userManagerStub.changePassword).toHaveBeenCalledWith(loginManagerStub.currentUser, currentPassword, password);
@@ -167,20 +170,18 @@ describe('Password Tab component', function() {
             expect(element.query(By.css('error-display'))).toBeTruthy();
         });
         it('with the correct classes based on the confirm password field dirty flag', function() {
-            let currentPassword = element.query(By.css('.current-password input'));
-            expect(currentPassword.classes['is-invalid']).toBeFalsy();
             expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeTruthy();
 
-            component.passwordForm.controls.currentPassword.markAsDirty();
-            fixture.detectChanges();
-            expect(currentPassword.classes['is-invalid']).toBeTruthy();
-            expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeTruthy();
-
-            component.passwordForm.controls['currentPassword'].setValue('test');
-            component.passwordForm.controls['unmaskPassword'].setValue('test');
+            component.passwordForm.controls.currentPassword.setValue(null);
             component.passwordForm.updateValueAndValidity();
             fixture.detectChanges();
-            expect(currentPassword.classes['is-invalid']).toBeFalsy();
+            expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeTruthy();
+            
+            component.passwordForm.controls['currentPassword'].setValue('test');
+            component.passwordForm.controls['unmaskPassword'].setValue('test');
+            component.passwordForm.markAsDirty();
+            component.passwordForm.updateValueAndValidity();
+            fixture.detectChanges();
             expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeFalsy();
         });
         it('with an unmaskPassword', function() {
@@ -189,7 +190,7 @@ describe('Password Tab component', function() {
     });
     it('should save changes when the save button is clicked', function() {
         spyOn(component, 'save');
-        let button = element.query(By.css('form'));
+        const button = element.query(By.css('form'));
         button.triggerEventHandler('ngSubmit', null);
         fixture.detectChanges();
         expect(component.save).toHaveBeenCalled();

@@ -21,14 +21,14 @@
  * #L%
  */
 import * as angular from 'angular';
+import { downgradeComponent } from '@angular/upgrade/static';
+import { NgModule } from '@angular/core';
 
 import { ActivityCardComponent } from './components/activityCard/activityCard.component';
 import { ActivityTitleComponent } from './components/activityTitle/activityTitle.component';
 import { HomePageComponent } from './components/homePage/homePage.component';
 import { QuickActionGridComponent } from './components/quickActionGrid/quickActionGrid.component';
-import { NgModule } from "@angular/core";
-import { SharedModule } from "../shared/shared.module";
-import { downgradeComponent } from "@angular/upgrade/static";
+import { SharedModule } from '../shared/shared.module';
 
 /**
  * @namspace home

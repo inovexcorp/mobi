@@ -28,13 +28,10 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
  * @param control The FormControl to apply this validator to
  */
 export function uniqueValue(arr: any[]): ValidatorFn {
-    console.log('inside factory');
-    return (control: AbstractControl): { [key: string]: boolean } | null => {
-    // return (control: AbstractControl): ValidationErrors | null => {
-        if (control.value === '' || arr === null || arr.length) {
+    return (control: AbstractControl): ValidationErrors | null => {
+        if (control.value === '' || arr === null || !arr.length) {
             return null;
         }
-        console.log('in validator', arr);
         return arr.includes(control.value) ? {'uniqueValue': true} : null;
     };
 }

@@ -21,7 +21,10 @@
  * #L%
  */
 import { get } from 'lodash';
-import { Component, Inject, Input, OnChanges, OnInit, SimpleChanges } from "@angular/core";
+import { Component, Inject, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+
+import { UserManagerService } from '../../../shared/services/userManager.service';
+import { User } from '../../../shared/models/user.interface';
 
 import './activityTitle.component.scss';
 
@@ -49,7 +52,7 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
     public entitiesStr = '(None)';
 
     constructor(@Inject('provManagerService') private pm, @Inject('utilService') private util,
-                @Inject('userManagerService') private um, @Inject('prefixes') private prefixes) {}
+                private um: UserManagerService, @Inject('prefixes') private prefixes) {}
     
     ngOnInit(): void {
         this.setUsername(this.util.getPropertyId(this.activity, this.prefixes.prov + 'wasAssociatedWith'));
@@ -64,7 +67,7 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
         }
     }
     setEntities(activity): void {
-        let types = get(activity, '@type', []);
+        const types = get(activity, '@type', []);
         let pred = '';
         this.pm.activityTypes.forEach(obj => {
             if (types.includes(obj.type)) {
@@ -72,21 +75,21 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
                 return false;
             }
         });
-        let entityTitles = get(activity, "['" + pred + "']", []).map(idObj => {
-            let entity = this.entities.find(obj => obj['@id'] === idObj['@id']);
+        const entityTitles = get(activity, '[\'' + pred + '\']', []).map(idObj => {
+            const entity = this.entities.find(obj => obj['@id'] === idObj['@id']);
             return this.util.getDctermsValue(entity, 'title');
         });
         this.entitiesStr = entityTitles.join(', ').replace(/,(?!.*,)/gmi, ' and') || '(None)';
     }
     setUsername(iri): void {
         if (iri) {
-            this.username = get(this.um.users.find(user => user.iri === iri), 'username', '(None)');
+            this.username = get(this.um.users.find((user: User) => user.iri === iri), 'username', '(None)');
         } else {
             this.username = '(None)';
         }
     }
     setWord(activity): void {
-        let types = get(activity, '@type', []);
+        const types = get(activity, '@type', []);
         this.pm.activityTypes.forEach(obj => {
             if (types.includes(obj.type)) {
                 this.word = obj.word;

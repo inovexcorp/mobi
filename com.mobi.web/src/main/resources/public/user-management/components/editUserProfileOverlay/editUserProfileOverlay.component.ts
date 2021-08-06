@@ -20,10 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
+import { Component, Inject } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
 import { find } from 'lodash';
 
-const template = require('./editUserProfileOverlay.component.html');
+import { emailOrEmpty } from '../../../shared/validators/emailOrEmpty.validator';
+import { UserStateService } from '../../../shared/services/userState.service';
+import { UserManagerService } from '../../../shared/services/userManager.service';
 
 /**
  * @ngdoc component
@@ -35,46 +39,40 @@ const template = require('./editUserProfileOverlay.component.html');
  * @description
  * `editUserProfileOverlay` is a component that creates content for a modal with a form to change the
  * {@link shared.service:userStateService#selectedUser selected user's} profile information in Mobi. The
- * form contains fields to edit the user's first name, last name, and email. Meant to be used in conjunction
- * with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * form contains fields to edit the user's first name, last name, and email. Meant to be used in conjunction with the
+ * `MatDialog` service.
  */
-const editUserProfileOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: editUserProfileOverlayComponentCtrl,
-};
+@Component({
+    selector: 'edit-profile-overlay',
+    templateUrl: './editUserProfileOverlay.component.html'
+})
+export class EditUserProfileOverlayComponent {
+    errorMessage = '';
+    editProfileForm: FormGroup;
 
-editUserProfileOverlayComponentCtrl.$inject = ['userStateService', 'userManagerService', 'prefixes'];
+    constructor(private dialogRef: MatDialogRef<EditUserProfileOverlayComponent>, private fb: FormBuilder,
+        private state: UserStateService, private um: UserManagerService,
+        @Inject('utilService') private util, @Inject('prefixes') private prefixes) {
+            this.editProfileForm = this.fb.group({
+                firstName: [this.state.selectedUser.firstName],
+                lastName: [this.state.selectedUser.lastName],
+                email: [this.state.selectedUser.email, [ emailOrEmpty ]], // TODO: Replace Validators.email after Angular 6
+            });
+        }
 
-function editUserProfileOverlayComponentCtrl(userStateService, userManagerService, prefixes) {
-    var dvm = this;
-    dvm.state = userStateService;
-    dvm.um = userManagerService;
-    dvm.newUser = {};
-
-    dvm.$onInit = function() {
-        dvm.newUser = angular.copy(dvm.state.selectedUser);
-    }
-    dvm.set = function() {
-        dvm.newUser.jsonld[prefixes.foaf + 'firstName'] = [{'@value': dvm.newUser.firstName}];
-        dvm.newUser.jsonld[prefixes.foaf + 'lastName'] = [{'@value': dvm.newUser.lastName}];
-        dvm.newUser.jsonld[prefixes.foaf + 'mbox'] = [{'@id': dvm.newUser.email}];
-        dvm.um.updateUser(dvm.state.selectedUser.username, dvm.newUser).then(response => {
-            dvm.errorMessage = '';
-            dvm.state.selectedUser = find(dvm.um.users, {username: dvm.newUser.username});
-            dvm.close();
-        }, error => dvm.errorMessage = error);
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
+    set(): void {
+        const newUser = Object.assign({}, this.state.selectedUser);
+        newUser.firstName = this.editProfileForm.controls.firstName.value;
+        this.util.replacePropertyValue(newUser.jsonld, this.prefixes.foaf + 'firstName', this.state.selectedUser.firstName, newUser.firstName);
+        newUser.lastName = this.editProfileForm.controls.lastName.value;
+        this.util.replacePropertyValue(newUser.jsonld, this.prefixes.foaf + 'lastName', this.state.selectedUser.lastName, newUser.lastName);
+        newUser.email = this.editProfileForm.controls.email.value;
+        this.util.replacePropertyId(newUser.jsonld, this.prefixes.foaf + 'mbox', this.state.selectedUser.email, newUser.email);
+        this.um.updateUser(this.state.selectedUser.username, newUser).then(() => {
+            this.util.createSuccessToast('User profile successfully saved');
+            this.errorMessage = '';
+            this.state.selectedUser = find(this.um.users, { username: newUser.username });
+            this.dialogRef.close();
+        }, error => this.errorMessage = error);
     }
 }
-
-export default editUserProfileOverlayComponent;

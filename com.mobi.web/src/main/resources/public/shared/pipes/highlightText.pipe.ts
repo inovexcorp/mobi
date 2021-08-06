@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,24 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('User State service', function() {
-    var userStateSvc;
+import { Pipe, PipeTransform } from '@angular/core';
 
-    beforeEach(function() {
-        angular.mock.module('shared');
+@Pipe({
+  name: 'highlightText',
+})
+export class HighlightTextPipe implements PipeTransform {
+  transform(value: any, args: any): any {
+    if (!args) {
+      return value;
+    }
 
-        inject(function(userStateService) {
-            userStateSvc = userStateService;
-        });
-    });
+    const regex = new RegExp(args, 'gi');
+    const match = value.match(regex);
 
-    afterEach(function() {
-        userStateSvc = null;
-    });
+    if (!match) {
+      return value;
+    }
 
-    it('should reset variables', function() {
-        userStateSvc.reset();
-        expect(userStateSvc.selectedGroup).toBeUndefined();
-        expect(userStateSvc.selectedUser).toBeUndefined();
-    });
-});
+    return value.replace(regex, '<span class="highlight-text">' + match[0] + '</span>');
+  }
+}

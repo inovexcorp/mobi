@@ -101,14 +101,8 @@ describe('Record Access Overlay component', function() {
                     id: this.recordId,
                     changed: false,
                     everyone: true,
-                    users: userManagerSvc.users,
-                    groups: userManagerSvc.groups,
                     selectedUsers: [],
-                    selectedGroups: [],
-                    userSearchText: '',
-                    groupSearchText: '',
-                    selectedUser: undefined,
-                    selectedGroup: undefined
+                    selectedGroups: []
                 });
             });
             it('with a policy rule that has selected users', function() {
@@ -122,14 +116,8 @@ describe('Record Access Overlay component', function() {
                     id: this.recordId,
                     changed: false,
                     everyone: false,
-                    users: _.reject(userManagerSvc.users, {iri: 'user1', username: 'user1'}),
-                    groups: userManagerSvc.groups,
                     selectedUsers: [{iri: 'user1', username: 'user1'}],
-                    selectedGroups: [],
-                    userSearchText: '',
-                    groupSearchText: '',
-                    selectedUser: undefined,
-                    selectedGroup: undefined
+                    selectedGroups: []
                 });
             });
             it('with a policy that has selected groups', function() {
@@ -143,14 +131,8 @@ describe('Record Access Overlay component', function() {
                     id: this.recordId,
                     changed: false,
                     everyone: false,
-                    users: userManagerSvc.users,
-                    groups: _.reject(userManagerSvc.groups, {iri: 'group1', title: 'group1'}),
                     selectedUsers: [],
-                    selectedGroups: [{iri: 'group1', title: 'group1'}],
-                    userSearchText: '',
-                    groupSearchText: '',
-                    selectedUser: undefined,
-                    selectedGroup: undefined
+                    selectedGroups: [{iri: 'group1', title: 'group1'}]
                 });
             });
         });

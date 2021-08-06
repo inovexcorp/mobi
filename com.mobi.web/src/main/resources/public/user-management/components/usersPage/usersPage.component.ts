@@ -20,91 +20,110 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { includes, get, filter } from 'lodash';
+import { Component, Inject, OnInit } from '@angular/core';
+import { MatDialog, MatSlideToggleChange } from '@angular/material';
+import { includes, get, filter, noop } from 'lodash';
+
+import { UserStateService } from '../../../shared/services/userState.service';
+import { UserManagerService } from '../../../shared/services/userManager.service';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { CreateUserOverlayComponent } from '../createUserOverlay/createUserOverlay.component';
+import { EditUserProfileOverlayComponent } from '../editUserProfileOverlay/editUserProfileOverlay.component';
+import { ResetPasswordOverlayComponent } from '../resetPasswordOverlay/resetPasswordOverlay.component';
+import { Group } from '../../../shared/models/group.interface';
+import { User } from '../../../shared/models/user.interface';
 
 import './usersPage.component.scss';
 
-const template = require('./usersPage.component.html');
-
 /**
- * @ngdoc component
- * @name user-management.component:usersPage
- * @requires shared.service:userStateService
- * @requires shared.service:userManagerService
- * @requires shared.service:loginManagerService
- * @requires shared.service:utilService
- * @requires shared.service:modalService
- *
- * @description
- * `usersPage` is a component that creates a Bootstrap `row` div with three columns containing
- * {@link shared.component:block blocks} for selecting and editing a user. The left column contains a
- * {@link user-management.component:usersList usersList} block for selecting the current
- * {@link shared.service:userStateService user} and buttons for creating, deleting, and searching for a user. The
- * center column contains a block for previewing and editing a user's profile information and a block for changing
- * a user's password. The right column contains a block for viewing and changing a user's
- * {@link user-management.component:permissionsInput permissions} and a block for viewing the groups a user is a
- * member of.
+ * @class user-management.UsersPageComponent
+ * 
+ * A component that creates a Bootstrap `row` div with functionality to select and edit a user. The left column contains
+ * a {@link user-management.UsersListComponent list of users} for selecting the current
+ * {@link shared.UserStateService#selectedUser user} and a button to create a User. On the right is a display of the
+ * user's profile information, the groups the user is a member of, and buttons to toggle whether the user is an admin,
+ * deleting the user, and resetting the user's password.
  */
-const usersPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: usersPageComponentCtrl
-};
+@Component({
+    selector: 'users-page',
+    templateUrl: './usersPage.component.html'
+})
+export class UsersPageComponent implements OnInit {
+    isAdminUser = false;
+    isAdmin = false;
+    groups: Group[] = [];
+    filteredUsers: User[] = [];
+    selectedAdmin = false;
+    selectedCurrentUser = false;
+    selectedAdminUser = false;
+    
+    constructor(private dialog: MatDialog, public state: UserStateService,
+        private um: UserManagerService, @Inject('loginManagerService') private lm,
+        @Inject('utilService') private util) {}
 
-usersPageComponentCtrl.$inject = ['userStateService', 'userManagerService', 'loginManagerService', 'utilService', 'modalService'];
-
-function usersPageComponentCtrl(userStateService, userManagerService, loginManagerService, utilService, modalService) {
-    var dvm = this;
-    dvm.state = userStateService;
-    dvm.um = userManagerService;
-    dvm.lm = loginManagerService;
-    dvm.util = utilService;
-    dvm.roles = {admin: false};
-
-    dvm.$onInit = function() {
-        setRoles();
+    ngOnInit(): void {
+        this.setUsers();
+        this.setAdmin();
+        this.isAdminUser = this.um.isAdminUser(this.lm.currentUserIRI);
+        this.isAdmin = this.um.isAdmin(this.lm.currentUser);
     }
-    dvm.selectUser = function(user) {
-        dvm.state.selectedUser = user;
-        setRoles();
+    selectUser(user: User): void {
+        this.state.selectedUser = user;
+        this.selectedCurrentUser = this.lm.currentUser === this.state.selectedUser.username;
+        this.selectedAdminUser = this.um.isAdminUser(this.state.selectedUser.iri);
+        this.setAdmin();
+        this.setUserGroups();
     }
-    dvm.confirmDeleteUser = function() {
-        modalService.openConfirmModal('Are you sure you want to remove <strong>' + dvm.state.selectedUser.username + '</strong>?', dvm.deleteUser);
+    confirmDeleteUser(): void {
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: 'Are you sure you want to remove <strong>' + this.state.selectedUser.username + '</strong>?'
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.deleteUser();
+            }
+        });
     }
-    dvm.createUser = function() {
-        modalService.openModal('createUserOverlay');
+    createUser(): void {
+        this.dialog.open(CreateUserOverlayComponent);
     }
-    dvm.editProfile = function() {
-        modalService.openModal('editUserProfileOverlay');
+    editProfile(): void {
+        this.dialog.open(EditUserProfileOverlayComponent);
     }
-    dvm.resetPassword = function() {
-        modalService.openModal('resetPasswordOverlay');
+    resetPassword(): void {
+        this.dialog.open(ResetPasswordOverlayComponent);
     }
-    dvm.deleteUser = function() {
-        dvm.um.deleteUser(dvm.state.selectedUser.username).then(response => {
-            dvm.state.selectedUser = undefined;
-            setRoles();
-        }, dvm.util.createErrorToast);
+    deleteUser(): void {
+        this.um.deleteUser(this.state.selectedUser.username).then(() => {
+            this.util.createSuccessToast('User successfully deleted');
+            this.state.selectedUser = undefined;
+            this.selectedCurrentUser = false;
+            this.selectedAdminUser = false;
+            this.setAdmin();
+            this.setUserGroups();
+        }, this.util.createErrorToast);
     }
-    dvm.changeRoles = function(value) {
-        var request = value.admin ? dvm.um.addUserRoles(dvm.state.selectedUser.username, ['admin']) : dvm.um.deleteUserRole(dvm.state.selectedUser.username, 'admin');
-        request.then(() => {
-            dvm.roles = value;
-        }, dvm.util.createErrorToast);
+    changeAdmin(event: MatSlideToggleChange): void {
+        const request = event.checked ? this.um.addUserRoles(this.state.selectedUser.username, ['admin']) : this.um.deleteUserRole(this.state.selectedUser.username, 'admin');
+        request.then(noop, this.util.createErrorToast);
     }
-    dvm.getUserGroups = function() {
-        return filter(dvm.um.groups, group => includes(group.members, dvm.state.selectedUser.username));
+    setUserGroups(): void {
+        this.groups = filter(this.um.groups, group => includes(group.members, this.state.selectedUser.username));
     }
-    dvm.goToGroup = function(group) {
-        dvm.state.showGroups = true;
-        dvm.state.showUsers = false;
-        dvm.state.selectedGroup = group;
+    goToGroup(group: Group): void {
+        this.state.selectedGroup = group;
+        this.state.tabIndex = 1;
     }
-
-    function setRoles() {
-        dvm.roles.admin = includes(get(dvm.state.selectedUser, 'roles', []), 'admin');
+    setAdmin(): void {
+        this.selectedAdmin = includes(get(this.state.selectedUser, 'roles', []), 'admin');
+    }
+    onSearch(searchString: string): void {
+        this.state.userSearchString = searchString;
+        this.setUsers();
+    }
+    
+    private setUsers(): void {
+        this.filteredUsers = this.um.filterUsers(this.um.users, this.state.userSearchString);
     }
 }
-
-export default usersPageComponent;

@@ -20,47 +20,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Inject, Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { noop } from 'lodash';
+import 'rxjs/add/operator/toPromise';
 
-policyManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'prefixes'];
+import { REST_PREFIX } from '../../constants';
+import { HelperService } from './helper.service';
 
 /**
- * @ngdoc service
- * @name shared.service:policyManagerService
- * @requires shared.service:prefixes
- * @requires shared.service:utilService
- * @requires shared.service:httpService
+ * @class shared.PolicyManagerService
  *
- * @description
- * `policyManagerService` is a service that provides access to the Mobi policy REST
- * endpoints and variables with common IRIs used in policies.
+ * A service that provides access to the Mobi policy REST endpoints and variables with common IRIs used in policies.
  */
-function policyManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
-    var self = this;
-    var prefix = REST_PREFIX + 'policies';
-    var util = utilService;
+@Injectable()
+export class PolicyManagerService {
+    prefix = REST_PREFIX + 'policies';
 
     // Common IRIs used in policies
+    actionCreate = this.prefixes.policy + 'Create';
+    actionRead = this.prefixes.policy + 'Read';
+    actionUpdate = this.prefixes.policy + 'Update';
+    actionDelete = this.prefixes.policy + 'Delete';
+    actionModify = this.prefixes.catalog + 'Modify';
+    subjectId = 'urn:oasis:names:tc:xacml:1.0:subject:subject-id';
+    resourceId = 'urn:oasis:names:tc:xacml:1.0:resource:resource-id';
+    actionId = 'urn:oasis:names:tc:xacml:1.0:action:action-id';
+    subjectCategory = 'urn:oasis:names:tc:xacml:1.0:subject-category:access-subject';
+    resourceCategory = 'urn:oasis:names:tc:xacml:3.0:attribute-category:resource';
+    actionCategory = 'urn:oasis:names:tc:xacml:3.0:attribute-category:action';
+    stringEqual = 'urn:oasis:names:tc:xacml:1.0:function:string-equal';
 
-    self.actionCreate = prefixes.policy + 'Create';
-    self.actionRead = prefixes.policy + 'Read';
-    self.actionUpdate = prefixes.policy + 'Update';
-    self.actionDelete = prefixes.policy + 'Delete';
-    self.actionModify = prefixes.catalog + 'Modify';
-    self.subjectId = 'urn:oasis:names:tc:xacml:1.0:subject:subject-id';
-    self.resourceId = 'urn:oasis:names:tc:xacml:1.0:resource:resource-id';
-    self.actionId = 'urn:oasis:names:tc:xacml:1.0:action:action-id';
-    self.subjectCategory = 'urn:oasis:names:tc:xacml:1.0:subject-category:access-subject';
-    self.resourceCategory = 'urn:oasis:names:tc:xacml:3.0:attribute-category:resource';
-    self.actionCategory = 'urn:oasis:names:tc:xacml:3.0:attribute-category:action';
-    self.stringEqual = 'urn:oasis:names:tc:xacml:1.0:function:string-equal';
+    constructor(private http: HttpClient, private helper: HelperService, @Inject('utilService') private util, 
+        @Inject('prefixes') private prefixes) {}
 
     /**
-     * @ngdoc method
-     * @name getPolicies
-     * @methodOf shared.service:policyManagerService
-     *
-     * @description
      * Calls the GET /mobirest/policies endpoint with the passed filter values for
      * http://mobi.com/ontologies/policy#relatedResource, http://mobi.com/ontologies/policy#relatedSubject, and
      * http://mobi.com/ontologies/policy#relatedAction and returns the list of matching Policies in JSON.
@@ -68,55 +62,46 @@ function policyManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
      * @param {string} [relatedResource=''] An optional IRI string for a related Resource
      * @param {string} [relatedSubject=''] An optional IRI string for a related Subject
      * @param {string} [relatedAction=''] An optional IRI string for a related Action
-     * @return {Promise} A Promise that resolves to a JSON array of Policy JSON objects or is rejected with
+     * @returns {Promise} A Promise that resolves to a JSON array of Policy JSON objects or is rejected with
      * an error message
      */
-    self.getPolicies = function(relatedResource = undefined, relatedSubject = undefined, relatedAction = undefined) {
-        var config = {
-            params: {
+    getPolicies(relatedResource?: string, relatedSubject?: string, relatedAction?: string): Promise<any> {
+        const config = {
+            params: this.helper.createHttpParams({
                 relatedResource,
                 relatedSubject,
                 relatedAction
-            }
+            })
         };
-        return $http.get(prefix, config)
-            .then(response => response.data, util.rejectError);
+        return this.http.get(this.prefix, config)
+            .toPromise()
+            .then((response: any) => response, this.util.rejectError);
     }
 
     /**
-     * @ngdoc method
-     * @name getPolicy
-     * @methodOf shared.service:policyManagerService
-     *
-     * @description
      * Calls the GET /mobirest/policies/{policyId} endpoint to get the Policy for the provided ID.
      *
      * @param {string} policyId The ID of a Policy to retrieve
-     * @return {Promise} A Promise that resolves with the matching Policy if found or is rejected with an
+     * @returns {Promise} A Promise that resolves with the matching Policy if found or is rejected with an
      * error message
      */
-    self.getPolicy = function(policyId) {
-        return $http.get(prefix + '/' + encodeURIComponent(policyId))
-            .then(response => response.data, util.rejectError);
+    getPolicy(policyId: string): Promise<any> {
+        return this.http.get(this.prefix + '/' + encodeURIComponent(policyId))
+            .toPromise()
+            .then((response: any) => response, this.util.rejectError);
     }
 
     /**
-     * @ngdoc method
-     * @name updatePolicy
-     * @methodOf shared.service:policyManagerService
-     *
-     * @description
      * Calls the PUT /mobirest/policies/{policyId} endpoint with the provided new Policy object and updates
      * the Policy with the matching ID.
      *
      * @param {Object} newPolicy A Policy JSON object to replace the original with
-     * @return {Promise} A Promise that resolves if the update was successful or is rejected with an error
+     * @returns {Promise} A Promise that resolves if the update was successful or is rejected with an error
      * message
      */
-    self.updatePolicy = function(newPolicy) {
-        return $http.put(prefix + '/' + encodeURIComponent(newPolicy.PolicyId), newPolicy)
-            .then(noop, util.rejectError);
+    updatePolicy(newPolicy: any): Promise<void> {
+        return this.http.put(this.prefix + '/' + encodeURIComponent(newPolicy.PolicyId), newPolicy)
+            .toPromise()
+            .then(noop, this.util.rejectError);
     }
 }
-
-export default policyManagerService;

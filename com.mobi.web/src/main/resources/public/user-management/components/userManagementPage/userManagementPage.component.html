@@ -21,15 +21,17 @@
   #L%
   -->
 <div class="user-management-page h-100">
-	<material-tabset centered>
-        <material-tab heading="'Users'" active="dvm.state.showUsers" set-active="dvm.state.showUsers = value">
+    <!-- NOTE: Loads each tab content eagerly, i.e. right away. Starting with Angular Material 6, we can switch this to
+        lazy loading (with manual destroy) which will be critical for modules like the Ontology Editor -->
+    <mat-tab-group dynamicHeight="true" class="h-100" [(selectedIndex)]="state.tabIndex" (selectedTabChange)="onTabChanged($event)">
+        <mat-tab label="Users">
             <users-page></users-page>
-        </material-tab>
-        <material-tab heading="'Groups'" active="dvm.state.showGroups" set-active="dvm.state.showGroups = value">
+        </mat-tab>
+        <mat-tab label="Groups">
             <groups-page></groups-page>
-        </material-tab>
-        <material-tab heading="'Permissions'" active="dvm.state.showPermissions" set-active="dvm.state.showPermissions = value">
+        </mat-tab>
+        <mat-tab label="Permissions">
             <permissions-page></permissions-page>
-        </material-tab>
-    </material-tabset>
+        </mat-tab>
+    </mat-tab-group>
 </div>

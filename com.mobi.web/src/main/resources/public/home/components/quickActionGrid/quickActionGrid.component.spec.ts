@@ -22,11 +22,11 @@
  */
 
 import { flatten } from 'lodash';
-import { DebugElement } from "@angular/core";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { configureTestSuite } from "ng-bullet";
-import { By } from "@angular/platform-browser";
-import { StateService } from "@uirouter/core";
+import { DebugElement } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureTestSuite } from 'ng-bullet';
+import { By } from '@angular/platform-browser';
+import { StateService } from '@uirouter/core';
 
 import {
     cleanStylesFromDOM,
@@ -34,9 +34,9 @@ import {
     mockOntologyState,
     mockDiscoverState
 } from '../../../../../../test/ts/Shared';
-import { SharedModule } from "../../../shared/shared.module";
+import { SharedModule } from '../../../shared/shared.module';
 import { WindowRef } from '../../../shared/services/windowRef.service';
-import { QuickActionGridComponent } from "./quickActionGrid.component";
+import { QuickActionGridComponent } from './quickActionGrid.component';
 
 // Mocks
 class mockState {
@@ -100,7 +100,7 @@ describe('Quick Action Grid component', function() {
         });
         describe('should open an ontology', function() {
             it('if one is selected', function() {
-                let item = { active: true };
+                const item = { active: true };
                 ontologyStateStub.listItem = item;
                 component.openAnOntology();
                 expect($stateStub.go).toHaveBeenCalledWith('root.ontology-editor', null, {reload: true});
@@ -143,7 +143,7 @@ describe('Quick Action Grid component', function() {
             expect(element.queryAll(By.css('.card-body')).length).toEqual(1);
         });
         it('depending on how many actions there are', function() {
-            let rows = element.queryAll(By.css('.card-body .row'));
+            const rows = element.queryAll(By.css('.card-body .row'));
             expect(rows.length).toEqual(component.actions.length);
             component.actions.forEach(arr => {
                 expect(element.nativeElement(rows[0]).queryAll(By.css('.col')).length).toEqual(arr.length);

@@ -33,11 +33,10 @@ import {
     mockUtil,
     mockPrefixes
 } from '../../../../../../test/ts/Shared';
-import { SharedModule } from "../../../shared/shared.module";
+import { SharedModule } from '../../../shared/shared.module';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { PreferencesTabComponent } from './preferencesTab.component';
 import { PreferenceGroupComponent } from '../preferenceGroup/preferenceGroup.component';
-import utilService from '../../../shared/services/util.service';
 import { get } from 'lodash';
 
 describe('Preferences Tab component', function() {
@@ -74,25 +73,25 @@ describe('Preferences Tab component', function() {
         preferenceManagerStub = TestBed.get('preferenceManagerService');
         utilStub = TestBed.get('utilService');
         utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
-            return get(entity, "['" + propertyIRI + "'][0]['@value']", '');
+            return get(entity, '[\'' + propertyIRI + '\'][0][\'@value\']', '');
         });
 
         utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {
-            return get(entity, "['" + propertyIRI + "'][0]['@id']", '');
+            return get(entity, '[\'' + propertyIRI + '\'][0][\'@id\']', '');
         });
         testGroups = [ {
-            "@id" : "preference:TestGroupA",
-            "@type" : [ "preference:PreferenceGroup" ],
-            "rdfs:label" : [ {
-              "@language" : "en",
-              "@value" : "Test Group A"
+            '@id': 'preference:TestGroupA',
+            '@type': [ 'preference:PreferenceGroup' ],
+            'rdfs:label': [ {
+              '@language': 'en',
+              '@value': 'Test Group A'
             } ]
           }, {
-            "@id" : "preference:#TestGroupB",
-            "@type" : [ "preference:PreferenceGroup" ],
-            "rdfs:label" : [ {
-              "@language" : "en",
-              "@value" : "Test Group B"
+            '@id': 'preference:#TestGroupB',
+            '@type': [ 'preference:PreferenceGroup' ],
+            'rdfs:label': [ {
+              '@language': 'en',
+              '@value': 'Test Group B'
             } ]
           } ];
 
@@ -129,8 +128,8 @@ describe('Preferences Tab component', function() {
         describe('should add a preference group to the sidebar', function() {
             it('unless the group has no label', function() {
                 const testPreferenceGroup = {
-                    "@id" : "preference:TestGroupA",
-                    "@type" : [ "preference:PreferenceGroup" ]
+                    '@id': 'preference:TestGroupA',
+                    '@type': [ 'preference:PreferenceGroup' ]
                 };
                 component.addTab(testPreferenceGroup);
                 expect(component.tabs.length).toEqual(0);
@@ -138,11 +137,11 @@ describe('Preferences Tab component', function() {
             });
             it('with the correct properties', function() {
                 const testPreferenceGroup = {
-                    "@id" : "preference:TestGroupA",
-                    "@type" : [ "preference:PreferenceGroup" ],
-                    "rdfs:label" : [ {
-                      "@language" : "en",
-                      "@value" : "Test Group A"
+                    '@id': 'preference:TestGroupA',
+                    '@type': [ 'preference:PreferenceGroup' ],
+                    'rdfs:label': [ {
+                      '@language': 'en',
+                      '@value': 'Test Group A'
                     } ]
                 };
                 component.addTab(testPreferenceGroup);

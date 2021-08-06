@@ -24,12 +24,11 @@
 @import "../../../css/variables";
 
 .member-table {
-    tr {
-        td:first-child {
-            width: 15%;
-        }
-        &.member td:last-child {
-            text-align: right;
-        }
+    .delete-column {
+        flex: none;
+    }
+    .username-column {
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 }

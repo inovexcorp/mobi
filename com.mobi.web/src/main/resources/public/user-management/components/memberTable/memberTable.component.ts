@@ -20,78 +20,52 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { filter, has, includes } from 'lodash';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 
 import './memberTable.component.scss';
  
-const template = require('./memberTable.component.html');
-
 /**
- * @ngdoc component
- * @name user-management.component:memberTable
- * @requires shared.service:userManagerService
- * @requires shared.service:userStateService
- * @requires shared.service:loginManagerService
- *
- * @description
- * `memberTable` is a component that creates a table of the passed members and provides functionality for adding
- * members to the and removing members from list. The exact method of adding and removing is determined by the
- * provided `addMember` and `removeMember` functions. When the "Add Member" link is clicked, a row is added to the
- * table contains a `ui-select` with the available users to add to the member list. Once a user has been
- * selected in the `ui-select`, it will be added to the list. If you click off of the `ui-select`, it will be
- * removed. The Add and Remove functionality is only available if the `readOnly` attribute is falsy.
- *
- * @param {boolean} readOnly Whether the table should be read only (i.e. non-editable)
- * @param {string[]} members The list of members names to display in the table
- * @param {Function} removeMember The method to call when a member is removed from the list. Expects an argument
- * called `member`
- * @param {Function} addMember The method to call when a member is added to the list. Expects an argument called
- * `member`
- * @param {boolean} linkToUser Whether the usernames should be links to viewing the user in the
- * {@link user-management.component:usersPage}
+ * @class user-management.MemberTableComponent
+ * 
+ * A component that creates a table of the passed members and provides functionality for removing members from list. The
+ * exact method of removing is determined by the `removeMember` function. The Remove functionality is only available if
+ * the `readOnly` attribute is falsy. The listed members can become clickable links if `linkToUser` is truthy.
  */
-const memberTableComponent = {
-    template,
-    bindings: {
-        readOnly: '<',
-        members: '<',
-        removeMember: '&',
-        addMember: '&',
-        linkToUser: '<'
-    },
-    controllerAs: 'dvm',
-    controller: memberTableComponentCtrl
-};
+@Component({
+    selector: 'member-table',
+    templateUrl: './memberTable.component.html'
+})
+export class MemberTableComponent implements OnChanges {
+    /**
+     * A list of usernames representing the members of a group
+     * @type {string[]}
+     */
+    @Input() members: string[];
+    /**
+     * Whether the table is readonly
+     * @type {boolean}
+     */
+    @Input() readOnly: boolean;
+    /**
+     * Whether the listed members should be clickable links
+     * @type {boolean}
+     */
+    @Input() linkToUser: boolean;
+    /**
+     * A method to be run when a member is removed. Takes the member to remove as an argument in the form of the user's
+     * username.
+     */
+    @Output() removeMember = new EventEmitter();
 
-memberTableComponentCtrl.$inject = ['userStateService', 'userManagerService', 'loginManagerService'];
+    displayedColumns: string[] = ['username', 'delete'];
+    dataSource: string[] = [];
 
-function memberTableComponentCtrl(userStateService, userManagerService, loginManagerService) {
-    var dvm = this;
-    dvm.state = userStateService;
-    dvm.lm = loginManagerService;
-    dvm.um = userManagerService;
+    constructor() {}
 
-    dvm.addingMember = false;
-    dvm.selectedUser = undefined;
-    dvm.memberObjects = [];
-    dvm.availableUsers = []; 
-
-    dvm.$onChanges = function(changesObj) {
-        if (has(changesObj, 'members')) {
-            dvm.memberObjects = filter(dvm.um.users, user => includes(dvm.members, user.username));
-            dvm.availableUsers = filter(dvm.um.users, user => !includes(dvm.members, user.username));
-        }
+    ngOnChanges(changes: SimpleChanges): void {
+        this.dataSource = this.members;
     }
-    dvm.onSelect = function() {
-        dvm.addMember({member: dvm.selectedUser.username});
-        dvm.selectedUser = undefined;
-        dvm.addingMember = false;
-    }
-    dvm.goToUser = function(user) {
-        dvm.state.showGroups = false;
-        dvm.state.showUsers = true;
-        dvm.state.selectedUser = user;
+    emitRemoveMember(user: string): void {
+        this.removeMember.emit(user);
     }
 }
-
-export default memberTableComponent;

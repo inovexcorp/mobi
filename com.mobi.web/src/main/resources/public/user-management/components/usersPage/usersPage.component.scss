@@ -24,7 +24,21 @@
 @import "../../../css/variables";
 
 .users-page {
-    .password-block-row {
-        flex: 0 0 auto !important;
+    .user-title {
+        h3 {
+            word-break: break-word;
+        }
+        .avatar-box {
+            float: left;
+            overflow: hidden;
+            width: 100px;
+            height: 100px;
+            transition: all 0.2s linear;
+    
+            img {
+                width: 100%;
+                height: 100%;
+            }
+        }
     }
 }

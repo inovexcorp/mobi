@@ -21,50 +21,40 @@
  * #L%
  */
 
-const template = require('./resetPasswordOverlay.component.html');
+import { Component, Inject } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
+
+import { UserManagerService } from '../../../shared/services/userManager.service';
+import { UserStateService } from '../../../shared/services/userState.service';
 
 /**
- * @ngdoc component
- * @name user-management.component:resetPasswordOverlay
- * @requires shared.service:userManagerService
- * @requires shared.service:userStateService
+ * @class user-management.ResetPasswordOverlayComponent
  *
- * @description
- * `resetPasswordOverlay` is a component that creates content for a modal with a form to reset the
- * {@link shared.service:userStateService#selectedUser selected user's} password in Mobi. The form uses a
- * {@link shared.component:passwordConfirmInput passwordConfirmInput} to confirm the new password.
- * Meant to be used in conjunction with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal with a form to reset the
+ * {@link shared.UserStateService#selectedUser selected user's} password in Mobi. Meant to be used in conjunction with
+ * the `MatDialog` service.
  */
-const resetPasswordOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: resetPasswordOverlayComponentCtrl,
-};
+@Component({
+    selector: 'reset-password-overlay',
+    templateUrl: './resetPasswordOverlay.component.html'
+})
+export class ResetPasswordOverlayComponent {
+    errorMessage = '';
+    resetPasswordForm = this.fb.group({
+        unmaskPassword: ['', [Validators.required]],
+    });
 
-resetPasswordOverlayComponentCtrl.$inject = ['userStateService', 'userManagerService'];
+    constructor(private dialogRef: MatDialogRef<ResetPasswordOverlayComponent>, private fb: FormBuilder,
+        private state: UserStateService, private um: UserManagerService, 
+        @Inject('utilService') private util) {}
 
-function resetPasswordOverlayComponentCtrl(userStateService, userManagerService) {
-    const dvm = this;
-    dvm.state = userStateService;
-    dvm.um = userManagerService;
-
-    dvm.set = function() {
-        dvm.um.resetPassword(dvm.state.selectedUser.username, dvm.password)
+    set(): void {
+        this.um.resetPassword(this.state.selectedUser.username, this.resetPasswordForm.controls.unmaskPassword.value)
             .then(() => {
-                dvm.errorMessage = '';
-                dvm.close();
-            }, error => dvm.errorMessage = error);
-    };
-    dvm.cancel = function() {
-        dvm.dismiss();
-    };
+                this.util.createSuccessToast('Password successfully reset');
+                this.errorMessage = '';
+                this.dialogRef.close();
+            }, error => this.errorMessage = error);
+    }
 }
-
-export default resetPasswordOverlayComponent;

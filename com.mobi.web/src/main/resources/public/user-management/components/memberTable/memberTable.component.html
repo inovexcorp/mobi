@@ -20,29 +20,20 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<table class="member-table table table-sm" click-anywhere-but-here="dvm.addingMember = false">
-    <tr ng-repeat="user in dvm.memberObjects track by user.username" class="member">
-        <td ng-if="!dvm.linkToUser" class="username align-middle">{{user.username}}</td>
-        <td ng-if="dvm.linkToUser" class="username align-middle"><a ng-click="dvm.goToUser(user)">{{user.username}}</a></td>
-        <td>
-            <span><button class="btn btn-link" ng-click="dvm.removeMember({member: user.username})" ng-disabled="user.username === dvm.lm.currentUser || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.readOnly">
-            <i class="fa fa-trash-o"></i>
-            </button></span>
-        </td>
-    </tr>
-    <tr ng-if="dvm.addingMember" class="adding-member">
-        <td colspan="2">
-            <ui-select ng-model="dvm.selectedUser" on-select="dvm.onSelect()">
-                <ui-select-match ui-lock-choice="$select.selected.username === dvm.lm.currentUser" placeholder="Select a User">
-                    <span title="{{$select.selected.username}}">{{$select.selected.username}}</span>
-                </ui-select-match>
-                <ui-select-choices repeat="user in dvm.availableUsers | filter:$select.search">
-                    <div title="{{user.username}}" ng-bind-html="user.username | highlight:$select.search | trusted"></div>
-                </ui-select-choices>
-            </ui-select>
-        </td>
-    </tr>
-    <tr ng-if="dvm.availableUsers.length > 0 && dvm.um.isAdmin(dvm.lm.currentUser)" class="add-member">
-        <td colspan="2"><a a-disabled="dvm.readOnly" ng-click="dvm.addingMember = true">+ Add Member</a></td>
-    </tr>
-</table>
+<mat-table #table [dataSource]="dataSource" class="member-table">
+    <ng-container matColumnDef="username">
+        <mat-header-cell *matHeaderCellDef>Username</mat-header-cell>
+        <mat-cell class="username-column" *matCellDef="let user">{{user}}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="delete">
+        <mat-header-cell *matHeaderCellDef>Delete</mat-header-cell>
+        <mat-cell *matCellDef="let user" class="delete-column">
+            <button mat-icon-button color="primary" aria-label="Remove member" (click)="emitRemoveMember(user)" [disabled]="readOnly">
+                <mat-icon>delete</mat-icon>
+            </button>
+        </mat-cell>
+    </ng-container>
+
+    <mat-header-row *matHeaderRowDef="displayedColumns" style="display: none"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+</mat-table>

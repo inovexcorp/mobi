@@ -20,72 +20,71 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
 import { map, without } from 'lodash';
 
-const template = require('./createGroupOverlay.component.html');
+import { UserManagerService } from '../../../shared/services/userManager.service';
+import { uniqueValue } from '../../../shared/validators/uniqueValue.validator';
+import { Group } from '../../../shared/models/group.interface';
+import { User } from '../../../shared/models/user.interface';
 
 /**
- * @ngdoc component
- * @name user-management.component:createGroupOverlay
- * @requires shared.service:userManagerService
- * @requires shared.service:userStateService
- * @requires shared.service:loginManagerService
- *
- * @description
- * `createGroupOverlay` is a component that creates content for a modal with a form to add a group to Mobi. The
- * form includes the group title, a group description, and group
- * {@link user-management.component:memberTable members}. Meant to be used in conjunction with the
- * {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * @class user-management.CreateGroupOverlayComponent
+ * 
+ * A component that creates content for a modal with a form to add a group to Mobi. The form includes the group title,
+ * a group description, and group {@link user-management.MemberTableComponent members}. Meant to be used in conjunction
+ * with the `MatDialog` service.
  */
-const createGroupOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: createGroupOverlayComponentCtrl
-};
+@Component({
+    selector: 'create-group-overlay',
+    templateUrl: './createGroupOverlay.component.html'
+})
+export class CreateGroupOverlayComponent implements OnInit {
+    members: string[] = [];
+    errorMessage = '';
+    createGroupForm = this.fb.group({
+        title: ['', [ Validators.required, uniqueValue(this.getTitles())]],
+        description: [''],
+        admin: ''
+    });
 
-createGroupOverlayComponentCtrl.$inject = ['userManagerService', 'loginManagerService'];
-
-function createGroupOverlayComponentCtrl(userManagerService, loginManagerService) {
-    var dvm = this;
-    dvm.um = userManagerService;
-    dvm.lm = loginManagerService;
-    dvm.newGroup = {
-        title: '',
-        description: '',
-        roles: [],
-        members: []
-    };
-    dvm.errorMessage = '';
-
-    dvm.$onInit = function() {
-        dvm.newGroup.members = [dvm.lm.currentUser];
+    constructor(private dialogRef: MatDialogRef<CreateGroupOverlayComponent>, private fb: FormBuilder,
+        private um: UserManagerService, @Inject('loginManagerService') private lm,
+        @Inject('utilService') private util) {}
+    
+    ngOnInit(): void {
+        this.members = [this.lm.currentUser];
     }
-    dvm.getTitles = function() {
-        return map(dvm.um.groups, 'title');
+    getTitles(): string[] {
+        return map(this.um.groups, 'title');
     }
-    dvm.add = function() {
-        dvm.um.addGroup(dvm.newGroup)
-        .then(response => {
-            dvm.errorMessage = '';
-            dvm.close();
-        }, error => dvm.errorMessage = error);
+    getTitleErrorMessage(): string {
+        return this.createGroupForm.controls.title.hasError('uniqueValue') ? 'This group title has already been taken' : '';
     }
-    dvm.addMember = function(member) {
-        dvm.newGroup.members = dvm.newGroup.members.concat([member]);
+    add(): void {
+        const newGroup: Group = {
+            title: this.createGroupForm.controls.title.value,
+            description: this.createGroupForm.controls.description.value,
+            roles: [],
+            members: this.members,
+            external: false
+        };
+        if (this.createGroupForm.controls.admin.value) {
+            newGroup.roles.push('admin');
+        }
+        this.um.addGroup(newGroup)
+            .then(() => {
+                this.util.createSuccessToast('Group successfully created');
+                this.errorMessage = '';
+                this.dialogRef.close();
+            }, error => this.errorMessage = error);
     }
-    dvm.removeMember = function(member) {
-        dvm.newGroup.members = without(dvm.newGroup.members, member);
+    addMember(member: User): void {
+        this.members = this.members.concat([member.username]);
     }
-    dvm.cancel = function() {
-        dvm.dismiss();
+    removeMember(member: string): void {
+        this.members = without(this.members, member);
     }
 }
-
-export default createGroupOverlayComponent;

@@ -22,10 +22,10 @@
   -->
 <div class="users-list tree scroll-without-buttons">
     <ul>
-        <li ng-repeat="user in dvm.filteredUsers track by user.username" ng-class="{'external': user.external}">
-            <a ng-click="dvm.clickEvent({user: user})" class="d-flex align-items-center" ng-class="{'active': dvm.selectedUser.username === user.username}">
-                <span class="user-title text-truncate" ng-bind-html="(user.firstName || user.lastName) ? (user.firstName + ' ' + user.lastName) : user.username | highlight:dvm.searchText | trusted"></span>
-                <small class="admin pl-1" ng-if="dvm.um.isAdmin(user.username)">(Admin)</small>
+        <li *ngFor="let user of users; trackBy : trackByFn" [ngClass]="{'external': user.external}">
+            <a (click)="clickUser(user)" class="d-flex align-items-center" [ngClass]="{'active': selectedUser && selectedUser.username === user.username}">
+                <span class="user-title text-truncate" [innerHTML]="(user.firstName || user.lastName) ? (user.firstName + ' ' + user.lastName) : user.username | highlightText: searchText"></span>
+                <small class="admin pl-1" *ngIf="um.isAdmin(user.username)">(Admin)</small>
             </a>
         </li>
     </ul>

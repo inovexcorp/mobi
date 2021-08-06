@@ -22,9 +22,9 @@
  */
 
 import { By } from '@angular/platform-browser';
-import { DebugElement } from "@angular/core";
-import { ComponentFixture, fakeAsync, TestBed, tick } from "@angular/core/testing";
-import { configureTestSuite } from "ng-bullet";
+import { DebugElement } from '@angular/core';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { configureTestSuite } from 'ng-bullet';
 import { MockComponent } from 'ng-mocks';
 
 import {
@@ -34,9 +34,9 @@ import {
     mockHttpService,
     cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
-import { SharedModule } from "../../../shared/shared.module";
+import { SharedModule } from '../../../shared/shared.module';
 import { ActivityTitleComponent } from '../activityTitle/activityTitle.component';
-import { ActivityCardComponent } from "./activityCard.component";
+import { ActivityCardComponent } from './activityCard.component';
 
 describe('Activity Card component', function() {
     let component: ActivityCardComponent;
@@ -140,7 +140,7 @@ describe('Activity Card component', function() {
             }));
         });
         it('should load more activities', function() {
-            let limit = component.limit;
+            const limit = component.limit;
             spyOn(component, 'setPage');
             component.loadMore();
             expect(component.limit).toEqual(limit + 10);

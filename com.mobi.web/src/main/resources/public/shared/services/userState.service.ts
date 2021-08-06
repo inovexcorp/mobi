@@ -21,109 +21,58 @@
  * #L%
  */
 
+import { Injectable } from '@angular/core';
+
+import { Group } from '../models/group.interface';
+import { User } from '../models/user.interface';
+
 /**
- * @ngdoc service
- * @name shared.service:userStateService
+ * @class shared.UserStateService
  *
- * @description
- * `userStateService` is a service which contains various variables to hold the
- * state of the user management page and utility functions to update those variables.
+ * A service which contains various variables to hold the state of the
+ * {@link user-management.UserManagementPage user management page} and utility functions to update those variables.
  */
-function userStateService() {
-    var self = this;
-
+@Injectable()
+export class UserStateService {
     /**
-     * @ngdoc property
-     * @name shared.service:userStateService#groupSearchString
-     * @propertyOf shared.service:userStateService
-     * @type {string}
-     *
-     * @description
      * `groupSearchString` holds a string to be used in filtering the
-     * {@link user-management.component:groupsList groups list}.
-     */
-    self.groupSearchString = '';
-    /**
-     * @ngdoc property
-     * @name shared.service:userStateService#userSearchString
-     * @propertyOf shared.service:userStateService
+     * {@link user-management.GroupsListComponent groups list}.
      * @type {string}
-     *
-     * @description
+     */
+    groupSearchString = '';
+    /**
      * `userSearchString` holds a string to be used in filtering the
-     * {@link user-management.component:usersList users list}.
+     * {@link user-management.UsersListComponent users list}.
+     * @type {string}
      */
-    self.userSearchString = '';
+    userSearchString = '';
     /**
-     * @ngdoc property
-     * @name shared.service:userStateService#showGroups
-     * @propertyOf shared.service:userStateService
-     * @type {boolean}
-     *
-     * @description
-     * `showGroups` holds a boolean indicating whether the
-     * {@link user-management.component:groupsPage groups page} should be shown.
-     */
-    self.showGroups = false;
-    /**
-     * @ngdoc property
-     * @name shared.service:userStateService#showUsers
-     * @propertyOf shared.service:userStateService
-     * @type {boolean}
-     *
-     * @description
-     * `showUsers` holds a boolean indicating whether the
-     * {@link user-management.component:usersPage users page} should be shown.
-     */
-    self.showUsers = true;
-    /**
-     * @ngdoc property
-     * @name shared.service:userStateService#showPermissions
-     * @propertyOf shared.service:userStateService
-     * @type {boolean}
-     *
-     * @description
-     * `showPermissions` holds a boolean indicating whether the
-     * {@link user-management.component:permissionsPage permissions page} should be shown.
-     */
-    self.showPermissions = false;
-    /**
-     * @ngdoc property
-     * @name shared.service:userStateService#selectedGroup
-     * @propertyOf shared.service:userStateService
-     * @type {object}
-     *
-     * @description
      * `selectedGroup` holds the currently selected group object from the
-     * {@link shared.service:userManagerService#groups groups list}.
+     * {@link shared.UserManagerService#groups groups list}.
+     * @type {Group}
      */
-    self.selectedGroup = undefined;
+    selectedGroup: Group = undefined;
     /**
-     * @ngdoc property
-     * @name shared.service:userStateService#selectedUser
-     * @propertyOf shared.service:userStateService
-     * @type {object}
-     *
-     * @description
      * `selectedUser` holds the currently selected user object from the
-     * {@link shared.service:userManagerService#users users list}.
+     * {@link shared.UserManagerService#users users list}.
+     * @type {User}
      */
-    self.selectedUser = undefined;
+    selectedUser: User = undefined;
+    /**
+     * `tabIndex` holds the currently selected tab index in the
+     * {@link user-management.UserManagementPageComponent user management page}.
+     * @type {number}
+     */
+    tabIndex = 0;
 
     /**
-     * @ngdoc method
-     * @name shared.service:userStateService#reset
-     * @methodOf shared.service:userStateService
-     *
-     * @description
      * Resets all the main state variables back to false and undefined.
      */
-    self.reset = function() {
-        self.selectedGroup = undefined;
-        self.selectedUser = undefined;
-        self.groupSearchString = '';
-        self.userSearchString = '';
+    reset(): void {
+        this.selectedGroup = undefined;
+        this.selectedUser = undefined;
+        this.groupSearchString = '';
+        this.userSearchString = '';
+        this.tabIndex = 0;
     }
 }
-
-export default userStateService;

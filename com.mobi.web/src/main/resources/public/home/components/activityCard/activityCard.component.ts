@@ -21,7 +21,7 @@
  * #L%
  */
 import { get } from 'lodash';
-import { Component, Inject, OnDestroy, OnInit } from "@angular/core";
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 
 /**
  * @class home.ActivityCardComponent
@@ -62,7 +62,7 @@ export class ActivityCardComponent implements OnInit, OnDestroy {
             .then(response => {
                 this.activities = response.data.activities;
                 this.entities = response.data.entities;
-                let headers = response.headers();
+                const headers = response.headers();
                 this.totalSize = get(headers, 'x-total-count', 0);
             }, errorMessage => {
                 if (errorMessage) {
@@ -71,8 +71,8 @@ export class ActivityCardComponent implements OnInit, OnDestroy {
             });
     }
     getTimeStamp(activity): string {
-        let dateStr = this.util.getPropertyValue(activity, this.prefixes.prov + 'endedAtTime');
-        return this.util.getDate(dateStr, 'short')
+        const dateStr = this.util.getPropertyValue(activity, this.prefixes.prov + 'endedAtTime');
+        return this.util.getDate(dateStr, 'short');
     }
     getConfig(): any {
         return {pageIndex: 0, limit: this.limit};

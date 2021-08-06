@@ -28,7 +28,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import {
     cleanStylesFromDOM, mockUtil, mockPrefixes
 } from '../../../../../../test/ts/Shared';
-import { SharedModule } from "../../../shared/shared.module";
+import { SharedModule } from '../../../shared/shared.module';
 import { PreferenceConstants } from '../../classes/preferenceConstants.class';
 import { PreferenceFormFieldComponent } from '../preferenceFormField/preferenceFormField.component';
 import { FormGroup, FormControl } from '@angular/forms';
@@ -67,11 +67,11 @@ describe('Preference Form Field component', function() {
         utilStub = TestBed.get('utilService');
         
         utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
-            return get(entity, "['" + propertyIRI + "'][0]['@value']", '');
+            return get(entity, '[\'' + propertyIRI + '\'][0][\'@value\']', '');
         });
 
         utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {
-            return get(entity, "['" + propertyIRI + "'][0]['@id']", '');
+            return get(entity, '[\'' + propertyIRI + '\'][0][\'@id\']', '');
         });
 
         formGroup = new FormGroup({
@@ -81,27 +81,27 @@ describe('Preference Form Field component', function() {
         field = PreferenceConstants.HAS_DATA_VALUE;
 
         shaclShape = {
-            "@id" : "preference:SomeSimpleTextPreferencePropertyShape",
-            "@type" : [ "shacl:PropertyShape" ],
-            "preference:usesFormField" : [ {
-              "@id" : "preference:TextInput"
+            '@id': 'preference:SomeSimpleTextPreferencePropertyShape',
+            '@type': [ 'shacl:PropertyShape' ],
+            'preference:usesFormField': [ {
+              '@id': 'preference:TextInput'
             } ],
-            "shacl:datatype" : [ {
-              "@id" : "xsd:string"
+            'shacl:datatype': [ {
+              '@id': 'xsd:string'
             } ],
-            "shacl:name" : [ {
-              "@value" : "Some simple text field"
+            'shacl:name': [ {
+              '@value': 'Some simple text field'
             } ],
-            "shacl:maxCount" : [ {
-              "@type" : "xsd:integer",
-              "@value" : "2"
+            'shacl:maxCount': [ {
+              '@type': 'xsd:integer',
+              '@value': '2'
             } ],
-            "shacl:minCount" : [ {
-              "@type" : "xsd:integer",
-              "@value" : "1"
+            'shacl:minCount': [ {
+              '@type': 'xsd:integer',
+              '@value': '1'
             } ],
-            "shacl:path" : [ {
-              "@id" : "http://mobi.com/ontologies/preference#hasDataValue"
+            'shacl:path': [ {
+              '@id': 'http://mobi.com/ontologies/preference#hasDataValue'
             } ]
         };
 
@@ -140,14 +140,14 @@ describe('Preference Form Field component', function() {
                 });
                 it('when rdf declares a toggle input field', function() {
                     component.shaclShape['preference:usesFormField'] = [{
-                        "@id" : "preference:ToggleInput"
+                        '@id': 'preference:ToggleInput'
                     }];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('toggle');
                 });
                 it('when rdf declares an unsupported input field', function() {
                     component.shaclShape['preference:usesFormField'] = [{
-                        "@id" : "preference:UnknownInput"
+                        '@id': 'preference:UnknownInput'
                     }];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('');
@@ -163,7 +163,7 @@ describe('Preference Form Field component', function() {
             describe('should set validators correctly', function() {
                 it('when a min count exists', function() {
                     component.shaclShape['shacl:pattern'] = [{
-                        "@value" : "[a-zA-Z ]*"
+                        '@value': '[a-zA-Z ]*'
                     }];
                     component.ngOnChanges();
                     component.fieldFormControl.setValue('');
@@ -177,7 +177,7 @@ describe('Preference Form Field component', function() {
                 });
                 it('when a shacl pattern exists', function() {
                     component.shaclShape['shacl:pattern'] = [{
-                        "@value" : "[a-zA-Z ]*"
+                        '@value': '[a-zA-Z ]*'
                     }];
                     component.ngOnChanges();
 
@@ -196,7 +196,7 @@ describe('Preference Form Field component', function() {
                 });
                 it('when shacl datatype is integer', function() {
                     component.shaclShape['shacl:datatype'] = [{
-                        '@id' : 'xsd:integer'
+                        '@id': 'xsd:integer'
                     }];
                     component.ngOnChanges();
 

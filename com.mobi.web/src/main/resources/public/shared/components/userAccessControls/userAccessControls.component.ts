@@ -21,182 +21,219 @@
  * #L%
  */
 
-import { includes, filter, remove, concat, set, get, find, sortBy } from 'lodash';
+import { Component, Inject, Input, OnInit, ViewChild } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material';
+import { filter, remove, set, get, find } from 'lodash';
+import { Observable } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
+
+import { Group } from '../../models/group.interface';
+import { Policy } from '../../models/policy.interface';
+import { User } from '../../models/user.interface';
+import { PolicyManagerService } from '../../services/policyManager.service';
+import { UserManagerService } from '../../services/userManager.service';
 
 import './userAccessControls.component.scss';
 
-const template = require('./userAccessControls.component.html');
-
 /**
- * @ngdoc component
- * @name shared.component:userAccessControls
- * @requires shared.service:policyManagerService
- * @requires shared.service:utilService
- * @requires shared.service:loginManagerService
- * @requires shared.service:prefixes
+ * @class shared.UserAccessControlsComponent
  *
- * @description
- * `userAccessControls` is a component that creates a Bootstrap `row` div with a single column containing a
- * {@link shared.component:block block} for viewing and updating permissions on a Rule of a Policy. The Rule is
- * represented by the provided `item`. A `ruleTitle` can be provided to provide context on the Rule. The IRI of the
- * Rule is set with `ruleId`. The behavior when the Rule is updated is controlled by the provided `updateItem`
- * function which is expected to update the value of `item`. The Rule should be in the format:
- * ```
- * {
- *     everyone: false,
- *     users: [],
- *     selectedUsers: [],
- *     userSearchText: '',
- *     selectedUser: {},
- *     groups: [],
- *     selectedGroups: [],
- *     groupSearchText: '',
- *     selectedGroup: {}
- * }
- * ```
- * 
- * @param {Object} item A representation of a Rule in a Policy
- * @param {string} ruleTitle A string representing the display title of the Rule
- * @param {string} ruleId The IRI id of the Rule
- * @param {Function} updateItem A function to update the Rule. Should update teh value of `item`. Expects an
- * argument called `item`.
+ * A component that creates a Bootstrap `row` div with a container for viewing and updating
+ * permissions on a Rule of a Policy. The Rule is represented by the provided {@link Policy item}. A `ruleTitle` can be
+ * provided to provide context on the Rule. The IRI of the Rule is set with `ruleId`.
  */
-const userAccessControlsComponent = {
-    template,
-    bindings: {
-        item: '<',
-        ruleTitle: '<',
-        ruleId: '<',
-        updateItem: '&'
-    },
-    controllerAs: 'dvm',
-    controller: userAccessControlsComponentCtrl
-};
+@Component({
+    selector: 'user-access-controls',
+    templateUrl: './userAccessControls.component.html'
+})
+export class UserAccessControlsComponent implements OnInit {
+    /**
+     * A representation of the Rule that will be edited by this instance of the component
+     * {@link Policy}
+     */
+    @Input() item: Policy;
+    /**
+     * A string representing the display title of the Rule
+     * @type {string}
+     */
+    @Input() ruleTitle: string;
+    /**
+     * The Optional IRI id of the Rule
+     * @type {string}
+     */
+    @Input() ruleId?: string;
 
-userAccessControlsComponentCtrl.$inject = ['$scope', 'policyManagerService', 'loginManagerService', 'prefixes'];
+    @ViewChild('userInput', {read: MatAutocompleteTrigger}) userTrigger: MatAutocompleteTrigger;
+    @ViewChild('groupInput', {read: MatAutocompleteTrigger}) groupTrigger: MatAutocompleteTrigger;
 
-function userAccessControlsComponentCtrl($scope, policyManagerService, loginManagerService, prefixes) {
-    var dvm = this;
-    dvm.lm = loginManagerService;
-    var pm = policyManagerService;
-    var groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + prefixes.foaf + 'member' + '>') + ')';
-    var userRole = 'http://mobi.com/roles/user';
+    groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + this.prefixes.foaf + 'member' + '>') + ')';
+    userRole = 'http://mobi.com/roles/user';
 
-    dvm.filterUsers = function(users, searchText) {
-        return filter(users, user => includes(user.username.toLowerCase(), searchText.toLowerCase()));
-    }
-    dvm.filterGroups = function(groups, searchText) {
-        return filter(groups, group => includes(group.title.toLowerCase(), searchText.toLowerCase()));
-    }
-    dvm.addUser = function(user) {
-        if (user) {
-            dvm.item.selectedUsers.push(user);
-            dvm.item.selectedUsers = sortUsers(dvm.item.selectedUsers);
-            remove(dvm.item.users, user);
-            dvm.item.selectedUser = undefined;
-            dvm.item.userSearchText = '';
-            $scope.$$childTail.userSearchText = '';
-            $scope.$$childTail.selectedUser = undefined;
-            if (document.activeElement instanceof HTMLElement) {
-                document.activeElement.blur();
-            }
-            // document.activeElement.blur();
-            if (!dvm.ruleId) {
-                addUserMatch(user.iri, dvm.item.policy);
-            }
-            dvm.updateItem({item: dvm.item});
+    userSearchControl: FormControl = new FormControl();
+    availableUsers: User[] = [];
+    filteredAvailableUsers: Observable<User[]>;
+    groupSearchControl: FormControl = new FormControl();
+    availableGroups: Group[] = [];
+    filteredAvailableGroups: Observable<Group[]>;
+
+    constructor(private pm: PolicyManagerService, @Inject('loginManagerService') private lm,
+        public um: UserManagerService, @Inject('prefixes') private prefixes) { }
+
+    ngOnInit(): void {
+        if (this.item && this.item.everyone) {
+            this.userSearchControl.disable();
+            this.groupSearchControl.disable();
         }
+        this.setUsers();
+        this.setGroups();
+        this.filteredAvailableUsers = this.userSearchControl.valueChanges.pipe(
+            startWith<string | User>(''),
+            map(val => {
+                const searchText = typeof val === 'string' ? 
+                    val : 
+                    val ? 
+                        val.username :
+                        undefined;
+                return this.um.filterUsers(this.availableUsers, searchText);
+            })
+        );
+        this.filteredAvailableGroups = this.groupSearchControl.valueChanges.pipe(
+            startWith<string | Group>(''),
+            map(val => {
+                const searchText = typeof val === 'string' ? 
+                    val : 
+                    val ? 
+                        val.title :
+                        undefined;
+                return this.um.filterGroups(this.availableGroups, searchText);
+            })
+        );
     }
-    dvm.removeUser = function(user) {
-        dvm.item.users.push(user);
-        dvm.item.users = sortUsers(dvm.item.users);
-        remove(dvm.item.selectedUsers, user);
-        if (!dvm.ruleId) {
-            removeMatch(user.iri, dvm.item.policy);
+    setUsers(): void {
+        this.availableUsers = filter(this.um.users, user => !find(this.item.selectedUsers, { iri: user.iri }));
+    }
+    setGroups(): void {
+        this.availableGroups = filter(this.um.groups, group => !find(this.item.selectedGroups, { iri: group.iri }));
+    }
+    selectUser(event: MatAutocompleteSelectedEvent, auto: MatAutocomplete): void {
+        this.addUser(event.option.value);
+        setTimeout(_ => {
+            auto.options.forEach((item) => {
+                item.deselect();
+            });
+            this.setUsers();
+            this.userSearchControl.reset('');
+            this.userTrigger.openPanel();
+        }, 100);
+    }
+    addUser(user: User): void {
+        this.item.selectedUsers.push(user);
+        this.item.selectedUsers.sort((user1: User, user2: User) => user1.username.localeCompare(user2.username));
+        if (!this.ruleId) {
+            this.addUserMatch(user.iri, this.item.policy);
         }
-        dvm.updateItem({item: dvm.item});
+        this.item.changed = true;
     }
-    dvm.addGroup = function(group) {
-        if (group) {
-            dvm.item.selectedGroups.push(group);
-            dvm.item.selectedGroups = sortGroups(dvm.item.selectedGroups);
-            remove(dvm.item.groups, group);
-            dvm.item.selectedGroup = undefined;
-            dvm.item.groupSearchText = '';
-            $scope.$$childTail.groupSearchText = '';
-            $scope.$$childTail.selectedGroup = undefined;
-            if (document.activeElement instanceof HTMLElement) {
-                document.activeElement.blur();
-            }
-            // document.activeElement.blur();
-            if (!dvm.ruleId) {
-                addGroupMatch(group.iri, dvm.item.policy);
-            }
-            dvm.updateItem({item: dvm.item});
+    removeUser(user: User): void {
+        remove(this.item.selectedUsers, user);
+        if (!this.ruleId) {
+            this.removeMatch(user.iri, this.item.policy);
         }
+        this.setUsers();
+        this.userSearchControl.reset('');
+        this.item.changed = true;
     }
-    dvm.removeGroup = function(group) {
-        dvm.item.groups.push(group);
-        dvm.item.groups = sortGroups(dvm.item.groups);
-        remove(dvm.item.selectedGroups, group);
-        if (!dvm.ruleId) {
-            removeMatch(group.iri, dvm.item.policy);
+    selectGroup(event: MatAutocompleteSelectedEvent, auto: MatAutocomplete): void {
+        this.addGroup(event.option.value);
+        setTimeout(_ => {
+            auto.options.forEach((item) => {
+                item.deselect();
+            });
+            this.setGroups();
+            this.groupSearchControl.reset('');
+            this.groupTrigger.openPanel();
+        }, 100);
+    }
+    addGroup(group: Group): void {
+        this.item.selectedGroups.push(group);
+        this.item.selectedGroups.sort((group1, group2) => group1.title.localeCompare(group2.title));
+        if (!this.ruleId) {
+            this.addGroupMatch(group.iri, this.item.policy);
         }
-        dvm.updateItem({item: dvm.item});
+        this.item.changed = true;
     }
-    dvm.toggleEveryone = function() {
-        if (dvm.item.everyone) {
-            if (!dvm.ruleId) {
-                set(dvm.item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);
-                addMatch(userRole, prefixes.user + 'hasUserRole', dvm.item.policy);
+    removeGroup(group: Group): void {
+        remove(this.item.selectedGroups, group);
+        if (!this.ruleId) {
+            this.removeMatch(group.iri, this.item.policy);
+        }
+        this.setGroups();
+        this.groupSearchControl.reset('');
+        this.item.changed = true;
+    }
+    toggleEveryone(): void {
+        if (this.item.everyone) {
+            if (!this.ruleId) {
+                set(this.item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);
+                this.addMatch(this.userRole, this.prefixes.user + 'hasUserRole', this.item.policy);
             }
-            dvm.item.users = sortUsers(concat(dvm.item.users, dvm.item.selectedUsers));
-            dvm.item.selectedUsers = [];
-            dvm.item.groups = sortGroups(concat(dvm.item.groups, dvm.item.selectedGroups));
-            dvm.item.selectedGroups = [];
+            this.item.selectedUsers = [];
+            this.item.selectedGroups = [];
+            this.setUsers();
+            this.setGroups();
+            this.userSearchControl.reset('');
+            this.userSearchControl.disable();
+            this.groupSearchControl.reset('');
+            this.groupSearchControl.disable();
         } else {
-            if (!dvm.ruleId) {
-                removeMatch(userRole, dvm.item.policy);
+            if (!this.ruleId) {
+                this.removeMatch(this.userRole, this.item.policy);
             }
-            dvm.addUser(find(dvm.item.users, {iri: dvm.lm.currentUserIRI}));
+            this.addUser(find(this.um.users, { iri: this.lm.currentUserIRI }));
+            this.setUsers();
+            this.setGroups();
+            this.userSearchControl.reset('');
+            this.userSearchControl.enable();
+            this.groupSearchControl.reset('');
+            this.groupSearchControl.enable();
         }
-        dvm.updateItem({item: dvm.item});
+        this.item.changed = true;
+    }
+    getTitle(group: Group): string {
+        return group && group.title ? group.title : '';
+    }
+    getName = (user: User): string => { // arrow syntax used to preserve `this` keyword
+        const userDisplay = this.um.getUserDisplay(user);
+        return userDisplay === '[Not Available]' ? '' : userDisplay;
     }
 
-    function removeMatch(value, policy) {
+    private removeMatch(value: string, policy: any): void {
         remove(get(policy, 'Rule[0].Target.AnyOf[0].AllOf', []), ['Match[0].AttributeValue.content[0]', value]);
     }
-    function addUserMatch(value, policy) {
-        addMatch(value, pm.subjectId, policy);
+    private addUserMatch(value: string, policy: any) {
+        this.addMatch(value, this.pm.subjectId, policy);
     }
-    function addGroupMatch(value, policy) {
-        addMatch(value, groupAttributeId, policy);
+    private addGroupMatch(value: string, policy: any) {
+        this.addMatch(value, this.groupAttributeId, policy);
     }
-    function addMatch(value, id, policy) {
-        var newMatch = {
+    private addMatch(value: string, id: string, policy: any) {
+        const newMatch = {
             Match: [{
                 AttributeValue: {
                     content: [value],
                     otherAttributes: {},
-                    DataType: prefixes.xsd + 'string'
+                    DataType: this.prefixes.xsd + 'string'
                 },
                 AttributeDesignator: {
-                    Category: pm.subjectCategory,
+                    Category: this.pm.subjectCategory,
                     AttributeId: id,
-                    DataType: prefixes.xsd + 'string',
+                    DataType: this.prefixes.xsd + 'string',
                     MustBePresent: true
                 },
-                MatchId: pm.stringEqual
+                MatchId: this.pm.stringEqual
             }]
         };
         get(policy, 'Rule[0].Target.AnyOf[0].AllOf', []).push(newMatch);
     }
-    function sortUsers(users) {
-        return sortBy(users, 'username');
-    }
-    function sortGroups(groups) {
-        return sortBy(groups, 'title');
-    }
 }
-
-export default userAccessControlsComponent;

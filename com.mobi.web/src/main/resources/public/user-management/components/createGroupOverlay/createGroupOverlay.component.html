@@ -20,25 +20,28 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Create Group</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
-</div>
-<div class="modal-body">
-    <form name="dvm.form">
-        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-        <div class="form-group title">
-            <custom-label>Group Title</custom-label>
-            <input class="form-control" type="text" name="title" ng-model="dvm.newGroup.title" unique-value="dvm.getTitles()" ng-class="{'is-invalid': dvm.form.title.$dirty && dvm.form.title.$invalid}" required focus-me="true" />
-            <p ng-messages="dvm.form.title.$error" class="invalid-feedback">
-                <ng-message when="uniqueTitle">This group title has already been taken.</ng-message>
-            </p>
+<h1 mat-dialog-title>Create Group</h1>
+<div mat-dialog-content [formGroup]="createGroupForm">
+    <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+    <mat-form-field class="w-100">
+        <mat-label>Group Title</mat-label>
+        <input matInput type="text" name="title" formControlName="title" required/>
+        <mat-error *ngIf="createGroupForm.controls.title.invalid">{{getTitleErrorMessage()}}</mat-error>
+    </mat-form-field>
+    <mat-form-field class="w-100">
+        <mat-label>Description</mat-label>
+        <textarea matInput name="description" formControlName="description"></textarea>
+    </mat-form-field>
+    <mat-slide-toggle formControlName="admin">Admin</mat-slide-toggle>
+    <div class="pt-1">
+        <div>
+            <label>Members</label>
+            <add-member-button [existingMembers]="members" (addMember)="addMember($event)"></add-member-button>
         </div>
-        <text-area bind-model="dvm.newGroup.description" change-event="dvm.newGroup.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
-        <member-table members="dvm.newGroup.members" remove-member="dvm.removeMember(member)" add-member="dvm.addMember(member)"></member-table>
-    </form>
+        <member-table [members]="members" (removeMember)="removeMember($event)"></member-table>
+    </div>
 </div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-click="dvm.add()" ng-disabled="dvm.form.$invalid">Submit</button>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="">Cancel</button>
+    <button mat-raised-button color="primary" (click)="add()" [disabled]="createGroupForm.invalid">Submit</button>
 </div>

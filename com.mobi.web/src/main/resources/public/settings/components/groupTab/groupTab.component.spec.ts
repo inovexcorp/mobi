@@ -24,31 +24,32 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { By } from '@angular/platform-browser';
+import { MockComponent, MockProvider } from 'ng-mocks';
 
 import {
-    mockUserManager,
     mockLoginManager,
     cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
-import { SharedModule } from '../../../shared/shared.module';
+import { UserManagerService } from '../../../shared/services/userManager.service';
+import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { GroupTabComponent } from './groupTab.component';
 
 describe('Group Tab component', function() {
     let component: GroupTabComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<GroupTabComponent>;
-    let userManagerStub
+    let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let loginManagerStub;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
-            imports: [ SharedModule ],
             declarations: [
-                GroupTabComponent
+                GroupTabComponent,
+                MockComponent(InfoMessageComponent)
             ],
             providers: [
                 { provide: 'loginManagerService', useClass: mockLoginManager },
-                { provide: 'userManagerService', useClass: mockUserManager },
+                MockProvider(UserManagerService)
             ]
         });
     });
@@ -58,7 +59,7 @@ describe('Group Tab component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         loginManagerStub = TestBed.get('loginManagerService');
-        userManagerStub = TestBed.get('userManagerService');
+        userManagerStub = TestBed.get(UserManagerService);
 
         this.user = 'user';
         this.group1 = {title: 'group1', roles: [],  members: [this.user, 'test']};

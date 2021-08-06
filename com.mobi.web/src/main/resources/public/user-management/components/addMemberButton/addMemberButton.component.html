@@ -1,0 +1,22 @@
+<button mat-icon-button color="primary" class="add-member-button" [matMenuTriggerFor]="addMemberForm" #trigger="matMenuTrigger" (menuOpened)="setAvailableUsers()"><i class="fa fa-fw fa-plus"></i></button>
+<mat-menu #addMemberForm="matMenu" class="menu-form-wrapper" hasBackdrop="false" (closed)="clearAddMember()">
+<!-- TODO: Include after upgrading to Angular 6 -->
+<!-- <mat-menu #addMemberForm="matMenu" class="menu-form-wrapper" hasBackdrop="false"> -->
+    <ng-template matMenuContent>
+        <div (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" class="p-2 d-flex flex-column remove-min-width">
+            <mat-form-field>
+                <mat-label>User</mat-label>
+                <input matInput [matAutocomplete]="memberAutocomplete" [(ngModel)]="userFilter" (ngModelChange)="setFilteredUsers()">
+                <mat-autocomplete #memberAutocomplete="matAutocomplete" (optionSelected)="selectMember($event)" [displayWith]="getName">
+                    <mat-option *ngFor="let user of filteredAvailableUsers" [value]="user">
+                        {{getName(user)}}
+                    </mat-option>
+                </mat-autocomplete>
+            </mat-form-field>
+            <div class="mt-1">
+                <button mat-raised-button (click)="cancelAdd()">Cancel</button>
+                <button mat-raised-button color="primary" (click)="emitAddMember(userFilter)" [disabled]="!selectedMember">Add</button>
+            </div>
+        </div>
+    </ng-template>
+</mat-menu>

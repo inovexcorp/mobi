@@ -20,9 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { find, cloneDeep } from 'lodash';
+import { find } from 'lodash';
 import { OnInit, Component, Inject } from '@angular/core';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
+
+import { UserManagerService } from '../../../shared/services/userManager.service';
+import { User } from '../../../shared/models/user.interface';
 
 /**
  * @name settings.PasswordTabComponent
@@ -36,19 +39,19 @@ import { FormBuilder, Validators, FormGroup } from '@angular/forms';
     templateUrl: './passwordTab.component.html'
 })
 export class PasswordTabComponent implements OnInit {
-    currentUser: any = {};
+    currentUser: User = undefined;
     errorMessage: string;
     passwordForm = this.fb.group({
-        currentPassword: [{value: '', disabled: this.currentUser.external}, [Validators.required]],
-        unmaskPassword: [{value: '', disabled: this.currentUser.external}, [Validators.required]]
+        currentPassword: ['', [Validators.required]],
+        unmaskPassword: ['', [Validators.required]]
     });
    
-    constructor(@Inject('userManagerService') private um, @Inject('loginManagerService') private lm,
+    constructor(private um: UserManagerService, @Inject('loginManagerService') private lm,
         @Inject('utilService') private util, private fb: FormBuilder) {}
 
     ngOnInit(): void {
-        this.currentUser = cloneDeep(find(this.um.users, { username: this.lm.currentUser }));
-        if (this.currentUser.external) {
+        this.currentUser = find(this.um.users, { username: this.lm.currentUser });
+        if (!this.currentUser || this.currentUser.external) {
             this.disableAllFields(this.passwordForm);
         }
     }
@@ -68,7 +71,7 @@ export class PasswordTabComponent implements OnInit {
 
     disableAllFields(formGroup: FormGroup): void {
         Object.keys(formGroup.controls).forEach(controlName => {
-            let temp = formGroup.get(controlName)
+            const temp = formGroup.get(controlName);
             if (temp instanceof FormGroup) {
                 this.disableAllFields(temp);
             } else {

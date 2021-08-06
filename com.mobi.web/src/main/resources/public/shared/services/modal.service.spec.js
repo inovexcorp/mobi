@@ -74,6 +74,6 @@ describe('Modal service', function() {
     });
     it('should open a confirmation modal', function() {
         modalSvc.openConfirmModal('<p>testModal</p>', _.noop, _.noop);
-        expect($uibModal.open).toHaveBeenCalledWith({component: 'confirmModal', resolve: jasmine.any(Object)});
+        expect($uibModal.open).toHaveBeenCalledWith({component: 'confirmModalAjs', resolve: jasmine.any(Object)});
     });
 });

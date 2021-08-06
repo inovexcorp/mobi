@@ -20,59 +20,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
+import { Component, Inject } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
 import { find } from 'lodash';
 
-const template = require('./editGroupInfoOverlay.component.html');
+import { Group } from '../../../shared/models/group.interface';
+import { UserManagerService } from '../../../shared/services/userManager.service';
+import { UserStateService } from '../../../shared/services/userState.service';
 
 /**
- * @ngdoc component
- * @name user-management.component:editGroupInfoOverlay
- * @requires shared.service:userManagerService
- * @requires shared.service:userStateService
- * @requires shared.service:utilService
+ * @class user-management.EditGroupInfoOverlayComponent
  *
- * @description
- * `editGroupInfoOverlay` is a component that creates content for a modal with a form to change the
- * {@link shared.service:userStateService#selectedGroup selected group's} information in Mobi. The
- * form contains a field to edit the group's description. Meant to be used in conjunction with the
- * {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal with a form to change the
+ * {@link shared.UserStateService#selectedGroup selected group's} information in Mobi. The form contains a field to edit
+ * the group's description. Meant to be used in conjunction with the `MatDialog` service.
  */
-const editGroupInfoOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: editGroupInfoOverlayComponentCtrl,
-};
+@Component({
+    selector: 'edit-group-info-overlay',
+    templateUrl: './editGroupInfoOverlay.component.html'
+})
+export class EditGroupInfoOverlayComponent {
+    editGroupInfoForm: FormGroup;
+    errorMessage = '';
 
-editGroupInfoOverlayComponentCtrl.$inject = ['userStateService', 'userManagerService', 'utilService'];
-
-function editGroupInfoOverlayComponentCtrl(userStateService, userManagerService, utilService) {
-    var dvm = this;
-    dvm.state = userStateService;
-    dvm.um = userManagerService;
-    dvm.newGroup = {};
-
-    dvm.$onInit = function() {
-        dvm.newGroup = angular.copy(dvm.state.selectedGroup);
+    constructor(private dialogRef: MatDialogRef<EditGroupInfoOverlayComponent>, private fb: FormBuilder,
+        private state: UserStateService, private um: UserManagerService,
+        @Inject('utilService') private util) {
+            this.editGroupInfoForm = this.fb.group({
+                description: [this.state.selectedGroup.description]
+            });
     }
-    dvm.set = function() {
-        utilService.updateDctermsValue(dvm.newGroup.jsonld, 'description', dvm.newGroup.description);
-        dvm.um.updateGroup(dvm.state.selectedGroup.title, dvm.newGroup).then(response => {
-            dvm.errorMessage = '';
-            dvm.state.selectedGroup = find(dvm.um.groups, {title: dvm.newGroup.title});
-            dvm.close();
-        }, error => dvm.errorMessage = error);
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
+    
+    set(): void {
+        const newGroup: Group = Object.assign({}, this.state.selectedGroup);
+        newGroup.description = this.editGroupInfoForm.controls.description.value;
+        this.util.updateDctermsValue(newGroup.jsonld, 'description', newGroup.description);
+        this.um.updateGroup(this.state.selectedGroup.title, newGroup).then(() => {
+            this.errorMessage = '';
+            this.state.selectedGroup = find(this.um.groups, {title: newGroup.title});
+            this.dialogRef.close();
+        }, error => this.errorMessage = error);
     }
 }
-
-export default editGroupInfoOverlayComponent;

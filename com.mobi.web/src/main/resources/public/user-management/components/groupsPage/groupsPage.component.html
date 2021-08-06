@@ -22,70 +22,42 @@
   -->
 <div class="groups-page container-fluid h-100 py-2">
     <div class="row h-100">
-        <div class="col-4 h-100">
-            <block class="h-100">
-                <block-header>
-                    <span>Groups</span>
-                    <button class="btn btn-link float-right" ng-click="dvm.createGroup()" ng-disabled="!dvm.um.isAdmin(dvm.lm.currentUser)">
-                        <i class="fa fa-plus"></i>Create Group
-                    </button>
-                </block-header>
-                <block-search bind-model="dvm.state.groupSearchString" change-event="dvm.state.groupSearchString = value" clear-event="dvm.state.groupSearchString = ''"></block-search>
-                <block-content>
-                    <groups-list groups="dvm.um.groups" selected-group="dvm.state.selectedGroup" click-event="dvm.selectGroup(group)" search-text="dvm.state.groupSearchString"></groups-list>
-                </block-content>
-                <block-footer class="centered">
-                    <button class="btn btn-link" ng-click="dvm.confirmDeleteGroup()" ng-disabled="!dvm.state.selectedGroup || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.state.selectedGroup.external">
-                        <i class="fa fa-trash"></i>Delete Group
-                    </button>
-                </block-footer>
-            </block>
+        <div class="col-4 vertical-scroll h-100">
+            <button mat-raised-button color="primary" (click)="createGroup()" [disabled]="!isAdmin">
+                <i class="fa fa-plus"></i> Create Group
+            </button>
+            <div class="group-search">
+                <mat-form-field class="w-100">
+                    <input matInput (input)="onSearch($event.target.value)" />
+                    <span matPrefix><i class="fa fa-search"></i></span>
+                </mat-form-field>
+            </div>
+            <groups-list [groups]="filteredGroups" [selectedGroup]="state.selectedGroup" (clickEvent)="selectGroup($event)" [searchText]="state.groupSearchString"></groups-list>
         </div>
-        <div class="col-8 d-flex flex-column h-100">
-            <div class="group-title">
-                <h3>{{dvm.state.selectedGroup.title}}</h3>
+        <div class="col-8 d-flex flex-column h-100" *ngIf="state.selectedGroup">
+            <div class="group-title d-flex">
+                <div class="flex-1 pr-1">
+                    <h3>{{state.selectedGroup.title}}</h3>
+                    <mat-slide-toggle [(ngModel)]="selectedAdmin" (change)="changeAdmin($event)" [disabled]="!isAdmin">Admin</mat-slide-toggle>
+                </div>
+                <div>
+                    <button mat-raised-button color="warn" (click)="confirmDeleteGroup()" [disabled]="!isAdmin || state.selectedGroup.external">Delete Group</button>
+                </div>
             </div>
             <div class="row flex-1 remove-min-height">
-                <div class="col d-flex flex-column h-100">
-                    <div class="row flex-1 remove-min-height pb-3">
-                        <div class="col-6 h-100">
-                            <block class="h-100">
-                                <block-header>
-                                    <span>Description</span>
-                                    <button class="btn btn-link float-right" ng-click="dvm.editDescription()" ng-disabled="!dvm.state.selectedGroup || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.state.selectedGroup.external">
-                                        <i class="fa fa-pencil"></i>Edit
-                                    </button>
-                                </block-header>
-                                <block-content>
-                                    <p ng-if="dvm.state.selectedGroup" class="group-description padding break-word">{{dvm.state.selectedGroup.description || 'No description'}}</p>
-                                </block-content>
-                            </block>
-                        </div>
-                        <div class="col-6 h-100">
-                            <block class="h-100">
-                                <block-header>
-                                    <span>Permissions</span>
-                                </block-header>
-                                <block-content>
-                                    <div class="padding">
-                                        <permissions-input ng-if="dvm.state.selectedGroup" roles="dvm.roles" is-disabled-when="!dvm.um.isAdmin(dvm.lm.currentUser)" change-event="dvm.changeRoles(value)"></permissions-input>
-                                    </div>
-                                </block-content>
-                            </block>
-                        </div>
+                <div class="col-6 h-100 vertical-scroll">
+                    <div class="section-header">
+                        <h5>Description</h5>
+                        <button mat-icon-button color="primary" class="float-right" (click)="editDescription()" [disabled]="!isAdmin || state.selectedGroup.external"><i class="fa fa-fw fa-pencil"></i></button>
                     </div>
-                    <div class="row flex-2 remove-min-height member-block-row">
-                        <div class="col h-100">
-                            <block class="h-100">
-                                <block-header>
-                                    <span>Members</span>
-                                </block-header>
-                                <block-content>
-                                    <member-table ng-if="dvm.state.selectedGroup" read-only="dvm.state.selectedGroup.external" members="dvm.state.selectedGroup.members" add-member="dvm.addMember(member)" remove-member="dvm.confirmRemoveMember(member)" link-to-user="true"></member-table>
-                                </block-content>
-                            </block>
-                        </div>
+                    <p class="group-description padding break-word">{{state.selectedGroup.description || 'No description'}}</p>
+                </div>
+                <div class="col-6 h-100 vertical-scroll">
+                    <div class="section-header">
+                        <h5>Members</h5>
+                        <add-member-button [existingMembers]="state.selectedGroup.members" (addMember)="addMember($event)"></add-member-button>
                     </div>
+                    <member-table [members]="state.selectedGroup.members" [readOnly]="state.selectedGroup.external" [linkToUser]="true" (removeMember)="confirmRemoveMember($event)"></member-table>
                 </div>
             </div>
         </div>
