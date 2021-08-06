@@ -23,6 +23,10 @@
 /* Core variables */
 @import "./variables";
 
+.highlight-text {
+    font-weight: bold;
+}
+
 // Fixes for AngularJS Material
 md-backdrop.md-select-backdrop {
     z-index: 1999;
@@ -514,4 +518,31 @@ body {
     -ms-hyphens: auto;
     -moz-hyphens: auto;
     hyphens: auto;
+}
+
+// New Angular Styles
+.app-spinner-container {
+    background: #fff;
+    opacity: .4;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 9001;
+
+    .app-spinner {
+        left: 50%;
+        position: absolute;
+        top: 50%;
+        -webkit-transform: translate(-50%, -50%);
+           -moz-transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+    }
+}
+
+// Fixes issue where mat-autocomplete panel appears behind Bootstrap modals
+.cdk-overlay-container {
+    z-index: 1999;
 }

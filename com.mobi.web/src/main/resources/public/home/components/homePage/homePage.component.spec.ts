@@ -20,17 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { configureTestSuite } from "ng-bullet";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { DebugElement } from "@angular/core";
-import { By } from "@angular/platform-browser";
-import { MockComponent } from "ng-mocks";
+import { configureTestSuite } from 'ng-bullet';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { MockComponent } from 'ng-mocks';
 
-import { SharedModule } from "../../../shared/shared.module";
-import { cleanStylesFromDOM } from "../../../../../../test/ts/Shared";
-import { ActivityCardComponent } from "../activityCard/activityCard.component";
-import { QuickActionGridComponent } from "../quickActionGrid/quickActionGrid.component";
-import { HomePageComponent } from "./homePage.component";
+import { SharedModule } from '../../../shared/shared.module';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { ActivityCardComponent } from '../activityCard/activityCard.component';
+import { QuickActionGridComponent } from '../quickActionGrid/quickActionGrid.component';
+import { HomePageComponent } from './homePage.component';
 
 describe('Home Page component', function() {
     let component: HomePageComponent;

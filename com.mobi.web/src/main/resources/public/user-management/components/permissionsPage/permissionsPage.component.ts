@@ -20,115 +20,97 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, map, filter, forEach, some, chain, find, difference, sortBy, isNull, head} from 'lodash';
+import { Component, Inject, OnInit } from '@angular/core';
+import { get, map, filter, forEach, some, chain, find, sortBy, isNull, head, isUndefined} from 'lodash';
+
+import { Group } from '../../../shared/models/group.interface';
+import { Policy } from '../../../shared/models/policy.interface';
+import { User } from '../../../shared/models/user.interface';
+import { PolicyManagerService } from '../../../shared/services/policyManager.service';
+import { UserManagerService } from '../../../shared/services/userManager.service';
 
 import './permissionsPage.component.scss';
-const template = require('./permissionsPage.component.html');
 
 /**
- * @ngdoc component
- * @name user-management.component:permissionsPage
- * @requires shared.service:policyManagerService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
- * @requires shared.service:userManagerService
+ * @class user-management.PermissionsPageComponent
  *
- * @description
- * `permissionsPage` is a component that creates a Bootstrap `row` div with a single column containing a
- * {@link shared.component:block block} for viewing and updating overall permissions from policies retrieved through
- * the {@link shared.service:policyManagerService}. The list is refreshed everytime this component is rendered for
- * the first time so any changes made to the policies will reset when navigating away and back. Currently, the only
- * policies displayed are those for restrictions on record creation.
+ * A component that creates a Bootstrap `row` div with functionality to view and update overall permissions from
+ * policies retrieved through the {@link shared.PolicyManagerService}. The list is refreshed every time this component
+ * is rendered for the first time so any changes made to the policies will reset when navigating away and back.
+ * Currently, the list of displayed policies is hardcoded.
  */
-const permissionsPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: permissionsPageComponentCtrl
-};
+@Component({
+    selector: 'permissions-page',
+    templateUrl: './permissionsPage.component.html'
+})
+export class PermissionsPageComponent implements OnInit {
+    catalogId = '';
+    systemRepoId = 'http://mobi.com/system-repo';
+    groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + this.prefixes.foaf + 'member' + '>') + ')';
+    userRole = 'http://mobi.com/roles/user';
+    policies: Policy[] = [];
+    policiesInQuestion = [];
 
-permissionsPageComponentCtrl.$inject = ['$q', 'policyManagerService', 'catalogManagerService', 'utilService', 'prefixes', 'userManagerService'];
-
-function permissionsPageComponentCtrl($q, policyManagerService, catalogManagerService, utilService, prefixes, userManagerService) {
-    var dvm = this;
-    var pm = policyManagerService;
-    var um = userManagerService;
-    var util = utilService;
-    var catalogId = '';
-    var systemRepoId = 'http://mobi.com/system-repo';
-    var groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + prefixes.foaf + 'member' + '>') + ')';
-    var userRole = 'http://mobi.com/roles/user';
-
-    dvm.policies = [];
-    dvm.policiesInQuestion = [];
-
-    dvm.$onInit = function() {
-        catalogId = get(catalogManagerService.localCatalog, '@id', '');
-        setPoliciesInQuestion();
-        setPolicies();
+    constructor(private pm: PolicyManagerService, @Inject('catalogManagerService') private cm, 
+        @Inject('utilService') private util, @Inject('prefixes') private prefixes, 
+        private um: UserManagerService) {}
+    
+    ngOnInit(): void {
+        this.catalogId = get(this.cm.localCatalog, '@id', '');
+        this.setPoliciesInQuestion();
+        this.setPolicies();
     }
-    dvm.updatePolicy = function(item, policyIndex) {
-        item.changed = true;
-        dvm.policies[policyIndex] = item;
+    reset(): void {
+        this.ngOnInit();
     }
-    dvm.getTitle = function(item) {
-        return util.getBeautifulIRI(item.type);
-    }
-    dvm.saveChanges = function() {
-        var changedPolicies = filter(dvm.policies, 'changed');
-        $q.all(map(changedPolicies, item => pm.updatePolicy(item.policy)))
+    saveChanges(): void {
+        const changedPolicies = filter(this.policies, 'changed');
+        Promise.all(map(changedPolicies, item => this.pm.updatePolicy(item.policy)))
             .then(() => {
                 forEach(changedPolicies, item => item.changed = false);
-                util.createSuccessToast('Permissions updated');
-            }, util.createErrorToast);
+                this.util.createSuccessToast('Permissions updated');
+            }, this.util.createErrorToast);
     }
-    dvm.hasChanges = function() {
-        return some(dvm.policies, 'changed');
+    hasChanges(): boolean {
+        return some(this.policies, 'changed');
     }
 
-    function setPoliciesInQuestion() {
-        dvm.policiesInQuestion.push({ resourceId: catalogId, actionId: pm.actionCreate, subjectId: undefined, titleFunc: policy => 'Create ' + util.getBeautifulIRI(getRecordType(policy)) });
-        dvm.policiesInQuestion.push({ resourceId: systemRepoId, actionId: pm.actionRead, subjectId: undefined, titleFunc: () => 'Query System Repo' });
+    private setPoliciesInQuestion(): void {
+        this.policiesInQuestion.push({ resourceId: this.catalogId, actionId: this.pm.actionCreate, subjectId: undefined, titleFunc: policy => 'Create ' + this.util.getBeautifulIRI(this.getRecordType(policy)) });
+        this.policiesInQuestion.push({ resourceId: this.systemRepoId, actionId: this.pm.actionRead, subjectId: undefined, titleFunc: () => 'Query System Repo' });
     }
-    function setPolicies() {
-        dvm.policies = [];
-        $q.all(map(dvm.policiesInQuestion, policy => pm.getPolicies(policy.resourceId, policy.subjectId, policy.actionId)))
+    private setPolicies(): void {
+        this.policies = [];
+        Promise.all(map(this.policiesInQuestion, policy => this.pm.getPolicies(policy.resourceId, policy.subjectId, policy.actionId)))
                 .then(results => {
                     results.forEach((response, idx) => {
-                        dvm.policies = dvm.policies.concat(chain(response)
+                        this.policies = this.policies.concat(chain(response)
                             .map(policy => ({
                                 policy,
                                 id: policy.PolicyId,
-                                title: dvm.policiesInQuestion[idx].titleFunc(policy),
+                                title: this.policiesInQuestion[idx].titleFunc(policy),
                                 changed: false,
                                 everyone: false,
-                                users: [],
-                                groups: [],
                                 selectedUsers: [],
-                                selectedGroups: [],
-                                userSearchText: '',
-                                groupSearchText: '',
-                                selectedUser: undefined,
-                                selectedGroup: undefined
+                                selectedGroups: []
                             }))
                             .filter('title')
-                            .forEach(setInfo)
+                            .forEach(item => this.setInfo(item))
                             .value());
                     });
-                }, util.createErrorToast);
+                }, this.util.createErrorToast);
     }
-    function getRecordType(policy) {
+    private getRecordType(policy) {
         const target = get(policy, 'Target.AnyOf', []);
         const allOfMatch = chain(target)
             .map('AllOf').flatten()
             .map('Match').flatten()
-            .find(['AttributeDesignator.AttributeId', prefixes.rdf + 'type']).value();
+            .find(['AttributeDesignator.AttributeId', this.prefixes.rdf + 'type']).value();
         const attributeValue = get(allOfMatch, 'AttributeValue.content', []);
         const value =  head(attributeValue);
         return value;
     }
-    function setInfo(item) {
+    private setInfo(item: Policy): void {
         const rules = get(item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);
         const matches = chain(rules) 
             .map('Match[0]')
@@ -137,29 +119,27 @@ function permissionsPageComponentCtrl($q, policyManagerService, catalogManagerSe
                 value: get(match, 'AttributeValue.content[0]')
             }))
             .value();
-        if ( find( matches, { id: prefixes.user + 'hasUserRole', value: userRole } )) {
+        if ( find( matches, { id: this.prefixes.user + 'hasUserRole', value: this.userRole } )) {
             item.everyone = true;
         } else {
-            item.selectedUsers = sortUsers(chain(matches)
-                .filter({id: pm.subjectId})
-                .map(obj => find(um.users, {iri: obj.value}))
+            item.selectedUsers = this.sortUsers(chain(matches)
+                .filter({ id: this.pm.subjectId })
+                .map(obj => find(this.um.users, { iri: obj.value }))
                 .reject(isNull)
+                .reject(isUndefined)
                 .value());
-            item.selectedGroups = sortGroups(chain(matches)
-                .filter({id: groupAttributeId})
-                .map(obj => find(um.groups, {iri: obj.value}))
+            item.selectedGroups = this.sortGroups(chain(matches)
+                .filter({ id: this.groupAttributeId })
+                .map(obj => find(this.um.groups, { iri: obj.value }))
                 .reject(isNull)
+                .reject(isUndefined)
                 .value());
         }
-        item.users = sortUsers(difference(um.users, item.selectedUsers));
-        item.groups = sortGroups(difference(um.groups, item.selectedGroups));
     }
-    function sortUsers(users) {
+    private sortUsers(users: User[]): User[] {
         return sortBy(users, 'username');
     }
-    function sortGroups(groups) {
+    private sortGroups(groups: Group[]): Group[] {
         return sortBy(groups, 'title');
     }
 }
-
-export default permissionsPageComponent;

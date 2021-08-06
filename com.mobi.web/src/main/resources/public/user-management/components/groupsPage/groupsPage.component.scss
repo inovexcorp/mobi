@@ -1,0 +1,13 @@
+/* Core variables */
+@import "../../../css/variables";
+
+.groups-page {
+    .group-title {
+        h3 {
+            word-break: break-word;
+        }
+    }
+    .add-member-button {
+        float: right;
+    }
+}

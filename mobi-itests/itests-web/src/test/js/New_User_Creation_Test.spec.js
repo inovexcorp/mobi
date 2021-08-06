@@ -70,18 +70,19 @@ module.exports = {
 
     'Step 4: A new user is created' : function(browser) {
         browser
-            .waitForElementVisible("//button[text() [contains(., 'Create User')]]")
-            .click("//button[text() [contains(., 'Create User')]]")
+            .waitForElementVisible("//button/span[text() [contains(., 'Create User')]]")
+            .click("//button/span[text() [contains(., 'Create User')]]")
+            .waitForElementVisible("//h1[text() [contains(., 'Create User')]]")
             .useCss()
             .setValue('input[name=username]', newUser.username)
-            .setValue('input[name=password]', newUser.password)
+            .setValue('input[name=unmaskPassword]', newUser.password)
             .setValue('input[name=firstName]', newUser.firstName)
             .setValue('input[name=lastName]', newUser.lastName)
             .setValue('input[name=email]', newUser.email)
-            .click("input[type='checkbox']")
+            .click('label.mat-slide-toggle-label')
             .useXpath()
-            .click("//button[text() [contains(., 'Submit')]]")
-            .waitForElementNotVisible("//button[text() [contains(., 'Submit')]]")
+            .click("//button/span[text() [contains(., 'Submit')]]")
+            .assert.not.elementPresent("//button/span[text() [contains(., 'Submit')]]")
     },
 
     'Step 5: The new user is displayed in users list' : function(browser) {

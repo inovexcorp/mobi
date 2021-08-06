@@ -21,7 +21,7 @@
  * #L%
  */
 import './homePage.component.scss';
-import { Component } from "@angular/core";
+import { Component } from '@angular/core';
 
 /**
  * @class home.HomePageComponent

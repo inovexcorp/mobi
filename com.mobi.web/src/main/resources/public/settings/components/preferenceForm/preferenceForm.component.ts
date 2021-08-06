@@ -23,8 +23,9 @@
 
 import { Component, Input, EventEmitter, Output, OnChanges, Inject } from '@angular/core';
 import { FormArray, FormGroup } from '@angular/forms';
-import { Preference } from '../../interfaces/preference.interface';
 import { filter } from 'lodash';
+
+import { Preference } from '../../interfaces/preference.interface';
 
 /**
  * @ngdoc component
@@ -91,12 +92,12 @@ export class PreferenceFormComponent implements OnChanges {
         return this.form.get('formBlocks') as FormArray;
     }
 
-    formBlockKeys(n): Array<string> {
+    formBlockKeys(n: number): Array<string> {
         const formBlock: FormGroup = (this.form.get(['formBlocks', String(n)]) as FormGroup);
         return Object.keys(formBlock.controls);
     }
 
-    submitForm() {
+    submitForm(): void {
         this.preference.updateWithFormValues(this.form);
         this.updateEvent.emit(this.preference);
     }

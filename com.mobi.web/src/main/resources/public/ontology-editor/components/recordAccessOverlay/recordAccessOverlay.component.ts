@@ -63,10 +63,6 @@ function recordAccessOverlayComponentCtrl(utilService, userManagerService, recor
         dvm.getPolicy(dvm.resolve.resource);
         getRuleTitle();
     }
-    dvm.updatePolicy = function(item) {
-        dvm.policy = item;
-        dvm.policy.changed = true;
-    }
     dvm.getPolicy = function(recordId) {
         rp.getRecordPolicy(recordId)
             .then(result => {
@@ -75,14 +71,8 @@ function recordAccessOverlayComponentCtrl(utilService, userManagerService, recor
                         id: recordId,
                         changed: false,
                         everyone: false,
-                        users: [],
-                        groups: [],
                         selectedUsers: [],
-                        selectedGroups: [],
-                        userSearchText: '',
-                        groupSearchText: '',
-                        selectedUser: undefined,
-                        selectedGroup: undefined
+                        selectedGroups: []
                     };
                 setInfo(dvm.policy);
             }, util.createErrorToast);
@@ -101,8 +91,6 @@ function recordAccessOverlayComponentCtrl(utilService, userManagerService, recor
                 .reject(isNull)
                 .value());
         }
-        item.users = sortUsers(difference(um.users, item.selectedUsers));
-        item.groups = sortGroups(difference(um.groups, item.selectedGroups));
     }
     dvm.cancel = function() {
         dvm.dismiss();

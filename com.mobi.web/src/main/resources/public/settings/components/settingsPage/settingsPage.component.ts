@@ -22,6 +22,7 @@
  */
 import { Component, ViewChild } from '@angular/core';
 import { MatTabChangeEvent } from '@angular/material/tabs';
+
 import { PasswordTabComponent } from '../passwordTab/passwordTab.component';
 import { ProfileTabComponent } from '../profileTab/profileTab.component';
 
@@ -46,7 +47,7 @@ export class SettingsPageComponent {
 
     constructor() {}
 
-    onTabChanged(event: MatTabChangeEvent) {
+    onTabChanged(event: MatTabChangeEvent): void {
         if (event.index === 0) {
             this.profileTab.reset();
         } else if (event.index === 2) {

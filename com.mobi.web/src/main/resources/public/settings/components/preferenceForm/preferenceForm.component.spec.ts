@@ -29,7 +29,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import {
     cleanStylesFromDOM, mockPrefixes, mockUtil
 } from '../../../../../../test/ts/Shared';
-import { SharedModule } from "../../../shared/shared.module";
+import { SharedModule } from '../../../shared/shared.module';
 import { PreferenceFormComponent } from '../preferenceForm/preferenceForm.component';
 import { PreferenceConstants } from '../../classes/preferenceConstants.class';
 import { SimplePreference } from '../../classes/simplePreference.class';
@@ -74,77 +74,77 @@ describe('Preference Form component', function() {
         prefixStub = TestBed.get('prefixes');
 
         utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
-            return get(entity, "['" + propertyIRI + "'][0]['@value']", '');
+            return get(entity, '[\'' + propertyIRI + '\'][0][\'@value\']', '');
         });
 
         utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {
-            return get(entity, "['" + propertyIRI + "'][0]['@id']", '');
+            return get(entity, '[\'' + propertyIRI + '\'][0][\'@id\']', '');
         });
 
         utilStub.setPropertyValue.and.callFake((entity, propertyIRI, value) => {
-            if (has(entity, "['" + propertyIRI + "']")) {
+            if (has(entity, '[\'' + propertyIRI + '\']')) {
                 entity[propertyIRI].push({'@value': value});
             } else {
-                set(entity, "['" + propertyIRI + "'][0]", {'@value': value});
+                set(entity, '[\'' + propertyIRI + '\'][0]', {'@value': value});
             }
         });
 
         testUserPreference = [{
-            "@id": "http://mobi.com/preference#45e225a4-90f6-4276-b435-1b2888fdc01e",
-            "@type": [
-                "http://www.w3.org/2002/07/owl#Thing",
-                "preference:Preference",
-                "preference:SomeSimpleTextPreference",
-                "preference:Setting"
+            '@id': 'http://mobi.com/preference#45e225a4-90f6-4276-b435-1b2888fdc01e',
+            '@type': [
+                'http://www.w3.org/2002/07/owl#Thing',
+                'preference:Preference',
+                'preference:SomeSimpleTextPreference',
+                'preference:Setting'
             ],
-            "preference:forUser": [
+            'preference:forUser': [
                 {
-                    "@id": "http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997"
+                    '@id': 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997'
                 }
             ],
-            "http://mobi.com/ontologies/preference#hasDataValue": [
+            'http://mobi.com/ontologies/preference#hasDataValue': [
                 {
-                    "@value": "first"
+                    '@value': 'first'
                 }
             ]
         }];
 
         testPreferenceDefinitions = {
-            "preference:SomeSimpleTextPreference": { "@id" : "preference:SomeSimpleTextPreference",
-            "@type" : [ "http://www.w3.org/2002/07/owl#Class", "shacl:NodeShape" ],
-            "preference:inGroup" : [ {
-              "@id" : "preference:TestPrefGroupA"
+            'preference:SomeSimpleTextPreference': { '@id': 'preference:SomeSimpleTextPreference',
+            '@type': [ 'http://www.w3.org/2002/07/owl#Class', 'shacl:NodeShape' ],
+            'preference:inGroup': [ {
+              '@id': 'preference:TestPrefGroupA'
             } ],
-            "http://www.w3.org/2000/01/rdf-schema#subClassOf" : [ {
-              "@id" : "preference:Preference"
+            'http://www.w3.org/2000/01/rdf-schema#subClassOf': [ {
+              '@id': 'preference:Preference'
             } ],
-            "shacl:description" : [ {
-              "@language" : "en",
-              "@value" : "Enter a value for this simple text preference"
+            'shacl:description': [ {
+              '@language': 'en',
+              '@value': 'Enter a value for this simple text preference'
             } ],
-            "shacl:property" : [ {
-              "@id" : "preference:SomeSimpleTextPreferencePropertyShape"
+            'shacl:property': [ {
+              '@id': 'preference:SomeSimpleTextPreferencePropertyShape'
             } ]
           },
-          "preference:SomeSimpleTextPreferencePropertyShape": {
-            "@id" : "preference:SomeSimpleTextPreferencePropertyShape",
-            "@type" : [ "shacl:PropertyShape" ],
-            "preference:usesFormField" : [ {
-              "@id" : "preference:TextInput"
+          'preference:SomeSimpleTextPreferencePropertyShape': {
+            '@id': 'preference:SomeSimpleTextPreferencePropertyShape',
+            '@type': [ 'shacl:PropertyShape' ],
+            'preference:usesFormField': [ {
+              '@id': 'preference:TextInput'
             } ],
-            "shacl:datatype" : [ {
-              "@id" : "http://www.w3.org/2001/XMLSchema#string"
+            'shacl:datatype': [ {
+              '@id': 'http://www.w3.org/2001/XMLSchema#string'
             } ],
-            "shacl:maxCount" : [ {
-              "@type" : "http://www.w3.org/2001/XMLSchema#integer",
-              "@value" : "2"
+            'shacl:maxCount': [ {
+              '@type': 'http://www.w3.org/2001/XMLSchema#integer',
+              '@value': '2'
             } ],
-            "shacl:minCount" : [ {
-              "@type" : "http://www.w3.org/2001/XMLSchema#integer",
-              "@value" : "1"
+            'shacl:minCount': [ {
+              '@type': 'http://www.w3.org/2001/XMLSchema#integer',
+              '@value': '1'
             } ],
-            "shacl:path" : [ {
-              "@id" : "http://mobi.com/ontologies/preference#hasDataValue"
+            'shacl:path': [ {
+              '@id': 'http://mobi.com/ontologies/preference#hasDataValue'
             } ]
           }
         };
@@ -211,7 +211,7 @@ describe('Preference Form component', function() {
                     component.ngOnChanges();
                     expect(component.shaclShapes).toEqual({
                         'http://mobi.com/ontologies/preference#hasDataValue': testPreferenceDefinitions['preference:SomeSimpleTextPreferencePropertyShape']
-                    })
+                    });
                 });
             });
             describe('should build the form', function() {

@@ -20,60 +20,52 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { filter } from 'lodash';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+
+import { Group } from '../../../shared/models/group.interface';
 
 import './groupsList.component.scss';
 
-const template = require('./groupsList.component.html');
-
 /**
- * @ngdoc component
- * @name user-management.component:groupsList
- * @requires shared.service:userStateService
- * @requires shared.service:loginManagerService
+ * @class user-management.GroupsListComponent
  *
- * @description
- * `groupsList` is a component that creates an unordered list containing the provided `groups` list. The list will
- * be filtered by the provided `searchText` if present. The `selectedGroup` variable determines which group in the
- * list should be styled as if it is selected. The provided `clickEvent` function is expected to update the value of
- * `selectedGroup`.
- * 
- * @param {Object[]} groups An array of group Objects
- * @param {Object} [selectedGroup=undefined] The selected group to be styled
- * @param {Function} clickEvent A function to be called when a group is clicked. Should update the value of
- * `selectedGroup`. Expects an argument called `group`.
- * @param {string} searchText Text that should be used to filter the list of groups.
+ * A component that creates an unordered list containing the provided `groups` list. The provided `searchText` is only
+ * used for highlighting purposes, assumes filtering is done by the parent. The `selectedGroup` input determines which
+ * group in the list should be styled as if it is selected. The provided `clickEvent` function is expected to update the
+ * value of `selectedGroup`.
  */
-const groupListComponent = {
-    template,
-    bindings: {
-        groups: '<',
-        selectedGroup: '<',
-        clickEvent: '&',
-        searchText: '<'
-    },
-    controllerAs: 'dvm',
-    controller: groupListComponentCtrl
-};
+@Component({
+    selector: 'groups-list',
+    templateUrl: './groupsList.component.html'
+})
+export class GroupsListComponent {
+    /**
+     * An array of groups to display
+     * @type {Group[]}
+     */
+    @Input() groups: Group[];
+    /**
+     * Text that should be used to highlight filter matches in the list of groups.
+     * @type {string}
+     */
+    @Input() searchText: string;
+    /**
+     * The selected group to be styled
+     * @type {Group}
+     */
+     @Input() selectedGroup: Group;
+    /**
+     * A method to be run when a group is clicked. Should update the value of `selectedGroup`. Takes an argument in the
+     * form of a {@link Group}.
+     */
+    @Output() clickEvent = new EventEmitter();
 
-function groupListComponentCtrl() {
-    var dvm = this;
-    dvm.filteredGroups = [];
+    constructor() {}
 
-    dvm.$onInit = function() {
-        dvm.filteredGroups = filterGroups();
+    trackByFn(index, item: Group): string {
+        return item.title;
     }
-    dvm.$onChanges = function() {
-        dvm.filteredGroups = filterGroups();
-    }
-
-    function filterGroups() {
-        var arr = dvm.groups;
-        if (dvm.searchText) {
-            arr = filter(arr, group => group.title.toLowerCase().includes(dvm.searchText.toLowerCase()));
-        }
-        return arr.sort((group1, group2) => group1.title.localeCompare(group2.title));
+    clickGroup(group: Group): void {
+        this.clickEvent.emit(group);
     }
 }
-
-export default groupListComponent;

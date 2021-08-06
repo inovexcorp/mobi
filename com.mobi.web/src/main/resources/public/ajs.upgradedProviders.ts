@@ -90,16 +90,6 @@ export const httpServiceProvider = {
     deps: ['$injector']
 };
 
-export function userManagerServiceFactory(i: any) {
-    return i.get('userManagerService');
-}
-
-export const userManagerServiceProvider = {
-    provide: 'userManagerService',
-    useFactory: userManagerServiceFactory,
-    deps: ['$injector']
-};
-
 export function ontologyStateServiceFactory(i: any) {
     return i.get('ontologyStateService');
 }
@@ -127,5 +117,15 @@ export function discoverStateServiceFactory(i: any) {
 export const discoverStateServiceProvider = {
     provide: 'discoverStateService',
     useFactory: discoverStateServiceFactory,
+    deps: ['$injector']
+};
+
+export function catalogManagerServiceFactory(i: any) {
+    return i.get('catalogManagerService');
+}
+
+export const catalogManagerServiceProvider = {
+    provide: 'catalogManagerService',
+    useFactory: catalogManagerServiceFactory,
     deps: ['$injector']
 };

@@ -20,17 +20,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Edit Group Description</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+<h1 mat-dialog-title>Edit Group Description</h1>  
+<div mat-dialog-content [formGroup]="editGroupInfoForm">
+    <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+    <mat-form-field>
+        <mat-label>Description</mat-label>
+        <textarea matInput name="description" formControlName="description"></textarea>
+    </mat-form-field>
 </div>
-<div class="modal-body">
-    <form name="dvm.form">
-        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-        <text-area bind-model="dvm.newGroup.description" change-event="dvm.newGroup.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
-    </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-click="dvm.set()" ng-disabled="dvm.form.$invalid">Submit</button>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="">Cancel</button>
+    <button mat-raised-button color="primary" (click)="set()" [disabled]="editGroupInfoForm.invalid">Submit</button>
 </div>

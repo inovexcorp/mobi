@@ -20,24 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { filter, some } from 'lodash';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+
+import { User } from '../../../shared/models/user.interface';
+import { UserManagerService } from '../../../shared/services/userManager.service';
 
 import './usersList.component.scss';
 
-const template = require('./usersList.component.html');
-
 /**
- * @ngdoc component
- * @name user-management.component:usersList
- * @requires shared.service:userManagerService
- * @requires shared.service:userStateService
- * @requires shared.service:loginManagerService
- *
- * @description
- * `usersList` is a component that creates an unordered list containing the provided list of `users`. The list will
- * be filtered by the provided `searchText` if present. The `selectedUser` variable determines which user in the
- * list should be styled as if it is selected. The provided `clickEvent` function is expected to update the value of
- * `selectedUser`.
+ * @class user-management.UsersListComponent
+ * 
+ * A component that creates an unordered list containing the provided list of `users`. The provided `searchText` is only
+ * used for highlighting purposes, assumes filtering is done by the parent. The `selectedUser` input determines which
+ * user in the list should be styled as if it is selected. The provided `clickEvent` function is expected to update the
+ * value of `selectedUser`.
  * 
  * @param {Object[]} users An array of user Objects
  * @param {Object} [selectedUser=undefined] The selected user to be styled
@@ -45,62 +41,39 @@ const template = require('./usersList.component.html');
  * `selectedUser`. Expects an argument called `user`.
  * @param {string} searchText Text that should be used to filter the list of users.
  */
-const usersListComponent = {
-    template,
-    bindings: {
-        users: '<',
-        selectedUser: '<',
-        clickEvent: '&',
-        searchText: '<'
-    },
-    controllerAs: 'dvm',
-    controller: usersListComponentCtrl
-};
 
-usersListComponentCtrl.$inject = ['userManagerService'];
-
-function usersListComponentCtrl(userManagerService) {
-    var dvm = this;
-    dvm.um = userManagerService;
-    dvm.filteredUsers = [];
-
-    dvm.$onInit = function() {
-        dvm.filteredUsers = filterUsers();
-    }
-    dvm.$onChanges = function() {
-        dvm.filteredUsers = filterUsers();
-    }
-
+@Component({
+    selector: 'users-list',
+    templateUrl: './usersList.component.html'
+})
+export class UsersListComponent {
     /**
-     * Filters the list of users and finds matches to the search text. Matches are made based on any of the
-     * following user values:
-     *   user.username
-     *   user.firstName
-     *   user.lastName
-     *   user.firstName + " " + user.lastName
-     *   user.lastName + " " + user.firstName
-     *   user.lastName + ," " + user.firstName
+     * An array of users to display
+     * @type {User[]}
      */
-    function filterUsers() {
-        var results = dvm.users;
-        if (dvm.searchText) {
-            var searchTermLower = dvm.searchText.toLowerCase();
-
-            results = filter(dvm.users, userObj => {
-                var searchFields = [
-                    userObj.username.toLowerCase(),
-                    userObj.firstName.toLowerCase(),
-                    userObj.lastName.toLowerCase(),
-                    (userObj.firstName + " " + userObj.lastName).toLowerCase(),
-                    (userObj.lastName + " " + userObj.firstName).toLowerCase(),
-                    (userObj.lastName + ", " + userObj.firstName).toLowerCase()
-                ];
-                return some(searchFields, searchField => searchField.includes(searchTermLower));
-            });
-        }
-
-        return results.sort((user1, user2) => user1.username.localeCompare(user2.username));
+    @Input() users: User[];
+    /**
+     * Text that should be used to highlight filter matches in the list of users.
+     * @type {string}
+     */
+    @Input() searchText: string;
+    /**
+     * The selected group to be styled
+     * @type {User}
+     */
+    @Input() selectedUser: User;
+    /**
+     * A method to be run when a group is clicked. Should update the value of `selectedUser`. Takes an argument in the
+     * form of a {@link User}.
+     */
+    @Output() clickEvent = new EventEmitter();
+    
+    constructor(private um: UserManagerService) {}
+    
+    trackByFn(index, item: User): string {
+        return item.username;
+    }
+    clickUser(user: User): void {
+        this.clickEvent.emit(user);
     }
 }
-
-export default usersListComponent;

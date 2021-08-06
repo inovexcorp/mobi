@@ -20,9 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { forEach, has } from 'lodash';
 import { Input, Component, OnChanges, Inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { PreferenceUtils } from '../../classes/preferenceUtils.class'
+import { forEach, has } from 'lodash';
+
+import { PreferenceUtils } from '../../classes/preferenceUtils.class';
 import { Preference } from '../../interfaces/preference.interface';
 import { SimplePreference } from '../../classes/simplePreference.class';
 

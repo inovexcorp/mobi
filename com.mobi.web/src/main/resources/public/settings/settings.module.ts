@@ -23,7 +23,6 @@
 import * as angular from 'angular';
 import { NgModule } from '@angular/core';
 import { downgradeComponent } from '@angular/upgrade/static';
-import { MatTabsModule } from '@angular/material';
 
 import { SharedModule } from '../shared/shared.module';
 
@@ -38,8 +37,7 @@ import { PreferenceFormFieldComponent } from './components/preferenceFormField/p
 
 @NgModule({
     imports: [
-        SharedModule,
-        MatTabsModule
+        SharedModule
     ],
     declarations: [
         SettingsPageComponent,
@@ -64,7 +62,7 @@ export class SettingsModule {}
  */
 angular.module('settings', [])
     .directive('groupTab', downgradeComponent({component: GroupTabComponent}) as angular.IDirectiveFactory)
-    .component('passwordTab', downgradeComponent({component: PasswordTabComponent}) as angular.IDirectiveFactory)
+    .directive('passwordTab', downgradeComponent({component: PasswordTabComponent}) as angular.IDirectiveFactory)
     .directive('profileTab', downgradeComponent({component: ProfileTabComponent}) as angular.IDirectiveFactory)
     .directive('settingsPage', downgradeComponent({component: SettingsPageComponent}) as angular.IDirectiveFactory)
     .directive('preferencesTab', downgradeComponent({component: PreferencesTabComponent}) as angular.IDirectiveFactory)

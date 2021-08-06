@@ -21,9 +21,10 @@
  * #L%
  */
 import { chunk, isEmpty } from 'lodash';
-import { Component, Inject, OnInit } from "@angular/core";
-import { StateService } from "@uirouter/core";
-import { WindowRef } from "../../../shared/services/windowRef.service";
+import { Component, Inject, OnInit } from '@angular/core';
+import { StateService } from '@uirouter/core';
+
+import { WindowRef } from '../../../shared/services/windowRef.service';
 
 import './quickActionGrid.component.scss';
 
@@ -45,7 +46,7 @@ export class QuickActionGridComponent implements OnInit {
                 @Inject('discoverStateService') private ds) {}
     
     ngOnInit(): void {
-        let actions = [
+        const actions = [
             {
                 title: 'Search the Catalog',
                 icon: 'fa-book',

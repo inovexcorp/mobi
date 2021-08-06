@@ -1,0 +1,167 @@
+import { DebugElement } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { configureTestSuite } from 'ng-bullet';
+import { MockProvider } from 'ng-mocks';
+import { By } from '@angular/platform-browser';
+import { MatAutocompleteModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatMenuModule } from '@angular/material';
+import { FormsModule } from '@angular/forms';
+
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { UserManagerService } from '../../../shared/services/userManager.service';
+import { UserStateService } from '../../../shared/services/userState.service';
+import { AddMemberButtonComponent } from './addMemberButton.component';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { User } from '../../../shared/models/user.interface';
+
+describe('Add Member Button Component', function() {
+    let component: AddMemberButtonComponent;
+    let element: DebugElement;
+    let fixture: ComponentFixture<AddMemberButtonComponent>;
+    let userManagerStub: jasmine.SpyObj<UserManagerService>;
+    let testUser: User;
+
+    configureTestSuite(function() {
+        TestBed.configureTestingModule({
+            imports: [
+                FormsModule,
+                MatButtonModule,
+                MatMenuModule,
+                MatAutocompleteModule,
+                MatInputModule,
+                MatFormFieldModule,
+                NoopAnimationsModule
+            ],
+            declarations: [
+                AddMemberButtonComponent
+            ],
+            providers: [
+                MockProvider(UserManagerService),
+                MockProvider(UserStateService)
+            ]
+        });
+    });
+
+    beforeEach(function() {
+        fixture = TestBed.createComponent(AddMemberButtonComponent);
+        component = fixture.componentInstance;
+        element = fixture.debugElement;
+        userManagerStub = TestBed.get(UserManagerService);
+
+        testUser = {
+            external: false,
+            roles: [],
+            username: 'username',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: ''
+        };
+    });
+
+    afterEach(function() {
+        cleanStylesFromDOM();
+        component = null;
+        element = null;
+        fixture = null;
+        userManagerStub = null;
+        testUser = null;
+    });
+
+    describe('controller methods', function() {
+        it('should emit the adding of a member', function() {
+            spyOn(component.addMember, 'emit');
+            spyOn(component, 'clearAddMember');
+            spyOn(component.trigger, 'closeMenu');
+            component.emitAddMember(testUser);
+            expect(component.addMember.emit).toHaveBeenCalledWith(testUser);
+            expect(component.clearAddMember).toHaveBeenCalled();
+            expect(component.trigger.closeMenu).toHaveBeenCalled();
+        });
+        it('should set available members to choose from', function() {
+            spyOn(component, 'setFilteredUsers');
+            const batman = {
+                external: true,
+                username: 'batman',
+                firstName: 'BATMAN',
+                lastName: 'DUH',
+                email: 'iambatman@test.com',
+                roles: []
+            };
+            userManagerStub.users = [testUser, batman];
+            component.existingMembers = [testUser.username];
+            component.setAvailableUsers();
+            expect(component.availableUsers).toEqual([batman]);
+            expect(component.setFilteredUsers).toHaveBeenCalled();
+        });
+        describe('should set the filtered list of users', function() {
+            beforeEach(function() {
+                component.availableUsers = [testUser];
+                userManagerStub.filterUsers.and.returnValue([testUser]);
+            });
+            it('if the filter is a string', function() {
+                component.userFilter = 'test';
+                component.setFilteredUsers();
+                expect(component.filteredAvailableUsers).toEqual([testUser]);
+                expect(userManagerStub.filterUsers).toHaveBeenCalledWith(component.availableUsers, 'test');
+            });
+            it('if the filter is an object', function() {
+                component.userFilter = {username: 'username'};
+                component.setFilteredUsers();
+                expect(component.filteredAvailableUsers).toEqual([testUser]);
+                expect(userManagerStub.filterUsers).toHaveBeenCalledWith(component.availableUsers, 'username');
+            });
+            it('if the filter is not set', function() {
+                component.setFilteredUsers();
+                expect(component.filteredAvailableUsers).toEqual([testUser]);
+                expect(userManagerStub.filterUsers).toHaveBeenCalledWith(component.availableUsers, undefined);
+            });
+        });
+        it('should select a member', function() {
+            component.selectMember(testUser);
+            expect(component.selectedMember).toEqual(testUser);
+        });
+        it('should cancel the add menu', function() {
+            spyOn(component, 'clearAddMember');
+            spyOn(component.trigger, 'closeMenu');
+            component.cancelAdd();
+            expect(component.clearAddMember).toHaveBeenCalled();
+            expect(component.trigger.closeMenu).toHaveBeenCalled();
+        });
+        it('should clear the add member form', function() {
+            component.selectedMember = testUser;
+            component.userFilter = 'john';
+            component.clearAddMember();
+            expect(component.selectedMember).toBeUndefined();
+            expect(component.userFilter).toBeUndefined();
+        });
+        it('should retrieve the display name of a user', function() {
+            expect(component.getName(testUser)).toEqual('John Doe');
+           
+            testUser.firstName = '';
+            expect(component.getName(testUser)).toEqual('Doe');
+
+            testUser.firstName = 'John';
+            testUser.lastName = '';
+            expect(component.getName(testUser)).toEqual('John');
+
+            testUser.firstName = '';
+            expect(component.getName(testUser)).toEqual('username');
+
+            expect(component.getName(undefined)).toEqual('');
+        });
+    });
+    describe('contains the correct html', function() {
+        it('with a button', function() {
+            expect(element.queryAll(By.css('button.add-member-button')).length).toEqual(1);
+        });
+        it('after clicking the button', function() {
+            fixture.detectChanges();
+            spyOn(component, 'setAvailableUsers');
+            expect(element.queryAll(By.css('.mat-menu-panel')).length).toEqual(0);
+            const button = element.query(By.css('button.add-member-button'));
+            button.triggerEventHandler('click', null);
+            fixture.detectChanges();
+            expect(component.setAvailableUsers).toHaveBeenCalled();
+            expect(element.queryAll(By.css('.mat-menu-panel')).length).toEqual(1);
+        });
+    });
+});

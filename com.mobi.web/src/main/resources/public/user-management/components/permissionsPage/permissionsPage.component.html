@@ -20,21 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="permissions-page container-fluid h-100 py-3">
-    <div class="row h-100">
-        <div class="col h-100">
-            <block class="h-100">
-                <block-content>
-                    <div class="policy row padding" ng-repeat="policy in dvm.policies track by policy.id">
-                        <div class="col-6 offset-3">
-                            <user-access-controls item="policy" rule-title="policy.title" update-item="dvm.updatePolicy(item, $index)"></user-access-controls>
-                        </div>
-                    </div>
-                </block-content>
-            </block>
+<div class="permissions-page container-fluid h-100 py-3 vertical-scroll">
+    <div class="policy row padding" *ngFor="let policy of policies">
+        <div class="col-6 offset-3">
+            <user-access-controls [item]="policy" [ruleTitle]="policy.title"></user-access-controls>
         </div>
-        <div class="save-container">
-            <button type="button" class="btn btn-float save-button btn-primary fa fa-fw fa-floppy-o" ng-click="dvm.saveChanges()" ng-disabled="!dvm.hasChanges()" button-hover-text="Save Changes"></button>
-        </div>
+    </div>
+    <div class="save-container">
+        <button mat-fab color="primary" class="save-button" (click)="saveChanges()" [disabled]="!hasChanges()" matTooltip="Save Changes"><i class="fa fa-fw fa-floppy-o"></i></button>
     </div>
 </div>

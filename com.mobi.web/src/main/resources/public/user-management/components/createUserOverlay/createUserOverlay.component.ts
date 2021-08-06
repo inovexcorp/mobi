@@ -20,68 +20,69 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Inject } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
 import { map } from 'lodash';
 
-const template = require('./createUserOverlay.component.html');
+import { REGEX } from '../../../constants';
+import { User } from '../../../shared/models/user.interface';
+import { UserManagerService } from '../../../shared/services/userManager.service';
+import { UserStateService } from '../../../shared/services/userState.service';
+import { emailOrEmpty } from '../../../shared/validators/emailOrEmpty.validator';
+import { uniqueValue } from '../../../shared/validators/uniqueValue.validator';
 
 /**
- * @ngdoc component
- * @name user-management.component:createUserOverlay
- * @requires shared.service:userManagerService
- * @requires shared.service:userStateService
+ * @class user-management.CreateUserOverlayComponent
  *
- * @description
- * `createUserOverlay` is a component that creates content for a modal with a form to add a user to Mobi. The
- * form contains fields for the basic information about the user including the username, password, first name,
- * last name, email, permissions, and roles of the new user. Meant to be used in conjunction with the
- * {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal with a form to add a user to Mobi. The form contains fields for the
+ * basic information about the user including the username, password, first name, last name, email, and role of the new
+ * user. Meant to be used in conjunction with the `MatDialog` service.
  */
-const createUserOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: createUserOverlayComponentCtrl,
-};
+@Component({
+    selector: 'create-user-overlay',
+    templateUrl: './createUserOverlay.component.html'
+})
+export class CreateUserOverlayComponent {
+    usernamePattern = REGEX.LOCALNAME;
+    errorMessage = '';
+    createUserForm = this.fb.group({
+        username: ['', [ Validators.required, Validators.pattern(this.usernamePattern), uniqueValue(this.getUsernames()) ]],
+        unmaskPassword: ['', [Validators.required]],
+        firstName: [''],
+        lastName: [''],
+        email: ['', [ emailOrEmpty ]], // TODO: Replace Validators.email after Angular 6
+        admin: ''
+    });
 
-createUserOverlayComponentCtrl.$inject = ['userStateService', 'userManagerService', 'REGEX'];
+    constructor(private dialogRef: MatDialogRef<CreateUserOverlayComponent>, private fb: FormBuilder,
+        private state: UserStateService, private um: UserManagerService,
+        @Inject('utilService') private util) {}
 
-function createUserOverlayComponentCtrl(userStateService, userManagerService, REGEX) {
-    const dvm = this;
-    dvm.state = userStateService;
-    dvm.um = userManagerService;
-    dvm.usernamePattern = REGEX.LOCALNAME;
-    dvm.errorMessage = '';
-    dvm.roles = {admin: false};
-    dvm.newUser = {
-        username: '',
-        roles: ['user'],
-        firstName: '',
-        lastName: '',
-        email: ''
-    };
-
-    dvm.getUsernames = function() {
-        return map(dvm.um.users, 'username');
-    };
-    dvm.add = function() {
-        if (dvm.roles.admin) {
-            dvm.newUser.roles.push('admin');
+    getUsernames(): string[] {
+        return map(this.um.users, 'username');
+    }
+    getUsernameErrorMessage(): string {
+        return this.createUserForm.controls.username.hasError('uniqueValue') ? 'This username has already been taken' :
+            this.createUserForm.controls.username.hasError('pattern') ? 'Invalid username' : '';
+    }
+    add(): void {
+        const newUser: User = {
+            roles: ['user'],
+            username: this.createUserForm.controls.username.value,
+            firstName: this.createUserForm.controls.firstName.value,
+            lastName: this.createUserForm.controls.lastName.value,
+            email: this.createUserForm.controls.email.value,
+            external: false
+        };
+        if (this.createUserForm.controls.admin.value) {
+            newUser.roles.push('admin');
         }
-        dvm.um.addUser(dvm.newUser, dvm.password)
+        this.um.addUser(newUser, this.createUserForm.controls.unmaskPassword.value)
             .then(() => {
-                dvm.errorMessage = '';
-                dvm.close();
-            }, error => dvm.errorMessage = error);
-    };
-    dvm.cancel = function() {
-        dvm.dismiss();
-    };
+                this.util.createSuccessToast('User successfully created');
+                this.errorMessage = '';
+                this.dialogRef.close();
+            }, error => this.errorMessage = error);
+    }
 }
-
-export default createUserOverlayComponent;

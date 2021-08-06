@@ -100,7 +100,7 @@ function modalService($uibModal, $uibModalStack, $rootScope) {
      * @methodOf shared.service:modalService
      *
      * @description
-     * Opens a {@link shared.component:confirmModal} with the provided configuration. The body of the
+     * Opens a {@link shared.component:confirmModalAjs} with the provided configuration. The body of the
      * `confirmModal` is provided as a string. Custom implementation for the confirm and deny actions are provided
      * as the `yes` and `no` functions respectively.
      *
@@ -112,7 +112,7 @@ function modalService($uibModal, $uibModalStack, $rootScope) {
      */
     self.openConfirmModal = function(body, yes = noop, no = noop, size) {
         var configObj: any = {
-            component: 'confirmModal',
+            component: 'confirmModalAjs',
             resolve: {
                 body: () => body,
                 no: () => no,

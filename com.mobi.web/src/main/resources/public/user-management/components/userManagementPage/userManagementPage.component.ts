@@ -20,33 +20,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, ViewChild } from '@angular/core';
+import { MatTabChangeEvent } from '@angular/material';
+
+import { UserStateService } from '../../../shared/services/userState.service';
+import { PermissionsPageComponent } from '../permissionsPage/permissionsPage.component';
+
 import './userManagementPage.component.scss';
 
-const template = require('./userManagementPage.component.html');
-
 /**
- * @ngdoc component
- * @name user-management.component:userManagementPage
- * @requires shared.service:userStateService
+ * @class user-management.UserManagementPageComponent
  *
- * @description
- * `userManagementPage` is a component which creates a {@link shared.component:tabset tabset} with different pages
- * depending on whether the {@link user-management.component:usersPage users},
- * {@link user-management.component:groupsPage groups}, or
- * {@link user-management.component:permissionsPage permissions} of Mobi should be shown.
+ * A component which creates a `mat-tab-group` with tabs depending on whether the
+ * {@link user-management.UsersPageComponent users}, {@link user-management.GroupsPageComponent groups}, or
+ * {@link user-management.PermissionsPageComponent permissions} of Mobi should be shown.
  */
-const userManagementPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: userManagementPageComponentCtrl
-};
+@Component({
+    selector: 'user-management-page',
+    templateUrl: './userManagementPage.component.html'
+})
+export class UserManagementPageComponent {
+    @ViewChild(PermissionsPageComponent) permissionsPage: PermissionsPageComponent;
+    
+    constructor(public state: UserStateService) {}
 
-userManagementPageComponentCtrl.$inject = ['userStateService'];
-
-function userManagementPageComponentCtrl(userStateService) {
-    var dvm = this;
-    dvm.state = userStateService;
+    onTabChanged(event: MatTabChangeEvent): void {
+        if (event.index === 2) {
+            this.permissionsPage.reset();
+        }
+    }
 }
-
-export default userManagementPageComponent;

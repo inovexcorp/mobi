@@ -24,7 +24,9 @@ import { find, cloneDeep, replace } from 'lodash';
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 
+import { UserManagerService } from '../../../shared/services/userManager.service';
 import { emailOrEmpty } from '../../../shared/validators/emailOrEmpty.validator';
+import { User } from '../../../shared/models/user.interface';
 
 /**
  * @name settings.ProfileTabComponent
@@ -37,7 +39,7 @@ import { emailOrEmpty } from '../../../shared/validators/emailOrEmpty.validator'
     templateUrl: './profileTab.component.html',
 })
 export class ProfileTabComponent implements OnInit {
-    currentUser: any = {};
+    currentUser: User = undefined;
     errorMessage: string;
     success: boolean;
     profileForm = this.fb.group({
@@ -46,7 +48,7 @@ export class ProfileTabComponent implements OnInit {
         email: ['', [ emailOrEmpty ]] // TODO: Replace Validators.email after Angular 6
     });
 
-    constructor(@Inject('userManagerService') private um, @Inject('loginManagerService') private lm,
+    constructor(private um: UserManagerService, @Inject('loginManagerService') private lm,
         @Inject('prefixes') private prefixes, private fb: FormBuilder) {}
 
     ngOnInit(): void {

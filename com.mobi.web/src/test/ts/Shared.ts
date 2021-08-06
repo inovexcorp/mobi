@@ -27,7 +27,7 @@ export function cleanStylesFromDOM(): void {
     const head: HTMLHeadElement = document.getElementsByTagName('head')[0];
     const styles: HTMLCollectionOf<HTMLStyleElement> | [] = head.getElementsByTagName('style');
 
-    for (let i: number = 0; i < styles.length; i++) {
+    for (let i = 0; i < styles.length; i++) {
         head.removeChild(styles[i]);
     }
 }
@@ -98,6 +98,7 @@ export class mockUtil {
     getInputType = jasmine.createSpy('getInputType').and.returnValue('');
     getPattern = jasmine.createSpy('getPattern').and.returnValue(/[a-zA-Z]/);
     startDownload = jasmine.createSpy('startDownload');
+    rejectError = jasmine.createSpy('rejectError').and.callFake(() => Promise.reject(''));
 }
 
 export class mockPreferenceManager {
@@ -128,10 +129,10 @@ export class mockPrefixes {
     mergereq = 'mergereq:';
     user = 'user:';
     policy = 'policy:';
-    roles = "roles:";
-    foaf = "foaf:";
-    shacl = "shacl:";
-    preference = "preference:";
+    roles = 'roles:';
+    foaf = 'foaf:';
+    shacl = 'shacl:';
+    preference = 'preference:';
 }
 
 export class mockHttpService {
@@ -496,6 +497,75 @@ export class mockDiscoverState {
     resetSearchQueryConfig = jasmine.createSpy('resetSearchQueryConfig');
 }
 
+export class mockCatalogManager {
+    coreRecordTypes = [];
+    sortOptions = [];
+    recordTypes = [];
+    localCatalog = undefined;
+    distributedCatalog = undefined;
+    initialize = jasmine.createSpy('initialize').and.returnValue(Promise.resolve());
+    getSortOptions = jasmine.createSpy('getSortOptions').and.returnValue(Promise.resolve([]));
+    getRecordTypes = jasmine.createSpy('getRecordTypes').and.returnValue(Promise.resolve([]));
+    getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue(Promise.resolve({}));
+    getRecords = jasmine.createSpy('getRecords').and.returnValue(Promise.resolve({}));
+    getRecord = jasmine.createSpy('getRecord').and.returnValue(Promise.resolve({}));
+    createRecord = jasmine.createSpy('createRecord').and.returnValue(Promise.resolve());
+    updateRecord = jasmine.createSpy('updateRecord').and.returnValue(Promise.resolve());
+    deleteRecord = jasmine.createSpy('deleteRecord').and.returnValue(Promise.resolve());
+    getRecordDistributions = jasmine.createSpy('getRecordDistributions').and.returnValue(Promise.resolve({}));
+    getRecordDistribution = jasmine.createSpy('getRecordDistribution').and.returnValue(Promise.resolve({}));
+    createRecordDistribution = jasmine.createSpy('createRecordDistribution').and.returnValue(Promise.resolve());
+    updateRecordDistribution = jasmine.createSpy('updateRecordDistribution').and.returnValue(Promise.resolve());
+    deleteRecordDistribution = jasmine.createSpy('deleteRecordDistribution').and.returnValue(Promise.resolve());
+    getRecordVersions = jasmine.createSpy('getRecordVersions').and.returnValue(Promise.resolve({}));
+    getRecordLatestVersion = jasmine.createSpy('getRecordLatestVersion').and.returnValue(Promise.resolve({}));
+    getRecordVersion = jasmine.createSpy('getRecordVersion').and.returnValue(Promise.resolve({}));
+    createRecordVersion = jasmine.createSpy('createRecordVersion').and.returnValue(Promise.resolve());
+    createRecordTag = jasmine.createSpy('createRecordTag').and.returnValue(Promise.resolve());
+    updateRecordVersion = jasmine.createSpy('updateRecordVersion').and.returnValue(Promise.resolve());
+    deleteRecordVersion = jasmine.createSpy('deleteRecordVersion').and.returnValue(Promise.resolve());
+    getVersionCommit = jasmine.createSpy('getVersionCommit').and.returnValue(Promise.resolve({}));
+    getVersionDistributions = jasmine.createSpy('getVersionDistributions').and.returnValue(Promise.resolve({}));
+    getVersionDistribution = jasmine.createSpy('getVersionDistribution').and.returnValue(Promise.resolve({}));
+    createVersionDistribution = jasmine.createSpy('createVersionDistribution').and.returnValue(Promise.resolve());
+    updateVersionDistribution = jasmine.createSpy('updateVersionDistribution').and.returnValue(Promise.resolve());
+    deleteVersionDistribution = jasmine.createSpy('deleteVersionDistribution').and.returnValue(Promise.resolve());
+    getRecordBranches = jasmine.createSpy('getRecordBranches').and.returnValue(Promise.resolve({}));
+    getRecordMasterBranch = jasmine.createSpy('getRecordMasterBranch').and.returnValue(Promise.resolve({}));
+    getRecordBranch = jasmine.createSpy('getRecordBranch').and.returnValue(Promise.resolve({}));
+    createRecordBranch = jasmine.createSpy('createRecordBranch').and.returnValue(Promise.resolve());
+    createRecordUserBranch = jasmine.createSpy('createRecordUserBranch').and.returnValue(Promise.resolve());
+    updateRecordBranch = jasmine.createSpy('updateRecordBranch').and.returnValue(Promise.resolve());
+    deleteRecordBranch = jasmine.createSpy('deleteRecordBranch').and.returnValue(Promise.resolve());
+    getCommit = jasmine.createSpy('getCommit').and.returnValue(Promise.resolve([]));
+    getCommitHistory = jasmine.createSpy('getCommitHistory').and.returnValue(Promise.resolve([]));
+    getCompiledResource = jasmine.createSpy('getCompiledResource').and.returnValue(Promise.resolve([]));
+    getDifference = jasmine.createSpy('getDifference').and.returnValue(Promise.resolve([]));
+    getDifferenceForSubject = jasmine.createSpy('getDifferenceForSubject').and.returnValue(Promise.resolve([]));
+    getBranchCommits = jasmine.createSpy('getBranchCommits').and.returnValue(Promise.resolve([]));
+    createBranchCommit = jasmine.createSpy('createBranchCommit').and.returnValue(Promise.resolve());
+    getBranchHeadCommit = jasmine.createSpy('getBranchHeadCommit').and.returnValue(Promise.resolve({}));
+    getBranchCommit = jasmine.createSpy('getBranchCommit').and.returnValue(Promise.resolve({}));
+    getBranchDifference = jasmine.createSpy('getBranchDifference').and.returnValue(Promise.resolve({}));
+    getBranchConflicts = jasmine.createSpy('getBranchConflicts').and.returnValue(Promise.resolve([]));
+    mergeBranches = jasmine.createSpy('mergeBranches').and.returnValue(Promise.resolve(''));
+    getResource = jasmine.createSpy('getResource').and.returnValue(Promise.resolve(''));
+    downloadResource = jasmine.createSpy('downloadResource');
+    createInProgressCommit = jasmine.createSpy('createInProgressCommit').and.returnValue(Promise.resolve());
+    getInProgressCommit = jasmine.createSpy('getInProgressCommit').and.returnValue(Promise.resolve({}));
+    updateInProgressCommit = jasmine.createSpy('updateInProgressCommit').and.returnValue(Promise.resolve());
+    deleteInProgressCommit = jasmine.createSpy('deleteInProgressCommit').and.returnValue(Promise.resolve());
+    getEntityName = jasmine.createSpy('getEntityName');
+    isRecord = jasmine.createSpy('isRecord');
+    isVersionedRDFRecord = jasmine.createSpy('isVersionedRDFRecord');
+    isDistribution = jasmine.createSpy('isDistribution');
+    isBranch = jasmine.createSpy('isBranch');
+    isUserBranch = jasmine.createSpy('isUserBranch');
+    isVersion = jasmine.createSpy('isVersion');
+    isTag = jasmine.createSpy('isTag');
+    isCommit = jasmine.createSpy('isCommit');
+}
+
 export class mockOntologyManager {
     ontologyRecords = [];
     entityNameProps = [];
@@ -591,83 +661,83 @@ export class MockOntologyVisualization {
     init = jasmine.createSpy('init').and.returnValue(Promise.resolve());
     getGraphData = jasmine.createSpy('getGraphData').and.returnValue([
         {
-            "selectable": true,
-            "locked": false,
-            "grabbed": false,
-            "grabbable": true,
-            "data": {
-                "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#Pizza",
-                "idInt": "http://www.co-ode.org/ontologies/pizza/pizza.owl#Pizza",
-                "weight": 0,
-                "name": "Pizza"
+            'selectable': true,
+            'locked': false,
+            'grabbed': false,
+            'grabbable': true,
+            'data': {
+                'id': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#Pizza',
+                'idInt': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#Pizza',
+                'weight': 0,
+                'name': 'Pizza'
             },
-            "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#Pizza",
-            "group": "nodes",
-            "ontologyId": "http://www.co-ode.org/ontologies/pizza/pizza.owl"
+            'id': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#Pizza',
+            'group': 'nodes',
+            'ontologyId': 'http://www.co-ode.org/ontologies/pizza/pizza.owl'
         },
         {
-            "selectable": true,
-            "locked": false,
-            "grabbed": false,
-            "grabbable": true,
-            "data": {
-                "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping",
-                "idInt": "http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping",
-                "weight": 0,
-                "name": "CoberturaDeVegetais"
+            'selectable': true,
+            'locked': false,
+            'grabbed': false,
+            'grabbable': true,
+            'data': {
+                'id': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping',
+                'idInt': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping',
+                'weight': 0,
+                'name': 'CoberturaDeVegetais'
             },
-            "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping",
-            "group": "nodes",
-            "ontologyId": "http://www.co-ode.org/ontologies/pizza/pizza.owl"
+            'id': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping',
+            'group': 'nodes',
+            'ontologyId': 'http://www.co-ode.org/ontologies/pizza/pizza.owl'
         },
         {
-            "selectable": true,
-            "locked": false,
-            "grabbed": false,
-            "grabbable": true,
-            "data": {
-                "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping",
-                "idInt": "http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping",
-                "weight": 0,
-                "name": "CoberturaDeTomate"
+            'selectable': true,
+            'locked': false,
+            'grabbed': false,
+            'grabbable': true,
+            'data': {
+                'id': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping',
+                'idInt': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping',
+                'weight': 0,
+                'name': 'CoberturaDeTomate'
             },
-            "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping",
-            "group": "nodes",
-            "ontologyId": "http://www.co-ode.org/ontologies/pizza/pizza.owl"
+            'id': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping',
+            'group': 'nodes',
+            'ontologyId': 'http://www.co-ode.org/ontologies/pizza/pizza.owl'
         },
         {
-            "position": {},
-            "group": "edges",
-            "removed": false,
-            "selected": false,
-            "selectable": true,
-            "locked": false,
-            "grabbed": false,
-            "grabbable": true,
-            "data": {
-                "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping-http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping",
-                "idInt": "http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping-http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping",
-                "source": "http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping",
-                "target": "http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping",
-                "arrow": "triangle",
-                "weight": 0
+            'position': {},
+            'group': 'edges',
+            'removed': false,
+            'selected': false,
+            'selectable': true,
+            'locked': false,
+            'grabbed': false,
+            'grabbable': true,
+            'data': {
+                'id': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping-http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping',
+                'idInt': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping-http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping',
+                'source': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping',
+                'target': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping',
+                'arrow': 'triangle',
+                'weight': 0
             },
-            "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping-http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping"
+            'id': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#VegetableTopping-http://www.co-ode.org/ontologies/pizza/pizza.owl#TomatoTopping'
         },
         {
-            "selectable": true,
-            "locked": false,
-            "grabbed": false,
-            "grabbable": true,
-            "data": {
-                "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#SweetPepperTopping",
-                "idInt": "http://www.co-ode.org/ontologies/pizza/pizza.owl#SweetPepperTopping",
-                "weight": 0,
-                "name": "CoberturaDePimentaoDoce"
+            'selectable': true,
+            'locked': false,
+            'grabbed': false,
+            'grabbable': true,
+            'data': {
+                'id': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#SweetPepperTopping',
+                'idInt': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#SweetPepperTopping',
+                'weight': 0,
+                'name': 'CoberturaDePimentaoDoce'
             },
-            "id": "http://www.co-ode.org/ontologies/pizza/pizza.owl#SweetPepperTopping",
-            "group": "nodes",
-            "ontologyId": "http://www.co-ode.org/ontologies/pizza/pizza.owl"
+            'id': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#SweetPepperTopping',
+            'group': 'nodes',
+            'ontologyId': 'http://www.co-ode.org/ontologies/pizza/pizza.owl'
         }
     ]);
     hasPositions = jasmine.createSpy('hasPositions').and.returnValue(false);

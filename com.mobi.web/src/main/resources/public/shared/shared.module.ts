@@ -24,8 +24,23 @@ import * as angular from 'angular';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { downgradeComponent } from '@angular/upgrade/static';
-import { MatFormFieldModule, MatInputModule, MatButtonModule, ErrorStateMatcher, MatIconModule, MatSlideToggleModule, MatProgressSpinnerModule } from '@angular/material';
+import { downgradeComponent, downgradeInjectable } from '@angular/upgrade/static';
+import {
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    ErrorStateMatcher,
+    MatIconModule,
+    MatSlideToggleModule,
+    MatDialogModule,
+    MatTabsModule,
+    MatMenuModule,
+    MatAutocompleteModule,
+    MatTooltipModule,
+    MatProgressSpinnerModule } from '@angular/material';
+import { MatTableModule } from '@angular/material/table';
+import { CdkTableModule } from '@angular/cdk/table';
+import { HttpClientModule } from '@angular/common/http';
 
 import actionMenuComponent from './components/actionMenu/actionMenu.component';
 import blockComponent from './components/block/block.component';
@@ -42,7 +57,7 @@ import commitCompiledResourceComponent from './components/commitCompiledResource
 import commitDifferenceTabsetComponent from './components/commitDifferenceTabset/commitDifferenceTabset.component';
 import commitHistoryTableComponent from './components/commitHistoryTable/commitHistoryTable.component';
 import commitInfoOverlayComponent from './components/commitInfoOverlay/commitInfoOverlay.component';
-import confirmModalComponent from './components/confirmModal/confirmModal.component';
+import confirmModalComponent from './components/confirmModal/confirmModal.component.ajs';
 import customLabelComponent from './components/customLabel/customLabel.component';
 import editIriOverlayComponent from './components/editIriOverlay/editIriOverlay.component';
 import emailInputComponent from './components/emailInput/emailInput.component';
@@ -70,7 +85,6 @@ import stepProgressBarComponent from './components/stepProgressBar/stepProgressB
 import textAreaComponent from './components/textArea/textArea.component';
 import textInputComponent from './components/textInput/textInput.component';
 import unmaskPasswordComponent from './components/unmaskPassword/unmaskPassword.component.ajs';
-import userAccessControlsComponent from './components/userAccessControls/userAccessControls.component';
 import valueDisplayComponent from './components/valueDisplay/valueDisplay.component';
 
 import emailIri from './directives/emailIri/emailIri.directive';
@@ -119,7 +133,6 @@ import modalService from './services/modal.service';
 import ontologyManagerService from './services/ontologyManager.service';
 import ontologyStateService from './services/ontologyState.service';
 import policyEnforcementService from './services/policyEnforcement.service';
-import policyManagerService from './services/policyManager.service';
 import preferenceManagerService from './services/preferenceManager.service';
 import prefixes from './services/prefixes.service';
 import propertyManagerService from './services/propertyManager.service';
@@ -129,8 +142,6 @@ import settingsManagerService from './services/settingsManager.service';
 import sparqlManagerService from './services/sparqlManager.service';
 import stateManagerService from './services/stateManager.service';
 import updateRefsService from './services/updateRefs.service';
-import userManagerService from './services/userManager.service';
-import userStateService from './services/userState.service';
 import utilService from './services/util.service';
 import yasguiService from './services/yasgui.service';
 import { OntologyVisualizationService } from '../ontology-visualization/services/ontologyVisualizaton.service';
@@ -142,18 +153,26 @@ import {
     prefixesProvider,
     preferenceManagerServiceProvider,
     provManagerServiceProvider,
-    userManagerServiceProvider,
     utilServiceProvider,
     ontologyStateServiceProvider,
     discoverStateServiceProvider,
     ontologyManagerServiceProvider,
     settingsManagerServiceProvider,
+    catalogManagerServiceProvider
 } from '../ajs.upgradedProviders';
 
+import { ConfirmModalComponent } from './components/confirmModal/confirmModal.component';
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from './components/infoMessage/infoMessage.component';
 import { UnmaskPasswordComponent } from './components/unmaskPassword/unmaskPassword.component';
-import { WindowRef } from "./services/windowRef.service";
+import { UserAccessControlsComponent } from './components/userAccessControls/userAccessControls.component';
+
+import { HelperService } from './services/helper.service';
+import { PolicyManagerService } from './services/policyManager.service';
+import { UserManagerService } from './services/userManager.service';
+import { UserStateService } from './services/userState.service';
+import { WindowRef } from './services/windowRef.service';
+import { HighlightTextPipe } from './pipes/highlightText.pipe';
 import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
 import { SpinnerComponent } from './components/progress-spinner/spinner.component';
 import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
@@ -169,40 +188,66 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
+        HttpClientModule,
+        CdkTableModule,
+        MatAutocompleteModule,
+        MatMenuModule,
+        MatDialogModule,
+        MatTabsModule,
         MatFormFieldModule,
         MatInputModule,
         MatButtonModule,
         MatProgressSpinnerModule,
         MatIconModule,
-        MatSlideToggleModule
+        MatSlideToggleModule,
+        MatProgressSpinnerModule,
+        MatTableModule,
+        MatTooltipModule
     ],
     declarations: [
+        ConfirmModalComponent,
+        ErrorDisplayComponent,
+        InfoMessageComponent,
+        UnmaskPasswordComponent,
+        UserAccessControlsComponent,
+        SpinnerComponent,
+        HighlightTextPipe,
+        TrustedHtmlPipe
+    ],
+    entryComponents: [
+        ConfirmModalComponent,
         ErrorDisplayComponent,
         InfoMessageComponent,
         UnmaskPasswordComponent,
         SpinnerComponent,
-        TrustedHtmlPipe
-    ],
-    entryComponents: [
-        ErrorDisplayComponent,
-        InfoMessageComponent,
-        UnmaskPasswordComponent,
-        SpinnerComponent
+        UserAccessControlsComponent
     ],
     exports: [
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
+        HttpClientModule,
+        CdkTableModule,
+        MatAutocompleteModule,
         MatProgressSpinnerModule,
         MatButtonModule,
+        MatDialogModule,
         MatIconModule,
+        MatMenuModule,
+        MatTabsModule,
         MatSlideToggleModule,
         MatFormFieldModule,
         MatInputModule,
+        MatTableModule,
+        MatTooltipModule,
+        MatProgressSpinnerModule,
+        ConfirmModalComponent,
         ErrorDisplayComponent,
         InfoMessageComponent,
         UnmaskPasswordComponent,
         SpinnerComponent,
+        UserAccessControlsComponent,
+        HighlightTextPipe,
         TrustedHtmlPipe
     ],
     providers: [
@@ -213,10 +258,14 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
         prefixesProvider,
         httpServiceProvider,
         settingsManagerServiceProvider,
-        userManagerServiceProvider,
         ontologyStateServiceProvider,
         discoverStateServiceProvider,
+        catalogManagerServiceProvider,
         ontologyManagerServiceProvider,
+        HelperService,
+        PolicyManagerService,
+        UserManagerService,
+        UserStateService,
         WindowRef,
         OntologyVisualizationService,
         { provide: ErrorStateMatcher, useClass: MobiErrorStateMatcher }
@@ -240,7 +289,7 @@ angular.module('shared', [])
     .component('commitDifferenceTabset', commitDifferenceTabsetComponent)
     .component('commitHistoryTable', commitHistoryTableComponent)
     .component('commitInfoOverlay', commitInfoOverlayComponent)
-    .component('confirmModal', confirmModalComponent)
+    .component('confirmModalAjs', confirmModalComponent)
     .component('customLabel', customLabelComponent)
     .component('editIriOverlay', editIriOverlayComponent)
     .component('emailInput', emailInputComponent)
@@ -268,7 +317,6 @@ angular.module('shared', [])
     .component('textArea', textAreaComponent)
     .component('textInput', textInputComponent)
     .component('unmaskPasswordAjs', unmaskPasswordComponent)
-    .component('userAccessControls', userAccessControlsComponent)
     .component('valueDisplay', valueDisplayComponent)
     .directive('emailIri', emailIri)
     .directive('aDisabled', aDisabled)
@@ -313,7 +361,6 @@ angular.module('shared', [])
     .service('ontologyManagerService', ontologyManagerService)
     .service('ontologyStateService', ontologyStateService)
     .service('policyEnforcementService', policyEnforcementService)
-    .service('policyManagerService', policyManagerService)
     .service('preferenceManagerService', preferenceManagerService)
     .service('prefixes', prefixes)
     .service('propertyManagerService', propertyManagerService)
@@ -323,12 +370,15 @@ angular.module('shared', [])
     .service('sparqlManagerService', sparqlManagerService)
     .service('stateManagerService', stateManagerService)
     .service('updateRefsService', updateRefsService)
-    .service('userManagerService', userManagerService)
-    .service('userStateService', userStateService)
     .service('utilService', utilService)
     .factory('clickAnywhereButHereService', clickAnywhereButHereService)
-    .service('yasguiService',yasguiService)
+    .service('yasguiService', yasguiService)
+    .factory('policyManagerService', downgradeInjectable(PolicyManagerService))
+    .factory('userManagerService', downgradeInjectable(UserManagerService))
+    .factory('userStateService', downgradeInjectable(UserStateService))
+    .directive('confirmModal', downgradeComponent({component: ConfirmModalComponent}) as angular.IDirectiveFactory)
     .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory)
     .directive('infoMessage', downgradeComponent({component: InfoMessageComponent}) as angular.IDirectiveFactory)
     .directive('unmaskPassword', downgradeComponent({component: UnmaskPasswordComponent}) as angular.IDirectiveFactory)
-    .directive('progressSpinner', downgradeComponent({component: SpinnerComponent}) as angular.IDirectiveFactory);
+    .directive('progressSpinner', downgradeComponent({component: SpinnerComponent}) as angular.IDirectiveFactory)
+    .directive('userAccessControls', downgradeComponent({component: UserAccessControlsComponent}) as angular.IDirectiveFactory);

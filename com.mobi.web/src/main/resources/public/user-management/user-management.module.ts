@@ -21,40 +21,72 @@
  * #L%
  */
 import * as angular from 'angular';
+import { NgModule } from '@angular/core';
+import { downgradeComponent } from '@angular/upgrade/static';
 
-import createGroupOverlayComponent from './components/createGroupOverlay/createGroupOverlay.component';
-import createUserOverlayComponent from './components/createUserOverlay/createUserOverlay.component';
-import editGroupInfoOverlayComponent from './components/editGroupInfoOverlay/editGroupInfoOverlay.component';
-import editUserProfileOverlayComponent from './components/editUserProfileOverlay/editUserProfileOverlay.component';
-import groupListComponent from './components/groupsList/groupsList.component';
-import groupsPageComponent from './components/groupsPage/groupsPage.component';
-import memberTableComponent from './components/memberTable/memberTable.component';
-import permissionsInputComponent from './components/permissionsInput/permissionsInput.component';
-import permissionsPageComponent from './components/permissionsPage/permissionsPage.component';
-import resetPasswordOverlayComponent from './components/resetPasswordOverlay/resetPasswordOverlay.component';
-import userManagementPageComponent from './components/userManagementPage/userManagementPage.component';
-import usersListComponent from './components/usersList/usersList.component';
-import usersPageComponent from './components/usersPage/usersPage.component';
+import { SharedModule } from '../shared/shared.module';
+
+import { CreateGroupOverlayComponent } from './components/createGroupOverlay/createGroupOverlay.component';
+import { CreateUserOverlayComponent } from './components/createUserOverlay/createUserOverlay.component';
+import { EditGroupInfoOverlayComponent } from './components/editGroupInfoOverlay/editGroupInfoOverlay.component';
+import { EditUserProfileOverlayComponent } from './components/editUserProfileOverlay/editUserProfileOverlay.component';
+import { GroupsListComponent } from './components/groupsList/groupsList.component';
+import { GroupsPageComponent } from './components/groupsPage/groupsPage.component';
+import { MemberTableComponent } from './components/memberTable/memberTable.component';
+import { PermissionsPageComponent } from './components/permissionsPage/permissionsPage.component';
+import { ResetPasswordOverlayComponent } from './components/resetPasswordOverlay/resetPasswordOverlay.component';
+import { UserManagementPageComponent } from './components/userManagementPage/userManagementPage.component';
+import { UsersListComponent } from './components/usersList/usersList.component';
+import { UsersPageComponent } from './components/usersPage/usersPage.component';
+import { AddMemberButtonComponent } from './components/addMemberButton/addMemberButton.component';
+
+@NgModule({
+    imports: [
+        SharedModule
+    ],
+    declarations: [
+        AddMemberButtonComponent,
+        CreateGroupOverlayComponent,
+        CreateUserOverlayComponent,
+        EditGroupInfoOverlayComponent,
+        EditUserProfileOverlayComponent,
+        GroupsListComponent,
+        GroupsPageComponent,
+        MemberTableComponent,
+        PermissionsPageComponent,
+        ResetPasswordOverlayComponent,
+        UserManagementPageComponent,
+        UsersListComponent,
+        UsersPageComponent
+    ],
+    entryComponents: [
+        CreateGroupOverlayComponent,
+        CreateUserOverlayComponent,
+        EditGroupInfoOverlayComponent,
+        EditUserProfileOverlayComponent,
+        ResetPasswordOverlayComponent,
+        UserManagementPageComponent
+    ]
+})
+export class UserManagementModule {}
 
 /**
- * @ngdoc overview
- * @name user-management
+ * @namespace user-management
  *
- * @description
  * The `user-management` module provides components that make up the Administration page of Mobi for managing users,
  * groups, and overall permissions in the application.
  */
 angular.module('user-management', [])
-    .component('createGroupOverlay', createGroupOverlayComponent)
-    .component('createUserOverlay', createUserOverlayComponent)
-    .component('editGroupInfoOverlay', editGroupInfoOverlayComponent)
-    .component('editUserProfileOverlay', editUserProfileOverlayComponent)
-    .component('groupsList', groupListComponent)
-    .component('groupsPage', groupsPageComponent)
-    .component('memberTable', memberTableComponent)
-    .component('permissionsInput', permissionsInputComponent)
-    .component('permissionsPage', permissionsPageComponent)
-    .component('resetPasswordOverlay', resetPasswordOverlayComponent)
-    .component('userManagementPage', userManagementPageComponent)
-    .component('usersList', usersListComponent)
-    .component('usersPage', usersPageComponent);
+    .directive('addMemberButton', downgradeComponent({component: AddMemberButtonComponent}) as angular.IDirectiveFactory)
+    .directive('createGroupOverlay', downgradeComponent({component: CreateGroupOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('createUserOverlay', downgradeComponent({component: CreateUserOverlayComponent}) as angular.IDirectiveFactory)
+    .component('editGroupInfoOverlay', downgradeComponent({component: EditGroupInfoOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('editUserProfileOverlay', downgradeComponent({component: EditUserProfileOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('groupsList', downgradeComponent({component: GroupsListComponent}) as angular.IDirectiveFactory)
+    .directive('groupsPage', downgradeComponent({component: GroupsPageComponent}) as angular.IDirectiveFactory)
+    .directive('memberTable', downgradeComponent({component: MemberTableComponent}) as angular.IDirectiveFactory)
+    .directive('permissionsPage', downgradeComponent({component: PermissionsPageComponent}) as angular.IDirectiveFactory)
+    .directive('resetPasswordOverlay', downgradeComponent({component: ResetPasswordOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('usersList', downgradeComponent({component: UsersListComponent}) as angular.IDirectiveFactory)
+    .directive('usersPage', downgradeComponent({component: UsersPageComponent}) as angular.IDirectiveFactory)
+    .directive('userManagementPage', downgradeComponent({component: UserManagementPageComponent}) as angular.IDirectiveFactory);

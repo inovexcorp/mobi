@@ -20,19 +20,24 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h6>Edit User Profile</h6>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+<h1 mat-dialog-title>Edit User Profile</h1>
+<div mat-dialog-content [formGroup]="editProfileForm">
+    <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+    <mat-form-field class="w-100">
+        <mat-label>First Name</mat-label>
+        <input matInput type="text" name="firstName" formControlName="firstName"/>
+    </mat-form-field>
+    <mat-form-field class="w-100">
+        <mat-label>Last Name</mat-label>
+        <input matInput type="text" name="lastName" formControlName="lastName"/>
+    </mat-form-field>
+    <mat-form-field class="w-100">
+        <mat-label>Email</mat-label>
+        <input matInput name="email" formControlName="email">
+        <mat-error *ngIf="editProfileForm.controls.email.invalid">Not a valid email</mat-error>
+    </mat-form-field>
 </div>
-<div class="modal-body">
-    <form name="dvm.form">
-        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-        <text-input bind-model="dvm.newUser.firstName" change-event="dvm.newUser.firstName = value" input-name="'firstName'" display-text="'First Name'" muted-text="'(Optional)'" is-valid="dvm.form.firstName.$dirty && dvm.form.firstName.$valid" is-invalid="dvm.form.firstName.$dirty && dvm.form.firstName.$invalid"></text-input>
-        <text-input bind-model="dvm.newUser.lastName" change-event="dvm.newUser.lastName = value" input-name="'lastName'" display-text="'Last Name'" muted-text="'(Optional)'" is-valid="dvm.form.lastName.$dirty && dvm.form.lastName.$valid" is-invalid="dvm.form.lastName.$dirty && dvm.form.lastName.$invalid"></text-input>
-        <email-input bind-model="dvm.newUser.email" change-event="dvm.newUser.email = value" input-name="'email'" is-valid="dvm.form.email.$dirty && dvm.form.email.$valid" is-invalid="dvm.form.email.$dirty && dvm.form.email.$invalid" muted-text="'(Optional)'"></email-input>
-    </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-click="dvm.set()" ng-disabled="dvm.form.$invalid">Submit</button>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="">Cancel</button>
+    <button mat-raised-button color="primary" (click)="set()" [disabled]="editProfileForm.invalid">Submit</button>
 </div>
