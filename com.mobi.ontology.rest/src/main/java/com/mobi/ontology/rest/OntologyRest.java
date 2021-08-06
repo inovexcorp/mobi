@@ -1170,6 +1170,79 @@ public class OntologyRest {
     }
 
     /**
+     * Returns a JSON object with (ObjectPropertyRange) properties and ranges
+     *
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
+     * @return JSON object with keys
+     */
+    @GET
+    @Path("{recordId}/property-ranges")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(
+            tags = "ontologies",
+            summary = "Gets a JSON representation of the properties Ranges",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "JSON object with keys"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response getPropertyToRanges(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
+        try {
+
+            Optional<Ontology> optionalOntology = getOntology(context,
+                    recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit);
+            if (optionalOntology.isPresent()) {
+                StreamingOutput output = getPropertyToRangesStream(optionalOntology.get());
+                return Response.ok(output).build();
+            } else {
+                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.",
+                        Response.Status.BAD_REQUEST);
+            }
+        } catch (MobiException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private StreamingOutput getPropertyToRangesStream(Ontology ontology) {
+        Set<Ontology> onlyImports = OntologyUtils.getImportedOntologies(ontology);
+
+        return outputStream -> {
+            StopWatch watch = new StopWatch();
+
+            watch.reset();
+            log.trace("Start propertyToRanges");
+            watch.start();
+            outputStream.write("{ \"propertyToRanges\": ".getBytes());
+            writePropertyRangesToStream(ontology.getTupleQueryResults(GET_PROPERTY_RANGES, true), outputStream);
+            watch.stop();
+            log.trace("End propertyToRanges: " + watch.getTime() + "ms");
+            outputStream.write("}".getBytes());
+        };
+    }
+    /**
      * Returns IRIs in the ontology identified by the provided IDs.
      *
      * @param context     Context of the request.

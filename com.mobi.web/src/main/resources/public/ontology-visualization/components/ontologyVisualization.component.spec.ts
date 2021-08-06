@@ -53,25 +53,25 @@ describe('Ontology Visualization component', function()  {
             expect(ontologyVisStub.getGraphData).toHaveBeenCalled();
             expect(component.length).toBeTruthy();
             component.ngOnDestroy();
-            expect(ontologyVisStub.setGraphState).toHaveBeenCalled()
-            expect(utilStub.clearToast).toHaveBeenCalled()
+            expect(ontologyVisStub.setGraphState).toHaveBeenCalled();
+            expect(utilStub.clearToast).toHaveBeenCalled();
         }));
     });
     describe('component lifecycle should initialize with the right values', function() {
         it('onDestroy', fakeAsync(function() {
             fixture.autoDetectChanges();
             tick(60000);
-            component.ngOnDestroy()
-            expect(ontologyVisStub.setGraphState).toHaveBeenCalled()
-            expect(utilStub.clearToast).toHaveBeenCalled()
+            component.ngOnDestroy();
+            expect(ontologyVisStub.setGraphState).toHaveBeenCalled();
+            expect(utilStub.clearToast).toHaveBeenCalled();
         }));
         it('onChanges', fakeAsync(function() {
             fixture.autoDetectChanges();
             tick(60000);
             component.ontology = 1;
             component.hasInit = true;
-            spyOn(component,"updateGraph").and.callFake(()=>{});
-            spyOn(component,"updateGraphData").and.callFake(()=>{});
+            spyOn(component,'updateGraph').and.callFake(()=>{});
+            spyOn(component,'updateGraphData').and.callFake(()=>{});
             ontologyVisStub.hasPositions.and.returnValue('true');
             component.ngOnChanges({
                 ontology: new SimpleChange(null, component.ontology,true)

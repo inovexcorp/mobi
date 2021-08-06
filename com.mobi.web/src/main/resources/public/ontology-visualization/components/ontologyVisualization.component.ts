@@ -52,6 +52,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
     hasInProgressCommit = false;
     isOverLimit = false;
     length = 1;
+    timeout;
     hasWarningsMsg = false;
     toastrConfig  = {
         timeOut: 0,
@@ -140,12 +141,12 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             handleDisconnected: true, // if true, avoids disconnected components from overlapping
             convergenceThreshold: 0.01, // when the alpha value (system energy) falls below this value, the layout stops
             nodeSpacing: function( node ) { 
-                return 1000; 
+                return 6000; 
             }, // extra spacing around nodes
             linkId: function id(d) {
                 return d.id;
             },
-            linkDistance: 200,
+            linkDistance: 300,
             nodeRepulsion: 500000,
             manyBodyStrength: -1000,
             ready: function(){
@@ -174,34 +175,82 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         const chart = this.chart;
         const highlighted = new Set();
         const selectedNode = new Set();
+        const selectedEdge = new Set();
         this.hasInit = true;
         chart.ready(function() {
             chart.unbind('click');
-            chart.bind('mouseover', 'node', function(event) {
-                const target = event.target;
-                if (target) {
-                    target.addClass('focused');
-                    selectedNode.add(target);
-                }
-                const directlyConnected  = target.neighborhood();
-                directlyConnected.forEach(i => {
-                    highlighted.add(i);
-                    i.addClass('highlighted');
+            const addClassToCollection = (collection, nodes, classes) => {
+                collection.add(nodes);
+                nodes.addClass(classes);
+            };
+            const clearHighlightedElements = (collection, classes) => {
+                if (collection.size > 0) {
+                    collection.forEach(entry => {
+                        entry.removeClass(classes);
+                    });
+                    collection.clear();
+                }    
+            };
+            const selectNodes = () => {
+                chart.on('click', 'node', function(event) {
+                    clearTimeout( this.timeout );
+                    this.timeout = setTimeout(function(){
+                        focusElement(event.target, 'select');
+                    }, 100);
                 });
+            };
+            const focusElement = (target, action) => {
+
+                const edges = target.connectedEdges();
+                const nodes = target.neighborhood();
+                // clear style
+                clearHighlightedElements(highlighted, 'highlighted');
+                clearHighlightedElements(selectedEdge, 'highlighted');
+
+                if (target) {
+                    addClassToCollection(selectedNode, target, 'focused'); 
+                }
+                
+                // apply style 
+                if (action === 'highlight') {
+                    addClassToCollection(highlighted, edges, 'highlighted');
+                    addClassToCollection(highlighted, nodes, 'highlighted');
+                } else {
+                    edges.select();
+                    nodes.select();
+                }
+            };
+
+            chart.bind('mouseover', 'node', function(event) {
+                focusElement(event.target, 'highlight');
             });
 
             chart.bind('mouseout', 'node', function(event) {
-                if (selectedNode.size) {
-                    selectedNode.forEach((item:any) => {
-                        item.removeClass('focused');
-                    });
-                }
-                if (highlighted.size > 0) {
-                    highlighted.forEach((item:any) => {
-                        item.removeClass('highlighted');
-                    });
+                clearHighlightedElements(selectedNode, 'focused');
+                clearHighlightedElements(highlighted, 'highlighted');
+            });
+
+            // bind tap to edges and add the highlighted class to connected nodes
+            chart.bind('tap', 'edge', function(event) {
+                const target = event.target;
+                // clear style
+                clearHighlightedElements(highlighted, 'highlighted');
+                clearHighlightedElements(selectedEdge, 'highlighted');
+                if (target.hasClass('ranges')) { 
+                    //add Style
+                    addClassToCollection(selectedEdge, target.edges(), 'highlighted');
+                    addClassToCollection(highlighted, target.connectedNodes(), 'highlighted');
                 }
             });
+
+            chart.on('tap', function(event){
+                const evtTarget = event.target;
+                if (selectedEdge.size > 0 && evtTarget.group('edge')) {
+                    clearHighlightedElements(selectedEdge, 'highlighted');
+                    clearHighlightedElements(highlighted, 'highlighted');
+                }
+              });
+            selectNodes();
         });
     }
 

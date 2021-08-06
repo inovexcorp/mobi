@@ -39,7 +39,7 @@ import { SharedModule } from '../shared/shared.module';
      entryComponents: [ OntologyVisualization ]
 })
 
-export class OntologoyVisualizationModule {}
+export class OntologyVisualizationModule {}
 
 angular.module('visualization', [])
     .directive('ontologyVisualization', downgradeComponent({component: OntologyVisualization}) as angular.IDirectiveFactory);

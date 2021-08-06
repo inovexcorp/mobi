@@ -516,6 +516,7 @@ export class mockOntologyManager {
     getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue(Promise.resolve());
     getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue(Promise.resolve());
     getOntologyEntityNames = jasmine.createSpy('getOntologyEntityNames').and.returnValue(Promise.resolve());
+    getPropertyRange = jasmine.createSpy('getPropertyToRange').and.returnValue(Promise.resolve());
     getSearchResults = jasmine.createSpy('getSearchResults');
     getQueryResults = jasmine.createSpy('getQueryResults').and.returnValue(Promise.resolve());
     getEntityAndBlankNodes = jasmine.createSpy('getEntityAndBlankNodes').and.returnValue(Promise.resolve());

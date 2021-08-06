@@ -20,59 +20,60 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-.links line {
-  stroke: #999;
-  stroke-opacity: 0.6;
-}
-
-.nodes circle {
-  stroke: #fff;
-  stroke-width: 1.5px;
-}
-
-text {
-  font-family: sans-serif;
-  font-size: 10px;
-}
-
-.chart-container {
-  width: 100vw;
-  height: 100vh;
-}
-
-.chart-wrapper {
-  display: flex;
-  flex: 1;
-  position: relative;
-  padding: 0;
-
-  ontology-visualization {
+.visualization-tab {
+  .links line {
+    stroke: #999;
+    stroke-opacity: 0.6;
+  }
+  
+  .nodes circle {
+    stroke: #fff;
+    stroke-width: 1.5px;
+  }
+  
+  text {
+    font-family: sans-serif;
+    font-size: 10px;
+  }
+  
+  .chart-container {
+    width: 100vw;
+    height: 100vh;
+  }
+  
+  .chart-wrapper {
     display: flex;
     flex: 1;
-  }
-
-  .chartController {
-      background: #f2f5f7;
-      height: unset;
-
-      .controls-content {
-          overflow: auto;
-          margin: 0px 8px 8px 8px;
-          padding-bottom: 0px;
-      }
-  }
-
-  .chartContent{
-      overflow: auto;
+    position: relative;
+    padding: 0;
+  
+    ontology-visualization {
       display: flex;
       flex: 1;
-  }
-
-  .r-side {
-      margin-left: 14px;
-      min-width: 360px;
-      transition: tranform ease .5s;
-      z-index: 1000;
+    }
+  
+    .chartController {
+        background: #f2f5f7;
+        height: unset;
+  
+        .controls-content {
+            overflow: auto;
+            margin: 0px 8px 8px 8px;
+            padding-bottom: 0px;
+        }
+    }
+  
+    .chartContent{
+        overflow: auto;
+        display: flex;
+        flex: 1;
+    }
+  
+    .r-side {
+        margin-left: 14px;
+        min-width: 360px;
+        transition: tranform ease .5s;
+        z-index: 1000;
+    }
   }
 }
