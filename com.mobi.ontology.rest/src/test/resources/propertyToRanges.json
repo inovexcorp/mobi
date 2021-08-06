@@ -1,0 +1,5 @@
+{
+  "propertyToRanges": {
+      "urn:hasTopping":["urn:PizzaTopping"]
+  }
+}

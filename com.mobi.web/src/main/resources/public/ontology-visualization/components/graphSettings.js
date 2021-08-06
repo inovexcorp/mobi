@@ -90,7 +90,7 @@ const style = [{
 }, {
     "selector": "edge",
     "style": {
-        "haystack-radius": "0",
+        "haystack-radius": "2",
         "opacity": "0.333",
         "line-color": "#5a5858",
         "width": "2",
@@ -101,6 +101,38 @@ const style = [{
         "line-dash-pattern": [6, 3]
     }
 }, {
+    "selector": "edge.ranges",
+    "style": {
+        "opacity": "0.7",
+        "width": "2",
+        "overlay-padding": "3px",
+        "target-arrow-shape": "triangle",
+        "line-style": "solid",
+        "text-background-padding": "2px",
+        "text-background-opacity": 1,
+        "color": `${primary}`,
+        "text-background-color": "#fff",
+        "text-background-shape": "roundrectangle",
+        "text-border-color": "#fff",
+        "text-border-width": 1,
+        "text-border-opacity": 1,
+        "text-rotation":'45'
+    }
+}, {
+    "selector": "edge[label]",
+    "style": {
+      "label": "data(label)",
+      "width": 3
+    }
+  }, {
+    "selector": ".loop",
+    "style": {
+        "curve-style": "bezier",
+        "control-point-step-size": 80,
+        "line-color": "#5a5858",
+        "loop-sweep": "-40deg"
+    }
+  },{
     "selector": "node.unhighlighted",
     "style": {
         "opacity": "0.2"
@@ -116,7 +148,7 @@ const style = [{
         "z-index": "999999"
     }
 }, {
-        "selector": "node.highlighted",
+        "selector": ".highlighted",
         "style": {
             "border-width": "6px",
             "border-color": `${highlighted}`,
@@ -138,11 +170,31 @@ const style = [{
         "background-color": `${primary}`,
         "text-outline-color": `${primary}`
     }
-},
-    {
+},{
         "selector": "node.faded",
         "style": {
             "opacity": "0.06"
+        }
+    },
+    {
+        "selector": "edge.highlighted",
+        "style": {
+            "border-color": `${highlighted}`,
+            "line-color": `${highlighted}`
+        }
+    },
+    {
+        "selector": "edge.focused",
+        "style": {
+            "border-color": `${highlighted}`,
+            "line-color": `${highlighted}`
+        }
+    },
+    {
+        "selector": "edge:selected",
+        "style": {
+            "border-color": `${highlighted}`,
+            "line-color": `${highlighted}`
         }
     },
     {

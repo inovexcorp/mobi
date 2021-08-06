@@ -726,6 +726,32 @@ describe('Ontology Manager service', function() {
             });
         });
     });
+    describe('getPropertyToRange retrieves all propertyRanges in an ontology', function() {
+        beforeEach(function() {
+            this.params = paramSerializer({ branchId: this.branchId, commitId: this.commitId, applyInProgressCommit: false });
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/property-ranges?' + this.params).respond(400, null, null, this.error);
+            ontologyManagerSvc.getPropertyToRange(this.recordId, this.branchId, this.commitId, false)
+                .then(() => {
+                    fail('Promise should have rejected');
+                }, response => {
+                    expect(response).toEqual(this.error);
+                });
+            flushAndVerify($httpBackend);
+            expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
+        });
+        it('successfully', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/property-ranges?' + this.params).respond(200, [{}]);
+            ontologyManagerSvc.getPropertyToRange(this.recordId, this.branchId, this.commitId, false)
+                .then(response => {
+                    expect(response).toEqual([{}]);
+                }, () => {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
     describe('getIris retrieves all IRIs in an ontology', function() {
         beforeEach(function() {
             this.params = paramSerializer({ branchId: this.branchId, commitId: this.commitId });

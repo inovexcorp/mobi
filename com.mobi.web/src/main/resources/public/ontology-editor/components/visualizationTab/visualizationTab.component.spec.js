@@ -20,3 +20,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockOntologyState
+} from '../../../../../../test/js/Shared';
+
+describe('Visualization Tab component', function() {
+    let $compile, scope;
+
+    beforeEach(function() {
+        angular.mock.module('ontology-editor');
+        mockComponent('ontology-editor', 'ontologyVisualization');  
+        mockOntologyState();
+
+        inject(function(_$compile_, _$rootScope_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
+        });
+
+        this.element = $compile(angular.element('<visualization-tab></visualization-tab>'))(scope);
+        scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
+    });
+
+    describe('contains the correct html', function() {
+        it('for wrapping containers', function() {
+            expect(this.element.prop('tagName')).toEqual('visualization-tab'.toUpperCase());
+            expect(this.element.querySelectorAll('.visualization-tab').length).toEqual(1);
+        });
+    });
+});

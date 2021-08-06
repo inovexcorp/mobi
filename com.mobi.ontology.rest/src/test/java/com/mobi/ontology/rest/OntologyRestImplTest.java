@@ -254,6 +254,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private JSONObject searchResults;
     private JSONObject individualsOfResult;
     private JSONObject basicHierarchyResults;
+    private JSONObject propertyToRanges;
     private JSONArray importedOntologyResults;
     private JSONArray importsClosureResults;
     private OutputStream ontologyJsonLd;
@@ -350,6 +351,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         importsClosureResults = getResourceArray("/imports-closure-results.json");
         individualsOfResult = getResource("/individuals-of-results.json");
         basicHierarchyResults = getResource("/basic-hierarchy.json");
+        propertyToRanges = getResource("/propertyToRanges.json");
 
         record.setOntologyIRI(ontologyIRI);
         missingIRI = vf.createIRI("http://mobi.com/missing");
@@ -1625,7 +1627,44 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertTrue(responseObject.containsKey("entityNames"));
         assertEquals(responseObject.getJSONObject("entityNames"), expectedResults);
     }
+    
+    // Test PropertyToRanges in ontology
 
+    @Test
+    public void testGetPropertyToRanges() {
+        List<String> bindings = Arrays.asList("prop", "range");
+        List<String> values = Arrays.asList("urn:hasTopping", "urn:PizzaTopping");
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(bindings, values, 2, vf));
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/property-ranges")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertEquals(getResponse(response), propertyToRanges);
+    }
+
+    @Test
+    public void testGetPropertyToRangesWhenNoInProgressCommit() {
+        setNoInProgressCommit();
+
+        List<String> bindings = Arrays.asList("prop", "range");
+        List<String> values = Arrays.asList("urn:hasTopping", "urn:PizzaTopping");
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(bindings, values, 2, vf));
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/property-ranges")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(false);
+        assertEquals(getResponse(response), propertyToRanges);
+    }
     // Test get IRIs in ontology
 
     @Test

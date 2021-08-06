@@ -33,7 +33,7 @@ import { SharedModule } from './shared/shared.module';
 import { LoginModule } from './login/login.module';
 import { SettingsModule } from './settings/settings.module';
 import { HomeModule } from "./home/home.module";
-import { OntologoyVisualizationModule } from './ontology-visualization/ontologyVisualization.module';
+import { OntologyVisualizationModule } from './ontology-visualization/ontologyVisualization.module';
 
 @NgModule({
     imports: [
@@ -45,7 +45,7 @@ import { OntologoyVisualizationModule } from './ontology-visualization/ontologyV
         SharedModule,
         LoginModule,
         HomeModule,
-        OntologoyVisualizationModule,
+        OntologyVisualizationModule,
         SettingsModule
     ],
     declarations: [],

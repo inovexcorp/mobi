@@ -336,6 +336,27 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     };
     /**
      * @ngdoc method
+     * @name getPropertyToRange
+     * @methodOf shared.service:ontologyManagerService
+     *
+     * @description
+     * Calls the GET /mobirest/ontologies/{recordId}/property-range endpoint and retrieves an object with keys
+     * corresponding to Ontology Object Properties and ranges.
+     *
+     * @param {string} recordId The id of the Record the Branch should be part of
+     * @param {string} branchId The id of the Branch with the specified Commit
+     * @param {string} commitId The id of the Commit to retrieve the ontology from
+     * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes.
+     * @return {Promise} A Promise with an object containing listItem keys.
+     */
+     self.getPropertyToRange = function(recordId, branchId, commitId, applyInProgressCommit = false) {
+        const config = { params: { branchId, commitId, applyInProgressCommit } };
+        const url = prefix + '/' + encodeURIComponent(recordId) + '/property-ranges';
+        return $http.get(url, config)
+            .then(response => response.data, util.rejectError);
+    };
+    /**
+     * @ngdoc method
      * @name getIris
      * @methodOf shared.service:ontologyManagerService
      *
