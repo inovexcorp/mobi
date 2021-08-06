@@ -43,6 +43,19 @@ module.exports = {
             {
                 test: /\.html$/,
                 use: 'raw-loader'
+            },
+            {
+                test: /spec\.(j|t)s$/,
+                exclude: /node_modules/,
+                use: [
+                    {
+                      loader: 'eslint-loader',
+                      options: {
+                        quiet: true,
+                        failOnError: true,
+                      }
+                    }
+                ]
             }
         ]
     },

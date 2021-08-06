@@ -13,20 +13,31 @@ module.exports = {
   },
   plugins: [
     '@typescript-eslint',
-    'angular'
+    'angular',
+    'jasmine'
   ],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
+    'plugin:jasmine/recommended'
   ],
   'rules': {
-    'eqeqeq': 'error',
-    'curly': 'error',
-    'quotes': ['error', 'single'],
+    'eqeqeq': 'warn',
+    'curly': 'warn',
+    '@typescript-eslint/no-extra-semi': 'warn',
+    'no-undef': 'warn',
+    'no-redeclare': 'warn',
+    'no-var': 'warn',
+    'prefer-const': 'warn',
+    'no-useless-escape': 'warn',
+    'no-unreachable': 'warn',
+    'no-irregular-whitespace': 'warn',
+    'jasmine/no-focused-tests': 'error',
+    'quotes': ['warn', 'single'],
     // enforces spacing between keys and values in object literal properties
-    'key-spacing': ['error', { beforeColon: false, afterColon: true }],
+    'key-spacing': ['warn', { beforeColon: false, afterColon: true }],
     // enforce consistent spacing before and after keywords (keyword-spacing)
-    'keyword-spacing': ['error', {
+    'keyword-spacing': ['warn', {
       before: true,
       after: true,
       overrides: {
@@ -39,26 +50,26 @@ module.exports = {
     '@typescript-eslint/no-var-requires': 0,
     // Multiple empty lines
     'no-multiple-empty-lines': [
-      'error', {
+      'warn', {
         'max': 1,
         'maxEOF': 0 
       }
     ],
     //require or disallow semicolons
-    'semi': ['error', 'always'],
+    'semi': ['warn', 'always'],
     // opening curly brace of a block is placed on the same line as its corresponding statement or declaration
-    'brace-style': 2,
+    'brace-style': 'warn',
     // Allow empty functions
     //note you must disable the base rule as it can report incorrect errors
     'no-empty-function': 'off',
     '@typescript-eslint/no-empty-function': [
-      'error',
+      'warn',
       {
         'allow': ['constructors', 'arrowFunctions']
       }
     ],
     '@typescript-eslint/no-this-alias': [
-      'error',
+      'warn',
       {
         'allowDestructuring': true, // Allow `const { props, state } = this`; false by default
         'allowedNames': ['self', 'dvm'] // Allow `const self = this`; `[]` by default
