@@ -259,12 +259,13 @@ describe('User Access Controls component', function() {
             const option = document.querySelectorAll('mat-option');
             expect(option.length).toEqual(1);
             (option[0] as HTMLElement).click();
-            fixture.whenStable().then(() => {
-                expect(component.addUser).toHaveBeenCalledWith(user);
-                expect(component.setUsers).toHaveBeenCalled();
-                expect(component.userSearchControl.value).toEqual('');
-                expect(component.userTrigger.openPanel).toHaveBeenCalled();
-            });
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            expect(component.addUser).toHaveBeenCalledWith(user);
+            expect(component.setUsers).toHaveBeenCalled();
+            expect(component.userSearchControl.value).toEqual('');
+            expect(component.userTrigger.openPanel).toHaveBeenCalled();
         });
         describe('should add a user to a policy', function() {
             beforeEach(function() {
