@@ -31,7 +31,7 @@ var CatalogPage = function() {
     this.recordsViewCssSelector = 'catalog-page records-view';
     this.recordViewCssSelector = 'catalog-page record-view';
     this.recordFiltersCssSelector = this.recordsViewCssSelector + ' record-filters';
-    this.recordsViewSearchBarCssSelector = this.recordsViewCssSelector + ' div.d-flex search-bar input'
+    this.recordsViewSearchBarCssSelector = this.recordsViewCssSelector + ' div.d-flex search-bar.record-search input'
     this.recordBodyTitleSelector = this.recordViewCssSelector + ' div.record-body h2.record-title div.inline-edit';
     this.recordBodyDescriptionSelector = this.recordViewCssSelector + ' div.record-body p inline-edit';
 
