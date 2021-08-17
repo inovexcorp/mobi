@@ -113,7 +113,7 @@ function recordFiltersComponentCtrl(catalogStateService, catalogManagerService, 
             hide: false,
             pageable: true,
             searchable: true,
-            pagingData:{
+            pagingData: {
                 limit: 12,
                 totalKeywordSize: 0,
                 currentKeywordPage: 1,
@@ -147,7 +147,7 @@ function recordFiltersComponentCtrl(catalogStateService, catalogManagerService, 
                 dvm.cm.getKeywords(dvm.catalogId, paginatedConfig)
                     .then(response => {
                          if (pagingData.currentKeywordPage === 1) {
-                            filterInstance.rawFilterItems = response.data
+                            filterInstance.rawFilterItems = response.data;
                          } else {
                             filterInstance.rawFilterItems = filterInstance.rawFilterItems.concat(response.data);
                          }
@@ -167,6 +167,10 @@ function recordFiltersComponentCtrl(catalogStateService, catalogManagerService, 
                     value: keywordObject,
                     checked: includes(dvm.keywordFilterList, keywordObject[keywordPrefix])
                 }));
+                const keywords = filter(dvm.state.keywordFilterList, keyword => {
+                    return this.filterItems.filter(currentFilterItem => currentFilterItem.value[keywordPrefix].indexOf(keyword) !== -1).length;
+                });
+                dvm.changeFilter({recordType: dvm.recordType, keywordFilterList: keywords});
             },
             filter: function(filterItem) {
                 const checkedKeywordObjects = filter(this.filterItems, currentFilterItem => currentFilterItem.checked);
