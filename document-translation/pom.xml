@@ -39,6 +39,7 @@
         <module>com.mobi.document.translator.xml</module>
         <module>com.mobi.document.translator.cli</module>
         <module>com.mobi.document.translator.csv</module>
+        <module>com.mobi.document.translator.rest</module>
     </modules>
 
     <artifactId>document-translation</artifactId>

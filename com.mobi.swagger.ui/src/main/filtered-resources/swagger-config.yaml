@@ -2,6 +2,7 @@ resourcePackages:
   - com.mobi.ontology.rest
   - com.mobi.catalog.rest
   - com.mobi.dataset.rest
+  - com.mobi.document.translator.rest
   - com.mobi.etl.rest
   - com.mobi.explorable.dataset.rest
   - com.mobi.jaas.rest

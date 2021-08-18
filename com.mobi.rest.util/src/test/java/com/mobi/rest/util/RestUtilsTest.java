@@ -63,8 +63,12 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.eclipse.rdf4j.rio.RDFFormat;
 
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -213,6 +217,31 @@ public class RestUtilsTest {
         assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, "turtle", transformer, service));
         assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToSkolemizedString(model, "rdf/xml", transformer, service)));
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, "something", transformer, service)));
+    }
+
+    @Test
+    public void groupedModelToOutputStreamTest() throws Exception {
+        RDFFormat[] formatArray = new RDFFormat[] {RDFFormat.RDFXML, RDFFormat.JSONLD, RDFFormat.TURTLE};
+        for (RDFFormat format : formatArray) {
+            Path file = Files.createTempFile("test", format.getDefaultFileExtension());
+            OutputStream os = new ByteArrayOutputStream();
+
+            RestUtils.groupedModelToOutputStream(model, format, transformer, os);
+
+            String result = os.toString();
+            switch (format.getName()) {
+                case "JSON-LD":
+                    assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(result));
+                    break;
+                case "Turtle":
+                    assertEquals(expectedGroupedTurtle, result);
+                    break;
+                case "RDF/XML":
+                    assertEquals(expectedGroupedRdfxml, result);
+                    break;
+            }
+            Files.deleteIfExists(file);
+        }
     }
 
     @Test

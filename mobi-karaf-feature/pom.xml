@@ -274,6 +274,11 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>document.translator.rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>document.translator.json</artifactId>
             <version>${project.version}</version>
         </dependency>
