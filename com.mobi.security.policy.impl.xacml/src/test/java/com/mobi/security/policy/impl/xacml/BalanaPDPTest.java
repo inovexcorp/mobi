@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.exception.MobiException;
@@ -130,6 +131,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         assertEquals(Decision.PERMIT, result.getDecision());
         assertEquals(Status.OK, result.getStatus());
         assertTrue(result.getPolicyIds().contains(policy1));
+        verify(policyManager).getSystemPolicyIds();
     }
 
     @Test
@@ -143,6 +145,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         assertEquals(Decision.DENY, result.getDecision());
         assertEquals(Status.OK, result.getStatus());
         assertTrue(result.getPolicyIds().contains(policy2));
+        verify(policyManager).getSystemPolicyIds();
     }
 
     @Test
@@ -156,6 +159,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         assertEquals(Decision.DENY, result.getDecision());
         assertEquals(Status.OK, result.getStatus());
         assertTrue(result.getPolicyIds().contains(policy3));
+        verify(policyManager).getSystemPolicyIds();
     }
 
     @Test
@@ -167,6 +171,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         assertEquals(Status.OK, result.getStatus());
         assertEquals(Decision.NOT_APPLICABLE, result.getDecision());
         assertTrue(result.getPolicyIds().isEmpty());
+        verify(policyManager).getSystemPolicyIds();
     }
 
     private void loadPolicy(IRI policyId) throws Exception {

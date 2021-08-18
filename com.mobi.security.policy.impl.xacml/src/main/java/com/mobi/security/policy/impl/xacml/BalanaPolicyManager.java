@@ -62,6 +62,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -75,6 +76,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
+import javax.xml.bind.JAXB;
 
 @Component(
         configurationPolicy = ConfigurationPolicy.require,
@@ -95,6 +97,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     private String fileLocation;
     private IRI typeIRI;
     private IRI policyFileTypeIRI;
+    private Set<Resource> systemPolicies = new HashSet<>();
 
 
     @Reference
@@ -181,7 +184,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
 
     @Override
     public List<XACMLPolicy> getPolicies(PolicyQueryParams params) {
-        List<Resource> policyIds = PolicyUtils.findPolicies(params, repository);
+        Set<Resource> policyIds = PolicyUtils.findPolicies(params, repository);
         Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
         // If there is a policy cache
         if (cache.isPresent()) {
@@ -267,9 +270,43 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 conn.clear(policyFile.getResource());
             }
             policyCache.getPolicyCache().ifPresent(cache -> cache.remove(policyId.stringValue()));
+            systemPolicies.remove(policyId);
         } catch (VirtualFilesystemException e) {
             throw new IllegalStateException("Could not remove XACML Policy on disk due to: ", e);
         }
+    }
+
+    @Override
+    public Set<Resource> getSystemPolicyIds() {
+        return systemPolicies;
+    }
+
+    @Override
+    public Resource addSystemPolicy(XACMLPolicy policy) {
+        Resource id = addPolicy(policy);
+        systemPolicies.add(id);
+        return id;
+    }
+
+    @Override
+    public Resource loadPolicyIfAbsent(String policy) {
+        return loadPolicyIfAbsent(policy, false);
+    }
+
+    private Resource loadPolicyIfAbsent(String policy, boolean isSystemPolicy) {
+        PolicyType publishPolicyType = JAXB.unmarshal(new StringReader(policy), PolicyType.class);
+        Optional<XACMLPolicy> existingPublishPolicy = getPolicy(vf.createIRI(publishPolicyType.getPolicyId()));
+        if (existingPublishPolicy.isPresent()) {
+            return existingPublishPolicy.get().getId();
+        } else {
+            XACMLPolicy publishPolicy = createPolicy(publishPolicyType);
+            return isSystemPolicy ? addSystemPolicy(publishPolicy) : addPolicy(publishPolicy);
+        }
+    }
+
+    @Override
+    public Resource loadSystemPolicyIfAbsent(String policy) {
+        return loadPolicyIfAbsent(policy, true);
     }
 
     @Override
@@ -389,6 +426,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                         addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
                     }
                 }
+                systemPolicies.add(fileIRI);
             }
 
             // Grab fileNames that are already in the repository
