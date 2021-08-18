@@ -75,6 +75,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.cache.Cache;
@@ -183,7 +184,8 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
             PolicyQueryParams queryParams = new PolicyQueryParams.Builder()
                     .addResourceIRI(vf.createIRI(relatedResource))
                     .build();
-            List<Resource> policyIds = PolicyUtils.findPolicies(queryParams, repository);
+            Set<Resource> policyIds = PolicyUtils.findPolicies(queryParams, repository);
+            policyIds.addAll(policyManager.getSystemPolicyIds());
             policyIds.forEach(policyId -> {
                 if (!cache.get().containsKey(policyId.stringValue())) {
                     try (RepositoryConnection conn = repository.getConnection()) {

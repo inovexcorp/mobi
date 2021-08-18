@@ -33,6 +33,8 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -56,6 +58,7 @@ import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.impl.commons.SimpleVirtualFilesystem;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
@@ -70,6 +73,7 @@ import org.osgi.framework.BundleContext;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -203,6 +207,8 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         initializeRepo();
 
         manager.start(context, props);
+        assertEquals(0, manager.getSystemPolicyIds().size());
+
         verify(policyCache, atLeastOnce()).getPolicyCache();
         verify(cache).clear();
         assertTrue(entries.containsKey(policyId.stringValue()));
@@ -218,6 +224,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         initializeRepo();
 
         manager.start(context, props);
+        assertEquals(0, manager.getSystemPolicyIds().size());
         verify(policyCache, atLeastOnce()).getPolicyCache();
         verify(cache, times(0)).clear();
         assertFalse(entries.containsKey(policyId.stringValue()));
@@ -244,6 +251,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         setUpBundleTest();
         manager.start(context, props);
+        assertEquals(1, manager.getSystemPolicyIds().size());
         try (RepositoryConnection conn = repo.getConnection()) {
             Model model = RepositoryResults.asModel(conn.getStatements(null, null, null, defaultPolicyId), MODEL_FACTORY);
             assertFalse(model.isEmpty());
@@ -276,6 +284,8 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
             conn.add(defaultPolicyFile.getModel(), defaultPolicyId);
         }
         manager.start(context, props);
+        assertEquals(1, manager.getSystemPolicyIds().size());
+
         try (RepositoryConnection conn = repo.getConnection()) {
             Model model = RepositoryResults.asModel(conn.getStatements(null, null, null, defaultPolicyId), MODEL_FACTORY);
             assertFalse(model.isEmpty());
@@ -311,6 +321,43 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         manager.start(context, props);
 
         Resource newPolicyId = manager.addPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
+        verifyAddPolicyWithCache(newPolicyId);
+    }
+
+    @Test
+    public void addPolicyWithoutCacheTest() throws Exception {
+        // Setup:
+        when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
+        manager.start(context, props);
+
+        Resource newPolicyId = manager.addPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
+        verifyAddPolicyWithoutCache(newPolicyId);
+    }
+
+    @Test
+    public void addSystemPolicyWithCacheTest() throws Exception {
+        // Setup:
+        manager.start(context, props);
+        assertEquals(0, manager.getSystemPolicyIds().size());
+
+        Resource newPolicyId = manager.addSystemPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
+        assertEquals(1, manager.getSystemPolicyIds().size());
+        verifyAddPolicyWithCache(newPolicyId);
+    }
+
+    @Test
+    public void addSystemPolicyWithoutCacheTest() throws Exception {
+        // Setup:
+        when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
+        manager.start(context, props);
+        assertEquals(0, manager.getSystemPolicyIds().size());
+
+        Resource newPolicyId = manager.addSystemPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
+        assertEquals(1, manager.getSystemPolicyIds().size());
+        verifyAddPolicyWithoutCache(newPolicyId);
+    }
+
+    private void verifyAddPolicyWithCache(Resource newPolicyId) throws Exception {
         verify(policyCache, atLeastOnce()).getPolicyCache();
         verify(cache).put(eq(newPolicyId.stringValue()), any(Policy.class));
         assertEquals(policyId, newPolicyId);
@@ -340,13 +387,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         }
     }
 
-    @Test
-    public void addPolicyWithoutCacheTest() throws Exception {
-        // Setup:
-        when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
-        manager.start(context, props);
-
-        Resource newPolicyId = manager.addPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
+    private void verifyAddPolicyWithoutCache(Resource newPolicyId) throws Exception {
         verify(policyCache, atLeastOnce()).getPolicyCache();
         verify(cache, times(0)).put(anyString(), any(Policy.class));
         assertEquals(policyId, newPolicyId);
@@ -595,6 +636,26 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         }
     }
 
+    @Test
+    public void deleteSystemPolicyTest() throws Exception {
+        // Setup:
+        manager.start(context, props);
+        assertEquals(0, manager.getSystemPolicyIds().size());
+
+        Resource newPolicyId = manager.addSystemPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
+        assertEquals(1, manager.getSystemPolicyIds().size());
+        verifyAddPolicyWithCache(newPolicyId);
+
+        manager.deletePolicy(newPolicyId);
+        verify(policyCache, atLeastOnce()).getPolicyCache();
+        verify(cache).remove(newPolicyId.stringValue());
+        assertFalse(entries.containsKey(newPolicyId.stringValue()));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.contains(null, null, null, newPolicyId));
+        }
+        assertEquals(0, manager.getSystemPolicyIds().size());
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void deletePolicyThatDoesNotExistTest() {
         // Setup:
@@ -611,6 +672,48 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         setUpMissingFileTest();
 
         manager.deletePolicy(missingPolicyId);
+    }
+
+    @Test
+    public void loadPolicyIfAbsentWhenPresentTest() throws Exception {
+        initializeRepo();
+        BalanaPolicyManager spyManager = spy(manager);
+        Resource loadedId = spyManager.loadPolicyIfAbsent(IOUtils.toString(getClass().getResourceAsStream("/policy1.xml"), StandardCharsets.UTF_8));
+        assertEquals(policyId.stringValue(), loadedId.stringValue());
+        verify(spyManager).getPolicy(eq(policyId));
+        verify(spyManager, never()).createPolicy(any(PolicyType.class));
+        verify(spyManager, never()).addPolicy(any(XACMLPolicy.class));
+    }
+
+    @Test
+    public void loadPolicyIfAbsentWhenAbsentTest() throws Exception {
+        BalanaPolicyManager spyManager = spy(manager);
+        Resource loadedId = spyManager.loadPolicyIfAbsent(IOUtils.toString(getClass().getResourceAsStream("/policy1.xml"), StandardCharsets.UTF_8));
+        assertEquals(policyId.stringValue(), loadedId.stringValue());
+        verify(spyManager).getPolicy(eq(policyId));
+        verify(spyManager).createPolicy(any(PolicyType.class));
+        verify(spyManager).addPolicy(any(XACMLPolicy.class));
+    }
+
+    @Test
+    public void loadSystemPolicyIfAbsentWhenPresentTest() throws Exception {
+        initializeRepo();
+        BalanaPolicyManager spyManager = spy(manager);
+        Resource loadedId = spyManager.loadSystemPolicyIfAbsent(IOUtils.toString(getClass().getResourceAsStream("/policy1.xml"), StandardCharsets.UTF_8));
+        assertEquals(policyId.stringValue(), loadedId.stringValue());
+        verify(spyManager).getPolicy(eq(policyId));
+        verify(spyManager, never()).createPolicy(any(PolicyType.class));
+        verify(spyManager, never()).addSystemPolicy(any(XACMLPolicy.class));
+    }
+
+    @Test
+    public void loadSystemPolicyIfAbsentWhenAbsentTest() throws Exception {
+        BalanaPolicyManager spyManager = spy(manager);
+        Resource loadedId = spyManager.loadSystemPolicyIfAbsent(IOUtils.toString(getClass().getResourceAsStream("/policy1.xml"), StandardCharsets.UTF_8));
+        assertEquals(policyId.stringValue(), loadedId.stringValue());
+        verify(spyManager).getPolicy(eq(policyId));
+        verify(spyManager).createPolicy(any(PolicyType.class));
+        verify(spyManager).addSystemPolicy(any(XACMLPolicy.class));
     }
 
     private String copyToTemp(String resourceName) throws IOException {

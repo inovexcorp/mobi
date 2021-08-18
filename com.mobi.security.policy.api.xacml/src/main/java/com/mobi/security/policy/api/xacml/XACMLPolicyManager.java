@@ -29,6 +29,7 @@ import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface XACMLPolicyManager {
 
@@ -78,7 +79,7 @@ public interface XACMLPolicyManager {
     Optional<XACMLPolicy> getPolicy(Resource policyId);
 
     /**
-     * Updates the policy identified by the id within the provided new {@link XACMLPolicy) by replacing its contents.
+     * Updates the policy identified by the id within the provided new {@link XACMLPolicy} by replacing its contents.
      *
      * @param newPolicy The new policy to replace the identified one with
      * @throws IllegalArgumentException If the policy does not exist
@@ -95,4 +96,42 @@ public interface XACMLPolicyManager {
      *      not prevent
      */
     void deletePolicy(Resource policyId);
+
+    /**
+     * Returns a set of the {@link Resource}s for all the system {@link XACMLPolicy XACMLPolicies} stored in Mobi.
+     *
+     * @return A {@link Set} of the {@link Resource}s for all the system {@link XACMLPolicy XACMLPolicies} stored in
+     *     Mobi.
+     */
+    Set<Resource> getSystemPolicyIds();
+
+    /**
+     * Adds the provided {@link XACMLPolicy} to Mobi, marks it as a system policy, and returns its {@link Resource}
+     * identifier which will be the same as the provided {@link XACMLPolicy#id}.
+     *
+     * @param policy The {@link XACMLPolicy} to use as a system policy.
+     * @return The {@link Resource} identifier of the {@link XACMLPolicy}.
+     * @throws IllegalArgumentException If the Policy ID already exists in the repository.
+     * @throws IllegalStateException If an error occurred preventing the policy being saved that the system could
+     *      not prevent.
+     */
+    Resource addSystemPolicy(XACMLPolicy policy);
+
+    /**
+     * Converts the provided string into a {@link XACMLPolicy} and loads it into the system if a policy with the same id
+     * does not already exist.
+     *
+     * @param policy The {@link String} representation of a policy.
+     * @return The {@link Resource} of the provided policy.
+     */
+    Resource loadPolicyIfAbsent(String policy);
+
+    /**
+     * Converts the provided string into a {@link XACMLPolicy} and loads it into the system as a system policy if a
+     * system policy with the same id does not already exist.
+     *
+     * @param policy The {@link String} representation of a policy.
+     * @return The {@link Resource} of the provided policy.
+     */
+    Resource loadSystemPolicyIfAbsent(String policy);
 }

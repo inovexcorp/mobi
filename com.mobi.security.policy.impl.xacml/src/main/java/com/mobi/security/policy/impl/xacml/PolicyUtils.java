@@ -35,7 +35,6 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -62,7 +61,7 @@ public class PolicyUtils {
         }
     }
 
-    public static List<Resource> findPolicies(PolicyQueryParams params, Repository repository) {
+    public static Set<Resource> findPolicies(PolicyQueryParams params, Repository repository) {
         StringBuilder values = new StringBuilder(" ");
         StringBuilder filters = new StringBuilder(" ");
         setBindings(params.getResourceIRIs(), RESOURCES_BINDING, RESOURCES_PROP, values, filters);
@@ -74,7 +73,7 @@ public class PolicyUtils {
                     .replace(FILTERS, filters.toString());
             return QueryResults.asList(conn.prepareTupleQuery(queryStr).evaluate()).stream()
                     .map(bindings -> Bindings.requiredResource(bindings, POLICY_ID_BINDING))
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toSet());
         }
     }
 
