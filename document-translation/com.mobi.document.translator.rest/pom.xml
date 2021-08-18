@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  #%L
+  com.mobi.document.translation.cli
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>document-translation</artifactId>
+        <groupId>com.mobi</groupId>
+        <version>1.20.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>document.translator.rest</artifactId>
+    <name>${project.groupId}.${project.artifactId}</name>
+    <packaging>bundle</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.component.annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>document.translator.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>document.translator.json</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>document.translator.xml</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>document.translator.csv</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>rest.util</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>rdf.impl.sesame</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>repository.impl.core</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.test-framework.providers</groupId>
+            <artifactId>jersey-test-framework-provider-jdk-http</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>rdf-orm-test</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>persistence.utils.impl</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-name>Mobi Document Translation - REST</Bundle-name>
+                        <Bundle-Version>${project.version}</Bundle-Version>
+                        <Export-Package/>
+                        <Service-Component>*</Service-Component>
+                        <Import-Package>
+                            <!-- For some reason BND is not including these -->
+                            !io.swagger.v3.*,
+                            *
+                        </Import-Package>
+                        <build>${maven.build.timestamp}</build>
+                        <_snapshot>${maven.build.timestamp}</_snapshot>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

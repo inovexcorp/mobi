@@ -53,6 +53,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -159,6 +160,20 @@ public class RestUtils {
     public static String modelToSkolemizedString(Model model, String format, SesameTransformer transformer,
                                                  BNodeService service) {
         return modelToSkolemizedString(model, getRDFFormat(format), transformer, service);
+    }
+
+    /**
+     * Writes a {@link Model} to an output stream using the provided transformer.
+     *
+     * @param model       A {@link Model} of RDF to convert.
+     * @param format      The RDFFormat the RDF should be serialized into
+     * @param transformer The SesameTransformer for model conversions.
+     * @param os          The output stream the model should be written to.
+     */
+    public static void groupedModelToOutputStream(Model model, RDFFormat format, SesameTransformer transformer,
+                                                  OutputStream os) {
+        RDFHandler handler = new BufferedGroupingRDFHandler(Rio.createWriter(format, os));
+        Rio.write(new StatementIterable(model, transformer), handler);
     }
 
     /**
