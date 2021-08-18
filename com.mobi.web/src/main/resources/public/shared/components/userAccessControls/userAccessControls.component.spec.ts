@@ -22,7 +22,7 @@
  */
 
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, tick, fakeAsync, flush } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule, MatFormFieldModule, MatInputModule, MatSlideToggleModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
@@ -244,29 +244,31 @@ describe('User Access Controls component', function() {
             component.setGroups();
             expect(component.availableGroups).toEqual([superheroes]);
         });
-        it('should handle selecting a user', async function() {
+        it('should handle selecting a user', fakeAsync(function() {
             spyOn(component, 'addUser');
             spyOn(component, 'setUsers');
             userManagerStub.filterUsers.and.returnValue([user]);
             component.item = policy;
             component.ngOnInit();
             fixture.detectChanges();
-            await fixture.whenStable();
-            
+            fixture.whenStable();
+            tick();
             component.userTrigger.openPanel();
             fixture.detectChanges();
+            tick();
             spyOn(component.userTrigger, 'openPanel').and.callThrough(); // After initial call so test is accurate
             const option = document.querySelectorAll('mat-option');
             expect(option.length).toEqual(1);
             (option[0] as HTMLElement).click();
             fixture.detectChanges();
-            await fixture.whenStable();
-            fixture.detectChanges();
+            fixture.whenStable();
+            flush();
             expect(component.addUser).toHaveBeenCalledWith(user);
             expect(component.setUsers).toHaveBeenCalled();
             expect(component.userSearchControl.value).toEqual('');
             expect(component.userTrigger.openPanel).toHaveBeenCalled();
-        });
+           
+        }));
         describe('should add a user to a policy', function() {
             beforeEach(function() {
                 component.item = policy;
