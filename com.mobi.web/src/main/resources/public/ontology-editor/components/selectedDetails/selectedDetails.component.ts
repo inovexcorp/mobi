@@ -64,6 +64,14 @@ function selectedDetailsComponentCtrl($filter, ontologyManagerService, ontologyS
     dvm.os = ontologyStateService;
     dvm.om = ontologyManagerService;
 
+    dvm.isFromImportedOntology = function(){
+        const entity = get(dvm.os.listItem.entityInfo, get(dvm.os.listItem.selected, '@id'));
+        return get(entity, 'imported', false);
+    }
+    dvm.getImportedOntology = function(){
+        const entity = get(dvm.os.listItem.entityInfo, get(dvm.os.listItem.selected, '@id'), {});
+        return get(entity, 'ontologyId', '');
+    }
     dvm.getTypes = function() {
         return join(orderBy(
                 map(get(dvm.os.listItem.selected, '@type', []), t => { 
