@@ -126,8 +126,71 @@ describe('Selected Details component', function() {
             scope.$digest();
             expect(this.element.find('a').length).toEqual(1);
         });
+        it('when selected imported is true', function() {
+            ontologyStateSvc.listItem.entityInfo = {
+                'id1': { imported: true, ontologyId: 'ont1' }
+            }
+            ontologyStateSvc.listItem.selected = { '@id': 'id1' };
+            expect(this.controller.isFromImportedOntology()).toEqual(true);
+            expect(this.controller.getImportedOntology()).toEqual('ont1');
+            scope.$digest();
+            expect(this.element.querySelectorAll('.is-imported-ontology').length).toEqual(1);
+            expect(this.element.querySelectorAll('.imported-ontology').text()).toEqual('ont1');
+            ontologyStateSvc.listItem.entityInfo = {
+                'id1': { imported: false, ontologyId: 'ont1' }
+            }
+            scope.$digest();
+            expect(this.element.querySelectorAll('.is-imported-ontology').length).toEqual(0);
+        });
     });
     describe('controller methods', function() {
+        describe('isFromImportedOntology functions properly', function() {
+            it('when selected is empty', function() {
+                ontologyStateSvc.listItem.selected = {};
+                expect(this.controller.isFromImportedOntology()).toEqual(false);
+            });
+            it('when selected imported is false', function() {
+                ontologyStateSvc.listItem.entityInfo = {
+                    'id1': { imported: false }
+                }
+                ontologyStateSvc.listItem.selected = { '@id': 'id1' };
+                expect(this.controller.isFromImportedOntology()).toEqual(false);
+            });
+            it('when selected imported is false and entityInfo empty', function() {
+                ontologyStateSvc.listItem.entityInfo = {
+                    'id1': { }
+                }
+                ontologyStateSvc.listItem.selected = { '@id': 'id1' };
+                expect(this.controller.isFromImportedOntology()).toEqual(false);
+            });
+            it('when selected imported is true', function() {
+                ontologyStateSvc.listItem.entityInfo = {
+                    'id1': { imported: true }
+                }
+                ontologyStateSvc.listItem.selected = { '@id': 'id1' };
+                expect(this.controller.isFromImportedOntology()).toEqual(true);
+            });
+        });
+        describe('getImportedOntology functions properly', function() {
+            it('when selected is empty', function() {
+                ontologyStateSvc.listItem.selected = {};
+                expect(this.controller.getImportedOntology()).toEqual('');
+            });
+            it('when selected and entityInfo is correct', function() {
+                ontologyStateSvc.listItem.entityInfo = {
+                    'id1': { imported: false, ontologyId: 'ont1'},
+                }
+                ontologyStateSvc.listItem.selected = { '@id': 'id1' };
+                expect(this.controller.getImportedOntology()).toEqual('ont1');
+            });
+            it('when selected and entityInfo is empty', function() {
+                ontologyStateSvc.listItem.entityInfo = {
+                    'id1': { imported: false}
+                }
+                ontologyStateSvc.listItem.selected = { '@id': 'id1' };
+                expect(this.controller.getImportedOntology()).toEqual('');
+            });
+        });
         describe('getTypes functions properly', function() {
             it('when @type is empty', function() {
                 ontologyStateSvc.listItem.selected = {};

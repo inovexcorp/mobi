@@ -3715,11 +3715,17 @@ public class OntologyRest {
         }
     }
 
-    private ArrayNode doWithOntologies(Set<Ontology> ontologies, Function<Ontology, ObjectNode> function) {
+    protected static ArrayNode doWithOntologies(Set<Ontology> ontologies, Function<Ontology, ObjectNode> function) {
         ArrayNode arrayNode = mapper.createArrayNode();
         for (Ontology ontology : ontologies) {
             ObjectNode object = function.apply(ontology);
-            object.put("id", ontology.getOntologyId().getOntologyIdentifier().stringValue());
+            OntologyId ontologyId = ontology.getOntologyId();
+            Optional<IRI> ontologyIRI = ontologyId.getOntologyIRI();
+            if (ontologyIRI.isPresent()) {
+                object.put("id", ontologyIRI.get().stringValue());
+            } else {
+                object.put("id", ontologyId.getOntologyIdentifier().stringValue());
+            }
             arrayNode.add(object);
         }
         return arrayNode;

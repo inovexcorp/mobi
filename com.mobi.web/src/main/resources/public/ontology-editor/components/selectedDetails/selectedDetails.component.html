@@ -25,7 +25,11 @@
         <span class="entity-name">{{dvm.om.getEntityName(dvm.os.listItem.selected)}}</span>
         <static-iri class="editable-iri" read-only="dvm.readOnly" iri="dvm.os.listItem.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)" highlight-text="dvm.highlightText"></static-iri>
     </div>
-    <p ng-if="dvm.os.listItem.selected['@type'].length" class="type-wrapper">
+    <p ng-if="dvm.isFromImportedOntology()" class="type-wrapper is-imported-ontology">
+        <span class="type-label">Ontology:</span>
+        <span class="imported-ontology text-muted">{{dvm.getImportedOntology()}}</span>
+    </p>
+    <p ng-if="dvm.os.listItem.selected['@type'].length" class="type-wrapper entity-types">
         <span class="type-label">Type(s):</span>
         <span class="types text-muted">{{dvm.getTypes()}}</span>
         <a ng-if="dvm.om.isIndividual(dvm.os.listItem.selected) && !dvm.readOnly && !dvm.os.isSelectedImported() && dvm.os.canModify()" ng-click="dvm.showTypesOverlay()"><i class="fa fa-pencil"></i></a>

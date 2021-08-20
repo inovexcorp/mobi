@@ -51,6 +51,7 @@ import static org.testng.Assert.fail;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
@@ -154,6 +155,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -849,8 +851,28 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 assertEquals(entityNames1.getNames(), finalExpectedValues.get(s).getNames(), entityNames1.getNames().toString()));
     }
 
-    // Test upload file
+    @Test
+    public void testDoWithOntologies() {
+        Ontology mockOntology1 = mock(Ontology.class);
+        OntologyId mockOntology1Id = mock(OntologyId.class);
+        when(mockOntology1.getOntologyId()).thenReturn(mockOntology1Id);
+        when(mockOntology1Id.getOntologyIRI()).thenReturn(Optional.empty());
+        when(mockOntology1Id.getOntologyIdentifier()).thenReturn(vf.createIRI("http://mobi.com/getOntologyIdentifier"));
 
+        Ontology mockOntology2 = mock(Ontology.class);
+        OntologyId mockOntology2Id = mock(OntologyId.class);
+        when(mockOntology2.getOntologyId()).thenReturn(mockOntology2Id);
+        when(mockOntology2Id.getOntologyIRI()).thenReturn(Optional.of(vf.createIRI("http://mobi.com/getOntologyIRI")));
+
+        Set<Ontology> set = new LinkedHashSet<>();
+        set.add(mockOntology1);
+        set.add(mockOntology2);
+
+        ArrayNode array = OntologyRest.doWithOntologies(set, (ontology1 ->  objectMapper.createObjectNode() ));
+        assertEquals(array.toString(), "[{\"id\":\"http://mobi.com/getOntologyIdentifier\"},{\"id\":\"http://mobi.com/getOntologyIRI\"}]");
+    }
+
+    // Test upload file
     @Test
     public void testUploadFile() {
         FormDataMultiPart fd = new FormDataMultiPart();
