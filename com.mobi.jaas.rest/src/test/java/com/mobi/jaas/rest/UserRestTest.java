@@ -40,6 +40,8 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.engines.UserConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
@@ -48,6 +50,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -71,6 +74,7 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -99,6 +103,8 @@ public class UserRestTest extends MobiRestTestNg {
     private Set<User> users;
     private Set<Group> groups;
     private Set<Role> roles;
+    private IRI inProgressCommitIRI1;
+    private IRI inProgressCommitIRI2;
     private static final String ENGINE_NAME = "com.mobi.jaas.engines.RdfEngine";
 
     @Mock
@@ -115,6 +121,15 @@ public class UserRestTest extends MobiRestTestNg {
 
     @Mock
     private User adminUserMock;
+
+    @Mock
+    private CatalogManager catalogManager;
+
+    @Mock
+    private InProgressCommit inProgressCommit1;
+
+    @Mock
+    private InProgressCommit inProgressCommit2;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -156,12 +171,19 @@ public class UserRestTest extends MobiRestTestNg {
 
         when(rdfEngine.getEngineName()).thenReturn(ENGINE_NAME);
 
+        inProgressCommitIRI1 = vf.createIRI("urn:inProgressCommit1");
+        inProgressCommitIRI2 = vf.createIRI("urn:inProgressCommit2");
+        when(inProgressCommit1.getResource()).thenReturn(inProgressCommitIRI1);
+        when(inProgressCommit2.getResource()).thenReturn(inProgressCommitIRI2);
+        when(catalogManager.getInProgressCommits(eq(user))).thenReturn(Arrays.asList(inProgressCommit1, inProgressCommit2));
+
         rest = new UserRest();
-        rest.setEngineManager(engineManager);
-        rest.setRdfEngine(rdfEngine);
-        rest.setValueFactory(vf);
-        rest.setTransformer(transformer);
-        rest.setUserFactory(userFactoryMock);
+        rest.engineManager = engineManager;
+        rest.rdfEngine = rdfEngine;
+        rest.vf = vf;
+        rest.transformer = transformer;
+        rest.userFactory = userFactoryMock;
+        rest.catalogManager = catalogManager;
 
         return new ResourceConfig()
                 .register(rest)
@@ -429,6 +451,9 @@ public class UserRestTest extends MobiRestTestNg {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().delete();
         assertEquals(response.getStatus(), 200);
         verify(engineManager).deleteUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
+        verify(catalogManager).getInProgressCommits(eq(user));
+        verify(catalogManager).removeInProgressCommit(eq(inProgressCommitIRI1));
+        verify(catalogManager).removeInProgressCommit(eq(inProgressCommitIRI2));
     }
 
     @Test

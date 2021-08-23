@@ -34,6 +34,8 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -2057,6 +2059,45 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         manager.getInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, IN_PROGRESS_COMMIT_IRI);
     }
 
+    /* getInProgressCommits(User) */
+
+    @Test
+    public void testGetInProgressCommitByUser() throws Exception {
+        // Setup:
+        User user = userFactory.createNew(USER_IRI);
+        InProgressCommit commit = inProgressCommitFactory.createNew(IN_PROGRESS_COMMIT_IRI);
+        when(utilsService.getInProgressCommitIRIs(eq(USER_IRI), any(RepositoryConnection.class))).thenReturn(Collections.singletonList(IN_PROGRESS_COMMIT_IRI));
+        doReturn(commit).when(utilsService).getExpectedObject(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
+
+        List<InProgressCommit> result = manager.getInProgressCommits(user);
+        verify(utilsService).getInProgressCommitIRIs(eq(USER_IRI), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
+        assertEquals(1, result.size());
+        assertEquals(commit, result.get(0));
+    }
+
+    @Test
+    public void testGetInProgressCommitByUserNoResults() throws Exception {
+        // Setup:
+        User user = userFactory.createNew(USER_IRI);
+        when(utilsService.getInProgressCommitIRIs(eq(USER_IRI), any(RepositoryConnection.class))).thenReturn(Collections.EMPTY_LIST);
+
+        List<InProgressCommit> result = manager.getInProgressCommits(user);
+        verify(utilsService).getInProgressCommitIRIs(eq(USER_IRI), any(RepositoryConnection.class));
+        verify(utilsService, never()).getExpectedObject(any(), any(), any());
+        assertEquals(0, result.size());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGetInProgressCommitByUserException() throws Exception {
+        // Setup:
+        User user = userFactory.createNew(USER_IRI);
+        when(utilsService.getInProgressCommitIRIs(eq(USER_IRI), any(RepositoryConnection.class))).thenReturn(Collections.singletonList(IN_PROGRESS_COMMIT_IRI));
+        doThrow(IllegalStateException.class).when(utilsService).getExpectedObject(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
+
+        List<InProgressCommit> result = manager.getInProgressCommits(user);
+    }
+
     /* getCommitDifference */
 
     @Test
@@ -2101,6 +2142,27 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getInProgressCommit(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
         verify(utilsService).removeInProgressCommit(eq(commit), any(RepositoryConnection.class));
+    }
+
+    /* removeInProgressCommit(Resource) */
+
+    @Test
+    public void testRemoveInProgressCommitByResource() throws Exception {
+        // Setup:
+        InProgressCommit commit = inProgressCommitFactory.createNew(IN_PROGRESS_COMMIT_IRI);
+        doReturn(commit).when(utilsService).getInProgressCommit(eq(IN_PROGRESS_COMMIT_IRI), any(RepositoryConnection.class));
+
+        manager.removeInProgressCommit(IN_PROGRESS_COMMIT_IRI);
+        verify(utilsService).getInProgressCommit(eq(IN_PROGRESS_COMMIT_IRI), any(RepositoryConnection.class));
+        verify(utilsService).removeInProgressCommit(eq(commit), any(RepositoryConnection.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRemoveInProgressCommitByResourceException() throws Exception {
+        // Setup:
+        doThrow(IllegalArgumentException.class).when(utilsService).getInProgressCommit(eq(IN_PROGRESS_COMMIT_IRI), any(RepositoryConnection.class));
+
+        manager.removeInProgressCommit(IN_PROGRESS_COMMIT_IRI);
     }
 
     /* applyInProgressCommit */

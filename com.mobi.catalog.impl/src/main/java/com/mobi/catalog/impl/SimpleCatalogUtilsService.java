@@ -139,6 +139,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     private static final String GET_PAGED_CHANGES;
     private static final String GET_IN_PROGRESS_COMMIT;
+    private static final String GET_ALL_IN_PROGRESS_COMMIT_IRIS;
     private static final String GET_COMMIT_CHAIN;
     private static final String GET_COMMIT_ENTITY_CHAIN;
     private static final String GET_NEW_LATEST_VERSION;
@@ -166,6 +167,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             );
             GET_IN_PROGRESS_COMMIT = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-in-progress-commit.rq"),
+                    StandardCharsets.UTF_8
+            );
+            GET_ALL_IN_PROGRESS_COMMIT_IRIS = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-all-in-progress-commit-iris.rq"),
                     StandardCharsets.UTF_8
             );
             GET_COMMIT_CHAIN = IOUtils.toString(
@@ -597,6 +602,11 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public InProgressCommit getInProgressCommit(Resource inProgressCommitId, RepositoryConnection conn) {
+        return getObject(inProgressCommitId, inProgressCommitFactory, conn);
+    }
+
+    @Override
     public Optional<Resource> getInProgressCommitIRI(Resource recordId, Resource userId, RepositoryConnection conn) {
         TupleQuery query = conn.prepareTupleQuery(GET_IN_PROGRESS_COMMIT);
         query.setBinding(USER_BINDING, userId);
@@ -607,6 +617,16 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         } else {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public List<Resource> getInProgressCommitIRIs(Resource userId, RepositoryConnection conn) {
+        TupleQuery query = conn.prepareTupleQuery(GET_ALL_IN_PROGRESS_COMMIT_IRIS);
+        query.setBinding(USER_BINDING, userId);
+        TupleQueryResult queryResult = query.evaluate();
+        List<Resource> inProgressCommitIRIs = new ArrayList<>();
+        queryResult.forEach(bindings -> inProgressCommitIRIs.add(Bindings.requiredResource(bindings, COMMIT_BINDING)));
+        return inProgressCommitIRIs;
     }
 
     @Override
@@ -623,7 +643,17 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         });
 
         graphs.forEach(resource -> {
-            if (!conn.contains(null, null, resource)) {
+            // Transaction bug here where the statements in the removed commit are still in the repo when retrieved
+            // with the additions/deletions graph resource as the object. When retrieving the InProgressCommit graph
+            // no results are returned as expected.
+
+            // Original logic:
+            // if (!conn.contains(null, null, resource)) {
+            //     remove(resource, conn);
+            // }
+            Model model = RepositoryResults.asModel(conn.getStatements(null, null, resource), mf);
+            model.remove(null, null, null, commit.getResource());
+            if (!model.contains(null, null, resource)) {
                 remove(resource, conn);
             }
         });
