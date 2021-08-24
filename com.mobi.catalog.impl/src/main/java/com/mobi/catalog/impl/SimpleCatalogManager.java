@@ -1185,6 +1185,16 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public List<InProgressCommit> getInProgressCommits(User user) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return utils.getInProgressCommitIRIs(user.getResource(), conn)
+                    .stream()
+                    .map(resource -> utils.getExpectedObject(resource, inProgressCommitFactory, conn))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Override
     public Revision getRevision(Resource commitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return utils.getRevision(commitId, conn);
@@ -1248,6 +1258,16 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
             InProgressCommit commit = utils.getInProgressCommit(versionedRDFRecordId, user.getResource(), conn);
+            conn.begin();
+            utils.removeInProgressCommit(commit, conn);
+            conn.commit();
+        }
+    }
+
+    @Override
+    public void removeInProgressCommit(Resource inProgressCommitId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            InProgressCommit commit = utils.getInProgressCommit(inProgressCommitId, conn);
             conn.begin();
             utils.removeInProgressCommit(commit, conn);
             conn.commit();

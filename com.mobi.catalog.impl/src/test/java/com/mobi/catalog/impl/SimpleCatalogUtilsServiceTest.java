@@ -51,7 +51,11 @@ import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.*;
+import com.mobi.rdf.api.BNode;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
@@ -1419,6 +1423,24 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         }
     }
 
+    /* getInProgressCommit(Resource, RepositoryConnection) */
+
+    @Test
+    public void getInProgressCommitByResourceTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            InProgressCommit commit = service.getInProgressCommit(IN_PROGRESS_COMMIT_IRI, conn);
+            assertFalse(commit.getModel().isEmpty());
+            assertEquals(IN_PROGRESS_COMMIT_IRI, commit.getResource());
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getInProgressCommitByResourceDoesNotExistTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            InProgressCommit commit = service.getInProgressCommit(VALUE_FACTORY.createIRI("<urn:test>"), conn);
+        }
+    }
+
     /* getInProgressCommitIRI */
 
     @Test
@@ -1435,6 +1457,27 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             Optional<Resource> iri = service.getInProgressCommitIRI(VERSIONED_RECORD_MISSING_VERSION_IRI, USER_IRI, conn);
             assertFalse(iri.isPresent());
+        }
+    }
+
+    /* getInProgressCommitIRIs(Resource, RepositoryConnection) */
+
+    @Test
+    public void getInProgressCommitIRIsTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            List<Resource> iris = service.getInProgressCommitIRIs(USER_IRI, conn);
+            assertEquals(3, iris.size());
+            assertTrue(iris.contains(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#in-progress-commit-referenced")));
+            assertTrue(iris.contains(IN_PROGRESS_COMMIT_NO_RECORD_IRI));
+            assertTrue(iris.contains(VALUE_FACTORY.createIRI(COMMITS + "quad-in-progress-commit")));
+        }
+    }
+
+    @Test
+    public void getInProgressCommitIRIsNoUserTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            List<Resource> iris = service.getInProgressCommitIRIs(VALUE_FACTORY.createIRI("urn:test"), conn);
+            assertEquals(0, iris.size());
         }
     }
 

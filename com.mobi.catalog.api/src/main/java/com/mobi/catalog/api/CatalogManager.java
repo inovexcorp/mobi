@@ -702,6 +702,17 @@ public interface CatalogManager {
                                                    Resource inProgressCommitId);
 
     /**
+     * Gets a List of InProgressCommits for the provided User. Returns an empty List if there are no InProgressCommits
+     * for provided User.
+     *
+     * @param user The User with an InProgressCommit.
+     * @return The List of InProgressCommits associated with the user.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found.
+     * @throws IllegalStateException    Thrown if the InProgressCommit could not be found.
+     */
+    List<InProgressCommit> getInProgressCommits(User user);
+
+    /**
      * Gets the Revision associated with the provided commit Resource.
      *
      * @param commitId The Resource identifying the commit
@@ -785,6 +796,14 @@ public interface CatalogManager {
      *                                  found
      */
     void removeInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user);
+
+    /**
+     * Removes the InProgressCommit identified by the provided Resource.
+     *
+     * @param inProgressCommitId The Resource identifying the InProgressCommit.
+     * @throws IllegalArgumentException Thrown if the InProgressCommit could not be found.
+     */
+    void removeInProgressCommit(Resource inProgressCommitId);
 
     /**
      * Applies the addition and deletion statements from the InProgressCommit identified by the provided Resource to the

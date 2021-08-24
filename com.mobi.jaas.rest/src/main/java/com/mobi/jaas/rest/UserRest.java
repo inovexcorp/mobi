@@ -30,6 +30,8 @@ import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
+import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -85,38 +87,26 @@ import javax.ws.rs.core.Response;
 @Component(service = UserRest.class, immediate = true)
 @Path("/users")
 public class UserRest {
-    private EngineManager engineManager;
-    private ValueFactory vf;
-    private UserFactory userFactory;
-    private SesameTransformer transformer;
-    private Engine rdfEngine;
     private final Logger logger = LoggerFactory.getLogger(UserRest.class);
     static final String ADMIN_USER_IRI = "http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997";
 
     @Reference
-    void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
+    EngineManager engineManager;
 
     @Reference
-    void setValueFactory(ValueFactory vf) {
-        this.vf = vf;
-    }
+    ValueFactory vf;
 
     @Reference
-    void setUserFactory(UserFactory userFactory) {
-        this.userFactory = userFactory;
-    }
+    UserFactory userFactory;
 
     @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
+    SesameTransformer transformer;
 
     @Reference(target = "(engineName=RdfEngine)")
-    void setRdfEngine(Engine engine) {
-        this.rdfEngine = engine;
-    }
+    Engine rdfEngine;
+
+    @Reference
+    CatalogManager catalogManager;
 
     /**
      * Retrieves a list of all the {@link User}s in Mobi.
@@ -467,6 +457,9 @@ public class UserRest {
                 throw ErrorUtils.sendError("The admin user cannot be deleted.",
                         Response.Status.METHOD_NOT_ALLOWED);
             }
+            List<InProgressCommit> inProgressCommits = catalogManager.getInProgressCommits(user.get());
+            inProgressCommits.forEach(inProgressCommit ->
+                    catalogManager.removeInProgressCommit(inProgressCommit.getResource()));
             engineManager.deleteUser(rdfEngine.getEngineName(), username);
             logger.info("Deleted user " + username);
             return Response.ok().build();

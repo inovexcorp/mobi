@@ -409,6 +409,16 @@ public interface CatalogUtilsService {
                                          RepositoryConnection conn);
 
     /**
+     * Retrieves an InProgressCommit identified by the provided Resource.
+     *
+     * @param inProgressCommitId The Resource identifying the InProgressCommit.
+     * @param conn               A RepositoryConnection to use for lookup.
+     * @return The identified InProgressCommit.
+     * @throws IllegalArgumentException Thrown if the InProgressCommit could not be found.
+     */
+    InProgressCommit getInProgressCommit(Resource inProgressCommitId, RepositoryConnection conn);
+
+    /**
      * Gets the IRI of the InProgressCommit for the User identified by the provided Resource for the VersionedRDFRecord
      * identified by the provided Resource.
      *
@@ -417,6 +427,14 @@ public interface CatalogUtilsService {
      * @return The Resource of the InProgressCommit if it exists.
      */
     Optional<Resource> getInProgressCommitIRI(Resource recordId, Resource userId, RepositoryConnection conn);
+
+    /**
+     * Gets a List of Resources of any InProgressCommits for the provided User.
+     *
+     * @param userId The Resource identifying the User who may have InProgressCommits.
+     * @return The List of the InProgressCommits for the User.
+     */
+    List<Resource> getInProgressCommitIRIs(Resource userId, RepositoryConnection conn);
 
     /**
      * Removes the provided InProgressCommit from the Repository. Removes the delta named graphs of the InProgressCommit
