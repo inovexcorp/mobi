@@ -51,6 +51,9 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rest.security.annotations.ActionAttributes;
+import com.mobi.rest.security.annotations.AttributeValue;
+import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
@@ -257,6 +260,8 @@ public class DatasetRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = DatasetRecord.TYPE))
+    @ResourceId("http://mobi.com/catalog-local")
     public Response createDatasetRecord(
             @Context ContainerRequestContext context,
             @Parameter(schema = @Schema(type = "string",
