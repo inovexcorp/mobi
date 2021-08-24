@@ -76,6 +76,7 @@ export class PermissionsPageComponent implements OnInit {
     }
 
     private setPoliciesInQuestion(): void {
+        this.policiesInQuestion = [];
         this.policiesInQuestion.push({ resourceId: this.catalogId, actionId: this.pm.actionCreate, subjectId: undefined, titleFunc: policy => 'Create ' + this.util.getBeautifulIRI(this.getRecordType(policy)) });
         this.policiesInQuestion.push({ resourceId: this.systemRepoId, actionId: this.pm.actionRead, subjectId: undefined, titleFunc: () => 'Query System Repo' });
     }
