@@ -25,6 +25,7 @@ package com.mobi.sparql.cli;
 
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.exception.MobiException;
+import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.StatementIterable;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.GraphQueryResult;
@@ -34,19 +35,23 @@ import com.mobi.query.api.TupleQuery;
 import com.mobi.query.api.Update;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
+import com.mobi.sparql.cli.rdf4j.queryrenderer.MobiSPARQLQueryRenderer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Completion;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.apache.karaf.shell.support.completers.FileCompleter;
 import org.apache.karaf.shell.support.table.ShellTable;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.algebra.Clear;
@@ -62,7 +67,6 @@ import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.ParsedUpdate;
 import org.eclipse.rdf4j.query.parser.QueryParserUtil;
-import org.eclipse.rdf4j.queryrender.sparql.SPARQLQueryRenderer;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.Rio;
@@ -72,6 +76,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -127,6 +132,7 @@ public class Query implements Action {
     private String repositoryParam = null;
 
     @Option(name = "-f", aliases = "--query-file", description = "The input query file")
+    @Completion(FileCompleter.class)
     private String queryFileParam = null;
 
     @Option(name = "-d", aliases = "--dry-run", description = "Run UPDATE query as a dry run to see what will change. "
@@ -235,7 +241,7 @@ public class Query implements Action {
     private void populateUpdateStatements(RewriteUpdateVisitor visitor, Repository repository, Model statements,
                                               UpdateType updateType)
             throws Exception {
-        SPARQLQueryRenderer renderer = new SPARQLQueryRenderer();
+        MobiSPARQLQueryRenderer renderer = new MobiSPARQLQueryRenderer();
         Map<String, MultiProjection> contextToMultiProjection = visitor.getMultiProjections();
         for (String key : contextToMultiProjection.keySet()) {
             String constructModifyData = renderer.render(new ParsedGraphQuery(contextToMultiProjection.get(key)));
@@ -248,8 +254,39 @@ public class Query implements Action {
                 if (updateType.equals(UpdateType.CLEAR)) {
                     assert !key.isEmpty();
                 }
-                query.evaluate().forEach(statement -> statements.add(statement.getSubject(),
-                        statement.getPredicate(), statement.getObject(), !key.isEmpty() ? vf.createIRI(key) : null));
+
+                // Here we handle reconstructing the queries into a single model. An UPDATE query can be broken out into
+                // many CONSTRUCT queries based on the INSERT/DELETE and if there are GRAPH clauses in the INSERT/DELETE
+                // clauses. If there is a hardcoded graph name, then it is set as the key in the multivalued map. If
+                // there is a variable for a graph, then additional triples are set specifying what subjects are in
+                // that graph. This is used to build out a map of Subjects to Contexts so that when the results are all
+                // combined, you can say which statements have a context associated with it in the INSERT/DELETE.
+                Model results = QueryResults.asModel(query.evaluate(), mf);
+                Model graphStatements = results.filter(null, vf.createIRI(RewriteUpdateVisitor.GRAPH_PREDICATE), null);
+                int graphStatementsSize = graphStatements.size();
+                Map<Resource, List<Resource>> subjectToContext = new HashMap<>();
+                if (graphStatementsSize > 0) {
+                    graphStatements.forEach(statement -> {
+                        Resource context = (Resource) statement.getObject();
+                        Resource subject = statement.getSubject();
+                        List<Resource> contexts = subjectToContext.getOrDefault(subject, new ArrayList<>());
+                        contexts.add(context);
+                        subjectToContext.put(subject, contexts);
+                    });
+                }
+                results.remove(null,  vf.createIRI(RewriteUpdateVisitor.GRAPH_PREDICATE), null);
+                results.forEach(statement -> {
+                    if (!key.isEmpty() && graphStatementsSize > 0) {
+                        Resource[] contextArray = subjectToContext.get(statement.getSubject()).toArray(new Resource[0]);
+                        statements.add(statement.getSubject(), statement.getPredicate(), statement.getObject(),
+                                contextArray);
+                    } else if (key.isEmpty()) {
+                        statements.add(statement.getSubject(), statement.getPredicate(), statement.getObject());
+                    } else {
+                        statements.add(statement.getSubject(), statement.getPredicate(), statement.getObject(),
+                                vf.createIRI(key));
+                    }
+                });
             }
         }
     }

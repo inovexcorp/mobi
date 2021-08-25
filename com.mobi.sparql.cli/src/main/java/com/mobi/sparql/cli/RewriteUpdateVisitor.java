@@ -23,6 +23,7 @@ package com.mobi.sparql.cli;
  * #L%
  */
 
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.query.algebra.Clear;
 import org.eclipse.rdf4j.query.algebra.DeleteData;
 import org.eclipse.rdf4j.query.algebra.Extension;
@@ -47,12 +48,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class RewriteUpdateVisitor extends AbstractQueryModelVisitor<RuntimeException> {
     private final Map<String, MultiProjection> contextToConstructQuery = new HashMap<>();
     private TupleExpr whereClause = null;
+
+    public static final String GRAPH_PREDICATE = "http://mobi.com/query/cli/update#graphPredicate";
 
     public RewriteUpdateVisitor() {
     }
@@ -100,9 +104,16 @@ public class RewriteUpdateVisitor extends AbstractQueryModelVisitor<RuntimeExcep
     @Override
     public void meet(StatementPattern statementPattern) {
         String key = "";
+        boolean addGraphAsOwnTriple = false;
         Var context = statementPattern.getContextVar();
         if (context != null) {
-            key = context.getValue().stringValue();
+            if (context.getValue() != null) {
+                key = context.getValue().stringValue();
+            } else {
+                // Workaround to insert the variable value for the graph as its own statement when reconstructed
+                key = "?" + context.getName();
+                addGraphAsOwnTriple = true;
+            }
         }
         MultiProjection multiProjection = contextToConstructQuery.getOrDefault(key, createMultiProjection());
         ProjectionElemList elemList = new ProjectionElemList();
@@ -110,6 +121,29 @@ public class RewriteUpdateVisitor extends AbstractQueryModelVisitor<RuntimeExcep
         elemList.addElement(getProjectionElem(statementPattern.getPredicateVar(), "predicate", multiProjection));
         elemList.addElement(getProjectionElem(statementPattern.getObjectVar(), "object", multiProjection));
         multiProjection.addProjection(elemList);
+
+        if (addGraphAsOwnTriple) {
+            // CONSTRUCT queries in RDF4j do not allow for GRAPH clauses. As a workaround, we can set the subject of
+            // the statement to point to what GRAPH it belongs to when a variable for a graph is used.
+            // i.e, <urn:subject> <http://mobi.com/query/cli/update#graphPredicate> <urn:someGraph>
+            // This can be used on the return to reconstruct the values in the table.
+
+            ProjectionElemList contextElemList = new ProjectionElemList();
+            contextElemList.addElement(getProjectionElem(statementPattern.getSubjectVar(), "subject", multiProjection));
+
+            String uuid = "const_" + UUID.randomUUID();
+            ProjectionElem elem = new ProjectionElem();
+            elem.setSourceName(uuid);
+            elem.setTargetName("predicate");
+            contextElemList.addElement(elem);
+
+            contextElemList.addElement(getProjectionElem(context, "object", multiProjection));
+            multiProjection.addProjection(contextElemList);
+
+            Extension ext = (Extension) multiProjection.getArg();
+            ext.addElement(new ExtensionElem(
+                    new ValueConstant(SimpleValueFactory.getInstance().createIRI(GRAPH_PREDICATE)), uuid));
+        }
         contextToConstructQuery.put(key, multiProjection);
     }
 

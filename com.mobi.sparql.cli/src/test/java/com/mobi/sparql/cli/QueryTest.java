@@ -384,6 +384,164 @@ public class QueryTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getUpdateStatementsInsertWithGraphVariableTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(VALUE_FACTORY.createIRI("http://example/book1"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
+                    VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"),
+                    VALUE_FACTORY.createIRI("http://example/bookStore"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book1"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
+                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createIRI("http://example/bookStore"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
+                    VALUE_FACTORY.createIRI("http://example.org/ns#price"),
+                    VALUE_FACTORY.createLiteral(42),
+                    VALUE_FACTORY.createIRI("http://example/bookStore"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
+                    VALUE_FACTORY.createLiteral("David Copperfield"),
+                    VALUE_FACTORY.createIRI("http://example/bookStore"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/creator"),
+                    VALUE_FACTORY.createLiteral("Edmund Wells"),
+                    VALUE_FACTORY.createIRI("http://example/bookStore"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
+                    VALUE_FACTORY.createLiteral("1948-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createIRI("http://example/bookStore"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book3"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
+                    VALUE_FACTORY.createLiteral("SPARQL 1.1 Tutorial"),
+                    VALUE_FACTORY.createIRI("http://example/bookStore"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book4"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
+                    VALUE_FACTORY.createLiteral("SPARQL 1.0 Tutorial"),
+                    VALUE_FACTORY.createIRI("http://example/bookStore2"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book4"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
+                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createIRI("http://example/bookStore2"));
+        }
+
+        String queryStr = "PREFIX dc:  <http://purl.org/dc/elements/1.1/>\n" +
+                "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+                "\n" +
+                "INSERT \n" +
+                "  { GRAPH ?bookStore { ?book ?p ?v } }\n" +
+                "WHERE\n" +
+                "  { GRAPH  ?bookStore\n" +
+                "       { ?book dc:date ?date .\n" +
+                "         FILTER ( ?date > \"1970-01-01T00:00:00-02:00\"^^xsd:dateTime )\n" +
+                "         ?book ?p ?v\n" +
+                "  } }";
+
+        ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
+        Difference result = service.getUpdateStatements(parsedUpdate, repo);
+        Model expectedInserts = MODEL_FACTORY.createModel();
+        expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
+                VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
+                VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"),
+                VALUE_FACTORY.createIRI("http://example/bookStore"));
+        expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
+                VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
+                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                VALUE_FACTORY.createIRI("http://example/bookStore"));
+        expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book4"),
+                VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
+                VALUE_FACTORY.createLiteral("SPARQL 1.0 Tutorial"),
+                VALUE_FACTORY.createIRI("http://example/bookStore2"));
+        expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book4"),
+                VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
+                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                VALUE_FACTORY.createIRI("http://example/bookStore2"));
+
+        Model expectedDeletes = MODEL_FACTORY.createModel();
+
+        assertModelsEqual(expectedInserts, result.getAdditions());
+        assertModelsEqual(expectedDeletes, result.getDeletions());
+    }
+
+    @Test
+    public void getUpdateStatementsDeleteWithGraphVariableTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(VALUE_FACTORY.createIRI("http://example/book1"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
+                    VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"),
+                    VALUE_FACTORY.createIRI("http://example/bookStore"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book1"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
+                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createIRI("http://example/bookStore"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
+                    VALUE_FACTORY.createIRI("http://example.org/ns#price"),
+                    VALUE_FACTORY.createLiteral(42),
+                    VALUE_FACTORY.createIRI("http://example/bookStore"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
+                    VALUE_FACTORY.createLiteral("David Copperfield"),
+                    VALUE_FACTORY.createIRI("http://example/bookStore"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/creator"),
+                    VALUE_FACTORY.createLiteral("Edmund Wells"),
+                    VALUE_FACTORY.createIRI("http://example/bookStore"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book2"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
+                    VALUE_FACTORY.createLiteral("1948-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createIRI("http://example/bookStore"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book3"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
+                    VALUE_FACTORY.createLiteral("SPARQL 1.1 Tutorial"),
+                    VALUE_FACTORY.createIRI("http://example/bookStore"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book4"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
+                    VALUE_FACTORY.createLiteral("SPARQL 1.0 Tutorial"),
+                    VALUE_FACTORY.createIRI("http://example/bookStore2"));
+            conn.add(VALUE_FACTORY.createIRI("http://example/book4"),
+                    VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
+                    VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                    VALUE_FACTORY.createIRI("http://example/bookStore2"));
+        }
+
+        String queryStr = "PREFIX dc:  <http://purl.org/dc/elements/1.1/>\n" +
+                "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n" +
+                "\n" +
+                "DELETE \n" +
+                "  { GRAPH ?bookStore { ?book ?p ?v } }\n" +
+                "WHERE\n" +
+                "  { GRAPH  ?bookStore\n" +
+                "       { ?book dc:date ?date .\n" +
+                "         FILTER ( ?date > \"1970-01-01T00:00:00-02:00\"^^xsd:dateTime )\n" +
+                "         ?book ?p ?v\n" +
+                "  } }";
+
+        ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
+        Difference result = service.getUpdateStatements(parsedUpdate, repo);
+        Model expectedDeletes = MODEL_FACTORY.createModel();
+        expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book1"),
+                VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
+                VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"),
+                VALUE_FACTORY.createIRI("http://example/bookStore"));
+        expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book1"),
+                VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
+                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                VALUE_FACTORY.createIRI("http://example/bookStore"));
+        expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book4"),
+                VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
+                VALUE_FACTORY.createLiteral("SPARQL 1.0 Tutorial"),
+                VALUE_FACTORY.createIRI("http://example/bookStore2"));
+        expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book4"),
+                VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/date"),
+                VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
+                VALUE_FACTORY.createIRI("http://example/bookStore2"));
+
+        Model expectedInserts = MODEL_FACTORY.createModel();
+
+        assertModelsEqual(expectedInserts, result.getAdditions());
+        assertModelsEqual(expectedDeletes, result.getDeletions());
+    }
+
+    @Test
     public void getUpdateStatementsDeleteDataMultipleGraphsTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(VALUE_FACTORY.createIRI("urn:1"),
