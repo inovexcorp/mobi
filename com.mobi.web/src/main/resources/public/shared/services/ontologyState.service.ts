@@ -650,27 +650,36 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @returns {Promise} A promise containing the record id, branch id, commit id, and inProgressCommit.
      */
     self.getOntologyCatalogDetails = function(recordId) {
-        var state = self.getOntologyStateByRecordId(recordId);
+        let state = self.getOntologyStateByRecordId(recordId);
         if (!isEmpty(state)) {
-            var inProgressCommit = emptyInProgressCommit;
-            var currentState = self.getCurrentState(state);
-            var commitId = util.getPropertyId(currentState, prefixes.ontologyState + 'commit');
-            var tagId = util.getPropertyId(currentState, prefixes.ontologyState + 'tag');
-            var branchId = util.getPropertyId(currentState, prefixes.ontologyState + 'branch');
-            var upToDate = false;
-            var promise;
+            let inProgressCommit = emptyInProgressCommit;
+            let currentState = self.getCurrentState(state);
+            let commitId = util.getPropertyId(currentState, prefixes.ontologyState + 'commit');
+            let tagId = util.getPropertyId(currentState, prefixes.ontologyState + 'tag');
+            let branchId = util.getPropertyId(currentState, prefixes.ontologyState + 'branch');
+            let upToDate = false;
+            let promise;
+            let branchToastShown = false;
             if (branchId) {
                 promise = cm.getRecordBranch(branchId, recordId, catalogId)
                     .then(branch => {
                         upToDate = util.getPropertyId(branch, prefixes.catalog + 'head') === commitId;
                         return cm.getInProgressCommit(recordId, catalogId);
-                    }, $q.reject);
+                    }, error => {
+                        util.createWarningToast('Branch ' + branchId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                        branchToastShown = true;
+                        return $q.reject(error);
+                    });
             } else if (tagId) {
                 upToDate = true;
                 promise = cm.getRecordVersion(tagId, recordId, catalogId)
                     .then(() => {
                         return cm.getInProgressCommit(recordId, catalogId);
-                    }, () => self.updateOntologyState({recordId, commitId}).then(() => cm.getInProgressCommit(recordId, catalogId)), $q.reject);
+                    }, () => {
+                        util.createWarningToast('Tag ' + tagId + ' does not exist. Opening commit ' + util.condenseCommitId(commitId), {timeout: 5000});
+                        return self.updateOntologyState({recordId, commitId})
+                    })
+                    .then(() => cm.getInProgressCommit(recordId, catalogId), $q.reject);
             } else {
                 upToDate = true;
                 promise = cm.getInProgressCommit(recordId, catalogId);
@@ -683,12 +692,15 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                     if (get(response, 'status') === 404) {
                         return cm.getCommit(commitId);
                     }
-                    return $q.reject();
+                    return $q.reject(response);
                 })
-                .then(() => ({recordId, branchId, commitId, upToDate, inProgressCommit}), () =>
-                    self.deleteOntologyState(recordId)
+                .then(() => ({recordId, branchId, commitId, upToDate, inProgressCommit}), () => {
+                    if (!branchToastShown) {
+                        util.createWarningToast('Commit ' + util.condenseCommitId(commitId) + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                    }
+                    return self.deleteOntologyState(recordId)
                         .then(() => self.getLatestOntology(recordId), $q.reject)
-                );
+                });
         }
         return self.getLatestOntology(recordId);
     }

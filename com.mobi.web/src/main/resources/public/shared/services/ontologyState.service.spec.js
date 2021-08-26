@@ -557,6 +557,7 @@ describe('Ontology State Service', function() {
     });
     describe('getOntologyCatalogDetails calls the correct methods', function() {
         beforeEach(function() {
+            util.condenseCommitId.and.returnValue(this.commitId);
             this.expected = {
                 recordId: this.recordId,
                 branchId: this.branchId,
@@ -643,6 +644,7 @@ describe('Ontology State Service', function() {
                                     expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
                                     expect(ontologyStateSvc.deleteOntologyState).toHaveBeenCalledWith(this.recordId);
                                     expect(ontologyStateSvc.getLatestOntology).toHaveBeenCalledWith(this.recordId);
+                                    expect(util.createWarningToast).toHaveBeenCalledWith('Commit ' + this.commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                                 });
                                 it('and getLatestOntology is rejected', function() {
                                     ontologyStateSvc.getLatestOntology.and.returnValue($q.reject(this.error));
@@ -657,6 +659,7 @@ describe('Ontology State Service', function() {
                                     expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
                                     expect(ontologyStateSvc.deleteOntologyState).toHaveBeenCalledWith(this.recordId);
                                     expect(ontologyStateSvc.getLatestOntology).toHaveBeenCalledWith(this.recordId);
+                                    expect(util.createWarningToast).toHaveBeenCalledWith('Commit ' + this.commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                                 });
                             });
                             it('and deleteOntologyState is rejected', function() {
@@ -672,6 +675,7 @@ describe('Ontology State Service', function() {
                                 expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
                                 expect(ontologyStateSvc.deleteOntologyState).toHaveBeenCalledWith(this.recordId);
                                 expect(ontologyStateSvc.getLatestOntology).not.toHaveBeenCalled();
+                                expect(util.createWarningToast).toHaveBeenCalledWith('Commit ' + this.commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                             });
                         });
                     });
@@ -717,6 +721,7 @@ describe('Ontology State Service', function() {
                                         expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
                                         expect(ontologyStateSvc.deleteOntologyState).toHaveBeenCalledWith(this.recordId);
                                         expect(ontologyStateSvc.getLatestOntology).toHaveBeenCalledWith(this.recordId);
+                                        expect(util.createWarningToast).toHaveBeenCalledWith('Commit ' + this.commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                                     });
                                     it('and getLatestOntology is rejected', function() {
                                         ontologyStateSvc.getLatestOntology.and.returnValue($q.reject(this.error));
@@ -731,6 +736,7 @@ describe('Ontology State Service', function() {
                                         expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
                                         expect(ontologyStateSvc.deleteOntologyState).toHaveBeenCalledWith(this.recordId);
                                         expect(ontologyStateSvc.getLatestOntology).toHaveBeenCalledWith(this.recordId);
+                                        expect(util.createWarningToast).toHaveBeenCalledWith('Commit ' + this.commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                                     });
                                 });
                                 it('and deleteOntologyState is rejected', function() {
@@ -746,6 +752,7 @@ describe('Ontology State Service', function() {
                                     expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
                                     expect(ontologyStateSvc.deleteOntologyState).toHaveBeenCalledWith(this.recordId);
                                     expect(ontologyStateSvc.getLatestOntology).not.toHaveBeenCalled();
+                                    expect(util.createWarningToast).toHaveBeenCalledWith('Commit ' + this.commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                                 });
                             });
                         });
@@ -840,6 +847,8 @@ describe('Ontology State Service', function() {
                             expect(ontologyManagerSvc.getOntology).not.toHaveBeenCalled();
                             expect(ontologyStateSvc.deleteOntologyState).toHaveBeenCalledWith(this.recordId);
                             expect(ontologyStateSvc.getLatestOntology).toHaveBeenCalledWith(this.recordId);
+                            expect(util.createWarningToast).toHaveBeenCalledWith('Branch ' + this.branchId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
+                            expect(util.createWarningToast).not.toHaveBeenCalledWith('Commit ' + this.commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                         });
                     });
                     it('and deleteOntologyState is rejected', function() {
@@ -1096,6 +1105,8 @@ describe('Ontology State Service', function() {
                                 expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
                                 expect(ontologyStateSvc.deleteOntologyState).not.toHaveBeenCalled();
                                 expect(ontologyStateSvc.getLatestOntology).not.toHaveBeenCalled();
+                                expect(util.createWarningToast).toHaveBeenCalledWith('Tag ' + this.tagId + ' does not exist. Opening commit ' + this.commitId, {timeout: 5000});
+                                expect(util.createWarningToast).not.toHaveBeenCalledWith('Commit ' + this.commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                             });
                             describe('and getCommit is rejected', function() {
                                 beforeEach(function() {
@@ -1120,6 +1131,7 @@ describe('Ontology State Service', function() {
                                         expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
                                         expect(ontologyStateSvc.deleteOntologyState).toHaveBeenCalledWith(this.recordId);
                                         expect(ontologyStateSvc.getLatestOntology).toHaveBeenCalledWith(this.recordId);
+                                        expect(util.createWarningToast).toHaveBeenCalledWith('Commit ' + this.commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                                     });
                                     it('and getLatestOntology is rejected', function() {
                                         ontologyStateSvc.getLatestOntology.and.returnValue($q.reject(this.error));
@@ -1135,6 +1147,7 @@ describe('Ontology State Service', function() {
                                         expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
                                         expect(ontologyStateSvc.deleteOntologyState).toHaveBeenCalledWith(this.recordId);
                                         expect(ontologyStateSvc.getLatestOntology).toHaveBeenCalledWith(this.recordId);
+                                        expect(util.createWarningToast).toHaveBeenCalledWith('Commit ' + this.commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                                     });
                                 });
                                 it('and deleteOntologyState is rejected', function() {
@@ -1151,6 +1164,7 @@ describe('Ontology State Service', function() {
                                     expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
                                     expect(ontologyStateSvc.deleteOntologyState).toHaveBeenCalledWith(this.recordId);
                                     expect(ontologyStateSvc.getLatestOntology).not.toHaveBeenCalled();
+                                    expect(util.createWarningToast).toHaveBeenCalledWith('Commit ' + this.commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                                 });
                             });
                         });
