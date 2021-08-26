@@ -75,7 +75,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.cache.Cache;
@@ -184,22 +183,9 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
             PolicyQueryParams queryParams = new PolicyQueryParams.Builder()
                     .addResourceIRI(vf.createIRI(relatedResource))
                     .build();
-            Set<Resource> policyIds = PolicyUtils.findPolicies(queryParams, repository);
-            policyIds.addAll(policyManager.getSystemPolicyIds());
-            policyIds.forEach(policyId -> {
-                if (!cache.get().containsKey(policyId.stringValue())) {
-                    try (RepositoryConnection conn = repository.getConnection()) {
-                        RepositoryResult<Statement> statements = conn.getStatements(policyId,
-                                vf.createIRI(BinaryFile.retrievalURL_IRI), null);
-                        VirtualFile file = vfs.resolveVirtualFile(statements.iterator().next().getObject()
-                                .stringValue());
-                        String policyStr = IOUtils.toString(file.readContent(), StandardCharsets.UTF_8);
-                        cache.get().put(policyId.stringValue(), new BalanaPolicy(policyStr, vf));
-                    } catch (IOException e) {
-                        throw new MobiException("Error retrieving policy from VFS.", e);
-                    }
-                }
-            });
+            PolicyUtils.findPolicies(queryParams, repository)
+                    .forEach(policyId -> checkCacheForPolicyId(policyId, cache.get()));
+            policyManager.getSystemPolicyIds().forEach(policyId -> checkCacheForPolicyId(policyId, cache.get()));
             return StreamSupport.stream(cache.get().spliterator(), false)
                     .map(Cache.Entry::getValue)
                     .filter(policy -> policy instanceof XACMLPolicy)
@@ -231,5 +217,20 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
         }
 
         return Collections.emptyList();
+    }
+
+    private void checkCacheForPolicyId(Resource policyId, Cache<String, Policy> cache) {
+        if (!cache.containsKey(policyId.stringValue())) {
+            try (RepositoryConnection conn = repository.getConnection()) {
+                RepositoryResult<Statement> statements = conn.getStatements(policyId,
+                        vf.createIRI(BinaryFile.retrievalURL_IRI), null);
+                VirtualFile file = vfs.resolveVirtualFile(statements.iterator().next().getObject()
+                        .stringValue());
+                String policyStr = IOUtils.toString(file.readContent(), StandardCharsets.UTF_8);
+                cache.put(policyId.stringValue(), new BalanaPolicy(policyStr, vf));
+            } catch (IOException e) {
+                throw new MobiException("Error retrieving policy from VFS.", e);
+            }
+        }
     }
 }

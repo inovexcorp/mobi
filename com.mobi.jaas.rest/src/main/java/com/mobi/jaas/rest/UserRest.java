@@ -41,6 +41,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.platform.config.api.state.StateManager;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
@@ -107,6 +108,9 @@ public class UserRest {
 
     @Reference
     CatalogManager catalogManager;
+
+    @Reference
+    StateManager stateManager;
 
     /**
      * Retrieves a list of all the {@link User}s in Mobi.
@@ -460,6 +464,8 @@ public class UserRest {
             List<InProgressCommit> inProgressCommits = catalogManager.getInProgressCommits(user.get());
             inProgressCommits.forEach(inProgressCommit ->
                     catalogManager.removeInProgressCommit(inProgressCommit.getResource()));
+            stateManager.getStates(username, null, new HashSet<>())
+                    .forEach((resource, model) -> stateManager.deleteState(resource));
             engineManager.deleteUser(rdfEngine.getEngineName(), username);
             logger.info("Deleted user " + username);
             return Response.ok().build();

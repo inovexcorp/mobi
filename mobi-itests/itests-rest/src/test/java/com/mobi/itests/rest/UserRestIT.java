@@ -98,12 +98,14 @@ public class UserRestIT extends KarafTestSupport {
         IRI inProgressCommit = vf.createIRI("https://mobi.com/in-progress-commits#c152d7b8-98f4-4337-909d-7fc6c62589f5");
         IRI inProgressAdditions = vf.createIRI("https://mobi.com/additions#c152d7b8-98f4-4337-909d-7fc6c62589f5");
         IRI inProgressDeletions = vf.createIRI("https://mobi.com/deletions#c152d7b8-98f4-4337-909d-7fc6c62589f5");
+        IRI userState = vf.createIRI("http://mobi.com/states#e7eb17e0-4c26-4433-816e-2fb0a9608c42");
 
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(conn.contains(user, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(User.TYPE)));
             assertTrue(conn.containsContext(inProgressCommit));
             assertTrue(conn.containsContext(inProgressAdditions));
             assertTrue(conn.containsContext(inProgressDeletions));
+            assertTrue(conn.contains(userState, null, null));
         }
 
         try (CloseableHttpResponse response = deleteUser(createHttpClient(), "testuser")) {
@@ -118,6 +120,7 @@ public class UserRestIT extends KarafTestSupport {
             assertFalse(conn.containsContext(inProgressCommit));
             assertFalse(conn.containsContext(inProgressAdditions));
             assertFalse(conn.containsContext(inProgressDeletions));
+            assertFalse(conn.contains(userState, null, null));
         }
     }
 
