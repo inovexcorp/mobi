@@ -32,6 +32,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -50,6 +51,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.platform.config.api.state.StateManager;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
@@ -74,8 +76,10 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -105,6 +109,7 @@ public class UserRestTest extends MobiRestTestNg {
     private Set<Role> roles;
     private IRI inProgressCommitIRI1;
     private IRI inProgressCommitIRI2;
+    private IRI stateIRI;
     private static final String ENGINE_NAME = "com.mobi.jaas.engines.RdfEngine";
 
     @Mock
@@ -130,6 +135,9 @@ public class UserRestTest extends MobiRestTestNg {
 
     @Mock
     private InProgressCommit inProgressCommit2;
+
+    @Mock
+    private StateManager stateManager;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -159,6 +167,10 @@ public class UserRestTest extends MobiRestTestNg {
         group.setMember(Collections.singleton(user));
         groups = Collections.singleton(group);
 
+        inProgressCommitIRI1 = vf.createIRI("urn:inProgressCommit1");
+        inProgressCommitIRI2 = vf.createIRI("urn:inProgressCommit2");
+        stateIRI = vf.createIRI("urn:state1");
+
         MockitoAnnotations.initMocks(this);
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
@@ -171,12 +183,6 @@ public class UserRestTest extends MobiRestTestNg {
 
         when(rdfEngine.getEngineName()).thenReturn(ENGINE_NAME);
 
-        inProgressCommitIRI1 = vf.createIRI("urn:inProgressCommit1");
-        inProgressCommitIRI2 = vf.createIRI("urn:inProgressCommit2");
-        when(inProgressCommit1.getResource()).thenReturn(inProgressCommitIRI1);
-        when(inProgressCommit2.getResource()).thenReturn(inProgressCommitIRI2);
-        when(catalogManager.getInProgressCommits(eq(user))).thenReturn(Arrays.asList(inProgressCommit1, inProgressCommit2));
-
         rest = new UserRest();
         rest.engineManager = engineManager;
         rest.rdfEngine = rdfEngine;
@@ -184,6 +190,7 @@ public class UserRestTest extends MobiRestTestNg {
         rest.transformer = transformer;
         rest.userFactory = userFactoryMock;
         rest.catalogManager = catalogManager;
+        rest.stateManager = stateManager;
 
         return new ResourceConfig()
                 .register(rest)
@@ -200,7 +207,7 @@ public class UserRestTest extends MobiRestTestNg {
     public void setupMocks() {
         user.setPassword(vf.createLiteral("ABC"));
 
-        reset(engineManager);
+        reset(engineManager, catalogManager, stateManager);
 
         when(engineManager.getUsers()).thenReturn(users);
         when(engineManager.userExists(anyString())).thenReturn(true);
@@ -225,6 +232,14 @@ public class UserRestTest extends MobiRestTestNg {
         when(engineManager.getUserRoles(UsernameTestFilter.USERNAME)).thenReturn(Stream.concat(roles.stream(),
                 group.getHasGroupRole().stream()).collect(Collectors.toSet()));
         when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.empty());
+
+        when(inProgressCommit1.getResource()).thenReturn(inProgressCommitIRI1);
+        when(inProgressCommit2.getResource()).thenReturn(inProgressCommitIRI2);
+        when(catalogManager.getInProgressCommits(eq(user))).thenReturn(Arrays.asList(inProgressCommit1, inProgressCommit2));
+
+        Map<Resource, Model> states = new HashMap<>();
+        states.put(stateIRI, mf.createModel());
+        when(stateManager.getStates(eq(UsernameTestFilter.USERNAME), eq(null), any(Set.class))).thenReturn(states);
     }
 
     @Test
@@ -454,6 +469,35 @@ public class UserRestTest extends MobiRestTestNg {
         verify(catalogManager).getInProgressCommits(eq(user));
         verify(catalogManager).removeInProgressCommit(eq(inProgressCommitIRI1));
         verify(catalogManager).removeInProgressCommit(eq(inProgressCommitIRI2));
+        verify(stateManager).getStates(eq(UsernameTestFilter.USERNAME), eq(null), any(Set.class));
+        verify(stateManager).deleteState(eq(stateIRI));
+    }
+
+    @Test
+    public void deleteUserNoInProgressCommitsTest() {
+        when(catalogManager.getInProgressCommits(eq(user))).thenReturn(new ArrayList<>());
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().delete();
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).deleteUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
+        verify(catalogManager).getInProgressCommits(eq(user));
+        verify(catalogManager, never()).removeInProgressCommit(any(Resource.class));
+        verify(stateManager).getStates(eq(UsernameTestFilter.USERNAME), eq(null), any(Set.class));
+        verify(stateManager).deleteState(eq(stateIRI));
+    }
+
+    @Test
+    public void deleteUserNoStatesTest() {
+        when(stateManager.getStates(eq(UsernameTestFilter.USERNAME), eq(null), any(Set.class))).thenReturn(new HashMap());
+
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().delete();
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager).deleteUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
+        verify(catalogManager).getInProgressCommits(eq(user));
+        verify(catalogManager).removeInProgressCommit(eq(inProgressCommitIRI1));
+        verify(catalogManager).removeInProgressCommit(eq(inProgressCommitIRI2));
+        verify(stateManager).getStates(eq(UsernameTestFilter.USERNAME), eq(null), any(Set.class));
+        verify(stateManager, never()).deleteState(eq(stateIRI));
     }
 
     @Test
