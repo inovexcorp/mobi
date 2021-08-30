@@ -41,6 +41,7 @@ before_script:
       VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
       MESSAGE="Building snapshot"
     fi
+  - export NODE_OPTIONS=--max_old_space_size=8192
   - echo "$MESSAGE - $VERSION"
 
 # For merge requests, just do an unit tests
@@ -50,6 +51,29 @@ unit_test:
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   only:
     - merge_requests
+
+full_test_manual:
+  stage: test
+  only:
+    - merge_requests
+  except:
+    variables:
+      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/ #Should not run on automated commits
+  script:
+    - apt-get update
+    # Redirect calls to localhost:9080 to host machines (not this container), a 2nd container running mobi will be bound to the host at port 9080 (by functional tests).
+    - apt-get install -y redir
+    - HOST_IP=$(ip route show | awk '/default/ {print $3}')
+    - redir :9080 $HOST_IP:9080
+    # Update Chrome Version
+    - apt-get -y install google-chrome-stable
+    # Run unit, integration, and functional tests
+    - mvn $MAVEN_CLI_OPTS clean install -DskipTests -DskipFunctional=false -DskipITs=false
+  artifacts:
+    when: on_failure
+    paths:
+      - mobi-itests/itests-web/target/nightwatch-screenshots #in the event that the functional tests fail, screenshots of failures are stored in the directory
+  when: manual # This setting turns a job into a manual one
 
 # For commits to master and releases do a full test
 full_test:
