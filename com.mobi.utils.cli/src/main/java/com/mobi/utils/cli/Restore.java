@@ -26,15 +26,21 @@ package com.mobi.utils.cli;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.rdf.RDFImportService;
+import com.mobi.exception.MobiException;
+import com.mobi.persistence.utils.Bindings;
+import com.mobi.persistence.utils.QueryResults;
 import com.mobi.platform.config.api.ontologies.platformconfig.State;
 import com.mobi.platform.config.api.state.StateManager;
+import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.BindingSet;
+import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
 import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
-import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
@@ -86,9 +92,42 @@ public class Restore implements Action {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Restore.class);
 
+    private static final String CLEAN_DANGLING_ADDITIONS_DELETIONS;
+    private static final String CLEAR_INPROGRESS_COMMIT_NO_RECORD;
+    private static final String CLEAR_INPROGRESS_COMMIT_NO_USER;
+    private static final String SEARCH_STATE_INSTANCES_NO_USER;
+    private static final String CLEAR_POLICY_STATEMENTS;
+
+    static {
+        try {
+            CLEAN_DANGLING_ADDITIONS_DELETIONS = IOUtils.toString(
+                    Restore.class.getResourceAsStream("/clearDanglingAdditionsDeletions.rq"),
+                    StandardCharsets.UTF_8
+            );
+            CLEAR_INPROGRESS_COMMIT_NO_RECORD = IOUtils.toString(
+                    Restore.class.getResourceAsStream("/clearInProgressCommitNoRecord.rq"),
+                    StandardCharsets.UTF_8
+            );
+            CLEAR_INPROGRESS_COMMIT_NO_USER = IOUtils.toString(
+                    Restore.class.getResourceAsStream("/clearInProgressCommitNoUser.rq"),
+                    StandardCharsets.UTF_8
+            );
+            SEARCH_STATE_INSTANCES_NO_USER = IOUtils.toString(
+                    Restore.class.getResourceAsStream("/searchStateInstanceNoUser.rq"),
+                    StandardCharsets.UTF_8
+            );
+            CLEAR_POLICY_STATEMENTS = IOUtils.toString(
+                    Restore.class.getResourceAsStream("/clearPolicyStatements.rq"),
+                    StandardCharsets.UTF_8
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
+
     private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + File.separator + "restoreZip";
-    private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15", "1.16", "1.17", "1.18",
-            "1.19", "1.20");
+    private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15", "1.16", "1.17",
+            "1.18", "1.19", "1.20");
 
     // Service References
 
@@ -297,9 +336,7 @@ public class Restore implements Action {
         FileUtils.copyDirectory(tmpPolicyDir, policyDir);
     }
 
-    private void restoreRepositories(JSONObject manifest, String backupVersion) throws IOException {
-
-        // Clear populated repositories
+    protected Set<String> clearAllRepos(RepositoryManager repositoryManager) {
         Set<String> remoteRepos = new HashSet<>();
         repositoryManager.getAllRepositories().forEach((repoID, repo) -> {
             if (repo.getConfig() instanceof NativeRepositoryConfig
@@ -311,6 +348,12 @@ public class Restore implements Action {
                 remoteRepos.add(repoID);
             }
         });
+        return remoteRepos;
+    }
+
+    private void restoreRepositories(JSONObject manifest, String backupVersion) throws IOException {
+        // Clear populated repositories
+        Set<String> remoteRepos = clearAllRepos(repositoryManager);
 
         // Populate Repositories
         JSONObject repos = manifest.optJSONObject("repositories");
@@ -336,27 +379,39 @@ public class Restore implements Action {
                 System.out.println("Skipping data load of remote repository " + repoName);
             }
         }
+        // Remove Statements
+        cleanCatalogRepo(backupVersion);
+    }
 
-        // Remove Policy Statements
-        RepositoryConnection conn = config.getRepository().getConnection();
-        Iterator<Statement> statements = conn.getStatements(null,
-                vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), vf.createIRI(PolicyFile.TYPE))
-                .iterator();
+    protected void cleanCatalogRepo(String backupVersion) {
+        try (RepositoryConnection conn = config.getRepository().getConnection()) {
+            LOGGER.trace("Remove All In progress Commits where User doesn’t exist");
+            conn.prepareUpdate(CLEAR_INPROGRESS_COMMIT_NO_USER).execute();
 
-        while (statements.hasNext()) {
-            conn.clear(statements.next().getSubject());
-        }
-        LOGGER.trace("Removed PolicyFile statements");
+            LOGGER.trace("Remove In Progress Commits where Record doesn’t exist");
+            conn.prepareUpdate(CLEAR_INPROGRESS_COMMIT_NO_RECORD).execute();
 
-        if (mobiVersions.indexOf(backupVersion) < 2) {
-            // Clear ontology editor state
-            statements = conn.getStatements(null,
-                    vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), vf.createIRI(State.TYPE)).iterator();
+            LOGGER.trace("Remove Addition and Deletion Graphs with no Revision");
+            conn.prepareUpdate(CLEAN_DANGLING_ADDITIONS_DELETIONS).execute();
 
-            while (statements.hasNext()) {
-                stateManager.deleteState(statements.next().getSubject());
+            LOGGER.trace("Remove PolicyFile statements");
+            conn.prepareUpdate(CLEAR_POLICY_STATEMENTS).execute();
+
+            LOGGER.trace("Remove State instances where User doesn’t exist");
+
+            TupleQueryResult results = conn.prepareTupleQuery(SEARCH_STATE_INSTANCES_NO_USER).evaluate();
+            results.forEach(bindingSet -> stateManager.deleteState(Bindings.requiredResource(bindingSet, "state")));
+
+            if (mobiVersions.indexOf(backupVersion) < 2) {
+                // Clear ontology editor state
+                Iterator<Statement> statements = conn.getStatements(null,
+                        vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), vf.createIRI(State.TYPE)).iterator();
+
+                while (statements.hasNext()) {
+                    stateManager.deleteState(statements.next().getSubject());
+                }
+                LOGGER.trace("Remove state statements");
             }
-            LOGGER.trace("Remove state statements");
         }
     }
 

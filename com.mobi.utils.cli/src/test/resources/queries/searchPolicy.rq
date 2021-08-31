@@ -1,0 +1,7 @@
+PREFIX policy: <http://mobi.com/ontologies/policy#>
+
+SELECT
+  ?policyGraph ?policy
+WHERE {
+  GRAPH ?policyGraph { ?policy a policy:PolicyFile. }
+}

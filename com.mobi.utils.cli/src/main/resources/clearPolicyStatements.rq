@@ -1,0 +1,11 @@
+PREFIX policy: <http://mobi.com/ontologies/policy#>
+
+DELETE {
+  GRAPH ?policyGraph { ?policy ?p ?o }
+}
+WHERE {
+  GRAPH ?policyGraph {
+    ?policy a policy:PolicyFile;
+      ?p ?o
+  }
+}
