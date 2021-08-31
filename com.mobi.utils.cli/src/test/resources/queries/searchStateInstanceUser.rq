@@ -1,0 +1,10 @@
+PREFIX usrmgmt: <http://mobi.com/ontologies/user/management#>
+PREFIX config: <http://mobi.com/ontologies/platform/config#>
+
+SELECT
+  ?state ?user
+WHERE {
+  ?state a config:State; config:forUser ?user.
+  FILTER EXISTS { ?user a usrmgmt:User }
+}
+ORDER BY ?state

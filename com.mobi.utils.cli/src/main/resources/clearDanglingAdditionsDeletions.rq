@@ -1,0 +1,20 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX catalog: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX usrmgmt: <http://mobi.com/ontologies/user/management#>
+
+DELETE {  
+  GRAPH ?diffGraph {
+    ?s3 ?p3 ?o3 .
+  }
+}
+WHERE {
+  GRAPH ?diffGraph {
+    ?s3 ?p3 ?o3 .
+  }
+
+  FILTER(STRSTARTS(STR(?diffGraph), "https://mobi.com/additions#") || STRSTARTS(STR(?diffGraph), "https://mobi.com/deletions#"))
+  FILTER NOT EXISTS {?revision (catalog:additions|catalog:deletions) ?diffGraph.}
+}
