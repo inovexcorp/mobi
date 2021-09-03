@@ -28,6 +28,8 @@ import { from } from 'rxjs/observable/from';
 import { of } from 'rxjs/observable/of';
 import { forkJoin } from 'rxjs/observable/forkJoin';
 
+import  { style, buildColorScale } from '../helpers/graphSettings';
+
 /**
  * @class OntologyVisualization.service
  *
@@ -51,6 +53,8 @@ export class OntologyVisualizationService {
     public nodesLimit = 500;
     public spinnerId = 'ontology-visualization';
     private clasess;
+    public importedOntologies = [];
+    private ontologiesClassMap;
 
     constructor(@Inject('ontologyStateService') private os,
         @Inject('ontologyManagerService') private om,
@@ -69,13 +73,23 @@ export class OntologyVisualizationService {
         this.ontologyId = this.os.listItem.ontologyId;
         this.commitId = this.os.listItem.ontologyRecord.commitId;
         this.branchId = this.os.listItem.ontologyRecord.branchId;
+        this.importedOntologies = this.os.listItem.importedOntologies || [];
         this.hasInProgressCommit = this.os.hasInProgressCommit();
+
+        if (this.os.listItem.hasPendingRefresh) {
+            this.os.listItem.hasPendingRefresh = false;
+            this.graphState.delete(this.commitId);
+        }
+
         if (!this.hasInProgressCommit) { 
             this.setOntologyClasses(null);
         }
+
         const classes = this.getOntologyClasses();
+        this.setOntologyClassName();
 
         return new Promise<void>((resolve, reject) => {
+
             if (!this.graphState.has(this.commitId)) {
                 if (!this.hasInProgressCommit) {
                     if (classes.flat.length) {
@@ -95,7 +109,7 @@ export class OntologyVisualizationService {
                     }
                 } else {
                     const ontologyGraph = this.getOntologyById(this.ontologyId);
-                    if (ontologyGraph) {
+                    if (ontologyGraph && !this.os.listItem.hasPendingRefresh) {
                         this.setGraphState(ontologyGraph.data);
                         resolve();
                     } else {
@@ -108,6 +122,10 @@ export class OntologyVisualizationService {
                                 this.os.listItem.ontologyRecord.branchId,
                                 this.os.listItem.ontologyRecord.commitId,
                                 true,
+                                false),
+                            this.om.getImportedIris(this.os.listItem.ontologyRecord.recordId,
+                                this.os.listItem.ontologyRecord.branchId,
+                                this.os.listItem.ontologyRecord.commitId,
                                 false)
                         ).pipe(catchError(error => of(reject(error))));
 
@@ -115,10 +133,14 @@ export class OntologyVisualizationService {
                             const classHierarchy: any = val[0];
                             this.propertyRanges = val[1].propertyToRanges;
                             this.entityNames = val[2];
+                            const importedIris = val[3];
+
                             if (!classHierarchy.iris || (classHierarchy.iris && classHierarchy.iris.length === 0)) { 
                                 reject(this.inProgressCommitMessage);
                             }
                             const listItem = {
+                                importedOntologyIds: [],
+                                importedOntologies: [],
                                 classes: {
                                     parentMap: classHierarchy.parentMap,
                                     childMap: classHierarchy.childMap,
@@ -130,6 +152,23 @@ export class OntologyVisualizationService {
                                 entityInfo: {}
                             };
 
+                            if (importedIris && importedIris.length > 0) {
+                                importedIris.forEach(info => {
+                                    const importedOntologyListItem = {
+                                        id: info.id,
+                                        ontologyId: info.id
+                                    };
+                                    listItem.importedOntologyIds.push(info.id);
+                                    listItem.importedOntologies.push(importedOntologyListItem);
+                                    if (info.classes && info.classes.length) {
+                                        info.classes.forEach(iri => this.os.addToClassIRIs(listItem, iri, info.id));
+                                    }
+                                });
+                                this.importedOntologies = listItem.importedOntologies;
+                                this.setOntologyClassName();
+                            }
+
+                            this.importedOntologies = listItem.importedOntologies;
                             classHierarchy.iris.forEach(iri => this.os.addToClassIRIs(listItem, iri, this.ontologyId));
                             this.isOverLimit = classHierarchy.iris.length > this.nodesLimit;
                             listItem.classes.flat = this.os.flattenHierarchy(listItem.classes, listItem);
@@ -151,7 +190,7 @@ export class OntologyVisualizationService {
                             this.graphData = info.data;
                         } else {
                             //Just in case we didn't finish loading the graph the first time.
-                            this.graphState.delete(this.branchId);
+                            this.graphState.delete(this.commitId);
                             this.initDataSetup(classes, this.os.listItem.entityInfo);
                         }
                     } else {
@@ -280,12 +319,17 @@ export class OntologyVisualizationService {
      * @param positioned a flag that tells the graph has been positioned before.
      */
     setGraphState(graph, positioned = false) {
+        if (this.importedOntologies && this.importedOntologies.length > 0) {
+            buildColorScale(this.importedOntologies.length);
+        }
         this.graphState.set(this.commitId,
             {
                 data: graph,
                 positioned: positioned,
                 ontologyId: this.ontologyId,
-                branchId: this.branchId
+                branchId: this.branchId,
+                importedOntologies: this.importedOntologies,
+                style: style
             });
     }
 
@@ -296,6 +340,18 @@ export class OntologyVisualizationService {
     getGraphData() {
         if (this.graphState && this.graphState.has(this.commitId)) {
             return this.graphState.get(this.commitId).data;
+        }
+    }
+
+    /**
+     * Returns Graph-level information::style.
+     * @returns { Array } An array of objects that contains graph style
+     */
+    getGraphStyle() {
+        if (this.graphState && this.graphState.has(this.commitId)) {
+            return this.graphState.get(this.commitId).style;
+        } else {
+            return {};
         }
     }
 
@@ -363,6 +419,15 @@ export class OntologyVisualizationService {
         return this.getOntologyClasses().flat.length > 0;
     }
 
+    /**
+     * Creates a new css class for every imported Ontology
+     */
+    setOntologyClassName() {
+        this.ontologiesClassMap = new Map();
+        this.importedOntologies.forEach( (item, index)=> {
+            this.ontologiesClassMap.set(item.id,`Ontology-${index}`);
+        });
+    }
     /**
      * 
      * @param nodes 
@@ -501,6 +566,10 @@ export class OntologyVisualizationService {
                 group: group,
                 ontologyId: nodeInfo.ontologyId
             };
+
+            if (nodeInfo.imported) {
+                node.classes = this.ontologiesClassMap.get(nodeInfo.ontologyId);
+            }
 
             node.data = {
                 id: classId,

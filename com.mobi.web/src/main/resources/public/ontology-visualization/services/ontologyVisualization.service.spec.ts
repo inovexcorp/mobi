@@ -1,4 +1,4 @@
-import {fakeAsync, TestBed, tick} from '@angular/core/testing';
+import {fakeAsync, TestBed, tick, flush} from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
@@ -43,7 +43,20 @@ describe('OntologyVisualization Service', () => {
         });
         ontologyManagerStub.getClassHierarchies = jasmine.createSpy('getClassHierarchies').and.returnValue(Promise.resolve(listItem.classHierarchy));
         ontologyManagerStub.getOntologyEntityNames = jasmine.createSpy('getOntologyEntityNames').and.returnValue(Promise.resolve(listItem.entityInfo));
+        ontologyManagerStub.getImportedIris = jasmine.createSpy('getImportedIris').and.returnValue(Promise.resolve([{
+            id: 1,
+            ontologyId: 1,
+            classes: []
+        },
+        {
+            id: 2,
+            ontologyId: 2,
+            classes: []
+        }]));
         visualizationStub.getPropertyRangeQuery = jasmine.createSpy('getPropertyRangeQuery').and.returnValue(Promise.resolve(listItem.propertyToRanges));
+        visualizationStub.hasClasses = jasmine.createSpy('hasClasses').and.returnValue(true);
+        visualizationStub.importedOntologies = [];
+        visualizationStub.setOntologyClassName = jasmine.createSpy('setOntologyClassName').and.callFake(() => {});
     });
 
     afterEach(() => {
@@ -53,7 +66,7 @@ describe('OntologyVisualization Service', () => {
     describe('should initialize with the correct data', function() {
         it('successfully', fakeAsync(function() {
             visualizationStub.init();
-            tick();
+            flush();
             expect(visualizationStub.getGraphData().length).toBeGreaterThan(0);
             expect(visualizationStub.hasPositions()).toBeFalse();
             expect(visualizationStub.isOverLimit).toBeFalse();
@@ -61,7 +74,7 @@ describe('OntologyVisualization Service', () => {
         it('with node limit', fakeAsync(function() {
             visualizationStub.nodesLimit = 50;
             visualizationStub.init();
-            tick();
+            flush();
             expect(visualizationStub.getGraphData().filter((item) => item.group == 'nodes').length).toBeLessThanOrEqual(50);
             expect(visualizationStub.hasPositions()).toBeFalse();
             expect(visualizationStub.isOverLimit).toBeTruthy();
@@ -69,7 +82,7 @@ describe('OntologyVisualization Service', () => {
         it('with InProgressCommit', fakeAsync(function() {
             ontologyStateStub.hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(true);
             visualizationStub.init();
-            tick();
+            flush();
             expect(visualizationStub.getGraphData().length).toBeGreaterThan(0);
             expect(visualizationStub.hasPositions()).toBeFalse();
             expect(visualizationStub.isOverLimit).toBeFalse();
@@ -78,7 +91,7 @@ describe('OntologyVisualization Service', () => {
             visualizationStub.nodesLimit = 50;
             ontologyStateStub.hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(true);
             visualizationStub.init();
-            tick();
+            flush();
             expect(visualizationStub.getGraphData().filter((item) => item.group === 'nodes').length).toBeLessThanOrEqual(50);
             expect(visualizationStub.hasPositions()).toBeFalse();
             expect(visualizationStub.isOverLimit).toBeTruthy();

@@ -30,7 +30,7 @@ const colors = chroma.cubehelix()
     .correctLightness()
     .colors(6);
 
-const highlighted = chroma('orange').alpha(0.5).hex('rgb');
+const highlighted = chroma('rgb(62, 189, 147)').alpha(0.5).hex('rgb');
 let primary = colors[0];
 let secondary = colors[1];
 
@@ -83,14 +83,13 @@ const style = [{
     "selector": "node:selected",
     "style": {
         "border-width": "6px",
-        "border-color": `${primary}`,
-        "background-color": `${highlighted}`,
+        "border-color": `${highlighted}`,
         "text-outline-color": `${primary}`
     }
 }, {
     "selector": "edge",
     "style": {
-        "haystack-radius": "2",
+        "haystack-radius": "1",
         "opacity": "0.333",
         "line-color": "#5a5858",
         "width": "2",
@@ -152,14 +151,15 @@ const style = [{
         "style": {
             "border-width": "6px",
             "border-color": `${highlighted}`,
-            "text-outline-color": `${primary}`
+            "text-outline-color": `${primary}`,
+            "border-opacity": "0.5",
         }
         },
     {
         "selector": "node.highlighted:selected",
         "style": {
             "border-width": "6px",
-            "border-color": `${primary}`
+            "border-color": `${highlighted}`
         }
     },
     {
@@ -168,7 +168,8 @@ const style = [{
         "border-width": "6px",
         "border-color": `${highlighted}`,
         "background-color": `${primary}`,
-        "text-outline-color": `${primary}`
+        "text-outline-color": `${primary}`,
+        "border-opacity": "0.5",
     }
 },{
         "selector": "node.faded",
@@ -180,14 +181,15 @@ const style = [{
         "selector": "edge.highlighted",
         "style": {
             "border-color": `${highlighted}`,
-            "line-color": `${highlighted}`
+            "line-color": `${highlighted}`,
         }
     },
     {
         "selector": "edge.focused",
         "style": {
             "border-color": `${highlighted}`,
-            "line-color": `${highlighted}`
+            "line-color": `${highlighted}`,
+            "border-opacity": "0.5",
         }
     },
     {
@@ -204,4 +206,60 @@ const style = [{
     },
 }];
 
-export  { style };
+const buildColorScale = (scaleNo) => {
+    const ontologyColors =  getScale(scaleNo);
+    for (let i = 0; i < scaleNo; i++) {
+        const keyIndex = `Ontology-${i}`;
+        style.push({
+            'selector': `.${keyIndex}`,
+            'style': {
+                'background-color': `${ontologyColors[i]}`,
+                'text-outline-color': `${ontologyColors[i]}`,
+            }
+        },{
+            'selector': `.${keyIndex}:selected`,
+            'style': {
+                'text-outline-color': `${ontologyColors[i]}`
+            }
+        });
+    }
+    return style;
+};
+
+const getScale = (no, isPaired) => {
+    if (isPaired) {
+        return
+    }
+    /** 
+     * color sets
+     **/
+    const colorSets = {
+        Set2: {
+            set : ['rgb(102,194,165)', 'rgb(252,141,98)', 'rgb(141,160,203)', 'rgb(231,138,195)', 'rgb(166,216,84)', 'rgb(255,217,47)', 'rgb(229,196,148)', 'rgb(179,179,179)'],
+        },
+        Accent: {
+            set : ['rgb(127,201,127)', 'rgb(190,174,212)', 'rgb(253,192,134)', 'rgb(255,255,153)', 'rgb(56,108,176)', 'rgb(240,2,127)', 'rgb(191,91,23)', 'rgb(102,102,102)'],
+        },
+        Set3: {
+            set : ['rgb(141,211,199)', 'rgb(86,176,219)', 'rgb(190,186,218)', 'rgb(251,128,114)', 'rgb(128,177,211)', 'rgb(253,180,98)', 'rgb(179,222,105)', 'rgb(252,205,229)', 'rgb(217,217,217)', 'rgb(188,128,189)', 'rgb(204,235,197)', 'rgb(255,237,111)'],
+        },
+        Dark: {
+           set : ['rgb(117,112,179)','rgb(231,41,138)','rgb(27,158,119)', 'rgb(230,171,2)', 'rgb(139,0,139)','rgb(102,102,102)','rgb(222,49,40)']
+        },
+        Paired: {
+           set : ['rgb(166,206,227)', 'rgb(31,120,180)', 'rgb(178,223,138)', 'rgb(51,160,44)', 'rgb(251,154,153)', 'rgb(227,26,28)', 'rgb(253,191,111)', 'rgb(255,127,0)', 'rgb(202,178,214)', 'rgb(106,61,154)', 'rgb(255,255,153)', 'rgb(177,89,40)'],
+        },
+        Pastel2: {
+            set : ['rgb(179,226,205)', 'rgb(253,205,172)', 'rgb(203,213,232)', 'rgb(244,202,228)', 'rgb(230,245,201)', 'rgb(255,242,174)', 'rgb(241,226,204)', 'rgb(204,204,204)'],
+        },
+        Pastel1: {
+           set : [ 'rgb(254,217,166)', 'rgb(255,255,204)', 'rgb(229,216,189)', 'rgb(253,218,236)', 'rgb(242,242,242)'],
+        },
+    };
+        return  chroma.scale(colorSets.Dark.set).mode('lch').colors(no);
+};
+
+export  {
+    style,
+    buildColorScale
+};

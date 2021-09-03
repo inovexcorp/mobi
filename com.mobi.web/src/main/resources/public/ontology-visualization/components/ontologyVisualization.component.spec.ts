@@ -39,6 +39,7 @@ describe('Ontology Visualization component', function()  {
         element = fixture.debugElement;
         ontologyVisStub = TestBed.get(OntologyVisualizationService);
         utilStub = TestBed.get('utilService');
+        ontologyVisStub.getGraphStyle = jasmine.createSpy('getGraphStyle').and.returnValue({});
     }));
     afterEach(function() {
         element = null;
