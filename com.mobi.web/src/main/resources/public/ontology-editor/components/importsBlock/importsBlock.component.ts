@@ -101,6 +101,7 @@ function importsBlockComponentCtrl($q, $timeout, ontologyStateService, prefixes,
     dvm.refresh = function() {
         dvm.os.updateOntology(dvm.listItem.ontologyRecord.recordId, dvm.listItem.ontologyRecord.branchId, dvm.listItem.ontologyRecord.commitId, dvm.listItem.upToDate, dvm.listItem.inProgressCommit, true)
             .then(response => {
+                dvm.os.listItem.hasPendingRefresh = true;
                 dvm.setIndirectImports();
                 util.createSuccessToast('');
             }, util.createErrorToast);

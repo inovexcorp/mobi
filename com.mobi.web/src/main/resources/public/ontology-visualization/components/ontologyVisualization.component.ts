@@ -22,7 +22,6 @@
  */
 import cytoscape from 'cytoscape/dist/cytoscape.esm.js';
 import * as d3Force from 'cytoscape-d3-force';
-import  { style } from './graphSettings';
 import { Component, Inject, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { OntologyVisualizationService } from '../services/ontologyVisualizaton.service';
 import './ontologyVisualization.component.scss';
@@ -128,6 +127,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
     initGraph() : void {
         const self = this;
         const elements = this.ovis.getGraphData();
+        const style = this.ovis.getGraphStyle();
         const layoutName = this.ovis.hasPositions() ? 'preset' : this.layout;
         const container = <HTMLElement>document.querySelector('.ontology-visualization');
         this.length = this.getElementsLength(elements);
@@ -169,7 +169,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             container,
             layout,
             elements,
-            style,
+            style
         });
 
         const chart = this.chart;

@@ -253,6 +253,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         selected: {},
         selectedBlankNodes: [],
         failedImports: [],
+        hasPendingRefresh: false,
         goTo: {
             entityIRI: '',
             active: false

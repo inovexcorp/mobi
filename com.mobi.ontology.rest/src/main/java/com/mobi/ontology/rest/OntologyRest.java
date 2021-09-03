@@ -12,12 +12,12 @@ package com.mobi.ontology.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -2171,6 +2171,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
      * @return IRIs in the ontology identified by the provided IDs.
      */
     @GET
@@ -2196,9 +2198,11 @@ public class OntologyRest {
             @Parameter(description = "String representing the Branch Resource ID", required = false)
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
-            @QueryParam("commitId") String commitIdStr) {
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs);
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs, applyInProgressCommit);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2341,6 +2345,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
      * @return annotation properties in the ontology identified by the provided IDs.
      */
     @GET
@@ -2366,10 +2372,12 @@ public class OntologyRest {
             @Parameter(description = "String representing the Branch Resource ID", required = false)
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
-            @QueryParam("commitId") String commitIdStr) {
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getAnnotationIRIObject);
+                    this::getAnnotationIRIObject, applyInProgressCommit);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2388,6 +2396,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
      * @return classes in the ontology identified by the provided IDs.
      */
     @GET
@@ -2413,9 +2423,12 @@ public class OntologyRest {
             @Parameter(description = "String representing the Branch Resource ID", required = false)
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
-            @QueryParam("commitId") String commitIdStr) {
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
+            ) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getClassIRIArray);
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getClassIRIArray, applyInProgressCommit);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2434,6 +2447,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
      * @return datatypes in the ontology identified by the provided IDs.
      */
     @GET
@@ -2459,9 +2474,11 @@ public class OntologyRest {
             @Parameter(description = "String representing the Branch Resource ID", required = false)
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
-            @QueryParam("commitId") String commitIdStr) {
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getDatatypeIRIObject);
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getDatatypeIRIObject, applyInProgressCommit);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2480,6 +2497,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
      * @return object properties in the ontology identified by the provided IDs.
      */
     @GET
@@ -2505,10 +2524,12 @@ public class OntologyRest {
             @Parameter(description = "String representing the Branch Resource ID", required = false)
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
-            @QueryParam("commitId") String commitIdStr) {
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getObjectPropertyIRIObject);
+                    this::getObjectPropertyIRIObject, applyInProgressCommit);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2527,6 +2548,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
      * @return data properties in the ontology identified by the provided IDs.
      */
     @GET
@@ -2553,10 +2576,12 @@ public class OntologyRest {
             @Parameter(description = "String representing the Branch Resource ID", required = false)
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
-            @QueryParam("commitId") String commitIdStr) {
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getDataPropertyIRIObject);
+                    this::getDataPropertyIRIObject, applyInProgressCommit);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2575,6 +2600,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
      * @return named individuals in the ontology identified by the provided IDs.
      */
     @GET
@@ -2600,10 +2627,13 @@ public class OntologyRest {
             @Parameter(description = "String representing the Branch Resource ID", required = false)
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
-            @QueryParam("commitId") String commitIdStr) {
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
+            ) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getNamedIndividualIRIObject);
+                    this::getNamedIndividualIRIObject, applyInProgressCommit);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2658,7 +2688,7 @@ public class OntologyRest {
             @DefaultValue("false") @QueryParam("nested") boolean nested,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
-            ) {
+    ) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
@@ -3001,7 +3031,7 @@ public class OntologyRest {
             return Response.ok(objectNode.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        } 
+        }
     }
 
     /**
@@ -3697,14 +3727,17 @@ public class OntologyRest {
      * @param commitIdStr the commit ID String to process.
      * @param iriFunction the Function that takes an Ontology and returns a List of IRI corresponding to an Ontology
      *                    component.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
      * @return the JSON list of imported IRI lists determined by the provided Function.
      */
     private Response doWithImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                               String branchIdStr, String commitIdStr,
-                                              Function<Ontology, ObjectNode> iriFunction) {
+                                              Function<Ontology, ObjectNode> iriFunction,
+                                              boolean applyInProgressCommit) {
         Set<Ontology> importedOntologies;
         try {
-            importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, true);
+            importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit);
         } catch (MobiOntologyException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
