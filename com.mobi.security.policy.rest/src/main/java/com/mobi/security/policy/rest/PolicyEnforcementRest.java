@@ -55,6 +55,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -117,7 +118,6 @@ public class PolicyEnforcementRest {
                     String jsonRequest) {
         log.debug("Authorizing...");
         long start = System.currentTimeMillis();
-
         try {
             JSONObject json = JSONObject.fromObject(jsonRequest);
             IRI subjectId = (IRI) RestUtils.optActiveUser(context, engineManager).map(User::getResource)
@@ -142,8 +142,8 @@ public class PolicyEnforcementRest {
             Map<String, Literal> actionAttrs = attributes.entrySet().stream().collect(Collectors.toMap(
                     e -> e.getKey(), e -> vf.createLiteral(e.getValue())));
 
-            Request request = pdp.createRequest(subjectId, subjectAttrs, resourceId, resourceAttrs,
-                    actionId, actionAttrs);
+            Request request = pdp.createRequest(Arrays.asList(subjectId), subjectAttrs, Arrays.asList(resourceId), resourceAttrs,
+                    Arrays.asList(actionId), actionAttrs);
 
             log.debug(request.toString());
             com.mobi.security.policy.api.Response response = pdp.evaluate(request,

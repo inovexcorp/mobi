@@ -92,6 +92,7 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
+import com.mobi.security.policy.api.PDP;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
@@ -216,6 +217,9 @@ public class CatalogRestTest extends MobiRestTestNg {
     @Mock
     private RepositoryConnection conn;
 
+    @Mock
+    private PDP pdp;
+
     @Override
     protected Application configureApp() throws Exception {
         vf = getValueFactory();
@@ -297,6 +301,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         rest.setbNodeService(bNodeService);
         rest.setProvUtils(provUtils);
         rest.setCatalogUtilsService(catalogUtils);
+        rest.setPdp(pdp);
 
         return new ResourceConfig()
                 .register(rest)
@@ -333,6 +338,8 @@ public class CatalogRestTest extends MobiRestTestNg {
         when(catalogManager.getDistributedCatalog()).thenReturn(distributedCatalog);
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(testRecord.getResource()));
         when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(recordResults);
+        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class),
+                any(PDP.class))).thenReturn(recordResults);
         when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(recordFactory)))
                 .thenReturn(Optional.of(testRecord));
         when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(unversionedRecordFactory)))
@@ -552,7 +559,7 @@ public class CatalogRestTest extends MobiRestTestNg {
                 .limit(10)
                 .ascending(false);
 
-        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()));
+        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()), eq(user), eq(pdp));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.getTotalSize());
         assertEquals(response.getLinks().size(), 0);
@@ -589,7 +596,7 @@ public class CatalogRestTest extends MobiRestTestNg {
                 .limit(10)
                 .ascending(false);
 
-        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()));
+        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()), eq(user), eq(pdp));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.getTotalSize());
         assertEquals(response.getLinks().size(), 0);
@@ -610,7 +617,7 @@ public class CatalogRestTest extends MobiRestTestNg {
                 .queryParam("offset", 1)
                 .queryParam("limit", 1).request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class));
+        verify(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class), eq(user), eq(pdp));
         Set<Link> links = response.getLinks();
         assertEquals(links.size(), 2);
         links.forEach(link -> {
@@ -634,7 +641,8 @@ public class CatalogRestTest extends MobiRestTestNg {
     @Test
     public void getRecordsWithOffsetThatIsTooLargeTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class));
+        doThrow(new IllegalArgumentException()).when(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)),
+                any(PaginatedSearchParams.class), eq(user), eq(pdp));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records").queryParam("offset", 9999).request().get();
         assertEquals(response.getStatus(), 400);
@@ -643,7 +651,8 @@ public class CatalogRestTest extends MobiRestTestNg {
     @Test
     public void getRecordsWithIncorrectPathTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(catalogManager).findRecord(eq(vf.createIRI(ERROR_IRI)), any(PaginatedSearchParams.class));
+        doThrow(new IllegalArgumentException()).when(catalogManager).findRecord(eq(vf.createIRI(ERROR_IRI)),
+                any(PaginatedSearchParams.class), eq(user), eq(pdp));
 
         Response response = target().path("catalogs/" + encode(ERROR_IRI) + "/records")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();
@@ -653,7 +662,8 @@ public class CatalogRestTest extends MobiRestTestNg {
     @Test
     public void getRecordsWithErrorTest() {
         // Setup:
-        doThrow(new MobiException()).when(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class));
+        doThrow(new MobiException()).when(catalogManager).findRecord(eq(vf.createIRI(LOCAL_IRI)), any(PaginatedSearchParams.class),
+                eq(user), eq(pdp));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).request().get();

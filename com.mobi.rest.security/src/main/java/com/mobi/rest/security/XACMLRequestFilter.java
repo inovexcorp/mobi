@@ -70,6 +70,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -210,8 +211,8 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                     context);
         }
 
-        Request request = pdp.createRequest(subjectIdIri, subjectAttributes, resourceIdIri, resourceAttributes,
-                actionId, actionAttributes);
+        Request request = pdp.createRequest(Arrays.asList(subjectIdIri), subjectAttributes, Arrays.asList(resourceIdIri), resourceAttributes,
+                Arrays.asList(actionId), actionAttributes);
         log.debug(request.toString());
         Response response = pdp.evaluate(request, vf.createIRI(POLICY_PERMIT_OVERRIDES));
         log.debug(response.toString());

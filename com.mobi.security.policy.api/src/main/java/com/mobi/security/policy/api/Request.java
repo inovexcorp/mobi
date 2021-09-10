@@ -27,6 +27,7 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Map;
 
 public interface Request {
@@ -37,9 +38,9 @@ public interface Request {
     IRI getSubjectCategory();
 
     /**
-     * The ID of the Subject of this authorization Request.
+     * The IDs of the Subjects of this authorization Request.
      */
-    IRI getSubjectId();
+    List<IRI> getSubjectIds();
 
     /**
      * A map of other attributes on the Subject that are sent as a part of this authorization Request.
@@ -52,9 +53,9 @@ public interface Request {
     IRI getResourceCategory();
 
     /**
-     * The ID of the Resource of this authorization Request.
+     * The IDs of the Resources of this authorization Request.
      */
-    IRI getResourceId();
+    List<IRI> getResourceIds();
 
     /**
      * A map of other attributes on the Resource that are sent as a part of this authorization Request.
@@ -67,9 +68,9 @@ public interface Request {
     IRI getActionCategory();
 
     /**
-     * The ID of the Action of this authorization Request.
+     * The IDs of the Actions of this authorization Request.
      */
-    IRI getActionId();
+    List<IRI> getActionIds();
 
     /**
      * A map of other attributes on the Action that are sent as a part of this authorization Request.

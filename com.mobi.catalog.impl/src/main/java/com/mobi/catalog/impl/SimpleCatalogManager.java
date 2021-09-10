@@ -12,16 +12,18 @@ package com.mobi.catalog.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
@@ -79,6 +81,7 @@ import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -87,6 +90,9 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.Request;
+import com.mobi.security.policy.api.xacml.XACML;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
@@ -98,6 +104,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -307,21 +314,146 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
+    private List<String> getViewableRecords(Resource catalogId, PaginatedSearchParams searchParams, User user, PDP pdp,
+                                            RepositoryConnection conn) {
+        Optional<Resource> typeParam = searchParams.getTypeFilter();
+        Optional<String> searchTextParam = searchParams.getSearchText();
+
+        String queryString = replaceRecordsFilter(new ArrayList<>(), replaceKeywordFilter(searchParams,
+                FIND_RECORDS_QUERY));
+
+        log.debug("Query String:\n" + queryString);
+
+        TupleQuery query = conn.prepareTupleQuery(queryString);
+        query.setBinding(CATALOG_BINDING, catalogId);
+        typeParam.ifPresent(resource -> query.setBinding(TYPE_FILTER_BINDING, resource));
+        searchTextParam.ifPresent(searchText -> query.setBinding(SEARCH_BINDING, vf.createLiteral(searchText)));
+
+        log.debug("Query Plan:\n" + query);
+
+        // Get Results
+        TupleQueryResult result = query.evaluate();
+
+        List<String> recordIRIs = new ArrayList<>();
+        result.forEach(bindings -> {
+            recordIRIs.add(Bindings.requiredResource(bindings, RECORD_BINDING)
+                    .stringValue());
+        });
+
+        Map<String, Literal> subjectAttrs = new HashMap<>();
+        Map<String, Literal> actionAttrs = new HashMap<>();
+
+        IRI subjectId = (IRI) user.getResource();
+
+        /** Will this always be Read? */
+        IRI actionId = vf.createIRI("http://mobi.com/ontologies/policy#Read");
+
+        List<IRI> resourceIds = recordIRIs.stream().map(recordIRI -> vf.createIRI(recordIRI))
+                .collect(Collectors.toList());
+        subjectAttrs.put(XACML.SUBJECT_ID, vf.createLiteral(subjectId.stringValue()));
+        actionAttrs.put(XACML.ACTION_ID, vf.createLiteral(actionId.stringValue()));
+
+        if (resourceIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Request request = pdp.createRequest(Arrays.asList(subjectId), subjectAttrs, resourceIds, new HashMap<>(),
+                Arrays.asList(actionId), actionAttrs);
+
+        Set<String> viewableRecords = pdp.filter(request,
+                vf.createIRI(POLICY_PERMIT_OVERRIDES));
+        return new ArrayList<>(viewableRecords);
+    }
+
+    @Override
+    public PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams, User user,
+                                                     PDP pdp) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            List<String> viewableRecords = getViewableRecords(catalogId, searchParams, user, pdp, conn);
+            int totalCount = viewableRecords.size();
+            log.debug("Record count: " + totalCount);
+
+            if (totalCount == 0) {
+                return SearchResults.emptyResults();
+            }
+
+            // Prepare Query
+            int offset = searchParams.getOffset();
+            int limit = searchParams.getLimit().orElse(totalCount);
+
+            if (offset > totalCount) {
+                throw new IllegalArgumentException("Offset exceeds total size");
+            }
+
+            StringBuilder querySuffix = new StringBuilder("\nORDER BY ");
+            Resource sortByParam = searchParams.getSortBy().orElse(vf.createIRI(_Thing.modified_IRI));
+            StringBuilder binding = new StringBuilder();
+            if (sortByParam.equals(vf.createIRI(_Thing.title_IRI))) {
+                binding.append("lcase(?").append(sortingOptions.getOrDefault(sortByParam, "modified")).append(")");
+            } else {
+                binding.append("?").append(sortingOptions.getOrDefault(sortByParam, "modified"));
+            }
+            Optional<Boolean> ascendingParam = searchParams.getAscending();
+            if (ascendingParam.isPresent() && ascendingParam.get()) {
+                querySuffix.append(binding);
+            } else {
+                querySuffix.append("DESC(").append(binding).append(")");
+            }
+            querySuffix.append("\nLIMIT ").append(limit).append("\nOFFSET ").append(offset);
+
+            String queryString = replaceKeywordFilter(searchParams,
+                    FIND_RECORDS_QUERY + querySuffix.toString());
+
+            queryString = replaceRecordsFilter(viewableRecords, queryString);
+
+            log.debug("Query String:\n" + queryString);
+
+            TupleQuery query = conn.prepareTupleQuery(queryString);
+            query.setBinding(CATALOG_BINDING, catalogId);
+
+            Optional<Resource> typeParam = searchParams.getTypeFilter();
+            Optional<String> searchTextParam = searchParams.getSearchText();
+
+            typeParam.ifPresent(resource -> query.setBinding(TYPE_FILTER_BINDING, resource));
+            searchTextParam.ifPresent(searchText -> query.setBinding(SEARCH_BINDING, vf.createLiteral(searchText)));
+
+            log.debug("Query Plan:\n" + query);
+
+            // Get Results
+            TupleQueryResult result = query.evaluate();
+
+            List<Record> records = new ArrayList<>();
+            result.forEach(bindings -> {
+                Resource resource = vf.createIRI(Bindings.requiredResource(bindings, RECORD_BINDING)
+                        .stringValue());
+                records.add(utils.getRecord(catalogId, resource, recordFactory, conn));
+            });
+
+            result.close();
+
+            log.debug("Result set size: " + records.size());
+
+            int pageNumber = (limit > 0) ? (offset / limit) + 1 : 1;
+
+            return records.size() > 0 ? new SimpleSearchResults<>(records, totalCount, limit, pageNumber) :
+                    SearchResults.emptyResults();
+        }
+    }
+
     @Override
     public PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Optional<Resource> typeParam = searchParams.getTypeFilter();
             Optional<String> searchTextParam = searchParams.getSearchText();
 
+            String queryStr = replaceRecordsFilter(new ArrayList<>(), COUNT_RECORDS_QUERY);
             // Get Total Count
-            String countQuery = replaceKeywordFilter(searchParams, COUNT_RECORDS_QUERY);
-            log.debug("Count Query String:\n" + countQuery);
-            TupleQuery countTupleQuery = conn.prepareTupleQuery(countQuery);
-            countTupleQuery.setBinding(CATALOG_BINDING, catalogId);
-            typeParam.ifPresent(resource -> countTupleQuery.setBinding(TYPE_FILTER_BINDING, resource));
-            searchTextParam.ifPresent(s -> countTupleQuery.setBinding(SEARCH_BINDING, vf.createLiteral(s)));
+            TupleQuery countQuery = conn.prepareTupleQuery(replaceKeywordFilter(searchParams, queryStr));
+            countQuery.setBinding(CATALOG_BINDING, catalogId);
+            typeParam.ifPresent(resource -> countQuery.setBinding(TYPE_FILTER_BINDING, resource));
+            searchTextParam.ifPresent(s -> countQuery.setBinding(SEARCH_BINDING, vf.createLiteral(s)));
 
-            TupleQueryResult countResults = countTupleQuery.evaluate();
+            TupleQueryResult countResults = countQuery.evaluate();
 
             int totalCount;
             BindingSet countBindingSet;
@@ -361,8 +493,8 @@ public class SimpleCatalogManager implements CatalogManager {
             }
             querySuffix.append("\nLIMIT ").append(limit).append("\nOFFSET ").append(offset);
 
-            String queryString = replaceKeywordFilter(searchParams,
-                    FIND_RECORDS_QUERY + querySuffix.toString());
+            String queryString = replaceRecordsFilter(new ArrayList<>(), replaceKeywordFilter(searchParams,
+                    FIND_RECORDS_QUERY + querySuffix.toString()));
 
             log.debug("Query String:\n" + queryString);
 
@@ -398,7 +530,30 @@ public class SimpleCatalogManager implements CatalogManager {
         return keyword.replace("\\", "\\\\").replace("'", "\\'");
     }
 
-    protected static String replaceKeywordFilter(PaginatedSearchParams searchParams, String queryString) {
+    private String replaceRecordsFilter(List<String> recordIRIs, String queryString) {
+        if (!recordIRIs.isEmpty()) {
+            StringBuilder recordsFilter = new StringBuilder();
+            recordsFilter.append("FILTER(?record IN (");
+
+            for (int i = 0; i < recordIRIs.size(); i++) {
+                recordsFilter.append("<");
+                recordsFilter.append(recordIRIs.get(i));
+                recordsFilter.append(">");
+
+                if (i < recordIRIs.size() - 1) {
+                    recordsFilter.append(",");
+                }
+            }
+            recordsFilter.append("))");
+
+            queryString = queryString.replace("%RECORDS_FILTER%", recordsFilter.toString());
+        } else {
+            queryString = queryString.replace("%RECORDS_FILTER%", "");
+        }
+        return queryString;
+    }
+
+    public static String replaceKeywordFilter(PaginatedSearchParams searchParams, String queryString) {
         if (searchParams.getKeywords().isPresent()) {
             StringBuilder keywordFilter = new StringBuilder();
             keywordFilter.append("?record mcat:keyword ?keyword .\n");

@@ -11,6 +11,7 @@ WHERE {
         dc:modified ?modified ;
         ?p ?o .
 
+    %RECORDS_FILTER%
     %KEYWORDS_FILTER%
     FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord, mcat:VersionedRDFRecord,
         mcat:OntologyRecord, mcat:MappingRecord, dataset:DatasetRecord))

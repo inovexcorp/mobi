@@ -38,16 +38,14 @@ import aQute.bnd.annotation.component.Reference;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.PIP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.Response;
-import com.mobi.security.policy.api.Status;
+import com.mobi.security.policy.api.xacml.XACML;
 import com.mobi.security.policy.api.xacml.XACMLResponse;
 import org.wso2.balana.Balana;
 import org.wso2.balana.PDPConfig;
-import org.wso2.balana.ProcessingException;
 import org.wso2.balana.combine.PolicyCombiningAlgorithm;
 import org.wso2.balana.combine.xacml2.FirstApplicablePolicyAlg;
 import org.wso2.balana.combine.xacml2.OnlyOneApplicablePolicyAlg;
@@ -57,10 +55,15 @@ import org.wso2.balana.combine.xacml3.OrderedDenyOverridesPolicyAlg;
 import org.wso2.balana.combine.xacml3.OrderedPermitOverridesPolicyAlg;
 import org.wso2.balana.combine.xacml3.PermitOverridesPolicyAlg;
 import org.wso2.balana.combine.xacml3.PermitUnlessDenyPolicyAlg;
+import org.wso2.balana.ctx.AbstractResult;
+import org.wso2.balana.ctx.Attribute;
+import org.wso2.balana.ctx.ResponseCtx;
+import org.wso2.balana.ctx.xacml3.Result;
 import org.wso2.balana.finder.AttributeFinder;
 import org.wso2.balana.finder.AttributeFinderModule;
 import org.wso2.balana.finder.PolicyFinder;
 import org.wso2.balana.finder.PolicyFinderModule;
+import org.wso2.balana.xacml3.Attributes;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -108,8 +111,9 @@ public class BalanaPDP implements PDP {
     }
 
     @Override
-    public Request createRequest(IRI subjectId, Map<String, Literal> subjectAttrs, IRI resourceId,
-                                 Map<String, Literal> resourceAttrs, IRI actionId, Map<String, Literal> actionAttrs) {
+    public Request createRequest(List<IRI> subjectId, Map<String, Literal> subjectAttrs, List<IRI> resourceId,
+                                 Map<String, Literal> resourceAttrs, List<IRI> actionId,
+                                 Map<String, Literal> actionAttrs) {
         BalanaRequest.Builder builder = new BalanaRequest.Builder(subjectId, resourceId, actionId, OffsetDateTime.now(),
                 vf, jaxbContext);
         if (subjectAttrs != null) {
@@ -142,13 +146,28 @@ public class BalanaPDP implements PDP {
     }
 
     @Override
-    public Response evaluate(Request request, IRI policyAlgorithm) {
-        try {
-            return new XACMLResponse(getPDP(policyAlgorithm).evaluate(getRequest(request).toString()), vf, jaxbContext);
-        } catch (ProcessingException e) {
-            return new XACMLResponse.Builder(Decision.INDETERMINATE, Status.PROCESSING_ERROR, jaxbContext)
-                    .statusMessage(e.getMessage()).build();
+    public Set<String> filter(Request request, IRI policyAlgorithm) {
+        ResponseCtx responseCtx = getPDP(policyAlgorithm).evaluateReturnResponseCtx(getRequest(request).toString());
+        Set<String> resultSet = new HashSet<>();
+        for(AbstractResult result : responseCtx.getResults()) {
+            if(AbstractResult.DECISION_PERMIT == result.getDecision()
+                    || AbstractResult.DECISION_NOT_APPLICABLE == result.getDecision()) {
+                Set<Attributes> attributesSet = ((Result)result).getAttributes();
+                for(Attributes attributes : attributesSet) {
+                    if (attributes.getCategory().toString().equals(XACML.RESOURCE_CATEGORY)) {
+                        for (Attribute attribute : attributes.getAttributes()) {
+                            resultSet.add(attribute.getValue().encode());
+                        }
+                    }
+                }
+            }
         }
+        return resultSet;
+    }
+
+    @Override
+    public Response evaluate(Request request, IRI policyAlgorithm) {
+        return new XACMLResponse(getPDP(policyAlgorithm).evaluate(getRequest(request).toString()), vf, jaxbContext);
     }
 
     private org.wso2.balana.PDP getPDP(IRI policyAlgorithm) {
@@ -167,7 +186,7 @@ public class BalanaPDP implements PDP {
         });
         attributeFinder.setModules(attributeFinderModules);
 
-        PDPConfig newConfig = new PDPConfig(attributeFinder, policyFinder, null, false);
+        PDPConfig newConfig = new PDPConfig(attributeFinder, policyFinder, null, true);
         balanaPRP.setPDPConfig(newConfig);
         balanaPRP.setCombiningAlg(getAlgorithm(policyAlgorithm));
         return new org.wso2.balana.PDP(newConfig);
@@ -177,8 +196,8 @@ public class BalanaPDP implements PDP {
         if (request instanceof BalanaRequest) {
             return (BalanaRequest) request;
         }
-        BalanaRequest.Builder builder = new BalanaRequest.Builder(request.getSubjectId(), request.getResourceId(),
-                request.getActionId(), request.getRequestTime(), vf, jaxbContext);
+        BalanaRequest.Builder builder = new BalanaRequest.Builder(request.getSubjectIds(), request.getResourceIds(),
+                request.getActionIds(), request.getRequestTime(), vf, jaxbContext);
         request.getSubjectAttrs().forEach(builder::addSubjectAttr);
         request.getResourceAttrs().forEach(builder::addResourceAttr);
         request.getActionAttrs().forEach(builder::addActionAttr);

@@ -12,12 +12,12 @@ package com.mobi.security.policy.impl.core.pip;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -103,11 +103,11 @@ public class MobiPIPTest extends OrmEnabledTestCase {
         when(request.getSubjectCategory()).thenReturn(subjectCategory);
         when(request.getResourceCategory()).thenReturn(resourceCategory);
         when(request.getActionCategory()).thenReturn(actionCategory);
-        when(request.getSubjectId()).thenReturn(subjectId);
+        when(request.getSubjectIds()).thenReturn(Arrays.asList(subjectId));
         when(request.getSubjectAttrs()).thenReturn(attrs);
-        when(request.getResourceId()).thenReturn(resourceId);
+        when(request.getResourceIds()).thenReturn(Arrays.asList(resourceId));
         when(request.getResourceAttrs()).thenReturn(attrs);
-        when(request.getActionId()).thenReturn(actionId);
+        when(request.getActionIds()).thenReturn(Arrays.asList(actionId));
         when(request.getActionAttrs()).thenReturn(attrs);
         when(request.getRequestTime()).thenReturn(time);
 
