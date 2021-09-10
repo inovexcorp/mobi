@@ -49,7 +49,7 @@
                             <md-list-item class="ontology" ng-repeat="ontology in dvm.ontologies track by ontology.recordId">
                                 <div class="md-list-item-text">
                                     <h4 class="header" ng-bind-html="ontology.title | highlight:dvm.getOntologyConfig.searchText | trusted"></h4>
-                                    <p><small class="ontology-iri text-muted">{{ontology.ontologyIRI}}</small></p>
+                                    <p><small class="ontology-iri text-muted" title="{{ontology.ontologyIRI}}">{{ontology.ontologyIRI}}</small></p>
                                 </div>
                                 <md-checkbox class="md-primary" ng-model="ontology.selected" aria-label="Selected" ng-change="dvm.toggleOntology(ontology)"></md-checkbox>
                             </md-list-item>
