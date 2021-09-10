@@ -42,6 +42,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.security.policy.api.PDP;
 
 import java.io.File;
 import java.util.List;
@@ -79,6 +80,21 @@ public interface CatalogManager {
      * @throws IllegalArgumentException Thrown if the passed offset is greater than the number of results.
      */
     PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams);
+
+
+    /**
+     * Searches the provided Catalog for Records that match the provided PaginatedSearchParams. Acceptable
+     * sortBy parameters are http://purl.org/dc/terms/title, http://purl.org/dc/terms/modified, and
+     * http://purl.org/dc/terms/issued. Only records that the provided user has Read permission for are returned.
+     *
+     * @param catalogId    The Resource identifying the Catalog to find the Records in.
+     * @param searchParams Search parameters.
+     * @param user         The user to check record read permissions for
+     * @param pdp          The PDP to use to check record permissions
+     * @return The PaginatedSearchResults for a page matching the search criteria.
+     * @throws IllegalArgumentException Thrown if the passed offset is greater than the number of results.
+     */
+    PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams, User user, PDP pdp);
 
     /**
      * Return a list of keywords using the provided Catalog with provided PaginatedSearchParams.

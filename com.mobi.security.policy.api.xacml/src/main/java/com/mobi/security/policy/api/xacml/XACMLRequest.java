@@ -56,13 +56,13 @@ import javax.xml.bind.JAXBException;
 
 public class XACMLRequest implements Request {
 
-    protected IRI subjectId;
+    protected List<IRI> subjectIds;
     protected IRI subjectCategory;
     protected Map<String, Literal> subjectAttrs;
-    protected IRI resourceId;
+    protected List<IRI> resourceIds;
     protected IRI resourceCategory;
     protected Map<String, Literal> resourceAttrs;
-    protected IRI actionId;
+    protected List<IRI> actionIds;
     protected IRI actionCategory;
     protected Map<String, Literal> actionAttrs;
     protected IRI requestTimeAttribute;
@@ -72,16 +72,18 @@ public class XACMLRequest implements Request {
     protected ObjectFactory of;
     protected JAXBContext jaxbContext;
 
+    protected ValueFactory vf;
+
     protected XACMLRequest() {}
 
     protected XACMLRequest(Builder builder) {
-        this.subjectId = builder.subjectId;
+        this.subjectIds = builder.subjectIds;
         this.subjectCategory = builder.subjectCategory;
         this.subjectAttrs = builder.subjectAttrs;
-        this.resourceId = builder.resourceId;
+        this.resourceIds = builder.resourceIds;
         this.resourceCategory = builder.resourceCategory;
         this.resourceAttrs = builder.resourceAttrs;
-        this.actionId = builder.actionId;
+        this.actionIds = builder.actionIds;
         this.actionCategory = builder.actionCategory;
         this.actionAttrs = builder.actionAttrs;
         this.requestTime = builder.requestTime;
@@ -89,14 +91,26 @@ public class XACMLRequest implements Request {
         this.jaxbContext = builder.jaxbContext;
 
         of = new ObjectFactory();
-
+        this.vf = builder.vf;
         this.requestType = of.createRequestType();
         requestType.setCombinedDecision(false);
         requestType.setReturnPolicyIdList(true);
         List<AttributesType> attributesList = requestType.getAttributes();
-        attributesList.add(createAttributes(SUBJECT_CATEGORY, subjectAttrs, SUBJECT_ID, subjectId));
-        attributesList.add(createAttributes(RESOURCE_CATEGORY, resourceAttrs, RESOURCE_ID, resourceId));
-        attributesList.add(createAttributes(ACTION_CATEGORY, actionAttrs, ACTION_ID, actionId));
+        subjectIds.forEach(id -> {
+            Map<String, Literal> subjectMap = new HashMap<>();
+            subjectMap.put(SUBJECT_ID, builder.vf.createLiteral(id.stringValue()));
+            attributesList.add(createAttributes(SUBJECT_CATEGORY, subjectMap, SUBJECT_ID, id));
+        });
+        resourceIds.forEach(id -> {
+            Map<String, Literal> resourceMap = new HashMap<>();
+            resourceMap.put(RESOURCE_ID, builder.vf.createLiteral(id.stringValue()));
+            attributesList.add(createAttributes(RESOURCE_CATEGORY, resourceMap, RESOURCE_ID, id));
+        });
+        actionIds.forEach(id -> {
+            Map<String, Literal> actionMap = new HashMap<>();
+            actionMap.put(ACTION_ID, builder.vf.createLiteral(id.stringValue()));
+            attributesList.add(createAttributes(ACTION_CATEGORY, actionMap, ACTION_ID, id));
+        });
 
         AttributeValueType requestTimeAttributeValue = of.createAttributeValueType();
         requestTimeAttributeValue.setDataType(XSD.DATE_TIME);
@@ -116,8 +130,8 @@ public class XACMLRequest implements Request {
     }
 
     @Override
-    public IRI getSubjectId() {
-        return subjectId;
+    public List<IRI> getSubjectIds() {
+        return subjectIds;
     }
 
     @Override
@@ -131,8 +145,8 @@ public class XACMLRequest implements Request {
     }
 
     @Override
-    public IRI getResourceId() {
-        return resourceId;
+    public List<IRI> getResourceIds() {
+        return resourceIds;
     }
 
     @Override
@@ -146,8 +160,8 @@ public class XACMLRequest implements Request {
     }
 
     @Override
-    public IRI getActionId() {
-        return actionId;
+    public List<IRI> getActionIds() {
+        return actionIds;
     }
 
     @Override
@@ -181,30 +195,32 @@ public class XACMLRequest implements Request {
     }
 
     public static class Builder {
-        private IRI subjectId;
+        private List<IRI> subjectIds;
         private IRI subjectCategory;
         private Map<String, Literal> subjectAttrs = new HashMap<>();
-        private IRI resourceId;
+        private List<IRI> resourceIds;
         private IRI resourceCategory;
         private Map<String, Literal> resourceAttrs = new HashMap<>();
-        private IRI actionId;
+        private List<IRI> actionIds;
         private IRI actionCategory;
         private Map<String, Literal> actionAttrs = new HashMap<>();
         private IRI requestTimeAttribute;
         private OffsetDateTime requestTime;
         private JAXBContext jaxbContext;
+        public ValueFactory vf;
 
-        public Builder(IRI subjectId, IRI resourceId, IRI actionId, OffsetDateTime requestTime, ValueFactory vf,
+        public Builder(List<IRI> subjectIds, List<IRI> resourceIds, List<IRI> actionIds, OffsetDateTime requestTime, ValueFactory vf,
                        JAXBContext jaxbContext) {
-            this.subjectId = subjectId;
-            this.resourceId = resourceId;
-            this.actionId = actionId;
+            this.subjectIds = subjectIds;
+            this.resourceIds = resourceIds;
+            this.actionIds = actionIds;
             this.requestTime = requestTime;
             this.subjectCategory = vf.createIRI(SUBJECT_CATEGORY);
             this.resourceCategory = vf.createIRI(RESOURCE_CATEGORY);
             this.actionCategory = vf.createIRI(ACTION_CATEGORY);
             this.requestTimeAttribute = vf.createIRI(CURRENT_DATETIME);
             this.jaxbContext = jaxbContext;
+            this.vf = vf;
         }
 
         public Builder addSubjectAttr(String attributeId, Literal value) {
@@ -235,6 +251,7 @@ public class XACMLRequest implements Request {
                 .map(key -> {
                     Literal value = attrs.get(key);
                     AttributeType attributeType = of.createAttributeType();
+                    attributeType.setIncludeInResult(true);
                     attributeType.setAttributeId(key);
                     AttributeValueType attributeValueType = of.createAttributeValueType();
                     attributeValueType.setDataType(value.getDatatype().stringValue());
@@ -244,6 +261,7 @@ public class XACMLRequest implements Request {
                 })
                 .collect(Collectors.toList())
         );
+
         AttributeValueType idAttributeValue = of.createAttributeValueType();
         idAttributeValue.setDataType(XSD.STRING);
         idAttributeValue.getContent().add(idStr.stringValue());

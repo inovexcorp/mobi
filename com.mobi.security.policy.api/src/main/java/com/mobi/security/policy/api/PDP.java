@@ -26,22 +26,24 @@ package com.mobi.security.policy.api;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface PDP {
     /**
      * Creates a new {@link Request} object with the provided details that is compatible with this PDP.
      *
-     * @param subjectId The ID of the Subject of the Request.
+     * @param subjectIds The List of IDs for the Subjects of the Request.
      * @param subjectAttrs A map of other attributes on the Subject.
-     * @param resourceId The ID of the Resource of the Request.
+     * @param resourceIds The List of IDs for the Resources of the Request.
      * @param resourceAttrs A map of other attributes on the Resource.
-     * @param actionId The ID of the Action of the Request.
+     * @param actionIds The List of IDs for the Actions of the Request.
      * @param actionAttrs A map of other attributes on the Action.
      * @return A Request in the appropriate format for this PDP
      */
-    Request createRequest(IRI subjectId, Map<String, Literal> subjectAttrs, IRI resourceId,
-                          Map<String, Literal> resourceAttrs, IRI actionId, Map<String, Literal> actionAttrs);
+    Request createRequest(List<IRI> subjectIds, Map<String, Literal> subjectAttrs, List<IRI> resourceIds,
+                          Map<String, Literal> resourceAttrs, List<IRI> actionIds, Map<String, Literal> actionAttrs);
 
     /**
      * Evaluates an authorization {@link Request} against a collection of {@link Policy Policies} combined
@@ -51,6 +53,17 @@ public interface PDP {
      * @return A Response with the Decision of the Request
      */
     Response evaluate(Request request);
+    
+    /**
+     * Evaluates an authorization {@link Request} against a collection of {@link Policy Policies} combined
+     * with the identified algorithm and returns a Set of Strings representing the resources that have an authorization
+     * {@link Decision} of either PERMIT or NOT APPLICABLE.
+     *
+     * @param request An authorization Request
+     * @param policyAlgorithm The IRI identifier for a Policy algorithm for combining results
+     * @return A Response with the Decision of the Request
+     */
+    Set<String> filter(Request request, IRI policyAlgorithm);
 
     /**
      * Evaluates an authorization {@link Request} against a collection of {@link Policy Policies} combined

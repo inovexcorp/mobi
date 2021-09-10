@@ -72,7 +72,6 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
-import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
@@ -94,13 +93,13 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
+import com.mobi.security.policy.api.PDP;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -116,7 +115,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -163,6 +161,7 @@ public class CatalogRest {
     private VersioningManager versioningManager;
     private BNodeService bNodeService;
     private CatalogProvUtils provUtils;
+    private PDP pdp;
 
     protected EngineManager engineManager;
     protected DistributionFactory distributionFactory;
@@ -195,6 +194,11 @@ public class CatalogRest {
     @Reference
     void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    void setPdp(PDP pdp) {
+        this.pdp = pdp;
     }
 
     @Reference
@@ -365,7 +369,7 @@ public class CatalogRest {
             }
     )
     public Response getRecords(
-            @Context UriInfo uriInfo,
+            @Context ContainerRequestContext context,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(schema = @Schema(description = "IRI of the field to use for sort order",
@@ -416,8 +420,8 @@ public class CatalogRest {
                 builder.keywords(keywords);
             }
             PaginatedSearchResults<Record> records = catalogManager.findRecord(vf.createIRI(catalogId),
-                    builder.build());
-            return createPaginatedResponseJackson(uriInfo, records.getPage(), records.getTotalSize(), limit, offset,
+                    builder.build(), getActiveUser(context, engineManager), pdp);
+            return createPaginatedResponseJackson(context.getUriInfo(), records.getPage(), records.getTotalSize(), limit, offset,
                     Record.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);

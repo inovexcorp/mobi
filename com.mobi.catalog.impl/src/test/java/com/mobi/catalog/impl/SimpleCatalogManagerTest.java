@@ -40,7 +40,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Streams;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
@@ -84,6 +83,8 @@ import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.Request;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -101,6 +102,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -189,6 +191,15 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
     @Mock
     private Conflict conflict;
+
+    @Mock
+    private PDP pdp;
+
+    @Mock
+    private User user;
+
+    @Mock
+    private Request request;
 
     @Before
     public void setUp() throws Exception {
@@ -390,6 +401,93 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         assertEquals(TOTAL_SIZE, records.getTotalSize());
         assertEquals(1000, records.getPageSize());
         assertEquals(1, records.getPageNumber());
+    }
+
+    @Test
+    public void testFindRecordsWithPolicyCheck() throws Exception {
+        // Setup:
+        int limit = 1000;
+        int offset = 0;
+
+        String complexRecordIRIString = "http://mobi.com/test/records#complex-record";
+        String complexVersionedRdfRecordIRIString = "http://mobi.com/test/records#quad-versioned-rdf-record";
+
+        when(user.getResource()).thenReturn(VALUE_FACTORY.createIRI("http://mobi.com/theUser"));
+        when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(request);
+        when(pdp.filter(any(), any(IRI.class))).thenReturn(new HashSet<>(Arrays.asList(complexRecordIRIString,
+                complexVersionedRdfRecordIRIString)));
+
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
+
+        // when
+        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams, user, pdp);
+
+        // then
+        assertEquals(2, records.getPage().size());
+        assertEquals(2, records.getTotalSize());
+        assertEquals(1000, records.getPageSize());
+        assertEquals(1, records.getPageNumber());
+    }
+
+    @Test
+    public void testFindRecordsWithPolicyCheckMultiplePages() throws Exception {
+        // Setup:
+        int limit = 1;
+        int offset = 0;
+
+        String complexRecordIRIString = "http://mobi.com/test/records#complex-record";
+        String complexVersionedRdfRecordIRIString = "http://mobi.com/test/records#quad-versioned-rdf-record";
+
+        when(user.getResource()).thenReturn(VALUE_FACTORY.createIRI("http://mobi.com/theUser"));
+        when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(request);
+        when(pdp.filter(any(), any(IRI.class))).thenReturn(new HashSet<>(Arrays.asList(complexRecordIRIString,
+                complexVersionedRdfRecordIRIString)));
+
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
+
+        // when
+        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams, user, pdp);
+
+        // then
+        assertEquals(1, records.getPage().size());
+        assertEquals(2, records.getTotalSize());
+        assertEquals(1, records.getPageSize());
+        assertEquals(1, records.getPageNumber());
+
+        PaginatedSearchParams pageTwoSearchParams = new PaginatedSearchParams.Builder().limit(limit).offset(1)
+                .build();
+
+        // when
+        PaginatedSearchResults<Record> pageTwoRecords = manager.findRecord(distributedCatalogId, pageTwoSearchParams,
+                user, pdp);
+
+        // then
+        assertEquals(1, pageTwoRecords.getPage().size());
+        assertEquals(2, pageTwoRecords.getTotalSize());
+        assertEquals(1, pageTwoRecords.getPageSize());
+        assertEquals(2, pageTwoRecords.getPageNumber());
+    }
+
+    @Test
+    public void testFindRecordsWithPolicyCheckNoAllowedRecords() throws Exception {
+        // Setup:
+        int limit = 1000;
+        int offset = 0;
+
+        when(user.getResource()).thenReturn(VALUE_FACTORY.createIRI("http://mobi.com/theUser"));
+        when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(request);
+        when(pdp.filter(any(), any(IRI.class))).thenReturn(new HashSet<>());
+
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
+
+        // when
+        PaginatedSearchResults<Record> records = manager.findRecord(distributedCatalogId, searchParams, user, pdp);
+
+        // then
+        assertEquals(0, records.getPage().size());
+        assertEquals(0, records.getTotalSize());
+        assertEquals(0, records.getPageSize());
+        assertEquals(0, records.getPageNumber());
     }
 
     @Test

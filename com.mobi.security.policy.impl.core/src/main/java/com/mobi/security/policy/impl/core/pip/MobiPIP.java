@@ -40,6 +40,7 @@ import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.exception.MissingAttributeException;
 import com.mobi.security.policy.api.exception.ProcessingException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -75,39 +76,42 @@ public class MobiPIP implements PIP {
             throws MissingAttributeException, ProcessingException {
         IRI attributeId = attributeDesignator.attributeId();
         IRI category = attributeDesignator.category();
-        IRI pathSource;
+        List<IRI> pathSources;
         if (category.equals(request.getSubjectCategory())) {
-            pathSource = request.getSubjectId();
+            pathSources = request.getSubjectIds();
         } else if (category.equals(request.getResourceCategory())) {
-            pathSource = request.getResourceId();
+            pathSources = request.getResourceIds();
         } else {
             return Collections.emptyList();
         }
-
+        List<Literal> literals = new ArrayList<>();
         try (RepositoryConnection conn = repo.getConnection()) {
-            if (attributeId.stringValue().startsWith(PROP_PATH_NAMESPACE)) {
-                int firstIdx = attributeId.stringValue().lastIndexOf("(") + 1;
-                int lastIdx = attributeId.stringValue().lastIndexOf(")");
-                String path = decode(attributeId.stringValue().substring(firstIdx, lastIdx));
-                TupleQuery query = conn.prepareTupleQuery(String.format(PROP_PATH_QUERY, path));
-                query.setBinding("sub", pathSource);
-                return StreamSupport.stream(query.evaluate().spliterator(), false)
-                        .map(bindings -> bindings.getBinding("value").get().getValue())
-                        .map(value -> {
-                            if (Literal.class.isAssignableFrom(value.getClass())) {
-                                return (Literal) value;
-                            } else {
-                                return vf.createLiteral(value.stringValue());
-                            }
-                        })
-                        .collect(Collectors.toList());
-            } else {
-                return StreamSupport.stream(conn.getStatements(pathSource, attributeId, null).spliterator(), false)
-                        .map(Statement::getObject)
-                        .map(value -> value instanceof Literal ? (Literal) value
-                                : vf.createLiteral(value.stringValue()))
-                        .collect(Collectors.toList());
+            for (IRI pathSource : pathSources) {
+                if (attributeId.stringValue().startsWith(PROP_PATH_NAMESPACE)) {
+                    int firstIdx = attributeId.stringValue().lastIndexOf("(") + 1;
+                    int lastIdx = attributeId.stringValue().lastIndexOf(")");
+                    String path = decode(attributeId.stringValue().substring(firstIdx, lastIdx));
+                    TupleQuery query = conn.prepareTupleQuery(String.format(PROP_PATH_QUERY, path));
+                    query.setBinding("sub", pathSource);
+                    literals.addAll(StreamSupport.stream(query.evaluate().spliterator(), false)
+                            .map(bindings -> bindings.getBinding("value").get().getValue())
+                            .map(value -> {
+                                if (Literal.class.isAssignableFrom(value.getClass())) {
+                                    return (Literal) value;
+                                } else {
+                                    return vf.createLiteral(value.stringValue());
+                                }
+                            })
+                            .collect(Collectors.toList()));
+                } else {
+                    literals.addAll(StreamSupport.stream(conn.getStatements(pathSource, attributeId, null).spliterator(), false)
+                            .map(Statement::getObject)
+                            .map(value -> value instanceof Literal ? (Literal) value
+                                    : vf.createLiteral(value.stringValue()))
+                            .collect(Collectors.toList()));
+                }
             }
+            return literals;
         }
     }
 }

@@ -43,7 +43,9 @@ import org.wso2.balana.ctx.Attribute;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -82,36 +84,45 @@ public class BalanaRequest extends XACMLRequest {
                 case SUBJECT_CATEGORY:
                     attributeSet.forEach(attribute -> {
                         if (attribute.getId().toString().equals(XACML.SUBJECT_ID)) {
-                            this.subjectId = vf.createIRI(attribute.getValue().encode());
+                            if (this.subjectIds == null) {
+                                this.subjectIds = new ArrayList<>();
+                            }
+                            this.subjectIds.add(vf.createIRI(attribute.getValue().encode()));
                         } else {
                             this.subjectAttrs.put(attribute.getId().toString(), getLiteral(attribute.getValue(), vf));
                         }
                     });
-                    if (this.subjectId == null) {
+                    if (this.subjectIds == null) {
                         throw new IllegalArgumentException("No Subject ID passed in Request");
                     }
                     break;
                 case XACML.RESOURCE_CATEGORY:
                     attributeSet.forEach(attribute -> {
                         if (attribute.getId().toString().equals(XACML.RESOURCE_ID)) {
-                            this.resourceId = vf.createIRI(attribute.getValue().encode());
+                            if (this.resourceIds == null) {
+                                this.resourceIds = new ArrayList<>();
+                            }
+                            this.resourceIds.add(vf.createIRI(attribute.getValue().encode()));
                         } else {
                             this.resourceAttrs.put(attribute.getId().toString(), getLiteral(attribute.getValue(), vf));
                         }
                     });
-                    if (this.resourceId == null) {
+                    if (this.resourceIds == null) {
                         throw new IllegalArgumentException("No Resource ID passed in the request");
                     }
                     break;
                 case XACML.ACTION_CATEGORY:
                     attributeSet.forEach(attribute -> {
                         if (attribute.getId().toString().equals(XACML.ACTION_ID)) {
-                            this.actionId = vf.createIRI(attribute.getValue().encode());
+                            if (this.actionIds == null) {
+                                this.actionIds = new ArrayList<>();
+                            }
+                            this.actionIds.add(vf.createIRI(attribute.getValue().encode()));
                         } else {
                             this.actionAttrs.put(attribute.getId().toString(), getLiteral(attribute.getValue(), vf));
                         }
                     });
-                    if (this.actionId == null) {
+                    if (this.actionIds == null) {
                         throw new IllegalArgumentException("No Action ID passed in the request");
                     }
                     break;
@@ -137,9 +148,9 @@ public class BalanaRequest extends XACMLRequest {
 
     public static class Builder extends XACMLRequest.Builder {
 
-        public Builder(IRI subjectId, IRI resourceId, IRI actionId, OffsetDateTime requestTime, ValueFactory vf,
+        public Builder(List<IRI> subjectIds, List<IRI> resourceIds, List<IRI> actionIds, OffsetDateTime requestTime, ValueFactory vf,
                        JAXBContext jaxbContext) {
-            super(subjectId, resourceId, actionId, requestTime, vf, jaxbContext);
+            super(subjectIds, resourceIds, actionIds, requestTime, vf, jaxbContext);
         }
 
         public BalanaRequest build() {

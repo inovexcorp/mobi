@@ -2,13 +2,12 @@ PREFIX mcat: <http://mobi.com/ontologies/catalog#>
 PREFIX dataset: <http://mobi.com/ontologies/dataset#>
 
 SELECT
-    (COUNT(distinct ?record) as ?record_count)
+    ?record
 WHERE {
     ?record a ?type ;
         mcat:catalog ?catalog ;
         ?p ?o .
 
-    %RECORDS_FILTER%
     %KEYWORDS_FILTER%
     FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord,
         mcat:VersionedRDFRecord, mcat:OntologyRecord, mcat:MappingRecord, dataset:DatasetRecord))
