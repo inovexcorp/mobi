@@ -127,8 +127,10 @@ describe('Groups Page component', function() {
     });
     describe('controller methods', function() {
         it('should select a group', function() {
+            spyOn(component, 'setAdmin');
             component.selectGroup(group);
             expect(userStateStub.selectedGroup).toEqual(group);
+            expect(component.setAdmin).toHaveBeenCalled();
         });
         it('should open a modal for creating a group', function() {
             component.createGroup();
