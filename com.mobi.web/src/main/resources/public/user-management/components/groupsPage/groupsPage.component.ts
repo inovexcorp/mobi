@@ -63,6 +63,7 @@ export class GroupsPageComponent implements OnInit {
     }
     selectGroup(group: Group): void {
         this.state.selectedGroup = group;
+        this.setAdmin();
     }
     createGroup(): void {
         this.dialog.open(CreateGroupOverlayComponent);
