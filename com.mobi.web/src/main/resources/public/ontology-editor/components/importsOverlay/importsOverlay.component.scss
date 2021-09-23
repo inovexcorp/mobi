@@ -58,4 +58,7 @@ imports-overlay {
             color: var(--danger-dark);
         }
     }
+    .selected-ontology {
+        word-wrap: break-word;
+    }
 }

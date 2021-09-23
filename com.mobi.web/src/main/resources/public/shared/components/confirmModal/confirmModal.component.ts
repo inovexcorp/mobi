@@ -23,6 +23,8 @@
 import { Component, Inject } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 
+import './confirmModal.component.scss';
+
 /**
  * @class shared.ConfirmModalComponent
  * 
