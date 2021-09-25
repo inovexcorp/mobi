@@ -119,7 +119,7 @@ describe('Imports Block component', function() {
             expect(this.element.querySelectorAll('.text-danger').length).toEqual(0);
             spyOn(this.controller, 'failed').and.returnValue(true);
             scope.$apply();
-            expect(this.element.querySelectorAll('.text-danger').length).toEqual(1);
+            expect(this.element.querySelectorAll('.text-danger').length).toEqual(2);
         });
         it('with a p a.btn-link if the user can modify', function() {
             expect(this.element.querySelectorAll('p a.btn-link').length).toEqual(1);
