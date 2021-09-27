@@ -12,6 +12,7 @@ WHERE {
       }
       GRAPH ?deletionsGraph {
         ?deletionSubject ?p ?o .
+        %SUBJECTLIST%
       }
     }
   }
@@ -24,6 +25,7 @@ WHERE {
     }
     GRAPH ?additionsGraph {
       ?deletionSubject ?p ?o .
+      %SUBJECTLIST%
     }
   } UNION {
     GRAPH ?commitOfInterest {
@@ -32,6 +34,7 @@ WHERE {
     }
     GRAPH ?deletionsGraph {
       ?deletionSubject ?p ?o .
+      %SUBJECTLIST%
     }
   }
 }

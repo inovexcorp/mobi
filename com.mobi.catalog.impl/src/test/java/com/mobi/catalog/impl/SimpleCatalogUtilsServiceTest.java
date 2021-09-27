@@ -35,12 +35,10 @@ import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.MCAT_Thing;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.UserBranch;
@@ -79,7 +77,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URLEncoder;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -87,6 +84,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -197,6 +195,16 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
                 getValueFactory().createIRI(_Thing.modified_IRI), null);
 
         return statements.next().toString();
+    }
+
+    private List<Resource> buildResources(String... resources) {
+        return Stream.of(resources).map((r) -> VALUE_FACTORY.createIRI(r)).collect(Collectors.toList());
+    }
+
+    private String modelAssertHelper(Model model){
+        Set<String> statements = new TreeSet<>();
+        model.forEach(statement -> statements.add(statement.toString()));
+        return String.join("\n", statements);
     }
 
     /* validateResource */
@@ -2244,13 +2252,13 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         }
     }
 
-    /* getCompiledResource(List<Resource>, RepositoryConnection) */
+    /* getCompiledResource(List<Resource>, RepositoryConnection, Resource... subjectIds) */
 
     @Test
     public void getCompiledResourceWithListTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1")).collect(Collectors.toList());
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1");
             Model expected = MODEL_FACTORY.createModel(Collections.singleton(
                     VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"))));
             Statement classStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
@@ -2258,8 +2266,23 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             expected.add(classStmt);
 
             Model result = service.getCompiledResource(commits, conn);
-            assertEquals(expected.size(), result.size());
-            expected.forEach(statement -> assertTrue(result.contains(statement)));
+            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
+        }
+    }
+
+    @Test
+    public void getCompiledResourceWithListSubjectIdTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1");
+            Model expected = MODEL_FACTORY.createModel(Collections.singleton(
+                    VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"))));
+            Statement classStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
+                    VALUE_FACTORY.createLiteral("Class Title 2"));
+            expected.add(classStmt);
+
+            Model result = service.getCompiledResource(commits, conn, VALUE_FACTORY.createIRI("http://mobi.com/test/class"));
+            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
         }
     }
 
@@ -2267,15 +2290,14 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     public void getCompiledResourceWithListChangeEntityTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename0")).collect(Collectors.toList());
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0");
             Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1");
             Model expected = MODEL_FACTORY.createModel();
             expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
             expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
 
             Model result = service.getCompiledResource(commits, conn);
-            assertEquals(expected.size(), result.size());
-            expected.forEach(statement -> assertTrue(result.contains(statement)));
+            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
         }
     }
 
@@ -2283,7 +2305,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     public void getCompiledResourceWithListBlankNodeTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank0")).collect(Collectors.toList());
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#testBlank1", "http://mobi.com/test/commits#testBlank0");
             Resource blankNode = VALUE_FACTORY.createBNode("genid1");
             Model expected = MODEL_FACTORY.createModel();
             expected.add(blankNode, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
@@ -2299,13 +2321,13 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         }
     }
 
-    /* getCompiledResourceFile(List<Resource>, RepositoryConnection) */
+    /* getCompiledResourceFile(List<Resource>, RepositoryConnection, Resource... subjectIds) */
 
     @Test
     public void getCompiledResourceFileWithListTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1")).collect(Collectors.toList());
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1");
             Model expected = MODEL_FACTORY.createModel(Collections.singleton(
                     VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"))));
             Statement classStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
@@ -2313,9 +2335,26 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             expected.add(classStmt);
 
             File file = service.getCompiledResourceFile(commits, conn);
-            Model model = Models.createModel(new FileInputStream(file), transformer);
-            assertEquals(expected.size(), model.size());
-            expected.forEach(statement -> assertTrue(model.contains(statement)));
+            Model result = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
+            file.delete();
+        }
+    }
+
+    @Test
+    public void getCompiledResourceFileWithListSubjectIdTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1");
+            Model expected = MODEL_FACTORY.createModel(Collections.singleton(
+                    VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"))));
+            Statement classStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
+                    VALUE_FACTORY.createLiteral("Class Title 2"));
+            expected.add(classStmt);
+
+            File file = service.getCompiledResourceFile(commits, conn, VALUE_FACTORY.createIRI("http://mobi.com/test/class"));
+            Model result = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
             file.delete();
         }
     }
@@ -2324,16 +2363,32 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     public void getCompiledResourceFileWithListChangeEntityTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename0")).collect(Collectors.toList());
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0");
             Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1");
             Model expected = MODEL_FACTORY.createModel();
             expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
             expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
 
             File file = service.getCompiledResourceFile(commits, conn);
-            Model model = Models.createModel(new FileInputStream(file), transformer);
-            assertEquals(expected.size(), model.size());
-            expected.forEach(statement -> assertTrue(model.contains(statement)));
+            Model result = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
+            file.delete();
+        }
+    }
+
+    @Test
+    public void getCompiledResourceFileWithListChangeEntitySubjectIdTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0");
+            Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+            expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
+
+            File file = service.getCompiledResourceFile(commits, conn, VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1"));
+            Model result = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
             file.delete();
         }
     }
@@ -2342,7 +2397,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     public void getCompiledResourceFileWithListBlankNodeTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank0")).collect(Collectors.toList());
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#testBlank1", "http://mobi.com/test/commits#testBlank0");
             Resource blankNode = VALUE_FACTORY.createBNode("genid1");
             Model expected = MODEL_FACTORY.createModel();
             expected.add(blankNode, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
@@ -2356,6 +2411,86 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
                 assertTrue(expected.contains(temp));
             });
             assertEquals(expected.size(), model.size());
+        }
+    }
+
+    /* getDeletionSubjects */
+
+    @Test
+    public void getDeletionSubjectsTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1");
+
+            assertEquals("Without SubjectId", new HashSet<>(buildResources("http://mobi.com/test/ontology", "http://mobi.com/test/class")),
+                    service.getDeletionSubjects(commits, conn));
+            assertEquals("With SubjectId", new HashSet<>(buildResources("http://mobi.com/test/ontology")),
+                    service.getDeletionSubjects(commits, conn,  VALUE_FACTORY.createIRI("http://mobi.com/test/ontology")));
+            assertEquals("With SubjectIds", new HashSet<>(buildResources("http://mobi.com/test/ontology", "http://mobi.com/test/class")),
+                    service.getDeletionSubjects(commits, conn,  VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), VALUE_FACTORY.createIRI("http://mobi.com/test/class")));
+            assertEquals("With SubjectId Non-exist", Collections.emptySet(),
+                    service.getDeletionSubjects(commits, conn,  VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist")));
+        }
+    }
+
+    @Test
+    public void getDeletionSubjectsWithListChangeEntityTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0");
+
+            assertEquals("Without SubjectId", new HashSet<>(buildResources("http://mobi.com/test/ontology")),
+                    service.getDeletionSubjects(commits, conn));
+            assertEquals("With SubjectId", new HashSet<>(buildResources("http://mobi.com/test/ontology")),
+                    service.getDeletionSubjects(commits, conn,  VALUE_FACTORY.createIRI("http://mobi.com/test/ontology")));
+            assertEquals("With SubjectIds", new HashSet<>(buildResources("http://mobi.com/test/ontology")),
+                    service.getDeletionSubjects(commits, conn,  VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist")));
+            assertEquals("With SubjectId Non-exist", Collections.emptySet(),
+                    service.getDeletionSubjects(commits, conn,  VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist")));
+        }
+    }
+
+    /* getCommitWithSubjects */
+
+    @Test
+    public void getCommitWithSubjectsTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+
+            // Setup:
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1");
+            Set<Resource> deletionSubjects = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/tests")).collect(Collectors.toSet());
+
+            assertEquals("Without SubjectId", new HashSet<>(buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1")),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects));
+            assertEquals("With SubjectId", new HashSet<>(buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1")),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontology")));
+            assertEquals("With SubjectIds", new HashSet<>(buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1")),
+                    service.getCommitWithSubjects(commits, conn,  deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), VALUE_FACTORY.createIRI("http://mobi.com/test/class")));
+            assertEquals("With SubjectId Non-exist", Collections.emptySet(),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist")));
+            assertEquals("With SubjectIds Non-exist", Collections.emptySet(),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist"), VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist2")));
+        }
+    }
+
+    @Test
+    public void getCommitWithSubjectsWithListChangeEntityTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0");
+
+            Set<Resource> deletionSubjects = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/tests")).collect(Collectors.toSet());
+
+            assertEquals("Without SubjectId", new HashSet<>(buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0")),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects));
+            assertEquals("With SubjectId", new HashSet<>(buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0")),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontology")));
+            assertEquals("With SubjectIds", new HashSet<>(buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0")),
+                    service.getCommitWithSubjects(commits, conn,  deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), VALUE_FACTORY.createIRI("http://mobi.com/test/class")));
+            assertEquals("With SubjectId Non-exist", Collections.emptySet(),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist")));
+            assertEquals("With SubjectIds Non-exist", Collections.emptySet(),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist"), VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist2")));
         }
     }
 

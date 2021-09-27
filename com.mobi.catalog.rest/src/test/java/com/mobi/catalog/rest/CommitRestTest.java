@@ -387,7 +387,7 @@ public class CommitRestTest extends MobiRestTestNg {
         Model expected = mf.createModel();
         expected.add(vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"), typeIRI, vf.createIRI(COMMIT_IRIS[1]));
         when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(entityCommits);
-        when(catalogManager.getCompiledResource(any(List.class))).thenReturn(expected);
+        when(catalogManager.getCompiledResource(any(List.class), any(Resource.class))).thenReturn(expected);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
                 .queryParam("entityId", encode("http://www.w3.org/2002/07/owl#Ontology")).request().get();
         assertEquals(response.getStatus(), 200);
@@ -406,7 +406,7 @@ public class CommitRestTest extends MobiRestTestNg {
     public void getCompiledResourceEmptyModelTest() {
         List<Commit> emptyList = new ArrayList<>();
         Model expected = mf.createModel();
-        when(catalogManager.getCompiledResource(any(List.class))).thenReturn(expected);
+        when(catalogManager.getCompiledResource(any(List.class), any(Resource.class))).thenReturn(expected);
         when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(emptyList);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
                 .queryParam("entityId", encode("http://mobi.com/test/empty")).request().get();

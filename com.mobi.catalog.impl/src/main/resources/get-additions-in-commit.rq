@@ -13,5 +13,6 @@ CONSTRUCT {
 
   GRAPH ?additionsGraph {
     ?s ?p ?o .
+    %SUBJECTLIST%
   }
 }
