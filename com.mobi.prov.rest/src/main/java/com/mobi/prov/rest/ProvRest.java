@@ -24,6 +24,9 @@ package com.mobi.prov.rest;
  */
 
 import static com.mobi.rest.util.LinksUtils.validateParams;
+import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
+import static com.mobi.rest.util.RestUtils.getRDFFormat;
+import static com.mobi.rest.util.RestUtils.groupedModelToString;
 
 import com.mobi.exception.MobiException;
 import com.mobi.ontologies.provo.Activity;
@@ -63,6 +66,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
@@ -214,6 +218,41 @@ public class ProvRest {
             return response.build();
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Returns a JSON object representing the triples with a subject of the passed in resource ID.
+     *
+     * @return A JSON object that is the complete representation of the provenance Activity
+     */
+    @GET
+    @Path("{activityId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(
+            tags = "provenance-data",
+            summary = "Retrieves a JSON object representing the passed in provenance Activity",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object representing the passed in activity"),
+                    @ApiResponse(responseCode = "404", description = "Activity Not Found"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    public Response getActivity(
+            @Parameter(description = "String representing the identifier of the activity", required = true)
+            @PathParam("activityId") String provenanceId) {
+        try {
+            Activity provActivity = provService.getActivity(vf.createIRI(provenanceId)).orElseThrow(() ->
+                    ErrorUtils.sendError("Provenance Activity not found", Response.Status.NOT_FOUND));
+            String json = groupedModelToString(provActivity.getModel(), getRDFFormat("jsonld"), transformer);
+            return Response.ok(getObjectFromJsonld(json)).build();
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 

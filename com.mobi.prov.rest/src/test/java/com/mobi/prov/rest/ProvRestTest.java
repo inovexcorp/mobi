@@ -41,6 +41,7 @@ import static org.testng.Assert.fail;
 import com.mobi.exception.MobiException;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
+import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.rdf.api.Resource;
@@ -100,6 +101,7 @@ public class ProvRestTest extends MobiRestTestNg {
     private List<String> entityIRIs;
     private final String ACTIVITY_NAMESPACE = "http://test.org/activities#";
     private final String ENTITY_NAMESPACE = "http://test.org/entities#";
+    private final String NULL_ACT_IRI = "http://test.org/activities#ProvActNull";
     private Map<String, List<String>> entityMap;
 
     @Mock
@@ -180,6 +182,10 @@ public class ProvRestTest extends MobiRestTestNg {
 
         when(provService.getConnection()).thenReturn(repo.getConnection());
         when(provService.getActivity(any(Resource.class))).thenAnswer(i -> {
+            Resource resource = i.getArgumentAt(0, Resource.class);
+            if (resource.stringValue().equals(NULL_ACT_IRI)) {
+                return Optional.empty();
+            }
             Activity activity = activityFactory.createNew(i.getArgumentAt(0, Resource.class));
             entityMap.get(activity.getResource().stringValue()).forEach(entityIRI -> entityFactory.createNew(vf.createIRI(entityIRI), activity.getModel()));
             return Optional.of(activity);
@@ -241,6 +247,18 @@ public class ProvRestTest extends MobiRestTestNg {
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
+    }
+
+    @Test
+    public void getActivityWithoutErrorTest() {
+        Response response = target().path("provenance-data/" + ResourceUtils.encode(activityIRIs.get(0))).request().get();
+        assertEquals(response.getStatus(), 200);
+    }
+
+    @Test
+    public void getActivityWithErrorTest() {
+        Response response = target().path("provenance-data/" + NULL_ACT_IRI).request().get();
+        assertEquals(response.getStatus(), 404);
     }
 
     @Test
