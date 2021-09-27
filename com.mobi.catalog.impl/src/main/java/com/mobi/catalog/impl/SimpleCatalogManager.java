@@ -1526,10 +1526,10 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Model getCompiledResource(List<Commit> commitList) {
+    public Model getCompiledResource(List<Commit> commitList, Resource... subjectIds) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return utils.getCompiledResource(commitList.stream().map(commit -> commit.getResource())
-                    .collect(Collectors.toList()), conn);
+                    .collect(Collectors.toList()), conn, subjectIds);
         }
     }
 

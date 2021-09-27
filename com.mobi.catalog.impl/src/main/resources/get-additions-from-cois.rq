@@ -16,6 +16,7 @@ CONSTRUCT {
           }
           GRAPH ?deletionsGraph {
             ?deletionSubject ?p ?o .
+            %SUBJECTLIST%
           }
         }
       }
@@ -28,6 +29,7 @@ CONSTRUCT {
         }
         GRAPH ?additionsGraph {
           ?deletionSubject ?p ?o .
+          %SUBJECTLIST%
         }
       } UNION {
         GRAPH ?commitOfInterest {
@@ -36,6 +38,7 @@ CONSTRUCT {
         }
         GRAPH ?deletionsGraph {
           ?deletionSubject ?p ?o .
+          %SUBJECTLIST%
         }
       }
     }
@@ -47,5 +50,6 @@ CONSTRUCT {
   }
   GRAPH ?additionsGraph {
     ?addSubject ?p ?o .
+    %SUBJECTLISTADD%
   }
 }

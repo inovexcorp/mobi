@@ -9,7 +9,9 @@ WHERE {
       ?commit prov:generated ?revision .
       ?revision catalog:deletions ?deletionsGraph .
   }
+
   GRAPH ?deletionsGraph {
     ?s ?p ?o .
+    %SUBJECTLIST%
   }
 }

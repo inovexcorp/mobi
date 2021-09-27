@@ -287,8 +287,7 @@ public class CommitRest {
                 final List<Commit> commits;
                 if (StringUtils.isNotBlank(entityId)) {
                     commits = catalogManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(entityId));
-                    Model entityModel = catalogManager.getCompiledResource(commits);
-                    model = entityModel.filter(vf.createIRI(entityId), null,null);
+                    model = catalogManager.getCompiledResource(commits, vf.createIRI(entityId));
                 } else {
                     commits = catalogManager.getCommitChain(vf.createIRI(commitId));
                     model = catalogManager.getCompiledResource(commits);
