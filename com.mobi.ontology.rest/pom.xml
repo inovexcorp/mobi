@@ -128,7 +128,7 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>ontology.impl.owlapi</artifactId>
+            <artifactId>ontology.impl.repository</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
