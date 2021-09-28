@@ -359,7 +359,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                                RepositoryConnection conn) {
         validateResource(catalogId, vf.createIRI(Catalog.TYPE), conn);
         validateResource(recordId, recordType, conn);
-        if (!conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), catalogId).hasNext()) {
+        if (!conn.contains(recordId, vf.createIRI(Record.catalog_IRI), catalogId)) {
             throw throwDoesNotBelong(recordId, recordFactory, catalogId, catalogFactory);
         }
     }

@@ -83,8 +83,8 @@ public class CatalogConfigProviderImplTest extends OrmEnabledTestCase {
     @Test
     public void startTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(null, null, null, localCatalogId).hasNext());
-            assertTrue(conn.getStatements(null, null, null, distributedCatalogId).hasNext());
+            assertTrue(conn.contains(null, null, null, localCatalogId));
+            assertTrue(conn.contains(null, null, null, distributedCatalogId));
         }
     }
 

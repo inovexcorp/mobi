@@ -600,6 +600,7 @@ public class ExplorableDatasetRest {
             instanceModel.addAll(getReifiedStatements(conn, instanceId, predicate, object));
             count--;
         }
+        statements.close();
         return instanceModel;
     }
 

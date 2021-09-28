@@ -200,8 +200,12 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     @Override
     public boolean contains(Resource subject, IRI predicate, Value object, Resource... contexts) {
         try {
-            return sesameConn.getStatements(Values.sesameResource(subject), Values.sesameIRI(predicate),
-                    Values.sesameValue(object), Values.sesameResources(contexts)).hasNext();
+            org.eclipse.rdf4j.repository.RepositoryResult<org.eclipse.rdf4j.model.Statement> results =
+                    sesameConn.getStatements(Values.sesameResource(subject), Values.sesameIRI(predicate),
+                    Values.sesameValue(object), Values.sesameResources(contexts));
+            boolean contains = results.hasNext();
+            results.close();
+            return contains;
         } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
@@ -210,7 +214,11 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     @Override
     public boolean containsContext(Resource context) {
         try {
-            return sesameConn.getStatements(null, null, null, Values.sesameResources(context)).hasNext();
+            org.eclipse.rdf4j.repository.RepositoryResult<org.eclipse.rdf4j.model.Statement> results =
+                    sesameConn.getStatements(null, null, null, Values.sesameResources(context));
+            boolean contains = results.hasNext();
+            results.close();
+            return contains;
         } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }

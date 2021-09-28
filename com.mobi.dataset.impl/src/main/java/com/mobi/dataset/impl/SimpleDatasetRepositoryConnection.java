@@ -311,7 +311,10 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public boolean contains(Resource subject, IRI predicate, Value object, Resource... contexts) {
-        return getStatements(subject, predicate, object, contexts).hasNext();
+        RepositoryResult<Statement> result = getStatements(subject, predicate, object, contexts);
+        boolean contains = result.hasNext();
+        result.close();
+        return contains;
     }
 
     @Override
@@ -485,9 +488,12 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
                 .getStatements(datasetResource, valueFactory.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
 
         if (statements.hasNext()) {
-            return Statements.objectResource(statements.next())
+            Resource resource = Statements.objectResource(statements.next())
                     .orElseThrow(() -> new MobiException("Could not retrieve systemDefaultNamedGraph for dataset"));
+            statements.close();
+            return resource;
         } else {
+            statements.close();
             throw new MobiException("Could not retrieve systemDefaultNamedGraph for dataset");
         }
     }

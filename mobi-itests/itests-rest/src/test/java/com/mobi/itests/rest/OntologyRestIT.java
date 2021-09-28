@@ -203,14 +203,15 @@ public class OntologyRestIT extends KarafTestSupport {
             additionsGraphIRI = (IRI) stmts.next().getObject();
             assertTrue(conn.size(additionsGraphIRI) > 0);
 
-            assertTrue(conn.getStatements(null, null, null, recordId).hasNext());
-            assertTrue(conn.getStatements(recordId, null, null).hasNext());
-            assertTrue(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
-            assertTrue(conn.getStatements(null, null, null, branchId).hasNext());
-            assertTrue(conn.getStatements(branchId, null, null).hasNext());
-            assertTrue(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext());
-            assertTrue(conn.getStatements(null, null, null, commitId).hasNext());
-            assertTrue(conn.getStatements(commitId, null, null).hasNext());
+            assertTrue(conn.contains(null, null, null, recordId));
+            assertTrue(conn.contains(recordId, null, null));
+            assertTrue(conn.contains(recordId, branchIRI, branchId, recordId));
+            assertTrue(conn.contains(null, null, null, branchId));
+            assertTrue(conn.contains(branchId, null, null));
+            assertTrue(conn.contains(branchId, headIRI, commitId, branchId));
+            assertTrue(conn.contains(null, null, null, commitId));
+            assertTrue(conn.contains(commitId, null, null));
+            stmts.close();
         }
         return additionsGraphIRI;
     }
@@ -219,13 +220,13 @@ public class OntologyRestIT extends KarafTestSupport {
         Repository repo = getOsgiService(Repository.class, "id=system", 30000L);
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertFalse(conn.getStatements(null, null, null, branchId).hasNext());
-            assertFalse(conn.getStatements(branchId, null, null).hasNext());
-            assertFalse(conn.getStatements(null, null, null, recordId).hasNext());
-            assertFalse(conn.getStatements(recordId, null, null).hasNext());
-            assertFalse(conn.getStatements(null, null, null, commitId).hasNext());
-            assertFalse(conn.getStatements(commitId, null, null).hasNext());
-            assertFalse(conn.getStatements(null, null, null, additionsGraphIRI).hasNext());
+            assertFalse(conn.contains(null, null, null, branchId));
+            assertFalse(conn.contains(branchId, null, null));
+            assertFalse(conn.contains(null, null, null, recordId));
+            assertFalse(conn.contains(recordId, null, null));
+            assertFalse(conn.contains(null, null, null, commitId));
+            assertFalse(conn.contains(commitId, null, null));
+            assertFalse(conn.contains(null, null, null, additionsGraphIRI));
         }
     }
 }

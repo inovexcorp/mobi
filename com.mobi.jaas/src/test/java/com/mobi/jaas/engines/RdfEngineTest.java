@@ -233,6 +233,7 @@ public class RdfEngineTest extends OrmEnabledTestCase {
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(newUserId, null, null);
         assertTrue(statements.hasNext());
+        statements.close();
         connection.close();
     }
 
@@ -315,8 +316,10 @@ public class RdfEngineTest extends OrmEnabledTestCase {
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(VALUE_FACTORY.createIRI(userId), null, null);
         assertFalse(statements.hasNext());
+        statements.close();
         statements = connection.getStatements(null, null, VALUE_FACTORY.createIRI(userId));
         assertFalse(statements.hasNext());
+        statements.close();
         connection.close();
     }
 
@@ -361,6 +364,7 @@ public class RdfEngineTest extends OrmEnabledTestCase {
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(newGroupId, null, null);
         assertTrue(statements.hasNext());
+        statements.close();
         connection.close();
     }
 
@@ -438,6 +442,7 @@ public class RdfEngineTest extends OrmEnabledTestCase {
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(VALUE_FACTORY.createIRI(groupId1), null, null);
         assertFalse(statements.hasNext());
+        statements.close();
         connection.close();
     }
 
