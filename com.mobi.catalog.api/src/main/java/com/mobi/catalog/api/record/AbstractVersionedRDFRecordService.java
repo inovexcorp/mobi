@@ -64,7 +64,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -76,6 +75,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 
 /**
  * Defines functionality for VersionedRDFRecordService. Provides common methods for exporting and deleting a Record.
@@ -265,6 +265,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             LOGGER.info("Could not find policy for record: " + record.getResource()
                     + ". Continuing with record deletion.");
         }
+        results.close();
     }
 
     /**

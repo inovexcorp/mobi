@@ -134,7 +134,7 @@ public class SimpleApplicationWrapperTest extends OrmEnabledTestCase {
         conn.add(VALUE_FACTORY.createIRI(namespace + "id"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE));
 
         wrapper.stop();
-        assertFalse(conn.getStatements(VALUE_FACTORY.createIRI(namespace + "id"), null, null).hasNext());
+        assertFalse(conn.contains(VALUE_FACTORY.createIRI(namespace + "id"), null, null));
         conn.close();
     }
 
@@ -150,7 +150,7 @@ public class SimpleApplicationWrapperTest extends OrmEnabledTestCase {
         props.put("description", "Description");
 
         wrapper.modified(props);
-        assertFalse(conn.getStatements(VALUE_FACTORY.createIRI(namespace + "id"), null, null).hasNext());
+        assertFalse(conn.contains(VALUE_FACTORY.createIRI(namespace + "id"), null, null));
         assertEquals(props.get("id").toString(), wrapper.applicationId);
         Resource appIri = VALUE_FACTORY.createIRI(namespace + props.get("id"));
         Model appModel = MODEL_FACTORY.createModel();

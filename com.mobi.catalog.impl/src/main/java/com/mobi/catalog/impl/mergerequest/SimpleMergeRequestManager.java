@@ -52,14 +52,15 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -504,8 +505,8 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             // Adjust comment chain pointers if they exist
             Comment comment = getComment(commentId, conn).orElseThrow(
                     () -> new IllegalArgumentException("Comment " + commentId + " does not exist"));
-            Iterator<Statement> statements = conn.getStatements(null, vf.createIRI(Comment.replyComment_IRI),
-                    commentId);
+            RepositoryResult<Statement> statements = conn.getStatements(null, vf.createIRI(
+                    Comment.replyComment_IRI), commentId);
             if (statements.hasNext()) {
                 Resource parentCommentIRI = statements.next().getSubject();
                 Optional<Comment> parentCommentOpt = getComment(parentCommentIRI, conn);
@@ -523,6 +524,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                     updateComment(parentComment.getResource(), parentComment);
                 }
             }
+            statements.close();
             catalogUtils.validateResource(commentId, commentFactory.getTypeIRI(), conn);
             catalogUtils.remove(commentId, conn);
         }

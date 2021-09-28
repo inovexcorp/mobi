@@ -4337,6 +4337,7 @@ public class OntologyRest {
                             Response.Status.BAD_REQUEST);
                 }
                 commitId = (Resource) commitStmt.next().getObject();
+                commitStmt.close();
             }
         } catch (IllegalArgumentException | RDFParseException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);

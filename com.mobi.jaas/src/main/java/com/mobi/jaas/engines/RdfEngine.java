@@ -553,14 +553,13 @@ public class RdfEngine implements Engine {
 
     private boolean resourceExists(Resource resource) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            return conn.getStatements(resource, null, null, context).hasNext();
+            return conn.contains(resource, null, null, context);
         }
     }
 
     private boolean resourceExists(Resource resource, String typeString) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            return conn.getStatements(resource, vf.createIRI(RDF.TYPE.stringValue()),
-                    vf.createIRI(typeString), context).hasNext();
+            return conn.contains(resource, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(typeString), context);
         }
     }
 

@@ -69,6 +69,11 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -79,11 +84,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
 
 @Component(service = RecordPermissionsRest.class, immediate = true)
 @Path("/record-permissions")
@@ -275,7 +275,9 @@ public class RecordPermissionsRest {
             LOGGER.info("Could not find related resource for: " + resourceId);
             return Optional.empty();
         }
-        return Optional.of(results.next().getSubject().stringValue());
+        Optional<String> result = Optional.of(results.next().getSubject().stringValue());
+        results.close();
+        return result;
     }
 
     /**

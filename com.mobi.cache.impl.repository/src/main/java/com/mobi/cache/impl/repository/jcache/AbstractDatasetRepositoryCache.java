@@ -53,7 +53,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
     protected DatasetConnection getDatasetConnection(Resource datasetIRI, boolean createNotExists) {
         LOG.debug("Retrieving cache dataset connection for " + datasetIRI.stringValue());
         try (RepositoryConnection conn = repository.getConnection()) {
-            if (!conn.getStatements(datasetIRI, null, null).hasNext()) {
+            if (!conn.contains(datasetIRI, null, null)) {
                 if (createNotExists) {
                     LOG.debug("Creating cache dataset " + datasetIRI.stringValue());
                     datasetManager.createDataset(datasetIRI.stringValue(), repository.getConfig().id());

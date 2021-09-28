@@ -144,8 +144,7 @@ public class SimpleStateManager implements StateManager {
             if (!stateExists(stateId, conn)) {
                 throw new IllegalArgumentException("State not found");
             }
-            return conn.getStatements(stateId, factory.createIRI(State.forUser_IRI),
-                    user.getResource()).hasNext();
+            return conn.contains(stateId, factory.createIRI(State.forUser_IRI), user.getResource());
         }
     }
 
@@ -258,7 +257,7 @@ public class SimpleStateManager implements StateManager {
         conn.remove(state.getResource(), null, null);
         state.getStateResource().stream()
                 .filter(resource ->
-                        !conn.getStatements(null, factory.createIRI(State.stateResource_IRI), resource).hasNext())
+                        !conn.contains(null, factory.createIRI(State.stateResource_IRI), resource))
                 .forEach(resource -> conn.remove(resource, null, null));
     }
 
@@ -273,8 +272,7 @@ public class SimpleStateManager implements StateManager {
     }
 
     private boolean stateExists(Resource stateId, RepositoryConnection conn) {
-        return conn.getStatements(stateId, factory.createIRI(RDF.TYPE.stringValue()),
-                factory.createIRI(State.TYPE))
-                .hasNext();
+        return conn.contains(stateId, factory.createIRI(RDF.TYPE.stringValue()),
+                factory.createIRI(State.TYPE));
     }
 }
