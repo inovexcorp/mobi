@@ -1,0 +1,46 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix setting: <http://mobi.com/ontologies/setting#>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix test: <http://example.com/>.
+
+test:SomeSimpleTextApplicationSetting a owl:Class, sh:NodeShape;
+    rdfs:subClassOf setting:ApplicationSetting;
+    sh:property test:SomeSimpleTextApplicationSettingPropertyShape;
+    setting:inGroup test:SomeApplicationSettingGroup .
+
+test:SomeSimpleTextApplicationSettingPropertyShape a sh:PropertyShape;
+    sh:path setting:hasDataValue;
+    sh:datatype xsd:string;
+    sh:minCount 1 ;
+    sh:maxCount 2 ;
+    setting:usesFormField setting:TextInput .
+
+test:SomeSimpleBooleanApplicationSetting a owl:Class, sh:NodeShape;
+    rdfs:subClassOf setting:ApplicationSetting;
+    sh:property test:SomeSimpleBooleanApplicationSettingPropertyShape;
+    setting:inGroup test:SomeOtherApplicationSettingGroup .
+
+test:SomeSimpleBooleanApplicationSettingPropertyShape a sh:PropertyShape;
+    sh:path setting:hasDataValue;
+    sh:datatype xsd:boolean;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    setting:usesFormField setting:ToggleInput .
+
+test:SomeOtherBooleanApplicationSetting a owl:Class, sh:NodeShape;
+    rdfs:subClassOf setting:ApplicationSetting;
+    sh:property test:SomeOtherBooleanApplicationSettingPropertyShape;
+    setting:inGroup test:SomeOtherApplicationSettingGroup .
+
+test:SomeOtherBooleanApplicationSettingPropertyShape a sh:PropertyShape;
+    sh:path setting:hasDataValue;
+    sh:datatype xsd:boolean;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    setting:usesFormField setting:ToggleInput .
+
+test:SomeApplicationSettingGroup a setting:ApplicationSettingGroup ;
+    rdfs:label "Some application setting group"@en .
+
+test:SomeOtherApplicationSettingGroup a setting:ApplicationSettingGroup ;
+    rdfs:label "Some other application setting group"@en .

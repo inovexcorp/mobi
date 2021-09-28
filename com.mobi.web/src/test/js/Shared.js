@@ -480,7 +480,7 @@ export function mockPrefixes() {
             this.roles = "roles:";
             this.foaf = "foaf:";
             this.shacl = "shacl:";
-            this.preference = "preference:";
+            this.setting = "setting:";
         });
     });
 }

@@ -27,12 +27,12 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.preference.api.PreferenceService;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.setting.api.SettingService;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
@@ -63,20 +63,18 @@ public class SimpleNotificationService {
     @Modified
     protected void start() {
         // Uncomment the below code when we implement the notification preferences
-        /**
-        Model ontologyModel;
-        try {
-            ontologyModel = Models.createModel("ttl", NOTIFICATION_ONTOLOGY, transformer);
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
-
-        removeSubjectFromModel(ontologyModel, vf.createIRI(NOTIFICATION_ONTOLOGY_NAME));
-
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            conn.add(ontologyModel, vf.createIRI(PreferenceService.GRAPH));
-        }
-         **/
+//        Model ontologyModel;
+//        try {
+//            ontologyModel = Models.createModel("ttl", NOTIFICATION_ONTOLOGY, transformer).getModel();
+//        } catch (IOException e) {
+//            throw new MobiException(e);
+//        }
+//
+//        removeSubjectFromModel(ontologyModel, vf.createIRI(NOTIFICATION_ONTOLOGY_NAME));
+//
+//        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+//            conn.add(ontologyModel, vf.createIRI(SettingService.GRAPH));
+//        }
     }
 
     private void removeAttachedBNodes(Model model, Resource subject) {

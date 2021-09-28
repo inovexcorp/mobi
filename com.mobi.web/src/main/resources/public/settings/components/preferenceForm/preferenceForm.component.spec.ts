@@ -90,7 +90,7 @@ describe('Preference Form component', function() {
         });
 
         testUserPreference = [{
-            '@id': 'http://mobi.com/preference#45e225a4-90f6-4276-b435-1b2888fdc01e',
+            '@id': 'http://mobi.com/setting#45e225a4-90f6-4276-b435-1b2888fdc01e',
             '@type': [
                 'http://www.w3.org/2002/07/owl#Thing',
                 'preference:Preference',
@@ -102,7 +102,7 @@ describe('Preference Form component', function() {
                     '@id': 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997'
                 }
             ],
-            'http://mobi.com/ontologies/preference#hasDataValue': [
+            'http://mobi.com/ontologies/setting#hasDataValue': [
                 {
                     '@value': 'first'
                 }
@@ -144,7 +144,7 @@ describe('Preference Form component', function() {
               '@value': '1'
             } ],
             'shacl:path': [ {
-              '@id': 'http://mobi.com/ontologies/preference#hasDataValue'
+              '@id': 'http://mobi.com/ontologies/setting#hasDataValue'
             } ]
           }
         };
@@ -210,7 +210,7 @@ describe('Preference Form component', function() {
                     fixture.detectChanges();
                     component.ngOnChanges();
                     expect(component.shaclShapes).toEqual({
-                        'http://mobi.com/ontologies/preference#hasDataValue': testPreferenceDefinitions['preference:SomeSimpleTextPreferencePropertyShape']
+                        'http://mobi.com/ontologies/setting#hasDataValue': testPreferenceDefinitions['preference:SomeSimpleTextPreferencePropertyShape']
                     });
                 });
             });
@@ -221,7 +221,7 @@ describe('Preference Form component', function() {
                     fixture.detectChanges();
                     component.ngOnChanges();
                     expect((component.form.get('formBlocks') as FormArray).length).toEqual(1);
-                    expect(component.form.get('formBlocks').get(['0', 'http://mobi.com/ontologies/preference#hasDataValue', 'http://mobi.com/ontologies/preference#hasDataValue']).value).toEqual('first');
+                    expect(component.form.get('formBlocks').get(['0', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('first');
                 });
                 it('when a multiple preference values exists', function() {
                     testUserPreference[0][PreferenceConstants.HAS_DATA_VALUE] = [
@@ -240,9 +240,9 @@ describe('Preference Form component', function() {
                     fixture.detectChanges();
                     component.ngOnChanges();
                     expect((component.form.get('formBlocks') as FormArray).length).toEqual(3);
-                    expect(component.form.get('formBlocks').get(['0', 'http://mobi.com/ontologies/preference#hasDataValue', 'http://mobi.com/ontologies/preference#hasDataValue']).value).toEqual('first');
-                    expect(component.form.get('formBlocks').get(['1', 'http://mobi.com/ontologies/preference#hasDataValue', 'http://mobi.com/ontologies/preference#hasDataValue']).value).toEqual('second');
-                    expect(component.form.get('formBlocks').get(['2', 'http://mobi.com/ontologies/preference#hasDataValue', 'http://mobi.com/ontologies/preference#hasDataValue']).value).toEqual('third');
+                    expect(component.form.get('formBlocks').get(['0', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('first');
+                    expect(component.form.get('formBlocks').get(['1', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('second');
+                    expect(component.form.get('formBlocks').get(['2', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('third');
                 });
             });
         });
@@ -259,7 +259,7 @@ describe('Preference Form component', function() {
             component.addFormBlock();
             fixture.detectChanges();
             expect((component.form.get('formBlocks') as FormArray).length).toEqual(2);
-            expect(component.form.get('formBlocks').get(['1', 'http://mobi.com/ontologies/preference#hasDataValue', 'http://mobi.com/ontologies/preference#hasDataValue']).value).toEqual('');
+            expect(component.form.get('formBlocks').get(['1', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('');
             expect(testPreference.values[0][PreferenceConstants.HAS_DATA_VALUE].length).toEqual(2);
             expect(component.numValues).toEqual(2);
             expect(component.form.dirty).toEqual(true);
@@ -267,8 +267,8 @@ describe('Preference Form component', function() {
             component.addFormBlock();
             fixture.detectChanges();
             expect((component.form.get('formBlocks') as FormArray).length).toEqual(3);
-            expect(component.form.get('formBlocks').get(['1', 'http://mobi.com/ontologies/preference#hasDataValue', 'http://mobi.com/ontologies/preference#hasDataValue']).value).toEqual('');
-            expect(component.form.get('formBlocks').get(['2', 'http://mobi.com/ontologies/preference#hasDataValue', 'http://mobi.com/ontologies/preference#hasDataValue']).value).toEqual('');
+            expect(component.form.get('formBlocks').get(['1', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('');
+            expect(component.form.get('formBlocks').get(['2', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('');
             expect(component.numValues).toEqual(3);
             expect(testPreference.values[0][PreferenceConstants.HAS_DATA_VALUE].length).toEqual(3);
             expect(component.form.dirty).toEqual(true);
@@ -296,8 +296,8 @@ describe('Preference Form component', function() {
             fixture.detectChanges();
             expect((component.form.get('formBlocks') as FormArray).length).toEqual(2);
             
-            expect(component.form.get('formBlocks').get(['0', 'http://mobi.com/ontologies/preference#hasDataValue', 'http://mobi.com/ontologies/preference#hasDataValue']).value).toEqual('first');
-            expect(component.form.get('formBlocks').get(['1', 'http://mobi.com/ontologies/preference#hasDataValue', 'http://mobi.com/ontologies/preference#hasDataValue']).value).toEqual('third');
+            expect(component.form.get('formBlocks').get(['0', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('first');
+            expect(component.form.get('formBlocks').get(['1', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('third');
 
             expect(component.form.dirty).toEqual(true);
         });

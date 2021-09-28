@@ -1,0 +1,32 @@
+[
+  {
+    "@id": "http://mobi.com/setting#a5e9de07-9bb1-42c1-aac7-3a6ec351ce13",
+    "@type": [
+      "http://mobi.com/ontologies/setting#Prefix",
+      "http://www.w3.org/2002/07/owl#Thing"
+    ],
+    "http://mobi.com/ontologies/setting#hasNamespace": [
+      {
+        "@value": "http://www.w3.org/2004/02/skos/core#"
+      }
+    ],
+    "http://mobi.com/ontologies/setting#hasPrefix": [
+      {
+        "@value": "skos"
+      }
+    ]
+  },
+  {
+    "@id": "http://mobi.com/testPrefixApplicationSetting",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Thing",
+      "http://mobi.com/ontologies/setting#ApplicationSetting",
+      "http://mobi.com/ontologies/setting#PrefixApplicationSetting"
+    ],
+    "http://mobi.com/ontologies/setting#hasObjectValue": [
+      {
+        "@id": "http://mobi.com/setting#a5e9de07-9bb1-42c1-aac7-3a6ec351ce13"
+      }
+    ]
+  }
+]

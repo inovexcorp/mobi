@@ -1,0 +1,16 @@
+PREFIX setting: <http://mobi.com/ontologies/setting#>
+
+CONSTRUCT {
+    ?userPreference ?p ?o .
+    ?objectValue ?attachedPred ?attachedObj .
+}
+WHERE {
+    ?userPreference setting:forUser ?user ;
+        a ?preferenceType ;
+        ?p ?o .
+
+    OPTIONAL {
+        ?userPreference setting:hasObjectValue ?objectValue .
+        ?objectValue ?attachedPred ?attachedObj .
+    }
+}

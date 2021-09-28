@@ -1,0 +1,15 @@
+PREFIX setting: <http://mobi.com/ontologies/setting#>
+
+CONSTRUCT {
+    ?applicationSetting ?p ?o .
+    ?objectValue ?attachedPred ?attachedObj .
+}
+WHERE {
+    ?applicationSetting a ?applicationSettingType ;
+        ?p ?o .
+
+    OPTIONAL {
+        ?applicationSetting setting:hasObjectValue ?objectValue .
+        ?objectValue ?attachedPred ?attachedObj .
+    }
+}

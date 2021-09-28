@@ -132,7 +132,7 @@ export class mockPrefixes {
     roles = 'roles:';
     foaf = 'foaf:';
     shacl = 'shacl:';
-    preference = 'preference:';
+    setting = 'setting:';
 }
 
 export class mockHttpService {

@@ -96,42 +96,42 @@ describe('Preference Group component', function() {
             }
         });
         testUserPreferences = {
-            "preference:SomeSimpleBooleanPreference": [
+            "setting:SomeSimpleBooleanPreference": [
                 {
-                    "@id": "http://mobi.com/preference#bff0d229-5691-455a-8e2b-8c09ccbc4ef6",
+                    "@id": "http://mobi.com/setting#bff0d229-5691-455a-8e2b-8c09ccbc4ef6",
                     "@type": [
                         "http://www.w3.org/2002/07/owl#Thing",
-                        "preference:SomeSimpleBooleanPreference",
-                        "preference:Preference",
-                        "preference:Setting"
+                        "setting:SomeSimpleBooleanPreference",
+                        "setting:Preference",
+                        "setting:Setting"
                     ],
-                    "preference:forUser": [
+                    "setting:forUser": [
                         {
                             "@id": "http://mobi.com/users/111111111111111111111111111"
                         }
                     ],
-                    "http://mobi.com/ontologies/preference#hasDataValue": [
+                    "http://mobi.com/ontologies/setting#hasDataValue": [
                         {
                             "@value": "true"
                         }
                     ]
                 }
             ],
-            "preference:SomeSimpleTextPreference": [
+            "setting:SomeSimpleTextPreference": [
                 {
-                    "@id": "http://mobi.com/preference#45e225a4-90f6-4276-b435-1b2888fdc01e",
+                    "@id": "http://mobi.com/setting#45e225a4-90f6-4276-b435-1b2888fdc01e",
                     "@type": [
                         "http://www.w3.org/2002/07/owl#Thing",
-                        "preference:Preference",
-                        "preference:SomeSimpleTextPreference",
-                        "preference:Setting"
+                        "setting:Preference",
+                        "setting:SomeSimpleTextPreference",
+                        "setting:Setting"
                     ],
-                    "preference:forUser": [
+                    "setting:forUser": [
                         {
                             "@id": "http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997"
                         }
                     ],
-                    "http://mobi.com/ontologies/preference#hasDataValue": [
+                    "http://mobi.com/ontologies/setting#hasDataValue": [
                         {
                             "@value": "aaa"
                         }
@@ -141,25 +141,25 @@ describe('Preference Group component', function() {
         };
 
         testPreferenceDefinitions = [ {
-            "@id" : "preference:SomeSimpleBooleanPreference",
+            "@id" : "setting:SomeSimpleBooleanPreference",
             "@type" : [ "http://www.w3.org/2002/07/owl#Class", "shacl:NodeShape" ],
-            "preference:inGroup" : [ {
-              "@id" : "preference:TestPrefGroupA"
+            "setting:inGroup" : [ {
+              "@id" : "setting:TestPrefGroupA"
             } ],
             "http://www.w3.org/2000/01/rdf-schema#subClassOf" : [ {
-              "@id" : "preference:Preference"
+              "@id" : "setting:Preference"
             } ],
             "shacl:description" : [ {
               "@value" : "What is your value for the simple boolean preference?"
             } ],
             "shacl:property" : [ {
-              "@id" : "preference:SomeSimpleBooleanPreferencePropertyShape"
+              "@id" : "setting:SomeSimpleBooleanPreferencePropertyShape"
             } ]
           }, {
-            "@id" : "preference:SomeSimpleBooleanPreferencePropertyShape",
+            "@id" : "setting:SomeSimpleBooleanPreferencePropertyShape",
             "@type" : [ "shacl:PropertyShape" ],
-            "preference:usesFormField" : [ {
-              "@id" : "preference:ToggleInput"
+            "setting:usesFormField" : [ {
+              "@id" : "setting:ToggleInput"
             } ],
             "shacl:datatype" : [ {
               "@id" : "http://www.w3.org/2001/XMLSchema#boolean"
@@ -173,29 +173,29 @@ describe('Preference Group component', function() {
               "@value" : "1"
             } ],
             "shacl:path" : [ {
-              "@id" : "http://mobi.com/ontologies/preference#hasDataValue"
+              "@id" : "http://mobi.com/ontologies/setting#hasDataValue"
             } ]
           }, {
-            "@id" : "preference:SomeSimpleTextPreference",
+            "@id" : "setting:SomeSimpleTextPreference",
             "@type" : [ "http://www.w3.org/2002/07/owl#Class", "shacl:NodeShape" ],
-            "preference:inGroup" : [ {
-              "@id" : "preference:TestPrefGroupA"
+            "setting:inGroup" : [ {
+              "@id" : "setting:TestPrefGroupA"
             } ],
             "http://www.w3.org/2000/01/rdf-schema#subClassOf" : [ {
-              "@id" : "preference:Preference"
+              "@id" : "setting:Preference"
             } ],
             "shacl:description" : [ {
               "@language" : "en",
               "@value" : "Enter a value for this simple text preference"
             } ],
             "shacl:property" : [ {
-              "@id" : "preference:SomeSimpleTextPreferencePropertyShape"
+              "@id" : "setting:SomeSimpleTextPreferencePropertyShape"
             } ]
           }, {
-            "@id" : "preference:SomeSimpleTextPreferencePropertyShape",
+            "@id" : "setting:SomeSimpleTextPreferencePropertyShape",
             "@type" : [ "shacl:PropertyShape" ],
-            "preference:usesFormField" : [ {
-              "@id" : "preference:TextInput"
+            "setting:usesFormField" : [ {
+              "@id" : "setting:TextInput"
             } ],
             "shacl:datatype" : [ {
               "@id" : "http://www.w3.org/2001/XMLSchema#string"
@@ -209,7 +209,7 @@ describe('Preference Group component', function() {
               "@value" : "1"
             } ],
             "shacl:path" : [ {
-              "@id" : "http://mobi.com/ontologies/preference#hasDataValue"
+              "@id" : "http://mobi.com/ontologies/setting#hasDataValue"
             } ]
           } ];
 
@@ -234,17 +234,17 @@ describe('Preference Group component', function() {
     
                     expect(Object.keys(component.preferences).length).toEqual(2);
     
-                    expect(component.preferences['preference:SomeSimpleBooleanPreference'].values[0][PreferenceConstants.HAS_DATA_VALUE][0]['@value']).toEqual('true');
+                    expect(component.preferences['setting:SomeSimpleBooleanPreference'].values[0][PreferenceConstants.HAS_DATA_VALUE][0]['@value']).toEqual('true');
     
-                    expect(component.preferences['preference:SomeSimpleBooleanPreference'].topLevelPreferenceNodeshapeInstance.length).toEqual(1);
+                    expect(component.preferences['setting:SomeSimpleBooleanPreference'].topLevelPreferenceNodeshapeInstance.length).toEqual(1);
     
-                    expect(component.preferences['preference:SomeSimpleBooleanPreference'].topLevelPreferenceNodeshapeInstanceId).toEqual('http://mobi.com/preference#bff0d229-5691-455a-8e2b-8c09ccbc4ef6');
+                    expect(component.preferences['setting:SomeSimpleBooleanPreference'].topLevelPreferenceNodeshapeInstanceId).toEqual('http://mobi.com/setting#bff0d229-5691-455a-8e2b-8c09ccbc4ef6');
     
-                    expect(component.preferences['preference:SomeSimpleBooleanPreference']).toBeInstanceOf(SimplePreference);
+                    expect(component.preferences['setting:SomeSimpleBooleanPreference']).toBeInstanceOf(SimplePreference);
     
-                    expect(component.preferences['preference:SomeSimpleBooleanPreference'].asJsonLD()).toEqual(testUserPreferences['preference:SomeSimpleBooleanPreference']);
+                    expect(component.preferences['setting:SomeSimpleBooleanPreference'].asJsonLD()).toEqual(testUserPreferences['setting:SomeSimpleBooleanPreference']);
     
-                    expect(component.preferences['preference:SomeSimpleTextPreference'].asJsonLD()).toEqual(testUserPreferences['preference:SomeSimpleTextPreference']);
+                    expect(component.preferences['setting:SomeSimpleTextPreference'].asJsonLD()).toEqual(testUserPreferences['setting:SomeSimpleTextPreference']);
                 }));
                 it('when no user preferences exist', fakeAsync(function() {
                     preferenceManagerStub.getUserPreferences.and.returnValue(Promise.resolve({data: []}));
@@ -253,20 +253,20 @@ describe('Preference Group component', function() {
     
                     expect(Object.keys(component.preferences).length).toEqual(2);
     
-                    expect(component.preferences['preference:SomeSimpleBooleanPreference'].values[0][PreferenceConstants.HAS_DATA_VALUE][0]['@value']).toEqual('');
+                    expect(component.preferences['setting:SomeSimpleBooleanPreference'].values[0][PreferenceConstants.HAS_DATA_VALUE][0]['@value']).toEqual('');
 
-                    expect(component.preferences['preference:SomeSimpleTextPreference'].values[0][PreferenceConstants.HAS_DATA_VALUE][0]['@value']).toEqual('');
+                    expect(component.preferences['setting:SomeSimpleTextPreference'].values[0][PreferenceConstants.HAS_DATA_VALUE][0]['@value']).toEqual('');
 
-                    expect(component.preferences['preference:SomeSimpleBooleanPreference'].topLevelPreferenceNodeshapeInstanceId).toEqual(undefined);
+                    expect(component.preferences['setting:SomeSimpleBooleanPreference'].topLevelPreferenceNodeshapeInstanceId).toEqual(undefined);
     
-                    expect(component.preferences['preference:SomeSimpleBooleanPreference']).toBeInstanceOf(SimplePreference);
+                    expect(component.preferences['setting:SomeSimpleBooleanPreference']).toBeInstanceOf(SimplePreference);
                 }));
             });
         });
         it('should update a preference', fakeAsync(function() {
             component.retrievePreferences();
             tick();
-            const pref: SimplePreference = component.preferences['preference:SomeSimpleBooleanPreference'];
+            const pref: SimplePreference = component.preferences['setting:SomeSimpleBooleanPreference'];
             preferenceManagerStub.updateUserPreference.and.returnValue(Promise.resolve());
             component.updateUserPreference(pref);
             expect(preferenceManagerStub.updateUserPreference).toHaveBeenCalled();
@@ -276,7 +276,7 @@ describe('Preference Group component', function() {
             preferenceManagerStub.getUserPreferences.and.returnValue(Promise.resolve({data: []}));
             component.retrievePreferences();
             tick();
-            const pref: SimplePreference = component.preferences['preference:SomeSimpleBooleanPreference'];
+            const pref: SimplePreference = component.preferences['setting:SomeSimpleBooleanPreference'];
             preferenceManagerStub.createUserPreference.and.returnValue(Promise.resolve());
             component.updateUserPreference(pref);
             expect(preferenceManagerStub.updateUserPreference).not.toHaveBeenCalled();

@@ -106,9 +106,9 @@
         <module>com.mobi.email.api</module>
         <module>com.mobi.email.impl</module>
         <module>com.mobi.utils.cli</module>
-        <module>com.mobi.preference.api</module>
-        <module>com.mobi.preference.impl</module>
-        <module>com.mobi.preference.rest</module>
+        <module>com.mobi.setting.api</module>
+        <module>com.mobi.setting.impl</module>
+        <module>com.mobi.setting.rest</module>
         <module>com.mobi.notification.impl</module>
         <module>com.mobi.persistence.utils.impl</module>
     </modules>

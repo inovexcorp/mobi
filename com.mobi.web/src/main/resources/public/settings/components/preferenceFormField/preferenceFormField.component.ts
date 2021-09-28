@@ -56,11 +56,11 @@ export class PreferenceFormFieldComponent implements OnChanges {
             this.validators.push(Validators.pattern(regex));
         }
 
-        switch (this.util.getPropertyId(this.shaclShape, this.prefixes.preference + 'usesFormField')) {
-            case this.prefixes.preference + 'TextInput':
+        switch (this.util.getPropertyId(this.shaclShape, this.prefixes.setting + 'usesFormField')) {
+            case this.prefixes.setting + 'TextInput':
                 this.formType = 'textInput';
                 break;
-            case this.prefixes.preference + 'ToggleInput':
+            case this.prefixes.setting + 'ToggleInput':
                 this.formType = 'toggle';
                 break;
             case '':

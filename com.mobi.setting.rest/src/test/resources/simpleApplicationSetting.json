@@ -1,0 +1,16 @@
+[
+  {
+    "@id": "http://example.com/MySimpleApplicationSetting",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Thing",
+      "http://mobi.com/ontologies/setting#ApplicationSetting",
+      "http://example.com/ExampleSimpleApplicationSetting"
+    ],
+    "http://mobi.com/ontologies/setting#hasDataValue": [
+      {
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean",
+        "@value": "false"
+      }
+    ]
+  }
+]
