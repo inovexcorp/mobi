@@ -28,20 +28,22 @@ import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.QueryResults;
 import com.mobi.platform.config.api.ontologies.platformconfig.State;
 import com.mobi.platform.config.api.state.StateManager;
 import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.BindingSet;
-import com.mobi.query.api.TupleQuery;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
+import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
 import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import com.mobi.vfs.api.VirtualFile;
+import com.mobi.vfs.api.VirtualFilesystem;
+import com.mobi.vfs.api.VirtualFilesystemException;
+import com.mobi.vfs.ontologies.documents.BinaryFile;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -76,7 +78,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -227,7 +228,7 @@ public class Restore implements Action {
         if (!backupVersion.startsWith(mobiVersions.get(0))) {
             copyPolicyFiles(bundleContext);
         }
-        restoreRepositories(manifest, backupVersion);
+        restoreRepositories(manifest, backupVersion, bundleContext);
 
         File tempArchive = new File(RESTORE_PATH);
         tempArchive.delete();
@@ -351,7 +352,8 @@ public class Restore implements Action {
         return remoteRepos;
     }
 
-    private void restoreRepositories(JSONObject manifest, String backupVersion) throws IOException {
+    private void restoreRepositories(JSONObject manifest, String backupVersion, BundleContext bundleContext)
+            throws IOException {
         // Clear populated repositories
         Set<String> remoteRepos = clearAllRepos(repositoryManager);
 
@@ -380,10 +382,10 @@ public class Restore implements Action {
             }
         }
         // Remove Statements
-        cleanCatalogRepo(backupVersion);
+        cleanCatalogRepo(backupVersion, bundleContext);
     }
 
-    protected void cleanCatalogRepo(String backupVersion) {
+    protected void cleanCatalogRepo(String backupVersion, BundleContext bundleContext) {
         try (RepositoryConnection conn = config.getRepository().getConnection()) {
             LOGGER.trace("Remove All In progress Commits where User doesn’t exist");
             conn.prepareUpdate(CLEAR_INPROGRESS_COMMIT_NO_USER).execute();
@@ -393,6 +395,18 @@ public class Restore implements Action {
 
             LOGGER.trace("Remove Addition and Deletion Graphs with no Revision");
             conn.prepareUpdate(CLEAN_DANGLING_ADDITIONS_DELETIONS).execute();
+
+            if (mobiVersions.indexOf(backupVersion) < 8) {
+                // 1.20 changed admin policy and system repo query policy. Need to remove old versions so updated
+                // policy takes effect.
+                ServiceReference<XACMLPolicyManager> service =
+                        bundleContext.getServiceReference(XACMLPolicyManager.class);
+                List<Resource> policiesToRemove = new ArrayList<>();
+                policiesToRemove.add(vf.createIRI("http://mobi.com/policies/system-repo-access"));
+                policiesToRemove.add(vf.createIRI("http://mobi.com/policies/all-access-versioned-rdf-record"));
+                String policyFileLocation = (String) service.getProperty("policyFileLocation");
+                removePolicyFiles(bundleContext, conn, policyFileLocation, policiesToRemove);
+            }
 
             LOGGER.trace("Remove PolicyFile statements");
             conn.prepareUpdate(CLEAR_POLICY_STATEMENTS).execute();
@@ -404,14 +418,47 @@ public class Restore implements Action {
 
             if (mobiVersions.indexOf(backupVersion) < 2) {
                 // Clear ontology editor state
-                Iterator<Statement> statements = conn.getStatements(null,
-                        vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), vf.createIRI(State.TYPE)).iterator();
-
-                while (statements.hasNext()) {
-                    stateManager.deleteState(statements.next().getSubject());
-                }
+                RepositoryResult<Statement> stateResults = conn.getStatements(null,
+                        vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), vf.createIRI(State.TYPE));
+                stateResults.forEach(statement -> stateManager.deleteState(statement.getSubject()));
                 LOGGER.trace("Remove state statements");
             }
+        }
+    }
+
+    /**
+     * Finds old policy file locations for the provided files in the repo (may point to a non-existent directory), grabs
+     * the hash path, finds the File in the new location on this instance using the policyFileLocation and VFS, and
+     * deletes the File if it exists.
+     * @param bundleContext the OSGI {@link BundleContext} used to retrieve services.
+     * @param conn the {@link RepositoryConnection} used to query the repo for retrievalUrls.
+     * @param policyFileLocation the policyFileLocation for the current instance.
+     * @param policies the List of IRIs of policies whose files should be removed.
+     */
+    protected void removePolicyFiles(BundleContext bundleContext, RepositoryConnection conn, String policyFileLocation,
+                                     List<Resource> policies) {
+        ServiceReference<VirtualFilesystem> vfsService = bundleContext.getServiceReference(VirtualFilesystem.class);
+        VirtualFilesystem vfs = bundleContext.getService(vfsService);
+
+        for (Resource policy : policies) {
+            RepositoryResult<Statement> results = conn.getStatements(policy,
+                    vf.createIRI(BinaryFile.retrievalURL_IRI), null);
+            results.forEach(statement -> {
+                String path = statement.getObject().stringValue();
+                Pattern pathPattern = Pattern.compile("([\\/|\\\\]\\w+){3}$");
+                Matcher matcher = pathPattern.matcher(path);
+                if (matcher.find()) {
+                    String vfsFilePath = policyFileLocation + matcher.group().substring(1);
+                    try {
+                        VirtualFile file = vfs.resolveVirtualFile(vfsFilePath);
+                        if (file.exists()) {
+                            file.delete();
+                        }
+                    } catch (VirtualFilesystemException e) {
+                        LOGGER.error("Could not find vfs file: " + vfsFilePath);
+                    }
+                }
+            });
         }
     }
 

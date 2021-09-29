@@ -22,12 +22,19 @@ package com.mobi.utils.cli;
  * #L%
  */
 
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.platform.config.api.state.StateManager;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.TupleQuery;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.core.utils.Values;
@@ -39,6 +46,9 @@ import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import com.mobi.repository.impl.sesame.http.HTTPRepositoryConfig;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
 import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
+import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import com.mobi.vfs.api.VirtualFile;
+import com.mobi.vfs.api.VirtualFilesystem;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -50,11 +60,14 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,11 +75,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.when;
-
 public class RestoreTest {
 
+    private static final String POLICY_FILE_LOCATION = "testLocation";
     private Repository repo;
     private ValueFactory vf;
     private Restore restore;
@@ -83,8 +94,23 @@ public class RestoreTest {
     @Mock
     private CatalogConfigProvider catalogConfigProvider;
 
+    @Mock
+    private BundleContext bundleContext;
+
+    @Mock
+    private VirtualFilesystem vfs;
+
+    @Mock
+    private ServiceReference<VirtualFilesystem> vfsServiceRef;
+
+    @Mock
+    private VirtualFile virtualFile;
+
+    @Mock
+    private ServiceReference<XACMLPolicyManager> xacmlServiceRef;
+
     @Before
-    public void setupMocks() {
+    public void setupMocks() throws Exception {
         MockitoAnnotations.initMocks(this);
         vf = SimpleValueFactory.getInstance();
 
@@ -100,6 +126,13 @@ public class RestoreTest {
         repo.initialize();
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
         when(catalogConfigProvider.getRepository()).thenReturn(repo);
+
+        when(bundleContext.getServiceReference(eq(VirtualFilesystem.class))).thenReturn(vfsServiceRef);
+        when(bundleContext.getServiceReference(eq(XACMLPolicyManager.class))).thenReturn(xacmlServiceRef);
+        when(bundleContext.getService(eq(vfsServiceRef))).thenReturn(vfs);
+        when(xacmlServiceRef.getProperty(eq("policyFileLocation"))).thenReturn(POLICY_FILE_LOCATION);
+        when(vfs.resolveVirtualFile(anyString())).thenReturn(virtualFile);
+        when(virtualFile.exists()).thenReturn(true);
     }
 
     private Repository mockRepo(Class<? extends RepositoryConfig> configClassToMock) {
@@ -178,7 +211,7 @@ public class RestoreTest {
 
         Assert.assertEquals(graphExpect, queryResource("/queries/searchInProgressCommits.rq", "inProgressCommit", "diffGraph"));
 
-        restore.cleanCatalogRepo("2");
+        restore.cleanCatalogRepo("2", bundleContext);
 
         graphExpect = Stream.of("https://mobi.com/in-progress-commits#R5U29I1;https://mobi.com/additions#R5U29I1A1").collect(Collectors.toList());
 
@@ -193,7 +226,7 @@ public class RestoreTest {
 
         Assert.assertEquals(graphExpect, queryResource("/queries/searchInProgressCommits.rq", "inProgressCommit", "diffGraph"));
 
-        restore.cleanCatalogRepo("2");
+        restore.cleanCatalogRepo("2", bundleContext);
 
         graphExpect = Stream.of("https://mobi.com/in-progress-commits#R5U29I1;https://mobi.com/additions#R5U29I1A1").collect(Collectors.toList());
 
@@ -206,7 +239,7 @@ public class RestoreTest {
         List<String> graphExpect = Stream.of("https://mobi.com/additions#hasNoRevision",
                 "https://mobi.com/deletions#hasNoRevision").collect(Collectors.toList());
         Assert.assertEquals(graphExpect, queryResource("/queries/searchDanglingAdditionsDeletions.rq", "diffGraph"));
-        restore.cleanCatalogRepo("2");
+        restore.cleanCatalogRepo("2", bundleContext);
         Assert.assertEquals(0, queryResource("/queries/searchDanglingAdditionsDeletions.rq", "diffGraph").size());
         // ensure it did not delete good graphs
         graphExpect = Stream.of("https://mobi.com/additions#hasRevision001",
@@ -220,7 +253,7 @@ public class RestoreTest {
         List<String> graphExpect = Stream.of("http://mobi.com/states#0001",
                 "http://mobi.com/states#0002").collect(Collectors.toList());
         Assert.assertEquals(graphExpect, queryResource("/queries/searchStateInstanceNoUser.rq", "state"));
-        restore.cleanCatalogRepo("1.20");
+        restore.cleanCatalogRepo("1.20", bundleContext);
 
         Mockito.verify(stateManager).deleteState(vf.createIRI("http://mobi.com/states#0002"));
         Mockito.verify(stateManager).deleteState(vf.createIRI("http://mobi.com/states#0001"));
@@ -231,9 +264,52 @@ public class RestoreTest {
     public void cleanGraphStatePolicyFileStatementsTest() {
         loadFiles("/systemState.trig");
         Assert.assertEquals(16, queryResource("/queries/searchPolicy.rq", "policyGraph", "policy").size());
-        restore.cleanCatalogRepo("2");
+        restore.cleanCatalogRepo("2", bundleContext);
         Assert.assertEquals(0, queryResource("/queries/searchPolicy.rq", "policyGraph", "policy").size());
         Assert.assertEquals(8, Mockito.mockingDetails(stateManager).getInvocations().size());
     }
 
+    @Test
+    public void removePolicyFileTest() throws Exception {
+        loadFiles("/systemPolicyFiles.trig");
+        List<Resource> resources = Collections.singletonList(vf.createIRI("http://mobi.com/policies/all-access-versioned-rdf-record"));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            restore.removePolicyFiles(bundleContext, conn, POLICY_FILE_LOCATION, resources);
+        }
+        verify(bundleContext).getServiceReference(eq(VirtualFilesystem.class));
+        verify(bundleContext).getService(eq(vfsServiceRef));
+        verify(vfs).resolveVirtualFile(eq(POLICY_FILE_LOCATION + "3a/5f/b3766aac44f6"));
+        verify(virtualFile).exists();
+        verify(virtualFile).delete();
+    }
+
+    @Test
+    public void removePolicyFileDoesntExistTest() throws Exception {
+        when(virtualFile.exists()).thenReturn(false);
+        loadFiles("/systemPolicyFiles.trig");
+        List<Resource> resources = Collections.singletonList(vf.createIRI("http://mobi.com/policies/all-access-versioned-rdf-record"));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            restore.removePolicyFiles(bundleContext, conn, POLICY_FILE_LOCATION, resources);
+        }
+        verify(bundleContext).getServiceReference(eq(VirtualFilesystem.class));
+        verify(bundleContext).getService(eq(vfsServiceRef));
+        verify(vfs).resolveVirtualFile(eq(POLICY_FILE_LOCATION + "3a/5f/b3766aac44f6"));
+        verify(virtualFile).exists();
+        verify(virtualFile, never()).delete();
+    }
+
+    @Test
+    public void removePolicyFileIRIDoesntExistTest() throws Exception {
+        when(virtualFile.exists()).thenReturn(false);
+        loadFiles("/systemPolicyFiles.trig");
+        List<Resource> resources = Collections.singletonList(vf.createIRI("urn:nothing"));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            restore.removePolicyFiles(bundleContext, conn, POLICY_FILE_LOCATION, resources);
+        }
+        verify(bundleContext).getServiceReference(eq(VirtualFilesystem.class));
+        verify(bundleContext).getService(eq(vfsServiceRef));
+        verify(vfs, never()).resolveVirtualFile(eq(POLICY_FILE_LOCATION + "3a/5f/b3766aac44f6"));
+        verify(virtualFile, never()).exists();
+        verify(virtualFile, never()).delete();
+    }
 }

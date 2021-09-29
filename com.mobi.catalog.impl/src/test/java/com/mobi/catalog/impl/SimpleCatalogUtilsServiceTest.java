@@ -25,8 +25,8 @@ package com.mobi.catalog.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
@@ -35,12 +35,10 @@ import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.MCAT_Thing;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.UserBranch;
@@ -79,7 +77,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URLEncoder;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -87,6 +84,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -196,7 +194,19 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         RepositoryResult<Statement> statements = conn.getStatements(entity,
                 getValueFactory().createIRI(_Thing.modified_IRI), null);
 
-        return statements.next().toString();
+        String modifiedIri = statements.next().toString();
+        statements.close();
+        return modifiedIri;
+    }
+
+    private List<Resource> buildResources(String... resources) {
+        return Stream.of(resources).map((r) -> VALUE_FACTORY.createIRI(r)).collect(Collectors.toList());
+    }
+
+    private String modelAssertHelper(Model model){
+        Set<String> statements = new TreeSet<>();
+        model.forEach(statement -> statements.add(statement.toString()));
+        return String.join("\n", statements);
     }
 
     /* validateResource */
@@ -229,7 +239,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         Record record = recordFactory.createNew(EMPTY_IRI);
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertFalse(conn.getStatements(null, null, null, EMPTY_IRI).hasNext());
+            assertFalse(conn.contains(null, null, null, EMPTY_IRI));
 
             service.addObject(record, conn);
             assertEquals(record.getModel().size(), RepositoryResults.asModel(conn.getStatements(null, null, null, EMPTY_IRI), MODEL_FACTORY).size());
@@ -242,7 +252,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     public void updateObjectTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            assertTrue(conn.getStatements(null, null, null, RECORD_IRI).hasNext());
+            assertTrue(conn.contains(null, null, null, RECORD_IRI));
             Record newRecord = recordFactory.createNew(RECORD_IRI);
 
             service.updateObject(newRecord, conn);
@@ -331,9 +341,9 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void removeTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(null, null, null, RECORD_IRI).hasNext());
+            assertTrue(conn.contains(null, null, null, RECORD_IRI));
             service.remove(RECORD_IRI, conn);
-            assertFalse(conn.getStatements(null, null, null, RECORD_IRI).hasNext());
+            assertFalse(conn.contains(null, null, null, RECORD_IRI));
         }
     }
 
@@ -342,9 +352,9 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void removeObjectTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(null, null, null, RECORD_IRI).hasNext());
+            assertTrue(conn.contains(null, null, null, RECORD_IRI));
             service.removeObject(recordFactory.createNew(RECORD_IRI), conn);
-            assertFalse(conn.getStatements(null, null, null, RECORD_IRI).hasNext());
+            assertFalse(conn.contains(null, null, null, RECORD_IRI));
         }
     }
 
@@ -353,10 +363,10 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void removeObjectWithRelationshipTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(null, null, null, BRANCH_IRI).hasNext());
+            assertTrue(conn.contains(null, null, null, BRANCH_IRI));
             service.removeObjectWithRelationship(BRANCH_IRI, VERSIONED_RDF_RECORD_IRI, VersionedRDFRecord.branch_IRI, conn);
-            assertFalse(conn.getStatements(null, null, null, BRANCH_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI), BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertFalse(conn.contains(null, null, null, BRANCH_IRI));
+            assertFalse(conn.contains(VERSIONED_RDF_RECORD_IRI, VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI), BRANCH_IRI, VERSIONED_RDF_RECORD_IRI));
         }
     }
 
@@ -673,16 +683,16 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         Version version = versionFactory.createNew(LATEST_VERSION_IRI);
         version.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(DISTRIBUTION_IRI)));
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertTrue(conn.contains(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI));
+            assertTrue(conn.contains(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI));
+            assertTrue(conn.contains(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI));
 
             service.removeVersion(VERSIONED_RECORD_IRI, version, conn);
 
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertTrue(conn.contains(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI));
+            assertTrue(conn.contains(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI));
+            assertFalse(conn.contains(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI));
+            assertFalse(conn.contains(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI));
         }
     }
 
@@ -693,16 +703,16 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         Version version = versionFactory.createNew(LATEST_VERSION_IRI);
         version.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(DISTRIBUTION_IRI)));
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertTrue(conn.contains(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI));
+            assertTrue(conn.contains(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI));
+            assertTrue(conn.contains(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI));
 
             service.removeVersion(VERSIONED_RECORD_IRI, version.getResource(), conn);
 
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertTrue(conn.contains(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI));
+            assertTrue(conn.contains(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI));
+            assertFalse(conn.contains(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI));
+            assertFalse(conn.contains(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI));
         }
     }
 
@@ -1028,29 +1038,29 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         IRI revisionToKeep = VALUE_FACTORY.createIRI(REVISIONS + "commitA0");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, BRANCH_IRI).hasNext());
-            assertTrue(conn.getStatements(commitIdToRemove, typeIRI, COMMIT_CATALOG_IRI, commitIdToRemove).hasNext());
-            assertTrue(conn.getStatements(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commitIdToRemove).hasNext());
-            assertTrue(conn.getStatements(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commitIdToRemove).hasNext());
-            assertTrue(conn.getStatements(commitIdToKeep, typeIRI, COMMIT_CATALOG_IRI, commitIdToKeep).hasNext());
-            assertTrue(conn.getStatements(revisionToKeep, ADDITIONS_CATALOG_IRI, additionsToKeep, commitIdToKeep).hasNext());
-            assertTrue(conn.getStatements(revisionToKeep, DELETIONS_CATALOG_IRI, deletionsToKeep, commitIdToKeep).hasNext());
+            assertTrue(conn.contains(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI));
+            assertTrue(conn.contains(VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI));
+            assertTrue(conn.contains(BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, BRANCH_IRI));
+            assertTrue(conn.contains(commitIdToRemove, typeIRI, COMMIT_CATALOG_IRI, commitIdToRemove));
+            assertTrue(conn.contains(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commitIdToRemove));
+            assertTrue(conn.contains(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commitIdToRemove));
+            assertTrue(conn.contains(commitIdToKeep, typeIRI, COMMIT_CATALOG_IRI, commitIdToKeep));
+            assertTrue(conn.contains(revisionToKeep, ADDITIONS_CATALOG_IRI, additionsToKeep, commitIdToKeep));
+            assertTrue(conn.contains(revisionToKeep, DELETIONS_CATALOG_IRI, deletionsToKeep, commitIdToKeep));
 
             List<Resource> deletedCommits = service.removeBranch(VERSIONED_RDF_RECORD_IRI, BRANCH_IRI, conn);
 
             assertEquals(1, deletedCommits.size());
             assertEquals(commitIdToRemove, deletedCommits.get(0));
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, BRANCH_IRI).hasNext());
-            assertFalse(conn.getStatements(commitIdToRemove, typeIRI, COMMIT_CATALOG_IRI, commitIdToRemove).hasNext());
-            assertFalse(conn.getStatements(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commitIdToRemove).hasNext());
-            assertFalse(conn.getStatements(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commitIdToRemove).hasNext());
-            assertTrue(conn.getStatements(commitIdToKeep, typeIRI, COMMIT_CATALOG_IRI, commitIdToKeep).hasNext());
-            assertTrue(conn.getStatements(revisionToKeep, ADDITIONS_CATALOG_IRI, additionsToKeep, commitIdToKeep).hasNext());
-            assertTrue(conn.getStatements(revisionToKeep, DELETIONS_CATALOG_IRI, deletionsToKeep, commitIdToKeep).hasNext());
+            assertFalse(conn.contains(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI));
+            assertFalse(conn.contains(VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI));
+            assertFalse(conn.contains(BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, BRANCH_IRI));
+            assertFalse(conn.contains(commitIdToRemove, typeIRI, COMMIT_CATALOG_IRI, commitIdToRemove));
+            assertFalse(conn.contains(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commitIdToRemove));
+            assertFalse(conn.contains(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commitIdToRemove));
+            assertTrue(conn.contains(commitIdToKeep, typeIRI, COMMIT_CATALOG_IRI, commitIdToKeep));
+            assertTrue(conn.contains(revisionToKeep, ADDITIONS_CATALOG_IRI, additionsToKeep, commitIdToKeep));
+            assertTrue(conn.contains(revisionToKeep, DELETIONS_CATALOG_IRI, deletionsToKeep, commitIdToKeep));
         }
     }
 
@@ -1068,30 +1078,30 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         IRI revisionToKeep = VALUE_FACTORY.createIRI(REVISIONS + "commitA0");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, BRANCH_IRI).hasNext());
-            assertTrue(conn.getStatements(commitIdToRemove, typeIRI, COMMIT_CATALOG_IRI, commitIdToRemove).hasNext());
-            assertTrue(conn.getStatements(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commitIdToRemove).hasNext());
-            assertTrue(conn.getStatements(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commitIdToRemove).hasNext());
-            assertTrue(conn.getStatements(commitIdToKeep, typeIRI, COMMIT_CATALOG_IRI, commitIdToKeep).hasNext());
-            assertTrue(conn.getStatements(revisionToKeep, ADDITIONS_CATALOG_IRI, additionsToKeep, commitIdToKeep).hasNext());
-            assertTrue(conn.getStatements(revisionToKeep, DELETIONS_CATALOG_IRI, deletionsToKeep, commitIdToKeep).hasNext());
+            assertTrue(conn.contains(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI));
+            assertTrue(conn.contains(VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI));
+            assertTrue(conn.contains(BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, BRANCH_IRI));
+            assertTrue(conn.contains(commitIdToRemove, typeIRI, COMMIT_CATALOG_IRI, commitIdToRemove));
+            assertTrue(conn.contains(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commitIdToRemove));
+            assertTrue(conn.contains(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commitIdToRemove));
+            assertTrue(conn.contains(commitIdToKeep, typeIRI, COMMIT_CATALOG_IRI, commitIdToKeep));
+            assertTrue(conn.contains(revisionToKeep, ADDITIONS_CATALOG_IRI, additionsToKeep, commitIdToKeep));
+            assertTrue(conn.contains(revisionToKeep, DELETIONS_CATALOG_IRI, deletionsToKeep, commitIdToKeep));
 
             List<Resource> deletedCommits = new ArrayList<>();
             service.removeBranch(VERSIONED_RDF_RECORD_IRI, BRANCH_IRI, deletedCommits, conn);
 
             assertEquals(1, deletedCommits.size());
             assertEquals(commitIdToRemove, deletedCommits.get(0));
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, BRANCH_IRI).hasNext());
-            assertFalse(conn.getStatements(commitIdToRemove, typeIRI, COMMIT_CATALOG_IRI, commitIdToRemove).hasNext());
-            assertFalse(conn.getStatements(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commitIdToRemove).hasNext());
-            assertFalse(conn.getStatements(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commitIdToRemove).hasNext());
-            assertTrue(conn.getStatements(commitIdToKeep, typeIRI, COMMIT_CATALOG_IRI, commitIdToKeep).hasNext());
-            assertTrue(conn.getStatements(revisionToKeep, ADDITIONS_CATALOG_IRI, additionsToKeep, commitIdToKeep).hasNext());
-            assertTrue(conn.getStatements(revisionToKeep, DELETIONS_CATALOG_IRI, deletionsToKeep, commitIdToKeep).hasNext());
+            assertFalse(conn.contains(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI));
+            assertFalse(conn.contains(VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI));
+            assertFalse(conn.contains(BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, BRANCH_IRI));
+            assertFalse(conn.contains(commitIdToRemove, typeIRI, COMMIT_CATALOG_IRI, commitIdToRemove));
+            assertFalse(conn.contains(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commitIdToRemove));
+            assertFalse(conn.contains(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commitIdToRemove));
+            assertTrue(conn.contains(commitIdToKeep, typeIRI, COMMIT_CATALOG_IRI, commitIdToKeep));
+            assertTrue(conn.contains(revisionToKeep, ADDITIONS_CATALOG_IRI, additionsToKeep, commitIdToKeep));
+            assertTrue(conn.contains(revisionToKeep, DELETIONS_CATALOG_IRI, deletionsToKeep, commitIdToKeep));
         }
     }
 
@@ -1113,34 +1123,34 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
 
         try (RepositoryConnection conn = repo.getConnection()) {
 
-            assertTrue(conn.getStatements(complexRecordIRI, BRANCH_CATALOG_IRI, complexBranchIRI, complexRecordIRI).hasNext());
-            assertTrue(conn.getStatements(commitA, typeIRI, COMMIT_CATALOG_IRI, commitA).hasNext());
-            assertTrue(conn.getStatements(commitARevision, ADDITIONS_CATALOG_IRI, commitAAdditions, commitA).hasNext());
-            assertTrue(conn.getStatements(commitARevision, DELETIONS_CATALOG_IRI, commitADeletions, commitA).hasNext());
+            assertTrue(conn.contains(complexRecordIRI, BRANCH_CATALOG_IRI, complexBranchIRI, complexRecordIRI));
+            assertTrue(conn.contains(commitA, typeIRI, COMMIT_CATALOG_IRI, commitA));
+            assertTrue(conn.contains(commitARevision, ADDITIONS_CATALOG_IRI, commitAAdditions, commitA));
+            assertTrue(conn.contains(commitARevision, DELETIONS_CATALOG_IRI, commitADeletions, commitA));
 
-            assertTrue(conn.getStatements(commitC, typeIRI, COMMIT_CATALOG_IRI, commitC).hasNext());
-            assertTrue(conn.getStatements(commitCRevision, ADDITIONS_CATALOG_IRI, commitCAdditions, commitC).hasNext());
-            assertTrue(conn.getStatements(commitCRevision, DELETIONS_CATALOG_IRI, commitCDeletions, commitC).hasNext());
+            assertTrue(conn.contains(commitC, typeIRI, COMMIT_CATALOG_IRI, commitC));
+            assertTrue(conn.contains(commitCRevision, ADDITIONS_CATALOG_IRI, commitCAdditions, commitC));
+            assertTrue(conn.contains(commitCRevision, DELETIONS_CATALOG_IRI, commitCDeletions, commitC));
 
-            assertTrue(conn.getStatements(commitB, typeIRI, COMMIT_CATALOG_IRI, commitB).hasNext());
-            assertTrue(conn.getStatements(commitD, typeIRI, COMMIT_CATALOG_IRI, commitD).hasNext());
+            assertTrue(conn.contains(commitB, typeIRI, COMMIT_CATALOG_IRI, commitB));
+            assertTrue(conn.contains(commitD, typeIRI, COMMIT_CATALOG_IRI, commitD));
 
             List<Resource> deletedCommits = service.removeBranch(complexRecordIRI, complexBranchIRI, conn);
 
             assertEquals(2, deletedCommits.size());
             assertTrue(deletedCommits.contains(commitA));
             assertTrue(deletedCommits.contains(commitC));
-            assertFalse(conn.getStatements(complexRecordIRI, BRANCH_CATALOG_IRI, complexBranchIRI, complexRecordIRI).hasNext());
-            assertFalse(conn.getStatements(commitA, typeIRI, COMMIT_CATALOG_IRI, commitA).hasNext());
-            assertFalse(conn.getStatements(commitARevision, ADDITIONS_CATALOG_IRI, commitAAdditions, commitA).hasNext());
-            assertFalse(conn.getStatements(commitARevision, DELETIONS_CATALOG_IRI, commitADeletions, commitA).hasNext());
+            assertFalse(conn.contains(complexRecordIRI, BRANCH_CATALOG_IRI, complexBranchIRI, complexRecordIRI));
+            assertFalse(conn.contains(commitA, typeIRI, COMMIT_CATALOG_IRI, commitA));
+            assertFalse(conn.contains(commitARevision, ADDITIONS_CATALOG_IRI, commitAAdditions, commitA));
+            assertFalse(conn.contains(commitARevision, DELETIONS_CATALOG_IRI, commitADeletions, commitA));
 
-            assertFalse(conn.getStatements(commitC, typeIRI, COMMIT_CATALOG_IRI, commitC).hasNext());
-            assertFalse(conn.getStatements(commitCRevision, ADDITIONS_CATALOG_IRI, commitCAdditions, commitC).hasNext());
-            assertFalse(conn.getStatements(commitCRevision, DELETIONS_CATALOG_IRI, commitCDeletions, commitC).hasNext());
+            assertFalse(conn.contains(commitC, typeIRI, COMMIT_CATALOG_IRI, commitC));
+            assertFalse(conn.contains(commitCRevision, ADDITIONS_CATALOG_IRI, commitCAdditions, commitC));
+            assertFalse(conn.contains(commitCRevision, DELETIONS_CATALOG_IRI, commitCDeletions, commitC));
 
-            assertTrue(conn.getStatements(commitB, typeIRI, COMMIT_CATALOG_IRI, commitB).hasNext());
-            assertTrue(conn.getStatements(commitD, typeIRI, COMMIT_CATALOG_IRI, commitD).hasNext());
+            assertTrue(conn.contains(commitB, typeIRI, COMMIT_CATALOG_IRI, commitB));
+            assertTrue(conn.contains(commitD, typeIRI, COMMIT_CATALOG_IRI, commitD));
         }
     }
 
@@ -1160,23 +1170,23 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         branch.setHead(commitFactory.createNew(commit2));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(quadVersionedRecordId, BRANCH_CATALOG_IRI, branchToRemove, quadVersionedRecordId).hasNext());
-            assertTrue(conn.getStatements(commit2, typeIRI, COMMIT_CATALOG_IRI, commit2).hasNext());
-            assertTrue(conn.getStatements(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commit2).hasNext());
-            assertTrue(conn.getStatements(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commit2).hasNext());
-            assertTrue(conn.getStatements(null, null, null, graphAdditionsToRemove).hasNext());
-            assertTrue(conn.getStatements(null, null, null, graphDeletionsToRemove).hasNext());
+            assertTrue(conn.contains(quadVersionedRecordId, BRANCH_CATALOG_IRI, branchToRemove, quadVersionedRecordId));
+            assertTrue(conn.contains(commit2, typeIRI, COMMIT_CATALOG_IRI, commit2));
+            assertTrue(conn.contains(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commit2));
+            assertTrue(conn.contains(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commit2));
+            assertTrue(conn.contains(null, null, null, graphAdditionsToRemove));
+            assertTrue(conn.contains(null, null, null, graphDeletionsToRemove));
 
             List<Resource> deletedCommits = service.removeBranch(quadVersionedRecordId, branchToRemove, conn);
 
             assertEquals(1, deletedCommits.size());
             assertEquals(commit2, deletedCommits.get(0));
-            assertFalse(conn.getStatements(quadVersionedRecordId, BRANCH_CATALOG_IRI, branchToRemove, quadVersionedRecordId).hasNext());
-            assertFalse(conn.getStatements(commit2, typeIRI, COMMIT_CATALOG_IRI, commit2).hasNext());
-            assertFalse(conn.getStatements(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commit2).hasNext());
-            assertFalse(conn.getStatements(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commit2).hasNext());
-            assertFalse(conn.getStatements(null, null, null, graphAdditionsToRemove).hasNext());
-            assertFalse(conn.getStatements(null, null, null, graphDeletionsToRemove).hasNext());
+            assertFalse(conn.contains(quadVersionedRecordId, BRANCH_CATALOG_IRI, branchToRemove, quadVersionedRecordId));
+            assertFalse(conn.contains(commit2, typeIRI, COMMIT_CATALOG_IRI, commit2));
+            assertFalse(conn.contains(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commit2));
+            assertFalse(conn.contains(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commit2));
+            assertFalse(conn.contains(null, null, null, graphAdditionsToRemove));
+            assertFalse(conn.contains(null, null, null, graphDeletionsToRemove));
         }
     }
 
@@ -1185,11 +1195,11 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         // Setup:
         IRI noHeadBranchIRI = VALUE_FACTORY.createIRI(BRANCHES + "no-head-branch");
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, noHeadBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertTrue(conn.contains(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, noHeadBranchIRI, VERSIONED_RDF_RECORD_IRI));
 
             List<Resource> deletedCommits = service.removeBranch(VERSIONED_RDF_RECORD_IRI, noHeadBranchIRI, conn);
             assertEquals(0, deletedCommits.size());
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, noHeadBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertFalse(conn.contains(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, noHeadBranchIRI, VERSIONED_RDF_RECORD_IRI));
         }
     }
 
@@ -1200,18 +1210,20 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         IRI createdFromIRI = VALUE_FACTORY.createIRI(UserBranch.createdFrom_IRI);
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(BRANCH_IRI, null, null).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, userBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI).hasNext());
+            assertTrue(conn.contains(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI));
+            assertTrue(conn.contains(BRANCH_IRI, null, null));
+            assertTrue(conn.contains(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, userBranchIRI, VERSIONED_RDF_RECORD_IRI));
+            assertTrue(conn.contains(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI));
 
             service.removeBranch(VERSIONED_RDF_RECORD_IRI, BRANCH_IRI, conn);
 
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(BRANCH_IRI, null, null).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, userBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI).hasNext());
-            assertTrue(conn.getStatements(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI).next().getObject().equals(BRANCH_IRI));
+            assertFalse(conn.contains(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI));
+            assertFalse(conn.contains(BRANCH_IRI, null, null));
+            assertTrue(conn.contains(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, userBranchIRI, VERSIONED_RDF_RECORD_IRI));
+            assertTrue(conn.contains(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI));
+            RepositoryResult<Statement> results = conn.getStatements(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI);
+            assertTrue(results.next().getObject().equals(BRANCH_IRI));
+            results.close();
         }
     }
 
@@ -1222,17 +1234,17 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         IRI createdFromIRI = VALUE_FACTORY.createIRI(UserBranch.createdFrom_IRI);
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(BRANCH_IRI, null, null).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, userBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI).hasNext());
+            assertTrue(conn.contains(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI));
+            assertTrue(conn.contains(BRANCH_IRI, null, null));
+            assertTrue(conn.contains(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, userBranchIRI, VERSIONED_RDF_RECORD_IRI));
+            assertTrue(conn.contains(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI));
 
             service.removeBranch(VERSIONED_RDF_RECORD_IRI, userBranchIRI, conn);
 
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(BRANCH_IRI, null, null).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, userBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI).hasNext());
+            assertTrue(conn.contains(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI));
+            assertTrue(conn.contains(BRANCH_IRI, null, null));
+            assertFalse(conn.contains(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, userBranchIRI, VERSIONED_RDF_RECORD_IRI));
+            assertFalse(conn.contains(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI));
         }
     }
 
@@ -1494,7 +1506,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             assertTrue(conn.size(deletionsResource) > 0);
 
             service.removeInProgressCommit(commit, conn);
-            assertFalse(conn.getStatements(null, null, null, IN_PROGRESS_COMMIT_IRI).hasNext());
+            assertFalse(conn.contains(null, null, null, IN_PROGRESS_COMMIT_IRI));
             assertTrue(conn.size(additionsResource) == 0);
             assertTrue(conn.size(deletionsResource) == 0);
         }
@@ -1535,12 +1547,12 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             Resource deletionsResource = getDeletionsResource(COMMIT_IRI);
             commit.getModel().add(commit.getResource(), VALUE_FACTORY.createIRI(Revision.additions_IRI), additionsResource, commit.getResource());
             commit.getModel().add(commit.getResource(), VALUE_FACTORY.createIRI(Revision.deletions_IRI), deletionsResource, commit.getResource());
-            assertTrue(conn.getStatements(null, null, null, commit.getResource()).hasNext());
+            assertTrue(conn.contains(null, null, null, commit.getResource()));
             assertTrue(conn.size(additionsResource) > 0);
             assertTrue(conn.size(deletionsResource) > 0);
 
             service.removeInProgressCommit(commit, conn);
-            assertFalse(conn.getStatements(null, null, null, commit.getResource()).hasNext());
+            assertFalse(conn.contains(null, null, null, commit.getResource()));
             assertTrue(conn.size(additionsResource) > 0);
             assertTrue(conn.size(deletionsResource) > 0);
         }
@@ -1816,15 +1828,15 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             Branch branch = service.getBranch(CATALOG_IRI, SIMPLE_VERSIONED_RDF_RECORD_IRI, BRANCH_IRI, branchFactory, conn);
             String previousBranchModDate = getModifiedIriValue(BRANCH_IRI, conn);
 
-            assertFalse(conn.getStatements(null, null, null, newIRI).hasNext());
-            assertTrue(conn.getStatements(BRANCH_IRI, headIRI, headCommitIRI, BRANCH_IRI).hasNext());
+            assertFalse(conn.contains(null, null, null, newIRI));
+            assertTrue(conn.contains(BRANCH_IRI, headIRI, headCommitIRI, BRANCH_IRI));
 
             service.addCommit(branch, commit, conn);
 
             assertTrue(branch.getHead_resource().isPresent());
             assertEquals(newIRI, branch.getHead_resource().get());
-            assertTrue(conn.getStatements(null, null, null, newIRI).hasNext());
-            assertTrue(conn.getStatements(BRANCH_IRI, headIRI, newIRI, BRANCH_IRI).hasNext());
+            assertTrue(conn.contains(null, null, null, newIRI));
+            assertTrue(conn.contains(BRANCH_IRI, headIRI, newIRI, BRANCH_IRI));
             assertNotSame(getModifiedIriValue(BRANCH_IRI, conn), previousBranchModDate);
             assertNotSame(getModifiedIriValue(SIMPLE_VERSIONED_RDF_RECORD_IRI, conn), previousRecordModDate);
         }
@@ -2244,13 +2256,13 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         }
     }
 
-    /* getCompiledResource(List<Resource>, RepositoryConnection) */
+    /* getCompiledResource(List<Resource>, RepositoryConnection, Resource... subjectIds) */
 
     @Test
     public void getCompiledResourceWithListTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1")).collect(Collectors.toList());
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1");
             Model expected = MODEL_FACTORY.createModel(Collections.singleton(
                     VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"))));
             Statement classStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
@@ -2258,8 +2270,23 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             expected.add(classStmt);
 
             Model result = service.getCompiledResource(commits, conn);
-            assertEquals(expected.size(), result.size());
-            expected.forEach(statement -> assertTrue(result.contains(statement)));
+            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
+        }
+    }
+
+    @Test
+    public void getCompiledResourceWithListSubjectIdTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1");
+            Model expected = MODEL_FACTORY.createModel(Collections.singleton(
+                    VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"))));
+            Statement classStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
+                    VALUE_FACTORY.createLiteral("Class Title 2"));
+            expected.add(classStmt);
+
+            Model result = service.getCompiledResource(commits, conn, VALUE_FACTORY.createIRI("http://mobi.com/test/class"));
+            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
         }
     }
 
@@ -2267,15 +2294,14 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     public void getCompiledResourceWithListChangeEntityTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename0")).collect(Collectors.toList());
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0");
             Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1");
             Model expected = MODEL_FACTORY.createModel();
             expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
             expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
 
             Model result = service.getCompiledResource(commits, conn);
-            assertEquals(expected.size(), result.size());
-            expected.forEach(statement -> assertTrue(result.contains(statement)));
+            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
         }
     }
 
@@ -2283,7 +2309,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     public void getCompiledResourceWithListBlankNodeTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank0")).collect(Collectors.toList());
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#testBlank1", "http://mobi.com/test/commits#testBlank0");
             Resource blankNode = VALUE_FACTORY.createBNode("genid1");
             Model expected = MODEL_FACTORY.createModel();
             expected.add(blankNode, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
@@ -2299,13 +2325,13 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         }
     }
 
-    /* getCompiledResourceFile(List<Resource>, RepositoryConnection) */
+    /* getCompiledResourceFile(List<Resource>, RepositoryConnection, Resource... subjectIds) */
 
     @Test
     public void getCompiledResourceFileWithListTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1")).collect(Collectors.toList());
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1");
             Model expected = MODEL_FACTORY.createModel(Collections.singleton(
                     VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"))));
             Statement classStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
@@ -2313,9 +2339,26 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             expected.add(classStmt);
 
             File file = service.getCompiledResourceFile(commits, conn);
-            Model model = Models.createModel(new FileInputStream(file), transformer);
-            assertEquals(expected.size(), model.size());
-            expected.forEach(statement -> assertTrue(model.contains(statement)));
+            Model result = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
+            file.delete();
+        }
+    }
+
+    @Test
+    public void getCompiledResourceFileWithListSubjectIdTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1");
+            Model expected = MODEL_FACTORY.createModel(Collections.singleton(
+                    VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"))));
+            Statement classStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
+                    VALUE_FACTORY.createLiteral("Class Title 2"));
+            expected.add(classStmt);
+
+            File file = service.getCompiledResourceFile(commits, conn, VALUE_FACTORY.createIRI("http://mobi.com/test/class"));
+            Model result = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
             file.delete();
         }
     }
@@ -2324,16 +2367,32 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     public void getCompiledResourceFileWithListChangeEntityTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testRename0")).collect(Collectors.toList());
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0");
             Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1");
             Model expected = MODEL_FACTORY.createModel();
             expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
             expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
 
             File file = service.getCompiledResourceFile(commits, conn);
-            Model model = Models.createModel(new FileInputStream(file), transformer);
-            assertEquals(expected.size(), model.size());
-            expected.forEach(statement -> assertTrue(model.contains(statement)));
+            Model result = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
+            file.delete();
+        }
+    }
+
+    @Test
+    public void getCompiledResourceFileWithListChangeEntitySubjectIdTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0");
+            Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1");
+            Model expected = MODEL_FACTORY.createModel();
+            expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+            expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
+
+            File file = service.getCompiledResourceFile(commits, conn, VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1"));
+            Model result = Models.createModel(new FileInputStream(file), transformer);
+            assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
             file.delete();
         }
     }
@@ -2342,7 +2401,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     public void getCompiledResourceFileWithListBlankNodeTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank1"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testBlank0")).collect(Collectors.toList());
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#testBlank1", "http://mobi.com/test/commits#testBlank0");
             Resource blankNode = VALUE_FACTORY.createBNode("genid1");
             Model expected = MODEL_FACTORY.createModel();
             expected.add(blankNode, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
@@ -2356,6 +2415,86 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
                 assertTrue(expected.contains(temp));
             });
             assertEquals(expected.size(), model.size());
+        }
+    }
+
+    /* getDeletionSubjects */
+
+    @Test
+    public void getDeletionSubjectsTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1");
+
+            assertEquals("Without SubjectId", new HashSet<>(buildResources("http://mobi.com/test/ontology", "http://mobi.com/test/class")),
+                    service.getDeletionSubjects(commits, conn));
+            assertEquals("With SubjectId", new HashSet<>(buildResources("http://mobi.com/test/ontology")),
+                    service.getDeletionSubjects(commits, conn,  VALUE_FACTORY.createIRI("http://mobi.com/test/ontology")));
+            assertEquals("With SubjectIds", new HashSet<>(buildResources("http://mobi.com/test/ontology", "http://mobi.com/test/class")),
+                    service.getDeletionSubjects(commits, conn,  VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), VALUE_FACTORY.createIRI("http://mobi.com/test/class")));
+            assertEquals("With SubjectId Non-exist", Collections.emptySet(),
+                    service.getDeletionSubjects(commits, conn,  VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist")));
+        }
+    }
+
+    @Test
+    public void getDeletionSubjectsWithListChangeEntityTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0");
+
+            assertEquals("Without SubjectId", new HashSet<>(buildResources("http://mobi.com/test/ontology")),
+                    service.getDeletionSubjects(commits, conn));
+            assertEquals("With SubjectId", new HashSet<>(buildResources("http://mobi.com/test/ontology")),
+                    service.getDeletionSubjects(commits, conn,  VALUE_FACTORY.createIRI("http://mobi.com/test/ontology")));
+            assertEquals("With SubjectIds", new HashSet<>(buildResources("http://mobi.com/test/ontology")),
+                    service.getDeletionSubjects(commits, conn,  VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist")));
+            assertEquals("With SubjectId Non-exist", Collections.emptySet(),
+                    service.getDeletionSubjects(commits, conn,  VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist")));
+        }
+    }
+
+    /* getCommitWithSubjects */
+
+    @Test
+    public void getCommitWithSubjectsTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+
+            // Setup:
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1");
+            Set<Resource> deletionSubjects = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/tests")).collect(Collectors.toSet());
+
+            assertEquals("Without SubjectId", new HashSet<>(buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1")),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects));
+            assertEquals("With SubjectId", new HashSet<>(buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1")),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontology")));
+            assertEquals("With SubjectIds", new HashSet<>(buildResources("http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1")),
+                    service.getCommitWithSubjects(commits, conn,  deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), VALUE_FACTORY.createIRI("http://mobi.com/test/class")));
+            assertEquals("With SubjectId Non-exist", Collections.emptySet(),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist")));
+            assertEquals("With SubjectIds Non-exist", Collections.emptySet(),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist"), VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist2")));
+        }
+    }
+
+    @Test
+    public void getCommitWithSubjectsWithListChangeEntityTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0");
+
+            Set<Resource> deletionSubjects = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/tests")).collect(Collectors.toSet());
+
+            assertEquals("Without SubjectId", new HashSet<>(buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0")),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects));
+            assertEquals("With SubjectId", new HashSet<>(buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0")),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontology")));
+            assertEquals("With SubjectIds", new HashSet<>(buildResources("http://mobi.com/test/commits#testRename1", "http://mobi.com/test/commits#testRename0")),
+                    service.getCommitWithSubjects(commits, conn,  deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), VALUE_FACTORY.createIRI("http://mobi.com/test/class")));
+            assertEquals("With SubjectId Non-exist", Collections.emptySet(),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist")));
+            assertEquals("With SubjectIds Non-exist", Collections.emptySet(),
+                    service.getCommitWithSubjects(commits, conn, deletionSubjects, VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist"), VALUE_FACTORY.createIRI("http://mobi.com/test/ontologyNonExist2")));
         }
     }
 

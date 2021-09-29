@@ -6,7 +6,7 @@ com.mobi.etl.delimited
 com.mobi.etl.rdf
 com.mobi.etl.rest
 com.mobi.ontology.api
-com.mobi.ontology.impl.owlapi
+com.mobi.ontology.impl.repository
 com.mobi.ontology.rest
 com.mobi.ontology.utils
 com.mobi.persistence.api

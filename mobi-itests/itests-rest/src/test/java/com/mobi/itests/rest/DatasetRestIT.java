@@ -111,19 +111,21 @@ public class DatasetRestIT extends KarafTestSupport {
             // Assert setup of DatasetRecord, Dataset, and system default named graph
             try (RepositoryConnection conn = repo.getConnection()) {
                 assertTrue(conn.size(recordId) > 0);
-                assertTrue(conn.getStatements(recordId, repositoryIRI, vf.createLiteral("system")).hasNext());
+                assertTrue(conn.contains(recordId, repositoryIRI, vf.createLiteral("system")));
                 RepositoryResult<Statement> datasetResults = conn.getStatements(recordId, datasetIRI, null);
                 assertTrue(datasetResults.hasNext());
                 Optional<Resource> opt1 = Statements.objectResource(datasetResults.next());
                 assertTrue(opt1.isPresent());
                 datasetId = opt1.get();
-                assertTrue(conn.getStatements(datasetId, null, null).hasNext());
+                assertTrue(conn.contains(datasetId, null, null));
                 RepositoryResult<Statement> sdngResults = conn.getStatements(datasetId, systemDefaultNGIRI, null);
                 assertTrue(sdngResults.hasNext());
                 Optional<Resource> opt2 = Statements.objectResource(sdngResults.next());
                 assertTrue(opt2.isPresent());
                 systemDefaultNG = opt2.get();
                 assertEquals(0, conn.size(systemDefaultNG));
+                datasetResults.close();
+                sdngResults.close();
             }
         }
 

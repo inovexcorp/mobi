@@ -624,18 +624,20 @@ public interface CatalogUtilsService {
      * the provided List using previous Commit data to construct it.
      *
      * @param commits The ordered List of Resource identifying the Commits to create a compiled resource from
+     * @param subjectIds Optional list of entity {@link Resource}s to filter the compiled resource by
      * @return Model which represents the resource at the Commit's point in history.
      */
-    Model getCompiledResource(List<Resource> commits, RepositoryConnection conn);
+    Model getCompiledResource(List<Resource> commits, RepositoryConnection conn, Resource... subjectIds);
 
     /**
      * Gets the File which represents the entity at the instance of theCommit identified by the first Resource in
      * the provided List using previous Commit data to construct it.
      *
      * @param commits The ordered List of Resource identifying the Commits to create a compiled resource from
+     * @param subjectIds Optional list of entity {@link Resource}s to filter the compiled resource by
      * @return A {@link File} which represents the resource at the Commit's point in history.
      */
-    File getCompiledResourceFile(List<Resource> commits, RepositoryConnection conn);
+    File getCompiledResourceFile(List<Resource> commits, RepositoryConnection conn, Resource... subjectIds);
 
     /**
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource

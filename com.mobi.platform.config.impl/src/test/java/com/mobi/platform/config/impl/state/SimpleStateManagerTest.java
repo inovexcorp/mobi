@@ -314,7 +314,7 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
         assertTrue(stateModel.contains(result, VALUE_FACTORY.createIRI(State.forUser_IRI), user.getResource()));
         newState.forEach(statement -> {
             assertTrue(stateModel.contains(result, VALUE_FACTORY.createIRI(State.stateResource_IRI), statement.getSubject()));
-            assertTrue(conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject()).hasNext());
+            assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
         });
         conn.close();
     }
@@ -345,7 +345,7 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
         assertTrue(stateModel.contains(result, VALUE_FACTORY.createIRI(ApplicationState.application_IRI), application.getResource()));
         newState.forEach(statement -> {
             assertTrue(stateModel.contains(result, VALUE_FACTORY.createIRI(State.stateResource_IRI), statement.getSubject()));
-            assertTrue(conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject()).hasNext());
+            assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
         });
         conn.close();
     }
@@ -419,11 +419,11 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
         assertFalse(stateModel.isEmpty());
         oldModel.forEach(statement -> {
             assertFalse(stateModel.contains(state.getResource(), VALUE_FACTORY.createIRI(State.stateResource_IRI), statement.getSubject()));
-            assertFalse(conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject()).hasNext());
+            assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
         });
         newModel.forEach(statement -> {
             assertTrue(stateModel.contains(state.getResource(), VALUE_FACTORY.createIRI(State.stateResource_IRI), statement.getSubject()));
-            assertTrue(conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject()).hasNext());
+            assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
         });
         conn.close();
     }
@@ -450,11 +450,11 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
         assertFalse(stateModel.isEmpty());
         oldModel.forEach(statement -> {
             assertFalse(stateModel.contains(state0.getResource(), VALUE_FACTORY.createIRI(State.stateResource_IRI), statement.getSubject()));
-            assertTrue(conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject()).hasNext());
+            assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
         });
         newModel.forEach(statement -> {
             assertTrue(stateModel.contains(state0.getResource(), VALUE_FACTORY.createIRI(State.stateResource_IRI), statement.getSubject()));
-            assertTrue(conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject()).hasNext());
+            assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
         });
         conn.close();
     }
@@ -474,7 +474,7 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
         assertFalse(stateModel.isEmpty());
         newModel.forEach(statement -> {
             assertTrue(stateModel.contains(state.getResource(), VALUE_FACTORY.createIRI(State.stateResource_IRI), statement.getSubject()));
-            assertTrue(conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject()).hasNext());
+            assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
         });
         conn.close();
     }
@@ -500,7 +500,7 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
         conn.getStatements(state.getResource(), null, null).forEach(stateModel::add);
         assertTrue(stateModel.isEmpty());
         model.forEach(statement ->
-                assertFalse(conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject()).hasNext()));
+                assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
         conn.close();
     }
 
@@ -523,7 +523,7 @@ public class SimpleStateManagerTest extends OrmEnabledTestCase {
         conn.getStatements(state0.getResource(), null, null).forEach(stateModel::add);
         assertTrue(stateModel.isEmpty());
         model.forEach(statement ->
-                assertTrue(conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject()).hasNext()));
+                assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
         conn.close();
     }
 

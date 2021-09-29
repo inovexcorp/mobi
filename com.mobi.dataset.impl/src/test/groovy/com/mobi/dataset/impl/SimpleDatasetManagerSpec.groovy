@@ -515,7 +515,8 @@ class SimpleDatasetManagerSpec extends Specification {
                 .build()
 
         catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
-        resultsMock.hasNext() >>> [true, true, false]
+        connMock.contains(*_) >> true
+
         resultsMock.next() >>> [
                 vf.createStatement(recordIRI, datasetPred, datasetIRI),
                 vf.createStatement(recordIRI, repoPred, vf.createLiteral(repo))

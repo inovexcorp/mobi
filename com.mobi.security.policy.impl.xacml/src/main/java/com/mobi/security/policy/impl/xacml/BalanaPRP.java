@@ -228,6 +228,7 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
                         .stringValue());
                 String policyStr = IOUtils.toString(file.readContent(), StandardCharsets.UTF_8);
                 cache.put(policyId.stringValue(), new BalanaPolicy(policyStr, vf));
+                statements.close();
             } catch (IOException e) {
                 throw new MobiException("Error retrieving policy from VFS.", e);
             }

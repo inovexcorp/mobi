@@ -178,7 +178,7 @@ public class SimpleDatasetManager implements DatasetManager {
         IRI sdgIRI = vf.createIRI(config.getDataset() + SYSTEM_DEFAULT_NG_SUFFIX);
 
         try (RepositoryConnection conn = dsRepo.getConnection()) {
-            if (conn.getStatements(datasetIRI, null, null).hasNext()) {
+            if (conn.contains(datasetIRI, null, null)) {
                 throw new IllegalArgumentException("The dataset already exists in the specified repository.");
             }
         }
@@ -213,7 +213,7 @@ public class SimpleDatasetManager implements DatasetManager {
         IRI sdgIRI = vf.createIRI(dataset + SYSTEM_DEFAULT_NG_SUFFIX);
 
         try (RepositoryConnection conn = dsRepo.getConnection()) {
-            if (conn.getStatements(null, null, null, datasetIRI).hasNext()) {
+            if (conn.contains(null, null, null, datasetIRI)) {
                 throw new IllegalArgumentException("The dataset already exists in the specified repository.");
             }
 
@@ -387,6 +387,7 @@ public class SimpleDatasetManager implements DatasetManager {
                     return Optional.of(record);
                 }
             }
+            recordStmts.close();
 
             return Optional.empty();
         }
@@ -451,16 +452,20 @@ public class SimpleDatasetManager implements DatasetManager {
         RepositoryResult<Statement> ngStmts = conn.getStatements(null, ngPred, graph);
         while (ngStmts.hasNext()) {
             if (!ngStmts.next().getSubject().equals(dataset)) {
+                ngStmts.close();
                 return false;
             }
         }
+        ngStmts.close();
 
         RepositoryResult<Statement> dngStmts = conn.getStatements(null, dngPred, graph);
         while (dngStmts.hasNext()) {
             if (!dngStmts.next().getSubject().equals(dataset)) {
+                dngStmts.close();
                 return false;
             }
         }
+        dngStmts.close();
 
         return true;
     }

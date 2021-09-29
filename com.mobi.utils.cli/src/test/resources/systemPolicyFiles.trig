@@ -1,0 +1,9 @@
+<http://mobi.com/policies/all-access-versioned-rdf-record> {
+  <http://mobi.com/policies/all-access-versioned-rdf-record> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://mobi.com/ontologies/documents#BinaryFile>, <http://mobi.com/ontologies/policy#Policy>,
+      <http://mobi.com/ontologies/policy#PolicyFile>;
+    <http://mobi.com/ontologies/documents#checksum> "\"L�J)�9�����DYC�v��ge.��4ڲ";
+    <http://mobi.com/ontologies/documents#fileName> "file:///Users/person/mobiDistros/mobi-distribution-1.19.1/data/policies/3a/5f/b3766aac44f6.xml";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/person/mobiDistros/mobi-distribution-1.19.1/data/policies/3a/5f/b3766aac44f6>;
+    <http://mobi.com/ontologies/documents#size> 1.0577E4 .
+}

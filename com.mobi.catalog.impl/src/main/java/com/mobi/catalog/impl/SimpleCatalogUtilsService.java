@@ -359,7 +359,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                                RepositoryConnection conn) {
         validateResource(catalogId, vf.createIRI(Catalog.TYPE), conn);
         validateResource(recordId, recordType, conn);
-        if (!conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), catalogId).hasNext()) {
+        if (!conn.contains(recordId, vf.createIRI(Record.catalog_IRI), catalogId)) {
             throw throwDoesNotBelong(recordId, recordFactory, catalogId, catalogFactory);
         }
     }
@@ -1223,17 +1223,17 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public Model getCompiledResource(List<Resource> commits, RepositoryConnection conn) {
+    public Model getCompiledResource(List<Resource> commits, RepositoryConnection conn, Resource... subjectIds) {
         Model compiledResource = mf.createModel();
         if (commits.size() == 0) {
             return compiledResource;
         }
-        buildCompiledResource(commits, conn, compiledResource::add);
+        buildCompiledResource(commits, conn, compiledResource::add, subjectIds);
         return compiledResource;
     }
 
     @Override
-    public File getCompiledResourceFile(List<Resource> commits, RepositoryConnection conn) {
+    public File getCompiledResourceFile(List<Resource> commits, RepositoryConnection conn, Resource... subjectIds) {
         try {
             long writeTimeStart = System.currentTimeMillis();
             if (commits.size() == 0) {
@@ -1247,7 +1247,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 writer.startRDF();
                 Consumer<Statement> consumer = statement ->
                         com.mobi.persistence.utils.rio.Rio.write(statement, writer, sesameTransformer);
-                buildCompiledResource(commits, conn, consumer);
+                buildCompiledResource(commits, conn, consumer, subjectIds);
                 writer.endRDF();
             }
             log.trace("Write statements to file in {} ms", System.currentTimeMillis() - writeTimeStart);
@@ -1264,28 +1264,25 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      * @param commits The {@link List} of Commits {@link Resource}s.
      * @param conn The {@link RepositoryConnection} to use to query the repository.
      * @param consumer The {@link Consumer} to handle the generated {@link Statement}.
+     * @param subjectIds Optional list of entity {@link Resource}s to filter the compiled resource by
      */
     private void buildCompiledResource(List<Resource> commits, RepositoryConnection conn,
-                                       Consumer<Statement> consumer) {
+                                       Consumer<Statement> consumer, Resource... subjectIds) {
         // Get all subjects in deletions graphs for provided commits
-        String commitsStr = "<" + StringUtils.join(commits, "> <") + ">";
-        Set<Resource> deletionSubjects = new HashSet<>();
-        TupleQuery subjectsQuery = conn.prepareTupleQuery(
-                GET_SUBJECTS_WITH_DELETIONS.replace("%COMMITLIST%", commitsStr));
-        subjectsQuery.evaluate().forEach(bindings -> deletionSubjects.add((Bindings.requiredResource(bindings, "s"))));
+        Set<Resource> deletionSubjects = getDeletionSubjects(commits, conn, subjectIds);
+        // Find all commits with the subjects in additions or deletions graphs
+        // These are the commits of interest for comparing changes
+        Set<Resource> commitsOfInterest = getCommitWithSubjects(commits, conn, deletionSubjects, subjectIds);
 
-        Set<Resource> commitsOfInterest = new HashSet<>();
         if (deletionSubjects.size() > 0) {
-            // Find all commits with the subjects in additions or deletions graphs. These are the commits of interest
-            // for comparing changes
-            TupleQuery commitsQuery = conn.prepareTupleQuery(GET_COMMITS_WITH_SUBJECT
-                    .replace("%COMMITLIST%", commitsStr));
-            commitsQuery.evaluate().forEach(bindingSet ->
-                    commitsOfInterest.add(Bindings.requiredResource(bindingSet, "commitOfInterest")));
-
             // Write any addition statement in commitsOfInterest whose subject is NOT a deletionsSubject
-            GraphQuery additionsInCOIQuery = conn.prepareGraphQuery(
-                    GET_ADDITIONS_FROM_COIS.replace("%COMMITLIST%", commitsStr));
+            String additionsFromCoisQueryString = replaceCommitList(GET_ADDITIONS_FROM_COIS, commits);
+            additionsFromCoisQueryString = replaceSubjectList(additionsFromCoisQueryString,
+                    "deletionSubject", "%SUBJECTLIST%",subjectIds);
+            additionsFromCoisQueryString = replaceSubjectList(additionsFromCoisQueryString,
+                    "addSubject", "%SUBJECTLISTADD%",subjectIds);
+
+            GraphQuery additionsInCOIQuery = conn.prepareGraphQuery(additionsFromCoisQueryString);
             additionsInCOIQuery.evaluate().forEach(statement -> {
                 if (!deletionSubjects.contains(statement.getSubject())) {
                     consumer.accept(statement);
@@ -1304,10 +1301,49 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .filter(commit -> !commitsOfInterest.contains(commit))
                 .collect(Collectors.toList());
         if (commitsAdditionsOnly.size() > 0) {
-            String commitsAdditionsOnlyStr = "<" + StringUtils.join(commitsAdditionsOnly, "> <") + ">";
-            GraphQuery additionsQuery = conn.prepareGraphQuery(GET_ADDITIONS_IN_COMMIT
-                    .replace("%COMMITLIST%", commitsAdditionsOnlyStr));
+            String additionInCommitQuery =  replaceCommitList(GET_ADDITIONS_IN_COMMIT, commits);
+            additionInCommitQuery = replaceSubjectList(additionInCommitQuery, "s", "%SUBJECTLIST%", subjectIds);
+            GraphQuery additionsQuery = conn.prepareGraphQuery(additionInCommitQuery);
             additionsQuery.evaluate().forEach(consumer);
+        }
+    }
+
+    protected Set<Resource> getDeletionSubjects(List<Resource> commits, RepositoryConnection conn,
+                                                Resource... subjectIds) {
+        Set<Resource> deletionSubjects = new HashSet<>();
+        String query = replaceCommitList(GET_SUBJECTS_WITH_DELETIONS, commits);
+        query = replaceSubjectList(query, "s", "%SUBJECTLIST%", subjectIds);
+        TupleQuery subjectsQuery = conn.prepareTupleQuery(query);
+        subjectsQuery.evaluate().forEach(bindings ->
+                deletionSubjects.add((Bindings.requiredResource(bindings, "s"))));
+        return deletionSubjects;
+    }
+
+    protected Set<Resource> getCommitWithSubjects(List<Resource> commits, RepositoryConnection conn,
+                                       Set<Resource> deletionSubjects, Resource... subjectIds) {
+
+        Set<Resource> commitsOfInterest = new HashSet<>();
+        if (deletionSubjects.size() > 0) {
+            String query = replaceCommitList(GET_COMMITS_WITH_SUBJECT, commits);
+            query = replaceSubjectList(query, "deletionSubject", "%SUBJECTLIST%", subjectIds);
+            TupleQuery commitsQuery = conn.prepareTupleQuery(query);
+            commitsQuery.evaluate().forEach(bindingSet ->
+                    commitsOfInterest.add(Bindings.requiredResource(bindingSet, "commitOfInterest")));
+        }
+        return commitsOfInterest;
+
+    }
+
+    private static String replaceCommitList(String query, List<Resource> commits) {
+        return query.replace("%COMMITLIST%", "<" + StringUtils.join(commits, "> <") + ">");
+    }
+
+    private static String replaceSubjectList(String query, String binding, String target, Resource... subjectIds) {
+        if (subjectIds.length > 0) {
+            return query.replace(target,
+                    "VALUES ?" + binding + " { <" + StringUtils.join(subjectIds, "> <") + "> }");
+        } else {
+            return query.replace(target, "");
         }
     }
 
