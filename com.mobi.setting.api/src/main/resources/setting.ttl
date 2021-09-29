@@ -1,0 +1,77 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix um: <http://mobi.com/ontologies/user/management#>.
+@prefix : <http://mobi.com/ontologies/setting#>.
+@base <http://mobi.com/ontologies/setting>.
+
+<http://mobi.com/ontologies/setting> a owl:Ontology;
+    owl:versionIRI <http://mobi.com/ontologies/setting/1.0>;
+    rdfs:label "The Mobi setting ontology"@en;
+    rdfs:comment "The Mobi setting ontology describes how settings are defined within the Mobi framework."@en;
+    dct:creator [foaf:name "Ben Greenberg"], [foaf:name "Megan Mercer"];
+    foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>];
+    dct:modified "2021-09-08"^^xsd:date.
+
+# Setting
+
+:Setting a owl:Class;
+    rdfs:label "Setting"@en;
+    rdfs:comment "A setting within the Mobi Framework"@en.
+
+:Preference a owl:Class;
+    rdfs:label "Preference"@en;
+    rdfs:comment "A preference that a user can have within the Mobi framework"@en;
+    rdfs:subClassOf :Setting .
+
+:ApplicationSetting a owl:Class;
+    rdfs:label "Application Setting"@en;
+    rdfs:comment "An application setting that applies for all users within the Mobi framework"@en;
+    rdfs:subClassOf :Setting .
+
+:hasDataValue a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "Has Data Value"@en;
+    rdfs:domain :Setting;
+    rdfs:range rdfs:Literal .
+
+:hasObjectValue a owl:ObjectProperty;
+    rdfs:label "Has Object Value"@en;
+    rdfs:domain :Setting .
+
+:inGroup a owl:ObjectProperty;
+    rdfs:label "In Group"@en;
+    rdfs:domain sh:NodeShape;
+    rdfs:range :SettingGroup .
+
+:forUser a owl:ObjectProperty;
+    rdfs:label "For User"@en;
+    rdfs:domain :Preference;
+    rdfs:range um:User.
+
+:SettingGroup a owl:Class;
+    rdfs:label "Setting Group"@en;
+    rdfs:comment "Parent class of Preference Group and Application Setting Group"@en.
+
+:PreferenceGroup a owl:Class;
+    rdfs:subClassOf :SettingGroup ;
+    rdfs:label "Preference Group"@en;
+    rdfs:comment "The group of preferences that this preference belongs to"@en.
+
+:ApplicationSettingGroup a owl:Class;
+    rdfs:subClassOf :SettingGroup ;
+    rdfs:label "Application Setting Group"@en;
+    rdfs:comment "The group of application settings that this application setting belongs to"@en.
+
+:FormField a owl:Class .
+
+:TextInput a :FormField .
+
+:ToggleInput a :FormField .
+
+:usesFormField a owl:ObjectProperty;
+   rdfs:label "For User"@en;
+   rdfs:domain sh:PropertyShape;
+   rdfs:range :FormField.

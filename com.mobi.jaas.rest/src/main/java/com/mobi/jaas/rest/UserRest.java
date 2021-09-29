@@ -46,7 +46,6 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.orm.Thing;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -777,21 +776,9 @@ public class UserRest {
         if (!engineManager.userExists(activeUsername)) {
             throw ErrorUtils.sendError("User not found", Response.Status.UNAUTHORIZED);
         }
-        if (!isAdminUser(activeUsername) && !activeUsername.equals(username)) {
+        if (!RestUtils.isAdminUser(activeUsername, engineManager) && !activeUsername.equals(username)) {
             throw ErrorUtils.sendError("Not authorized to make this request", Response.Status.UNAUTHORIZED);
         }
-    }
-
-    /**
-     * Determines whether or not the User with the passed username is an admin.
-     *
-     * @param username The username of a User
-     * @return true if the identified User is an admin; false otherwise
-     */
-    private boolean isAdminUser(String username) {
-        return engineManager.getUserRoles(username).stream()
-                .map(Thing::getResource)
-                .anyMatch(resource -> resource.stringValue().contains("admin"));
     }
 
     /**

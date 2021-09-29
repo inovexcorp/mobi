@@ -1,9 +1,0 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
-@prefix pref: <http://mobi.com/ontologies/preference#>.
-@prefix test: <http://example.com/>.
-
-test:SomePreferenceGroup a pref:PreferenceGroup ;
-    rdfs:label "Some preference group"@en .
-
-test:SomeOtherPreferenceGroup a pref:PreferenceGroup ;
-    rdfs:label "Some other preference group"@en .

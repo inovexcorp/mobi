@@ -878,4 +878,16 @@ public class RestUtils {
                 .build();
         return ErrorUtils.sendError(throwable, throwable.getMessage(), response);
     }
+
+    /**
+     * Determines whether or not the User with the passed username is an admin.
+     *
+     * @param username The username of a User
+     * @return true if the identified User is an admin; false otherwise
+     */
+    public static boolean isAdminUser(String username, EngineManager engineManager) {
+        return engineManager.getUserRoles(username).stream()
+                .map(Thing::getResource)
+                .anyMatch(resource -> resource.stringValue().contains("admin"));
+    }
 }

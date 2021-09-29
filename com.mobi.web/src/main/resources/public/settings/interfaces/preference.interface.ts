@@ -39,7 +39,7 @@ export interface Preference {
      *
      * @description
      * 'json' holds the underlying json-ld for the nodeshape that is also a subclass of 
-     * http://mobi.com/ontologies/preference#Preference that the Preference object represents
+     * http://mobi.com/ontologies/setting#Preference that the Preference object represents
      */
     json: any;
 
@@ -84,7 +84,7 @@ export interface Preference {
 
      * @description
      * 'requiredPropertyShape' is the json-ld representation of the PropertyShape that every nodeshape 
-     * that is also a subclass of http://mobi.com/ontologies/preference#Preference must point to.
+     * that is also a subclass of http://mobi.com/ontologies/setting#Preference must point to.
      */
     requiredPropertyShape: any;
 
@@ -96,7 +96,7 @@ export interface Preference {
      *
      * @description
      * 'topLevelPreferenceNodeshapeInstanceId' is the resource id of the user's instance of the nodeshape 
-     * that is also a subclass of http://mobi.com/ontologies/preference#Preference that the Preference object represents
+     * that is also a subclass of http://mobi.com/ontologies/setting#Preference that the Preference object represents
      */
     topLevelPreferenceNodeshapeInstanceId: string;
 
@@ -107,7 +107,7 @@ export interface Preference {
      *
      * @description
      * 'topLevelPreferenceNodeshapeInstance' is the json-ld representation of the user's instance of the nodeshape 
-     * that is also a subclass of http://mobi.com/ontologies/preference#Preference that the Preference object represents
+     * that is also a subclass of http://mobi.com/ontologies/setting#Preference that the Preference object represents
      */
     topLevelPreferenceNodeshapeInstance: any;
 
@@ -129,7 +129,7 @@ export interface Preference {
      * @type {string}
      *
      * @description
-     * 'type' is the resource id of the nodeshape that is also a subclass of http://mobi.com/ontologies/preference#Preference
+     * 'type' is the resource id of the nodeshape that is also a subclass of http://mobi.com/ontologies/setting#Preference
      * that the Preference object represents
      */
     type: string;

@@ -42,7 +42,7 @@ export class PreferenceUtils {
         if (has(object, '@id')|| has(object, '@type')) {
             console.log('Object has unexpected structure. It appears that the object already has an id or type');
         } else {
-            object['@id'] = 'http://mobi.com/preference#' + uuid.v4();
+            object['@id'] = 'http://mobi.com/setting#' + uuid.v4();
             object['@type'] = ['http://www.w3.org/2002/07/owl#Thing'];
             intendedTypes.forEach(intendedType => object['@type'].push(intendedType));
         }

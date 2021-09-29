@@ -75,16 +75,16 @@ describe('Preference Form Field component', function() {
         });
 
         formGroup = new FormGroup({
-            'http://mobi.com/ontologies/preference#hasDataValue': new FormControl('firstVal')
+            'http://mobi.com/ontologies/setting#hasDataValue': new FormControl('firstVal')
         });
 
         field = PreferenceConstants.HAS_DATA_VALUE;
 
         shaclShape = {
-            '@id': 'preference:SomeSimpleTextPreferencePropertyShape',
+            '@id': 'setting:SomeSimpleTextPreferencePropertyShape',
             '@type': [ 'shacl:PropertyShape' ],
-            'preference:usesFormField': [ {
-              '@id': 'preference:TextInput'
+            'setting:usesFormField': [ {
+              '@id': 'setting:TextInput'
             } ],
             'shacl:datatype': [ {
               '@id': 'xsd:string'
@@ -101,7 +101,7 @@ describe('Preference Form Field component', function() {
               '@value': '1'
             } ],
             'shacl:path': [ {
-              '@id': 'http://mobi.com/ontologies/preference#hasDataValue'
+              '@id': 'http://mobi.com/ontologies/setting#hasDataValue'
             } ]
         };
 
@@ -139,22 +139,22 @@ describe('Preference Form Field component', function() {
                     expect(component.formType).toEqual('textInput');
                 });
                 it('when rdf declares a toggle input field', function() {
-                    component.shaclShape['preference:usesFormField'] = [{
-                        '@id': 'preference:ToggleInput'
+                    component.shaclShape['setting:usesFormField'] = [{
+                        '@id': 'setting:ToggleInput'
                     }];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('toggle');
                 });
                 it('when rdf declares an unsupported input field', function() {
-                    component.shaclShape['preference:usesFormField'] = [{
-                        '@id': 'preference:UnknownInput'
+                    component.shaclShape['setting:usesFormField'] = [{
+                        '@id': 'setting:UnknownInput'
                     }];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('');
                     expect(utilStub.createErrorToast).toHaveBeenCalled();
                 });
                 it('when rdf declares no input field', function() {
-                    delete component.shaclShape['preference:usesFormField'];
+                    delete component.shaclShape['setting:usesFormField'];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('');
                     expect(utilStub.createErrorToast).toHaveBeenCalled();

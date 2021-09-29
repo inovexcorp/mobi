@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-preferenceManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'httpService'];
+preferenceManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'httpService', 'prefixes'];
 
 /**
  * @ngdoc service
@@ -34,10 +34,11 @@ preferenceManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService',
  * `preferenceManagerService` is a service that provides access to the Mobi Preference REST endpoints and variables
  * to hold information about the different types of preferences.
  */
-function preferenceManagerService($http, $q, REST_PREFIX, utilService, httpService) {
+function preferenceManagerService($http, $q, REST_PREFIX, utilService, httpService, prefixes) {
     const self = this,
         util = utilService,
-        prefix = REST_PREFIX + 'preference';
+        prefix = REST_PREFIX + 'settings',
+        type = prefixes.setting  + 'Preference';
 
     /**
      * @ngdoc method
@@ -55,7 +56,12 @@ function preferenceManagerService($http, $q, REST_PREFIX, utilService, httpServi
      * error message
      */
     self.getUserPreferences = function(id = '') {
-        const promise = id ? httpService.get(prefix, id) : $http.get(prefix);
+        const config = {
+            params: {
+                type
+            }
+        };
+        const promise = id ? httpService.get(prefix, config, id) : $http.get(prefix, config);
         return promise.then($q.when, util.rejectError);
     };
 
@@ -76,7 +82,12 @@ function preferenceManagerService($http, $q, REST_PREFIX, utilService, httpServi
      * error message
      */
     self.updateUserPreference = function(preferenceId, preferenceType, userPreference, id = '') {
-        const config = { params: { preferenceType } };
+        const config = {
+            params: {
+                'subType': preferenceType,
+                type
+            }
+        };
         const promise = id ? httpService.put(prefix + '/' + encodeURIComponent(preferenceId), userPreference, config, id) 
             : $http.put(prefix + '/' + encodeURIComponent(preferenceId), userPreference, config);
         return promise.then($q.when, util.rejectError);
@@ -98,7 +109,12 @@ function preferenceManagerService($http, $q, REST_PREFIX, utilService, httpServi
      * error message
      */
     self.createUserPreference = function(preferenceType, userPreference, id = '') {
-        const config = { params: { preferenceType } };
+        const config = {
+            params: {
+                'subType': preferenceType,
+                type
+            }
+        };
         const promise = id ? httpService.post(prefix, userPreference, config, id) 
             : $http.post(prefix, userPreference, config);
         return promise.then($q.when, util.rejectError);
@@ -118,7 +134,12 @@ function preferenceManagerService($http, $q, REST_PREFIX, utilService, httpServi
      * error message
      */
     self.getPreferenceGroups = function(id = '') {
-        const promise = id ? httpService.get(prefix + '/groups', id) : $http.get(prefix + '/groups');
+        const config = {
+            params: {
+                type
+            }
+        };
+        const promise = id ? httpService.get(prefix + '/groups', config, id) : $http.get(prefix + '/groups', config);
         return promise.then($q.when, util.rejectError);
     };
 
@@ -137,8 +158,13 @@ function preferenceManagerService($http, $q, REST_PREFIX, utilService, httpServi
      * error message
      */
     self.getPreferenceDefinitions = function(preferenceGroup, id = '') {
-        const promise = id ? httpService.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup) + '/definitions', id) 
-            : $http.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup) + '/definitions');
+        const config = {
+            params: {
+                type
+            }
+        };
+        const promise = id ? httpService.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup) + '/definitions', config, id)
+            : $http.get(prefix + '/groups/' + encodeURIComponent(preferenceGroup) + '/definitions', config);
         return promise.then($q.when, util.rejectError);
     };
 }

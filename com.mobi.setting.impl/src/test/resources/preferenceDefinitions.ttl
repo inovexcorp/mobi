@@ -1,0 +1,46 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix setting: <http://mobi.com/ontologies/setting#>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix test: <http://example.com/>.
+
+test:SomeSimpleTextPreference a owl:Class, sh:NodeShape;
+    rdfs:subClassOf setting:Preference;
+    sh:property test:SomeSimpleTextPreferencePropertyShape;
+    setting:inGroup test:SomePreferenceGroup .
+
+test:SomeSimpleTextPreferencePropertyShape a sh:PropertyShape;
+    sh:path setting:hasDataValue;
+    sh:datatype xsd:string;
+    sh:minCount 1 ;
+    sh:maxCount 2 ;
+    setting:usesFormField setting:TextInput .
+
+test:SomeSimpleBooleanPreference a owl:Class, sh:NodeShape;
+    rdfs:subClassOf setting:Preference;
+    sh:property test:SomeSimpleBooleanPreferencePropertyShape;
+    setting:inGroup test:SomeOtherPreferenceGroup .
+
+test:SomeSimpleBooleanPreferencePropertyShape a sh:PropertyShape;
+    sh:path setting:hasDataValue;
+    sh:datatype xsd:boolean;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    setting:usesFormField setting:ToggleInput .
+
+test:SomeOtherBooleanPreference a owl:Class, sh:NodeShape;
+    rdfs:subClassOf setting:Preference;
+    sh:property test:SomeOtherBooleanPreferencePropertyShape;
+    setting:inGroup test:SomeOtherPreferenceGroup .
+
+test:SomeOtherBooleanPreferencePropertyShape a sh:PropertyShape;
+    sh:path setting:hasDataValue;
+    sh:datatype xsd:boolean;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    setting:usesFormField setting:ToggleInput .
+
+test:SomePreferenceGroup a setting:PreferenceGroup ;
+    rdfs:label "Some preference group"@en .
+
+test:SomeOtherPreferenceGroup a setting:PreferenceGroup ;
+    rdfs:label "Some other preference group"@en .

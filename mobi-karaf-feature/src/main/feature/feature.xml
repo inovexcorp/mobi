@@ -184,9 +184,9 @@
         <bundle start-level="80">mvn:com.mobi/rest.security/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/email.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/email.impl/${project.version}</bundle>
-	    <bundle start-level="80">mvn:com.mobi/preference.api/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/preference.impl/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/preference.rest/${project.version}</bundle>
+	    <bundle start-level="80">mvn:com.mobi/setting.api/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/setting.impl/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/setting.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/notification.impl/${project.version}</bundle>
     </feature>
     <feature name="mobi-cli" description="Mobi CLI Bundles" version="${project.version}">

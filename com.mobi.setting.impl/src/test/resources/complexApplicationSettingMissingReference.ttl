@@ -1,0 +1,5 @@
+@prefix test: <http://example.com/>.
+@prefix setting: <http://mobi.com/ontologies/setting#>.
+
+test:MyComplexApplicationSetting a test:ExampleComplexApplicationSetting, setting:ApplicationSetting;
+    setting:hasObjectValue test:MyObjectValue .

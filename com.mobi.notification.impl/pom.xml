@@ -40,7 +40,7 @@
     <dependencies>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>preference.api</artifactId>
+            <artifactId>setting.api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -97,9 +97,9 @@
                                     <outputPackage>com.mobi.ontologies.shacl</outputPackage>
                                 </ontology>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/../com.mobi.preference.api/src/main/resources/preference.ttl</ontologyFile>
-                                    <outputPackage>com.mobi.preference.api.ontologies</outputPackage>
-                                    <ontologyName>Preference</ontologyName>
+                                    <ontologyFile>${project.basedir}/../com.mobi.setting.api/src/main/resources/setting.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.setting.api.ontologies</outputPackage>
+                                    <ontologyName>Setting</ontologyName>
                                 </ontology>
                             </references>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>

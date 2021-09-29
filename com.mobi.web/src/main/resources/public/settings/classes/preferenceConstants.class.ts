@@ -28,6 +28,6 @@
  * `PreferenceConstants` is a class containing readonly string constants that are commonly used in the Preference implementations
  */
 export class PreferenceConstants {
-    static readonly HAS_DATA_VALUE: string = 'http://mobi.com/ontologies/preference#hasDataValue';
-    static readonly HAS_OBJECT_VALUE: string = 'http://mobi.com/ontologies/preference#hasObjectValue';
+    static readonly HAS_DATA_VALUE: string = 'http://mobi.com/ontologies/setting#hasDataValue';
+    static readonly HAS_OBJECT_VALUE: string = 'http://mobi.com/ontologies/setting#hasObjectValue';
 }

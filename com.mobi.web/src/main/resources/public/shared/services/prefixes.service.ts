@@ -54,7 +54,7 @@ function prefixes() {
     self.roles = 'http://mobi.com/roles/';
     self.skosxl = 'http://www.w3.org/2008/05/skos-xl#';
     self.shacl = 'http://www.w3.org/ns/shacl#';
-    self.preference = 'http://mobi.com/ontologies/preference#';
+    self.setting = 'http://mobi.com/ontologies/setting#';
 }
 
 export default prefixes;

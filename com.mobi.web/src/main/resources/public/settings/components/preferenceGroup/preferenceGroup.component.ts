@@ -104,6 +104,6 @@ export class PreferenceGroupComponent implements OnChanges {
     }
 
     isTopLevelNodeShape(shape): boolean {
-        return has(shape, this.prefixes.preference + 'inGroup');
+        return has(shape, this.prefixes.setting + 'inGroup');
     }
 }

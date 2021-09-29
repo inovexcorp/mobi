@@ -66,7 +66,7 @@ export class SimplePreference implements Preference {
 
         // Find Node that corresponds to the top level instance of nodeshape of the given user preference 
         this.topLevelPreferenceNodeshapeInstance = filter(userPreference, entity => {
-            return entity['@type'].includes(this.prefixes.preference + 'Preference');
+            return entity['@type'].includes(this.prefixes.setting + 'Preference');
         });
 
         if (this.topLevelPreferenceNodeshapeInstance.length) {
@@ -220,7 +220,7 @@ export class SimplePreference implements Preference {
         this.stripBlankValues();
         this.values.map(val => {
             if (!PreferenceUtils.isJsonLd(val)) {
-                PreferenceUtils.convertToJsonLd(val, [this.type, this.prefixes.preference + 'Setting', this.prefixes.preference + 'Preference']);
+                PreferenceUtils.convertToJsonLd(val, [this.type, this.prefixes.setting + 'Setting', this.prefixes.setting + 'Preference']);
             }
         });
         return this.values;

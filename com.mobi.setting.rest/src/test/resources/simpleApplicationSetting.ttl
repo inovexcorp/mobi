@@ -1,0 +1,6 @@
+@prefix test: <http://example.com/>.
+@prefix setting: <http://mobi.com/ontologies/setting#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+
+test:MySimpleApplicationSetting a test:ExampleSimpleApplicationSetting, setting:ApplicationSetting, owl:Thing;
+    setting:hasDataValue false .
