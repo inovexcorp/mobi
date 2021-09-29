@@ -31,7 +31,24 @@
         right: 15px;
         top: 16px;
     }
+
     .search-tab {
         height: 100%;
+    }
+
+    .badge-beta {
+        background-color: #6c757d;
+        color: #fff;
+        text-transform: uppercase;
+        font-size: .8em;
+        font-weight: 700;
+        padding-bottom: .1rem;
+        padding-top: .1rem;
+    }
+
+    .active {
+        .badge-beta {
+            background-color:  map-get($mobi-primary, 500);
+        }
     }
 }
