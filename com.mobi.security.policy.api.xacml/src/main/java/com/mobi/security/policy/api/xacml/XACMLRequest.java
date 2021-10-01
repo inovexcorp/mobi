@@ -98,16 +98,19 @@ public class XACMLRequest implements Request {
         List<AttributesType> attributesList = requestType.getAttributes();
         subjectIds.forEach(id -> {
             Map<String, Literal> subjectMap = new HashMap<>();
+            subjectMap.putAll(subjectAttrs);
             subjectMap.put(SUBJECT_ID, builder.vf.createLiteral(id.stringValue()));
             attributesList.add(createAttributes(SUBJECT_CATEGORY, subjectMap, SUBJECT_ID, id));
         });
         resourceIds.forEach(id -> {
             Map<String, Literal> resourceMap = new HashMap<>();
+            resourceMap.putAll(resourceAttrs);
             resourceMap.put(RESOURCE_ID, builder.vf.createLiteral(id.stringValue()));
             attributesList.add(createAttributes(RESOURCE_CATEGORY, resourceMap, RESOURCE_ID, id));
         });
         actionIds.forEach(id -> {
             Map<String, Literal> actionMap = new HashMap<>();
+            actionMap.putAll(actionAttrs);
             actionMap.put(ACTION_ID, builder.vf.createLiteral(id.stringValue()));
             attributesList.add(createAttributes(ACTION_CATEGORY, actionMap, ACTION_ID, id));
         });

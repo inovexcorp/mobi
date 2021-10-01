@@ -147,7 +147,7 @@ public class BalanaPDP implements PDP {
 
     @Override
     public Set<String> filter(Request request, IRI policyAlgorithm) {
-        ResponseCtx responseCtx = getPDP(policyAlgorithm).evaluateReturnResponseCtx(getRequest(request).toString());
+        ResponseCtx responseCtx = getPDP(policyAlgorithm, true).evaluateReturnResponseCtx(getRequest(request).toString());
         Set<String> resultSet = new HashSet<>();
         for(AbstractResult result : responseCtx.getResults()) {
             if(AbstractResult.DECISION_PERMIT == result.getDecision()
@@ -167,10 +167,10 @@ public class BalanaPDP implements PDP {
 
     @Override
     public Response evaluate(Request request, IRI policyAlgorithm) {
-        return new XACMLResponse(getPDP(policyAlgorithm).evaluate(getRequest(request).toString()), vf, jaxbContext);
+        return new XACMLResponse(getPDP(policyAlgorithm, false).evaluate(getRequest(request).toString()), vf, jaxbContext);
     }
 
-    private org.wso2.balana.PDP getPDP(IRI policyAlgorithm) {
+    private org.wso2.balana.PDP getPDP(IRI policyAlgorithm, boolean multipleRequestHandle) {
         PDPConfig config = balana.getPdpConfig();
 
         PolicyFinder policyFinder = new PolicyFinder();
@@ -186,7 +186,7 @@ public class BalanaPDP implements PDP {
         });
         attributeFinder.setModules(attributeFinderModules);
 
-        PDPConfig newConfig = new PDPConfig(attributeFinder, policyFinder, null, true);
+        PDPConfig newConfig = new PDPConfig(attributeFinder, policyFinder, null, multipleRequestHandle);
         balanaPRP.setPDPConfig(newConfig);
         balanaPRP.setCombiningAlg(getAlgorithm(policyAlgorithm));
         return new org.wso2.balana.PDP(newConfig);
