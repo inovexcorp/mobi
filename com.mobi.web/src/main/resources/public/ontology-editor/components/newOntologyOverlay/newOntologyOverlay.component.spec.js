@@ -111,7 +111,9 @@ describe('New Ontology Overlay component', function() {
         });
         it('depending on whether there is an error', function() {
             expect(this.element.find('error-display').length).toEqual(0);
-            this.controller.error = 'Error';
+            this.controller.error = {
+                errorMessage: 'Error'
+            };
             scope.$digest();
             expect(this.element.find('error-display').length).toEqual(1);
         });

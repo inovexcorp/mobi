@@ -24,8 +24,13 @@ package com.mobi.persistence.utils;
  */
 
 import com.mobi.rdf.api.Model;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.rio.RDFParseException;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -35,45 +40,88 @@ import java.util.Optional;
 public class ParsedModel {
     private Model model;
     private String rdfFormatName;
-    private Optional<RDFParseException> rdfParseException;
+    private final Map<String, List<String>> formatToError = new HashMap<>();
 
-    public ParsedModel() {
-        this.rdfParseException = Optional.empty();
-    }
+    public ParsedModel() {}
 
     /**
      * ParsedModel Constructor.
+     *
      * @param model Mobi Model
      * @param rdfFormatName format that was used to parse Mobi Model
      */
     public ParsedModel(Model model, String rdfFormatName) {
         this.model = model;
         this.rdfFormatName = rdfFormatName;
-        this.rdfParseException = Optional.empty();
     }
 
+    /**
+     * Return the parsed model.
+     *
+     * @return the parsed model
+     */
     public Model getModel() {
         return model;
     }
 
+    /**
+     * Set the Model on the ParsedModel.
+     *
+     * @param model The model to set as the underlying model
+     */
     public void setModel(Model model) {
         this.model = model;
     }
 
+    /**
+     * Retrieve the RDFFormat string name.
+     *
+     * @return the RDFFormat string name
+     */
     public String getRdfFormatName() {
         return rdfFormatName;
     }
 
+    /**
+     * Set the RDFFormat string name.
+     *
+     * @param rdfFormatName the RDFFormat string name to set
+     */
     public void setRdfFormatName(String rdfFormatName) {
         this.rdfFormatName = rdfFormatName;
     }
 
+    /**
+     * Builds and returns an Optional of the RDFParseException if errors are present. Returns an empty optional if not.
+     *
+     * @return An Optional of the RDFParseException if errors are present; otherwise an empty optional.
+     */
     public Optional<RDFParseException> getRdfParseException() {
-        return rdfParseException;
+        if (formatToError.size() > 0) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.format("Error parsing formats: %s.", StringUtils.join(formatToError.keySet(), " ,")));
+            for (String format : formatToError.keySet()) {
+                sb.append(Models.ERROR_OBJECT_DELIMITER);
+                sb.append(format);
+                sb.append(": ");
+                sb.append(StringUtils.join(formatToError.get(format), " ,"));
+            }
+            return Optional.of(new RDFParseException(sb.toString()));
+        } else {
+            return Optional.empty();
+        }
     }
 
-    public void setRdfParseException(Optional<RDFParseException> rdfParseException) {
-        this.rdfParseException = rdfParseException;
+    /**
+     * Adds the error string to the list of errors for the given format.
+     *
+     * @param format the RDFFormat for the error message
+     * @param error the error message when parsed
+     */
+    public void addFormatToError(String format, String error) {
+        List<String> errorMessages = formatToError.getOrDefault(format, new ArrayList<>());
+        errorMessages.add(error);
+        formatToError.put(format, errorMessages);
     }
 
     @Override
@@ -86,11 +134,11 @@ public class ParsedModel {
         }
         ParsedModel that = (ParsedModel) other;
         return Objects.equals(model, that.model) && Objects.equals(rdfFormatName, that.rdfFormatName)
-                && Objects.equals(rdfParseException, that.rdfParseException);
+                && Objects.equals(formatToError, that.formatToError);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(model, rdfFormatName, rdfParseException);
+        return Objects.hash(model, rdfFormatName, formatToError);
     }
 }

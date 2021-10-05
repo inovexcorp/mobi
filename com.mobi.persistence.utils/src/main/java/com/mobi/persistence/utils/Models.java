@@ -379,10 +379,8 @@ public class Models {
                 break;
             } catch (RDFParseException e) {
                 triedRDFFormats.add(parserName);
-                String template = "File was tried against all following formats. ;;; Formats: %s";
                 parsedModel = new ParsedModel();
-                parsedModel.setRdfParseException(Optional.of(
-                        new RDFParseException(String.format(template, triedRDFFormats))));
+                parsedModel.addFormatToError(parserName, e.getMessage());
                 rdfData.reset();
             } catch (Exception e) {
                 rdfData.reset();
@@ -523,10 +521,8 @@ public class Models {
             parsedModel = new ParsedModel(transformer.mobiModel(sesameModel), "OBO");
         } catch (OBOFormatParserException | IOException e) {
             triedRDFFormats.add("OBO");
-            String template = "File was tried against following formats. ;;; Formats: %s";
             parsedModel = new ParsedModel();
-            parsedModel.setRdfParseException(Optional.of(
-                    new RDFParseException(String.format(template, triedRDFFormats))));
+            parsedModel.addFormatToError("OBO", e.getMessage());
             rdfData.reset();
         }
         return parsedModel;

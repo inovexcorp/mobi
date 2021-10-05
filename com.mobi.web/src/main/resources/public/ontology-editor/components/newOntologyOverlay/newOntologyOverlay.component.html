@@ -26,7 +26,14 @@
 </div>
 <div class="modal-body">
     <form name="dvm.form" novalidate autocomplete="off">
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+        <error-display ng-if="dvm.error.errorMessage">
+            {{dvm.error.errorMessage}}
+            <ul>
+                <li class="text-danger m-0" ng-repeat="detailError in dvm.error.errorDetails">
+                    {{ detailError }}
+                </li>
+            </ul>
+        </error-display>
         <div class="form-group">
             <custom-label>Ontology IRI</custom-label>
             <input class="form-control" name="iri" ng-model="dvm.os.newOntology['@id']" ng-pattern="dvm.iriPattern" ng-change="dvm.iriHasChanged = true" ng-class="{'is-invalid': dvm.form.iri.$error.pattern}" required />
