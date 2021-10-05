@@ -30,25 +30,46 @@ module.exports = {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
-    'Step 2: Create a new Ontology' : function(browser) {
+    'Step 2: Ensure that user is on Ontology editor page' : function(browser) {
+        browser
+            .useCss()
+            .waitForElementPresent('ontology-editor-page')
+    },
+
+    'Step 3: Open new Ontology Overlay' : function(browser) {
+        var newOntologyButtonXpath = '//button[text()="New Ontology"]';
         browser
             .useXpath()
-            .waitForElementVisible('//button[text()="New Ontology"]')
-            .click('//button[text()="New Ontology"]')
-            .useCss()
+            .waitForElementVisible(newOntologyButtonXpath)
+            .click(newOntologyButtonXpath)
+            
+    },
+
+    'Step 3: Edit New Ontology Overlay' : function(browser) {
+        browser   
+            .useCss()        
+            .waitForElementVisible('new-ontology-overlay')
             .waitForElementVisible('new-ontology-overlay text-input[display-text="\'Title\'"] input')
-            .setValue('new-ontology-overlay text-input[display-text="\'Title\'"] input', 'myTitle')
             .waitForElementVisible('new-ontology-overlay text-area[display-text="\'Description\'"] textarea')
+            .setValue('new-ontology-overlay text-input[display-text="\'Title\'"] input', 'myTitle')
             .setValue('new-ontology-overlay text-area[display-text="\'Description\'"] textarea', 'myDescription')
+    },
+
+    'Step 4: Submit New Ontology Overlay' : function(browser) {
+        browser
+            .useCss()        
+            .waitForElementVisible('new-ontology-overlay')
             .useXpath()
             .click('//new-ontology-overlay//button[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('new-ontology-overlay .modal-header h3')
+            .waitForElementNotPresent('new-ontology-overlay')
+            .waitForElementPresent('ontology-editor-page ontology-tab')
     },
 
-    'Step 3: Verify new ontology properties' : function(browser) {
+    'Step 5: Verify new ontology properties' : function(browser) {
         browser
-            .waitForElementVisible('.imports-block')
+            .waitForElementPresent('ontology-editor-page ontology-tab')
+            .waitForElementVisible('ontology-editor-page ontology-tab project-tab imports-block')
             .useXpath()
             .waitForElementVisible('//ontology-properties-block//value-display//span[text()[contains(.,"myTitle")]]')
             .waitForElementVisible('//ontology-properties-block//value-display//span[text()[contains(.,"myDescription")]]')
@@ -57,34 +78,74 @@ module.exports = {
             .useCss()       
     },
 
-    'Step 4: Ensure IRI changes are successful' : function(browser) {
+    'Step 6: Edit IRI for ontology' : function(browser) { 
         browser
+            .useCss()  
             .click('static-iri i.fa.fa-pencil')
+            .waitForElementVisible('edit-iri-overlay')
             .setValue('edit-iri-overlay div.form-group.ends-container input', 'myOntology')
             .click('xpath', '//edit-iri-overlay//button[text()="Submit"]')
+            .waitForElementNotPresent('.spinner')
+    },
+
+    'Step 6: Open Commit overlay' : function(browser) { 
+        browser
+            .useCss()  
             .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
             .waitForElementVisible('circle-button-stack .fa-git')
             .click('circle-button-stack .fa-git')
-            .waitForElementVisible('commit-overlay .modal-header h3')
+            .waitForElementVisible('commit-overlay')
+    },
+
+    'Step 7: Edit Commit message and Submit' : function(browser) { 
+        browser
+            .useCss()  
+            .waitForElementVisible('commit-overlay')
             .assert.containsText('commit-overlay .modal-header h3', 'Commit')
             .setValue('commit-overlay textarea[name=comment]', 'Changed IRI')
             .useXpath()
             .click('//commit-overlay//button[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('commit-overlay .modal-header h3', 5000)
+            .waitForElementNotPresent('.spinner')
+            .waitForElementNotPresent('commit-overlay')
+            .waitForElementPresent('ontology-editor-page ontology-tab')
+    },
+
+    'Step 8: Open Ontology Editor Page Ontology List Page' : function(browser) { 
+        browser
+            .useCss()  
+            .waitForElementPresent('ontology-editor-page ontology-tab')
             .click('ontology-sidebar button.btn.btn-primary')
-            .click('xpath', '//search-bar')
+            .waitForElementNotPresent('.spinner')
+            .waitForElementPresent('ontology-editor-page open-ontology-tab')
+    },
+
+    'Step 9: On The Ontology List Page, search for ontology' : function(browser) { 
+        browser
+            .useCss() 
+            .waitForElementPresent('ontology-editor-page open-ontology-tab')
+            .click('ontology-editor-page open-ontology-tab search-bar')
             .keys('myTitle')
             .keys(browser.Keys.ENTER)
-            .pause(1000)
+            .waitForElementNotPresent('.spinner')
+            .waitForElementVisible('ontology-editor-page open-ontology-tab')
+    },
+
+    'Step 10: Ensure IRI changes are successful' : function(browser) {
+        browser
+            .waitForElementPresent('ontology-editor-page open-ontology-tab')
             .useXpath()
             .assert.containsText('//open-ontology-tab//small', 'MyTitlemyOntology')
             .click('//open-ontology-tab//small[text()[contains(.,"MyTitlemyOntology")]]')
+        // wait for loading to finish
+        browser
             .useCss()
-            .waitForElementVisible('.imports-block')
+            .waitForElementNotPresent('.spinner')
+            .waitForElementPresent('ontology-editor-page ontology-tab')
+            .waitForElementVisible('ontology-editor-page ontology-tab project-tab imports-block')
     },
 
-    'Step 5: Create a new branch' : function(browser) {
+    'Step 11: Create a new branch' : function(browser) {
         browser
             .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
             .waitForElementVisible('circle-button-stack .fa-code-fork')
@@ -101,14 +162,14 @@ module.exports = {
             .waitForElementNotPresent('create-branch-overlay .modal-title')
     },
 
-    'Step 6: Verify a new branch was created' : function(browser) {
+    'Step 12: Verify a new branch was created' : function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"newBranchTitle")]]')
             .useCss()
     },
 
-    'Step 7: Create a new Class': function(browser) {
+    'Step 13: Create a new Class': function(browser) {
         browser
             .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
             .waitForElementVisible('circle-button-stack .fa-code-fork')
@@ -130,7 +191,7 @@ module.exports = {
             .waitForElementNotPresent('create-class-overlay .modal-header h3', 5000)
     },
 
-    'Step 8: Verify class was created': function(browser) {
+    'Step 14: Verify class was created': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Classes")]]')
@@ -139,7 +200,7 @@ module.exports = {
             .waitForElementVisible('//class-hierarchy-block//tree-item//span[text()[contains(.,"firstClass")]]')
     },
 
-    'Step 9: Verify changes are shown': function(browser) {
+    'Step 15: Verify changes are shown': function(browser) {
         browser
             .useXpath() // Must use Xpath when checking does an element with a certain value exist among other like elements
             .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Changes")]]')
@@ -161,7 +222,7 @@ module.exports = {
             .assert.containsText('saved-changes-tab .additions .statement-display div[title*="ns#type"] ~ div[title*="owl#Class"]', 'owl#Class')
     },
 
-    'Step 10: Commit Changes': function(browser) {
+    'Step 16: Commit Changes': function(browser) {
         browser
             .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
             .waitForElementVisible('circle-button-stack .fa-git')
@@ -175,7 +236,7 @@ module.exports = {
             .waitForElementNotPresent('commit-overlay .modal-header h3', 5000)
     },
 
-    'Step 11: Verify no changes are shown': function(browser) {
+    'Step 17: Verify no changes are shown': function(browser) {
         browser
             .assert.containsText('.nav-link.active span', 'Changes')
             .waitForElementVisible('info-message p')
@@ -183,7 +244,7 @@ module.exports = {
             .assert.elementNotPresent('saved-changes-tab .expansion-panel')
     },
 
-    'Step 12: Verify Commit': function(browser) {
+    'Step 18: Verify Commit': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Commits")]]')
@@ -196,7 +257,7 @@ module.exports = {
             .assert.containsText('commit-history-table .commit-message[title="commit123"] span', 'commit123')
     },
 
-    'Step 13: Verify Master Branch only has initial commit': function(browser) {
+    'Step 19: Verify Master Branch only has initial commit': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"newBranchTitle")]]')
@@ -212,7 +273,7 @@ module.exports = {
             .assert.containsText('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
     },
 
-    'Step 14: Switch back to the other branch': function(browser) {
+    'Step 20: Switch back to the other branch': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"MASTER")]]')
@@ -225,7 +286,7 @@ module.exports = {
             .useCss()
     },
     
-    'Step 15: Perform a merge': function(browser) {
+    'Step 21: Perform a merge': function(browser) {
         browser
             .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
             .waitForElementVisible('circle-button-stack .fa-random')
@@ -255,7 +316,7 @@ module.exports = {
             .useCss()
     },
 
-    'Step 16: Validate Merged Commits': function(browser) {
+    'Step 22: Validate Merged Commits': function(browser) {
         browser
             .waitForElementNotPresent('.spinner')
             .useXpath()

@@ -97,7 +97,8 @@ module.exports = {
           .waitForElementVisible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
           .click('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
           .useCss()
-          .waitForElementVisible('div.material-tabset li.nav-item')
+          .waitForElementNotPresent('.spinner', 5000)
+          .waitForElementVisible('div.material-tabset li.nav-item') // ensures that project tab is showing
   },
 
   'generalUtils': new GeneralUtils()
