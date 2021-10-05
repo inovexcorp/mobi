@@ -1,4 +1,4 @@
-image: gitlab.inovexcorp.com:4567/ilab/docker-images/maven-node-jdk8
+image: maven:3.6-jdk-8
 
 stages:
   - test
@@ -14,6 +14,14 @@ variables:
   MAVEN_CLI_OPTS: "--batch-mode --errors --show-version"
 
 before_script:
+  # Setup Node 14
+  - curl -fsSL https://deb.nodesource.com/setup_14.x | bash -
+  - apt-get install -y nodejs
+  # Update Chrome Version to latest
+  - curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - 
+  - echo "deb [arch=amd64]  http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
+  - apt-get update
+  - apt-get -y install google-chrome-stable
   # Copy settings.xml from runner into current docker container (/m2 is a mounted directory)
   - cp /m2/settings.xml ~/.m2/settings.xml
   # Sets Version variables for use in job steps and updates pom to correct version for run
@@ -71,8 +79,6 @@ full_test_manual:
     - apt-get install -y redir
     - HOST_IP=$(ip route show | awk '/default/ {print $3}')
     - redir :9080 $HOST_IP:9080
-    # Update Chrome Version to latest
-    - apt-get -y install google-chrome-stable
     # Run integration, and functional tests (skips unit tests as they are included in the automated unit_test job)
     - mvn $MAVEN_CLI_OPTS clean install -DskipTests -DskipFunctional=false -DskipITs=false
   artifacts:
@@ -96,8 +102,6 @@ full_test:
     - apt-get install -y redir
     - HOST_IP=$(ip route show | awk '/default/ {print $3}')
     - redir :9080 $HOST_IP:9080
-    # Update Chrome Version
-    - apt-get -y install google-chrome-stable
     # Run unit, integration, and functional tests
     - mvn $MAVEN_CLI_OPTS clean install -DskipFunctional=false -DskipITs=false -Prelease-build
   artifacts:
