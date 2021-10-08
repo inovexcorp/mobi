@@ -101,7 +101,7 @@ export class mockUtil {
     rejectError = jasmine.createSpy('rejectError').and.callFake(() => Promise.reject(''));
 }
 
-export class mockPreferenceManager {
+export class mockSettingManager {
     getUserPreferences = jasmine.createSpy('getUserPreferences').and.returnValue(Promise.resolve(''));
     updateUserPreference = jasmine.createSpy('updateUserPreference').and.returnValue(Promise.resolve(''));
     createUserPreference = jasmine.createSpy('createUserPreference').and.returnValue(Promise.resolve(''));

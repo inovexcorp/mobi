@@ -30,7 +30,7 @@ import { SimplePreference } from '../../classes/simplePreference.class';
 /**
  * @ngdoc component
  * @name settings.component:preferenceGroup
- * @requires shared.service:preferenceManagerService
+ * @requires shared.service:settingManagerService
  * @requires shared.service.utilService
  * @requires shared.service.prefixes
  *
@@ -49,18 +49,18 @@ export class PreferenceGroupComponent implements OnChanges {
     preferences = {};
     preferenceIRIs = [];
 
-    constructor(@Inject('preferenceManagerService') private pm, @Inject('utilService') private util, @Inject('prefixes') private prefixes, private ref: ChangeDetectorRef) {}
+    constructor(@Inject('settingManagerService') private sm, @Inject('utilService') private util, @Inject('prefixes') private prefixes, private ref: ChangeDetectorRef) {}
 
     ngOnChanges(): void {
         this.retrievePreferences();
     }
 
     retrievePreferences(): void {
-        this.pm.getUserPreferences()
+        this.sm.getUserPreferences()
             .then(response => {
                 this.errorMessage = '';
                 const userPreferences = response.data;
-                this.pm.getPreferenceDefinitions(this.group)
+                this.sm.getPreferenceDefinitions(this.group)
                     .then(response => {
                         this.preferences = {};
                         const shapeDefinitions = {};
@@ -89,13 +89,13 @@ export class PreferenceGroupComponent implements OnChanges {
 
     updateUserPreference(preference: Preference): void {
         if (preference.exists()) {
-            this.pm.updateUserPreference(preference.topLevelPreferenceNodeshapeInstanceId, preference.type, preference.asJsonLD())
+            this.sm.updateUserPreference(preference.topLevelPreferenceNodeshapeInstanceId, preference.type, preference.asJsonLD())
                 .then(() => {
                     this.errorMessage = '';
                     this.retrievePreferences();
                 }, error => this.errorMessage = error);
         } else {
-            this.pm.createUserPreference(preference.type, preference.asJsonLD())
+            this.sm.createUserPreference(preference.type, preference.asJsonLD())
                 .then(() => {
                     this.errorMessage = '';
                     this.retrievePreferences();

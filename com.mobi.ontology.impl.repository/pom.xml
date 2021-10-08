@@ -84,10 +84,19 @@
             <artifactId>etl.api</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>setting.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>namespace.impl</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <!--  Test dependencies -->

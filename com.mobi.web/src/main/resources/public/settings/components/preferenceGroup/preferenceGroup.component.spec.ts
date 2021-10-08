@@ -29,7 +29,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import {
     cleanStylesFromDOM,
     mockUtil,
-    mockPreferenceManager,
+    mockSettingManager,
     mockPrefixes
 } from '../../../../../../test/ts/Shared';
 import { SharedModule } from "../../../shared/shared.module";
@@ -46,7 +46,7 @@ describe('Preference Group component', function() {
     let component: PreferenceGroupComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<PreferenceGroupComponent>;
-    let preferenceManagerStub;
+    let settingManagerStub;
     let testUserPreferences;
     let testPreferenceDefinitions;
     let utilStub;
@@ -63,7 +63,7 @@ describe('Preference Group component', function() {
                 PreferenceGroupComponent
             ],
             providers: [
-                { provide: 'preferenceManagerService', useClass: mockPreferenceManager },
+                { provide: 'settingManagerService', useClass: mockSettingManager },
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: 'prefixes', useClass: mockPrefixes },
                 { provide: 'ErrorDisplayComponent', useClass: MockComponent(ErrorDisplayComponent) }
@@ -75,7 +75,7 @@ describe('Preference Group component', function() {
         fixture = TestBed.createComponent(PreferenceGroupComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        preferenceManagerStub = TestBed.get('preferenceManagerService');
+        settingManagerStub = TestBed.get('settingManagerService');
         utilStub = TestBed.get('utilService');
         
         spyOn(PreferenceUtils, 'isSimplePreference').and.returnValue(true);
@@ -213,8 +213,8 @@ describe('Preference Group component', function() {
             } ]
           } ];
 
-        preferenceManagerStub.getPreferenceDefinitions.and.returnValue(Promise.resolve({data: testPreferenceDefinitions}));
-        preferenceManagerStub.getUserPreferences.and.returnValue(Promise.resolve({data: testUserPreferences}));
+        settingManagerStub.getPreferenceDefinitions.and.returnValue(Promise.resolve({data: testPreferenceDefinitions}));
+        settingManagerStub.getUserPreferences.and.returnValue(Promise.resolve({data: testUserPreferences}));
     });
 
     afterEach(function() {
@@ -222,7 +222,7 @@ describe('Preference Group component', function() {
         component = null;
         element = null;
         fixture = null;
-        preferenceManagerStub = null;
+        settingManagerStub = null;
     });
 
     describe('controller methods', function() {
@@ -247,7 +247,7 @@ describe('Preference Group component', function() {
                     expect(component.preferences['setting:SomeSimpleTextPreference'].asJsonLD()).toEqual(testUserPreferences['setting:SomeSimpleTextPreference']);
                 }));
                 it('when no user preferences exist', fakeAsync(function() {
-                    preferenceManagerStub.getUserPreferences.and.returnValue(Promise.resolve({data: []}));
+                    settingManagerStub.getUserPreferences.and.returnValue(Promise.resolve({data: []}));
                     component.retrievePreferences();
                     tick();
     
@@ -267,20 +267,20 @@ describe('Preference Group component', function() {
             component.retrievePreferences();
             tick();
             const pref: SimplePreference = component.preferences['setting:SomeSimpleBooleanPreference'];
-            preferenceManagerStub.updateUserPreference.and.returnValue(Promise.resolve());
+            settingManagerStub.updateUserPreference.and.returnValue(Promise.resolve());
             component.updateUserPreference(pref);
-            expect(preferenceManagerStub.updateUserPreference).toHaveBeenCalled();
-            expect(preferenceManagerStub.createUserPreference).not.toHaveBeenCalled();
+            expect(settingManagerStub.updateUserPreference).toHaveBeenCalled();
+            expect(settingManagerStub.createUserPreference).not.toHaveBeenCalled();
         }));
         it('should create a preference', fakeAsync(function() {
-            preferenceManagerStub.getUserPreferences.and.returnValue(Promise.resolve({data: []}));
+            settingManagerStub.getUserPreferences.and.returnValue(Promise.resolve({data: []}));
             component.retrievePreferences();
             tick();
             const pref: SimplePreference = component.preferences['setting:SomeSimpleBooleanPreference'];
-            preferenceManagerStub.createUserPreference.and.returnValue(Promise.resolve());
+            settingManagerStub.createUserPreference.and.returnValue(Promise.resolve());
             component.updateUserPreference(pref);
-            expect(preferenceManagerStub.updateUserPreference).not.toHaveBeenCalled();
-            expect(preferenceManagerStub.createUserPreference).toHaveBeenCalled();
+            expect(settingManagerStub.updateUserPreference).not.toHaveBeenCalled();
+            expect(settingManagerStub.createUserPreference).toHaveBeenCalled();
         }));
     });
     describe('contains the correct html', function() {
@@ -292,7 +292,7 @@ describe('Preference Group component', function() {
             expect(element.queryAll(By.css('error-display')).length).toEqual(0);
         }));
         it('when preferences are can not be retrieved', fakeAsync(function() {
-            preferenceManagerStub.getUserPreferences.and.returnValue(Promise.reject('Error message'));
+            settingManagerStub.getUserPreferences.and.returnValue(Promise.reject('Error message'));
             component.retrievePreferences();
             tick();
             fixture.detectChanges();

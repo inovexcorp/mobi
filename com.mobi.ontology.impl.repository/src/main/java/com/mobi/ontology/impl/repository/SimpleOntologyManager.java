@@ -52,6 +52,8 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryManager;
+import com.mobi.setting.api.SettingService;
+import com.mobi.setting.api.ontologies.ApplicationSetting;
 import org.apache.commons.lang.NotImplementedException;
 import org.slf4j.LoggerFactory;
 
@@ -74,9 +76,14 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
     private ImportsResolver importsResolver;
     private BNodeService bNodeService;
     private RDFImportService importService;
-
+    private SettingService<ApplicationSetting> settingService;
 
     public SimpleOntologyManager() {
+    }
+
+    @Reference
+    public void setSettingService(SettingService<ApplicationSetting> settingService) {
+        this.settingService = settingService;
     }
 
     @Reference
@@ -190,27 +197,27 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
 
     @Override
     public OntologyId createOntologyId() {
-        return new SimpleOntologyId.Builder(valueFactory).build();
+        return new SimpleOntologyId.Builder(valueFactory, settingService).build();
     }
 
     @Override
     public OntologyId createOntologyId(Resource resource) {
-        return new SimpleOntologyId.Builder(valueFactory).id(resource).build();
+        return new SimpleOntologyId.Builder(valueFactory, settingService).id(resource).build();
     }
 
     @Override
     public OntologyId createOntologyId(IRI ontologyIRI) {
-        return new SimpleOntologyId.Builder(valueFactory).ontologyIRI(ontologyIRI).build();
+        return new SimpleOntologyId.Builder(valueFactory, settingService).ontologyIRI(ontologyIRI).build();
     }
 
     @Override
     public OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI) {
-        return new SimpleOntologyId.Builder(valueFactory).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
+        return new SimpleOntologyId.Builder(valueFactory, settingService).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
     }
 
     @Override
     public OntologyId createOntologyId(Model model) {
-        return new SimpleOntologyId.Builder(valueFactory).model(model).build();
+        return new SimpleOntologyId.Builder(valueFactory, settingService).model(model).build();
     }
 
     @Override

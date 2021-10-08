@@ -1,8 +1,8 @@
-package com.mobi.notification.impl;
+package com.mobi.namespace.impl;
 
 /*-
  * #%L
- * com.mobi.notification.impl
+ * com.mobi.namespace.impl
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,6 +23,8 @@ package com.mobi.notification.impl;
  * #L%
  */
 
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ValueFactory;
 import com.mobi.setting.api.SettingUtilsService;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -32,20 +34,25 @@ import org.osgi.service.component.annotations.Reference;
 import java.io.InputStream;
 
 @Component(immediate = true)
-public class SimpleNotificationService {
-    private static final String NOTIFICATION_ONTOLOGY_NAME = "http://mobi.com/ontologies/notification";
-    private static final InputStream NOTIFICATION_ONTOLOGY;
+public class SimpleNamespaceService {
+    private static final String NAMESPACE_ONTOLOGY_NAME = "http://mobi.com/ontologies/namespace";
+    private static final InputStream NAMESPACE_ONTOLOGY;
+    private static final String DEFAULT_NAMESPACE_IRI = "http://mobi.com/ontologies/namespace/DefaultOntologyNamespace/";
 
     @Reference
     SettingUtilsService settingUtilsService;
 
     static {
-        NOTIFICATION_ONTOLOGY = SimpleNotificationService.class.getResourceAsStream("/notification.ttl");
+        NAMESPACE_ONTOLOGY = SimpleNamespaceService.class.getResourceAsStream("/namespace.ttl");
     }
+
+    @Reference
+    ValueFactory vf;
 
     @Activate
     @Modified
     protected void start() {
-//        settingUtilsService.updateRepoWithSettingDefinitions(NOTIFICATION_ONTOLOGY, NOTIFICATION_ONTOLOGY_NAME);
+        Model model = settingUtilsService.updateRepoWithSettingDefinitions(NAMESPACE_ONTOLOGY, NAMESPACE_ONTOLOGY_NAME);
+        settingUtilsService.initializeApplicationSettingsWithDefaultValues(model, vf.createIRI(DEFAULT_NAMESPACE_IRI));
     }
 }

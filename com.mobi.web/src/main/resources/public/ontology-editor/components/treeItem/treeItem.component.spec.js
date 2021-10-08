@@ -21,25 +21,22 @@
  * #L%
  */
 import {
-    mockSettingsManager,
     mockOntologyState,
     injectRegexConstant
 } from '../../../../../../test/js/Shared';
 
 describe('Tree Item component', function() {
-    var $compile, scope, ontologyStateSvc, settingsManagerSvc;
+    var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         angular.mock.module('ontology-editor');
-        mockSettingsManager();
         mockOntologyState();
         injectRegexConstant();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _settingsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            settingsManagerSvc = _settingsManagerService_;
         });
 
         scope.hasChildren = true;
@@ -66,7 +63,6 @@ describe('Tree Item component', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        settingsManagerSvc = null;
         this.element.remove();
     });
 

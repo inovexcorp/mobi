@@ -30,8 +30,6 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.notification.impl.SimpleNotificationService;
-import com.mobi.notification.impl.ontologies.EmailNotificationPreference;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.core.utils.Values;
@@ -92,8 +90,6 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
 
         service = new SimpleApplicationSettingService();
         injectOrmFactoryReferencesIntoService(service);
-        SimpleNotificationService notificationService = new SimpleNotificationService();
-        injectOrmFactoryReferencesIntoService(notificationService);
         service.vf = VALUE_FACTORY;
         service.mf = MODEL_FACTORY;
         service.configProvider = configProvider;
@@ -220,7 +216,7 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     @Test
     public void getUserApplicationSettingThatDoesNotExistTest() throws Exception {
         Optional<ApplicationSetting> retrievedApplicationSetting = service.getSettingByType(
-                VALUE_FACTORY.createIRI(EmailNotificationPreference.TYPE));
+                VALUE_FACTORY.createIRI("http://mobi.com/ontologies/notification#EmailNotificationPreference"));
         assertFalse(retrievedApplicationSetting.isPresent());
     }
 

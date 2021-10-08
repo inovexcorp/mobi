@@ -40,23 +40,13 @@ export const utilServiceProvider = {
     deps: ['$injector']
 };
 
-export function settingsManagerServiceFactory(i: any) {
-    return i.get('settingsManagerService');
+export function settingManagerServiceFactory(i: any) {
+    return i.get('settingManagerService');
 }
 
-export const settingsManagerServiceProvider = {
-    provide: 'settingsManagerService',
-    useFactory: settingsManagerServiceFactory,
-    deps: ['$injector']
-};
-
-export function preferenceManagerServiceFactory(i: any) {
-    return i.get('preferenceManagerService');
-}
-
-export const preferenceManagerServiceProvider = {
-    provide: 'preferenceManagerService',
-    useFactory: preferenceManagerServiceFactory,
+export const settingManagerServiceProvider = {
+    provide: 'settingManagerService',
+    useFactory: settingManagerServiceFactory,
     deps: ['$injector']
 };
 

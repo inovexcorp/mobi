@@ -23,11 +23,14 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
+import com.mobi.namespace.impl.ontologies.DefaultOntologyNamespaceApplicationSetting;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.impl.core.AbstractOntologyId;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.setting.api.SettingService;
+import com.mobi.setting.api.ontologies.ApplicationSetting;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -39,7 +42,8 @@ public class SimpleOntologyId extends AbstractOntologyId {
     private IRI versionIRI;
 
     public static class Builder extends AbstractOntologyId.Builder {
-        public Builder(ValueFactory factory) {
+        public Builder(ValueFactory factory, SettingService<ApplicationSetting> settingService) {
+            this.settingService = settingService;
             this.factory = factory;
         }
 
@@ -62,7 +66,16 @@ public class SimpleOntologyId extends AbstractOntologyId {
         } else if (builder.identifier != null) {
             this.identifier = builder.identifier;
         } else {
-            this.identifier = factory.createIRI(DEFAULT_PREFIX + UUID.randomUUID());
+            String ontologyNamespace;
+            Optional<ApplicationSetting> ontologyNamespaceApplicationSetting = settingService.getSettingByType(
+                    factory.createIRI(DefaultOntologyNamespaceApplicationSetting.TYPE));
+            if (ontologyNamespaceApplicationSetting.isPresent() && ontologyNamespaceApplicationSetting.get()
+                    .getHasDataValue().isPresent()) {
+                ontologyNamespace = ontologyNamespaceApplicationSetting.get().getHasDataValue().get().stringValue();
+            } else {
+                ontologyNamespace = DEFAULT_PREFIX;
+            }
+            this.identifier = factory.createIRI(ontologyNamespace + UUID.randomUUID());
         }
 
     }

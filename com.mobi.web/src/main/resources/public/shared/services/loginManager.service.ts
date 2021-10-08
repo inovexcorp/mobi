@@ -32,6 +32,7 @@ loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
     'mergeRequestsStateService',
     'ontologyManagerService',
     'ontologyStateService',
+    'settingManagerService',
     'sparqlManagerService',
     'stateManagerService',
     'userManagerService',
@@ -55,6 +56,7 @@ loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
  * @requires shared.service:mergeRequestsStateService
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:ontologyStateService
+ * @requires shared.service:settingManagerService
  * @requires shared.service:sparqlManagerService
  * @requires shared.service:stateManagerService
  * @requires shared.service:userManagerService
@@ -64,7 +66,7 @@ loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
  * `loginManagerService` is a service that provides access to the Mobi login REST
  * endpoints so users can log into and out of Mobi.
  */
-function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService, yasguiService) {
+function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, settingManagerService, sparqlManagerService, stateManagerService, userManagerService, userStateService, yasguiService) {
     var self = this,
         prefix = REST_PREFIX + 'session';
     
@@ -192,6 +194,7 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
             var promises = [
                 stateManagerService.initialize(),
                 userManagerService.initialize(),
+                settingManagerService.initialize(),
                 userManagerService.getUser(data).then(user => {
                     self.currentUserIRI = user.iri;
                     self.currentUser = user.username;

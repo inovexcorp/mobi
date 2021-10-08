@@ -111,6 +111,7 @@
         <module>com.mobi.setting.rest</module>
         <module>com.mobi.notification.impl</module>
         <module>com.mobi.persistence.utils.impl</module>
+        <module>com.mobi.namespace.impl</module>
     </modules>
 
     <properties>

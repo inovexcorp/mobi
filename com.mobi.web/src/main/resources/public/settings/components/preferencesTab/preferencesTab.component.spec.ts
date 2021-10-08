@@ -29,7 +29,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import {
     cleanStylesFromDOM,
-    mockPreferenceManager,
+    mockSettingManager,
     mockUtil,
     mockPrefixes
 } from '../../../../../../test/ts/Shared';
@@ -44,7 +44,7 @@ describe('Preferences Tab component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<PreferencesTabComponent>;
     let utilStub;
-    let preferenceManagerStub;
+    let settingManagerStub;
     let testGroups;
 
     configureTestSuite(function() {
@@ -58,7 +58,7 @@ describe('Preferences Tab component', function() {
                 MockComponent(PreferenceGroupComponent)
             ],
             providers: [
-                { provide: 'preferenceManagerService', useClass: mockPreferenceManager },
+                { provide: 'settingManagerService', useClass: mockSettingManager },
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: 'prefixes', useClass: mockPrefixes },
                 { provide: 'ErrorDisplayComponent', useClass: MockComponent(ErrorDisplayComponent) }
@@ -70,7 +70,7 @@ describe('Preferences Tab component', function() {
         fixture = TestBed.createComponent(PreferencesTabComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        preferenceManagerStub = TestBed.get('preferenceManagerService');
+        settingManagerStub = TestBed.get('settingManagerService');
         utilStub = TestBed.get('utilService');
         utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
             return get(entity, '[\'' + propertyIRI + '\'][0][\'@value\']', '');
@@ -95,7 +95,7 @@ describe('Preferences Tab component', function() {
             } ]
           } ];
 
-        preferenceManagerStub.tabs = [];
+        settingManagerStub.tabs = [];
     });
 
     afterEach(function() {
@@ -103,21 +103,21 @@ describe('Preferences Tab component', function() {
         component = null;
         element = null;
         fixture = null;
-        preferenceManagerStub = null;
+        settingManagerStub = null;
         utilStub = null;
     });
 
     describe('controller methods', function() {
         describe('should populate the sidebar', function() {
             it('unless an error occurs', fakeAsync(function() {
-                preferenceManagerStub.getPreferenceGroups.and.returnValue(Promise.reject('Error message'));
+                settingManagerStub.getPreferenceGroups.and.returnValue(Promise.reject('Error message'));
                 component.setPreferenceTabs();
                 tick();
-                expect(preferenceManagerStub.tabs.length).toEqual(0);
+                expect(settingManagerStub.tabs.length).toEqual(0);
                 expect(utilStub.createErrorToast).toHaveBeenCalled();
             }));
             it('with new values', fakeAsync(function() {
-                preferenceManagerStub.getPreferenceGroups.and.returnValue(Promise.resolve({data: testGroups}));
+                settingManagerStub.getPreferenceGroups.and.returnValue(Promise.resolve({data: testGroups}));
                 component.setPreferenceTabs();
                 tick();
                 expect(component.tabs.length).toEqual(2);

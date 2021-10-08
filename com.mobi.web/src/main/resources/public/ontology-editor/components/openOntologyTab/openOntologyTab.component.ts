@@ -55,13 +55,14 @@ const openOntologyTabComponent = {
     controller: openOntologyTabComponentCtrl
 };
 
-openOntologyTabComponentCtrl.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'mapperStateService', 'catalogManagerService', 'modalService', 'policyEnforcementService', 'policyManagerService'];
+openOntologyTabComponentCtrl.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'mapperStateService', 'catalogManagerService', 'modalService', 'settingManagerService', 'policyEnforcementService', 'policyManagerService'];
 
-function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontologyStateService, prefixes, utilService, mapperStateService, catalogManagerService, modalService, policyEnforcementService, policyManagerService) {
+function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontologyStateService, prefixes, utilService, mapperStateService, catalogManagerService, modalService, settingManagerService, policyEnforcementService, policyManagerService) {
     var dvm = this;
     var cm = catalogManagerService;
     var pe = policyEnforcementService;
     var pm = policyManagerService;
+    var sm = settingManagerService;
     var ontologyRecords = [];
 
     dvm.prefixes = prefixes;
@@ -115,9 +116,8 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
         }
     }
     dvm.newOntology = function() {
-        var date = new Date();
         dvm.os.newOntology = {
-            '@id': 'https://mobi.com/ontologies/' + (date.getMonth() + 1) + '/' + date.getFullYear() + '/',
+            '@id': sm.defaultNamespace,
             '@type': [prefixes.owl + 'Ontology'],
             [prefixes.dcterms + 'title']: [{
                 '@value': ''

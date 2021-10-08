@@ -32,12 +32,13 @@ import {
     mockPolicyEnforcement,
     mockPolicyManager,
     mockModal,
+    mockSettingManager,
     injectTrustedFilter,
     injectHighlightFilter
 } from '../../../../../../test/js/Shared';
 
 describe('Open Ontology Tab component', function() {
-    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, prefixes, utilSvc, mapperStateSvc, catalogManagerSvc, policyManagerSvc, policyEnforcementSvc, httpSvc, modalSvc;
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, prefixes, settingManagerSvc, utilSvc, mapperStateSvc, catalogManagerSvc, policyManagerSvc, policyEnforcementSvc, httpSvc, modalSvc;
 
     beforeEach(function() {
         angular.mock.module('ontology-editor');
@@ -50,12 +51,13 @@ describe('Open Ontology Tab component', function() {
         mockMapperState();
         mockHttpService();
         mockPolicyEnforcement();
+        mockSettingManager();
         mockPolicyManager();
         mockModal();
         injectHighlightFilter();
         injectTrustedFilter();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _prefixes_, _utilService_, _mapperStateService_, _catalogManagerService_, _policyManagerService_, _policyEnforcementService_, _httpService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _prefixes_, _utilService_, _mapperStateService_, _catalogManagerService_, _policyManagerService_, _policyEnforcementService_, _settingManagerService_, _httpService_, _modalService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -64,6 +66,7 @@ describe('Open Ontology Tab component', function() {
             prefixes = _prefixes_;
             utilSvc = _utilService_;
             mapperStateSvc = _mapperStateService_;
+            settingManagerSvc = _settingManagerService_;
             catalogManagerSvc = _catalogManagerService_;
             policyManagerSvc = _policyManagerService_;
             policyEnforcementSvc = _policyEnforcementService_;
@@ -107,6 +110,7 @@ describe('Open Ontology Tab component', function() {
         utilSvc = null;
         mapperStateSvc = null;
         catalogManagerSvc = null;
+        settingManagerSvc = null;
         httpSvc = null;
         modalSvc = null;
         this.element.remove();
@@ -205,6 +209,7 @@ describe('Open Ontology Tab component', function() {
             });
         });
         it('should set the correct state for creating a new ontology', function() {
+            settingManagerSvc.defaultNamespace = 'https://mobi.com/ontologies/';
             this.controller.newOntology();
             expect(_.startsWith(ontologyStateSvc.newOntology['@id'], 'https://mobi.com/ontologies/')).toEqual(true);
             expect(ontologyStateSvc.newOntology[prefixes.dcterms + 'title']).toEqual([{'@value': ''}]);
