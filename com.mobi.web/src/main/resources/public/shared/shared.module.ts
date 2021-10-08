@@ -133,12 +133,11 @@ import modalService from './services/modal.service';
 import ontologyManagerService from './services/ontologyManager.service';
 import ontologyStateService from './services/ontologyState.service';
 import policyEnforcementService from './services/policyEnforcement.service';
-import preferenceManagerService from './services/preferenceManager.service';
+import settingManagerService from './services/settingManager.service';
 import prefixes from './services/prefixes.service';
 import propertyManagerService from './services/propertyManager.service';
 import provManagerService from './services/provManager.service';
 import recordPermissionsManagerService from './services/recordPermissionsManager.service';
-import settingsManagerService from './services/settingsManager.service';
 import sparqlManagerService from './services/sparqlManager.service';
 import stateManagerService from './services/stateManager.service';
 import updateRefsService from './services/updateRefs.service';
@@ -151,13 +150,12 @@ import {
     httpServiceProvider,
     loginManagerServiceProvider,
     prefixesProvider,
-    preferenceManagerServiceProvider,
+    settingManagerServiceProvider,
     provManagerServiceProvider,
     utilServiceProvider,
     ontologyStateServiceProvider,
     discoverStateServiceProvider,
     ontologyManagerServiceProvider,
-    settingsManagerServiceProvider,
     catalogManagerServiceProvider
 } from '../ajs.upgradedProviders';
 
@@ -253,11 +251,10 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
     providers: [
         loginManagerServiceProvider,
         utilServiceProvider,
-        preferenceManagerServiceProvider,
+        settingManagerServiceProvider,
         provManagerServiceProvider,
         prefixesProvider,
         httpServiceProvider,
-        settingsManagerServiceProvider,
         ontologyStateServiceProvider,
         discoverStateServiceProvider,
         catalogManagerServiceProvider,
@@ -361,12 +358,11 @@ angular.module('shared', [])
     .service('ontologyManagerService', ontologyManagerService)
     .service('ontologyStateService', ontologyStateService)
     .service('policyEnforcementService', policyEnforcementService)
-    .service('preferenceManagerService', preferenceManagerService)
+    .service('settingManagerService', settingManagerService)
     .service('prefixes', prefixes)
     .service('propertyManagerService', propertyManagerService)
     .service('provManagerService', provManagerService)
     .service('recordPermissionsManagerService', recordPermissionsManagerService)
-    .service('settingsManagerService', settingsManagerService)
     .service('sparqlManagerService', sparqlManagerService)
     .service('stateManagerService', stateManagerService)
     .service('updateRefsService', updateRefsService)

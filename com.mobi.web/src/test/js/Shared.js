@@ -457,6 +457,21 @@ export function mockHttpService() {
     });
 }
 
+export function mockSettingManager() {
+    angular.mock.module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
+        $provide.service('settingManagerService', function($q) {
+            this.defaultNamespace = '';
+            this.getUserPreferences = jasmine.createSpy('getUserPreferences').and.returnValue(Promise.resolve(''));
+            this.updateUserPreference = jasmine.createSpy('updateUserPreference').and.returnValue(Promise.resolve(''));
+            this.createUserPreference = jasmine.createSpy('createUserPreference').and.returnValue(Promise.resolve(''));
+            this.getPreferenceGroups = jasmine.createSpy('getPreferenceGroups').and.returnValue(Promise.resolve(''));
+            this.getPreferenceDefinitions = jasmine.createSpy('getPreferenceDefinitions').and.returnValue(Promise.resolve(''));
+            this.initialize = jasmine.createSpy('initialize');
+        });
+    });
+}
+
 export function mockPrefixes() {
     angular.mock.module(function($provide) {
         $provide.service('prefixes', function() {
@@ -519,17 +534,6 @@ export function mockSparqlManager() {
             this.downloadResultsPost = jasmine.createSpy('downloadResultsPost');
             this.setResults = jasmine.createSpy('setResults');
             this.pagedQuery = jasmine.createSpy('pagedQuery').and.returnValue($q.when({}));
-        });
-    });
-}
-
-export function mockSettingsManager() {
-    angular.mock.module(function($provide) {
-        $provide.service('settingsManagerService', function() {
-            this.getSettings = jasmine.createSpy('getSettings').and.returnValue({});
-            this.setSettings = jasmine.createSpy('setSettings').and.callFake(_.identity);
-            this.getTreeDisplay = jasmine.createSpy('getTreeDisplay').and.returnValue('');
-            this.getTooltipDisplay = jasmine.createSpy('getTooltipDisplay').and.returnValue('');
         });
     });
 }

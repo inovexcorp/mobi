@@ -31,6 +31,7 @@ import {
     mockMergeRequestsState,
     mockOntologyManager,
     mockOntologyState,
+    mockSettingManager,
     mockSparqlManager,
     mockStateManager,
     mockUserManager,
@@ -44,7 +45,7 @@ import {
 describe('Login Manager service', function() {
     var loginManagerSvc, $httpBackend, state, scope, $q, catalogManagerSvc, catalogStateSvc, datasetManagerSvc,
         datasetStateSvc, delimitedManagerSvc, discoverStateSvc, mapperStateSvc, mergeRequestsStateSvc, ontologyManagerSvc,
-        ontologyStateSvc, sparqlManagerSvc, stateManagerSvc, userManagerSvc, userStateSvc, yasguiSvc;
+        ontologyStateSvc, settingManagerSvc, sparqlManagerSvc, stateManagerSvc, userManagerSvc, userStateSvc, yasguiSvc;
 
 
     beforeEach(function() {
@@ -57,6 +58,7 @@ describe('Login Manager service', function() {
         mockDiscoverState();
         mockMapperState();
         mockMergeRequestsState();
+        mockSettingManager();
         mockOntologyManager();
         mockOntologyState();
         mockSparqlManager();
@@ -75,7 +77,7 @@ describe('Login Manager service', function() {
         inject(function(loginManagerService, _$httpBackend_, _$state_, _$rootScope_, _$q_, _catalogManagerService_,
                         _catalogStateService_, _datasetManagerService_, _datasetStateService_, _delimitedManagerService_,
                         _discoverStateService_, _mapperStateService_, _mergeRequestsStateService_, _ontologyManagerService_,
-                        _ontologyStateService_, _sparqlManagerService_, _stateManagerService_, _userManagerService_,
+                        _ontologyStateService_, _settingManagerService_, _sparqlManagerService_, _stateManagerService_, _userManagerService_,
                          _userStateService_,_yasguiService_) {
             loginManagerSvc = loginManagerService;
             $httpBackend = _$httpBackend_;
@@ -92,6 +94,7 @@ describe('Login Manager service', function() {
             mergeRequestsStateSvc = _mergeRequestsStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
+            settingManagerSvc = _settingManagerService_;
             sparqlManagerSvc = _sparqlManagerService_;
             stateManagerSvc = _stateManagerService_;
             userManagerSvc = _userManagerService_;
@@ -116,6 +119,7 @@ describe('Login Manager service', function() {
         mergeRequestsStateSvc = null;
         ontologyManagerSvc = null;
         ontologyStateSvc = null;
+        settingManagerSvc = null;
         sparqlManagerSvc = null;
         stateManagerSvc = null;
         userManagerSvc = null;

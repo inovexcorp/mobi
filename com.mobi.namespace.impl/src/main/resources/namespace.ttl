@@ -1,0 +1,36 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix setting: <http://mobi.com/ontologies/setting#>.
+@prefix : <http://mobi.com/ontologies/namespace#>.
+@base <http://mobi.com/ontologies/namespace>.
+
+<http://mobi.com/ontologies/namespace> a owl:Ontology;
+    owl:versionIRI <http://mobi.com/ontologies/namespace/1.0>;
+    owl:imports <http://www.w3.org/ns/shacl#>, <http://mobi.com/ontologies/preference>;
+    rdfs:label "The namespace Application Setting Shape Ontology"@en;
+    rdfs:comment "The namespace Ontology provides the SHACL shapes relating to namespace settings."@en;
+    dct:creator [foaf:name "Ben Greenberg"];
+    foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>];
+    dct:modified "2021-10-06"^^xsd:date.
+
+:DefaultOntologyNamespaceApplicationSetting a owl:Class, sh:NodeShape;
+    rdfs:subClassOf setting:ApplicationSetting;
+    sh:description "What is the ontology namespace for your organization?" ;
+    rdfs:comment "An Application Setting an organization can have within the Mobi framework that signifies the namespace to be used for created ontology IRIs."@en;
+    sh:property :DefaultOntologyNamespaceApplicationSettingPropertyShape;
+    setting:inGroup :NamespaceApplicationSettingGroup .
+
+:DefaultOntologyNamespaceApplicationSettingPropertyShape a sh:PropertyShape;
+    sh:path setting:hasDataValue;
+    sh:datatype xsd:string;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:defaultValue "https://mobi.com/ontologies/"@en ;
+    setting:usesFormField setting:TextInput .
+
+:NamespaceApplicationSettingGroup a setting:ApplicationSettingGroup ;
+    rdfs:label "Namespaces"@en .

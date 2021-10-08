@@ -33,6 +33,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -82,6 +83,8 @@ import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
 import com.mobi.repository.impl.sesame.query.SesameOperationDatasetFactory;
+import com.mobi.setting.api.SettingService;
+import com.mobi.setting.api.ontologies.ApplicationSetting;
 import com.mobi.vocabularies.xsd.XSD;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Statement;
@@ -183,6 +186,9 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Mock
     private Branch localBranch2;
 
+    @Mock
+    private SettingService<ApplicationSetting> settingService;
+
     @Before
     public void setUp() throws Exception {
         vf = VALUE_FACTORY;
@@ -210,6 +216,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         when(repo.getConfig()).thenReturn(repositoryConfig);
         when(repositoryConfig.id()).thenReturn("ontologyCache");
 
+        when(settingService.getSettingByType(any())).thenReturn(Optional.empty());
         when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
         when(transformer.sesameModel(any(com.mobi.rdf.api.Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, com.mobi.rdf.api.Model.class)));
         when(transformer.sesameResource(any(Resource.class))).thenAnswer(i -> Values.sesameResource(i.getArgumentAt(0, Resource.class)));
@@ -222,7 +229,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         when(ontologyManager.createOntologyId(any(IRI.class), any(IRI.class))).thenReturn(ontologyId);
         when(ontologyManager.createOntologyId(any(IRI.class))).thenReturn(ontologyId);
         ArgumentCaptor<Model> iriModel = ArgumentCaptor.forClass(Model.class);
-        when(ontologyManager.createOntologyId(iriModel.capture())).thenAnswer(inovcation -> new SimpleOntologyId.Builder(vf).model(iriModel.getValue()).build());
+        when(ontologyManager.createOntologyId(iriModel.capture())).thenAnswer(inovcation -> new SimpleOntologyId.Builder(vf, settingService).model(iriModel.getValue()).build());
         when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
         when(ontologyId.getOntologyIdentifier()).thenReturn(vf.createIRI("https://mobi.com/ontology-id"));
 
@@ -311,7 +318,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
     @Test
     public void getOntologyId() throws Exception {
-        when(ontologyManager.createOntologyId(any(Model.class))).thenReturn(ontologyId);
+        doReturn(ontologyId).when(ontologyManager).createOntologyId(any(Model.class));
 
         OntologyId id = ont1.getOntologyId();
         assertEquals(vf.createIRI("https://mobi.com/ontology-id"), id.getOntologyIdentifier());

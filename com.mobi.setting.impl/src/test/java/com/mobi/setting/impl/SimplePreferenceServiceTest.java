@@ -30,8 +30,6 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.notification.impl.SimpleNotificationService;
-import com.mobi.notification.impl.ontologies.EmailNotificationPreference;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.ontologies.Preference;
 import com.mobi.setting.api.ontologies.Setting;
@@ -100,8 +98,6 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
 
         service = new SimplePreferenceService();
         injectOrmFactoryReferencesIntoService(service);
-        SimpleNotificationService notificationService = new SimpleNotificationService();
-        injectOrmFactoryReferencesIntoService(notificationService);
         service.vf = VALUE_FACTORY;
         service.mf = MODEL_FACTORY;
         service.configProvider = configProvider;
@@ -264,7 +260,7 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
     public void getUserPreferenceThatDoesNotExistTest() throws Exception {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
         Optional<Preference> retrievedPreference = service.getSettingByType(
-                VALUE_FACTORY.createIRI(EmailNotificationPreference.TYPE), user);
+                VALUE_FACTORY.createIRI("http://mobi.com/ontologies/notification#EmailNotificationPreference"), user);
         assertFalse(retrievedPreference.isPresent());
     }
 

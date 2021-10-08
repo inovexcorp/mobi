@@ -30,11 +30,14 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.setting.api.SettingService;
+import com.mobi.setting.api.ontologies.ApplicationSetting;
 
 public abstract class AbstractOntologyId implements OntologyId {
 
     protected Resource identifier;
     protected ValueFactory factory;
+    protected SettingService<ApplicationSetting> settingService;
 
     protected static final String DEFAULT_PREFIX = "http://mobi.com/ontologies/";
 
@@ -44,6 +47,7 @@ public abstract class AbstractOntologyId implements OntologyId {
         public IRI versionIRI;
         public Model model;
         public ValueFactory factory;
+        public SettingService<ApplicationSetting> settingService;
 
         /**
          * If model is set, will attempt to pull OntologyIRI and VersionIRI from model. Will ignore builder fields for
@@ -77,6 +81,7 @@ public abstract class AbstractOntologyId implements OntologyId {
 
     protected void setUp(Builder builder) {
         this.factory = builder.factory;
+        this.settingService = builder.settingService;
 
         if (builder.model != null) {
             builder.ontologyIRI = null;

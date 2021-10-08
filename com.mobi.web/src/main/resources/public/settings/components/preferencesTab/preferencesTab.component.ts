@@ -28,7 +28,7 @@ import './preferencesTab.component.scss';
 
 /**
  * @name settings.PreferencesTabComponent
- * @requires shared.service:preferenceManagerService
+ * @requires shared.service:settingManagerService
  * @requires shared.service.utilService
  * @requires shared.service.prefixes
  *
@@ -43,7 +43,7 @@ import './preferencesTab.component.scss';
 export class PreferencesTabComponent implements OnInit {
     tabs: { type: string, heading: string, active: boolean }[] = []
     
-    constructor(@Inject('preferenceManagerService') private pm, @Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
+    constructor(@Inject('settingManagerService') private sm, @Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
     
     ngOnInit(): void {
         this.setPreferenceTabs();
@@ -71,7 +71,7 @@ export class PreferencesTabComponent implements OnInit {
     }
 
     setPreferenceTabs(): void {
-        this.pm.getPreferenceGroups()
+        this.sm.getPreferenceGroups()
             .then(response => {
                 this.tabs = [];
                 forEach(response.data, preferenceGroup => {
