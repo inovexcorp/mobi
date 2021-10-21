@@ -23,6 +23,8 @@ package com.mobi.namespace.impl;
  * #L%
  */
 
+import com.mobi.namespace.api.NamespaceService;
+import com.mobi.namespace.api.ontologies.DefaultOntologyNamespaceApplicationSetting;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.setting.api.SettingUtilsService;
@@ -31,28 +33,39 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
+import java.io.IOException;
 import java.io.InputStream;
 
-@Component(immediate = true)
-public class SimpleNamespaceService {
+@Component(name = SimpleNamespaceService.COMPONENT_NAME, immediate = true)
+public class SimpleNamespaceService implements NamespaceService {
+
+    static final String COMPONENT_NAME = "com.mobi.namespace.api.NamespaceService";
+
     private static final String NAMESPACE_ONTOLOGY_NAME = "http://mobi.com/ontologies/namespace";
-    private static final InputStream NAMESPACE_ONTOLOGY;
     private static final String DEFAULT_NAMESPACE_IRI = "http://mobi.com/ontologies/namespace/DefaultOntologyNamespace/";
+    private String defaultOntologyNamespace = "http://mobi.com/ontologies/";
 
     @Reference
     SettingUtilsService settingUtilsService;
-
-    static {
-        NAMESPACE_ONTOLOGY = SimpleNamespaceService.class.getResourceAsStream("/namespace.ttl");
-    }
 
     @Reference
     ValueFactory vf;
 
     @Activate
     @Modified
-    protected void start() {
-        Model model = settingUtilsService.updateRepoWithSettingDefinitions(NAMESPACE_ONTOLOGY, NAMESPACE_ONTOLOGY_NAME);
+    protected void start() throws IOException {
+        InputStream namespaceOntology = NamespaceService.class.getResourceAsStream("/namespace.ttl");
+        Model model = settingUtilsService.updateRepoWithSettingDefinitions(namespaceOntology, NAMESPACE_ONTOLOGY_NAME);
         settingUtilsService.initializeApplicationSettingsWithDefaultValues(model, vf.createIRI(DEFAULT_NAMESPACE_IRI));
+    }
+
+    @Override
+    public void setDefaultOntologyNamespace(String namespace) {
+        this.defaultOntologyNamespace = namespace;
+    }
+
+    @Override
+    public String getDefaultOntologyNamespace() {
+        return this.defaultOntologyNamespace;
     }
 }
