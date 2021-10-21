@@ -36,6 +36,7 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.exception.MobiException;
+import com.mobi.namespace.api.NamespaceService;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
@@ -77,6 +78,7 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
     private BNodeService bNodeService;
     private RDFImportService importService;
     private SettingService<ApplicationSetting> settingService;
+    private NamespaceService namespaceService;
 
     public SimpleOntologyManager() {
     }
@@ -84,6 +86,11 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
     @Reference
     public void setSettingService(SettingService<ApplicationSetting> settingService) {
         this.settingService = settingService;
+    }
+
+    @Reference
+    public void setNamespaceService(NamespaceService namespaceService) {
+        this.namespaceService = namespaceService;
     }
 
     @Reference
@@ -197,27 +204,27 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
 
     @Override
     public OntologyId createOntologyId() {
-        return new SimpleOntologyId.Builder(valueFactory, settingService).build();
+        return new SimpleOntologyId.Builder(valueFactory, settingService, namespaceService).build();
     }
 
     @Override
     public OntologyId createOntologyId(Resource resource) {
-        return new SimpleOntologyId.Builder(valueFactory, settingService).id(resource).build();
+        return new SimpleOntologyId.Builder(valueFactory, settingService, namespaceService).id(resource).build();
     }
 
     @Override
     public OntologyId createOntologyId(IRI ontologyIRI) {
-        return new SimpleOntologyId.Builder(valueFactory, settingService).ontologyIRI(ontologyIRI).build();
+        return new SimpleOntologyId.Builder(valueFactory, settingService, namespaceService).ontologyIRI(ontologyIRI).build();
     }
 
     @Override
     public OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI) {
-        return new SimpleOntologyId.Builder(valueFactory, settingService).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
+        return new SimpleOntologyId.Builder(valueFactory, settingService, namespaceService).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
     }
 
     @Override
     public OntologyId createOntologyId(Model model) {
-        return new SimpleOntologyId.Builder(valueFactory, settingService).model(model).build();
+        return new SimpleOntologyId.Builder(valueFactory, settingService, namespaceService).model(model).build();
     }
 
     @Override

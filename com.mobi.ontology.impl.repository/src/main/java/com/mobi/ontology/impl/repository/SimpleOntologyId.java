@@ -23,7 +23,8 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
-import com.mobi.namespace.impl.ontologies.DefaultOntologyNamespaceApplicationSetting;
+import com.mobi.namespace.api.NamespaceService;
+import com.mobi.namespace.api.ontologies.DefaultOntologyNamespaceApplicationSetting;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.impl.core.AbstractOntologyId;
 import com.mobi.rdf.api.IRI;
@@ -42,8 +43,10 @@ public class SimpleOntologyId extends AbstractOntologyId {
     private IRI versionIRI;
 
     public static class Builder extends AbstractOntologyId.Builder {
-        public Builder(ValueFactory factory, SettingService<ApplicationSetting> settingService) {
+        public Builder(ValueFactory factory, SettingService<ApplicationSetting> settingService,
+                       NamespaceService namespaceService) {
             this.settingService = settingService;
+            this.namespaceService = namespaceService;
             this.factory = factory;
         }
 
@@ -73,7 +76,7 @@ public class SimpleOntologyId extends AbstractOntologyId {
                     .getHasDataValue().isPresent()) {
                 ontologyNamespace = ontologyNamespaceApplicationSetting.get().getHasDataValue().get().stringValue();
             } else {
-                ontologyNamespace = DEFAULT_PREFIX;
+                ontologyNamespace = namespaceService.getDefaultOntologyNamespace();
             }
             this.identifier = factory.createIRI(ontologyNamespace + UUID.randomUUID());
         }

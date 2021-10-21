@@ -45,12 +45,12 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>catalog.api</artifactId>
+            <artifactId>setting.api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>setting.api</artifactId>
+            <artifactId>notification.api</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
@@ -64,48 +64,17 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>Notification Impl</Bundle-Name>
+                        <Bundle-Name>Mobi Notification Impl</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
+                        <Export-Package>
+                            com.mobi.notification.api;provide:=true,
+                        </Export-Package>
+                        <_metatype>*</_metatype>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>com.mobi.orm</groupId>
-                <artifactId>rdf-orm-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>generateOrmSources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>generate-orm</goal>
-                        </goals>
-                        <inherited>false</inherited>
-                        <configuration>
-                            <generates>
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/notification.ttl</ontologyFile>
-                                    <outputPackage>com.mobi.notification.impl.ontologies</outputPackage>
-                                    <ontologyName>Notification</ontologyName>
-                                </ontology>
-                            </generates>
-                            <references>
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/../com.mobi.rdf.orm.ontologies/src/main/resources/shacl.ttl</ontologyFile>
-                                    <outputPackage>com.mobi.ontologies.shacl</outputPackage>
-                                </ontology>
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/../com.mobi.setting.api/src/main/resources/setting.ttl</ontologyFile>
-                                    <outputPackage>com.mobi.setting.api.ontologies</outputPackage>
-                                    <ontologyName>Setting</ontologyName>
-                                </ontology>
-                            </references>
-                            <outputLocation>${project.basedir}/src/main/java</outputLocation>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
