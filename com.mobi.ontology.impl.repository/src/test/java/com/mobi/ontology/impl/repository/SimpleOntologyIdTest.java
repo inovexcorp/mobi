@@ -29,6 +29,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 import com.mobi.etl.api.rdf.RDFImportService;
+import com.mobi.namespace.api.NamespaceService;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.rdf.api.IRI;
@@ -63,6 +64,9 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
     @Mock
     private SettingService<ApplicationSetting> settingService;
 
+    @Mock
+    private NamespaceService namespaceService;
+
     private static final String ONTOLOGY_PREFIX = "http://mobi.com/ontologies/";
 
     @Before
@@ -73,6 +77,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         mf = getModelFactory();
 
         when(settingService.getSettingByType(any())).thenReturn(Optional.empty());
+        when(namespaceService.getDefaultOntologyNamespace()).thenReturn(ONTOLOGY_PREFIX);
 
         ontologyIRI = vf.createIRI(ontologyIRIString);
         versionIRI = vf.createIRI(versionIRIString);
@@ -85,7 +90,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
     
     @Test
     public void testConstructorWithNoInputValue() {
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).build();
         
         assertTrue(ontologyId.getOntologyIdentifier().stringValue().startsWith(ONTOLOGY_PREFIX));
         assertEquals(Optional.empty(), ontologyId.getOntologyIRI());
@@ -94,7 +99,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
     
     @Test
     public void testConstructorWithOnlyId() {
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).id(identifierIRI).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).id(identifierIRI).build();
         
         assertEquals(identifierIRI, ontologyId.getOntologyIdentifier());
         assertEquals(Optional.empty(), ontologyId.getOntologyIRI());
@@ -103,7 +108,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
     
     @Test
     public void testConstructorWithIdAndOntologyIRI() {
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).id(identifierIRI).ontologyIRI(ontologyIRI).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).id(identifierIRI).ontologyIRI(ontologyIRI).build();
         
         assertEquals(ontologyIRI, ontologyId.getOntologyIdentifier());
         assertEquals(ontologyIRIString, ontologyId.getOntologyIdentifier().stringValue());
@@ -113,7 +118,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
 
     @Test
     public void testConstructorWithIdAndOntologyIRIAndVersionIRI() {
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).id(identifierIRI).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).id(identifierIRI).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
 
         assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
         assertEquals(versionIRIString, ontologyId.getOntologyIdentifier().stringValue());
@@ -125,7 +130,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
 
     @Test
     public void testConstructorWithNoIdAndOntologyIRIAndNoVersionIRI() {
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).ontologyIRI(ontologyIRI).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).ontologyIRI(ontologyIRI).build();
 
         assertEquals(ontologyIRI, ontologyId.getOntologyIdentifier());
         assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
@@ -134,12 +139,12 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
 
     @Test(expected = MobiOntologyException.class)
     public void testConstructorWithNoIdAndNoOntologyIRIAndVersionIRI() {
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).versionIRI(versionIRI).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).versionIRI(versionIRI).build();
     }
 
     @Test
     public void testConstructorWithNoIdAndOntologyIRIAndVersionIRI() {
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
         
         assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
         assertEquals(versionIRIString, ontologyId.getOntologyIdentifier().stringValue());
@@ -153,7 +158,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
     public void testConstructorWithModelNoOntologyIRINoVersionIRI() {
         Model model = mf.createModel();
 
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).model(model).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).model(model).build();
         assertTrue(ontologyId.getOntologyIdentifier().stringValue().startsWith(ONTOLOGY_PREFIX));
         assertEquals(Optional.empty(), ontologyId.getOntologyIRI());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
@@ -164,7 +169,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         Model model = mf.createModel();
         model.add(ontologyIRI, typeIRI, ontologyType);
 
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).model(model).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).model(model).build();
         assertEquals(ontologyIRI, ontologyId.getOntologyIdentifier());
         assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
@@ -177,7 +182,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         model.add(vf.createIRI("urn:secondIRI"), typeIRI, ontologyType);
         model.add(vf.createIRI("urn:thirdIRI"), typeIRI, ontologyType);
 
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).model(model).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).model(model).build();
         assertTrue(ontologyId.getOntologyIRI().isPresent());
         assertTrue(ontologyId.getOntologyIRI().get().equals(ontologyIRI)
                 || ontologyId.getOntologyIRI().get().equals(vf.createIRI("urn:secondIRI"))
@@ -192,7 +197,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         model.add(ontologyIRI, typeIRI, ontologyType);
         model.add(ontologyIRI, versionIRIPred, versionIRI);
 
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).model(model).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).model(model).build();
         assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
         assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
         assertEquals(Optional.of(versionIRI), ontologyId.getVersionIRI());
@@ -206,7 +211,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         model.add(vf.createIRI("urn:thirdIRI"), typeIRI, ontologyType);
         model.add(ontologyIRI, versionIRIPred, versionIRI);
 
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).model(model).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).model(model).build();
         if (ontologyId.getVersionIRI().isPresent()) {
             assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
             assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
@@ -225,7 +230,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         model.add(ontologyIRI, versionIRIPred, versionIRI);
         model.add(ontologyIRI, versionIRIPred, vf.createIRI("urn:secondIRI"));
 
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).model(model).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).model(model).build();
         assertTrue(ontologyId.getVersionIRI().isPresent());
         assertTrue(ontologyId.getVersionIRI().get().equals(versionIRI) || ontologyId.getVersionIRI().get().equals(vf.createIRI("urn:secondIRI")));
         assertEquals(ontologyId.getVersionIRI().get(), ontologyId.getOntologyIdentifier());
@@ -242,7 +247,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         model.add(ontologyIRI2, typeIRI, ontologyType);
         model.add(ontologyIRI2, versionIRIPred, versionIRI2);
 
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).model(model).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).model(model).build();
         assertTrue(ontologyId.getVersionIRI().isPresent());
         if (ontologyId.getVersionIRI().get().equals(versionIRI)) {
             assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
@@ -259,7 +264,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
     public void testConstructorWithModelOntologyIRIandID() {
         Model model = mf.createModel();
         model.add(ontologyIRI, typeIRI, ontologyType);
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).id(identifierIRI).model(model).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).id(identifierIRI).model(model).build();
 
         assertEquals(ontologyIRI, ontologyId.getOntologyIdentifier());
         assertEquals(ontologyIRIString, ontologyId.getOntologyIdentifier().stringValue());
@@ -272,7 +277,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         Model model = mf.createModel();
         model.add(ontologyIRI, versionIRIPred, versionIRI);
 
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).model(model).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).model(model).build();
         assertTrue(ontologyId.getOntologyIdentifier().stringValue().startsWith(ONTOLOGY_PREFIX));
         assertEquals(Optional.empty(), ontologyId.getOntologyIRI());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
@@ -283,7 +288,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         Model model = mf.createModel();
         model.add(ontologyIRI, typeIRI, ontologyType);
 
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).model(model).ontologyIRI(vf.createIRI("urn:otherOntologyIRI")).versionIRI(vf.createIRI("urn:otherVersionIRI")).id(identifierIRI).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).model(model).ontologyIRI(vf.createIRI("urn:otherOntologyIRI")).versionIRI(vf.createIRI("urn:otherVersionIRI")).id(identifierIRI).build();
         assertEquals(ontologyIRI, ontologyId.getOntologyIdentifier());
         assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
@@ -295,7 +300,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         model.add(vf.createBNode("_:node123"), typeIRI, ontologyType);
         model.add(vf.createBNode("_:node123"), vf.createIRI("urn:testPred"), vf.createLiteral("test value"));
 
-        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService).model(model).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf, settingService, namespaceService).model(model).build();
         assertTrue(ontologyId.getOntologyIdentifier().stringValue().startsWith(ONTOLOGY_PREFIX));
         assertEquals(Optional.empty(), ontologyId.getOntologyIRI());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());

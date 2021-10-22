@@ -23,6 +23,7 @@ package com.mobi.notification.impl;
  * #L%
  */
 
+import com.mobi.notification.api.NotificationService;
 import com.mobi.setting.api.SettingUtilsService;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -31,8 +32,11 @@ import org.osgi.service.component.annotations.Reference;
 
 import java.io.InputStream;
 
-@Component(immediate = true)
-public class SimpleNotificationService {
+@Component(name = SimpleNotificationService.COMPONENT_NAME, immediate = true)
+public class SimpleNotificationService implements NotificationService {
+
+    static final String COMPONENT_NAME = "com.mobi.notification.api.NotificationService";
+
     private static final String NOTIFICATION_ONTOLOGY_NAME = "http://mobi.com/ontologies/notification";
     private static final InputStream NOTIFICATION_ONTOLOGY;
 
@@ -40,7 +44,7 @@ public class SimpleNotificationService {
     SettingUtilsService settingUtilsService;
 
     static {
-        NOTIFICATION_ONTOLOGY = SimpleNotificationService.class.getResourceAsStream("/notification.ttl");
+        NOTIFICATION_ONTOLOGY = NotificationService.class.getResourceAsStream("/notification.ttl");
     }
 
     @Activate

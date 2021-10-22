@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  com.mobi.notification.impl
+  com.mobi.notification.api
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -33,14 +33,14 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>notification.impl</artifactId>
+    <artifactId>notification.api</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
     <dependencies>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>rest.util</artifactId>
+            <artifactId>rdf.orm</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -49,9 +49,8 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>notification.api</artifactId>
-            <version>${project.version}</version>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
     </dependencies>
 
@@ -64,18 +63,54 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>Mobi Notification Impl</Bundle-Name>
+                        <Bundle-Name>Mobi Notification API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.notification.api;provide:=true,
+                            com.mobi.notification.api*,
                         </Export-Package>
-                        <_metatype>*</_metatype>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
+                        <_dsannotations-options>inherit</_dsannotations-options>
                     </instructions>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>com.mobi.orm</groupId>
+                <artifactId>rdf-orm-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generateOrmSources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-orm</goal>
+                        </goals>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <generates>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/notification.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.notification.api.ontologies</outputPackage>
+                                    <ontologyName>Notification</ontologyName>
+                                </ontology>
+                            </generates>
+                            <references>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../com.mobi.rdf.orm.ontologies/src/main/resources/shacl.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.ontologies.shacl</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../com.mobi.setting.api/src/main/resources/setting.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.setting.api.ontologies</outputPackage>
+                                    <ontologyName>Setting</ontologyName>
+                                </ontology>
+                            </references>
+                            <outputLocation>${project.basedir}/src/main/java</outputLocation>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
 </project>

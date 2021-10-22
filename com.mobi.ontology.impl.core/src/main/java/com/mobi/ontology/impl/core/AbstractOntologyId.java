@@ -23,6 +23,7 @@ package com.mobi.ontology.impl.core;
  * #L%
  */
 
+import com.mobi.namespace.api.NamespaceService;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.utils.OntologyModels;
@@ -38,6 +39,7 @@ public abstract class AbstractOntologyId implements OntologyId {
     protected Resource identifier;
     protected ValueFactory factory;
     protected SettingService<ApplicationSetting> settingService;
+    protected NamespaceService namespaceService;
 
     protected static final String DEFAULT_PREFIX = "http://mobi.com/ontologies/";
 
@@ -48,6 +50,7 @@ public abstract class AbstractOntologyId implements OntologyId {
         public Model model;
         public ValueFactory factory;
         public SettingService<ApplicationSetting> settingService;
+        public NamespaceService namespaceService;
 
         /**
          * If model is set, will attempt to pull OntologyIRI and VersionIRI from model. Will ignore builder fields for
@@ -82,6 +85,7 @@ public abstract class AbstractOntologyId implements OntologyId {
     protected void setUp(Builder builder) {
         this.factory = builder.factory;
         this.settingService = builder.settingService;
+        this.namespaceService = builder.namespaceService;
 
         if (builder.model != null) {
             builder.ontologyIRI = null;
