@@ -10,7 +10,7 @@
 
 <http://mobi.com/ontologies/namespace> a owl:Ontology;
     owl:versionIRI <http://mobi.com/ontologies/namespace/1.0>;
-    owl:imports <http://www.w3.org/ns/shacl#>, <http://mobi.com/ontologies/preference>;
+    owl:imports <http://www.w3.org/ns/shacl#>, <http://mobi.com/ontologies/setting>;
     rdfs:label "The namespace Application Setting Shape Ontology"@en;
     rdfs:comment "The namespace Ontology provides the SHACL shapes relating to namespace settings."@en;
     dct:creator [foaf:name "Ben Greenberg"];

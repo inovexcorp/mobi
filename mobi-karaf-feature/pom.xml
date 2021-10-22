@@ -352,24 +352,34 @@
             <artifactId>server.impl</artifactId>
             <version>${project.version}</version>
         </dependency>
-	<dependency>
+	    <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>setting.api</artifactId>
             <version>${project.version}</version>
         </dependency>
-	<dependency>
+	    <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>setting.impl</artifactId>
             <version>${project.version}</version>
         </dependency>
-	<dependency>
+	    <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>setting.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
-	<dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>notification.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+	    <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>notification.impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>namespace.api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
