@@ -211,7 +211,7 @@ support_branch_increment_micro_version:
     - git push origin HEAD:$BRANCH
     # Push release to github
     - git remote -v | grep -w github || git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com/inovexcorp/mobi.git
-    - git push github HEAD:$BRANCH
+    - git push github
     - git push github $CI_COMMIT_REF_NAME #pushing release tag
 
 enterprise_tests:
