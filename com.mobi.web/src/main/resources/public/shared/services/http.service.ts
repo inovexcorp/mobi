@@ -74,6 +74,21 @@ function httpService($q, $http) {
 
     /**
      * @ngdoc method
+     * @name isPendingEmpty
+     * @methodOf shared.service:httpService
+     *
+     * @description
+     * Checks to see if there is any request in the pending array.
+     *
+     * @return {boolean} True if there is a request item in the pending array,
+     *                   false if it is not.
+     */
+     self.isPendingQueueEmpty = function(id) {
+        return self.pending.length === 0;
+    }
+
+    /**
+     * @ngdoc method
      * @name cancel
      * @methodOf shared.service:httpService
      *
