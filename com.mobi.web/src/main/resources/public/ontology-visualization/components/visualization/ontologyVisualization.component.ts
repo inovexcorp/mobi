@@ -75,7 +75,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
 
     sidePanelActionSub$: Subscription; // Subscription to control cytoscape graph from different components
 
-    constructor(private ovis: OntologyVisualizationService,  @Inject('utilService') private util,  @Inject('httpService') private http) {}
+    constructor(private ovis: OntologyVisualizationService,  @Inject('utilService') private util,  @Inject('httpService') public http) {}
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes?.inProgress?.currentValue) {
