@@ -22,6 +22,9 @@
  */
 
 import { identity, get, has } from 'lodash';
+import { Subject, Observable } from 'rxjs';
+import { OntologyVisualizationService } from '../../main/resources/public/ontology-visualization/services/ontologyVisualizaton.service';
+import { GraphState, SidePanelPayload, StateNode, StateEdge, ControlRecordI } from '../../main/resources/public/ontology-visualization/services/visualization.interfaces';
 
 export function cleanStylesFromDOM(): void {
     const head: HTMLHeadElement = document.getElementsByTagName('head')[0];
@@ -586,7 +589,7 @@ export class mockOntologyManager {
     getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue(Promise.resolve());
     getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue(Promise.resolve());
     getOntologyEntityNames = jasmine.createSpy('getOntologyEntityNames').and.returnValue(Promise.resolve());
-    getPropertyRange = jasmine.createSpy('getPropertyToRange').and.returnValue(Promise.resolve());
+    getPropertyToRange = jasmine.createSpy('getPropertyToRange').and.returnValue(Promise.resolve());
     getSearchResults = jasmine.createSpy('getSearchResults');
     getQueryResults = jasmine.createSpy('getQueryResults').and.returnValue(Promise.resolve());
     getEntityAndBlankNodes = jasmine.createSpy('getEntityAndBlankNodes').and.returnValue(Promise.resolve());
@@ -657,8 +660,48 @@ export class mockOntologyManager {
     getObjProperties = jasmine.createSpy('getObjProperties').and.returnValue(Promise.resolve());
 }
 
-export class MockOntologyVisualization {
-    init = jasmine.createSpy('init').and.returnValue(Promise.resolve());
+export class MockOntologyVisualizationService {
+    ERROR_MESSAGE: "ERROR_MESSAGE_1";
+    IN_PROGRESS_COMMIT_MESSAGE: "IN_PROGRESS_COMMIT_MESSAGE_2";
+    NO_CLASS_MESSAGE: "NO_CLASS_MESSAGE";
+    spinnerId: 'ontology-visualization';
+    DEFAULT_NODE_LIMIT: 100;
+
+    public get graphStateCache(): Map<String, GraphState> {
+        throw new Error('graphStateCache not implemented.');
+    }
+
+    _sidePanelActionSubjectSubscription = jasmine.createSpyObj('Subscription', {
+        'unsubscribe': jasmine.createSpy('Unsubscribe')
+    })
+    _sidePanelActionSubjectObservable = jasmine.createSpyObj('Observable', {
+        'subscribe': this._sidePanelActionSubjectSubscription
+    })
+    sidePanelActionSubject$ = jasmine.createSpyObj('sidePanelActionSubject$', {
+        'asObservable': this._sidePanelActionSubjectObservable,
+        'next': jasmine.createSpy('next')
+    });
+    init = jasmine.createSpy('init').and.returnValue(new Observable<GraphState>( observer => {
+            observer.complete();
+        })
+    );
+    getOntologyNetworkObservable(): Observable<any> {
+        throw new Error('getOntologyNetworkObservable not implemented.');
+    }
+    getOntologyLocalObservable(): Observable<any> {
+        throw new Error('getOntologyLocalObservable not implemented.');
+    }
+    buildGraphData(commitGraphState: GraphState, hasInProgress: boolean): Observable<GraphState> {
+        throw new Error('buildGraphData not implemented.');
+    }
+    buildGraph(classParentMap: any, childIris: any, entityInfo: any, classMap: any, ranges: any, hasInProgressCommit: boolean, localNodeLimit: number): { graphNodes: StateNode[]; graphEdges: StateEdge[]; allGraphNodes: ControlRecordI[]; } {
+        throw new Error('buildGraph not implemented.');
+    }
+    getGraphState(commitId: string, error?: boolean): GraphState {
+        throw new Error('getGraphState not implemented.');
+    }
+    getPropertyLabel: (propertyIri: any, entityInfo: any, hasInProgressCommit: any) => string;
+    
     getGraphData = jasmine.createSpy('getGraphData').and.returnValue([
         {
             'selectable': true,
@@ -740,9 +783,4 @@ export class MockOntologyVisualization {
             'ontologyId': 'http://www.co-ode.org/ontologies/pizza/pizza.owl'
         }
     ]);
-    hasPositions = jasmine.createSpy('hasPositions').and.returnValue(false);
-    hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(false);
-    isOverLimit = jasmine.createSpy('isOverLimit').and.returnValue(false);
-    setGraphState = jasmine.createSpy('setGraphState');
-    updateGraphData = jasmine.createSpy('updateGraphData');
 }

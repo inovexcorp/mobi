@@ -37,7 +37,8 @@ import {
     MatMenuModule,
     MatAutocompleteModule,
     MatTooltipModule,
-    MatProgressSpinnerModule } from '@angular/material';
+    MatProgressSpinnerModule,
+    MatSelectModule } from '@angular/material';
 import { MatTableModule } from '@angular/material/table';
 import { CdkTableModule } from '@angular/cdk/table';
 import { HttpClientModule } from '@angular/common/http';
@@ -200,7 +201,8 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
         MatSlideToggleModule,
         MatProgressSpinnerModule,
         MatTableModule,
-        MatTooltipModule
+        MatTooltipModule,
+        MatSelectModule
     ],
     declarations: [
         ConfirmModalComponent,
@@ -239,6 +241,7 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
         MatTableModule,
         MatTooltipModule,
         MatProgressSpinnerModule,
+        MatSelectModule,
         ConfirmModalComponent,
         ErrorDisplayComponent,
         InfoMessageComponent,

@@ -1,0 +1,203 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+ @import "../../../css/variables";
+
+.visualization-sidebar {
+  $hoverBtn : #4C9AFF;
+  $hoverList : #ebecf0;
+  --hover-btn: #{$hoverBtn};
+  --hover-list: #{$hoverList};
+  
+
+  &:hover {
+    .sidebar__togglebtn.toggle-hide {
+      .toggle-hide {
+        visibility:visible;
+      }
+    } 
+  }
+
+    .open-sidebar {
+      font-size: 20px;
+      cursor: pointer;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+    }
+
+  .sidebar-controls {
+    position: absolute;
+    right: 25px;
+    z-index: 1000;
+  }
+
+  .sidebar {
+    &__togglebtn {
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+      position: absolute;
+      top: 40px;
+      overflow: hidden;
+      z-index: 35;
+      overflow: visible;
+      background-color: transparent;
+      transition: background-color 100ms linear 0s,
+                  color 100ms linear 0s,
+                  opacity 350ms cubic-bezier(.2,0, 0,1)0s;
+
+      &.toggle-hide {
+        right: 290px;
+      }
+
+      &.toggle-show {
+        right: 15px;
+      }
+
+      .sidebar__btn {
+        background-color: white;
+        height: 2rem;
+        width: 2rem;
+        line-height: 2rem;
+      }
+    }
+  }
+
+  .sidebar-wrapper {
+    box-sizing: border-box;
+    position: absolute;
+    right: 0;
+    margin-right: 5px;
+    padding: 2px;
+    height: 85%;
+    overflow: hidden;
+    background : #FAFbFC;
+    display: none;
+    width: 300px;
+    
+    &.sidebar-toggled {
+      display: block;
+      overflow-y: scroll;
+    }
+
+      .sidebar-content {
+        overflow-y: hidden;
+        position: relative;
+        background-color: transparent;
+        height: 100%;
+      
+          .sidebar-accordion {
+            overflow-x: hidden;
+            &__section {
+              .accordion__item {
+                &__header {
+                  padding: 5px;
+                  display: flex;
+                  align-items: center;
+                  min-height: 16.43px;
+                  border-bottom: 1px solid #e5e5e5;
+              }
+            }
+          }
+          .ontologyClass {
+            background: transparent;
+            display: flex;
+            flex-flow: row wrap;
+            justify-content: flex-start;
+            align-items: center;
+
+            &:hover {
+              background-color: var(--hover-list);
+            }
+
+            &__color {
+              margin-right: .5rem;
+              .btn-circle  {
+                box-sizing: border-box;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                min-width: 1rem;
+              }
+            }
+
+            &__info {
+              margin-right: .5rem;
+              flex: 1;
+              span {
+                display: inline-block;
+                max-width: 150px;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                vertical-align: middle;
+              }
+            }
+
+          }
+          .sidebar-header {
+              }
+
+              >div {
+                  text-transform: uppercase;
+                  font-weight: bold;
+                  flex-grow: 1;
+                  text-decoration: none;
+              }
+          
+              .close-sidebar {
+                  cursor: pointer;
+                  font-size: 20px;
+                  transition: color .3s ease;
+                  display: flex;
+                  justify-content: flex-end;
+              }
+          }
+      }
+      .sidebar-footer {
+          position: absolute;
+          width: 100%;
+          bottom: 0;
+          display: flex;
+      }
+
+      .sidebar-search {
+          >form {
+            padding: 10px 20px;
+            .input-group {
+              margin-bottom: 5px;
+            }
+          }
+    
+          .input-group-append .input-group-text {
+            border-left: 0;
+          }
+      }
+      
+      .sidebar__show-more {
+        display: flex;
+        margin: 5px auto;
+        justify-content: center;
+      }
+  }
+}

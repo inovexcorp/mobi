@@ -24,22 +24,35 @@ import * as angular from 'angular';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { downgradeComponent } from '@angular/upgrade/static';
-import { OntologyVisualization } from './components/ontologyVisualization.component';
-import { SharedModule } from '../shared/shared.module';
+import { OntologyVisualization } from './components/visualization/ontologyVisualization.component';
+import { VisualizationSidebar } from './components/visualizationSidebar/visualizationSidebar.component';
 
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
+import { SharedModule } from '../shared/shared.module';
+import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 
  @NgModule({
      declarations: [
-         OntologyVisualization,
+        OntologyVisualization,
+        VisualizationSidebar
      ],
      imports: [
-         BrowserModule,
-         SharedModule
+        BrowserModule,
+        SharedModule,
+        BrowserAnimationsModule,
+        FormsModule,
+        ReactiveFormsModule
      ],
-     entryComponents: [ OntologyVisualization ]
+     entryComponents: [ 
+        OntologyVisualization,
+        VisualizationSidebar
+    ]
 })
 
 export class OntologyVisualizationModule {}
 
 angular.module('visualization', [])
-    .directive('ontologyVisualization', downgradeComponent({component: OntologyVisualization}) as angular.IDirectiveFactory);
+    .directive('ontologyVisualization', downgradeComponent({component: OntologyVisualization}) as angular.IDirectiveFactory)
+    .directive('visualizationSidebar', downgradeComponent({component: VisualizationSidebar}) as angular.IDirectiveFactory);

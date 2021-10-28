@@ -20,15 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { entries } from 'lodash';
-import { Inject, Injectable } from '@angular/core';
+import * as _ from 'lodash';    
+import { Inject, Injectable, } from '@angular/core';
 
 import { catchError } from 'rxjs/operators';
 import { from } from 'rxjs/observable/from';
 import { of } from 'rxjs/observable/of';
 import { forkJoin } from 'rxjs/observable/forkJoin';
+import { Observable, Subject, Subscriber } from 'rxjs';
 
-import  { style, buildColorScale } from '../helpers/graphSettings';
+import { buildColorScale } from '../helpers/graphSettings';
+import { StateNode, StateEdge, RangesI, ControlRecordI, GraphState, SidePanelPayload, ParentMapI, ChildIrisI, EntityInfoI, inProgressCommitI} from './visualization.interfaces';
+import { map, tap, switchMap} from 'rxjs/operators';
+
 
 /**
  * @class OntologyVisualization.service
@@ -36,577 +40,441 @@ import  { style, buildColorScale } from '../helpers/graphSettings';
  * A service that communicates with Various Rest endpoint 
  * and defines/holds the data needed for the visualizaiton to render the Network diagrams.
  */
+
 @Injectable()
 export class OntologyVisualizationService {
-    private graphData = [];
-    private uniqueNodes = new Map();
-    private graphState = new Map();
-    private _commitId;
-    private _ontologyId;
-    private _branchId;
-    private _isOverLimit = false;
-    private _hasInProgressCommit;
-    private entityNames;
-    private errorMessage = 'Something went wrong. Please try again later.';
-    private inProgressCommitMessage = 'Uncommitted changes will not appear in the graph';
-    private _propertyRanges;
-    public nodesLimit = 500;
-    public spinnerId = 'ontology-visualization';
-    private clasess;
-    public importedOntologies = [];
-    private ontologiesClassMap;
+    private _graphStateCache = new Map<string, GraphState>(); // Used to store the graph state for a specific commitId
+    private _sidePanelActionSubject$ = new Subject<SidePanelPayload>(); // Used for controling graph outside of OntologyVisualization component
+    
+    readonly ERROR_MESSAGE: string = 'Something went wrong. Please try again later.';
+    readonly IN_PROGRESS_COMMIT_MESSAGE: string = 'Uncommitted changes will not appear in the graph';
+    readonly NO_CLASS_MESSAGE: string = 'No classes defined';
+    readonly spinnerId = 'ontology-visualization';
+    readonly DEFAULT_NODE_LIMIT = 500; // GLOBAL Node Limit for graph, each graphState will has it own
 
     constructor(@Inject('ontologyStateService') private os,
         @Inject('ontologyManagerService') private om,
         @Inject('utilService') private utilService) { }
 
+    public get graphStateCache() {
+        return this._graphStateCache;
+    }
+
+    public get sidePanelActionSubject$() {
+        return this._sidePanelActionSubject$;
+    }
+
     /**
-    * @name init
-    *
-    * @description
-    * Set the initial state of the visualation or 
-    * Retrieve the state of the visualization 
-    *
-    * @returns {Promise} A promise that resolves to a Map (data structure) that cointaints the graph state.
-    */
-    init() {
-        this.ontologyId = this.os.listItem.ontologyId;
-        this.commitId = this.os.listItem.ontologyRecord.commitId;
-        this.branchId = this.os.listItem.ontologyRecord.branchId;
-        this.importedOntologies = this.os.listItem.importedOntologies || [];
-        this.hasInProgressCommit = this.os.hasInProgressCommit();
+     * @name init
+     * 
+     * @param commitId commitId 
+     * @param hasInProgress If there are any inProgressCommits
+     * @returns {Observable} A Observable that resolves to a Map (data structure) that contains the graph state.
+     */
+    init(commitId: string, hasInProgress: inProgressCommitI): Observable<GraphState> {
+        const self = this;
+        const inProgressCommit = hasInProgress ? this.os.hasInProgressCommit({inProgressCommit: hasInProgress}) : null;
+        return Observable.of(commitId).pipe(
+            tap((commitId: string): void => {
+                if (this.os.listItem.hasPendingRefresh) {
+                    this.os.listItem.hasPendingRefresh = false;
+                    this.graphStateCache.delete(commitId);
+                }
+            }),
 
-        if (this.os.listItem.hasPendingRefresh) {
-            this.os.listItem.hasPendingRefresh = false;
-            this.graphState.delete(this.commitId);
-        }
-
-        if (!this.hasInProgressCommit) { 
-            this.setOntologyClasses(null);
-        }
-
-        const classes = this.getOntologyClasses();
-        this.setOntologyClassName();
-
-        return new Promise<void>((resolve, reject) => {
-
-            if (!this.graphState.has(this.commitId)) {
-                if (!this.hasInProgressCommit) {
-                    if (classes.flat.length) {
-                        try {
-                            const req = from(this.getPropertyRangeQuery()).pipe(catchError(error => of(reject(error))));
-                            req.subscribe(({ propertyToRanges }) => {
-                                this.propertyRanges = propertyToRanges;
-                                this.isOverLimit = classes.flat.length > this.nodesLimit;
-                                this.initDataSetup(classes, this.os.listItem.entityInfo);
-                                resolve();
-                            });
-                        } catch (e) {
-                            reject(this.errorMessage);
-                        }
-                    } else {
-                        reject('No classes defined');
-                    }
+            map((commitId: string): GraphState => {
+                if (this.graphStateCache.has(commitId)) {
+                    return this.graphStateCache.get(commitId);
                 } else {
-                    const ontologyGraph = this.getOntologyById(this.ontologyId);
-                    if (ontologyGraph && !this.os.listItem.hasPendingRefresh) {
-                        this.setGraphState(ontologyGraph.data);
-                        resolve();
-                    } else {
-                        const requests = forkJoin(this.om.getClassHierarchies(this.os.listItem.ontologyRecord.recordId,
-                            this.os.listItem.ontologyRecord.branchId,
-                            this.os.listItem.ontologyRecord.commitId,
-                            false),
-                            this.getPropertyRangeQuery(false),
-                            this.om.getOntologyEntityNames(this.os.listItem.ontologyRecord.recordId,
-                                this.os.listItem.ontologyRecord.branchId,
-                                this.os.listItem.ontologyRecord.commitId,
-                                true,
-                                false),
-                            this.om.getImportedIris(this.os.listItem.ontologyRecord.recordId,
-                                this.os.listItem.ontologyRecord.branchId,
-                                this.os.listItem.ontologyRecord.commitId,
-                                false)
-                        ).pipe(catchError(error => of(reject(error))));
-
-                        requests.subscribe(val => {
-                            const classHierarchy: any = val[0];
-                            this.propertyRanges = val[1].propertyToRanges;
-                            this.entityNames = val[2];
-                            const importedIris = val[3];
-
-                            if (!classHierarchy.iris || (classHierarchy.iris && classHierarchy.iris.length === 0)) { 
-                                reject(this.inProgressCommitMessage);
-                            }
-                            const listItem = {
-                                importedOntologyIds: [],
-                                importedOntologies: [],
-                                classes: {
-                                    parentMap: classHierarchy.parentMap,
-                                    childMap: classHierarchy.childMap,
-                                    flat: {},
-                                    iris: {}
-                                },
-                                ontologyRecord: this.os.listItem.ontologyRecord,
-                                ontologyId: this.ontologyId,
-                                entityInfo: {}
-                            };
-
-                            if (importedIris && importedIris.length > 0) {
-                                importedIris.forEach(info => {
-                                    const importedOntologyListItem = {
-                                        id: info.id,
-                                        ontologyId: info.id
-                                    };
-                                    listItem.importedOntologyIds.push(info.id);
-                                    listItem.importedOntologies.push(importedOntologyListItem);
-                                    if (info.classes && info.classes.length) {
-                                        info.classes.forEach(iri => this.os.addToClassIRIs(listItem, iri, info.id));
-                                    }
-                                });
-                                this.importedOntologies = listItem.importedOntologies;
-                                this.setOntologyClassName();
-                            }
-
-                            this.importedOntologies = listItem.importedOntologies;
-                            classHierarchy.iris.forEach(iri => this.os.addToClassIRIs(listItem, iri, this.ontologyId));
-                            this.isOverLimit = classHierarchy.iris.length > this.nodesLimit;
-                            listItem.classes.flat = this.os.flattenHierarchy(listItem.classes, listItem);
-                            this.setOntologyClasses(listItem.classes);
-                            this.initDataSetup(listItem.classes, listItem.entityInfo);
-                            resolve();
-                        },
-                            (err) => reject(err)
-                        );
-                    }
-
+                    const commitGraphState: GraphState = new GraphState({
+                        commitId: commitId,
+                        ontologyId: this.os.listItem.ontologyId,
+                        importedOntologies: this.os.listItem.importedOntologies || [],
+                        positioned: false,
+                        isOverLimit: false,
+                        nodeLimit: self.DEFAULT_NODE_LIMIT,
+                        allGraphNodes: [],
+                        allGraphEdges: [],
+                        data: { nodes: [], edges: [] }
+                    });
+                    this.graphStateCache.set(commitId, commitGraphState);
+                    return commitGraphState;
                 }
-            } else {
-                try {
-                    this.isOverLimit = classes.flat.length > this.nodesLimit;
-                    if (classes.flat.length) {
-                        const info = this.graphState.get(this.commitId);
-                        if (info && info.positioned) {
-                            this.graphData = info.data;
-                        } else {
-                            //Just in case we didn't finish loading the graph the first time.
-                            this.graphState.delete(this.commitId);
-                            this.initDataSetup(classes, this.os.listItem.entityInfo);
-                        }
-                    } else {
-                        if (this.hasInProgressCommit) {
-                            reject(this.inProgressCommitMessage);
-                        } else {
-                            reject('No classes defined');
-                        }
-                    }
-                    resolve();
-                } catch (e) {
-                    reject(this.errorMessage);
-                }
-            }
-        });
-    }
+            }),
 
-    /**
-     * Set the Ontology Identifier
-     * @method { set }  ontologyId 
-     * @param { string } id - The Ontology Identifier.
-     */
-    set ontologyId(id) {
-        this._ontologyId = id;
-    }
+            switchMap( (commitGraphState: GraphState): Observable<GraphState> => 
+                from(this.buildGraphData(commitGraphState, inProgressCommit))),
+            tap((commitGraphState: GraphState): void => {
+                const styleObject = buildColorScale(commitGraphState.importedOntologies, commitGraphState.ontologyId);
+                commitGraphState.style = styleObject.style,
+                commitGraphState.ontologyColorMap = new Map(Object.entries(styleObject.ontologyColorMap));
 
-    /**
-    * Returns the Ontology Identifier
-    * @method { get }  ontologyId 
-    * @returns { string } id - The Ontology Identifier.
-    */
-    get ontologyId() {
-        return this._ontologyId;
-    }
-
-    /**
-    * Set the commit Id
-    * @method { get }  ontologyId 
-    * @param { string } id - The Commit Id.
-    */
-    set commitId(id) {
-        this._commitId = id;
-    }
-
-    /**
-     * Returns the commit Id
-     * @method { get }  ontologyId 
-     * @returns { string } id - The Commit Id.
-     */
-    get commitId() {
-        return this._commitId;
-    }
-
-    /**
-     * Set the Branch Id
-     * @method { get }  branchId 
-     * @param { string } id - The Branch Id.
-     */
-    set branchId(id) {
-        this._branchId = id;
-    }
-
-    /**
-     * Returns the Branch Id
-     * @method { get }  branchId 
-     * @param { string } id - The Branch Id.
-     */
-    get branchId() {
-        return this._branchId;
-    }
-
-    /**
-     * Set isOverLimit flag to true or false.
-     * @method { set }  isOverLimit 
-     * @param { boolean } id - The Branch Id.
-     */
-    set isOverLimit(val) {
-        this._isOverLimit = val;
-    }
-
-    /**
-     * Returns the isOverLimit value
-     * @method { get }  branchId 
-     * @returns { boolean } isOverLimit
-     */
-    get isOverLimit() {
-        return this._isOverLimit;
-    }
-
-    /**
-     * Sets the value of hasInProgressCommit
-     * @method { set }  hasInProgressCommit 
-     * @param { boolean } val - hasInProgressCommit value (true/false).
-     */
-    set hasInProgressCommit(val) {
-        this._hasInProgressCommit = val;
-    }
-
-    /**
-     * Returns the hasInProgressCommit value indicating if the current 
-     * branch has any commit in progress. 
-     * True/False
-     * @method { get }  hasInProgressCommit 
-     * @returns { boolean } hasInProgressCommit
-     */
-    get hasInProgressCommit() {
-        return this._hasInProgressCommit;
-    }
-
-    /**
-    * Update the value of the attribute hasInProgressCommit.
-    */
-    updateInProgressCommit() {
-        this.hasInProgressCommit = this.os.hasInProgressCommit();
-    }
-
-    /**
-     * Stores a key-value pair (Map) where each key is the commitId that is associated with an Object 
-     * that contains information about the graph.
-     * The Object holds the following 
-     * data : An object that contains graph data, 
-     * positioned : a flag that tells the graph has been positioned before.
-     * ontologyId: the ontology associdated with the graph
-     * branchId : The branch Id associdated with the graph
-     * @param graph  An Array that contains the Ontology classes (nodes) and its parent-child relationship.
-     * @param positioned a flag that tells the graph has been positioned before.
-     */
-    setGraphState(graph, positioned = false) {
-        if (this.importedOntologies && this.importedOntologies.length > 0) {
-            buildColorScale(this.importedOntologies.length);
-        }
-        this.graphState.set(this.commitId,
-            {
-                data: graph,
-                positioned: positioned,
-                ontologyId: this.ontologyId,
-                branchId: this.branchId,
-                importedOntologies: this.importedOntologies,
-                style: style
-            });
-    }
-
-    /**
-     * Returns Graph-level information.
-     * @returns { Array } An array of objets that contains grapha data
-     */
-    getGraphData() {
-        if (this.graphState && this.graphState.has(this.commitId)) {
-            return this.graphState.get(this.commitId).data;
-        }
-    }
-
-    /**
-     * Returns Graph-level information::style.
-     * @returns { Array } An array of objects that contains graph style
-     */
-    getGraphStyle() {
-        if (this.graphState && this.graphState.has(this.commitId)) {
-            return this.graphState.get(this.commitId).style;
-        } else {
-            return {};
-        }
-    }
-
-    /**
-     * Holds an object with (ObjectPropertyRange) properties and ranges
-     * @param { Object } an object with properties and ranges.
-     */
-    set propertyRanges(val) {
-        this._propertyRanges = val;
-    }
-
-    /**
-     * @returns an object with properties and ranges
-     */
-    get propertyRanges() {
-        return this._propertyRanges;
-    }
-
-    /**
-     * Returns a Boolean indicating if the graph nodes has been positioned.
-     * @returns { boolean }
-     */
-    hasPositions() {
-        const state = this.graphState.has(this.commitId) ? this.graphState.get(this.commitId).positioned : false;
-        return state;
-    }
-
-    setOntologyClasses (clasess) {
-        this.clasess = clasess;
-    }
-    /**
-     * Retrieves all the classses linked to the ontology
-     * @returns { array } a list of ontology classes
-     */
-    getOntologyClasses() {
-        if (!this.clasess) {
-            return this.os.listItem && this.os.listItem.classes ? this.os.listItem.classes : { flat: [] };    
-        } else {
-           return this.clasess;
-        }
-    }
-
-    /**
-     * Rertuns an object with keys corresponding to Ontology Object Properties and ranges.
-     * @param {boolean} applyInProgressCommit Whether or not the saved changes in the logged-in User's InProgressCommit
-     * should be applied to the resource
-     * @return {Promise} A Promise with an object containing listItem keys. 
-     */
-    getPropertyRangeQuery(applyInProgressCommit = true) {
-        if (!this.om.getPropertyToRange ) {
-            return {};
-        }
-        return this.om.getPropertyToRange(this.os.listItem.ontologyRecord.recordId,
-            this.os.listItem.ontologyRecord.branchId,
-            this.os.listItem.ontologyRecord.commitId,
-            applyInProgressCommit
+                const ontologiesClassMap = new Map();
+                commitGraphState.importedOntologies.forEach( (item, index) => {
+                    ontologiesClassMap.set(item.id, `Ontology-${index}`);
+                });
+                commitGraphState.ontologiesClassMap = ontologiesClassMap;
+                commitGraphState.isOverLimit = commitGraphState.allGraphNodes.length > commitGraphState.nodeLimit;
+                const controlRecordSearch = commitGraphState.getControlRecordSearch(0);
+                commitGraphState.emitGraphData(controlRecordSearch);
+            })
         );
     }
 
     /**
-     * Checks if the current ontology contain any class. Returns a boolean.
-     * @returns { boolean } returns a boolean
-     */
-    hasClasses() {
-        return this.getOntologyClasses().flat.length > 0;
-    }
-
-    /**
-     * Creates a new css class for every imported Ontology
-     */
-    setOntologyClassName() {
-        this.ontologiesClassMap = new Map();
-        this.importedOntologies.forEach( (item, index)=> {
-            this.ontologiesClassMap.set(item.id,`Ontology-${index}`);
-        });
-    }
-    /**
+     * getOntologyNetworkObservable
      * 
-     * @param nodes 
-     * @param entityInfo 
+     * ForkJoin Does 4 backend requests
+     * - getClassHierarchies - Retrieves an object with the hierarchy of classes in the ontology organized 
+     *     by the subClassOf property and with an index of each IRI and its parent IRIs. 
+     *     {iris: ["classId1"] parentMap: {"parentClassId": ["classId1", "classId2"]}  }
+     *     Note: * Does not contain class ClassHierarchies for imported ontolgies * 
+     *  - getPropertyToRange - retrieves an object with keys corresponding to Ontology Object Properties and ranges
+     *    { propertyToRanges: { "propertyId": ["classId1"] } }
+     *  - getOntologyEntityNames - retrieves an object with entity info
+     *     { "classId1": {label: "atto", names: ["atto"]}
+     *      Note: ** Includes imported entity info ** 
+     *  - getImportedIris - retrieves an array of objects with IRIs for various entity types for each imported ontology of the identified ontology.
+     *   [ {importData}, {importData}]
+     *   Note: ** This does not contain the hierarchy for import data ** 
+     *   importData[] = annotationProperties, 
+     * @returns Observable of with map of data
      */
-    buildGraphData(nodes, entityInfo) {
-        const classList = nodes.parentMap;
-        const parentIds = Object.keys(classList);
-        const uriMap = new Map(entries(nodes.iris));
-        const removeIri = (iri) => {
-            if (uriMap.has(iri)) {
-                uriMap.delete(iri);
-            }
-        };
-        const addNodeData = (iri) => {
-            if (!this.uniqueNodes.has(iri)) {
-                removeIri(parent);
-                const info = entityInfo[iri];
-                if (info) {
-                    const node = this.buildNodeData(info, iri, 'nodes');
-                    this.uniqueNodes.set(iri, node);
-                }
-            }
-        };
+    getOntologyNetworkObservable(): Observable<any>{
+        return forkJoin(this.om.getClassHierarchies(this.os.listItem.ontologyRecord.recordId,
+            this.os.listItem.ontologyRecord.branchId,
+            this.os.listItem.ontologyRecord.commitId,
+            false),
+            this.om.getPropertyToRange(this.os.listItem.ontologyRecord.recordId,
+                this.os.listItem.ontologyRecord.branchId,
+                this.os.listItem.ontologyRecord.commitId,
+                false,
+                this.spinnerId),
+            this.om.getOntologyEntityNames(this.os.listItem.ontologyRecord.recordId,
+                this.os.listItem.ontologyRecord.branchId,
+                this.os.listItem.ontologyRecord.commitId,
+                true,
+                false,
+                this.spinnerId + '2'),
+            this.om.getImportedIris(this.os.listItem.ontologyRecord.recordId,
+                this.os.listItem.ontologyRecord.branchId,
+                this.os.listItem.ontologyRecord.commitId,
+                false,
+                this.spinnerId + '3')
+        ).pipe(
+            catchError(error => { throw 'Network Issue in Source. Details: ' + error } ),
+            map((networkData: any[]):any =>{
+                const classHierarchy: any = networkData[0];
+                const propertyRanges: any = networkData[1].propertyToRanges;
+                const entityNames: any = networkData[2];
+                const importedIris: any = networkData[3];
 
-        if (this.uniqueNodes.size > 0) {
-            this.uniqueNodes.clear();
-        }
-
-        parentIds.forEach((parent) => {
-            addNodeData(parent);
-            classList[parent].forEach((child) => {
-                addNodeData(child);
-                const id = this.buildId(parent, child);
-                if (!this.uniqueNodes.has(id)) {
-                    const link = this.buildLinkData(entityInfo[child], child, parent, id, 'edges');
-                    if (link && this.uniqueNodes.has(parent) && this.uniqueNodes.has(child)) {
-                        this.uniqueNodes.set(id, link);
-                    }
-                }
-            });
-        });
-        if (!this.isOverLimit && uriMap.size > 0) {
-            for (const item of uriMap.keys()) {
-                const node: any = this.buildNodeData(entityInfo[<any>item], item, 'nodes');
-                if (node) {
-                    this.uniqueNodes.set(item, node);
-                }
-            }
-            uriMap.clear();
-        }
-        const ranges = this.getPropertyRange(this.os.listItem.classToChildProperties, this.os.listItem.dataProperties, this.propertyRanges);
-        const getPropertyLabel = (propertyIri) => {
-            const getLabel = (entities, iri) => Object.prototype.hasOwnProperty.call(entities, iri) ? entities[iri].label : '';
-            let lbl = '';
-            if (!this.hasInProgressCommit) {
-                lbl = getLabel(this.os.listItem.entityInfo, propertyIri);
-            } else {
-                lbl = getLabel(this.entityNames, propertyIri);
-            }
-            if (!lbl) {
-                lbl = this.utilService.getBeautifulIRI(propertyIri);
-            }
-            return lbl;
-        };
-        ranges.forEach(item => {
-            item.forEach(property => {
-                if (property && this.uniqueNodes.has(property.domain) && this.uniqueNodes.has(property.range)) {
-                    const id = this.buildId(property.domain + `_${property.property}_`, property.range);
-                    if (!this.uniqueNodes.has(id)) {
-                        const info = {
-                            label: getPropertyLabel(property.property),
-                            class: 'ranges'
+                const listItem = {
+                    importedOntologyIds: [],
+                    importedOntologies: [],
+                    classes: {
+                        parentMap: classHierarchy.parentMap,
+                        childMap: classHierarchy.childMap,
+                        flat: {},
+                        iris: {}
+                    },
+                    ontologyRecord: this.os.listItem.ontologyRecord,
+                    ontologyId: this.os.listItem.ontologyId,
+                    entityInfo: entityNames
+                };
+    
+                if (importedIris && importedIris.length > 0) {
+                    importedIris.forEach(info => {
+                        const importedOntologyListItem = {
+                            id: info.id,
+                            ontologyId: info.id
                         };
-                        const link = this.buildLinkData(entityInfo[property.domain], property.domain, property.range, id, 'edges', info);
-                        if (link) {
-                            this.uniqueNodes.set(id, link);
+                        listItem.importedOntologyIds.push(info.id);
+                        listItem.importedOntologies.push(importedOntologyListItem);
+                        if (info.classes && info.classes.length) {
+                            info.classes.forEach(iri => this.os.addToClassIRIs(listItem, iri, info.id));
                         }
-                    }
+                    });
                 }
-            });
-        });
-        this.setGraphState([...this.uniqueNodes.values()]);
-        this.uniqueNodes.clear();
-    }
-    /**
-     * Returns the graph information if any key matches the ID
-     * @param id ontologyId
-     * @returns { array } Return an array that cointaints the graph state/information
-     */
-     getOntologyById(id) {
-        return [...this.graphState.values()].filter(item => item.ontologyId === id)[0];
+                classHierarchy.iris.forEach(iri => this.os.addToClassIRIs(listItem, iri, listItem.ontologyId));
+                listItem.classes.flat = this.os.flattenHierarchy(listItem.classes, listItem);
+           
+                const ranges = this.getPropertyRange(this.os.listItem.classToChildProperties, this.os.listItem.dataProperties, propertyRanges);
+               
+                return  {
+                    classParentMap: listItem.classes.parentMap, 
+                    childIris: listItem.classes.iris, 
+                    entityInfo: listItem.entityInfo,
+                    ranges: ranges
+                };
+             })
+        );
+    
     }
 
     /**
+     * Get ontology data from os.listitem
+     * @returns Observable
+     */
+    getOntologyLocalObservable(): Observable<any>{
+        return forkJoin(
+            this.om.getPropertyToRange(this.os.listItem.ontologyRecord.recordId,
+                this.os.listItem.ontologyRecord.branchId,
+                this.os.listItem.ontologyRecord.commitId,
+                false,
+                this.spinnerId)
+            ).pipe(
+                catchError(error => of(error)),
+                map((networkData:any[]):any =>{
+                    const propertyRanges: any = networkData[0].propertyToRanges;
+                    const classesObject = this.os.listItem && this.os.listItem.classes ? this.os.listItem.classes : { flat: [] };
+                    const classParentMap = classesObject.parentMap;
+                    const classIris = classesObject.iris;
+                    const entityInfo = this.os.listItem.entityInfo;
+                    const ranges = this.getPropertyRange(this.os.listItem.classToChildProperties, this.os.listItem.dataProperties, propertyRanges);
+
+                    return  {
+                        classParentMap: _.cloneDeep(classParentMap), 
+                        childIris: _.cloneDeep(classIris), 
+                        entityInfo: _.cloneDeep(entityInfo),
+                        ranges: _.cloneDeep(ranges)
+                    };
+                })
+            );
+    }
+
+    /**
+     * Build Graph Data for Ontology. 
+     * Responsible for building { @link StateNode } and { @link StateLink } objects used for cytoscape chart.
      * 
-     * @param classes Ontology classes
-     * @param entityInfo  Contains information about ontoloty entities
-     **/
-    private limitGraphData(classes, entityInfo) {
-        const classIds = Object.keys(classes.iris);
-        const map = { parentMap: this.buildParentMap(classIds, classes) };
-        this.buildGraphData(map, entityInfo);
+     * Only the domains and ranges set directly on the property definitions are taken into account
+     * If an object property has more than one domain, it should be shown originating from each class
+     * If an object property has more than one range, it should be shown ending at each class
+     * 
+     * @param commitGraphState commit graph state
+     * @param hasInProgress { @link inProgressCommitI } inprogress data
+     * @return Promise
+     */
+     buildGraphData(commitGraphState: GraphState, hasInProgress: inProgressCommitI): Observable<GraphState>{
+        return new Observable((observer: Subscriber<GraphState>) => {
+            // Data has already been initialized previously
+            if (commitGraphState.allGraphNodes.length > 0) {
+                return observer.next(commitGraphState); 
+            }
+        
+            // TODO https://www.learnrxjs.io/learn-rxjs/operators/conditional/iif
+            // If hasInProgress then use getOntologyNetworkObservable, 
+            // else use getOntologyLocalObservable
+            if (hasInProgress) {
+                this.getOntologyNetworkObservable().subscribe( ontologyData => { // todo add typescript interface for ontologyData 
+                    return this.graphDataFormat(ontologyData, commitGraphState, observer);
+                });
+            } else {
+                this.getOntologyLocalObservable().subscribe( ontologyData => { // todo add typescript interface for ontologyData 
+                    return this.graphDataFormat(ontologyData, commitGraphState, observer);
+                });
+            }
+
+        });
     }
 
-    /**
-     * Limits the size of the array that is going to be use to build the visualazation.
-     * @param classes Ontology classes
-     * @param entityInfo  Contains information about ontoloty entities
-     */
-    private initDataSetup(classes, entityInfo) {
-        if (!this.isOverLimit) {
-            this.buildGraphData(classes, entityInfo);
+    private graphDataFormat(ontologyData, commitGraphState: GraphState, observer) {
+        const result = this.buildGraph(ontologyData.classParentMap, 
+            ontologyData.childIris,
+            ontologyData.entityInfo,
+            ontologyData.ranges, 
+            false, 
+            commitGraphState.nodeLimit);
+
+        commitGraphState.allGraphNodes = result.allGraphNodes;
+        commitGraphState.allGraphEdges = result.allEdges;
+
+        const uniqueOntologyIds = new Set();
+        const importedOntologiesTemp = [];
+        
+        result.allGraphNodes.forEach(controlRecord => {
+            if (controlRecord.isImported && !uniqueOntologyIds.has(controlRecord.ontologyId)) {
+                importedOntologiesTemp.push({id: controlRecord.ontologyId, ontologyId: controlRecord.ontologyId});
+                uniqueOntologyIds.add(controlRecord.ontologyId);
+            }
+        });
+
+        commitGraphState.importedOntologies.forEach(v => {
+            if (!uniqueOntologyIds.has(v.id)) {
+                importedOntologiesTemp.push(v);
+                uniqueOntologyIds.add(v.id);
+            }
+        });
+            
+        commitGraphState.importedOntologies = importedOntologiesTemp;
+        commitGraphState.importedOntologies.sort((a, b) => { 
+            if (a.id < b.id) {
+                return -1;
+            }
+            if (a.id > b.id) {
+                return 1;
+            }
+            return 0;
+        });
+
+        if (result.allGraphNodes.length > 0) {
+            return observer.next(commitGraphState);
         } else {
-            this.limitGraphData(classes, entityInfo);
+            return observer.error(this.NO_CLASS_MESSAGE);
         }
     }
 
+    public buildGraph(classParentMap:ParentMapI,
+                      childIris:ChildIrisI,
+                      entityInfo: EntityInfoI,
+                      ranges: Array<any>= [],
+                      hasInProgressCommit: boolean,
+                      _localNodeLimit: number) {
+
+        const self = this;
+        const allNodeIds = new Set<string>();
+        const allNodes: StateNode[] = [];
+        const allEdges: StateEdge[] = [];
+
+        const pushNode = (stateNode: StateNode): void => {
+            const nodeId = stateNode.data.id;
+            if (allNodeIds.has(nodeId)) {
+                return;
+            }
+          
+            allNodes.push(stateNode);
+            allNodeIds.add(nodeId);
+        };
+        
+        // iteration of classParentMap
+        _.map(classParentMap, function(childrenIris, parentIri) { 
+            const parentEntityInfo = entityInfo[parentIri];
+            const currentStateNode = self.buildStateNode(parentEntityInfo, parentIri);
+            currentStateNode.data.subClassesCount = childrenIris.length;
+            pushNode(currentStateNode);
+            for (const childIri of childrenIris) {
+                const childEntityInfo = entityInfo[childIri];
+                pushNode(self.buildStateNode(childEntityInfo, childIri));
+                // StateEdge
+                const edgeId = parentIri + '<-subClass-' + childIri;
+                const edge = self.buildStateEdge(childEntityInfo, childIri, parentIri, edgeId);
+                allEdges.push(edge);
+            }
+        });
+        
+        _.map(childIris, function(ontologyId, parentIri) { 
+            const nodeEntityInfo = entityInfo[parentIri];
+            pushNode(self.buildStateNode(nodeEntityInfo, parentIri));
+        } );
+
+        // create range edges
+        ranges.forEach((item:Array<RangesI>= [])=> {
+            item.forEach((property:RangesI) => {
+                if (property && allNodeIds.has(property.domain) && allNodeIds.has(property.range)) {
+                    const edgeId = property.domain + '-' + property.property +'-' + property.range;
+                    const info = {
+                        label: self.getPropertyLabel(property.property, entityInfo, hasInProgressCommit),
+                        class: 'ranges'
+                    };
+                    const link = self.buildStateEdge(entityInfo[property.domain], property.domain, property.range, edgeId, info);
+                    if (link) {
+                        allEdges.push(link);
+                    }
+                }
+            });
+            }
+        );
+
+        // Object properties are displayed: As solid lines, Directed arrows from the domain to the range, 
+        //     With labels of the calculated names used in the other tabs
+        // Post Process - Only this.nodeLimit is allowed
+        const graphNodes: StateNode[] = allNodes.slice(0, 500); // sets the intial nodes on the graph
+        const graphNodesIds = new Set(graphNodes.map((node)=> node.data.id));
+        const allGraphNodes: ControlRecordI[] = allNodes.map((node: StateNode) => node.asControlRecord(graphNodesIds.has(node.data.id)));
+        return { allGraphNodes , allEdges };
+    }
+
     /**
-     * It defines a new Object with data for the network visualization.
+    * Returns Commit Graph State.
+    * @returns { GraphState } An GraphStateI Object
+    */
+    getGraphState(commitId: string, error = true): GraphState {
+        if (this.graphStateCache.has(commitId)) {
+            return this.graphStateCache.get(commitId);
+        }
+
+        if (error) {
+            throw new Error(`Graph State does not exist for commit: ${commitId}`);
+        }     
+    }
+
+    /**
+     * Get Property Label
+     * @param commitGraphState graph state
+     * @param propertyIri property iri
+     * @param entityInfo entityInfo
+     * @returns Property Label
+     */
+    public getPropertyLabel = (propertyIri:string, entityInfo: EntityInfoI, hasInProgressCommit:boolean) => {
+        const getLabel = (entities, iri) => Object.prototype.hasOwnProperty.call(entities, iri) ? entities[iri].label : '';
+        let lbl = '';
+        if (!hasInProgressCommit) {
+            lbl = getLabel(this.os.listItem.entityInfo, propertyIri);
+        } else {
+            lbl = getLabel(entityInfo, propertyIri);
+        }
+        if (!lbl) {
+            lbl = this.utilService.getBeautifulIRI(propertyIri);
+        }
+        return lbl;
+    }
+
+    /**
+     * It defines a new StateNode with data for the network visualization.
      * it returns the data values used to create a Node 
      * @param { object} nodeInfo contains information about the current node
-     * @param { string } classId The class unique Identifier. Class IRI
-     * @param { string } group  The group name
-     * @returns { Object } Returns a new Object with attributes
+     * @param { string } classIri The class unique Identifier. Class IRI
+     * @param { any } ontologiesClassMap Map of color for ontologies
+     * @returns Returns a new StateNode Object with attributes
      */
-    private buildNodeData(nodeInfo, classId, group) {
-        if (group && nodeInfo && classId) {
-            const node: any = {
-                selectable: true,
-                locked: false,
-                grabbed: false,
-                grabbable: true,
-                data: {},
-                id: classId,
-                group: group,
-                ontologyId: nodeInfo.ontologyId
-            };
-
-            if (nodeInfo.imported) {
-                node.classes = this.ontologiesClassMap.get(nodeInfo.ontologyId);
-            }
-
-            node.data = {
-                id: classId,
-                idInt: classId,
-                weight: 0,
-                name: nodeInfo.label
-            };
-            return node;
+    private buildStateNode(nodeInfo: any, classIri: string): StateNode {
+        if (!nodeInfo) {
+            throw new Error('buildStateNode - nodeInfo is null. IRI: ' + classIri);
         }
-        return {};
+            
+        if (!classIri) {
+            throw new Error('buildStateNode - classIri is null');
+        }
+           
+        const node: StateNode = new StateNode();
+
+        node.data = {
+            id: classIri,
+            idInt: classIri,
+            weight: 0,
+            name: nodeInfo.label,
+            ontologyId: nodeInfo.ontologyId,
+            isImported: nodeInfo.imported 
+        };
+
+        return node;
     }
 
     /**
      * It defines a new Object with data for the network visualization.
      * it returns the data values used to create an edge/link.
-     * @param linkInfo contains information about the Link/Edge
+     * @param linkInfo contains information about the Link/Edge {label: string, names: [], imported?: boolean, ontologyId?: string}
      * @param source The source node Id
      * @param target The target node Id
      * @param linkId A unique name for the link
      * @param group The group name that defines this element `edges` 
      * @param propertyInfo Information needed to create a property range.
-     * @returns a new object with information needed to create a new link.
+     * @returns New StateLink Object with information needed to create a new link.
      */
-    private buildLinkData(linkInfo, source, target, linkId, group, propertyInfo = null) {
-        if (group && linkInfo && linkInfo.ontologyId) {
-            const link: any = {
-                position: {},
-                group: group,
-                removed: false,
-                selected: false,
-                selectable: true,
-                locked: false,
-                grabbed: false,
-                grabbable: true,
-                data: {},
-                id: linkId
-            };
+    private buildStateEdge(linkInfo: any, source: string, target: string, linkId: string, propertyInfo = null): StateEdge {
+        if (linkInfo && linkInfo.ontologyId) {
+            const link = new StateEdge();
+
             link.data = {
                 id: linkId,
                 idInt: linkId,
@@ -629,48 +497,7 @@ export class OntologyVisualizationService {
             }
             return link;
         }
-        return {};
-    }
-
-    /**
-     * Concatenates two URI
-     * @param a URI left side of the new string
-     * @param b URI Right side of the new string
-     * @returns the combatination of the URIs {a}-{b}
-     */
-    private buildId(a, b) {
-        return a + '-' + b;
-    }
-
-    /**
-     * Build a new array of parent IRIs with children IRIs
-     * @param { array } data iriList list of classes URI
-     * @param { object } classes An object with meta-data about classes
-     * @returns 
-     */
-    private buildParentMap(data, classes) {
-        const iriList = data.slice(0, this.nodesLimit);
-        const parents: any = {};
-        iriList.forEach((item, index) => {
-            if (Object.prototype.hasOwnProperty.call(classes.parentMap, item)) {
-                parents[item] = [];
-                iriList.splice(index, 1);
-            }
-        });
-        Object.keys(parents).forEach((parent) => {
-            const current = classes.parentMap[parent];
-            current.forEach((item) => {
-                if (iriList.includes(item)) {
-                    const iriIndex = iriList.indexOf(item);
-                    parents[parent].push(item);
-                    iriList.splice(iriIndex, 1);
-                }
-            });
-        });
-        if (iriList.length > 0) {
-            return Object.assign(parents, ...iriList.map(item => ({ [item]: [] })));
-        }
-        return parents;
+        throw Error('buildStateLink method is missing data: ' + linkInfo);
     }
 
     /**
@@ -678,15 +505,10 @@ export class OntologyVisualizationService {
      * @param { object } classToChildProperties 
      * @param { object } dataProperty An Object with dataProperties
      * @param { object } propertyToRanges An Object with properties and Ranges
-     * @returns { array } returns an array with objects properties, domains and ranges.
+     * @returns Array<RangesI>[] returns an array with objects properties, domains and ranges.
      */
-    private getPropertyRange(classToChildProperties, dataProperty, propertyToRanges) {
-        interface RangesInterface {
-            domain: string,
-            property: string,
-            range: string
-        }
-        const ranges = [];
+    private getPropertyRange(classToChildProperties, dataProperty, propertyToRanges): Array<RangesI>[] {
+        const ranges: Array<RangesI>[] = [];
         if (classToChildProperties) {
             Object.keys(classToChildProperties).forEach(item => {
                 const properties = classToChildProperties[item].filter(index => {
@@ -698,12 +520,16 @@ export class OntologyVisualizationService {
                         return true;
                     }
                 });
-                const propertyInfo: Array<RangesInterface> = [];
+                const propertyInfo: Array<RangesI> = [];
     
+                if (!propertyToRanges) {
+                    throw new Error('propertyToRanges can not be null|undefined');
+                }
+                   
                 properties.forEach(element => {
                     if (propertyToRanges[element]) {
                         propertyToRanges[element].forEach(iri => {
-                            const data: RangesInterface = {
+                            const data: RangesI = {
                                 domain: item,
                                 property: '',
                                 range: ''

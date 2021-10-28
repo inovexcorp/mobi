@@ -21,8 +21,8 @@
   #L%
   -->
 <div class="ontology-visualization-container">
-  <info-message *ngIf="!length">(No classes defined)</info-message>
-  <progress-spinner class="visualization-spinner" *ngIf="!isLoaded"></progress-spinner>
-  <div class="ontology-visualization" [ngClass]="{ invisible: !isLoaded, hide: length === 0 && isLoaded }"></div>
+  <info-message *ngIf="!cyChartSize">(No classes defined)</info-message>
+  <progress-spinner class="visualization-spinner" *ngIf="!status.loaded && http.isPendingEmpty"></progress-spinner>
+  <div class="ontology-visualization" [ngClass]="{ invisible: !status.loaded, hide: cyChartSize === 0 && status.loaded }"></div>
 </div>
 

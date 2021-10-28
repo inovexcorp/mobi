@@ -1,10 +1,10 @@
-import {fakeAsync, TestBed, tick, flush} from '@angular/core/testing';
+import {fakeAsync, TestBed, flush} from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 import { OntologyVisualizationService } from './ontologyVisualizaton.service';
 import { SharedModule } from '../../shared/shared.module';
-import { listItem } from './testData';
+import { listItem, visData } from './testData';
 
 import {
     mockOntologyState,
@@ -12,12 +12,21 @@ import {
     mockUtil
 } from '../../../../../test/ts/Shared';
 
+import { of } from "rxjs/observable/of";
+import { Observable } from "rxjs";
+
+
 describe('OntologyVisualization Service', () => {
     let visualizationStub : OntologyVisualizationService;
     let httpMock: HttpTestingController;
     let ontologyStateStub: mockOntologyState;
-    let ontologyManagerStub: mockOntologyManager;
+    let ontologyManagerServiceStub: mockOntologyManager;
     let utilStub;
+    let mockRequest = (obj) => of(obj);
+    let inProgressCommitObj = {
+        additions: [],
+        deletions: []
+    };
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -32,18 +41,21 @@ describe('OntologyVisualization Service', () => {
     });
 
     beforeEach(() => {
-        ontologyStateStub = TestBed.get('ontologyStateService');
-        ontologyManagerStub = TestBed.get('ontologyManagerService');
-        utilStub = TestBed.get('utilService');
         visualizationStub = TestBed.get(OntologyVisualizationService);
         httpMock = TestBed.get(HttpTestingController);
-        ontologyStateStub.listItem = listItem;
+        ontologyStateStub = TestBed.get('ontologyStateService');
+        ontologyManagerServiceStub = TestBed.get('ontologyManagerService');
+        utilStub = TestBed.get('utilService');
+        
+        ontologyStateStub.listItem = Object.freeze(listItem);
         ontologyStateStub.addToClassIRIs = jasmine.createSpy('addToClassIRIs').and.callFake((items, iri) => {
             items.classes.iris = listItem.classes.iris;
         });
-        ontologyManagerStub.getClassHierarchies = jasmine.createSpy('getClassHierarchies').and.returnValue(Promise.resolve(listItem.classHierarchy));
-        ontologyManagerStub.getOntologyEntityNames = jasmine.createSpy('getOntologyEntityNames').and.returnValue(Promise.resolve(listItem.entityInfo));
-        ontologyManagerStub.getImportedIris = jasmine.createSpy('getImportedIris').and.returnValue(Promise.resolve([{
+
+        ontologyManagerServiceStub.getClassHierarchies = jasmine.createSpy('getClassHierarchies').and.returnValue(Promise.resolve(Object.freeze(listItem.classHierarchy)));
+        ontologyManagerServiceStub.getOntologyEntityNames = jasmine.createSpy('getOntologyEntityNames').and.returnValue(Promise.resolve(Object.freeze(listItem.entityInfo)));
+        ontologyManagerServiceStub.getPropertyToRange = jasmine.createSpy('getPropertyToRange').and.returnValue(Promise.resolve(Object.freeze(listItem.propertyToRanges)));
+        ontologyManagerServiceStub.getImportedIris = jasmine.createSpy('getImportedIris').and.returnValue(Promise.resolve(Object.freeze([{
             id: 1,
             ontologyId: 1,
             classes: []
@@ -52,49 +64,87 @@ describe('OntologyVisualization Service', () => {
             id: 2,
             ontologyId: 2,
             classes: []
-        }]));
-        visualizationStub.getPropertyRangeQuery = jasmine.createSpy('getPropertyRangeQuery').and.returnValue(Promise.resolve(listItem.propertyToRanges));
-        visualizationStub.hasClasses = jasmine.createSpy('hasClasses').and.returnValue(true);
-        visualizationStub.importedOntologies = [];
-        visualizationStub.setOntologyClassName = jasmine.createSpy('setOntologyClassName').and.callFake(() => {});
+        }])));
+
+        visualizationStub.getOntologyLocalObservable = jasmine.createSpy('getOntologyLocalObservable').and.returnValue(mockRequest(visData));
     });
 
     afterEach(() => {
         httpMock.verify();
+        visualizationStub = null;
     });
 
     describe('should initialize with the correct data', function() {
-        it('successfully', fakeAsync(function() {
-            visualizationStub.init();
+        it('successfully', fakeAsync(() => {
+            expect(() => visualizationStub.getGraphState('commit', true)).toThrowError(Error); // ensure no state exist
+            let graphState;
+            visualizationStub.init('commit', null).subscribe( commitGraphState => {
+                graphState = commitGraphState;
+            });
             flush();
-            expect(visualizationStub.getGraphData().length).toBeGreaterThan(0);
-            expect(visualizationStub.hasPositions()).toBeFalse();
-            expect(visualizationStub.isOverLimit).toBeFalse();
-        }));
-        it('with node limit', fakeAsync(function() {
-            visualizationStub.nodesLimit = 50;
-            visualizationStub.init();
-            flush();
-            expect(visualizationStub.getGraphData().filter((item) => item.group == 'nodes').length).toBeLessThanOrEqual(50);
-            expect(visualizationStub.hasPositions()).toBeFalse();
-            expect(visualizationStub.isOverLimit).toBeTruthy();
+            const state = visualizationStub.getGraphState('commit');
+            const actualState = {
+                allGraphNodesLength: state.allGraphNodes.length,
+                elementsLength: state.getElementsLength(),
+                positioned: state.positioned,
+                isOverLimit: state.isOverLimit
+            };
+            const expectState = {
+                allGraphNodesLength: 101,
+                elementsLength: 101,
+                positioned: false,
+                isOverLimit: false
+            };
+
+            expect(actualState).toEqual(expectState);
         }));
         it('with InProgressCommit', fakeAsync(function() {
             ontologyStateStub.hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(true);
-            visualizationStub.init();
-            flush();
-            expect(visualizationStub.getGraphData().length).toBeGreaterThan(0);
-            expect(visualizationStub.hasPositions()).toBeFalse();
-            expect(visualizationStub.isOverLimit).toBeFalse();
+            expect(() => visualizationStub.getGraphState('commit', true)).toThrowError(Error); // ensure no state exist
+            
+            let graphState;
+            visualizationStub.init('commit', inProgressCommitObj).subscribe( commitGraphState => {
+                graphState = commitGraphState;
+                expect(ontologyManagerServiceStub.getClassHierarchies).toHaveBeenCalled();
+                expect(ontologyManagerServiceStub.getPropertyToRange).toHaveBeenCalled();
+                expect(ontologyManagerServiceStub.getOntologyEntityNames).toHaveBeenCalled();
+                expect(ontologyManagerServiceStub.getImportedIris).toHaveBeenCalled();
+            });
+            flush(); // draining the macrotask queue until it is empty
+
+            const state = visualizationStub.getGraphState('commit');
+            const actualState = {
+                allGraphNodesLength: state.allGraphNodes.length,
+                elementsLength: state.getElementsLength(),
+                positioned: state.positioned,
+                isOverLimit: state.isOverLimit
+            }
+            const expectState = {
+                allGraphNodesLength: 100,
+                elementsLength: 100,
+                positioned: false,
+                isOverLimit: false
+            }
+            expect(actualState).toEqual(expectState);
+            const nodesLenght = Object.keys(state.data.nodes).length;
+            const edgesLenght = Object.keys(state.data.edges).length;
+            expect(nodesLenght).toBeGreaterThan(0);
+            expect(edgesLenght).toBeGreaterThan(0);
+
         }));
-        it('with InProgressCommit and node limit', fakeAsync(function() {
-            visualizationStub.nodesLimit = 50;
-            ontologyStateStub.hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(true);
-            visualizationStub.init();
-            flush();
-            expect(visualizationStub.getGraphData().filter((item) => item.group === 'nodes').length).toBeLessThanOrEqual(50);
-            expect(visualizationStub.hasPositions()).toBeFalse();
-            expect(visualizationStub.isOverLimit).toBeTruthy();
+
+        it('with InProgressCommit', fakeAsync(function() {
+            visualizationStub.getOntologyLocalObservable = jasmine.createSpy('getOntologyLocalObservable').and.returnValue(mockRequest({}));
+            expect(() => visualizationStub.getGraphState('commit', true)).toThrowError(Error); // ensure no state exist
+
+            visualizationStub.init('commit', inProgressCommitObj).subscribe( commitGraphState => {
+                expect(Observable.throw).toHaveBeenCalled();
+            }, () => {
+                expect((err) => {
+                  expect(err).toEqual('No classes defined')
+                })
+            });
+            flush(); // draining the macrotask queue until it is empty
         }));
     });
 });

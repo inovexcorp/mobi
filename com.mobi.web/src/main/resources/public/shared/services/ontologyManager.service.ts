@@ -347,13 +347,14 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
      * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes.
+     * @param {string} id The identifier for this request
      * @return {Promise} A Promise with an object containing listItem keys.
      */
-     self.getPropertyToRange = function(recordId, branchId, commitId, applyInProgressCommit = false) {
+     self.getPropertyToRange = function(recordId, branchId, commitId, applyInProgressCommit = false, id = '') {
         const config = { params: { branchId, commitId, applyInProgressCommit } };
         const url = prefix + '/' + encodeURIComponent(recordId) + '/property-ranges';
-        return $http.get(url, config)
-            .then(response => response.data, util.rejectError);
+        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        return promise.then(response => response.data, util.rejectError);
     };
     /**
      * @ngdoc method
@@ -388,13 +389,15 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
      * @return {Promise} A promise with an array of objects containing keys for various entities in an imported
+     * @param {string} id The identifier for this request
      * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes.
      * ontology and values of arrays of IRI strings
      */
-     self.getImportedIris = function(recordId, branchId, commitId, applyInProgressCommit = true) {
+     self.getImportedIris = function(recordId, branchId, commitId, applyInProgressCommit = true, id = '') {
         const config = { params: { branchId, commitId, applyInProgressCommit } };
-        return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-iris', config)
-            .then(response => get(response, 'status') === 200 ? response.data : [], util.rejectError);
+        const url = prefix + '/' + encodeURIComponent(recordId) + '/imported-iris';
+        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        return promise.then(response => get(response, 'status') === 200 ? response.data : [], util.rejectError);
     };
     /**
      * @ngdoc method
