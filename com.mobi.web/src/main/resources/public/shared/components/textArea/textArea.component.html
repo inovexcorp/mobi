@@ -21,6 +21,6 @@
   #L%
   -->
 <div class="form-group text-area">
-    <custom-label muted-text="dvm.mutedText">{{dvm.displayText}}</custom-label>
+    <custom-label [muted-text]="dvm.mutedText">{{dvm.displayText}}</custom-label>
     <textarea class="form-control" name="{{dvm.textAreaName}}" ng-model="dvm.bindModel" ng-trim="false" ng-change="dvm.changeEvent({value: dvm.bindModel})" ng-required="dvm.required" focus-me="dvm.isFocusMe"></textarea>
 </div>

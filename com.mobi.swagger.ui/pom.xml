@@ -110,6 +110,11 @@
             <artifactId>document.translator.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>shapes.rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Swagger Dependencies -->
         <dependency>

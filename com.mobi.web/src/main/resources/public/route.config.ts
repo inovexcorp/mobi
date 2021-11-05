@@ -82,6 +82,17 @@ export function routeConfig($stateProvider, $urlRouterProvider, uiSelectConfig) 
                 title: 'Ontology Editor'
             }
         })
+        .state('root.shapes-graph-editor', {
+            url: '/shapes-graph-editor',
+            views: {
+                'container@': {
+                    template: '<shapes-graph-editor-page></shapes-graph-editor-page>'
+                }
+            },
+            data: {
+                title: 'Shapes Graph Editor'
+            }
+        })
         .state('root.mapper', {
             url: '/mapper',
             views: {

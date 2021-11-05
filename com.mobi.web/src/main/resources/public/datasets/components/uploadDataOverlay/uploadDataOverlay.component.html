@@ -27,7 +27,7 @@
 <div class="modal-body">
     <form name="dvm.form" novalidate autocomplete="off">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <file-input display-text="'RDF File'" bind-model="dvm.fileObj" accept="'.ttl,.xml,.jsonld,.rdf,.trig,.json,.n3,.nq,.nt'" change-event="dvm.update(value)" required></file-input>
+        <file-input [display-text]="'RDF File'" [(files)]="dvm.fileObj" [accept]="['.ttl','.xml','.jsonld','.rdf','.trig','.json','.n3','.nq','.nt']" required></file-input>
         <div ng-if="dvm.importing" class="importing-indicator">
             <span targeted-spinner="dvm.uploadId" diameter="18"></span> <span class="text-muted">Importing Data</span>
         </div>

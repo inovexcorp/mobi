@@ -60,20 +60,23 @@ module.exports = {
     },
     'Step 5: Validate dataset Appearance' : function (browser) {
         browser
+            .waitForElementNotPresent('div.spinner')
+            .waitForElementPresent('datasets-list')
             .useXpath()
+            .waitForElementPresent('//div[contains(@class, "dataset-info")]')
             .assert.visible('//div[contains(@class, "dataset-info")]//h3[text()[contains(.,"Event ontology data")]]')
     },
     'Step 6: Click Upload data' : function (browser) {
         browser
             .click('//div[contains(@class, "list-group")]//action-menu//div[contains(@class, "dropdown")]//button')
-            .waitForElementVisible('//div[contains(@class, "list-group")]//action-menu//div[contains(@class, "dropdown")]//div[contains(@class, "dropdown-menu")]//a[contains(@class, "dropdown-item")]')
-            .click('//div[contains(@class, "list-group")]//action-menu//div[contains(@class, "dropdown")]//div[contains(@class, "dropdown-menu")]//a[contains(@class, "dropdown-item")]')
+            .waitForElementVisible('//div[contains(@class, "list-group")]//action-menu//div[contains(@class, "dropdown")]//div[contains(@class, "dropdown-menu")]//a[contains(@class, "upload-data")]')
+            .click('//div[contains(@class, "list-group")]//action-menu//div[contains(@class, "dropdown")]//div[contains(@class, "dropdown-menu")]//a[contains(@class, "upload-data")]')
             .waitForElementVisible('//upload-data-overlay')
             .waitForElementVisible('//upload-data-overlay//file-input')
             .waitForElementNotPresent('//div[contains(@class, "ng-animate")]')
-            .click('//file-input//div[@class="file-input form-group"]//div//button[text()[contains(.,"Choose File")]]')
+            .click('//upload-data-overlay//button[text()[contains(.,"Choose File")]]')
             .setValue('//input[@type="file"]', Onto1)
-            .assert.visible('//file-input//div[@class="file-input form-group"]//div//span[text()[contains(.,"EventOntology.ttl")]]')
+            .assert.visible('//file-input//div[@class="file-input mt-2"]//span[text()[contains(.,"EventOntology.ttl")]]')
     },
     'Step 7: Submit data' : function (browser) {
         browser

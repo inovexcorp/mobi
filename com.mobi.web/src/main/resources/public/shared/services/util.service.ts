@@ -617,8 +617,8 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      */
     self.getErrorDataObject = function(error, defaultMessage = 'Something went wrong. Please try again later.') {
         return {
-            'errorMessage': get(error, 'data.errorMessage') || error.statusText || defaultMessage,
-            'errorDetails': get(error, 'data.errorDetails') || []
+            'errorMessage': get(error, 'data.errorMessage') || get(error, 'error.errorMessage') || error.statusText || defaultMessage,
+            'errorDetails': get(error, 'data.errorDetails') || get(error, 'error.errorDetails') || []
         }
     }
     /**

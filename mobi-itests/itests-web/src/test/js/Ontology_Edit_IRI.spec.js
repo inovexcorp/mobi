@@ -61,13 +61,13 @@ module.exports = {
             .assert.visible('//edit-iri-overlay//ng-message[text()[contains(.,"Value is not a valid namespace.")]]')
             .clearValue(input_iriBegin)
             .setValue(input_iriBegin, validURL)
-            .assert.elementNotPresent('//edit-iri-overlay//ng-message')
+            .assert.not.elementPresent('//edit-iri-overlay//ng-message')
             .clearValue(input_iriEnds)
             .setValue(input_iriEnds, invalidEndsWidth)
             .waitForElementVisible('//edit-iri-overlay//ng-message')
             .assert.visible('//edit-iri-overlay//ng-message[text()[contains(.,"There is an invalid character.")]]')
             .clearValue(input_iriEnds)
             .setValue(input_iriEnds, validEndsWith)
-            .assert.elementNotPresent('//edit-iri-overlay//ng-message')
+            .assert.not.elementPresent('//edit-iri-overlay//ng-message')
     }
 }

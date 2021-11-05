@@ -80,7 +80,6 @@ import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
-import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.impl.repository.SimpleAnnotation;
 import com.mobi.ontology.impl.repository.SimpleAnnotationProperty;
 import com.mobi.ontology.impl.repository.SimpleClass;
@@ -895,7 +894,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals("#markdown", config.getValue().get(RecordCreateSettings.RECORD_MARKDOWN));
         assertEquals(Stream.of("keyword1", "keyword2").collect(Collectors.toSet()), config.getValue().get(RecordCreateSettings.RECORD_KEYWORDS));
         assertEquals(Collections.singleton(user), config.getValue().get(RecordCreateSettings.RECORD_PUBLISHERS));
-        assertNotNull(config.getValue().get(OntologyRecordCreateSettings.INPUT_STREAM));
+        assertNotNull(config.getValue().get(VersionedRDFRecordCreateSettings.INPUT_STREAM));
         assertGetUserFromContext();
     }
 

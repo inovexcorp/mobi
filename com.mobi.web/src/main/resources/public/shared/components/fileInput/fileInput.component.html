@@ -4,7 +4,7 @@
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -20,13 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="file-input form-group">
-    <custom-label ng-if="dvm.displayText">{{dvm.displayText}}</custom-label>
-    <div class="mt-2">
-        <button type="button" class="btn btn-light btn-sm ml-1" ng-click="dvm.click()">Choose File</button>
-        <span class="file-name-label mx-1 text-truncate text-muted" ng-class="{'text-body': dvm.selected}"> {{dvm.text}}</span>
-        <input ng-if="dvm.isMultiple" id="{{dvm.id}}" class="hide multiple" type="file" name="{{dvm.inputName}}" file-change="dvm.update($event, files)" multiple ng-attr-accept="{{dvm.accept ? dvm.accept : undefined}}" ng-required="dvm.isRequired"/>
-        <input ng-if="!dvm.isMultiple" id="{{dvm.id}}" class="hide not-multiple" type="file" name="{{dvm.inputName}}" file-change="dvm.update($event, files)" ng-attr-accept="{{dvm.accept ? dvm.accept : undefined}}" ng-required="dvm.isRequired"/>
-    </div>
-    <small class="form-text text-muted" ng-if="dvm.helpText">{{dvm.helpText}}</small>
+<custom-label *ngIf="displayText">{{displayText}}</custom-label>
+<div class="file-input mt-2">
+    <input style="display: none" type="file" (change)="update($event)" accept="{{accept}}" required="{{isRequired}}" multiple="{{isMultiple ? 'multiple' : ''}}" #hiddenfileinput>
+    <button (click)="hiddenfileinput.click()" class="btn">Choose File</button>
+    <span class="file-name-label mx-1 text-truncate text-muted" [ngClass]="{'text-body': selected}"> {{text}}</span>
 </div>

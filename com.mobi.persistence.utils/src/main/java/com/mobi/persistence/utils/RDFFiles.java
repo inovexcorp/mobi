@@ -23,15 +23,16 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
+import static java.util.Arrays.asList;
+
 import com.mobi.exception.MobiException;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFHandlerException;
-import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.obolibrary.obo2owl.OWLAPIObo2Owl;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.parser.OBOFormatParser;
@@ -45,7 +46,6 @@ import org.semanticweb.owlapi.rio.RioRenderer;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -57,8 +57,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
-import static java.util.Arrays.asList;
 
 /**
  * Utility class for handling InputStreams of RDF and creating files.
@@ -188,5 +186,26 @@ public class RDFFiles {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * Retrieves the extension of a file. If the file is a zip/gz, retrieves the combined extension (i.e., ttl.gz).
+     *
+     * @param fileName The string representation of a file name
+     * @return The extension of a file
+     */
+    public static String getFileExtension(String fileName) {
+        if (StringUtils.isEmpty(fileName)) {
+            throw new IllegalArgumentException("Filename must not be empty");
+        }
+        String fileExtension = FilenameUtils.getExtension(fileName);
+        if (fileExtension.equals("gz") || fileExtension.endsWith("zip")) {
+            String fileExtensionNoCompress = FilenameUtils.getExtension(FilenameUtils.removeExtension(fileName));
+            if (fileExtensionNoCompress.equals("tar")) {
+                throw new IllegalArgumentException("File must not be a tar");
+            }
+            fileExtension = fileExtensionNoCompress + "." + fileExtension;
+        }
+        return fileExtension;
     }
 }

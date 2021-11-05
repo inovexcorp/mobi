@@ -108,10 +108,6 @@ describe('Upload Changes Overlay component', function() {
         });
     });
     describe('controller methods', function() {
-        it('should update the selected file', function() {
-            this.controller.update({});
-            expect(this.controller.file).toEqual({});
-        });
         describe('should upload an ontology', function() {
             beforeEach(function() {
                 this.controller.os.listItem = {

@@ -1,0 +1,31 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix mcat: <http://mobi.com/ontologies/catalog#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix : <http://mobi.com/ontologies/shapes-graph-editor#>.
+@base <http://mobi.com/ontologies/shapes-graph-editor>.
+
+<http://mobi.com/ontologies/shapes-graph-editor> a owl:Ontology;
+    owl:versionIRI <http://mobi.com/ontologies/shapes-graph-editor#1.0>;
+    owl:imports <http://mobi.com/ontologies/catalog>;
+    rdfs:label "The Mobi Shapes Graph Editor Ontology"@en;
+    rdfs:comment "The Mobi ShapesGraph Editor ontology describes the structure of ShapesGraphRecords and how they relate to the Mobi Catalog."@en;
+    dct:creator [foaf:name "Tom Dalton"];
+    foaf:maker [foaf:name "Mobi"; foaf:homepage <http://mobi.com>];
+    dct:modified "2021-09-07"^^xsd:date.
+
+# ShapesGraphRecord
+
+:ShapesGraphRecord a owl:Class;
+    rdfs:subClassOf mcat:VersionedRDFRecord;
+    rdfs:label "Shapes Graph Record"@en;
+    rdfs:comment "A collection of RDF data that defines a Shapes Graph resource."@en.
+
+:shapesGraphIRI a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "Shapes Graph IRI"@en;
+    rdfs:comment "The latest shapes graph IRI on the master branch."@en;
+    rdfs:domain :ShapesGraphRecord;
+    rdfs:range <http://mobi.com/ontologies/mobi#Identifier> .

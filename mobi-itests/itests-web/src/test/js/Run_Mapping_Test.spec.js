@@ -68,7 +68,10 @@ module.exports = {
 
     'Step 6: Validate dataset Appearance' : function (browser) {
         browser
+            .waitForElementNotPresent('div.spinner')
+            .waitForElementPresent('datasets-list')
             .useXpath()
+            .waitForElementPresent('//div[contains(@class, "dataset-info")]')
             .assert.visible('//div[contains(@class, "dataset-info")]//h3[text()[contains(.,"UHTC ontology data")]]')
             .useCss()
     },
@@ -81,6 +84,7 @@ module.exports = {
 
     'Step 8: Create new mapping' : function (browser) {
         browser
+            .waitForElementNotPresent('div.spinner')
             .click('block-header button.btn')
             .setValue('div.form-group input[name=title]', "UHTC material Mapping")
             .setValue('div.form-group.text-area textarea.form-control', "A mapping of materials listed in the UHTC csv file to the UHTC ontology")
@@ -90,8 +94,8 @@ module.exports = {
     'Step 9: Attach csv to mapping' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
-            .click('div.file-input button.btn-light')
-            .setValue('input.hide[type=file]', OntoCSV)
+            .click('div.file-input button')
+            .setValue('input[type=file]', OntoCSV)
             .waitForElementNotPresent('div.spinner')
             .click('div.block-footer button.continue-btn')
     },

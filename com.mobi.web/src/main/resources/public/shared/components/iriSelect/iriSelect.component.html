@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="iri-select form-group">
-    <custom-label muted-text="dvm.mutedText">{{dvm.displayText}}</custom-label>
+    <custom-label [muted-text]="dvm.mutedText">{{dvm.displayText}}</custom-label>
     <!-- Multi Select -->
     <ui-select ng-if="dvm.isMultiSelect" multiple ng-model="dvm.bindModel" on-select="dvm.changeEvent({value: dvm.bindModel})" on-remove="dvm.changeEvent({value: dvm.bindModel})" ng-disabled="dvm.isDisabledWhen" ng-required="dvm.isRequiredWhen">
         <ui-select-match placeholder="{{'Select ' + displayText}}">

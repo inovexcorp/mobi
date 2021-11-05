@@ -20,11 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {mockComponent} from "../../../../../../test/js/Shared";
+
 describe('Unmask Password component', function() {
     var $compile, scope;
 
     beforeEach(function() {
         angular.mock.module('shared');
+        mockComponent('shared', 'customLabel');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

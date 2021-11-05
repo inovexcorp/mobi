@@ -59,12 +59,10 @@ import commitDifferenceTabsetComponent from './components/commitDifferenceTabset
 import commitHistoryTableComponent from './components/commitHistoryTable/commitHistoryTable.component';
 import commitInfoOverlayComponent from './components/commitInfoOverlay/commitInfoOverlay.component';
 import confirmModalComponent from './components/confirmModal/confirmModal.component.ajs';
-import customLabelComponent from './components/customLabel/customLabel.component';
 import editIriOverlayComponent from './components/editIriOverlay/editIriOverlay.component';
 import emailInputComponent from './components/emailInput/emailInput.component';
 import entityDatesComponent from './components/entityDates/entityDates.component';
 import entityDescriptionComponent from './components/entityDescription/entityDescription.component';
-import fileInputComponent from './components/fileInput/fileInput.component';
 import warningMessageComponent from './components/warningMessage/warningMessage.component';
 import inlineEditComponent from './components/inlineEdit/inlineEdit.component';
 import iriSelectComponent from './components/iriSelect/iriSelect.component';
@@ -170,11 +168,15 @@ import { HelperService } from './services/helper.service';
 import { PolicyManagerService } from './services/policyManager.service';
 import { UserManagerService } from './services/userManager.service';
 import { UserStateService } from './services/userState.service';
+import { ShapesGraphManagerService } from "./services/shapesGraphManager.service";
+import { ShapesGraphStateService } from "./services/shapesGraphState.service";
 import { WindowRef } from './services/windowRef.service';
 import { HighlightTextPipe } from './pipes/highlightText.pipe';
 import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
 import { SpinnerComponent } from './components/progress-spinner/spinner.component';
 import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
+import { FileInputComponent } from "./components/fileInput/fileInput.component";
+import { CustomLabelComponent } from "./components/customLabel/customLabel.component";
 
 /**
  * @namespace shared
@@ -212,7 +214,9 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
         UserAccessControlsComponent,
         SpinnerComponent,
         HighlightTextPipe,
-        TrustedHtmlPipe
+        TrustedHtmlPipe,
+        FileInputComponent,
+        CustomLabelComponent
     ],
     entryComponents: [
         ConfirmModalComponent,
@@ -220,7 +224,9 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
         InfoMessageComponent,
         UnmaskPasswordComponent,
         SpinnerComponent,
-        UserAccessControlsComponent
+        UserAccessControlsComponent,
+        FileInputComponent,
+        CustomLabelComponent
     ],
     exports: [
         CommonModule,
@@ -249,7 +255,9 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
         SpinnerComponent,
         UserAccessControlsComponent,
         HighlightTextPipe,
-        TrustedHtmlPipe
+        TrustedHtmlPipe,
+        FileInputComponent,
+        CustomLabelComponent
     ],
     providers: [
         loginManagerServiceProvider,
@@ -266,6 +274,8 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
         PolicyManagerService,
         UserManagerService,
         UserStateService,
+        ShapesGraphManagerService,
+        ShapesGraphStateService,
         WindowRef,
         OntologyVisualizationService,
         { provide: ErrorStateMatcher, useClass: MobiErrorStateMatcher }
@@ -290,12 +300,10 @@ angular.module('shared', [])
     .component('commitHistoryTable', commitHistoryTableComponent)
     .component('commitInfoOverlay', commitInfoOverlayComponent)
     .component('confirmModalAjs', confirmModalComponent)
-    .component('customLabel', customLabelComponent)
     .component('editIriOverlay', editIriOverlayComponent)
     .component('emailInput', emailInputComponent)
     .component('entityDates', entityDatesComponent)
     .component('entityDescription', entityDescriptionComponent)
-    .component('fileInput', fileInputComponent)
     .component('warningMessage', warningMessageComponent)
     .component('inlineEdit', inlineEditComponent)
     .component('iriSelect', iriSelectComponent)
@@ -375,9 +383,13 @@ angular.module('shared', [])
     .factory('policyManagerService', downgradeInjectable(PolicyManagerService))
     .factory('userManagerService', downgradeInjectable(UserManagerService))
     .factory('userStateService', downgradeInjectable(UserStateService))
+    .factory('shapesGraphManagerService', downgradeInjectable(ShapesGraphManagerService))
+    .factory('shapesGraphStateService', downgradeInjectable(ShapesGraphStateService))
     .directive('confirmModal', downgradeComponent({component: ConfirmModalComponent}) as angular.IDirectiveFactory)
     .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory)
     .directive('infoMessage', downgradeComponent({component: InfoMessageComponent}) as angular.IDirectiveFactory)
     .directive('unmaskPassword', downgradeComponent({component: UnmaskPasswordComponent}) as angular.IDirectiveFactory)
     .directive('progressSpinner', downgradeComponent({component: SpinnerComponent}) as angular.IDirectiveFactory)
-    .directive('userAccessControls', downgradeComponent({component: UserAccessControlsComponent}) as angular.IDirectiveFactory);
+    .directive('userAccessControls', downgradeComponent({component: UserAccessControlsComponent}) as angular.IDirectiveFactory)
+    .directive('fileInput', downgradeComponent({component: FileInputComponent}) as angular.IDirectiveFactory)
+    .directive('customLabel', downgradeComponent({component: CustomLabelComponent}) as angular.IDirectiveFactory);

@@ -13,6 +13,7 @@ resourcePackages:
   - com.mobi.rest.util
   - com.mobi.security.policy.rest
   - com.mobi.sparql.rest
+  - com.mobi.shapes.rest
 prettyPrint: true
 cacheTTL: 0
 openAPI:

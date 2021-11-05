@@ -23,7 +23,6 @@
 import { Inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { noop } from 'lodash';
-import 'rxjs/add/operator/toPromise';
 
 import { REST_PREFIX } from '../../constants';
 import { HelperService } from './helper.service';

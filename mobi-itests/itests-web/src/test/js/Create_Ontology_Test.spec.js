@@ -181,8 +181,8 @@ module.exports = {
             .waitForElementVisible('create-class-overlay .modal-header h3')
             .assert.containsText('create-class-overlay .modal-header h3', 'Create New OWL Class')
             .useXpath()
-            .waitForElementVisible('//create-class-overlay//span[text()="Name"]/parent::label/parent::custom-label/following-sibling::input', 'firstClass')
-            .setValue('//create-class-overlay//span[text()="Name"]/parent::label/parent::custom-label/following-sibling::input', 'firstClass') // This is necessary because the input box is not a child of the label
+            .waitForElementVisible('//create-class-overlay//parent::label[text()="Name"]/parent::custom-label/following-sibling::input')
+            .setValue('//create-class-overlay//parent::label[text()="Name"]/parent::custom-label/following-sibling::input', 'firstClass')
             .useCss()
             .setValue('create-class-overlay text-area[display-text="\'Description\'"] textarea', 'firstClassDescription') 
             .useXpath()
@@ -241,7 +241,7 @@ module.exports = {
             .assert.containsText('.nav-link.active span', 'Changes')
             .waitForElementVisible('info-message p')
             .assert.containsText('info-message p', 'You don\'t have any uncommitted changes.')
-            .assert.elementNotPresent('saved-changes-tab .expansion-panel')
+            .assert.not.elementPresent('saved-changes-tab .expansion-panel')
     },
 
     'Step 18: Verify Commit': function(browser) {

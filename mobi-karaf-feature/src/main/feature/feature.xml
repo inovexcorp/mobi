@@ -191,6 +191,9 @@
         <bundle start-level="80">mvn:com.mobi/notification.impl/${project.version}</bundle>
 	<bundle start-level="80">mvn:com.mobi/namespace.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/namespace.impl/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/shapes.api/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/shapes.impl/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/shapes.rest/${project.version}</bundle>
     </feature>
     <feature name="mobi-cli" description="Mobi CLI Bundles" version="${project.version}">
         <feature prerequisite="true">mobi-core</feature>

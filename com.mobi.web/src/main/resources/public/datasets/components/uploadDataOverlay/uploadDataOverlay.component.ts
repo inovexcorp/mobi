@@ -66,9 +66,6 @@ function uploadDataOverlayComponentCtrl(datasetManagerService, datasetStateServi
     dvm.$onInit = function() {
         dvm.datasetTitle = util.getDctermsValue(state.selectedDataset.record, 'title');
     }
-    dvm.update = function(value) {
-        dvm.fileObj = value;
-    }
     dvm.submit = function() {
         dvm.importing = true;
         dm.uploadData(state.selectedDataset.record['@id'], dvm.fileObj, dvm.uploadId)

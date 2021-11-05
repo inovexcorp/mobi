@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="datasets-ontology-picker form-group">
-    <custom-label muted-text="'(Optional)'">Ontologies</custom-label>
+    <custom-label [muted-text]="'(Optional)'">Ontologies</custom-label>
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
     <search-bar bind-model="dvm.ontologySearchConfig.searchText" change-event="dvm.ontologySearchConfig.searchText = value" submit-event="dvm.setOntologies()"></search-bar>
     <div class="ontologies my-2" targeted-spinner="dvm.spinnerId">

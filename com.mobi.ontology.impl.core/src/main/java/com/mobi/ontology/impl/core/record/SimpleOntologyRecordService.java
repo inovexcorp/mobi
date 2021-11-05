@@ -24,27 +24,16 @@ package com.mobi.ontology.impl.core.record;
  */
 
 import com.mobi.catalog.api.record.RecordService;
-import com.mobi.catalog.api.record.config.RecordOperationConfig;
-import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.core.api.record.AbstractOntologyRecordService;
-import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
-import com.mobi.ontology.core.utils.MobiOntologyException;
-import com.mobi.ontology.core.utils.MobiStringUtils;
 import com.mobi.ontology.utils.cache.OntologyCache;
-import com.mobi.persistence.utils.Models;
-import com.mobi.persistence.utils.ParsedModel;
-import com.mobi.rdf.api.Model;
 import com.mobi.repository.api.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 @Component(
         immediate = true,
@@ -53,7 +42,6 @@ import java.io.InputStream;
 public class SimpleOntologyRecordService extends AbstractOntologyRecordService<OntologyRecord> {
 
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyRecordService.class);
-    protected static final String TRIG_NOT_SUPPORTED = "TriG data is not supported for ontology upload.";
 
     @Reference
     public OntologyCache ontologyCache;
@@ -85,31 +73,6 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
         deletePolicies(record, conn);
         clearOntologyCache(record);
         logTrace("deleteOntology(recordId)", start);
-    }
-
-    @Override
-    protected Model createOntologyModel(RecordOperationConfig config) {
-        Model ontologyModel;
-        String fileName = config.get(OntologyRecordCreateSettings.FILE_NAME);
-        InputStream inputStream = config.get(OntologyRecordCreateSettings.INPUT_STREAM);
-
-        if (fileName != null && inputStream != null) {
-            String fileExtension = MobiStringUtils.getFileExtension(fileName);
-            try {
-                ParsedModel parsedModel = Models.createModel(fileExtension, inputStream, sesameTransformer);
-                ontologyModel = parsedModel.getModel();
-                if ("trig".equalsIgnoreCase(parsedModel.getRdfFormatName())) {
-                    throw new IllegalArgumentException(TRIG_NOT_SUPPORTED);
-                }
-            } catch (IOException e) {
-                throw new MobiOntologyException("Could not parse Ontology input stream.", e);
-            }
-        } else if (config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA) != null) {
-            ontologyModel = config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA);
-        } else {
-            throw new IllegalArgumentException("Ontology config does not have initial data.");
-        }
-        return ontologyModel;
     }
 
     /**

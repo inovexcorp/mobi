@@ -82,10 +82,6 @@ describe('Upload Data Overlay component', function() {
         });
     });
     describe('controller methods', function() {
-        it('should update the selected file', function() {
-            this.controller.update({});
-            expect(this.controller.fileObj).toEqual({});
-        });
         describe('should upload data to a dataset', function() {
             it('unless an error occurs', function() {
                 datasetManagerSvc.uploadData.and.returnValue($q.reject('Error Message'));

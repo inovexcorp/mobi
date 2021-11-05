@@ -27,7 +27,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatButtonModule, MatDialog, MatDialogModule, MatFormFieldModule, MatInputModule, MatSlideToggle, MatSlideToggleChange, MatSlideToggleModule } from '@angular/material';
-import { of } from 'rxjs/observable/of';
+import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 
 import { cleanStylesFromDOM, mockLoginManager, mockUtil } from '../../../../../../test/ts/Shared';

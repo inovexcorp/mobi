@@ -23,7 +23,6 @@ package com.mobi.ontology.core.utils;
  * #L%
  */
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -80,27 +79,6 @@ public class MobiStringUtils {
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
-    }
-
-    /**
-     * Retrieves the extension of a file. If the file is a zip/gz, retrieves the combined extension (i.e., ttl.gz).
-     *
-     * @param fileName The string representation of a file name
-     * @return The extension of a file
-     */
-    public static String getFileExtension(String fileName) {
-        if (StringUtils.isEmpty(fileName)) {
-            throw new IllegalArgumentException("Filename must not be empty");
-        }
-        String fileExtension = FilenameUtils.getExtension(fileName);
-        if (fileExtension.equals("gz") || fileExtension.endsWith("zip")) {
-            String fileExtensionNoCompress = FilenameUtils.getExtension(FilenameUtils.removeExtension(fileName));
-            if (fileExtensionNoCompress.equals("tar")) {
-                throw new IllegalArgumentException("File must not be a tar");
-            }
-            fileExtension = fileExtensionNoCompress + "." + fileExtension;
-        }
-        return fileExtension;
     }
 
     /*

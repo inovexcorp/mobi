@@ -35,7 +35,7 @@ var CatalogPage = function() {
     this.recordBodyTitleSelector = this.recordViewCssSelector + ' div.record-body h2.record-title div.inline-edit';
     this.recordBodyDescriptionSelector = this.recordViewCssSelector + ' div.record-body p inline-edit';
 
-    this.recordTypeFilters = ['Dataset Record', 'Mapping Record', 'Ontology Record','Record',
+    this.recordTypeFilters = ['Dataset Record', 'Mapping Record', 'Ontology Record', 'Record', 'Shapes Graph Record',
         'Unversioned Record', 'Versioned RDF Record', 'Versioned Record']
 };
 

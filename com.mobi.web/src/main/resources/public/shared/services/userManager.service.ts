@@ -23,7 +23,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
 import { map, get, find, filter, set, noop, forEach, has, merge, remove, pull, assign, union, includes, flatten, without, some } from 'lodash';
-import 'rxjs/add/operator/toPromise';
 
 import { ADMIN_USER_IRI, REST_PREFIX } from '../../constants';
 import { Group } from '../models/group.interface';

@@ -24,13 +24,14 @@ import 'hammerjs';
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { UpgradeModule } from '@angular/upgrade/static';
-import { HttpModule } from '@angular/http';
+import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { UIRouterUpgradeModule } from '@uirouter/angular-hybrid';
 
 import { MODULE_NAME } from './app.module.ajs';
 
 import { SharedModule } from './shared/shared.module';
+import { ShapesGraphEditorModule } from "./shapes-graph-editor/shapes-graph-editor.module";
 import { LoginModule } from './login/login.module';
 import { SettingsModule } from './settings/settings.module';
 import { HomeModule } from './home/home.module';
@@ -45,7 +46,7 @@ import { SpinnerService } from './spinner.service';
     imports: [
         BrowserModule,
         UpgradeModule,
-        HttpModule,
+        HttpClientModule,
         BrowserAnimationsModule,
         UIRouterUpgradeModule.forRoot(),
         SharedModule,
@@ -53,6 +54,7 @@ import { SpinnerService } from './spinner.service';
         HomeModule,
         OntologyVisualizationModule,
         SettingsModule,
+        ShapesGraphEditorModule,
         UserManagementModule
     ],
     declarations: [

@@ -98,6 +98,7 @@ import './mapper/mapper.module';
 import './merge-requests/merge-requests.module';
 import './ontology-editor/ontology-editor.module';
 import './settings/settings.module';
+import './shapes-graph-editor/shapes-graph-editor.module';
 import './shared/shared.module';
 import './user-management/user-management.module';
 
@@ -132,6 +133,7 @@ angular
         'merge-requests',
         'ontology-editor',
         'settings',
+        'shapes-graph-editor',
         'shared',
         'user-management'
     ])

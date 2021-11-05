@@ -1,0 +1,22 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <http://example.com/ns#>
+
+ex:PersonShape
+	a sh:NodeShape ;
+	sh:targetClass ex:Person ;    # Applies to all persons
+	sh:property [                 # _:b1
+		sh:path ex:ssn ;           # constrains the values of ex:ssn
+		sh:maxCount 1 ;
+		sh:datatype xsd:string ;
+		sh:pattern "^\\d{3}-\\d{2}-\\d{4}$" ;
+	] ;
+	sh:property [                 # _:b2
+		sh:path ex:worksFor ;
+		sh:class ex:Company ;
+		sh:nodeKind sh:IRI ;
+	] ;
+	sh:closed true ;
+	sh:ignoredProperties ( rdf:type ) .

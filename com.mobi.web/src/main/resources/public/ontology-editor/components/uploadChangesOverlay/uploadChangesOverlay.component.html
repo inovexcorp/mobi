@@ -35,7 +35,7 @@
             </ul>
         </error-display>
         <warning-message ng-if="dvm.error.warningMessage">{{dvm.error.warningMessage}}</warning-message>
-        <file-input display-text="'Select a file'" bind-model="dvm.file" change-event="dvm.update(value)" accept="'.owl,.ttl,.xml,.jsonld,.owx,.rdf,.obo'" required></file-input>
+        <file-input [display-text]="'Select a file'" [(files)]="dvm.file" [accept]="['.owl','.ttl','.xml','.jsonld','.owx','.rdf','.obo']" required></file-input>
     </form>
 </div>
 <div class="modal-footer">
