@@ -1,0 +1,62 @@
+
+<https://mobi.com/commits#35f006cf95f654f35ffb5d36b7075eefbbc01658> {
+  <https://mobi.com/commits#35f006cf95f654f35ffb5d36b7075eefbbc01658> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+    <http://purl.org/dc/terms/title> "The initial commit.";
+    <http://www.w3.org/ns/prov#atTime> "2021-09-17T06:50:33.144-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#2f800b0a-0ec2-4866-b6f3-fee824dedca7>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997> .
+  
+  <https://mobi.com/revisions#2f800b0a-0ec2-4866-b6f3-fee824dedca7> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+    <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/additions#2f800b0a-0ec2-4866-b6f3-fee824dedca7>;
+    <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deletions#2f800b0a-0ec2-4866-b6f3-fee824dedca7> .
+}
+
+<https://mobi.com/records#12556100-696c-4a38-b5ba-646ca0d99f99> {
+  <https://mobi.com/records#12556100-696c-4a38-b5ba-646ca0d99f99> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://mobi.com/ontologies/catalog#Record>, <http://mobi.com/ontologies/catalog#VersionedRDFRecord>,
+      <http://mobi.com/ontologies/catalog#VersionedRecord>, <http://mobi.com/ontologies/shapes-graph-editor#ShapesGraphRecord>;
+    <http://purl.org/dc/terms/title> "Test Shape Record";
+    <http://purl.org/dc/terms/description> "This is a Record for the basic Test Shape from W3C.";
+    <http://purl.org/dc/terms/issued> "2021-09-17T06:50:33.125-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://purl.org/dc/terms/modified> "2021-09-17T06:50:33.147-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#8953aadc-db08-44c4-ada2-d37cbb8de32d>;
+    <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
+    <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#8953aadc-db08-44c4-ada2-d37cbb8de32d>;
+    <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+    <http://mobi.com/ontologies/catalog#keyword> "keyword1", "keyword2", "keyword3";
+    <http://mobi.com/ontologies/shapes-graph-editor#shapesGraphIRI> <http://mobi.com/ontologies/shapes-graph/test-shape-record> .
+}
+
+<https://mobi.com/branches#8953aadc-db08-44c4-ada2-d37cbb8de32d> {
+  <https://mobi.com/branches#8953aadc-db08-44c4-ada2-d37cbb8de32d> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://mobi.com/ontologies/catalog#Branch>;
+    <http://purl.org/dc/terms/title> "MASTER";
+    <http://purl.org/dc/terms/description> "The master branch.";
+    <http://purl.org/dc/terms/issued> "2021-09-17T06:50:33.127-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://purl.org/dc/terms/modified> "2021-09-17T06:50:33.147-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.com/ontologies/catalog#head> <https://mobi.com/commits#35f006cf95f654f35ffb5d36b7075eefbbc01658> .
+}
+
+<https://mobi.com/additions#2f800b0a-0ec2-4866-b6f3-fee824dedca7> {
+  _:node1ffps5m6hx271 <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string>;
+    <http://www.w3.org/ns/shacl#maxCount> 1;
+    <http://www.w3.org/ns/shacl#path> <http://example.com/ns#ssn>;
+    <http://www.w3.org/ns/shacl#pattern> "^\\d{3}-\\d{2}-\\d{4}$" .
+  
+  _:node1ffps5m6hx272 <http://www.w3.org/ns/shacl#path> <http://example.com/ns#worksFor>;
+    <http://www.w3.org/ns/shacl#class> <http://example.com/ns#Company>;
+    <http://www.w3.org/ns/shacl#nodeKind> <http://www.w3.org/ns/shacl#IRI> .
+  
+  _:node1ffps5m6hx273 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>;
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+  
+  <http://example.com/ns#PersonShape> a <http://www.w3.org/ns/shacl#NodeShape>;
+    <http://www.w3.org/ns/shacl#closed> true;
+    <http://www.w3.org/ns/shacl#ignoredProperties> _:node1ffps5m6hx273;
+    <http://www.w3.org/ns/shacl#property> _:node1ffps5m6hx271, _:node1ffps5m6hx272;
+    <http://www.w3.org/ns/shacl#targetClass> <http://example.com/ns#Person> .
+  
+  <http://mobi.com/ontologies/shapes-graph/test-shape-record> a <http://www.w3.org/2002/07/owl#Ontology> .
+}

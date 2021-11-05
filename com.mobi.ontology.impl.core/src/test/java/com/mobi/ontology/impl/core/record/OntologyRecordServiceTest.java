@@ -61,7 +61,6 @@ import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
@@ -344,14 +343,14 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     public void createWithoutOntologyIRITest() throws Exception {
         // Setup:
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = Stream.of("Rick", "Morty").collect(Collectors.toSet());
+        Set<String> keywords = Stream.of("keyword1", "keyword2").collect(Collectors.toSet());
         Set<User> users = Stream.of(user).collect(Collectors.toSet());
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
-        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology.ttl"));
-        config.set(OntologyRecordCreateSettings.FILE_NAME, "test-ontology.ttl");
+        config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology.ttl"));
+        config.set(VersionedRDFRecordCreateSettings.FILE_NAME, "test-ontology.ttl");
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         OntologyRecord ontologyRecord = recordService.create(user, config, connection);
@@ -368,8 +367,8 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         Optional<Resource> optCatalogId = ontologyRecord.getCatalog_resource();
         assertTrue(optCatalogId.isPresent());
         assertEquals(catalogId.stringValue(), optCatalogId.get().stringValue());
-        Set<Literal> keywords = ontologyRecord.getKeyword();
-        assertEquals(names.size(), keywords.size());
+        Set<Literal> recordKeywords = ontologyRecord.getKeyword();
+        assertEquals(recordKeywords.size(), keywords.size());
         assertEquals(1, ontologyRecord.getBranch_resource().size());
         Optional<Resource> optMasterBranch = ontologyRecord.getMasterBranch_resource();
         assertTrue(optMasterBranch.isPresent());
@@ -390,17 +389,17 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     public void createWithOntologyIRITest() throws Exception {
         // Setup:
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
-        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology.ttl"));
-        config.set(OntologyRecordCreateSettings.FILE_NAME, "test-ontology.ttl");
+        config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology.ttl"));
+        config.set(VersionedRDFRecordCreateSettings.FILE_NAME, "test-ontology.ttl");
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         when(ontologyManager.createOntologyId(any(Model.class))).thenReturn(ontologyId2);
 
@@ -418,8 +417,8 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         Optional<Resource> optCatalogId = ontologyRecord.getCatalog_resource();
         assertTrue(optCatalogId.isPresent());
         assertEquals(catalogId.stringValue(), optCatalogId.get().stringValue());
-        Set<Literal> keywords = ontologyRecord.getKeyword();
-        assertEquals(names.size(), keywords.size());
+        Set<Literal> recordKeywords = ontologyRecord.getKeyword();
+        assertEquals(recordKeywords.size(), keywords.size());
         assertEquals(1, ontologyRecord.getBranch_resource().size());
         Optional<Resource> optMasterBranch = ontologyRecord.getMasterBranch_resource();
         assertTrue(optMasterBranch.isPresent());
@@ -440,17 +439,17 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     public void createWithBlankNodeOntology() {
         // Setup:
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
-        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-oiri.ttl"));
-        config.set(OntologyRecordCreateSettings.FILE_NAME, "test-ontology-no-oiri.ttl");
+        config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-oiri.ttl"));
+        config.set(VersionedRDFRecordCreateSettings.FILE_NAME, "test-ontology-no-oiri.ttl");
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         String defaultPrefix = "http://mobi.com/ontologies/";
@@ -489,17 +488,17 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     public void createWithNoOntology() {
         // Setup:
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
-        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-ont.ttl"));
-        config.set(OntologyRecordCreateSettings.FILE_NAME, "test-ontology-no-oiri.ttl");
+        config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-ont.ttl"));
+        config.set(VersionedRDFRecordCreateSettings.FILE_NAME, "test-ontology-no-oiri.ttl");
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         String defaultPrefix = "http://mobi.com/ontologies/";
@@ -537,15 +536,15 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     @Test
     public void createWithoutInputFileTest() throws Exception {
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, MODEL_FACTORY.createModel());
 
@@ -563,8 +562,8 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         Optional<Resource> optCatalogId = ontologyRecord.getCatalog_resource();
         assertTrue(optCatalogId.isPresent());
         assertEquals(catalogId.stringValue(), optCatalogId.get().stringValue());
-        Set<Literal> keywords = ontologyRecord.getKeyword();
-        assertEquals(names.size(), keywords.size());
+        Set<Literal> recordKeywords = ontologyRecord.getKeyword();
+        assertEquals(recordKeywords.size(), keywords.size());
         assertEquals(1, ontologyRecord.getBranch_resource().size());
         Optional<Resource> optMasterBranch = ontologyRecord.getMasterBranch_resource();
         assertTrue(optMasterBranch.isPresent());
@@ -587,23 +586,23 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     public void createTrigWithTrigExtensionTest() throws Exception {
         // Setup:
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
-        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/testData.trig"));
-        config.set(OntologyRecordCreateSettings.FILE_NAME, "testData.trig");
+        config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/testData.trig"));
+        config.set(VersionedRDFRecordCreateSettings.FILE_NAME, "testData.trig");
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         // When:
         try {
             recordService.create(user, config, connection);
         } catch(IllegalArgumentException e) {
-            assertEquals(SimpleOntologyRecordService.TRIG_NOT_SUPPORTED, e.getMessage());
+            assertEquals("TriG data is not supported for upload.", e.getMessage());
             throw e;
         }
         fail("IllegalArgumentException was not thrown");
@@ -613,23 +612,23 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     public void createTrigWithTxtExtensionTest() throws Exception {
         // Setup:
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
-        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/testData.trig"));
-        config.set(OntologyRecordCreateSettings.FILE_NAME, "testData.txt");
+        config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/testData.trig"));
+        config.set(VersionedRDFRecordCreateSettings.FILE_NAME, "testData.txt");
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         // When:
         try {
             recordService.create(user, config, connection);
         } catch(IllegalArgumentException e) {
-            assertEquals(SimpleOntologyRecordService.TRIG_NOT_SUPPORTED, e.getMessage());
+            assertEquals("TriG data is not supported for upload.", e.getMessage());
             throw e;
         }
         fail("IllegalArgumentException was not thrown");
@@ -639,23 +638,23 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     public void createTrigWithTxtZipExtensionTrigZipContentTest() throws Exception {
         // Setup:
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
-        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/testData.trig.zip"));
-        config.set(OntologyRecordCreateSettings.FILE_NAME, "testData.txt.zip");
+        config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/testData.trig.zip"));
+        config.set(VersionedRDFRecordCreateSettings.FILE_NAME, "testData.txt.zip");
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         // When:
         try {
             recordService.create(user, config, connection);
         } catch(IllegalArgumentException e) {
-            assertEquals(SimpleOntologyRecordService.TRIG_NOT_SUPPORTED, e.getMessage());
+            assertEquals("TriG data is not supported for upload.", e.getMessage());
             throw e;
         }
         fail("IllegalArgumentException was not thrown");
@@ -665,17 +664,17 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     public void createWithTrigInFileName() {
         // Setup:
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
-        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-oiri.ttl"));
-        config.set(OntologyRecordCreateSettings.FILE_NAME, "test-ontology-no-oiri-trig.ttl");
+        config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-oiri.ttl"));
+        config.set(VersionedRDFRecordCreateSettings.FILE_NAME, "test-ontology-no-oiri-trig.ttl");
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         // When:
         try {
@@ -689,23 +688,23 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     public void createTrigWithZipExtensionTTLContentTest() throws Exception {
         // Setup:
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
-        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-oiri.ttl"));
-        config.set(OntologyRecordCreateSettings.FILE_NAME, "test-ontology-no-oiri.trig.zip");
+        config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-oiri.ttl"));
+        config.set(VersionedRDFRecordCreateSettings.FILE_NAME, "test-ontology-no-oiri.trig.zip");
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         // When:
         try {
             recordService.create(user, config, connection);
         } catch(IllegalArgumentException e) {
-            assertEquals(SimpleOntologyRecordService.TRIG_NOT_SUPPORTED, e.getMessage());
+            assertEquals("TriG data is not supported for upload.", e.getMessage());
             throw e;
         }
         fail("IllegalArgumentException was not thrown");
@@ -714,15 +713,15 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     @Test (expected = IllegalArgumentException.class)
     public void createWithoutInputFileOrModelTest() throws Exception {
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         recordService.create(user, config, connection);
@@ -731,14 +730,14 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     @Test (expected = IllegalArgumentException.class)
     public void createRecordWithoutCatalogID() throws Exception {
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestDescription");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         recordService.create(user, config, connection);
@@ -747,15 +746,15 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     @Test (expected = IllegalArgumentException.class)
     public void createRecordWithoutPublisher() throws Exception {
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestDescription");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
 
         recordService.create(user, config, connection);
     }
@@ -763,14 +762,14 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     @Test (expected = IllegalArgumentException.class)
     public void createRecordWithoutTitle() throws Exception {
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         recordService.create(user, config, connection);

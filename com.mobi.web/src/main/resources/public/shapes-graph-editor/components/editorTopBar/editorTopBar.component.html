@@ -1,0 +1,48 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="editor-top-bar">
+    <div class="top-bar-content d-flex justify-content-between">
+        <div class="left-side">
+            <editor-record-select class="pr-1"></editor-record-select>
+            <div class="versioned-rdf-record-actions d-inline-block">
+<!--                <editor-branch-select></editor-branch-select>-->
+<!--                <button mat-icon-button color="primary"><mat-icon>local_offer</mat-icon></button>-->
+<!--                <button mat-icon-button color="primary"><i class="fa fa-code-fork"></i></button>-->
+<!--                <button mat-icon-button color="primary"><mat-icon>call_merge</mat-icon></button>-->
+                <button class="download-record" mat-icon-button color="primary" (click)="download()" [disabled]="downloadDisabled()"><mat-icon>get_app</mat-icon></button>
+<!--                <button mat-icon-button color="primary"><mat-icon>publish</mat-icon></button>-->
+<!--                <mat-chip-list>-->
+<!--                    <mat-chip color="warn">Uncommitted Changes</mat-chip>-->
+<!--                    <mat-chip color="warn">Unsaved</mat-chip>-->
+<!--                </mat-chip-list>-->
+            </div>
+        </div>
+<!--        <div class="right-side">-->
+<!--            <div class="versioned-rdf-record-actions">-->
+<!--                <button mat-button color="primary">Changes</button>-->
+<!--                <button mat-raised-button color="primary">Commit</button>-->
+<!--            </div>-->
+<!--        </div>-->
+    </div>
+    <mat-divider></mat-divider>
+</div>

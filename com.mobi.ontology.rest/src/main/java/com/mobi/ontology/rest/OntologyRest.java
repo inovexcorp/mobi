@@ -62,9 +62,7 @@ import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.core.utils.MobiOntologyException;
-import com.mobi.ontology.core.utils.MobiStringUtils;
 import com.mobi.ontology.rest.json.EntityNames;
 import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.ontology.utils.OntologyUtils;
@@ -74,6 +72,7 @@ import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.ParsedModel;
+import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
@@ -167,7 +166,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-
 
 @Path("/ontologies")
 @Component(service = OntologyRest.class, immediate = true)
@@ -333,8 +331,8 @@ public class OntologyRest {
         }
         if (fileInputStream != null) {
             RecordOperationConfig config = new OperationConfig();
-            config.set(OntologyRecordCreateSettings.INPUT_STREAM, fileInputStream);
-            config.set(OntologyRecordCreateSettings.FILE_NAME, fileDetail.getFileName());
+            config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, fileInputStream);
+            config.set(VersionedRDFRecordCreateSettings.FILE_NAME, fileDetail.getFileName());
             return createOntologyRecord(context, title, description, markdown, keywordSet, config);
         } else {
             checkStringParam(ontologyJson, "The ontologyJson is missing.");
@@ -663,7 +661,7 @@ public class OntologyRest {
                 try {
                     long startTimeF = System.currentTimeMillis();
                     Model temp = getUploadedModel(fileInputStream,
-                            MobiStringUtils.getFileExtension(fileDetail.getFileName()), uploadedBNodes);
+                            RDFFiles.getFileExtension(fileDetail.getFileName()), uploadedBNodes);
                     log.trace("uploadedModelFuture took {} ms", System.currentTimeMillis() - startTimeF);
                     return temp;
                 } catch (IOException e) {

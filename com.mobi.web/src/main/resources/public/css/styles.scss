@@ -45,6 +45,16 @@ md-backdrop.md-select-backdrop {
     z-index: 2000;
 }
 
+// Fixes for Angular Material
+.center-in-overlay {
+    display: flex;
+    justify-content: center;
+}
+
+.panel-max-height {
+    max-height: 500px !important;
+}
+
 // Fixes for Material Bootstrap
 .ui-select-bootstrap > .ui-select-choices,
 .ui-select-bootstrap > .ui-select-no-choice {

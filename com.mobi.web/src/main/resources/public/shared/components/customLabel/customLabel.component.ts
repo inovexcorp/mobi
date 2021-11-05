@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,32 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Input } from "@angular/core";
 
-const template = require('./customLabel.component.html');
+@Component({
+    selector: 'custom-label',
+    templateUrl: 'customLabel.component.html',
+})
+export class CustomLabelComponent {
 
-/**
- * @ngdoc component
- * @name shared.component:customLabel
- *
- * @description
- * `customLabel` is a component which creates a label element with transcluded text and
- * optional musted text within angle brackets. It is meant to be used for labeling a field
- * that involves an IRI in the muted text. The label element will be styled with the Bootstrap
- * 'control-label' class.
- *
- * @param {string} [mutedText=''] text to be displayed as muted within angle brackets after the
- * transcluded content.
- */
-const customLabelComponent = {
-    template,
-    transclude: true,
-    bindings: {
-        mutedText: '<'
-    },
-    controllerAs: 'dvm',
-    controller: customLabelComponentCtrl
+    /**
+     * Optional text to be displayed as small and muted.
+     * @type {string}
+     */
+    @Input() mutedText: string;
 }
-
-function customLabelComponentCtrl() {}
-
-export default customLabelComponent;

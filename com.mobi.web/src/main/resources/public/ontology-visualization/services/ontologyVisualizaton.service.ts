@@ -23,15 +23,10 @@
 import * as _ from 'lodash';    
 import { Inject, Injectable, } from '@angular/core';
 
-import { catchError } from 'rxjs/operators';
-import { from } from 'rxjs/observable/from';
-import { of } from 'rxjs/observable/of';
-import { forkJoin } from 'rxjs/observable/forkJoin';
-import { Observable, Subject, Subscriber } from 'rxjs';
-
 import { buildColorScale } from '../helpers/graphSettings';
 import { StateNode, StateEdge, RangesI, ControlRecordI, GraphState, SidePanelPayload, ParentMapI, ChildIrisI, EntityInfoI, inProgressCommitI} from './visualization.interfaces';
-import { map, tap, switchMap} from 'rxjs/operators';
+import { Observable, Subject, Subscriber, from, of, forkJoin } from 'rxjs';
+import { map, tap, switchMap, catchError} from 'rxjs/operators';
 
 
 /**
@@ -74,7 +69,7 @@ export class OntologyVisualizationService {
     init(commitId: string, hasInProgress: inProgressCommitI): Observable<GraphState> {
         const self = this;
         const inProgressCommit = hasInProgress ? this.os.hasInProgressCommit({inProgressCommit: hasInProgress}) : null;
-        return Observable.of(commitId).pipe(
+        return of(commitId).pipe(
             tap((commitId: string): void => {
                 if (this.os.listItem.hasPendingRefresh) {
                     this.os.listItem.hasPendingRefresh = false;
@@ -141,7 +136,7 @@ export class OntologyVisualizationService {
      * @returns Observable of with map of data
      */
     getOntologyNetworkObservable(): Observable<any>{
-        return forkJoin(this.om.getClassHierarchies(this.os.listItem.ontologyRecord.recordId,
+        return forkJoin([this.om.getClassHierarchies(this.os.listItem.ontologyRecord.recordId,
             this.os.listItem.ontologyRecord.branchId,
             this.os.listItem.ontologyRecord.commitId,
             false),
@@ -160,7 +155,7 @@ export class OntologyVisualizationService {
                 this.os.listItem.ontologyRecord.branchId,
                 this.os.listItem.ontologyRecord.commitId,
                 false,
-                this.spinnerId + '3')
+                this.spinnerId + '3')]
         ).pipe(
             catchError(error => { throw 'Network Issue in Source. Details: ' + error } ),
             map((networkData: any[]):any =>{
@@ -218,11 +213,11 @@ export class OntologyVisualizationService {
      */
     getOntologyLocalObservable(): Observable<any>{
         return forkJoin(
-            this.om.getPropertyToRange(this.os.listItem.ontologyRecord.recordId,
+            [this.om.getPropertyToRange(this.os.listItem.ontologyRecord.recordId,
                 this.os.listItem.ontologyRecord.branchId,
                 this.os.listItem.ontologyRecord.commitId,
                 false,
-                this.spinnerId)
+                this.spinnerId)]
             ).pipe(
                 catchError(error => of(error)),
                 map((networkData:any[]):any =>{

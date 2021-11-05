@@ -43,7 +43,7 @@
         </div>
         <branch-select class="select-branch" bind-model="dvm.request.targetBranch" required="true" change-event="dvm.request.targetBranch = value" branches="dvm.branches"></branch-select>
         <div class="form-group">
-            <custom-label muted-text="'(Optional)'">Assignee(s)</custom-label>
+            <custom-label [muted-text]="'(Optional)'">Assignee(s)</custom-label>
             <ui-select multiple ng-model="dvm.request.assignees">
                 <ui-select-match placeholder="Select Assignee(s)">
                     <span title="{{$item.iri}}">{{$item.username}}</span>

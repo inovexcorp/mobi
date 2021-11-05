@@ -44,7 +44,11 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
+import com.mobi.persistence.utils.Models;
+import com.mobi.persistence.utils.ParsedModel;
+import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.ResourceUtils;
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.query.api.BindingSet;
@@ -127,6 +131,9 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     @Reference
     public EngineManager engineManager;
 
+    @Reference
+    public SesameTransformer sesameTransformer;
+
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
         BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
@@ -153,6 +160,36 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                 masterBranchId, user, "The initial commit.", model, null);
         writePolicies(user, record);
         return record;
+    }
+
+    /**
+     * Creates a Model based on a {@link RecordOperationConfig}.
+     *
+     * @param config A {@link RecordOperationConfig} containing the Model or an InputStream to create a Model
+     * @return parsed model
+     */
+    protected Model createModel(RecordOperationConfig config) {
+        Model ontologyModel;
+        String fileName = config.get(VersionedRDFRecordCreateSettings.FILE_NAME);
+        InputStream inputStream = config.get(VersionedRDFRecordCreateSettings.INPUT_STREAM);
+
+        if (fileName != null && inputStream != null) {
+            String fileExtension = RDFFiles.getFileExtension(fileName);
+            try {
+                ParsedModel parsedModel = Models.createModel(fileExtension, inputStream, sesameTransformer);
+                ontologyModel = parsedModel.getModel();
+                if ("trig".equalsIgnoreCase(parsedModel.getRdfFormatName())) {
+                    throw new IllegalArgumentException("TriG data is not supported for upload.");
+                }
+            } catch (IOException e) {
+                throw new MobiException("Could not parse input stream.", e);
+            }
+        } else if (config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA) != null) {
+            ontologyModel = config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA);
+        } else {
+            throw new IllegalArgumentException("VersionedRDFRecord config does not have initial data.");
+        }
+        return ontologyModel;
     }
 
     /**

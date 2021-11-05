@@ -22,9 +22,9 @@
  */
 
 import { identity, get, has } from 'lodash';
-import { Subject, Observable } from 'rxjs';
-import { OntologyVisualizationService } from '../../main/resources/public/ontology-visualization/services/ontologyVisualizaton.service';
-import { GraphState, SidePanelPayload, StateNode, StateEdge, ControlRecordI } from '../../main/resources/public/ontology-visualization/services/visualization.interfaces';
+import { Observable } from 'rxjs';
+import { GraphState, StateNode, StateEdge, ControlRecordI } from '../../main/resources/public/ontology-visualization/services/visualization.interfaces';
+import 'hammerjs';
 
 export function cleanStylesFromDOM(): void {
     const head: HTMLHeadElement = document.getElementsByTagName('head')[0];
@@ -102,6 +102,7 @@ export class mockUtil {
     getPattern = jasmine.createSpy('getPattern').and.returnValue(/[a-zA-Z]/);
     startDownload = jasmine.createSpy('startDownload');
     rejectError = jasmine.createSpy('rejectError').and.callFake(() => Promise.reject(''));
+    rejectErrorObject = jasmine.createSpy('rejectError').and.callFake(() => Promise.reject(''));
 }
 
 export class mockSettingManager {
@@ -136,6 +137,7 @@ export class mockPrefixes {
     foaf = 'foaf:';
     shacl = 'shacl:';
     setting = 'setting:';
+    shapesGraphEditor = 'shapesGraphEdit:'
 }
 
 export class mockHttpService {
@@ -701,7 +703,7 @@ export class MockOntologyVisualizationService {
         throw new Error('getGraphState not implemented.');
     }
     getPropertyLabel: (propertyIri: any, entityInfo: any, hasInProgressCommit: any) => string;
-    
+
     getGraphData = jasmine.createSpy('getGraphData').and.returnValue([
         {
             'selectable': true,

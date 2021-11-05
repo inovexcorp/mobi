@@ -131,6 +131,13 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
         when(response.getDecision()).thenReturn(Decision.PERMIT);
     }
 
+    @Test(expected = MobiWebException.class)
+    public void invalidIri() throws Exception {
+        when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(resourceInfo.getResourceMethod()).thenReturn(MockInvalidResourceIdStringClass.class.getDeclaredMethod("resourceIdString"));
+        filter.filter(context);
+    }
 
     @Test
     public void decisionIsPermitTest() throws Exception {
@@ -616,6 +623,11 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
 
     private static class MockResourceIdStringClass {
         @ResourceId(value = "http://mobi.com/test#action")
+        public void resourceIdString() {}
+    }
+
+    private static class MockInvalidResourceIdStringClass {
+        @ResourceId(value = "notAnIri")
         public void resourceIdString() {}
     }
 

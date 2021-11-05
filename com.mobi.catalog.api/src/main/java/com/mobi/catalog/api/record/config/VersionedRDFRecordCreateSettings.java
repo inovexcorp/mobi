@@ -25,20 +25,36 @@ package com.mobi.catalog.api.record.config;
 
 import com.mobi.rdf.api.Model;
 
+import java.io.InputStream;
+
 /**
  * {@link com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord} create settings.
  */
 public class VersionedRDFRecordCreateSettings {
 
     /**
-     * Boolean setting for whether or not to write out versioned RDF data.
+     * Boolean setting for whether to write out versioned RDF data.
      */
     public static OperationSetting<Model> INITIAL_COMMIT_DATA;
+
+    /**
+     * Setting for passing in an InputStream.
+     */
+    public static OperationSetting<InputStream> INPUT_STREAM;
+
+    /**
+     * Setting for the file name associated with the provided InputStream.
+     */
+    public static OperationSetting<String> FILE_NAME;
 
     private VersionedRDFRecordCreateSettings() {}
 
     static {
         INITIAL_COMMIT_DATA = new OperationSettingImpl<>("com.mobi.catalog.operation.create.initialcommitdata",
                 "Data for initial commit", null);
+        INPUT_STREAM = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.inputstream"),
+                "The input stream file for the RDF", null);
+        FILE_NAME = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.filename"),
+                "The file name for the RDF input stream", null);
     }
 }

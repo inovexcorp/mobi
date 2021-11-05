@@ -34,7 +34,7 @@
                    ng-model="dvm.scheme[dvm.prefixes.dcterms + 'title'][0]['@value']" focus-me="true">
         </div>
         <div ng-if="dvm.conceptIRIs.length" class="form-group">
-            <custom-label muted-text="'(Optional)'">Top Concept(s)</custom-label>
+            <custom-label [muted-text]="'(Optional)'">Top Concept(s)</custom-label>
             <ui-select multiple ng-model="dvm.selectedConcepts">
                 <ui-select-match placeholder="Select Concept(s)">
                     <span title="{{$item}}">{{dvm.ontoUtils.getLabelForIRI($item)}}</span>

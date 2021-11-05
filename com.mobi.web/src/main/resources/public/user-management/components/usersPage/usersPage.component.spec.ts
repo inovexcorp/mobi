@@ -29,7 +29,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs/observable/of';
+import { of } from 'rxjs';
 
 import { cleanStylesFromDOM, mockLoginManager, mockUtil } from '../../../../../../test/ts/Shared';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';

@@ -55,9 +55,6 @@ function uploadChangesOverlayComponentCtrl(ontologyStateService) {
     dvm.file = undefined;
     dvm.os = ontologyStateService;
 
-    dvm.update = function(value) {
-        dvm.file = value;
-    }
     dvm.submit = function() {
         if (dvm.os.hasInProgressCommit()) {
             dvm.error = 'Unable to upload changes. Please either commit your current changes or discard them and try again.';

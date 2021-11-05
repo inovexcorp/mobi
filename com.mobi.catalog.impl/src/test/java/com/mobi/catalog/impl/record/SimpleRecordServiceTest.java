@@ -129,15 +129,15 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     @Test
     public void createRecordTest() throws Exception {
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestDescription");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         recordService.create(user, config, connection);
@@ -151,14 +151,14 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     public void createRecordWithoutCatalogID() throws Exception {
         thrown.expect(IllegalArgumentException.class);
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestDescription");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         recordService.create(user, config, connection);
@@ -169,15 +169,15 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     public void createRecordWithoutPublisher() throws Exception {
         thrown.expect(IllegalArgumentException.class);
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestDescription");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
 
         recordService.create(user, config, connection);
         verify(provUtils).removeActivity(any(CreateActivity.class));
@@ -187,14 +187,14 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     public void createRecordWithoutTitle() throws Exception {
         thrown.expect(IllegalArgumentException.class);
         RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         recordService.create(user, config, connection);

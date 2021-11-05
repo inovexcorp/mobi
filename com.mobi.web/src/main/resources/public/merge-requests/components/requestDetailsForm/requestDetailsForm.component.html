@@ -32,7 +32,7 @@
                 <text-input bind-model="dvm.state.requestConfig.title" change-event="dvm.state.requestConfig.title = value" display-text="'Title'" required="true"></text-input>
                 <text-area bind-model="dvm.state.requestConfig.description" change-event="dvm.state.requestConfig.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
                 <div class="form-group">
-                    <custom-label muted-text="'(Optional)'">Assignee(s)</custom-label>
+                    <custom-label [muted-text]="'(Optional)'">Assignee(s)</custom-label>
                     <ui-select multiple ng-model="dvm.state.requestConfig.assignees">
                         <ui-select-match placeholder="Select Assignee(s)">
                             <span title="{{$item.iri}}">{{$item.username}}</span>

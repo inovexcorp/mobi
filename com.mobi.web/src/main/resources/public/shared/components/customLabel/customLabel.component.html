@@ -20,4 +20,4 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<label class="control-label"><span ng-transclude></span> <small ng-if="dvm.mutedText" class="text-muted">{{dvm.mutedText}}</small></label>
+<label class="control-label"><ng-content></ng-content><small *ngIf="mutedText" class="text-muted"> {{mutedText}}</small></label>

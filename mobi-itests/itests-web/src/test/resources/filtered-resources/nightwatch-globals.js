@@ -69,7 +69,7 @@ module.exports = {
           .waitForElementVisible('upload-ontology-overlay')
           .click('xpath', '//button[text()[contains(.,"Submit All")]]')
           .waitForElementVisible('div.ontologies')
-          .assert.elementNotPresent('div.modal-header');
+          .assert.not.elementPresent('div.modal-header');
       for (var j = 0; j < args.length; j++) {
           browser
             .clearValue('open-ontology-tab search-bar input')

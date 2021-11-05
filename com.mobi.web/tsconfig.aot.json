@@ -22,6 +22,7 @@
         "src/main/resources/public/main.ts"
     ],
     "angularCompilerOptions": {
-        "outDir": "aot"
+        "outDir": "aot",
+        "preserveWhitespaces": "off"
     }
 }

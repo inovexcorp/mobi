@@ -152,14 +152,15 @@ module.exports = {
             .waitForElementPresent('div.modal-dialog axiom-overlay')
     },
 
-    'Step 12: Axiom Overlay - Edit Subproperty Axiom for Object Property' : function (browser) {
+    'Step 12: Axiom Overlay - Edit SubProperty Axiom for Object Property' : function (browser) {
         browser
+            .useXpath()
+            .waitForElementVisible('//div//axiom-overlay')
+            .waitForElementPresent('//axiom-overlay//div[contains(@class, "ui-select-match")]//i[contains(@class, "caret")]')
             .useCss()
-            .waitForElementPresent('div.modal-dialog axiom-overlay')
-            .waitForElementPresent('axiom-overlay div[placeholder="Select an axiom"] span.btn')
-            .saveScreenshot('./target/nightwatch-reports/selectAnAxiom-PreClick.png') // ensure dropdown is on page
-            .click('axiom-overlay div[placeholder="Select an axiom"] span.btn')
-            .saveScreenshot('./target/nightwatch-reports/selectAnAxiom-AfterClick.png') 
+            .waitForElementNotPresent('div.spinner', 5000)
+            .useCss()
+            .click('axiom-overlay div.modal-body form div.ui-select-match.ng-scope span')
             .waitForElementPresent('axiom-overlay div.ui-select-container.open')
             .waitForElementVisible('li.ui-select-choices-group')
             .useXpath()
@@ -169,7 +170,7 @@ module.exports = {
             .waitForElementNotPresent('axiom-overlay div.ui-select-container.open')
     },
 
-    'Step 13: Axiom Overlay - Edit Subproperty values for Object Property' : function (browser) {
+    'Step 13: Axiom Overlay - Edit SubProperty values for Object Property' : function (browser) {
         browser
             .useCss()
             .waitForElementPresent('div.modal-dialog axiom-overlay') // ensure still on overlay

@@ -76,7 +76,7 @@ module.exports = {
     'Step 7: Validate Ontology Appearance' : function (browser) {
         browser
             .waitForElementVisible('div.ontologies')
-            .assert.elementNotPresent('div.modal-header')
+            .assert.not.elementPresent('div.modal-header')
             .waitForElementVisible('div.ontologies')
             .useXpath()
             .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-1.ttl")]]')

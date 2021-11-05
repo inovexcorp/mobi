@@ -142,4 +142,23 @@
             border-radius: 40px;
         }
     }
+
+    $icon-small-size: 14px;
+    .mat-icon, .mat-icon-button i {
+        line-height: $icon-small-size;
+    }
+    .mat-icon {
+        width: $icon-small-size;
+        height: $icon-small-size;
+    }
+    .material-icons {
+        font-size: $icon-small-size;
+    }
+    md-icon {
+        color: white;
+        height: unset;
+        width: unset;
+        min-height: unset;
+        min-width: unset;
+    }
 }

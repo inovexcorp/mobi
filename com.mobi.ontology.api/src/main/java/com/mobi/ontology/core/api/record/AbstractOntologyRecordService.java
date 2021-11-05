@@ -28,11 +28,11 @@ import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
@@ -55,14 +55,10 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     @Reference
     public OntologyManager ontologyManager;
 
-    @Reference
-    public SesameTransformer sesameTransformer;
-
     /**
      * Semaphore for protecting ontology IRI uniqueness checks.
      */
     private Semaphore semaphore = new Semaphore(1, true);
-
 
     @Override
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
@@ -71,8 +67,8 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         Branch masterBranch = createMasterBranch(record);
         try {
             semaphore.acquire();
-            Model ontology = createOntologyModel(config);
-            setOntologyToRecord(record, ontology);
+            Model ontologyModel = createModel(config);
+            setOntologyToRecord(record, ontologyModel);
             conn.begin();
             addRecord(record, masterBranch, conn);
 
@@ -80,24 +76,16 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
             Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
                     new IllegalStateException("OntologyRecord must have a master Branch"));
             versioningManager.commit(catalogIdIRI, record.getResource(),
-                    masterBranchId, user, "The initial commit.", ontology, null, conn);
+                    masterBranchId, user, "The initial commit.", ontologyModel, null, conn);
             conn.commit();
             writePolicies(user, record);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            throw new MobiException(e);
         } finally {
             semaphore.release();
         }
         return record;
     }
-
-    /**
-     * Creates an ontology Model based on a {@link RecordOperationConfig}.
-     *
-     * @param config A {@link RepositoryConnection} to use for lookup
-     * @return created ontology
-     */
-    protected abstract Model createOntologyModel(RecordOperationConfig config);
 
     /**
      * Validates and sets the ontology to the record.

@@ -623,7 +623,9 @@
                                 <root>target/processed-source</root>
                             </roots>
                             <excludes>
-                                <exclude>src/main/resources/**/*</exclude>
+                                <exclude>src/main/resources/public/images/*</exclude>
+                                <exclude>src/main/resources/swagger/**/*</exclude>
+                                <exclude>src/main/resources/**/!(*.js|*.ts|*.html)</exclude>
                                 <exclude>src/test/resources/**/*</exclude>
                             </excludes>
                             <includes>
@@ -632,7 +634,6 @@
                                 <include>target/generated-sources/**/*</include>
                                 <include>target/processed-source/**/*</include>
                             </includes>
-
                         </configuration>
                     </execution>
                 </executions>

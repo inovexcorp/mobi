@@ -30,7 +30,11 @@
     </a>
     <ul class="main-nav nav flex-column flex-grow-1">
         <li class="nav-item" ng-repeat="per in dvm.perspectives" ng-class="{'active': per.isActive}" ui-sref-active="active">
-            <a class="nav-link" ui-sref="{{per.sref}}"><i class="fa fa-{{per.icon}}"></i><span class="collapsed-hide ml-1" ng-if="!$root.collapsedNav">{{per.name}}</span></a>
+            <a class="nav-link" ui-sref="{{per.sref}}">
+                <i ng-if="!per.mat" class="fa fa-{{per.icon}}"></i>
+                <md-icon ng-if="per.mat">{{per.icon}}</md-icon>
+                <span class="collapsed-hide ml-1" ng-if="!$root.collapsedNav">{{per.name}}</span>
+            </a>
         </li>
     </ul>
     <div>

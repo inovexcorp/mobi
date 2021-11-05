@@ -1,0 +1,40 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<mat-form-field class="editor-record-select">
+    <input matInput placeholder="Select a record" [matAutocomplete]="recordAutocomplete" [formControl]="recordSearchControl"/>
+    <mat-icon matSuffix>keyboard_arrow_down</mat-icon>
+    <mat-autocomplete class="panel-max-height" #recordAutocomplete="matAutocomplete" (optionSelected)="selectRecord($event)" (opened)="retrieveShapesGraphRecords()" (closed)="resetSearch()" [panelWidth]="301">
+        <mat-option [disabled]="true"><span class="center-in-overlay"><button class="create-record" mat-button color="primary" (click)="createShapesGraph($event)">Create Shapes Graph</button></span></mat-option>
+        <mat-divider></mat-divider>
+        <mat-optgroup *ngFor="let group of filteredOptions | async" [label]="group.title">
+            <mat-option *ngFor="let option of group.options" [ngStyle]="{ 'height': option.description ? 'unset' : '48px' }" [value]="option">
+                <span class="d-flex">
+                    <span class="flex-1 text-truncate">{{option.title}}</span>
+                    <button class="close-record" *ngIf="group.title === 'Open'" mat-icon-button color="primary" (click)="closeShapesGraphRecord(option.recordId)"><mat-icon>close</mat-icon></button>
+<!--                    <button *ngIf="group.title !== 'Open'" mat-icon-button color="primary" (click)="deleteShapesGraphRecord(option.recordId)"><mat-icon>delete</mat-icon></button>-->
+                </span>
+                <p class="description-text pl-3 small text-muted">{{option.description}}</p>
+            </mat-option>
+        </mat-optgroup>
+    </mat-autocomplete>
+</mat-form-field>

@@ -31,7 +31,8 @@ describe('Edit IRI Overlay component', function() {
 
     beforeEach(function() {
         angular.mock.module('shared');
-        mockComponent('shared', 'errorDisplay')
+        mockComponent('shared', 'errorDisplay');
+        mockComponent('shared', 'customLabel');
         injectRegexConstant();
 
         inject(function(_$compile_, _$rootScope_) {

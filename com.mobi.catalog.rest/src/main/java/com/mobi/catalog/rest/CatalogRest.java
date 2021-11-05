@@ -383,6 +383,7 @@ public class CatalogRest {
                             "http://mobi.com/ontologies/catalog#VersionedRDFRecord",
                             "http://mobi.com/ontologies/catalog#Record",
                             "http://mobi.com/ontologies/ontology-editor#OntologyRecord",
+                            "http://mobi.com/ontologies/shapes-graph-editor#ShapesGraphRecord",
                             "http://mobi.com/ontologies/delimited#MappingRecord",
                             "http://mobi.com/ontologies/catalog#UnversionedRecord",
                             "http://mobi.com/ontologies/dataset#DatasetRecord"},

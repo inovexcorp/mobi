@@ -777,16 +777,16 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     public void testCreateRecord() throws Exception {
         RecordOperationConfig config = new OperationConfig();
         User user = userFactory.createNew(USER_IRI);
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_MARKDOWN, "#Title");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         manager.createRecord(user, config, Record.class);
@@ -798,16 +798,16 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     public void testCreateVersionedRDFRecord() throws Exception {
         RecordOperationConfig config = new OperationConfig();
         User user = userFactory.createNew(USER_IRI);
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_MARKDOWN, "#Title");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         manager.createRecord(user, config, VersionedRDFRecord.class);
@@ -819,16 +819,16 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     public void testCreateNoRecordService() throws Exception {
         RecordOperationConfig config = new OperationConfig();
         User user = userFactory.createNew(USER_IRI);
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_MARKDOWN, "#Title");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         manager.removeRecordService(versionedRecordService);
 
@@ -839,16 +839,16 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     public void testCreateRecordNullFactory() throws Exception {
         RecordOperationConfig config = new OperationConfig();
         User user = userFactory.createNew(USER_IRI);
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_MARKDOWN, "#Title");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         manager.createRecord(user, config, null);

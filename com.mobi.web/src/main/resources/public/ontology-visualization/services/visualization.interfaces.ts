@@ -21,8 +21,8 @@
  * #L%
  */
 
-import { Observable, Subject } from "rxjs";
-import { filter, map, shareReplay, toArray } from "rxjs/operators";
+import { Observable, from, Subject } from 'rxjs';
+import { filter, map, shareReplay, toArray } from 'rxjs/operators';
 
 import * as d3 from 'd3-force';
 
@@ -193,7 +193,7 @@ export interface StateEdgeI {
 }
 
 export class StateEdge implements StateEdgeI {
-    position: {};
+    position: unknown;
     group: 'edges';
     removed: false;
     selected: false;
@@ -408,7 +408,7 @@ export class GraphState implements GraphStateI {
     public emitGraphData(controlRecordSearch: ControlRecordSearchI): void{
         const limit = controlRecordSearch?.limit ? controlRecordSearch.limit : this.nodeLimit;
 
-        Observable.from(this.allGraphNodes).pipe(
+        from(this.allGraphNodes).pipe(
             filter((controlRecord: ControlRecordI) =>  {
                 let matches: boolean[] = [];
 

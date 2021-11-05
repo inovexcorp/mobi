@@ -24,6 +24,7 @@ package com.mobi.rest.security;
  */
 import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 import static com.mobi.web.security.util.AuthenticationProps.ANON_USER;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.UNAUTHORIZED;
 
@@ -134,102 +135,108 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         log.debug("Authorizing...");
         long start = System.currentTimeMillis();
 
-        MultivaluedMap<String, String> pathParameters = uriInfo.getPathParameters();
-        MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
-        Method method = resourceInfo.getResourceMethod();
-
-        if (method.getAnnotation(ResourceId.class) == null) {
-            log.info(String.format("Request authorization skipped. %dms", System.currentTimeMillis() - start));
-            return;
-        }
-
-        IRI subjectIdIri = (IRI) RestUtils.optActiveUser(context, engineManager).map(User::getResource)
-                .orElse(vf.createIRI(ANON_USER));
-
-        // Subject
-
-        SubjectAttributes subjectAttributesAnnotation = method.getAnnotation(SubjectAttributes.class);
-        Map<String, Literal> subjectAttributes = new HashMap<>();
-        if (subjectAttributesAnnotation != null) {
-            setAttributes(subjectAttributes, subjectAttributesAnnotation.value(), pathParameters, queryParameters,
-                    context);
-        }
-
-        // Resource
-
-        ResourceId resourceIdAnnotation = method.getAnnotation(ResourceId.class);
-        IRI resourceIdIri;
         try {
-            resourceIdIri = getResourceIdIri(resourceIdAnnotation, context, queryParameters, pathParameters);
-        } catch (MobiWebException ex) {
-            DefaultResourceId[] defaultValArr = resourceIdAnnotation.defaultValue();
-            if (defaultValArr.length != 0) {
-                log.info("Attempting to resolve a default Resource ID.");
-                DefaultResourceId defaultVal = defaultValArr[0];
-                ResourceId defaultResourceId = getResourceIdFromDefault(defaultVal);
-                resourceIdIri = getResourceIdIri(defaultResourceId, context, queryParameters, pathParameters);
+            MultivaluedMap<String, String> pathParameters = uriInfo.getPathParameters();
+            MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+            Method method = resourceInfo.getResourceMethod();
+
+            if (method.getAnnotation(ResourceId.class) == null) {
+                log.info(String.format("Request authorization skipped. %dms", System.currentTimeMillis() - start));
+                return;
+            }
+
+            IRI subjectIdIri = (IRI) RestUtils.optActiveUser(context, engineManager).map(User::getResource)
+                    .orElse(vf.createIRI(ANON_USER));
+
+            // Subject
+
+            SubjectAttributes subjectAttributesAnnotation = method.getAnnotation(SubjectAttributes.class);
+            Map<String, Literal> subjectAttributes = new HashMap<>();
+            if (subjectAttributesAnnotation != null) {
+                setAttributes(subjectAttributes, subjectAttributesAnnotation.value(), pathParameters, queryParameters,
+                        context);
+            }
+
+            // Resource
+
+            ResourceId resourceIdAnnotation = method.getAnnotation(ResourceId.class);
+            IRI resourceIdIri;
+            try {
+                resourceIdIri = getResourceIdIri(resourceIdAnnotation, context, queryParameters, pathParameters);
+            } catch (MobiWebException ex) {
+                DefaultResourceId[] defaultValArr = resourceIdAnnotation.defaultValue();
+                if (defaultValArr.length != 0) {
+                    log.info("Attempting to resolve a default Resource ID.");
+                    DefaultResourceId defaultVal = defaultValArr[0];
+                    ResourceId defaultResourceId = getResourceIdFromDefault(defaultVal);
+                    resourceIdIri = getResourceIdIri(defaultResourceId, context, queryParameters, pathParameters);
+                } else {
+                    throw ex;
+                }
+            }
+
+            ResourceAttributes resourceAttributesAnnotation = method.getAnnotation(ResourceAttributes.class);
+            Map<String, Literal> resourceAttributes = new HashMap<>();
+            if (resourceAttributesAnnotation != null) {
+                setAttributes(resourceAttributes, resourceAttributesAnnotation.value(), pathParameters, queryParameters,
+                        context);
+            }
+
+            // Action
+
+            ActionId actionIdAnnotation = method.getAnnotation(ActionId.class);
+            IRI actionId;
+            if (actionIdAnnotation == null) {
+                switch (context.getMethod()) {
+                    case "POST":
+                        actionId = vf.createIRI(Create.TYPE);
+                        break;
+                    case "DELETE":
+                        actionId = vf.createIRI(Delete.TYPE);
+                        break;
+                    case "PUT":
+                        actionId = vf.createIRI(Update.TYPE);
+                        break;
+                    case "GET":
+                    default:
+                        actionId = vf.createIRI(Read.TYPE);
+                        break;
+                }
             } else {
-                throw ex;
+                actionId = vf.createIRI(actionIdAnnotation.value());
             }
-        }
 
-        ResourceAttributes resourceAttributesAnnotation = method.getAnnotation(ResourceAttributes.class);
-        Map<String, Literal> resourceAttributes = new HashMap<>();
-        if (resourceAttributesAnnotation != null) {
-            setAttributes(resourceAttributes, resourceAttributesAnnotation.value(), pathParameters, queryParameters,
-                    context);
-        }
-
-        // Action
-
-        ActionId actionIdAnnotation = method.getAnnotation(ActionId.class);
-        IRI actionId;
-        if (actionIdAnnotation == null) {
-            switch (context.getMethod()) {
-                case "POST":
-                    actionId = vf.createIRI(Create.TYPE);
-                    break;
-                case "DELETE":
-                    actionId = vf.createIRI(Delete.TYPE);
-                    break;
-                case "PUT":
-                    actionId = vf.createIRI(Update.TYPE);
-                    break;
-                case "GET":
-                default:
-                    actionId = vf.createIRI(Read.TYPE);
-                    break;
+            ActionAttributes actionAttributesAnnotation = method.getAnnotation(ActionAttributes.class);
+            Map<String, Literal> actionAttributes = new HashMap<>();
+            if (actionAttributesAnnotation != null) {
+                setAttributes(actionAttributes, actionAttributesAnnotation.value(), pathParameters, queryParameters,
+                        context);
             }
-        } else {
-            actionId = vf.createIRI(actionIdAnnotation.value());
-        }
 
-        ActionAttributes actionAttributesAnnotation = method.getAnnotation(ActionAttributes.class);
-        Map<String, Literal> actionAttributes = new HashMap<>();
-        if (actionAttributesAnnotation != null) {
-            setAttributes(actionAttributes, actionAttributesAnnotation.value(), pathParameters, queryParameters,
-                    context);
-        }
+            Request request = pdp.createRequest(Arrays.asList(subjectIdIri), subjectAttributes,
+                    Arrays.asList(resourceIdIri), resourceAttributes, Arrays.asList(actionId), actionAttributes);
+            log.debug(request.toString());
+            Response response = pdp.evaluate(request, vf.createIRI(POLICY_PERMIT_OVERRIDES));
+            log.debug(response.toString());
 
-        Request request = pdp.createRequest(Arrays.asList(subjectIdIri), subjectAttributes, Arrays.asList(resourceIdIri), resourceAttributes,
-                Arrays.asList(actionId), actionAttributes);
-        log.debug(request.toString());
-        Response response = pdp.evaluate(request, vf.createIRI(POLICY_PERMIT_OVERRIDES));
-        log.debug(response.toString());
-
-        Decision decision = response.getDecision();
-        if (decision != Decision.PERMIT) {
-            if (decision == Decision.DENY) {
-                String statusMessage = getMessageOrDefault(response,
-                        "You do not have permission to perform this action");
-                throw ErrorUtils.sendError(statusMessage, UNAUTHORIZED);
+            Decision decision = response.getDecision();
+            if (decision != Decision.PERMIT) {
+                if (decision == Decision.DENY) {
+                    String statusMessage = getMessageOrDefault(response,
+                            "You do not have permission to perform this action");
+                    throw ErrorUtils.sendError(statusMessage, UNAUTHORIZED);
+                }
+                if (decision == Decision.INDETERMINATE) {
+                    String statusMessage = getMessageOrDefault(response, "Request indeterminate");
+                    throw ErrorUtils.sendError(statusMessage, INTERNAL_SERVER_ERROR);
+                }
             }
-            if (decision == Decision.INDETERMINATE) {
-                String statusMessage = getMessageOrDefault(response, "Request indeterminate");
-                throw ErrorUtils.sendError(statusMessage, INTERNAL_SERVER_ERROR);
-            }
+            log.info(String.format("Request permitted. %dms", System.currentTimeMillis() - start));
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
+        } catch (IllegalStateException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), INTERNAL_SERVER_ERROR);
         }
-        log.info(String.format("Request permitted. %dms", System.currentTimeMillis() - start));
     }
 
     private IRI getResourceIdIri(ResourceId resourceIdAnnotation, ContainerRequestContext context,
