@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -35,6 +35,9 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
 import { DownloadRecordModalComponent } from '../downloadRecordModal/downloadRecordModal.component';
 import { EditorRecordSelectComponent } from '../editorRecordSelect/editorRecordSelect.component';
 import { EditorTopBarComponent } from './editorTopBar.component';
+import { MatChipsModule, MatButtonToggleModule } from '@angular/material';
+import { UploadRecordModalComponent } from '../uploadRecordModal/uploadRecordModal.component';
+import { CommitModalComponent } from '../commitModal/commitModal.component';
 
 describe('Editor Top Bar component', function() {
     let component: EditorTopBarComponent;
@@ -48,7 +51,9 @@ describe('Editor Top Bar component', function() {
             imports: [
                 MatButtonModule,
                 MatIconModule,
-                MatDividerModule
+                MatDividerModule,
+                MatChipsModule,
+                MatButtonToggleModule
             ],
             declarations: [
                 EditorTopBarComponent,
@@ -86,6 +91,14 @@ describe('Editor Top Bar component', function() {
         it('should open the download modal', function() {
             component.download();
             expect(matDialog.open).toHaveBeenCalledWith(DownloadRecordModalComponent, { data: { recordId: 'record1'}});
+        });
+        it('should open the upload modal', function() {
+            component.upload();
+            expect(matDialog.open).toHaveBeenCalledWith(UploadRecordModalComponent, {});
+        });
+        it('should open the commit modal', function() {
+            component.commit();
+            expect(matDialog.open).toHaveBeenCalledWith(CommitModalComponent, {});
         });
         it('should check if the download button is disabled', function() {
             expect(component.downloadDisabled()).toBeFalse();

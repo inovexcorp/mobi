@@ -113,6 +113,11 @@ export class mockSettingManager {
     getPreferenceDefinitions = jasmine.createSpy('getPreferenceDefinitions').and.returnValue(Promise.resolve(''));
 }
 
+export class mockModal {
+    openModal = jasmine.createSpy('openModal');
+    openConfirmModal = jasmine.createSpy('openConfirmModal');
+}
+
 export class mockPrefixes {
     owl = '';
     delim = '';

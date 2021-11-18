@@ -55,4 +55,33 @@ describe('Shapes Graph State service', function() {
         expect(service.currentShapesGraphRecordTitle).toEqual('');
         expect(service.openRecords).toEqual([]);
     });
+    describe('should check if the current shapes graph is committable', function() {
+        it('when no shapes graph is open', function() {
+            service.currentShapesGraphRecordIri = '';
+            expect(service.isCommittable()).toEqual(false);
+        });
+        it('when a shapes graph is open with no changes', function() {
+            service.currentShapesGraphRecordIri = 'test';
+            expect(service.isCommittable()).toEqual(false);
+        });
+        it('when a shapes graph is open with changes', function() {
+            service.currentShapesGraphRecordIri = 'test';
+            service.inProgressCommit = {
+                additions: [{'@id': 'testId'}],
+                deletions: []
+            };
+            expect(service.isCommittable()).toEqual(true);
+        });
+    });
+    it('should clear the in progress commit', function() {
+        service.inProgressCommit = {
+            additions: [{'@id': 'testId'}],
+            deletions: []
+        };
+        service.clearInProgressCommit();
+        expect(service.inProgressCommit).toEqual({
+            additions: [],
+            deletions: []
+        });
+    });
 });

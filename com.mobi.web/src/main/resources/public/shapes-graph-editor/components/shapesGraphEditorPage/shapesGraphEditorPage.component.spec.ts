@@ -24,10 +24,12 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { EditorTopBarComponent } from '../editorTopBar/editorTopBar.component';
 import { ShapesGraphEditorPageComponent } from './shapesGraphEditorPage.component';
+import { ShapesGraphChangesPageComponent } from '../shapesGraphChangesPage/shapesGraphChangesPage.component';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 
 describe('Shapes Graph Editor Page component', function() {
     let component: ShapesGraphEditorPageComponent;
@@ -39,9 +41,12 @@ describe('Shapes Graph Editor Page component', function() {
             imports: [ ],
             declarations: [
                 ShapesGraphEditorPageComponent,
-                MockComponent(EditorTopBarComponent)
+                MockComponent(EditorTopBarComponent),
+                MockComponent(ShapesGraphChangesPageComponent)
             ],
-            providers: []
+            providers: [
+                MockProvider(ShapesGraphStateService)
+            ]
         });
     });
 

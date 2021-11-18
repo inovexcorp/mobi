@@ -31,8 +31,10 @@ import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -41,8 +43,17 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontology.utils.OntologyModels;
+import com.mobi.persistence.utils.BNodeUtils;
+import com.mobi.persistence.utils.Models;
+import com.mobi.persistence.utils.ParsedModel;
+import com.mobi.persistence.utils.RDFFiles;
+import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.BNode;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
@@ -58,7 +69,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
@@ -71,18 +85,27 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -113,6 +136,12 @@ public class ShapesGraphRest {
 
     @Reference
     ValueFactory vf;
+
+    @Reference
+    ModelFactory mf;
+
+    @Reference
+    BNodeService bNodeService;
 
     /**
      * Ingests/uploads a SHACL Shapes Graph file or the JSON-LD of a SHACL Shapes Graph to a data store and creates and
@@ -316,6 +345,182 @@ public class ShapesGraphRest {
     }
 
     /**
+     * Deletes the SHACL Shapes Graph record with the associated record ID.
+     *
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @return A Response identifying whether the SHACL Shapes Graph Record was deleted.
+     */
+    @DELETE
+    @Path("{recordId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            tags = "shapes-graphs",
+            summary = "Deletes the SHACL Shapes Graph record with the associated record ID",
+            responses = {
+                    @ApiResponse(responseCode = "204",
+                            description = "The SHACL Shapes Graph record with the requested record ID was deleted"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+            }
+    )
+    @RolesAllowed("user")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response deleteShapesGraph(@Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID. "
+                    + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"", required = true)
+            @PathParam("recordId") String recordIdStr) {
+        try {
+            catalogManager.deleteRecord(getActiveUser(context, engineManager), vf.createIRI(recordIdStr),
+                    ShapesGraphRecord.class);
+            return Response.noContent().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PUT
+    @Path("{recordId}")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateShapesGraph(@Context ContainerRequestContext context,
+              @Parameter(schema = @Schema(type = "string", format = "binary",
+                      description = "SHACL Shapes Graph file to upload."))
+              @FormDataParam("file") InputStream fileInputStream,
+              @Parameter(description = "File details", hidden = true)
+                  @FormDataParam("file") FormDataContentDisposition fileDetail,
+              @Parameter(schema = @Schema(type = "string",
+                      description = "SHACL Shapes Graph JSON-LD to upload"))
+                  @FormDataParam("json") String json,
+                                      @Parameter(description = "String representing the Record Resource ID. "
+                                              + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"",
+                                              required = true)
+                                          @PathParam("recordId") String recordIdStr,
+                                      @Parameter(description = "Optional String representing the Branch Resource id. "
+                                              + "NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
+                                              + "Defaults to Master branch if missing")
+                                          @QueryParam("branchId") String branchIdStr,
+                                      @Parameter(description = "Optional String representing the Commit Resource id."
+                                              + " NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
+                                              + "Defaults to head commit if missing. The provided commitId must be on "
+                                              + "the Branch identified by the provided branchId; otherwise, nothing "
+                                              + "will be returned")
+                                          @QueryParam("commitId") String commitIdStr,
+                                      @Parameter(description = "Boolean representing whether the in progress commit "
+                                              + "should be overwritten")
+                                      @QueryParam("replaceInProgressCommit") boolean replaceInProgressCommit
+    ) {
+        if (replaceInProgressCommit) {
+            throw ErrorUtils.sendError("This functionality has not yet been implemented.",
+                    Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        if (fileInputStream == null) {
+            throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
+        }
+        try {
+            Resource catalogIRI = configProvider.getLocalCatalogIRI();
+            Resource recordId = vf.createIRI(recordIdStr);
+
+            User user = getActiveUser(context, engineManager);
+            Optional<InProgressCommit> commit = catalogManager.getInProgressCommit(catalogIRI, recordId, user);
+
+            if (commit.isPresent()) {
+                throw ErrorUtils.sendError("User has an in progress commit already.", Response.Status.BAD_REQUEST);
+            }
+
+            Resource branchId;
+            Resource commitId;
+            if (StringUtils.isNotBlank(commitIdStr)) {
+                checkStringParam(branchIdStr, "The branchIdStr is missing.");
+                commitId = vf.createIRI(commitIdStr);
+                branchId = vf.createIRI(branchIdStr);
+            } else if (StringUtils.isNotBlank(branchIdStr)) {
+                branchId = vf.createIRI(branchIdStr);
+                commitId = catalogManager.getHeadCommit(catalogIRI, recordId, branchId).getResource();
+            } else {
+                Branch branch = catalogManager.getMasterBranch(catalogIRI, recordId);
+                branchId = branch.getResource();
+                commitId = branch.getHead_resource().orElseThrow(() -> new IllegalStateException("Branch "
+                        + branchIdStr + " has no head Commit set"));
+            }
+
+            // Uploaded BNode map used for restoring addition BNodes
+            Map<BNode, IRI> uploadedBNodes = new HashMap<>();
+            final CompletableFuture<Model> uploadedModelFuture = CompletableFuture.supplyAsync(() -> {
+                try {
+                    return getUploadedModel(fileInputStream,
+                            RDFFiles.getFileExtension(fileDetail.getFileName()), uploadedBNodes);
+                } catch (IOException e) {
+                    throw new CompletionException(e);
+                }
+            });
+
+            // Catalog BNode map used for restoring deletion BNodes
+            Map<BNode, IRI> catalogBNodes = new HashMap<>();
+            final CompletableFuture<Model> currentModelFuture = CompletableFuture.supplyAsync(() -> {
+                return getCurrentModel(recordId, branchId, commitId, catalogBNodes);
+            });
+
+            Model currentModel = currentModelFuture.get();
+            Model uploadedModel = uploadedModelFuture.get();
+
+            if (!OntologyModels.findFirstOntologyIRI(uploadedModel, vf).isPresent()) {
+                OntologyModels.findFirstOntologyIRI(currentModel, vf)
+                        .ifPresent(iri -> uploadedModel.add(iri, vf.createIRI(RDF.TYPE.stringValue()),
+                                vf.createIRI(OWL.ONTOLOGY.stringValue())));
+            }
+
+            Difference diff = catalogManager.getDiff(currentModel, uploadedModel);
+
+            if (diff.getAdditions().size() == 0 && diff.getDeletions().size() == 0) {
+                return Response.noContent().build();
+            }
+
+            Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
+            catalogManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
+                    BNodeUtils.restoreBNodes(diff.getAdditions(), uploadedBNodes, mf),
+                    BNodeUtils.restoreBNodes(diff.getDeletions(), catalogBNodes, mf));
+
+            return Response.ok().build();
+        } catch (IllegalArgumentException | RDFParseException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (MobiException | ExecutionException | InterruptedException | CompletionException ex) {
+            if (ex instanceof ExecutionException) {
+                if (ex.getCause() instanceof IllegalArgumentException) {
+                    throw RestUtils.getErrorObjBadRequest(ex.getCause());
+                } else if (ex.getCause() instanceof RDFParseException) {
+                    throw RestUtils.getErrorObjBadRequest(ex.getCause());
+                }
+            }
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        } finally {
+            IOUtils.closeQuietly(fileInputStream);
+        }
+    }
+
+    /**
+     * Gets the Resource for the InProgressCommit associated with the provided User and the Record identified by the
+     * provided Resource. If that User does not have an InProgressCommit, a new one will be created and that Resource
+     * will be returned.
+     *
+     * @param user     the User with the InProgressCommit
+     * @param recordId the Resource identifying the Record with the InProgressCommit
+     * @return a Resource which identifies the InProgressCommit associated with the User for the Record
+     */
+    private Resource getInProgressCommitIRI(User user, Resource recordId) {
+        Optional<InProgressCommit> optional = catalogManager.getInProgressCommit(configProvider.getLocalCatalogIRI(),
+                recordId, user);
+        if (optional.isPresent()) {
+            return optional.get().getResource();
+        } else {
+            InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user);
+            catalogManager.addInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommit);
+            return inProgressCommit.getResource();
+        }
+    }
+
+    /**
      * Gets the SHACL Shapes Graph as a Model based on the provided IDs.
      *
      * @param recordIdStr the record ID String.
@@ -348,6 +553,12 @@ public class ShapesGraphRest {
         return model;
     }
 
+    private Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId, Map<BNode, IRI> bNodesMap) {
+        // Load existing ontology into a skolemized model
+        return bNodeService.deterministicSkolemize(catalogManager.getCompiledResource(recordId, branchId, commitId),
+                bNodesMap);
+    }
+
     /**
      * Writes to the SHACL Shapes Graph in the provided RDFFormat to an {@link OutputStream}.
      *
@@ -362,5 +573,18 @@ public class ShapesGraphRest {
         } catch (RDFHandlerException e) {
             throw new MobiException("Error while writing SHACL Shapes Graph.");
         }
+    }
+
+    private Model getUploadedModel(InputStream fileInputStream, String fileExtension, Map<BNode, IRI> bNodesMap)
+            throws IOException {
+        // Load uploaded ontology into a skolemized model
+        ParsedModel parsedModel = Models.createSkolemizedModel(fileExtension, fileInputStream,
+                mf, transformer, bNodeService, bNodesMap);
+
+        if ("trig".equalsIgnoreCase(parsedModel.getRdfFormatName())) {
+            throw new IllegalArgumentException("TriG data is not supported for ontology upload changes.");
+        }
+
+        return parsedModel.getModel();
     }
 }

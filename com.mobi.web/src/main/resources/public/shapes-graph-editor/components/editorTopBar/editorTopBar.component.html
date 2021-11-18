@@ -30,19 +30,19 @@
 <!--                <button mat-icon-button color="primary"><i class="fa fa-code-fork"></i></button>-->
 <!--                <button mat-icon-button color="primary"><mat-icon>call_merge</mat-icon></button>-->
                 <button class="download-record" mat-icon-button color="primary" (click)="download()" [disabled]="downloadDisabled()"><mat-icon>get_app</mat-icon></button>
-<!--                <button mat-icon-button color="primary"><mat-icon>publish</mat-icon></button>-->
-<!--                <mat-chip-list>-->
-<!--                    <mat-chip color="warn">Uncommitted Changes</mat-chip>-->
-<!--                    <mat-chip color="warn">Unsaved</mat-chip>-->
-<!--                </mat-chip-list>-->
+                <button mat-icon-button color="primary" (click)="upload()" [disabled]="state.isCommittable() || !this.state.currentShapesGraphRecordIri"><mat-icon>publish</mat-icon></button>
+                <mat-chip-list>
+                    <mat-chip *ngIf="state.isCommittable()" color="warn" selected>Uncommitted Changes</mat-chip>
+                    <!-- <mat-chip color="warn">Unsaved</mat-chip> -->
+                </mat-chip-list>
             </div>
         </div>
-<!--        <div class="right-side">-->
-<!--            <div class="versioned-rdf-record-actions">-->
-<!--                <button mat-button color="primary">Changes</button>-->
-<!--                <button mat-raised-button color="primary">Commit</button>-->
-<!--            </div>-->
-<!--        </div>-->
+        <div class="right-side">
+            <div class="versioned-rdf-record-actions">
+                <button mat-button class="changes" (click)="toggleChanges()" color="primary" [disabled]="!this.state.currentShapesGraphRecordIri">{{ state.changesPageOpen ? 'Hide Changes' : 'Show Changes' }}</button>
+                <button mat-raised-button color="primary" (click)="commit()" [disabled]="!state.isCommittable()">Commit</button>
+            </div>
+        </div>
     </div>
     <mat-divider></mat-divider>
 </div>
