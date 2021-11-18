@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -122,7 +122,11 @@ describe('New Shapes Graph Record Modal component', function() {
 
             expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(rdfUpload);
             expect(utilStub.createSuccessToast).toHaveBeenCalled();
-            expect(matDialogRef.close).toHaveBeenCalledWith(true);
+            expect(matDialogRef.close).toHaveBeenCalledWith({
+                recordId: 'record1',
+                title: 'Record Name',
+                description: 'Some description'
+            });
         });
         it('should add a keyword to the keyword list', function() {
             expect(component.createRecordForm.controls['keywords'].value.length).toBe(0);

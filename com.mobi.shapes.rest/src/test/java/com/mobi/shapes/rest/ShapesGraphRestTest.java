@@ -24,6 +24,7 @@ package com.mobi.shapes.rest;
  */
 
 import static com.mobi.persistence.utils.ResourceUtils.encode;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.mockito.Matchers.any;
@@ -32,6 +33,9 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -39,8 +43,10 @@ import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;
 
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
@@ -49,8 +55,10 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.persistence.utils.impl.SimpleBNodeService;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
@@ -63,12 +71,15 @@ import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
 import net.sf.json.JSONObject;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -95,6 +106,7 @@ import javax.ws.rs.core.Response;
 public class ShapesGraphRestTest extends MobiRestTestNg {
     private ShapesGraphRest rest;
     private ValueFactory vf;
+    private ModelFactory mf;
     private Repository repo;
     private OrmFactory<ShapesGraphRecord> recordFactory;
     private OrmFactory<Branch> branchFactory;
@@ -103,12 +115,16 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
     private ShapesGraphRecord record;
     private Branch branch;
     private Commit commit;
+    private IRI inProgressCommitId;
+    private InProgressCommit inProgressCommit;
+    private SimpleBNodeService bNodeService;
     private IRI branchId;
     private IRI commitId;
     private IRI recordId;
     private IRI catalogId;
     private IRI shapesGraphId;
     private Model shaclModel;
+    private Difference difference;
 
     @Mock
     CatalogConfigProvider configProvider;
@@ -125,6 +141,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
     @Override
     protected Application configureApp() throws Exception {
         vf = getValueFactory();
+        mf = getModelFactory();
 
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
@@ -141,12 +158,25 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         recordFactory = getRequiredOrmFactory(ShapesGraphRecord.class);
         branchFactory = getRequiredOrmFactory(Branch.class);
         commitFactory = getRequiredOrmFactory(Commit.class);
+        OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
 
         catalogId = vf.createIRI("http://mobi.com/catalog");
         recordId = vf.createIRI("http://mobi.com/shaclRecord1");
         shapesGraphId = vf.createIRI("http://mobi.com/shapes-graph-id");
         branchId = vf.createIRI("http://mobi.com/branch");
         commitId = vf.createIRI("http://mobi.com/commit");
+        inProgressCommitId = vf.createIRI("http://mobi.com/in-progress-commit");
+        inProgressCommit = inProgressCommitFactory.createNew(inProgressCommitId);
+
+        IRI titleIRI = vf.createIRI(DCTERMS.TITLE.stringValue());
+        Model additions = mf.createModel();
+        additions.add(catalogId, titleIRI, vf.createLiteral("Addition"));
+        Model deletions = mf.createModel();
+        deletions.add(catalogId, titleIRI, vf.createLiteral("Deletion"));
+        difference = new Difference.Builder()
+                .additions(additions)
+                .deletions(deletions)
+                .build();
 
         record = recordFactory.createNew(recordId);
         branch = branchFactory.createNew(branchId);
@@ -163,6 +193,13 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         rest.engineManager = engineManager;
         rest.transformer = transformer;
         rest.vf = vf;
+        rest.mf = mf;
+
+        bNodeService = new SimpleBNodeService();
+        bNodeService.setModelFactory(mf);
+        bNodeService.setValueFactory(vf);
+
+        rest.bNodeService = bNodeService;
 
         return new ResourceConfig()
                 .register(rest)
@@ -185,7 +222,15 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         when(catalogManager.getCompiledResource(any(Resource.class))).thenReturn(shaclModel);
         when(catalogManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(shaclModel);
         when(catalogManager.getMasterBranch(any(), any())).thenReturn(branch);
+        when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
         when(transformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
+        when(transformer.mobiStatement(any(org.eclipse.rdf4j.model.Statement.class))).thenAnswer(i -> {
+                return Values.mobiStatement(i.getArgumentAt(0, org.eclipse.rdf4j.model.Statement.class));
+        });
+        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenAnswer(i -> {
+            return Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class));
+        });
+        when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
     }
 
     @AfterMethod
@@ -428,7 +473,211 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 405);
     }
 
+    @Test
+    public void deleteShapesGraphRecordTest() {
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue())).request()
+                .accept(MediaType.APPLICATION_JSON).delete();
+
+        assertEquals(response.getStatus(), 204);
+        verify(catalogManager).deleteRecord(user, recordId, ShapesGraphRecord.class);
+    }
+
+    @Test
+    public void deleteShapesGraphRecordIllegalArgumentExceptionTest() {
+        doThrow(IllegalArgumentException.class).when(catalogManager).deleteRecord(any(), any(), any());
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue())).request()
+                .accept(MediaType.APPLICATION_JSON).delete();
+
+        assertEquals(response.getStatus(), 400);
+        verify(catalogManager).deleteRecord(user, recordId, ShapesGraphRecord.class);
+    }
+
+    @Test
+    public void deleteShapesGraphRecordIllegalStateExceptionTest() {
+        doThrow(IllegalStateException.class).when(catalogManager).deleteRecord(any(), any(), any());
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue())).request()
+                .accept(MediaType.APPLICATION_JSON).delete();
+
+        assertEquals(response.getStatus(), 500);
+        verify(catalogManager).deleteRecord(user, recordId, ShapesGraphRecord.class);
+    }
+
+    @Test
+    public void testUploadChangesToOntology() {
+        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+                .thenReturn(shaclModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("test-shape.ttl")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-shape.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertGetUserFromContext();
+        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
+        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+    }
+
+    @Test
+    public void testUploadChangesToOntologyWithoutBranchId() {
+        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+                .thenReturn(shaclModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+        when(catalogManager.getMasterBranch(eq(catalogId), eq(recordId))).thenReturn(branch);
+        FormDataMultiPart fd = new FormDataMultiPart();
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("test-shape.ttl")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-shape.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+        verify(catalogManager, times(0)).getMasterBranch(eq(catalogId), eq(recordId));
+        verify(catalogManager, times(0)).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager, times(0)).getDiff(any(Model.class), any(Model.class));
+        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager, times(0)).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+    }
+
+    @Test
+    public void testUploadChangesToOntologyWithoutCommitId() {
+        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+                .thenReturn(shaclModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+        when(catalogManager.getHeadCommit(eq(catalogId), eq(recordId), eq(branchId))).thenReturn(commit);
+        FormDataMultiPart fd = new FormDataMultiPart();
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("test-shape.ttl")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-shape.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertGetUserFromContext();
+        verify(catalogManager).getHeadCommit(eq(catalogId), eq(recordId), eq(branchId));
+        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
+        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+    }
+
+    @Test
+    public void testUploadChangesToOntologyWithExistingInProgressCommit() {
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId), any(User.class))).thenReturn(Optional.of(inProgressCommit));
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("search-results.json")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/search-results.json"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    public void testUploadChangesToOntologyNoDiff() {
+        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+                .thenReturn(shaclModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+        Difference difference = new Difference.Builder().additions(mf.createModel()).deletions(mf.createModel()).build();
+        when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("test-shape.ttl")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-shape.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+        assertGetUserFromContext();
+        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
+        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager, never()).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+    }
+
+    @Test
+    public void testUploadChangesTrigToOntologyNoDiff() {
+        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+                .thenReturn(shaclModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+        Difference difference = new Difference.Builder().additions(mf.createModel()).deletions(mf.createModel()).build();
+        when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        FormDataContentDisposition dispo = FormDataContentDisposition
+                .name("file")
+                .fileName("testShapesGraphData.trig")
+                .build();
+        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/testShapesGraphData.trig"),
+                MediaType.MULTIPART_FORM_DATA_TYPE);
+        fd.bodyPart(bodyPart);
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+        JSONObject responseObject = getResponse(response);
+        assertEquals(responseObject.get("error"), "IllegalArgumentException");
+        assertEquals(responseObject.get("errorMessage"), "TriG data is not supported for ontology upload changes.");
+        assertNotEquals(responseObject.get("errorDetails"), null);
+    }
+
     private JSONObject getResponse(Response response) {
         return JSONObject.fromObject(response.readEntity(String.class));
+    }
+
+    private void assertGetUserFromContext() {
+        verify(engineManager, atLeastOnce()).retrieveUser(anyString());
     }
 }

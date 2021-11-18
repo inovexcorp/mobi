@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -32,6 +32,7 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
 import { RecordSelectFiltered } from '../../models/recordSelectFiltered.interface';
 
 import { NewShapesGraphRecordModalComponent } from '../newShapesGraphRecordModal/newShapesGraphRecordModal.component';
+import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 
 interface OptionGroup {
     title: string,
@@ -57,6 +58,7 @@ export class EditorRecordSelectComponent implements OnInit {
     @ViewChild(MatAutocompleteTrigger) autocompleteTrigger: MatAutocompleteTrigger;
 
     recordSearchControl: FormControl = new FormControl();
+    catalogId: string = get(this.cm.localCatalog, '@id', '');
 
     unopened: RecordSelectFiltered[] = [];
     createGroup: OptionGroup = {
@@ -72,10 +74,11 @@ export class EditorRecordSelectComponent implements OnInit {
 
     filteredOptions: Observable<OptionGroup[]>
    
-    constructor(private dialog: MatDialog, private state: ShapesGraphStateService, @Inject('catalogManagerService') private cm,
+    constructor(private dialog: MatDialog, private state: ShapesGraphStateService, @Inject('catalogManagerService') private cm, private sm: ShapesGraphManagerService, @Inject('modalService') private modalService,
                 @Inject('prefixes') private prefixes, @Inject('utilService') private util) {}
 
     ngOnInit(): void {
+        this.retrieveShapesGraphRecords();
         this.setFilteredOptions();
         this.resetSearch();
     }
@@ -92,17 +95,40 @@ export class EditorRecordSelectComponent implements OnInit {
     createShapesGraph(event: Event): void {
         this.autocompleteTrigger.closePanel();
         event.stopPropagation();
-        this.dialog.open(NewShapesGraphRecordModalComponent);
+        this.dialog.open(NewShapesGraphRecordModalComponent).afterClosed().subscribe((record: RecordSelectFiltered) => { // Strip out subscribe after functionality is moved in future MR. It causes a slight delay.
+            if (record) {
+                this.openRecord(record);
+            }
+        });
     }
 
-    selectRecord(event: MatAutocompleteSelectedEvent): void {
-        this.state.currentShapesGraphRecordIri = event.option.value.recordId;
-        this.recordSearchControl.setValue(event.option.value.title);
-        this.state.currentShapesGraphRecordTitle = event.option.value.title;
-        if (!find(this.state.openRecords, {recordId: event.option.value.recordId})) {
-            this.state.openRecords.push(event.option.value);
+    selectRecord(event: MatAutocompleteSelectedEvent): Promise<any> {
+        return this.openRecord(event.option.value);
+    }
+
+    openRecord(record: RecordSelectFiltered): Promise<any> {
+        this.state.currentShapesGraphRecordIri = record.recordId;
+        this.recordSearchControl.setValue(record.title);
+        this.state.currentShapesGraphRecordTitle = record.title;
+        if (!find(this.state.openRecords, {recordId: record.recordId})) {
+            this.state.openRecords.push(record);
         }
-        remove(this.unopened, {recordId: event.option.value.recordId});
+        remove(this.unopened, {recordId: record.recordId});
+        this.state.inProgressCommit = {
+            additions: [],
+            deletions: []
+        };
+        this.state.changesPageOpen = false;
+        return this.cm.getRecordMasterBranch(this.state.currentShapesGraphRecordIri, this.catalogId)
+            .then(masterBranch => {
+                const branchId = get(masterBranch, '@id', '');
+                const commitId = get(masterBranch, "['" + this.prefixes.catalog + "head'][0]['@id']", '');
+                this.state.currentShapesGraphBranchIri = branchId;
+                this.state.currentShapesGraphCommitIri = commitId;
+                return this.cm.getInProgressCommit(this.state.currentShapesGraphRecordIri, this.catalogId);
+            }).then(commit => {
+                this.state.inProgressCommit = commit;
+            });
     }
 
     resetSearch(): void {
@@ -126,6 +152,10 @@ export class EditorRecordSelectComponent implements OnInit {
                 this.state.openRecords.forEach(value => {
                     if (find(openTmp, ['recordId', value.recordId]) === undefined) {
                         this.util.createWarningToast('Previously opened ShapesGraphRecord ' + value.title + ' was removed.');
+                        if (value.recordId === this.state.currentShapesGraphRecordIri) {
+                            this.state.reset();
+                            this.resetSearch();
+                        }
                     }
                 });
 
@@ -141,8 +171,26 @@ export class EditorRecordSelectComponent implements OnInit {
         if (recordIri === this.state.currentShapesGraphRecordIri) {
             this.state.currentShapesGraphRecordIri = '';
             this.state.currentShapesGraphRecordTitle = '';
+            this.state.currentShapesGraphBranchIri = '';
+            this.state.currentShapesGraphCommitIri = '';
+            this.state.inProgressCommit = {
+                additions: [],
+                deletions: []
+            };
         }
         this.setFilteredOptions();
+    }
+
+    showDeleteConfirmationOverlay(record: RecordSelectFiltered, event: Event): void {
+        this.autocompleteTrigger.closePanel();
+        event.stopPropagation();
+        this.modalService.openConfirmModal('<p>Are you sure you want to delete <strong>' + record.title + '</strong>?</p>', () => this.deleteShapesGraphRecord(record.recordId));
+    }
+
+    deleteShapesGraphRecord(recordIri: string): void {
+        this.sm.deleteShapesGraphRecord(recordIri).then(() => {
+            this.util.createSuccessToast(recordIri + ' deleted successfully!');
+        }, errorMessage => this.util.createErrorToast(errorMessage));
     }
 
     private getRecordSelectFiltered(record: JSONLDObject): RecordSelectFiltered {

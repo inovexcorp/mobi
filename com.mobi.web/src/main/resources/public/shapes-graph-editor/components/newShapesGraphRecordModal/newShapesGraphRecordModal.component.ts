@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -28,6 +28,8 @@ import { MatChipInputEvent } from '@angular/material/chips';
 import { RdfUpload } from '../../../shared/models/rdfUpload.interface';
 import { VersionedRdfUploadResponse } from '../../../shared/models/versionedRdfUploadResponse.interface';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
+import { RecordSelectFiltered } from '../../models/recordSelectFiltered.interface';
+
 import './newShapesGraphRecordModal.component.scss';
 
 /**
@@ -64,9 +66,19 @@ export class NewShapesGraphRecordModalComponent {
             file: this.selectedFile
         };
         this.sm.createShapesGraphRecord(rdfUpload)
-            .then((response: VersionedRdfUploadResponse) => this.util.createSuccessToast('Record ' + response.recordId + ' successfully created.'),
-                    error => this.util.createErrorToast(error.errorMessage));
-        this.dialogRef.close(true);
+            .then((response: VersionedRdfUploadResponse) => {
+                this.util.createSuccessToast('Record ' + response.recordId + ' successfully created.');
+                const record: RecordSelectFiltered = {
+                    recordId: response.recordId,
+                    title: this.createRecordForm.controls.title.value,
+                    description: this.createRecordForm.controls.description.value
+                };
+                
+                this.dialogRef.close(record);
+            }, error => {
+                this.util.createErrorToast(error.errorMessage);
+                this.dialogRef.close(null);
+            });
     }
 
     get keywordControls(): FormArray {

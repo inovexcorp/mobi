@@ -4,7 +4,7 @@
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="shapes-graph-editor-page vertical-scroll">
-    <editor-top-bar></editor-top-bar>
-    <shapes-graph-changes-page *ngIf="state.changesPageOpen"></shapes-graph-changes-page>
+<div class="shapes-graph-commit-modal">
+    <h1 mat-dialog-title>Commit</h1>
+    <div mat-dialog-content [formGroup]="createCommitForm">
+        <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+        <mat-form-field class="w-100">
+            <mat-label>Comment</mat-label>
+            <textarea matInput name="comment" formControlName="comment"></textarea>
+        </mat-form-field>
+    </div>
+    <div mat-dialog-actions>
+        <button mat-raised-button [mat-dialog-close]="">Cancel</button>
+        <button mat-raised-button color="primary" (click)="commit()" [disabled]="createCommitForm.invalid">Submit</button>
+    </div>
 </div>

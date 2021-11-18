@@ -10,17 +10,17 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
 import { forEach, get } from 'lodash';
 
@@ -29,6 +29,7 @@ import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { HelperService } from './helper.service';
+import { RdfUpdate } from '../models/rdfUpdate.interface';
 
 /**
  * @class shared.ShapesGraphManagerService
@@ -82,6 +83,46 @@ export class ShapesGraphManagerService {
         });
         this.util.startDownload(this.prefix + '/' + encodeURIComponent(rdfDownload.recordId) + '?' + params);
     }
+
+    /**
+     * Calls the DELETE /mobirest/shapes-graphs/{recordId} endpoint to delete a SHACL shapes graph record. Returns
+     * a Promise that resolves if it was successful and rejects with an error message if it was not.
+     *
+     * @param {string} recordId the iri of the SHACL shapes graph record to delete
+     * @returns {Promise} A Promise that resolves if the request was successful; rejects with an error message otherwise
+     */
+    deleteShapesGraphRecord(recordId: string): Promise<any> {
+        return this.http.delete(`${this.prefix}/${encodeURIComponent(recordId)}`)
+            .toPromise().then((response: any) => response, this.util.rejectErrorObject);
+    }
+
+    /**
+     * Calls the PUT /mobirest/shapes-graphs/{recordId} endpoint which will update the in-progress commit
+     * object to be applied to the shapes graph.
+     *
+     * @param {RdfUpdate} rdfUpdate the uploaded SHACL shapes graph
+     * @returns {Promise} A Promise that resolves if the request was successful; rejects with an error message otherwise
+     */
+    uploadChanges(rdfUpdate: RdfUpdate): Promise<any> {
+        const fd = new FormData();
+        if (rdfUpdate.file) {
+            fd.append('file', rdfUpdate.file);
+        }
+        if (rdfUpdate.branchId) {
+            fd.append('branchId', rdfUpdate.branchId);
+        }
+        if (rdfUpdate.commitId) {
+            fd.append('commitId', rdfUpdate.commitId);
+        }
+        if (rdfUpdate.jsonld) {
+            fd.append('json', JSON.stringify(rdfUpdate.jsonld));
+        }
+        if (rdfUpdate.replaceInProgressCommit) {
+            fd.append('replaceInProgressCommit', rdfUpdate.replaceInProgressCommit ? 'true' : 'false');
+        }
+        return this.http.put(`${this.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, fd, { observe: 'response'}).toPromise().then((response: any) => response, this.util.rejectErrorObject);
+    }
+
     /**
      * Returns a VersionedRdfUploadResponse from the provided response.
      *

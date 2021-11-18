@@ -10,18 +10,25 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
 /* Core variables */
 @import "../../../css/variables";
+@import '~@angular/material/theming';
+
+// Include the common styles for Angular Material. We include this here so that you only
+// have to load a single css file for Angular Material in your app.
+// Be sure that you only ever include this mixin once!
+@include mat-core();
+// @use '@angular/material' as mat;
 
 .editor-top-bar {
     width: 100%;
@@ -31,11 +38,22 @@
     }
     .left-side {
         padding: 0.5em;
+        
         .mat-chip-list {
             display: inline-block;
+
+            .mat-chip.mat-warn {
+                background-color: map-get($mat-amber, 500);
+            }
         }
     }
     .right-side {
         padding: 0.5em;
+        
+        .mat-button {
+            &:focus {
+                outline: none;
+            }
+        }
     }
 }

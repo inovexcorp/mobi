@@ -4,7 +4,7 @@
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="shapes-graph-editor-page vertical-scroll">
-    <editor-top-bar></editor-top-bar>
-    <shapes-graph-changes-page *ngIf="state.changesPageOpen"></shapes-graph-changes-page>
+<div class="shapes-graph-changes-page h-100 row m-0">
+    <div class="col-8 offset-2 pt-2 h-100">
+        <info-message *ngIf="!state.isCommittable() && state.currentShapesGraphRecordIri">No Changes to Display</info-message>
+        <div class="has-changes h-100 d-flex flex-column" *ngIf="state.isCommittable()">
+            <div class="changes-info">
+                <div class="btn-container clearfix">
+                    <button mat-raised-button *ngIf="state.isCommittable()" class="btn btn-danger m-2" (click)="removeChanges()">Remove All Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

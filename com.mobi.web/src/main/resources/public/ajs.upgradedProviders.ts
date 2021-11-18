@@ -40,6 +40,16 @@ export const utilServiceProvider = {
     deps: ['$injector']
 };
 
+export function modalServiceFactory(i: any) {
+    return i.get('modalService');
+}
+
+export const modalServiceProvider = {
+    provide: 'modalService',
+    useFactory: modalServiceFactory,
+    deps: ['$injector']
+};
+
 export function settingManagerServiceFactory(i: any) {
     return i.get('settingManagerService');
 }

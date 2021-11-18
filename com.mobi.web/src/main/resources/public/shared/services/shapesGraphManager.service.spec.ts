@@ -29,6 +29,7 @@ import { cleanStylesFromDOM, mockUtil } from '../../../../../test/ts/Shared';
 import { RdfUpload } from '../models/rdfUpload.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { RdfDownload } from '../models/rdfDownload.interface';
+import { RdfUpdate } from '../models/rdfUpdate.interface';
 
 describe('Shapes Graph Manager service', function() {
     let service: ShapesGraphManagerService;
@@ -42,6 +43,13 @@ describe('Shapes Graph Manager service', function() {
         description: 'Some description',
         keywords: ['keyword1', 'keyword2'],
         file: file
+    };
+    const rdfUpdate: RdfUpdate = {
+        recordId: 'record1',
+        file: file,
+        branchId: 'branch1',
+        commitId: 'commit1',
+        replaceInProgressCommit: false
     };
     const uploadResponse: VersionedRdfUploadResponse = {
         shapesGraphId: 'shapesGraphId1',
@@ -119,6 +127,51 @@ describe('Shapes Graph Manager service', function() {
                 }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne({url: service.prefix, method: 'POST'});
             request.flush([uploadResponse]);
+        });
+    });
+
+    describe('should upload changes to a shapes graph record', function() {
+        it('unless an error occurs', function(done) {
+            service.uploadChanges(rdfUpdate)
+                .then(() => fail('Promise should have rejected'), response => {
+                    expect(response).toEqual(error);
+                    expect(utilStub.rejectErrorObject).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
+                    done();
+                }).catch(done.fail);
+            const request = httpMock.expectOne({url: service.prefix + '/' + encodeURIComponent(rdfUpdate.recordId), method: 'PUT'});
+            request.flush('flush', { status: 400, statusText: error });
+        });
+
+        it('successfully', function(done) {
+            service.uploadChanges(rdfUpdate)
+                .then(response => {
+                    expect(response.status).toEqual(200);
+                    done();
+                }, () => fail('Promise should have resolved')).catch(done.fail);
+            const request = httpMock.expectOne({url: service.prefix + '/' + encodeURIComponent(rdfUpdate.recordId), method: 'PUT'});
+            request.flush([uploadResponse]);
+        });
+    });
+
+    describe('should delete changes on a shapes graph record', function() {
+        it('unless an error occurs', function(done) {
+            service.deleteShapesGraphRecord(rdfUpdate.recordId)
+                .then(() => fail('Promise should have rejected'), response => {
+                    expect(response).toEqual(error);
+                    expect(utilStub.rejectErrorObject).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
+                    done();
+                }).catch(done.fail);
+            const request = httpMock.expectOne({url: service.prefix + '/' + encodeURIComponent(rdfUpdate.recordId), method: 'DELETE'});
+            request.flush('flush', { status: 400, statusText: error });
+        });
+        it('successfully', function(done) {
+            service.deleteShapesGraphRecord(rdfUpdate.recordId)
+                .then(response => {
+                    expect(response).toEqual([]);
+                    done();
+                }, () => fail('Promise should have resolved')).catch(done.fail);
+            const request = httpMock.expectOne({url: service.prefix + '/' + encodeURIComponent(rdfUpdate.recordId), method: 'DELETE'});
+            request.flush([]);
         });
     });
 

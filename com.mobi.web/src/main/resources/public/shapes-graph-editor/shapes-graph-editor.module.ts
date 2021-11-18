@@ -10,18 +10,18 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
 import { NgModule } from '@angular/core';
-import { MatChipsModule, MatDividerModule } from '@angular/material';
+import { MatChipsModule, MatDividerModule, MatButtonToggleModule } from '@angular/material';
 import { MatSelectModule } from '@angular/material/select';
 import { downgradeComponent } from '@angular/upgrade/static';
 import * as angular from 'angular';
@@ -33,6 +33,9 @@ import { EditorRecordSelectComponent } from './components/editorRecordSelect/edi
 import { EditorTopBarComponent } from './components/editorTopBar/editorTopBar.component';
 import { NewShapesGraphRecordModalComponent } from './components/newShapesGraphRecordModal/newShapesGraphRecordModal.component';
 import { ShapesGraphEditorPageComponent } from './components/shapesGraphEditorPage/shapesGraphEditorPage.component';
+import { ShapesGraphChangesPageComponent } from './components/shapesGraphChangesPage/shapesGraphChangesPage.component';
+import { CommitModalComponent } from './components/commitModal/commitModal.component';
+import { UploadRecordModalComponent } from './components/uploadRecordModal/uploadRecordModal.component';
 
 /**
  * @namspace shapes-graph-editor
@@ -44,7 +47,8 @@ import { ShapesGraphEditorPageComponent } from './components/shapesGraphEditorPa
          SharedModule,
          MatDividerModule,
          MatChipsModule,
-         MatSelectModule
+         MatSelectModule,
+         MatButtonToggleModule
      ],
     declarations: [
         NewShapesGraphRecordModalComponent,
@@ -52,21 +56,30 @@ import { ShapesGraphEditorPageComponent } from './components/shapesGraphEditorPa
         EditorRecordSelectComponent,
         EditorTopBarComponent,
         ShapesGraphEditorPageComponent,
-        DownloadRecordModalComponent
+        DownloadRecordModalComponent,
+        UploadRecordModalComponent,
+        CommitModalComponent,
+        ShapesGraphChangesPageComponent
     ],
     providers: [],
     entryComponents: [
         NewShapesGraphRecordModalComponent,
         ShapesGraphEditorPageComponent,
-        DownloadRecordModalComponent
+        DownloadRecordModalComponent,
+        UploadRecordModalComponent,
+        CommitModalComponent,
+        ShapesGraphChangesPageComponent
     ]
 })
 export class ShapesGraphEditorModule {}
 
 angular.module('shapes-graph-editor', [])
     .directive('newShapesGraphRecordModal', downgradeComponent({component: NewShapesGraphRecordModalComponent}) as angular.IDirectiveFactory)
+    .directive('uploadRecordModal', downgradeComponent({component: UploadRecordModalComponent}) as angular.IDirectiveFactory)
     .directive('downloadRecordModal', downgradeComponent({component: DownloadRecordModalComponent}) as angular.IDirectiveFactory)
+    .directive('commitModal', downgradeComponent({component: CommitModalComponent}) as angular.IDirectiveFactory)
     .directive('editorBranchSelect', downgradeComponent({component: EditorBranchSelectComponent}) as angular.IDirectiveFactory)
     .directive('editorRecordSelect', downgradeComponent({component: EditorRecordSelectComponent}) as angular.IDirectiveFactory)
     .directive('editorTopBar', downgradeComponent({component: EditorTopBarComponent}) as angular.IDirectiveFactory)
     .directive('shapesGraphEditorPage', downgradeComponent({component: ShapesGraphEditorPageComponent}) as angular.IDirectiveFactory)
+    .directive('shapesGraphChangesPage', downgradeComponent({component: ShapesGraphChangesPageComponent}) as angular.IDirectiveFactory)
