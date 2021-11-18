@@ -155,6 +155,7 @@ function catalogStateService(catalogManagerService, prefixes) {
         [prefixes.ontologyEditor + 'OntologyRecord']: 'fa-sitemap',
         [prefixes.dataset + 'DatasetRecord']: 'fa-database',
         [prefixes.delim + 'MappingRecord']: 'fa-map',
+        [prefixes.shapesGraphEditor + 'ShapesGraphRecord']: 'mat rule',
         default: 'fa-book'
     };
 

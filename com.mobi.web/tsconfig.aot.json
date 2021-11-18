@@ -23,6 +23,7 @@
     ],
     "angularCompilerOptions": {
         "outDir": "aot",
+        "disableTypeScriptVersionCheck": true,
         "preserveWhitespaces": "off"
     }
 }

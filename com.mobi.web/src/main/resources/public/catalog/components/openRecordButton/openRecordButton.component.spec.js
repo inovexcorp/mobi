@@ -31,7 +31,7 @@ import {
 } from '../../../../../../test/js/Shared';
 
 describe('Open Record Button component', function() {
-    var $compile, $state, $q, scope, catalogStateSvc, mapperStateSvc, ontologyStateSvc, policyEnforcementSvc, utilSvc, prefixes;
+    let $compile, $state, $q, scope, catalogStateSvc, mapperStateSvc, ontologyStateSvc, policyEnforcementSvc, utilSvc, prefixes, shapesGraphStateService;
 
     beforeEach(function() {
         angular.mock.module('catalog');
@@ -47,9 +47,13 @@ describe('Open Record Button component', function() {
             $provide.service('$state', function() {
                 this.go = jasmine.createSpy('go');
             });
+
+            $provide.service('shapesGraphStateService', function() {
+                this.sgs = jasmine.createSpy('sgs');
+            });
         });
 
-        inject(function(_$compile_, _$rootScope_, _$state_, _$q_, _catalogStateService_, _mapperStateService_, _ontologyStateService_, _policyEnforcementService_, _utilService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$state_, _$q_, _catalogStateService_, _mapperStateService_, _ontologyStateService_, _policyEnforcementService_, _utilService_, _prefixes_, _shapesGraphStateService_) {
             $compile = _$compile_;
             $state = _$state_;
             $q = _$q_;
@@ -60,6 +64,7 @@ describe('Open Record Button component', function() {
             policyEnforcementSvc = _policyEnforcementService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
+            shapesGraphStateService = _shapesGraphStateService_;
         });
 
         scope.record = {

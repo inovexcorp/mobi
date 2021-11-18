@@ -56,16 +56,17 @@ const openRecordButtonComponent = {
     controller: openRecordButtonComponentCtrl
 };
 
-openRecordButtonComponentCtrl.$inject = ['$state', 'catalogStateService', 'mapperStateService', 'ontologyStateService', 'policyEnforcementService', 'policyManagerService', 'utilService', 'prefixes'];
+openRecordButtonComponentCtrl.$inject = ['$state', 'catalogStateService', 'mapperStateService', 'ontologyStateService', 'policyEnforcementService', 'policyManagerService', 'utilService', 'prefixes', 'shapesGraphStateService'];
 
-function openRecordButtonComponentCtrl($state, catalogStateService, mapperStateService, ontologyStateService, policyEnforcementService, policyManagerService, utilService, prefixes) {
-    var dvm = this;
-    var cs = catalogStateService;
-    var ms = mapperStateService;
-    var os = ontologyStateService;
-    var pe = policyEnforcementService;
-    var pm = policyManagerService;
-    var util = utilService;
+function openRecordButtonComponentCtrl($state, catalogStateService, mapperStateService, ontologyStateService, policyEnforcementService, policyManagerService, utilService, prefixes, shapesGraphStateService) {
+    let dvm = this;
+    let cs = catalogStateService;
+    let ms = mapperStateService;
+    let os = ontologyStateService;
+    let pe = policyEnforcementService;
+    let pm = policyManagerService;
+    let util = utilService;
+    let sgs = shapesGraphStateService;
     dvm.record = undefined;
     dvm.stopPropagation = false;
     dvm.recordType = '';
@@ -91,6 +92,9 @@ function openRecordButtonComponentCtrl($state, catalogStateService, mapperStateS
                 break;
             case prefixes.dataset + 'DatasetRecord':
                 dvm.openDataset();
+                break;
+            case prefixes.shapesGraphEditor + 'ShapesGraphRecord':
+                dvm.openShapesGraphRecord();
                 break;
             default:
                 util.createWarningToast('No module for record type ' + dvm.recordType);
@@ -124,7 +128,18 @@ function openRecordButtonComponentCtrl($state, catalogStateService, mapperStateS
     dvm.openDataset = function() {
         $state.go('root.datasets');
     }
-
+    dvm.openShapesGraphRecord = function() {
+        sgs.currentShapesGraphRecordIri = dvm.record['@id'];
+        sgs.currentShapesGraphRecordTitle = util.getDctermsValue(dvm.record, 'title');
+        if (!find(sgs.openRecords, {recordId: dvm.record['@id']})) {
+            sgs.openRecords.push({
+                recordId: dvm.record['@id'],
+                title: util.getDctermsValue(dvm.record, 'title'),
+                description: util.getDctermsValue(dvm.record, 'description')
+            })
+        }
+        $state.go('root.shapes-graph-editor');
+    }
     function update() {
         dvm.isFlat = dvm.flat !== undefined;
         dvm.stopPropagation = dvm.stopProp !== undefined;
