@@ -50,12 +50,21 @@ function recordIconComponentCtrl(catalogStateService) {
     var dvm = this;
     var state = catalogStateService;
     dvm.icon = '';
+    dvm.isMaterial = false;
 
     dvm.$onInit = function() {
-        dvm.icon = state.getRecordIcon(dvm.record);
+        changeIcon(state.getRecordIcon(dvm.record));
     }
     dvm.$onChanges = function(changesObj) {
-        dvm.icon = state.getRecordIcon(changesObj.record.currentValue);
+        changeIcon(state.getRecordIcon(changesObj.record.currentValue));
+    }
+    function changeIcon(recordIcon){
+        if (recordIcon.startsWith("mat ")) {
+            dvm.isMaterial = true;
+            dvm.icon = recordIcon.substring(4)
+        } else {
+            dvm.icon = recordIcon;
+        }
     }
 }
 
