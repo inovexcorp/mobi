@@ -1301,7 +1301,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .filter(commit -> !commitsOfInterest.contains(commit))
                 .collect(Collectors.toList());
         if (commitsAdditionsOnly.size() > 0) {
-            String additionInCommitQuery =  replaceCommitList(GET_ADDITIONS_IN_COMMIT, commits);
+            String additionInCommitQuery =  replaceCommitList(GET_ADDITIONS_IN_COMMIT, commitsAdditionsOnly);
             additionInCommitQuery = replaceSubjectList(additionInCommitQuery, "s", "%SUBJECTLIST%", subjectIds);
             GraphQuery additionsQuery = conn.prepareGraphQuery(additionInCommitQuery);
             additionsQuery.evaluate().forEach(consumer);
