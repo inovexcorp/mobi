@@ -210,5 +210,7 @@ module.exports = {
             .click('//a[@class="nav-link"]//span[text()[contains(.,"Classes")]]//parent::a')
             .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Classes")]]')
             .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
+            .click('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
+            .assert.visible('//value-display//div//span[text()[contains(.,"A Edited")]]//ancestor::property-values//p[text()[contains(.,"Title")]]')
     }
 }
