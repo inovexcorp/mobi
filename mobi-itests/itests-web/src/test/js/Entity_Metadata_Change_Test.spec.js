@@ -25,7 +25,7 @@ var adminUsername = 'admin'
 var adminPassword = 'admin'
 
 module.exports = {
-    '@tags': ['ontology-editor', 'sanity', 'incomplete'],
+    '@tags': ['ontology-editor', 'sanity'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
