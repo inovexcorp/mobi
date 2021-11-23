@@ -25,7 +25,7 @@ var adminUsername = 'admin'
 var adminPassword = 'admin'
 
 module.exports = {
-    '@tags': ['ontology-editor', 'sanity'],
+    '@tags': ['ontology-editor', 'sanity', 'incomplete'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
@@ -209,8 +209,9 @@ module.exports = {
             .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Classes")]]')
             .click('//a[@class="nav-link"]//span[text()[contains(.,"Classes")]]//parent::a')
             .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Classes")]]')
-            .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
+            .waitForElementVisible('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
             .click('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
-            .assert.visible('//value-display//div//span[text()[contains(.,"A Edited")]]//ancestor::property-values//p[text()[contains(.,"Title")]]')
+            .assert.visible('//value-display//div//span[text() = "A Edited"]//ancestor::property-values//p[text()[contains(.,"Title")]]')
+            .assert.elementNotPresent('//value-display//div//span[text()[contains(.,"Class A")]]//ancestor::property-values//p[text()[contains(.,"Title")]]')
     }
 }
