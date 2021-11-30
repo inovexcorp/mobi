@@ -40,6 +40,11 @@ GeneralUtils.prototype.switchToPage = function(browser, page, waitForElement){
 module.exports = {
   'globalPort' : '${https-port}',
 
+  // default timeout value in milliseconds for waitFor commands and implicit waitFor value for
+  // expect assertions
+  waitForConditionTimeout : 15000,
+
+
   'initial_steps' : function (browser, user, password) {
       browser
           .url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home')
