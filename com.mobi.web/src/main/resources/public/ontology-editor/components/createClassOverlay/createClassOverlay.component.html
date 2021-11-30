@@ -30,7 +30,7 @@
     <form name="dvm.form" novalidate autocomplete="off">
         <div class="form-group">
             <custom-label>Name</custom-label>
-            <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
+            <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" ng-blur="dvm.nameChanged()" required
                    ng-model="dvm.clazz[dvm.prefixes.dcterms + 'title'][0]['@value']" focus-me="true">
         </div>
         <text-area bind-model="dvm.clazz[dvm.prefixes.dcterms + 'description'][0]['@value']"
