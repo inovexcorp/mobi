@@ -116,19 +116,22 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
         }
     }
     dvm.newOntology = function() {
-        dvm.os.newOntology = {
-            '@id': sm.defaultNamespace,
-            '@type': [prefixes.owl + 'Ontology'],
-            [prefixes.dcterms + 'title']: [{
-                '@value': ''
-            }],
-            [prefixes.dcterms + 'description']: [{
-                '@value': ''
-            }]
-        };
-        dvm.os.newKeywords = [];
-        dvm.os.newLanguage = undefined;
-        modalService.openModal('newOntologyOverlay');
+        sm.getDefaultNamespace()
+            .then(defaultNamespace => {
+                dvm.os.newOntology = {
+                    '@id': defaultNamespace,
+                    '@type': [prefixes.owl + 'Ontology'],
+                    [prefixes.dcterms + 'title']: [{
+                        '@value': ''
+                    }],
+                    [prefixes.dcterms + 'description']: [{
+                        '@value': ''
+                    }]
+                };
+                dvm.os.newKeywords = [];
+                dvm.os.newLanguage = undefined;
+                modalService.openModal('newOntologyOverlay');
+            }, error => Promise.reject(error));
     }
     dvm.showDeleteConfirmationOverlay = function(record) {
         dvm.recordId = get(record, '@id', '');

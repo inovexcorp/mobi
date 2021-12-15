@@ -20,48 +20,57 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { OnInit, Inject, Component, Input } from '@angular/core';
+
 import { forEach, isEqual } from 'lodash';
 
-import { OnInit, Inject, Component } from '@angular/core';
+import './settingEditPage.component.scss';
 
-import './preferencesTab.component.scss';
+// The type of setting to get definitions for
+interface TabType {
+    type: string;
+    heading: string;
+    active: boolean;
+}
 
 /**
- * @name settings.PreferencesTabComponent
+ * @name settings.SettingEditPageComponent
  * @requires shared.service:settingManagerService
  * @requires shared.service.utilService
  * @requires shared.service.prefixes
  *
- * `preferencesTab` is a component that creates a Bootstrap `row` with a both a sidebar 
- * containing Preference Groups configured in the application as well as another section 
- * displaying the various preference forms contained within that preference group.
+ * `settingEditPage` is a component that creates a Bootstrap `row` with a both a sidebar 
+ * containing Setting Groups configured in the application as well as another section 
+ * displaying the various Setting forms contained within that Setting group.
  */
 @Component({
-    selector: 'preferences-tab',
-    templateUrl: './preferencesTab.component.html'
+    selector: 'setting-edit-page',
+    templateUrl: './settingEditPage.component.html'
 })
-export class PreferencesTabComponent implements OnInit {
-    tabs: { type: string, heading: string, active: boolean }[] = []
+export class SettingEditPageComponent implements OnInit {
+    @Input() settingType;
+    tabs: TabType[] = [];
     
-    constructor(@Inject('settingManagerService') private sm, @Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
+    constructor(@Inject('settingManagerService') private sm, 
+        @Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
     
     ngOnInit(): void {
-        this.setPreferenceTabs();
+        this.setSettingTabs();
     }
 
-    addTab(preferenceGroup: any): void {
-        if (!preferenceGroup[this.prefixes.rdfs + 'label']) {
-            this.util.createErrorToast('Preference Group not configured with label.')
+    addTab(settingGroup: any): void {
+        if (!settingGroup[this.prefixes.rdfs + 'label']) {
+            this.util.createErrorToast('Setting Group not configured with label.')
             return;
         }
         this.tabs.push({
-            type: preferenceGroup['@id'],
-            heading: this.util.getPropertyValue(preferenceGroup, this.prefixes.rdfs + 'label'),
+            type: settingGroup['@id'],
+            heading: this.util.getPropertyValue(settingGroup, this.prefixes.rdfs + 'label'),
             active: false
         });
     }
 
-    select(selectedTab: { type: string, heading: string, active:boolean }): void {
+    selectTab(selectedTab: TabType): void {
         forEach(this.tabs, tab => {
             if (tab.active && !isEqual(tab, selectedTab)) {
                 tab.active = false;
@@ -70,12 +79,12 @@ export class PreferencesTabComponent implements OnInit {
         selectedTab.active = true;
     }
 
-    setPreferenceTabs(): void {
-        this.sm.getPreferenceGroups()
+    setSettingTabs(): void {
+        this.sm.getSettingGroups(this.settingType.iri)
             .then(response => {
                 this.tabs = [];
-                forEach(response.data, preferenceGroup => {
-                    this.addTab(preferenceGroup);
+                forEach(response.data, settingGroup => {
+                    this.addTab(settingGroup);
                 });
                 if (this.tabs.length) {
                     this.tabs[0].active = true;

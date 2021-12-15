@@ -22,10 +22,12 @@
  */
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { configureTestSuite } from 'ng-bullet';
-import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
-import { MockComponent } from 'ng-mocks';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
+
+import { configureTestSuite } from 'ng-bullet';
+import { MockComponent } from 'ng-mocks';
+import { get } from 'lodash';
 
 import {
     cleanStylesFromDOM,
@@ -33,16 +35,17 @@ import {
     mockUtil,
     mockPrefixes
 } from '../../../../../../test/ts/Shared';
-import { SharedModule } from '../../../shared/shared.module';
-import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
-import { PreferencesTabComponent } from './preferencesTab.component';
-import { PreferenceGroupComponent } from '../preferenceGroup/preferenceGroup.component';
-import { get } from 'lodash';
+import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
+import { SettingEditPageComponent } from './settingEditPage.component';
+import { SettingGroupComponent } from '../settingGroup/settingGroup.component';
+import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
+import { TrustedHtmlPipe } from '../../pipes/trustedHtml.pipe';
 
-describe('Preferences Tab component', function() {
-    let component: PreferencesTabComponent;
+
+describe('Setting Edit Page Component', function() {
+    let component: SettingEditPageComponent;
     let element: DebugElement;
-    let fixture: ComponentFixture<PreferencesTabComponent>;
+    let fixture: ComponentFixture<SettingEditPageComponent>;
     let utilStub;
     let settingManagerStub;
     let testGroups;
@@ -50,12 +53,14 @@ describe('Preferences Tab component', function() {
     configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [
-                SharedModule,
                 NoopAnimationsModule
             ],
             declarations: [
-                PreferencesTabComponent,
-                MockComponent(PreferenceGroupComponent)
+                SettingEditPageComponent,
+                MockComponent(SettingGroupComponent),
+                ErrorDisplayComponent,
+                InfoMessageComponent,
+                TrustedHtmlPipe
             ],
             providers: [
                 { provide: 'settingManagerService', useClass: mockSettingManager },
@@ -67,7 +72,7 @@ describe('Preferences Tab component', function() {
     });
 
     beforeEach(function() {
-        fixture = TestBed.createComponent(PreferencesTabComponent);
+        fixture = TestBed.createComponent(SettingEditPageComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         settingManagerStub = TestBed.get('settingManagerService');
@@ -96,6 +101,8 @@ describe('Preferences Tab component', function() {
           } ];
 
         settingManagerStub.tabs = [];
+
+        component.settingType = { iri: `http://mobitest.com/Preference`, userText: 'Preferences'};
     });
 
     afterEach(function() {
@@ -110,15 +117,15 @@ describe('Preferences Tab component', function() {
     describe('controller methods', function() {
         describe('should populate the sidebar', function() {
             it('unless an error occurs', fakeAsync(function() {
-                settingManagerStub.getPreferenceGroups.and.returnValue(Promise.reject('Error message'));
-                component.setPreferenceTabs();
+                settingManagerStub.getSettingGroups.and.returnValue(Promise.reject('Error message'));
+                component.setSettingTabs();
                 tick();
                 expect(settingManagerStub.tabs.length).toEqual(0);
                 expect(utilStub.createErrorToast).toHaveBeenCalled();
             }));
             it('with new values', fakeAsync(function() {
-                settingManagerStub.getPreferenceGroups.and.returnValue(Promise.resolve({data: testGroups}));
-                component.setPreferenceTabs();
+                settingManagerStub.getSettingGroups.and.returnValue(Promise.resolve({data: testGroups}));
+                component.setSettingTabs();
                 tick();
                 expect(component.tabs.length).toEqual(2);
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
@@ -166,11 +173,11 @@ describe('Preferences Tab component', function() {
                     active: false
                 }
             ];
-            component.select(component.tabs[1]);
+            component.selectTab(component.tabs[1]);
             expect(component.tabs[0].active).toEqual(false);
             expect(component.tabs[1].active).toEqual(true);
 
-            component.select(component.tabs[0]);
+            component.selectTab(component.tabs[0]);
             expect(component.tabs[0].active).toEqual(true);
             expect(component.tabs[1].active).toEqual(false);
         });
@@ -193,7 +200,7 @@ describe('Preferences Tab component', function() {
             fixture.detectChanges();
         });
         it('for wrapping containers', function() {
-            expect(element.queryAll(By.css('.preferences-tab')).length).toEqual(1);
+            expect(element.queryAll(By.css('.setting-edit-page')).length).toEqual(1);
             expect(element.queryAll(By.css('.row')).length).toEqual(2);
             expect(element.queryAll(By.css('.col-3')).length).toEqual(1);
             expect(element.queryAll(By.css('.col-9')).length).toEqual(1);
@@ -205,7 +212,7 @@ describe('Preferences Tab component', function() {
             expect(element.query(By.css('info-message'))).toBeTruthy();
         });
         it('with sidebar elements', function() {
-            expect(element.queryAll(By.css('.preference-group-item a')).length).toEqual(2);
+            expect(element.queryAll(By.css('.setting-group-item a')).length).toEqual(2);
         });
     });
 });

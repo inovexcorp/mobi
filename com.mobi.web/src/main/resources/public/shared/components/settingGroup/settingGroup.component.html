@@ -4,7 +4,7 @@
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -21,6 +21,6 @@
   #L%
   -->
 <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
-<div *ngFor="let preferenceIRI of preferenceIRIs">
-    <preference-form (updateEvent)="updateUserPreference($event)" [preference]="preferences[preferenceIRI]"></preference-form>
+<div *ngFor="let settingIRI of settingIRIs">
+    <setting-form (updateEvent)="updateSetting($event)" [setting]="settings[settingIRI]"></setting-form>
 </div>

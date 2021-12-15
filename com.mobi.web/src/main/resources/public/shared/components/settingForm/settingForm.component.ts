@@ -23,26 +23,27 @@
 
 import { Component, Input, EventEmitter, Output, OnChanges, Inject } from '@angular/core';
 import { FormArray, FormGroup } from '@angular/forms';
+
 import { filter } from 'lodash';
 
-import { Preference } from '../../interfaces/preference.interface';
+import { Setting } from '../../models/setting.interface';
 
 /**
  * @ngdoc component
- * @name settings.component:preferenceForm
+ * @name shared.component:settingForm
  * @requires shared.service.utilService
  * @requires shared.service.prefixes
  *
  * @description
- * `preferenceForm` is a component that contains a form allowing a user to change their preferences
+ * `settingForm` is a component that contains a form allowing a user to change their settings
  */
 @Component({
-    selector: 'preference-form',
-    templateUrl: './preferenceForm.component.html'
+    selector: 'setting-form',
+    templateUrl: './settingForm.component.html'
 })
-export class PreferenceFormComponent implements OnChanges {
-    @Input() preference: Preference;
-    @Output() updateEvent = new EventEmitter<Preference>();
+export class SettingFormComponent implements OnChanges {
+    @Input() setting: Setting;
+    @Output() updateEvent = new EventEmitter<Setting>();
     
     shaclShapes = {};
     maxBlocks = 1000;
@@ -55,36 +56,36 @@ export class PreferenceFormComponent implements OnChanges {
     constructor(@Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
 
     ngOnChanges(): void {
-        if (this.preference.requiredPropertyShape[this.prefixes.shacl + 'maxCount']) {
-            this.maxBlocks = Number(this.util.getPropertyValue(this.preference.requiredPropertyShape, this.prefixes.shacl + 'maxCount'));
+        if (this.setting.requiredPropertyShape[this.prefixes.shacl + 'maxCount']) {
+            this.maxBlocks = Number(this.util.getPropertyValue(this.setting.requiredPropertyShape, this.prefixes.shacl + 'maxCount'));
         }
 
-        this.numValues = this.preference.numValues();
+        this.numValues = this.setting.numValues();
 
         // Create a lookup object to get the associated property shape for a given formFieldProperty.
-        this.preference.formFieldProperties.forEach(formFieldProperty => {
-            const shaclShape = filter(this.preference.formFieldPropertyShapes, formFieldPropertyShape => {
+        this.setting.formFieldProperties.forEach(formFieldProperty => {
+            const shaclShape = filter(this.setting.formFieldPropertyShapes, formFieldPropertyShape => {
                 return this.util.getPropertyId(formFieldPropertyShape, this.prefixes.shacl + 'path') === formFieldProperty;
             })[0];
             this.shaclShapes[formFieldProperty] = shaclShape;
         });
 
-        this.form = this.preference.buildForm();
+        this.form = this.setting.buildForm();
     }
 
     addFormBlock(): void {
-        this.preference.updateWithFormValues(this.form);
-        this.preference.addBlankValue();
-        this.numValues = this.preference.numValues();
-        this.form = this.preference.buildForm();
+        this.setting.updateWithFormValues(this.form);
+        this.setting.addBlankValue();
+        this.numValues = this.setting.numValues();
+        this.form = this.setting.buildForm();
         this.form.markAsDirty(); // Enable the submit button
     }
 
     deleteFormBlock(index: number): void {
         this.formBlocks.removeAt(index); // Modify the angular form contents
-        this.preference.updateWithFormValues(this.form); // modify the preference object to make it in sync with the form
-        this.numValues = this.preference.numValues(); // update the number of form blocks present (to influence whether the plus button is shown)
-        this.form = this.preference.buildForm(); // Re-build form based on preference object
+        this.setting.updateWithFormValues(this.form); // modify the setting object to make it in sync with the form
+        this.numValues = this.setting.numValues(); // update the number of form blocks present (to influence whether the plus button is shown)
+        this.form = this.setting.buildForm(); // Re-build form based on setting object
         this.form.markAsDirty(); // Enable the submit button
     }
 
@@ -98,7 +99,7 @@ export class PreferenceFormComponent implements OnChanges {
     }
 
     submitForm(): void {
-        this.preference.updateWithFormValues(this.form);
-        this.updateEvent.emit(this.preference);
+        this.setting.updateWithFormValues(this.form);
+        this.updateEvent.emit(this.setting);
     }
 }

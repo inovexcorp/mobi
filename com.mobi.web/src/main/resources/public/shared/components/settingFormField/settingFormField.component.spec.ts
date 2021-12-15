@@ -21,24 +21,29 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { configureTestSuite } from 'ng-bullet';
+import { FormGroup, FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatAutocompleteModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatIconModule, MatInputModule, MatLabel, MatMenuModule, MatProgressSpinnerModule, MatSelectModule, MatSlideToggleModule, MatTableModule, MatTabsModule, MatTooltipModule } from '@angular/material';
+
+import { configureTestSuite } from 'ng-bullet';
+import { get } from 'lodash';
 
 import {
     cleanStylesFromDOM, mockUtil, mockPrefixes
 } from '../../../../../../test/ts/Shared';
-import { SharedModule } from '../../../shared/shared.module';
-import { PreferenceConstants } from '../../classes/preferenceConstants.class';
-import { PreferenceFormFieldComponent } from '../preferenceFormField/preferenceFormField.component';
-import { FormGroup, FormControl } from '@angular/forms';
-import { By } from '@angular/platform-browser';
-import { get } from 'lodash';
 
-describe('Preference Form Field component', function() {
-    let component: PreferenceFormFieldComponent;
+import { SettingConstants } from '../../models/settingConstants.class';
+import { SettingFormFieldComponent } from './settingFormField.component';
+import { CustomLabelComponent } from '../customLabel/customLabel.component';
+import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
+import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
+
+describe('Setting Form Field component', function() {
+    let component: SettingFormFieldComponent;
     let element: DebugElement;
-    let fixture: ComponentFixture<PreferenceFormFieldComponent>;
+    let fixture: ComponentFixture<SettingFormFieldComponent>;
     let formGroup;
     let field;
     let shaclShape;
@@ -47,11 +52,30 @@ describe('Preference Form Field component', function() {
     configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [
-                SharedModule,
                 NoopAnimationsModule,
+                MatSlideToggleModule,
+                FormsModule,
+                ReactiveFormsModule,
+                MatAutocompleteModule,
+                MatMenuModule,
+                MatDialogModule,
+                MatTabsModule,
+                MatFormFieldModule,
+                MatInputModule,
+                MatButtonModule,
+                MatProgressSpinnerModule,
+                MatIconModule,
+                MatSlideToggleModule,
+                MatProgressSpinnerModule,
+                MatTableModule,
+                MatTooltipModule,
+                MatSelectModule
             ],
             declarations: [
-                PreferenceFormFieldComponent
+                SettingFormFieldComponent,
+                CustomLabelComponent,
+                ErrorDisplayComponent,
+                InfoMessageComponent,
             ],
             providers: [
                 { provide: 'utilService', useClass: mockUtil },
@@ -61,7 +85,7 @@ describe('Preference Form Field component', function() {
     });
 
     beforeEach(function() {
-        fixture = TestBed.createComponent(PreferenceFormFieldComponent);
+        fixture = TestBed.createComponent(SettingFormFieldComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         utilStub = TestBed.get('utilService');
@@ -78,7 +102,7 @@ describe('Preference Form Field component', function() {
             'http://mobi.com/ontologies/setting#hasDataValue': new FormControl('firstVal')
         });
 
-        field = PreferenceConstants.HAS_DATA_VALUE;
+        field = SettingConstants.HAS_DATA_VALUE;
 
         shaclShape = {
             '@id': 'setting:SomeSimpleTextPreferencePropertyShape',

@@ -21,43 +21,67 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { configureTestSuite } from 'ng-bullet';
+import { MatAutocompleteModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatIconModule, MatInputModule, MatLabel, MatMenuModule, MatProgressSpinnerModule, MatSelectModule, MatSlideToggleModule, MatTableModule, MatTabsModule, MatTooltipModule } from '@angular/material';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { MockComponent } from 'ng-mocks';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { FormArray, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
+
+import { configureTestSuite } from 'ng-bullet';
+import { MockComponent } from 'ng-mocks';
+import { get, has, set } from 'lodash';
 
 import {
     cleanStylesFromDOM, mockPrefixes, mockUtil
 } from '../../../../../../test/ts/Shared';
-import { SharedModule } from '../../../shared/shared.module';
-import { PreferenceFormComponent } from '../preferenceForm/preferenceForm.component';
-import { PreferenceConstants } from '../../classes/preferenceConstants.class';
-import { SimplePreference } from '../../classes/simplePreference.class';
-import { Preference } from '../../interfaces/preference.interface';
-import { PreferenceFormFieldComponent } from '../preferenceFormField/preferenceFormField.component';
-import { FormArray } from '@angular/forms';
-import { By } from '@angular/platform-browser';
-import { get, has, set } from 'lodash';
+import { SettingFormComponent } from './settingForm.component';
+import { SettingConstants } from '../../models/settingConstants.class';
+import { SimpleSetting } from '../../models/simpleSetting.class';
+import { Setting } from '../../models/setting.interface';
+import { SettingFormFieldComponent } from '../settingFormField/settingFormField.component';
+import { CustomLabelComponent } from '../customLabel/customLabel.component';
+import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
+import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
 
-describe('Preference Form component', function() {
-    let component: PreferenceFormComponent;
+describe('Setting Form component', function() {
+    let component: SettingFormComponent;
     let element: DebugElement;
-    let fixture: ComponentFixture<PreferenceFormComponent>;
-    let testUserPreference;
+    let fixture: ComponentFixture<SettingFormComponent>;
+    let testUserSetting;
     let testPreferenceDefinitions;
-    let testPreference: Preference;
+    let testSetting: Setting;
     let utilStub;
     let prefixStub;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [
-                SharedModule,
                 NoopAnimationsModule,
+                MatIconModule,
+                MatSlideToggleModule,
+                FormsModule,
+                ReactiveFormsModule,
+                MatAutocompleteModule,
+                MatMenuModule,
+                MatDialogModule,
+                MatTabsModule,
+                MatFormFieldModule,
+                MatInputModule,
+                MatButtonModule,
+                MatProgressSpinnerModule,
+                MatIconModule,
+                MatSlideToggleModule,
+                MatProgressSpinnerModule,
+                MatTableModule,
+                MatTooltipModule,
+                MatSelectModule
             ],
             declarations: [
-                MockComponent(PreferenceFormFieldComponent),
-                PreferenceFormComponent
+                SettingFormComponent,
+                MockComponent(SettingFormFieldComponent),
+                CustomLabelComponent,
+                ErrorDisplayComponent,
+                InfoMessageComponent,
             ],
             providers: [
                 { provide: 'utilService', useClass: mockUtil },
@@ -67,7 +91,7 @@ describe('Preference Form component', function() {
     });
 
     beforeEach(function() {
-        fixture = TestBed.createComponent(PreferenceFormComponent);
+        fixture = TestBed.createComponent(SettingFormComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         utilStub = TestBed.get('utilService');
@@ -89,7 +113,7 @@ describe('Preference Form component', function() {
             }
         });
 
-        testUserPreference = [{
+        testUserSetting = [{
             '@id': 'http://mobi.com/setting#45e225a4-90f6-4276-b435-1b2888fdc01e',
             '@type': [
                 'http://www.w3.org/2002/07/owl#Thing',
@@ -149,7 +173,7 @@ describe('Preference Form component', function() {
           }
         };
 
-        testPreference = new SimplePreference(testPreferenceDefinitions['preference:SomeSimpleTextPreference'], testPreferenceDefinitions, utilStub, prefixStub);
+        testSetting = new SimpleSetting(testPreferenceDefinitions['preference:SomeSimpleTextPreference'], testPreferenceDefinitions, utilStub, prefixStub);
     });
 
     afterEach(function() {
@@ -163,29 +187,29 @@ describe('Preference Form component', function() {
         describe('onChanges', function() {
             describe('should set maxBlocks', function() {
                 it('when a shacl maximum exists', function() {
-                    testPreference.populate(testUserPreference);
-                    component.preference = testPreference;
+                    testSetting.populate(testUserSetting);
+                    component.setting = testSetting;
                     fixture.detectChanges();
                     component.ngOnChanges();
                     expect(component.maxBlocks).toEqual(2);     
                 });
                 it('when no shacl maximum exists', function() {
                     delete testPreferenceDefinitions['preference:SomeSimpleTextPreferencePropertyShape']['shacl:maxCount'];
-                    testPreference = new SimplePreference(testPreferenceDefinitions['preference:SomeSimpleTextPreference'], testPreferenceDefinitions, utilStub, prefixStub);
-                    testPreference.populate(testUserPreference);
-                    component.preference = testPreference;
+                    testSetting = new SimpleSetting(testPreferenceDefinitions['preference:SomeSimpleTextPreference'], testPreferenceDefinitions, utilStub, prefixStub);
+                    testSetting.populate(testUserSetting);
+                    component.setting = testSetting;
                     fixture.detectChanges();
                     expect(component.maxBlocks).toEqual(1000);    
                 });
             });
             describe('should set numValues', function() {
-                it('based on the number of preference values', function() {
-                    testPreference.populate(testUserPreference);
-                    component.preference = testPreference;
+                it('based on the number of setting values', function() {
+                    testSetting.populate(testUserSetting);
+                    component.setting = testSetting;
                     fixture.detectChanges();
                     component.ngOnChanges();
                     expect(component.numValues).toEqual(1);
-                    testUserPreference[0][PreferenceConstants.HAS_DATA_VALUE] = [
+                    testUserSetting[0][SettingConstants.HAS_DATA_VALUE] = [
                         {
                             '@value': 'first'
                         },
@@ -196,8 +220,8 @@ describe('Preference Form component', function() {
                             '@value': 'third'
                         }
                     ];
-                    testPreference.populate(testUserPreference);
-                    component.preference = testPreference;
+                    testSetting.populate(testUserSetting);
+                    component.setting = testSetting;
                     fixture.detectChanges();
                     component.ngOnChanges();
                     expect(component.numValues).toEqual(3);
@@ -205,8 +229,8 @@ describe('Preference Form component', function() {
             });
             describe('should set shaclShapes', function() {
                 it('correctly', function() {
-                    testPreference.populate(testUserPreference);
-                    component.preference = testPreference;
+                    testSetting.populate(testUserSetting);
+                    component.setting = testSetting;
                     fixture.detectChanges();
                     component.ngOnChanges();
                     expect(component.shaclShapes).toEqual({
@@ -216,15 +240,15 @@ describe('Preference Form component', function() {
             });
             describe('should build the form', function() {
                 it('when a single preference value exists', function() {
-                    testPreference.populate(testUserPreference);
-                    component.preference = testPreference;
+                    testSetting.populate(testUserSetting);
+                    component.setting = testSetting;
                     fixture.detectChanges();
                     component.ngOnChanges();
                     expect((component.form.get('formBlocks') as FormArray).length).toEqual(1);
                     expect(component.form.get('formBlocks').get(['0', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('first');
                 });
                 it('when a multiple preference values exists', function() {
-                    testUserPreference[0][PreferenceConstants.HAS_DATA_VALUE] = [
+                    testUserSetting[0][SettingConstants.HAS_DATA_VALUE] = [
                         {
                             '@value': 'first'
                         },
@@ -235,8 +259,8 @@ describe('Preference Form component', function() {
                             '@value': 'third'
                         }
                     ];
-                    testPreference.populate(testUserPreference);
-                    component.preference = testPreference;
+                    testSetting.populate(testUserSetting);
+                    component.setting = testSetting;
                     fixture.detectChanges();
                     component.ngOnChanges();
                     expect((component.form.get('formBlocks') as FormArray).length).toEqual(3);
@@ -247,12 +271,12 @@ describe('Preference Form component', function() {
             });
         });
         it('should add a formBlock', function() {
-            testPreference.populate(testUserPreference);
-            component.preference = testPreference;
+            testSetting.populate(testUserSetting);
+            component.setting = testSetting;
             fixture.detectChanges();
             component.ngOnChanges();
             expect((component.form.get('formBlocks') as FormArray).length).toEqual(1);
-            expect(testPreference.values[0][PreferenceConstants.HAS_DATA_VALUE].length).toEqual(1);
+            expect(testSetting.values[0][SettingConstants.HAS_DATA_VALUE].length).toEqual(1);
             expect(component.numValues).toEqual(1);
             expect(component.form.dirty).toEqual(false);
 
@@ -260,7 +284,7 @@ describe('Preference Form component', function() {
             fixture.detectChanges();
             expect((component.form.get('formBlocks') as FormArray).length).toEqual(2);
             expect(component.form.get('formBlocks').get(['1', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('');
-            expect(testPreference.values[0][PreferenceConstants.HAS_DATA_VALUE].length).toEqual(2);
+            expect(testSetting.values[0][SettingConstants.HAS_DATA_VALUE].length).toEqual(2);
             expect(component.numValues).toEqual(2);
             expect(component.form.dirty).toEqual(true);
 
@@ -270,11 +294,11 @@ describe('Preference Form component', function() {
             expect(component.form.get('formBlocks').get(['1', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('');
             expect(component.form.get('formBlocks').get(['2', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('');
             expect(component.numValues).toEqual(3);
-            expect(testPreference.values[0][PreferenceConstants.HAS_DATA_VALUE].length).toEqual(3);
+            expect(testSetting.values[0][SettingConstants.HAS_DATA_VALUE].length).toEqual(3);
             expect(component.form.dirty).toEqual(true);
         });
         it('should delete a formBlock', function() {
-            testUserPreference[0][PreferenceConstants.HAS_DATA_VALUE] = [
+            testUserSetting[0][SettingConstants.HAS_DATA_VALUE] = [
                 {
                     '@value': 'first'
                 },
@@ -285,8 +309,8 @@ describe('Preference Form component', function() {
                     '@value': 'third'
                 }
             ];
-            testPreference.populate(testUserPreference);
-            component.preference = testPreference;
+            testSetting.populate(testUserSetting);
+            component.setting = testSetting;
             fixture.detectChanges();
             component.ngOnChanges();
 
@@ -304,20 +328,20 @@ describe('Preference Form component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            testPreference.populate(testUserPreference);
-            component.preference = testPreference;
+            testSetting.populate(testUserSetting);
+            component.setting = testSetting;
             fixture.detectChanges();
             component.ngOnChanges();
             fixture.detectChanges();
             expect(component.maxBlocks).toEqual(2);
             expect(element.queryAll(By.css('form')).length).toEqual(1);
-            expect(element.queryAll(By.css('preference-form-field')).length).toEqual(1);
+            expect(element.queryAll(By.css('setting-form-field')).length).toEqual(1);
             expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeTruthy();
             expect(element.queryAll(By.css('.add-block-button')).length).toEqual(1);
             expect(element.queryAll(By.css('.delete-block-button')).length).toEqual(0);
         });
         it('when maxBlocks is reached', function() {
-            testUserPreference[0][PreferenceConstants.HAS_DATA_VALUE] = [
+            testUserSetting[0][SettingConstants.HAS_DATA_VALUE] = [
                 {
                     '@value': 'first'
                 },
@@ -325,15 +349,15 @@ describe('Preference Form component', function() {
                     '@value': 'second'
                 }
             ];
-            testPreference.populate(testUserPreference);
-            component.preference = testPreference;
+            testSetting.populate(testUserSetting);
+            component.setting = testSetting;
             fixture.detectChanges();
             component.ngOnChanges();
             fixture.detectChanges();
             expect(component.maxBlocks).toEqual(2);
             expect((component.form.get('formBlocks') as FormArray).length).toEqual(2);
             expect(element.queryAll(By.css('form')).length).toEqual(1);
-            expect(element.queryAll(By.css('preference-form-field')).length).toEqual(2);
+            expect(element.queryAll(By.css('setting-form-field')).length).toEqual(2);
             expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeTruthy();
             expect(element.queryAll(By.css('.add-block-button')).length).toEqual(0);
             expect(element.queryAll(By.css('.delete-block-button')).length).toEqual(2);

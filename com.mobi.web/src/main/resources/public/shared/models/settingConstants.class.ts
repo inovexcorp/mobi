@@ -20,38 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-@import "../../../css/variables";
-
-.preferences-tab {
-    .preferences-info {
-        font-size: 16px;
-    }
-
-    .preferences-sidebar {
-        min-width: 150px;
-    }
-
-    .material-tabset {
-        padding-top: 15px; 
-        align-items: flex-end;
-
-        .sidebar-list {
-            min-width: 100px;
-
-            .preference-group-item {
-                border-right: solid gray; 
-                display: block; 
-                padding: .5rem .1rem; 
-                font-weight: 500;
-    
-                a {
-                    color: gray;
-
-                    &.active {
-                        color: var(--primary) !important;
-                    }
-                }
-            }
-        }
-    }
+/**
+ * @ngdoc interface
+ * @name shared.models:SettingConstants
+ *
+ * @description
+ * `SettingConstants` is a class containing readonly string constants that are commonly used in the Setting implementations
+ */
+export class SettingConstants {
+    static readonly HAS_DATA_VALUE: string = 'http://mobi.com/ontologies/setting#hasDataValue';
+    static readonly HAS_OBJECT_VALUE: string = 'http://mobi.com/ontologies/setting#hasObjectValue';
 }

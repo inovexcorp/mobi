@@ -25,6 +25,8 @@ import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { By } from '@angular/platform-browser';
+import { get, has, set } from 'lodash';
 
 import {
     cleanStylesFromDOM,
@@ -32,35 +34,31 @@ import {
     mockSettingManager,
     mockPrefixes
 } from '../../../../../../test/ts/Shared';
-import { SharedModule } from "../../../shared/shared.module";
-import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
-import { PreferenceGroupComponent } from '../preferenceGroup/preferenceGroup.component';
-import { PreferenceFormComponent } from '../preferenceForm/preferenceForm.component';
-import { PreferenceConstants } from '../../classes/preferenceConstants.class';
-import { SimplePreference } from '../../classes/simplePreference.class';
-import { By } from '@angular/platform-browser';
-import { PreferenceUtils } from '../../classes/preferenceUtils.class';
-import { get, has, set } from 'lodash';
+import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
+import { SettingGroupComponent } from './settingGroup.component';
+import { SettingFormComponent } from '../settingForm/settingForm.component';
+import { SettingConstants } from '../../models/settingConstants.class';
+import { SimpleSetting } from '../../models/simpleSetting.class';
+import { SettingUtils } from '../../models/settingUtils.class';
 
-describe('Preference Group component', function() {
-    let component: PreferenceGroupComponent;
+describe('Setting Group component', function() {
+    let component: SettingGroupComponent;
     let element: DebugElement;
-    let fixture: ComponentFixture<PreferenceGroupComponent>;
+    let fixture: ComponentFixture<SettingGroupComponent>;
     let settingManagerStub;
-    let testUserPreferences;
-    let testPreferenceDefinitions;
+    let testUserSettings;
+    let testSettingsDefinitions;
     let utilStub;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [
-                SharedModule,
-                NoopAnimationsModule,
-
+                NoopAnimationsModule
             ],
             declarations: [
-                MockComponent(PreferenceFormComponent),
-                PreferenceGroupComponent
+                MockComponent(SettingFormComponent),
+                SettingGroupComponent,
+                ErrorDisplayComponent
             ],
             providers: [
                 { provide: 'settingManagerService', useClass: mockSettingManager },
@@ -72,14 +70,15 @@ describe('Preference Group component', function() {
     });
 
     beforeEach(function() {
-        fixture = TestBed.createComponent(PreferenceGroupComponent);
+        fixture = TestBed.createComponent(SettingGroupComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         settingManagerStub = TestBed.get('settingManagerService');
         utilStub = TestBed.get('utilService');
         
-        spyOn(PreferenceUtils, 'isSimplePreference').and.returnValue(true);
+        spyOn(SettingUtils, 'isSimpleSetting').and.returnValue(true);
         
+        component.settingType = { iri: `http://mobitest.com/Preference`, userText: 'Preferences'};
         utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
             return get(entity, "['" + propertyIRI + "'][0]['@value']", '');
         });
@@ -95,7 +94,7 @@ describe('Preference Group component', function() {
                 set(entity, "['" + propertyIRI + "'][0]", {'@value': value});
             }
         });
-        testUserPreferences = {
+        testUserSettings = {
             "setting:SomeSimpleBooleanPreference": [
                 {
                     "@id": "http://mobi.com/setting#bff0d229-5691-455a-8e2b-8c09ccbc4ef6",
@@ -140,7 +139,7 @@ describe('Preference Group component', function() {
             ]
         };
 
-        testPreferenceDefinitions = [ {
+        testSettingsDefinitions = [ {
             "@id" : "setting:SomeSimpleBooleanPreference",
             "@type" : [ "http://www.w3.org/2002/07/owl#Class", "shacl:NodeShape" ],
             "setting:inGroup" : [ {
@@ -212,9 +211,9 @@ describe('Preference Group component', function() {
               "@id" : "http://mobi.com/ontologies/setting#hasDataValue"
             } ]
           } ];
-
-        settingManagerStub.getPreferenceDefinitions.and.returnValue(Promise.resolve({data: testPreferenceDefinitions}));
-        settingManagerStub.getUserPreferences.and.returnValue(Promise.resolve({data: testUserPreferences}));
+        settingManagerStub.getDefaultNamespace.and.returnValue(Promise.resolve(settingManagerStub.defaultNamespace));
+        settingManagerStub.getSettingDefinitions.and.returnValue(Promise.resolve({data: testSettingsDefinitions}));
+        settingManagerStub.getSettings.and.returnValue(Promise.resolve({data: testUserSettings}));
     });
 
     afterEach(function() {
@@ -226,74 +225,62 @@ describe('Preference Group component', function() {
     });
 
     describe('controller methods', function() {
-        describe('should retrieve preferences', function() {
+        describe('should retrieve settings', function() {
             describe('successfully', function() {
-                it('when user preferences exist', fakeAsync(function() {
-                    component.retrievePreferences();
+                it('when user settings exist', fakeAsync(function() {
+                    component.retrieveSettings();
                     tick();
-    
-                    expect(Object.keys(component.preferences).length).toEqual(2);
-    
-                    expect(component.preferences['setting:SomeSimpleBooleanPreference'].values[0][PreferenceConstants.HAS_DATA_VALUE][0]['@value']).toEqual('true');
-    
-                    expect(component.preferences['setting:SomeSimpleBooleanPreference'].topLevelPreferenceNodeshapeInstance.length).toEqual(1);
-    
-                    expect(component.preferences['setting:SomeSimpleBooleanPreference'].topLevelPreferenceNodeshapeInstanceId).toEqual('http://mobi.com/setting#bff0d229-5691-455a-8e2b-8c09ccbc4ef6');
-    
-                    expect(component.preferences['setting:SomeSimpleBooleanPreference']).toBeInstanceOf(SimplePreference);
-    
-                    expect(component.preferences['setting:SomeSimpleBooleanPreference'].asJsonLD()).toEqual(testUserPreferences['setting:SomeSimpleBooleanPreference']);
-    
-                    expect(component.preferences['setting:SomeSimpleTextPreference'].asJsonLD()).toEqual(testUserPreferences['setting:SomeSimpleTextPreference']);
+                    expect(Object.keys(component.settings).length).toEqual(2);
+                    expect(component.settings['setting:SomeSimpleBooleanPreference'].values[0][SettingConstants.HAS_DATA_VALUE][0]['@value']).toEqual('true');
+                    expect(component.settings['setting:SomeSimpleBooleanPreference'].topLevelSettingNodeshapeInstance.length).toEqual(1);
+                    expect(component.settings['setting:SomeSimpleBooleanPreference'].topLevelSettingNodeshapeInstanceId).toEqual('http://mobi.com/setting#bff0d229-5691-455a-8e2b-8c09ccbc4ef6');
+                    expect(component.settings['setting:SomeSimpleBooleanPreference']).toBeInstanceOf(SimpleSetting);
+                    expect(component.settings['setting:SomeSimpleBooleanPreference'].asJsonLD()).toEqual(testUserSettings['setting:SomeSimpleBooleanPreference']);
+                    expect(component.settings['setting:SomeSimpleTextPreference'].asJsonLD()).toEqual(testUserSettings['setting:SomeSimpleTextPreference']);
                 }));
-                it('when no user preferences exist', fakeAsync(function() {
-                    settingManagerStub.getUserPreferences.and.returnValue(Promise.resolve({data: []}));
-                    component.retrievePreferences();
+                it('when no user settings exist', fakeAsync(function() {
+                    settingManagerStub.getSettings.and.returnValue(Promise.resolve({data: []}));
+                    component.retrieveSettings();
                     tick();
-    
-                    expect(Object.keys(component.preferences).length).toEqual(2);
-    
-                    expect(component.preferences['setting:SomeSimpleBooleanPreference'].values[0][PreferenceConstants.HAS_DATA_VALUE][0]['@value']).toEqual('');
-
-                    expect(component.preferences['setting:SomeSimpleTextPreference'].values[0][PreferenceConstants.HAS_DATA_VALUE][0]['@value']).toEqual('');
-
-                    expect(component.preferences['setting:SomeSimpleBooleanPreference'].topLevelPreferenceNodeshapeInstanceId).toEqual(undefined);
-    
-                    expect(component.preferences['setting:SomeSimpleBooleanPreference']).toBeInstanceOf(SimplePreference);
+                    expect(Object.keys(component.settings).length).toEqual(2);
+                    expect(component.settings['setting:SomeSimpleBooleanPreference'].values[0][SettingConstants.HAS_DATA_VALUE][0]['@value']).toEqual('');
+                    expect(component.settings['setting:SomeSimpleTextPreference'].values[0][SettingConstants.HAS_DATA_VALUE][0]['@value']).toEqual('');
+                    expect(component.settings['setting:SomeSimpleBooleanPreference'].topLevelSettingNodeshapeInstanceId).toEqual(undefined);
+                    expect(component.settings['setting:SomeSimpleBooleanPreference']).toBeInstanceOf(SimpleSetting);
                 }));
             });
         });
-        it('should update a preference', fakeAsync(function() {
-            component.retrievePreferences();
+        it('should update a setting', fakeAsync(function() {
+            component.retrieveSettings();
             tick();
-            const pref: SimplePreference = component.preferences['setting:SomeSimpleBooleanPreference'];
-            settingManagerStub.updateUserPreference.and.returnValue(Promise.resolve());
-            component.updateUserPreference(pref);
-            expect(settingManagerStub.updateUserPreference).toHaveBeenCalled();
-            expect(settingManagerStub.createUserPreference).not.toHaveBeenCalled();
+            const simpleSetting: SimpleSetting = component.settings['setting:SomeSimpleBooleanPreference'];
+            settingManagerStub.updateSetting.and.returnValue(Promise.resolve());
+            component.updateSetting(simpleSetting);
+            expect(settingManagerStub.updateSetting).toHaveBeenCalled();
+            expect(settingManagerStub.createSetting).not.toHaveBeenCalled();
         }));
-        it('should create a preference', fakeAsync(function() {
-            settingManagerStub.getUserPreferences.and.returnValue(Promise.resolve({data: []}));
-            component.retrievePreferences();
+        it('should create a setting', fakeAsync(function() {
+            settingManagerStub.getSettings.and.returnValue(Promise.resolve({data: []}));
+            component.retrieveSettings();
             tick();
-            const pref: SimplePreference = component.preferences['setting:SomeSimpleBooleanPreference'];
+            const simpleSetting: SimpleSetting = component.settings['setting:SomeSimpleBooleanPreference'];
             settingManagerStub.createUserPreference.and.returnValue(Promise.resolve());
-            component.updateUserPreference(pref);
-            expect(settingManagerStub.updateUserPreference).not.toHaveBeenCalled();
-            expect(settingManagerStub.createUserPreference).toHaveBeenCalled();
+            component.updateSetting(simpleSetting);
+            expect(settingManagerStub.updateSetting).not.toHaveBeenCalled();
+            expect(settingManagerStub.createSetting).toHaveBeenCalled();
         }));
     });
     describe('contains the correct html', function() {
-        it('when preferences are retrieved successfully', fakeAsync(function() {
-            component.retrievePreferences();
+        it('when settings are retrieved successfully', fakeAsync(function() {
+            component.retrieveSettings();
             tick();
             fixture.detectChanges();
             expect(element.queryAll(By.css('div')).length).toEqual(2);
             expect(element.queryAll(By.css('error-display')).length).toEqual(0);
         }));
-        it('when preferences are can not be retrieved', fakeAsync(function() {
-            settingManagerStub.getUserPreferences.and.returnValue(Promise.reject('Error message'));
-            component.retrievePreferences();
+        it('when settings are can not be retrieved', fakeAsync(function() {
+            settingManagerStub.getSettings.and.returnValue(Promise.reject('Error message'));
+            component.retrieveSettings();
             tick();
             fixture.detectChanges();
             expect(element.queryAll(By.css('div')).length).toEqual(0);

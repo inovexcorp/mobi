@@ -179,6 +179,11 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
 import { FileInputComponent } from "./components/fileInput/fileInput.component";
 import { CustomLabelComponent } from "./components/customLabel/customLabel.component";
 
+import { SettingEditPageComponent } from './components/settingEditPage/settingEditPage.component';
+import { SettingGroupComponent } from './components/settingGroup/settingGroup.component';
+import { SettingFormComponent } from './components/settingForm/settingForm.component';
+import { SettingFormFieldComponent } from './components/settingFormField/settingFormField.component';
+
 /**
  * @namespace shared
  *
@@ -217,7 +222,11 @@ import { CustomLabelComponent } from "./components/customLabel/customLabel.compo
         HighlightTextPipe,
         TrustedHtmlPipe,
         FileInputComponent,
-        CustomLabelComponent
+        CustomLabelComponent,
+        SettingEditPageComponent,
+        SettingGroupComponent,
+        SettingFormComponent,
+        SettingFormFieldComponent
     ],
     entryComponents: [
         ConfirmModalComponent,
@@ -258,7 +267,8 @@ import { CustomLabelComponent } from "./components/customLabel/customLabel.compo
         HighlightTextPipe,
         TrustedHtmlPipe,
         FileInputComponent,
-        CustomLabelComponent
+        CustomLabelComponent, 
+        SettingEditPageComponent
     ],
     providers: [
         loginManagerServiceProvider,
@@ -394,4 +404,9 @@ angular.module('shared', [])
     .directive('progressSpinner', downgradeComponent({component: SpinnerComponent}) as angular.IDirectiveFactory)
     .directive('userAccessControls', downgradeComponent({component: UserAccessControlsComponent}) as angular.IDirectiveFactory)
     .directive('fileInput', downgradeComponent({component: FileInputComponent}) as angular.IDirectiveFactory)
-    .directive('customLabel', downgradeComponent({component: CustomLabelComponent}) as angular.IDirectiveFactory);
+    .directive('customLabel', downgradeComponent({component: CustomLabelComponent}) as angular.IDirectiveFactory)
+    .directive('settingEditPage', downgradeComponent({component: SettingEditPageComponent}) as angular.IDirectiveFactory)
+    .directive('settingGroup', downgradeComponent({component: SettingGroupComponent}) as angular.IDirectiveFactory)
+    .directive('settingForm', downgradeComponent({component: SettingFormComponent}) as angular.IDirectiveFactory)
+    .directive('settingFormField', downgradeComponent({component: SettingFormFieldComponent}) as angular.IDirectiveFactory);
+
