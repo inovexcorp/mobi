@@ -33,5 +33,8 @@
         <mat-tab label="Permissions">
             <permissions-page></permissions-page>
         </mat-tab>
+        <mat-tab label="Application Settings">
+            <setting-edit-page [settingType]="this.sm.appSettingType"></setting-edit-page>
+        </mat-tab>
     </mat-tab-group>
 </div>

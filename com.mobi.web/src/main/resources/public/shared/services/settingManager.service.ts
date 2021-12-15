@@ -22,7 +22,7 @@
  */
 
 import { has } from 'lodash';
-import { PreferenceConstants } from '../../settings/classes/preferenceConstants.class';
+import { SettingConstants } from '../models/settingConstants.class';
 
 settingManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'prefixes', 'utilService', 'httpService'];
 
@@ -39,28 +39,12 @@ settingManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'prefixes', 'util
  * to hold information about the different types of settings.
  */
 function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, httpService) {
-    const self = this,
-        util = utilService,
-        prefix = `${REST_PREFIX}settings`,
-        prefSettingType = `${prefixes.setting}Preference`,
-        appSettingType = `${prefixes.setting}ApplicationSetting`;
+    const self = this;
+    const util = utilService;
+    const prefix = `${REST_PREFIX}settings`;
 
-    self.defaultNamespace = '';
-
-    /**
-     * @ngdoc method
-     * @name initialize
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Initializes the `catalogId` variable.
-     */
-    self.initialize = function() {
-        return this.getDefaultNamespace()
-            .then(data => {
-                self.defaultNamespace = data;
-            }, error => Promise.reject(error));
-    };
+    self.prefSettingType = { iri: `${prefixes.setting}Preference`, userText: 'Preferences'};
+    self.appSettingType = { iri: `${prefixes.setting}ApplicationSetting`, userText: 'Application Settings'};
 
     self.getDefaultNamespace = function() {
         return this.getApplicationSettingByType('http://mobi.com/ontologies/namespace#DefaultOntologyNamespaceApplicationSetting').then(response => {
@@ -69,8 +53,8 @@ function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, ht
                 util.createErrorToast('Too many values present for application setting');
             } else if (applicationSetting.length === 1) {
                 const defaultNamespace = applicationSetting[0];
-                if (has(defaultNamespace, PreferenceConstants.HAS_DATA_VALUE)) {
-                    return util.getPropertyValue(defaultNamespace, PreferenceConstants.HAS_DATA_VALUE);
+                if (has(defaultNamespace, SettingConstants.HAS_DATA_VALUE)) {
+                    return util.getPropertyValue(defaultNamespace, SettingConstants.HAS_DATA_VALUE);
                 }
                 return applicationSetting;
             } else {
@@ -110,7 +94,7 @@ function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, ht
      * rejected with an error message
      */
     self.getUserPreferences = function(id = '') {
-        return self.getSettings(prefSettingType, id);
+        return self.getSettings(self.prefSettingType.iri, id);
     };
 
     /**
@@ -126,7 +110,7 @@ function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, ht
      * rejected with an error message
      */
     self.getApplicationSettings = function(id = '') {
-        return self.getSettings(appSettingType, id);
+        return self.getSettings(self.appSettingType.iri, id);
     };
 
     /**
@@ -170,7 +154,7 @@ function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, ht
      * error message
      */
     self.getApplicationSettingByType = function(applicationSettingType, id = '') {
-        return self.getSettingByType(appSettingType, applicationSettingType, id);
+        return self.getSettingByType(self.appSettingType.iri, applicationSettingType, id);
     };
 
     /**
@@ -187,7 +171,7 @@ function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, ht
      * error message
      */
     self.getUserPreferenceByType = function(preferenceType, id = '') {
-        return self.getSettingByType(prefSettingType, preferenceType, id);
+        return self.getSettingByType(self.prefSettingType.iri, preferenceType, id);
     };
 
     /**
@@ -232,7 +216,7 @@ function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, ht
      * error message
      */
     self.updateUserPreference = function(preferenceId, preferenceType, userPreference, id = '') {
-        return self.updateSetting(prefSettingType, preferenceId, preferenceType, userPreference, id);
+        return self.updateSetting(self.prefSettingType.iri, preferenceId, preferenceType, userPreference, id);
     };
 
     /**
@@ -252,7 +236,7 @@ function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, ht
      * error message
      */
     self.updateApplicationSetting = function(applicationSettingId, applicationSettingType, applicationSetting, id = '') {
-        return self.updateSetting(appSettingType, applicationSettingId, applicationSettingType, applicationSetting, id);
+        return self.updateSetting(self.appSettingType.iri, applicationSettingId, applicationSettingType, applicationSetting, id);
     };
 
     /**
@@ -299,7 +283,7 @@ function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, ht
      * error message
      */
     self.createUserPreference = function(preferenceType, userPreference, id = '') {
-        return self.createSetting(prefSettingType, preferenceType, userPreference, id)
+        return self.createSetting(self.prefSettingType.iri , preferenceType, userPreference, id)
     };
 
     /**
@@ -317,7 +301,7 @@ function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, ht
      * error message
      */
     self.createApplicationSetting = function(applicationSettingType, applicationSetting, id = '') {
-        return self.createSetting(appSettingType, applicationSettingType, applicationSetting, id);
+        return self.createSetting(self.appSettingType.iri, applicationSettingType, applicationSetting, id);
     };
 
     /**
@@ -383,7 +367,7 @@ function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, ht
      * error message
      */
     self.getPreferenceGroups = function(id = '') {
-        return self.getSettingGroups(prefSettingType, id);
+        return self.getSettingGroups(self.prefSettingType.iri, id);
     };
 
     /**
@@ -399,7 +383,7 @@ function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, ht
      * error message
      */
     self.getApplicationSettingGroups = function(id = '') {
-        return self.getSettingGroups(appSettingType, id);
+        return self.getSettingGroups(self.appSettingType.iri, id);
     };
 
     /**
@@ -410,13 +394,13 @@ function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, ht
      * @description
      * Retrieve all preference definitions that are part of the passed in preference group.
      * 
-     * @param {string} preferenceGroup The preference group to retrieve preference definitions for
+     * @param {string} settingGroup The preference group to retrieve preference definitions for
      * @param {string} [id=''] The identifier for this request
      * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
      * error message
      */
-    self.getPreferenceDefinitions = function(preferenceGroup, id = '') {
-        return self.getSettingDefinitions(preferenceGroup, prefSettingType, id);
+    self.getPreferenceDefinitions = function(settingGroup, id = '') {
+        return self.getSettingDefinitions(settingGroup, self.prefSettingType.iri, id);
     };
 
     /**
@@ -433,7 +417,7 @@ function settingManagerService($http, $q, REST_PREFIX, prefixes, utilService, ht
      * error message
      */
     self.getApplicationSettingDefinitions = function(applicationSettingGroup, id = '') {
-        return self.getSettingDefinitions(applicationSettingGroup, appSettingType, id);
+        return self.getSettingDefinitions(applicationSettingGroup, self.appSettingType.iri, id);
     };
 
     /**

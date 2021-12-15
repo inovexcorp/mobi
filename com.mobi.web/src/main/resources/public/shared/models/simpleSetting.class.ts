@@ -20,57 +20,61 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Preference } from '../interfaces/preference.interface';
-import { forEach, filter, sortBy } from 'lodash';
 import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
-import { PreferenceUtils } from './preferenceUtils.class';
-import { PreferenceConstants } from './preferenceConstants.class';
+
+import { forEach, filter, sortBy } from 'lodash';
+
+import { SettingUtils } from './settingUtils.class';
+import { SettingConstants } from './settingConstants.class';
+import { Setting } from './setting.interface';
+import { v } from '@angular/core/src/render3';
 
 /**
  * @ngdoc class
- * @name settings.classes:simplePreference
+ * @name shared.models:SimpleSetting
  *
  * @description
- * `SimplePreference` is an implementation of the Preference interface used for Preferences that will always have
+ * `SimpleSetting` is an implementation of the Setting interface used for Settings that will always have
  * exactly one form field (there may be multiple instances of that form field) that can only hold a literal value.
  */
-export class SimplePreference implements Preference {
-    private _topLevelPreferenceNodeshapeInstanceId: string;
-    private _topLevelPreferenceNodeshapeInstance: any;
+export class SimpleSetting implements Setting {
+    private _topLevelSettingNodeshapeInstanceId: string;
+    private _topLevelSettingNodeshapeInstance: any;
     private _formFieldPropertyShapes: any;
     private _formFieldProperties: Array<string>;
     private _values: Array<any> = [];
     private _json: any = {};
     private _requiredPropertyShape: any = {};
 
-    constructor(preferenceJson: any, shapeDefinitions: any, private util, private prefixes) {
-        preferenceJson.values = [];
-        this.json = preferenceJson;
+    constructor(settingJson: any, shapeDefinitions: any, private util, private prefixes) {
+        settingJson.values = [];
+        this.json = settingJson;
         this.requiredPropertyShape = shapeDefinitions[this.requiredPropertyShapeId];  
         this.formFieldPropertyShapes = [this.requiredPropertyShape];
-        this.formFieldProperties = [PreferenceConstants.HAS_DATA_VALUE];
+        this.formFieldProperties = [SettingConstants.HAS_DATA_VALUE];
     }
 
     public get type(): string {
         return this.json['@id'];
     }
 
-    public populate(userPreference): void {
-        this.values = filter(userPreference, this.formFieldProperties[0]);
+    public populate(setting: any): void {
+        this.values = filter(setting, this.formFieldProperties[0]);
 
         if (!this.values.length) {
             this.addBlankValue();
         } else {
-            this.values[0][PreferenceConstants.HAS_DATA_VALUE] = sortBy(this.values[0][PreferenceConstants.HAS_DATA_VALUE], '@value');
+            this.values[0][SettingConstants.HAS_DATA_VALUE] = sortBy(this.values[0][SettingConstants.HAS_DATA_VALUE], '@value');
         }
 
-        // Find Node that corresponds to the top level instance of nodeshape of the given user preference 
-        this.topLevelPreferenceNodeshapeInstance = filter(userPreference, entity => {
-            return entity['@type'].includes(this.prefixes.setting + 'Preference');
+        // Find Node that corresponds to the top level instance of nodeshape of the given user setting 
+        // NOTE: entity['@type'] = Arrays of IRIs
+        this.topLevelSettingNodeshapeInstance = filter(setting, entity => {
+            return entity['@type'].includes(this.prefixes.setting + 'Setting');
         });
 
-        if (this.topLevelPreferenceNodeshapeInstance.length) {
-            this.topLevelPreferenceNodeshapeInstanceId = this.topLevelPreferenceNodeshapeInstance[0]['@id'];
+        if (this.topLevelSettingNodeshapeInstance.length) {
+            this.topLevelSettingNodeshapeInstanceId = this.topLevelSettingNodeshapeInstance[0]['@id'];
         }
     }
 
@@ -100,7 +104,7 @@ export class SimplePreference implements Preference {
     }
 
     public get label(): string {
-        return this.util.getPropertyValue(this.json, this.prefixes.shacl + 'description')
+        return this.util.getPropertyValue(this.json, this.prefixes.shacl + 'description');
     }
 
     public get json(): any {
@@ -127,20 +131,20 @@ export class SimplePreference implements Preference {
         this._values = values;
     }
 
-    public get topLevelPreferenceNodeshapeInstance(): any {
-        return this._topLevelPreferenceNodeshapeInstance;
+    public get topLevelSettingNodeshapeInstance(): any {
+        return this._topLevelSettingNodeshapeInstance;
     }
 
-    public set topLevelPreferenceNodeshapeInstance(instance: any) {
-        this._topLevelPreferenceNodeshapeInstance = instance;
+    public set topLevelSettingNodeshapeInstance(instance: any) {
+        this._topLevelSettingNodeshapeInstance = instance;
     }
 
-    public get topLevelPreferenceNodeshapeInstanceId(): string {
-        return this._topLevelPreferenceNodeshapeInstanceId;
+    public get topLevelSettingNodeshapeInstanceId(): string {
+        return this._topLevelSettingNodeshapeInstanceId;
     }
 
-    public set topLevelPreferenceNodeshapeInstanceId(resourceId: string) {
-        this._topLevelPreferenceNodeshapeInstanceId = resourceId;
+    public set topLevelSettingNodeshapeInstanceId(resourceId: string) {
+        this._topLevelSettingNodeshapeInstanceId = resourceId;
     }
 
     // Will take a literal value
@@ -148,7 +152,7 @@ export class SimplePreference implements Preference {
         if (!this.values.length) {
             this.values[0] = {};
         }
-        this.util.setPropertyValue(this.values[0], PreferenceConstants.HAS_DATA_VALUE, value);
+        this.util.setPropertyValue(this.values[0], SettingConstants.HAS_DATA_VALUE, value);
     }
 
     addBlankValue(): void {
@@ -160,7 +164,7 @@ export class SimplePreference implements Preference {
             return false;
         }
         let blankValExists = false;
-        this.values[0][PreferenceConstants.HAS_DATA_VALUE].forEach(val => {
+        this.values[0][SettingConstants.HAS_DATA_VALUE].forEach(val => {
             if (!val['@value']) {
                 blankValExists = true;
             }
@@ -173,7 +177,7 @@ export class SimplePreference implements Preference {
             formBlocks: new FormArray([])
         });
 
-        this.values[0][PreferenceConstants.HAS_DATA_VALUE].forEach(value => {
+        this.values[0][SettingConstants.HAS_DATA_VALUE].forEach(value => {
             const fg: FormGroup = new FormGroup({});
             const fieldsTemplate = {};
             this.formFieldPropertyShapes.forEach(field => {
@@ -191,9 +195,9 @@ export class SimplePreference implements Preference {
     }
 
     public updateWithFormValues(form: FormGroup) {
-        this.values[0][PreferenceConstants.HAS_DATA_VALUE] = [];
+        this.values[0][SettingConstants.HAS_DATA_VALUE] = [];
         form.get('formBlocks').value.forEach((value) => {
-            this.util.setPropertyValue(this.values[0], PreferenceConstants.HAS_DATA_VALUE, String(value[PreferenceConstants.HAS_DATA_VALUE][PreferenceConstants.HAS_DATA_VALUE]));
+            this.util.setPropertyValue(this.values[0], SettingConstants.HAS_DATA_VALUE, String(value[SettingConstants.HAS_DATA_VALUE][SettingConstants.HAS_DATA_VALUE]));
         });
     }
 
@@ -201,28 +205,39 @@ export class SimplePreference implements Preference {
         if (!this.values.length) {
             return;
         }
-        for (let i = this.values[0][PreferenceConstants.HAS_DATA_VALUE].length - 1; i >= 0; i--) {
-            if (!this.values[0][PreferenceConstants.HAS_DATA_VALUE][i]['@value']) {
-                this.values[0][PreferenceConstants.HAS_DATA_VALUE].splice(i, 1);
+        for (let i = this.values[0][SettingConstants.HAS_DATA_VALUE].length - 1; i >= 0; i--) {
+            if (!this.values[0][SettingConstants.HAS_DATA_VALUE][i]['@value']) {
+                this.values[0][SettingConstants.HAS_DATA_VALUE].splice(i, 1);
             }
         }
     }
 
     exists(): boolean {
-        return !!this.topLevelPreferenceNodeshapeInstanceId;
+        return !!this.topLevelSettingNodeshapeInstanceId;
     }
 
     numValues(): number {
-        return this.values[0][PreferenceConstants.HAS_DATA_VALUE].length;
+        return this.values[0][SettingConstants.HAS_DATA_VALUE].length;
+    }
+
+    get settingType(): string {
+        if (this.util.hasPropertyId(this.json, this.prefixes.rdfs + 'subClassOf', this.prefixes.setting + 'ApplicationSetting')) {
+            return this.prefixes.setting + 'ApplicationSetting';
+        } else if (this.util.hasPropertyId(this.json, this.prefixes.rdfs + 'subClassOf', this.prefixes.setting + 'Preference')) {
+            return this.prefixes.setting + 'Preference';
+        } else {
+            this.util.createErrorToast('Setting Definition does not have a valid setting type.');
+        }
     }
 
     asJsonLD(): Array<any> {
         this.stripBlankValues();
         this.values.map(val => {
-            if (!PreferenceUtils.isJsonLd(val)) {
-                PreferenceUtils.convertToJsonLd(val, [this.type, this.prefixes.setting + 'Setting', this.prefixes.setting + 'Preference']);
+            if (!SettingUtils.isJsonLd(val)) {
+                SettingUtils.convertToJsonLd(val, [this.type, this.prefixes.setting + 'Setting', this.settingType]);
             }
         });
         return this.values;
     }
+
 }

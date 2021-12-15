@@ -20,14 +20,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/**
- * @ngdoc interface
- * @name settings.classes:preferenceConstants
- *
- * @description
- * `PreferenceConstants` is a class containing readonly string constants that are commonly used in the Preference implementations
- */
-export class PreferenceConstants {
-    static readonly HAS_DATA_VALUE: string = 'http://mobi.com/ontologies/setting#hasDataValue';
-    static readonly HAS_OBJECT_VALUE: string = 'http://mobi.com/ontologies/setting#hasObjectValue';
+@import "../../../css/variables";
+
+.setting-edit-page {
+    .settings-info {
+        font-size: 16px;
+    }
+
+    .settings-sidebar {
+        min-width: 150px;
+    }
+
+    .material-tabset {
+        padding-top: 15px; 
+        align-items: flex-end;
+
+        .sidebar-list {
+            min-width: 100px;
+
+            .setting-group-item {
+                border-right: solid gray; 
+                display: block; 
+                padding: .5rem .1rem; 
+                font-weight: 500;
+    
+                a {
+                    color: gray;
+
+                    &.active {
+                        color: var(--primary) !important;
+                    }
+                }
+            }
+        }
+    }
 }

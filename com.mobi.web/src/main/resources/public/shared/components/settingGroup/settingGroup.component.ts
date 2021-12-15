@@ -23,82 +23,85 @@
 import { Input, Component, OnChanges, Inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { forEach, has } from 'lodash';
 
-import { PreferenceUtils } from '../../classes/preferenceUtils.class';
-import { Preference } from '../../interfaces/preference.interface';
-import { SimplePreference } from '../../classes/simplePreference.class';
+import { SettingUtils } from '../../models/settingUtils.class';
+import { Setting } from '../../models/setting.interface';
+import { SimpleSetting } from '../../models/simpleSetting.class';
 
 /**
  * @ngdoc component
- * @name settings.component:preferenceGroup
+ * @name shared.component:settingGroup
  * @requires shared.service:settingManagerService
  * @requires shared.service.utilService
  * @requires shared.service.prefixes
  *
  * @description
- * `preferenceGroup` is a component that consisting of a series of {@link settings.component:preferenceForm preferenceForm}.
+ * `settingGroup` is a component that consisting of a series of {@link shared.component:settingForm settingForm}.
  */
 @Component({
-    selector: 'preference-group',
-    templateUrl: './preferenceGroup.component.html',
+    selector: 'setting-group',
+    templateUrl: './settingGroup.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PreferenceGroupComponent implements OnChanges {
+export class SettingGroupComponent implements OnChanges {
+    @Input() settingType;
     @Input() group;
 
     errorMessage = '';
-    preferences = {};
-    preferenceIRIs = [];
+    settings = {};
+    settingIRIs = [];
 
     constructor(@Inject('settingManagerService') private sm, @Inject('utilService') private util, @Inject('prefixes') private prefixes, private ref: ChangeDetectorRef) {}
 
     ngOnChanges(): void {
-        this.retrievePreferences();
+        this.retrieveSettings();
     }
 
-    retrievePreferences(): void {
-        this.sm.getUserPreferences()
+    retrieveSettings(): void {
+        this.sm.getSettings(this.settingType.iri)
             .then(response => {
                 this.errorMessage = '';
-                const userPreferences = response.data;
-                this.sm.getPreferenceDefinitions(this.group)
+                const settingResponse = response.data;
+                this.sm.getSettingDefinitions(this.group, this.settingType.iri)
                     .then(response => {
-                        this.preferences = {};
+                        this.settings = {};
                         const shapeDefinitions = {};
-                        const preferencesJson = {};
+                        const settingObject = {};
                         forEach(response.data, shape => {
                             shapeDefinitions[shape['@id']] = shape;
                             if (this.isTopLevelNodeShape(shape)) {
-                                preferencesJson[shape['@id']] = shape;
+                                settingObject[shape['@id']] = shape;
                             }
                         });
-                        forEach(preferencesJson, (preferenceJson:any, preferenceType: string) => {
-                            let preference: Preference;
-                            if (PreferenceUtils.isSimplePreference(preferenceJson, shapeDefinitions)) {
-                                preference = new SimplePreference(preferenceJson, shapeDefinitions, this.util, this.prefixes);
-                                preference.populate(userPreferences[preferenceType]);
-                                this.preferences[preferenceType] = preference;
+                        forEach(settingObject, (settingJson:any, settingType: string) => {
+                            let setting: Setting;
+                            if (SettingUtils.isSimpleSetting(settingJson, shapeDefinitions)) {
+                                setting = new SimpleSetting(settingJson, shapeDefinitions, this.util, this.prefixes);
+                                setting.populate(settingResponse[settingType]);
+                                this.settings[settingType] = setting;
                             } else {
-                                this.util.createErrorToast('Complex Preferences are not yet supported.');
+                                this.util.createErrorToast('Complex Settings are not yet supported.');
                             }
                         });
-                        this.preferenceIRIs = Object.keys(this.preferences);
+                        this.settingIRIs = Object.keys(this.settings);
                         this.ref.markForCheck();
                     }, error => this.errorMessage = error);
             }, error => this.errorMessage = error);
     }
 
-    updateUserPreference(preference: Preference): void {
-        if (preference.exists()) {
-            this.sm.updateUserPreference(preference.topLevelPreferenceNodeshapeInstanceId, preference.type, preference.asJsonLD())
+    updateSetting(setting: Setting): void {
+        if (setting.exists()) {
+            this.sm.updateSetting(this.settingType.iri, setting.topLevelSettingNodeshapeInstanceId, setting.type, setting.asJsonLD())
                 .then(() => {
                     this.errorMessage = '';
-                    this.retrievePreferences();
+                    this.retrieveSettings();
+                    this.util.createSuccessToast('Successfully updated the setting');
                 }, error => this.errorMessage = error);
         } else {
-            this.sm.createUserPreference(preference.type, preference.asJsonLD())
+            this.sm.createSetting(this.settingType.iri, setting.type, setting.asJsonLD())
                 .then(() => {
                     this.errorMessage = '';
-                    this.retrievePreferences();
+                    this.retrieveSettings();
+                    this.util.createSuccessToast('Successfully created the setting');
                 }, error => this.errorMessage = error);
         }
     }

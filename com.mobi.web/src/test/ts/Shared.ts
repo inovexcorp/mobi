@@ -106,11 +106,26 @@ export class mockUtil {
 }
 
 export class mockSettingManager {
-    getUserPreferences = jasmine.createSpy('getUserPreferences').and.returnValue(Promise.resolve(''));
+    prefSettingType = { iri: `http://mobitest.com/Preference`, userText: 'Preferences'};
+    appSettingType = { iri: `http://mobitest.com/ApplicationSetting`, userText: 'Application Settings'};
+    getDefaultNamespace = jasmine.createSpy('getDefaultNamespace').and.returnValue(Promise.resolve(''));
+    getApplicationSettings = jasmine.createSpy('getApplicationSettings').and.returnValue(Promise.resolve(''));
+    getSettings = jasmine.createSpy('getSettings').and.returnValue(Promise.resolve([]));
+    getApplicationSettingByType = jasmine.createSpy('getApplicationSettingByType').and.returnValue(Promise.resolve(''));
+    getUserPreferenceByType = jasmine.createSpy('getUserPreferenceByType').and.returnValue(Promise.resolve(''));
+    getSettingByType = jasmine.createSpy('getSettingByType').and.returnValue(Promise.resolve(''));
     updateUserPreference = jasmine.createSpy('updateUserPreference').and.returnValue(Promise.resolve(''));
+    updateApplicationSetting = jasmine.createSpy('updateApplicationSetting').and.returnValue(Promise.resolve(''));
+    updateSetting = jasmine.createSpy('updateSetting').and.returnValue(Promise.resolve(''));
     createUserPreference = jasmine.createSpy('createUserPreference').and.returnValue(Promise.resolve(''));
+    createApplicationSetting = jasmine.createSpy('createApplicationSetting').and.returnValue(Promise.resolve(''));
+    createSetting = jasmine.createSpy('createSetting').and.returnValue(Promise.resolve(''));
+    getSettingGroups = jasmine.createSpy('getSettingGroups').and.returnValue(Promise.resolve(''));
     getPreferenceGroups = jasmine.createSpy('getPreferenceGroups').and.returnValue(Promise.resolve(''));
+    getApplicationSettingGroups = jasmine.createSpy('getApplicationSettingGroups').and.returnValue(Promise.resolve(''));
     getPreferenceDefinitions = jasmine.createSpy('getPreferenceDefinitions').and.returnValue(Promise.resolve(''));
+    getApplicationSettingDefinitions = jasmine.createSpy('getApplicationSettingDefinitions').and.returnValue(Promise.resolve(''));
+    getSettingDefinitions = jasmine.createSpy('getSettingDefinitions').and.returnValue(Promise.resolve(''));
 }
 
 export class mockModal {

@@ -21,25 +21,27 @@
  * #L%
  */
 import { v4 as uuid } from 'uuid';
-import { PreferenceConstants } from './preferenceConstants.class';
-import { Preference } from '../interfaces/preference.interface';
 import { has } from 'lodash';
+
+import { SettingConstants } from './settingConstants.class';
+import { Setting } from './setting.interface';
 
 /**
  * @ngdoc class
- * @name settings.classes:preferenceUtils
+ * @name shared.models:SettingUtils
  *
  * @description
- * `PreferenceUtils` is a helper class that contains methods used by the Preference implementations
+ * `SettingUtils` is a helper class that contains methods used by the Setting implementations
  */
-export class PreferenceUtils {
-    static isSimplePreference(preferenceJson, shapeDefinitions): boolean {
-        const requiredPropertyShape = shapeDefinitions[preferenceJson['http://www.w3.org/ns/shacl#property'][0]['@id']];
-        return requiredPropertyShape['http://www.w3.org/ns/shacl#path'][0]['@id'] === PreferenceConstants.HAS_DATA_VALUE;
+export class SettingUtils {
+
+    static isSimpleSetting(settingJson, shapeDefinitions): boolean {
+        const requiredPropertyShape = shapeDefinitions[settingJson['http://www.w3.org/ns/shacl#property'][0]['@id']];
+        return requiredPropertyShape['http://www.w3.org/ns/shacl#path'][0]['@id'] === SettingConstants.HAS_DATA_VALUE;
     }
 
     static convertToJsonLd(object, intendedTypes) {
-        if (has(object, '@id')|| has(object, '@type')) {
+        if (has(object, '@id') || has(object, '@type')) {
             console.log('Object has unexpected structure. It appears that the object already has an id or type');
         } else {
             object['@id'] = 'http://mobi.com/setting#' + uuid.v4();
@@ -53,11 +55,11 @@ export class PreferenceUtils {
         return has(obj, '@id') && has(obj, '@type');
     }
 
-    static userPrefComparator(preference: Preference) {
+    static settingComparator(setting: Setting) {
         return function(a, b) {
-            if (a[preference.formFieldProperties[0]][0]['@value'] < b[preference.formFieldProperties[0]][0]['@value']) {
+            if (a[setting.formFieldProperties[0]][0]['@value'] < b[setting.formFieldProperties[0]][0]['@value']) {
                 return -1;
-            } else if (a[preference.formFieldProperties[0]][0]['@value'] > b[preference.formFieldProperties[0]][0]['@value']) {
+            } else if (a[setting.formFieldProperties[0]][0]['@value'] > b[setting.formFieldProperties[0]][0]['@value']) {
                 return 1;
             } else {
                 return 0;

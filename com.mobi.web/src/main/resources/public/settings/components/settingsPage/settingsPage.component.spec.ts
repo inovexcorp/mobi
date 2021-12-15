@@ -29,14 +29,13 @@ import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs';
 import { MockComponent } from 'ng-mocks';
 import 'ng-mocks/dist/jasmine'; // Ensures every method in Mocked Components are Jasmine spies
 
-import {
-    cleanStylesFromDOM
-} from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { GroupTabComponent } from '../groupTab/groupTab.component';
 import { PasswordTabComponent } from '../passwordTab/passwordTab.component';
 import { ProfileTabComponent } from '../profileTab/profileTab.component';
 import { SettingsPageComponent } from './settingsPage.component';
-import { PreferencesTabComponent } from '../preferencesTab/preferencesTab.component';
+import { SettingEditPageComponent } from '../../../shared/components/settingEditPage/settingEditPage.component';
+import { of } from 'rxjs';
 
 describe('Settings Page component', function() {
     let component: SettingsPageComponent;
@@ -54,7 +53,12 @@ describe('Settings Page component', function() {
                 MockComponent(GroupTabComponent),
                 MockComponent(PasswordTabComponent),
                 MockComponent(ProfileTabComponent),
-                MockComponent(PreferencesTabComponent)
+                MockComponent(SettingEditPageComponent)
+            ],
+            providers: [
+                { provide: 'settingManagerService', useFactory: () => jasmine.createSpyObj('settingManagerService', {
+                    open: { afterClosed: () => of(true)}
+                }) }
             ]
         });
     });
@@ -95,7 +99,7 @@ describe('Settings Page component', function() {
                 expect(component.profileTab.reset).not.toHaveBeenCalled();
                 expect(component.passwordTab.reset).toHaveBeenCalled();
             });
-            it('to the preferences tab', function() {
+            it('to the settings tab', function() {
                 const event = new MatTabChangeEvent();
                 event.index = 3;
                 component.onTabChanged(event);
@@ -120,7 +124,7 @@ describe('Settings Page component', function() {
             {el: 'profile-tab', idx: 0},
             {el: 'group-tab', idx: 1},
             {el: 'password-tab', idx: 2},
-            {el: 'preferences-tab', idx: 3}
+            {el: 'setting-edit-page', idx: 3}
         ].forEach(test => {
             it('with a ' + test.el, fakeAsync(function() {
                 fixture.detectChanges();

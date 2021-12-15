@@ -210,7 +210,9 @@ describe('Open Ontology Tab component', function() {
         });
         it('should set the correct state for creating a new ontology', function() {
             settingManagerSvc.defaultNamespace = 'https://mobi.com/ontologies/';
+            settingManagerSvc.getDefaultNamespace.and.returnValue($q.resolve(settingManagerSvc.defaultNamespace));
             this.controller.newOntology();
+            scope.$apply();
             expect(_.startsWith(ontologyStateSvc.newOntology['@id'], 'https://mobi.com/ontologies/')).toEqual(true);
             expect(ontologyStateSvc.newOntology[prefixes.dcterms + 'title']).toEqual([{'@value': ''}]);
             expect(ontologyStateSvc.newOntology[prefixes.dcterms + 'description']).toEqual([{'@value': ''}]);

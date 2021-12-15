@@ -25,18 +25,18 @@ import { Validators, ValidatorFn, FormControl, FormGroup } from '@angular/forms'
 
 /**
  * @ngdoc component
- * @name settings.component:preferenceFormField
+ * @name shared.component:settingFormField
  * @requires shared.service.utilService
  * @requires shared.service.prefixes
  *
  * @description
- * `preferenceFormField` is a component that create form input(s) for a specific form field
+ * `settingFormField` is a component that create form input(s) for a specific form field
  */
 @Component({
-    selector: 'preference-form-field',
-    templateUrl: './preferenceFormField.component.html'
+    selector: 'setting-form-field',
+    templateUrl: './settingFormField.component.html'
 })
-export class PreferenceFormFieldComponent implements OnChanges {
+export class SettingFormFieldComponent implements OnChanges {
     @Input() fieldFormGroup: FormGroup;
     @Input() fieldShaclProperty: string;
     @Input() shaclShape: any;
