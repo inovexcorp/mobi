@@ -160,6 +160,7 @@ module.exports = {
             .useCss()
             .waitForElementNotPresent('div.spinner', 5000)
             .useCss()
+            .pause(2000)
             .click('axiom-overlay div.modal-body form div.ui-select-match.ng-scope span')
             .waitForElementPresent('axiom-overlay div.ui-select-container.open')
             .waitForElementVisible('li.ui-select-choices-group')

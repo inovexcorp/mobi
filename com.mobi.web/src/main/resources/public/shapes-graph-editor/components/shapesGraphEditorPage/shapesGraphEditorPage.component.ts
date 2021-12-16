@@ -36,5 +36,5 @@ import './shapesGraphEditorPage.component.scss';
 })
 export class ShapesGraphEditorPageComponent {
 
-    constructor(private state: ShapesGraphStateService) {}
+    constructor(public state: ShapesGraphStateService) {}
 }
