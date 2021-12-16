@@ -61,7 +61,7 @@ unit_test:
   stage: test
   script:
     # Runs tests, skipping sections that are integration/functional test only
-    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
+    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test -P release-build
   only:
     - merge_requests
 
@@ -80,7 +80,7 @@ full_test_manual:
     - HOST_IP=$(ip route show | awk '/default/ {print $3}')
     - redir :9080 $HOST_IP:9080
     # Run integration, and functional tests (skips unit tests as they are included in the automated unit_test job)
-    - mvn $MAVEN_CLI_OPTS clean install -DskipTests -DskipFunctional=false -DskipITs=false
+    - mvn $MAVEN_CLI_OPTS clean install -DskipTests -DskipFunctional=false -DskipITs=false -Prelease-build
   artifacts:
     when: on_failure
     paths:

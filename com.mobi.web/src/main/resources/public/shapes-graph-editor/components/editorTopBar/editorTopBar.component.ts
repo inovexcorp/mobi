@@ -40,7 +40,7 @@ import './editorTopBar.component.scss';
 })
 export class EditorTopBarComponent {
 
-    constructor(private dialog: MatDialog, private state: ShapesGraphStateService) {}
+    constructor(private dialog: MatDialog, public state: ShapesGraphStateService) {}
 
     download(): void {
         this.dialog.open(DownloadRecordModalComponent, {

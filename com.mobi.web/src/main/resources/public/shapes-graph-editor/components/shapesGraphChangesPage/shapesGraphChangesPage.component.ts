@@ -48,7 +48,7 @@ export class ShapesGraphChangesPageComponent {
 
     catalogId: string = get(this.cm.localCatalog, '@id', '');
     
-    constructor(private state: ShapesGraphStateService, @Inject('catalogManagerService') private cm, @Inject('utilService') private util) {}
+    constructor(public state: ShapesGraphStateService, @Inject('catalogManagerService') private cm, @Inject('utilService') private util) {}
 
     removeChanges(): void {
         this.cm.deleteInProgressCommit(this.state.currentShapesGraphRecordIri, this.catalogId)

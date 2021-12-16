@@ -40,7 +40,7 @@ import { RdfUpdate } from '../../../shared/models/rdfUpdate.interface';
     templateUrl: './uploadRecordModal.component.html'
 })
 export class UploadRecordModalComponent {
-    error = '';
+    error: any = '';
     selectedFile: File;
     catalogId: string = get(this.cm.localCatalog, '@id', '');
 
