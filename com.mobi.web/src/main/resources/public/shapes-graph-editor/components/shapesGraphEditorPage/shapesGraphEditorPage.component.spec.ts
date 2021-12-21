@@ -26,7 +26,9 @@ import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { EditorTopBarComponent } from '../editorTopBar/editorTopBar.component';
+import { ShapesGraphMergePageComponent } from '../shapesGraphMergePage/shapesGraphMergePage.component';
 import { ShapesGraphEditorPageComponent } from './shapesGraphEditorPage.component';
 import { ShapesGraphChangesPageComponent } from '../shapesGraphChangesPage/shapesGraphChangesPage.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
@@ -35,6 +37,7 @@ describe('Shapes Graph Editor Page component', function() {
     let component: ShapesGraphEditorPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ShapesGraphEditorPageComponent>;
+    let shapesGraphStateStub;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -42,7 +45,8 @@ describe('Shapes Graph Editor Page component', function() {
             declarations: [
                 ShapesGraphEditorPageComponent,
                 MockComponent(EditorTopBarComponent),
-                MockComponent(ShapesGraphChangesPageComponent)
+                MockComponent(ShapesGraphChangesPageComponent),
+                MockComponent(ShapesGraphMergePageComponent)
             ],
             providers: [
                 MockProvider(ShapesGraphStateService)
@@ -54,6 +58,8 @@ describe('Shapes Graph Editor Page component', function() {
         fixture = TestBed.createComponent(ShapesGraphEditorPageComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
+        shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
+        shapesGraphStateStub.listItem = new VersionedRdfListItem();
     });
 
     afterAll(function() {
@@ -67,8 +73,44 @@ describe('Shapes Graph Editor Page component', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('div.shapes-graph-editor-page')).length).toEqual(1);
         });
-        it('with editor top bar', function() {
-            expect(element.queryAll(By.css('editor-top-bar')).length).toEqual(1);
+        describe('with editor top bar', function() {
+            it('when no active merge', async function() {
+                fixture.detectChanges();
+                await fixture.whenStable();
+                expect(element.queryAll(By.css('editor-top-bar')).length).toEqual(1);
+            });
+            it('with an active merge', async function() {
+                shapesGraphStateStub.listItem.merge.active = true;
+                fixture.detectChanges();
+                await fixture.whenStable();
+                expect(element.queryAll(By.css('editor-top-bar')).length).toEqual(0);
+            });
+        });
+        describe('with shapes graph merge page', function() {
+            it('when no active merge', async function() {
+                fixture.detectChanges();
+                await fixture.whenStable();
+                expect(element.queryAll(By.css('shapes-graph-merge-page')).length).toEqual(0);
+            });
+            it('with an active merge', async function() {
+                shapesGraphStateStub.listItem.merge.active = true;
+                fixture.detectChanges();
+                await fixture.whenStable();
+                expect(element.queryAll(By.css('shapes-graph-merge-page')).length).toEqual(1);
+            });
+        });
+        describe('with shapes graph changes page', function() {
+            it('when no active merge', async function() {
+                fixture.detectChanges();
+                await fixture.whenStable();
+                expect(element.queryAll(By.css('shapes-graph-changes-page')).length).toEqual(0);
+            });
+            it('with an active merge', async function() {
+                shapesGraphStateStub.listItem.changesPageOpen = true;
+                fixture.detectChanges();
+                await fixture.whenStable();
+                expect(element.queryAll(By.css('shapes-graph-changes-page')).length).toEqual(1);
+            });
         });
     });
 });

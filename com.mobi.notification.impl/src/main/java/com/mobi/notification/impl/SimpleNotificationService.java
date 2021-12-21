@@ -50,6 +50,6 @@ public class SimpleNotificationService implements NotificationService {
     @Activate
     @Modified
     protected void start() {
-//        settingUtilsService.updateRepoWithSettingDefinitions(NOTIFICATION_ONTOLOGY, NOTIFICATION_ONTOLOGY_NAME);
+        // settingUtilsService.updateRepoWithSettingDefinitions(NOTIFICATION_ONTOLOGY, NOTIFICATION_ONTOLOGY_NAME); // TODO Keep line commented
     }
 }

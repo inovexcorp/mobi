@@ -1,0 +1,40 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<h4 class="ng-binding">{{setting.label}}</h4>
+
+<form [formGroup]="form" (ngSubmit)="submitForm()">
+  <div formArrayName="formBlocks">
+    <div *ngFor="let formBlock of formBlocks.controls; let n=index">
+      <div [formGroupName]="n">
+        <div *ngFor="let formField of formBlockKeys(n)">
+            <setting-form-field [fieldShaclProperty]="formField" [fieldFormGroup]="formBlock.controls[formField]" [shaclShape]="shaclShapes[formField]"></setting-form-field>
+        </div>
+        <button class="delete-block-button" mat-icon-button *ngIf="numValues > 1" type="button" (click)="deleteFormBlock(n)"><mat-icon>clear</mat-icon></button>
+      </div>
+    </div>
+  </div>
+  <button mat-raised-button color="primary" type="submit" [disabled]="form.pristine || form.invalid">Save</button>
+  <button class="add-block-button" mat-icon-button type="button" *ngIf="numValues < maxBlocks" (click)="addFormBlock()" aria-label="Add another value">
+      <mat-icon>add</mat-icon>
+  </button>
+</form>

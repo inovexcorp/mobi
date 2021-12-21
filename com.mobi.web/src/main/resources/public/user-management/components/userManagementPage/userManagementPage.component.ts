@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 20121 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, Inject} from '@angular/core';
 import { MatTabChangeEvent } from '@angular/material';
 
 import { UserStateService } from '../../../shared/services/userState.service';
@@ -30,10 +30,13 @@ import './userManagementPage.component.scss';
 
 /**
  * @class user-management.UserManagementPageComponent
- *
+ * @requires shared.service:UserStateService
+ * @requires shared.service:settingManagerService
+ * 
  * A component which creates a `mat-tab-group` with tabs depending on whether the
- * {@link user-management.UsersPageComponent users}, {@link user-management.GroupsPageComponent groups}, or
- * {@link user-management.PermissionsPageComponent permissions} of Mobi should be shown.
+ * {@link user-management.UsersPageComponent users}, {@link user-management.GroupsPageComponent groups},
+ * {@link user-management.PermissionsPageComponent permissions}, or
+ * {@link shared.SettingEditPageComponent settingEditPage} of Mobi should be shown.
  */
 @Component({
     selector: 'user-management-page',
@@ -42,7 +45,7 @@ import './userManagementPage.component.scss';
 export class UserManagementPageComponent {
     @ViewChild(PermissionsPageComponent) permissionsPage: PermissionsPageComponent;
     
-    constructor(public state: UserStateService) {}
+    constructor(public state: UserStateService, @Inject('settingManagerService') public sm) {}
 
     onTabChanged(event: MatTabChangeEvent): void {
         if (event.index === 2) {

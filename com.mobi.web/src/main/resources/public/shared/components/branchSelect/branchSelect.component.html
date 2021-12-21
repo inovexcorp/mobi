@@ -20,13 +20,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="branch-select form-group">
-    <ui-select ng-model="dvm.bindModel" ng-required="dvm.required" ng-change="dvm.onChange()" ng-disabled="dvm.isDisabledWhen">
-        <ui-select-match placeholder="Select a Branch">
-            <span>Branch: {{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
-        </ui-select-match>
-        <ui-select-choices repeat="branch in dvm.branches | branchesToDisplay | filter:$select.search">
-            <span title="{{ dvm.util.getDctermsValue(branch, 'title') }}" ng-bind-html="dvm.util.getDctermsValue(branch, 'title') | highlight:$select.search | trusted"></span>
-        </ui-select-choices>
-    </ui-select>
+<div class="branch-select">
+    <mat-form-field>
+        <mat-label>Branch</mat-label>
+        <input type="text"
+               placeholder="Select a Branch"
+               aria-label="Branch"
+               matInput
+               [formControl]="branchControl"
+               [matAutocomplete]="auto">
+        <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" (optionSelected)="selectedBranch($event)" [displayWith]="getDisplayText.bind(this)">
+            <mat-option *ngFor="let branch of filteredBranches | async" [value]="branch">
+                {{ util.getDctermsValue(branch, 'title') }}
+            </mat-option>
+        </mat-autocomplete>
+    </mat-form-field>
 </div>

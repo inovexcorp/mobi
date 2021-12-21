@@ -725,6 +725,34 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
     }
     /**
      * @ngdoc method
+     * @name getPredicateLocalNameOrdered
+     * @methodOf shared.service:utilService
+     *
+     * @description
+     * Sorts the partialStatementArray by the localname of the partialStatement Object, {p: predicateIRI}.
+     *
+     * @param {Object} partialStatementArray An array of partial statements that should contain, at minimum, a `p` property
+     * with a value of the predicate IRI whose localname you want.
+     * @return {string} The partial statement array sorted by localname for the predicate provided in the partialStatement.
+     */
+    self.getPredicateLocalNameOrdered = function(partialStatementArray) {
+        return partialStatementArray
+            .slice(0)
+            .sort((a, b) => {
+                const aLocal = self.getPredicateLocalName(a);
+                const bLocal = self.getPredicateLocalName(b);
+
+                if (aLocal < bLocal) {
+                    return -1;
+                } else if (aLocal > bLocal) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+        });
+    };
+    /**
+     * @ngdoc method
      * @name getIdForBlankNode
      * @methodOf shared.service:utilService
      *

@@ -38,8 +38,7 @@ import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { FileInputComponent } from '../../../shared/components/fileInput/fileInput.component';
 import { RdfUpload } from '../../../shared/models/rdfUpload.interface';
-import { VersionedRdfUploadResponse } from '../../../shared/models/versionedRdfUploadResponse.interface';
-import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { NewShapesGraphRecordModalComponent } from './newShapesGraphRecordModal.component';
 
 describe('New Shapes Graph Record Modal component', function() {
@@ -47,13 +46,8 @@ describe('New Shapes Graph Record Modal component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<NewShapesGraphRecordModalComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<NewShapesGraphRecordModalComponent>>;
-    let shapesGraphManagerStub;
+    let shapesGraphStateStub;
     let utilStub;
-    const uploadResponse: VersionedRdfUploadResponse = {
-        recordId: 'record1',
-        branchId: 'branch1',
-        commitId: 'commit1'
-    };
     const file: File = new File([''], 'filename', { type: 'text/html' });
     const rdfUpload: RdfUpload = {
         title: 'Record Name',
@@ -84,7 +78,7 @@ describe('New Shapes Graph Record Modal component', function() {
             providers: [
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
                 { provide: 'utilService', useClass: mockUtil },
-                MockProvider(ShapesGraphManagerService)
+                MockProvider(ShapesGraphStateService)
             ]
         });
     });
@@ -94,8 +88,8 @@ describe('New Shapes Graph Record Modal component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         matDialogRef = TestBed.get(MatDialogRef);
-        shapesGraphManagerStub = TestBed.get(ShapesGraphManagerService);
-        shapesGraphManagerStub.createShapesGraphRecord.and.returnValue(Promise.resolve(uploadResponse));
+        shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
+        shapesGraphStateStub.uploadShapesGraph.and.returnValue(Promise.resolve());
         utilStub = TestBed.get('utilService');
     });
 
@@ -105,7 +99,7 @@ describe('New Shapes Graph Record Modal component', function() {
         element = null;
         fixture = null;
         matDialogRef = null;
-        shapesGraphManagerStub = null;
+        shapesGraphStateStub = null;
         utilStub = null;
     });
 
@@ -120,13 +114,8 @@ describe('New Shapes Graph Record Modal component', function() {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(rdfUpload);
-            expect(utilStub.createSuccessToast).toHaveBeenCalled();
-            expect(matDialogRef.close).toHaveBeenCalledWith({
-                recordId: 'record1',
-                title: 'Record Name',
-                description: 'Some description'
-            });
+            expect(shapesGraphStateStub.uploadShapesGraph).toHaveBeenCalledWith(rdfUpload);
+            expect(matDialogRef.close).toHaveBeenCalledWith(true);
         });
         it('should add a keyword to the keyword list', function() {
             expect(component.createRecordForm.controls['keywords'].value.length).toBe(0);

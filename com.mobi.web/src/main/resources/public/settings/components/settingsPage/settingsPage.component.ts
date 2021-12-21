@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, ViewChild } from '@angular/core';
+import { Component, Inject, ViewChild } from '@angular/core';
 import { MatTabChangeEvent } from '@angular/material/tabs';
 
 import { PasswordTabComponent } from '../passwordTab/passwordTab.component';
@@ -35,7 +35,7 @@ import './settingsPage.component.scss';
  * @description
  * `settingsPage` is a component which creates a `mat-tab-group` with tabs for different settings pertaining to the
  * current user. The tabs are {@link settings.component:profileTab profileTab},
- * {@link settings.component:passwordTab passwordTab}, and the {@link settings.component:preferencesTab preferencesTab}.
+ * {@link settings.component:passwordTab passwordTab}, and the {@link shared.component:settingEditPage settingEditPage}.
  */
 @Component({
     selector: 'settings-page',
@@ -45,7 +45,7 @@ export class SettingsPageComponent {
     @ViewChild(ProfileTabComponent) profileTab: ProfileTabComponent;
     @ViewChild(PasswordTabComponent) passwordTab: PasswordTabComponent;
 
-    constructor() {}
+    constructor(@Inject('settingManagerService') public sm) {}
 
     onTabChanged(event: MatTabChangeEvent): void {
         if (event.index === 0) {

@@ -21,8 +21,7 @@
  * #L%
  */
 import './resolveConflictsForm.component.scss';
-
-const template = require('./resolveConflictsForm.component.html');
+import { Component, Inject, Input } from '@angular/core';
 
 /**
  * @ngdoc component
@@ -53,48 +52,42 @@ const template = require('./resolveConflictsForm.component.html');
  * @param {string} branchTitle The title of the source branch of the merge
  * @param {string} targetTitle The title of the target branch of the merge
  */
-const resolveConflictsFormComponent = {
-    template,
-    bindings: {
-        conflicts: '<',
-        branchTitle: '<',
-        targetTitle: '<'
-    },
-    controllerAs: 'dvm',
-    controller: resolveConflictsFormComponentCtrl
-};
+@Component({
+    selector: 'resolve-conflicts-form',
+    templateUrl: './resolveConflictsForm.component.html'
+})
+export class ResolveConflictsFormComponent {
+    @Input() conflicts;
+    @Input() branchTitle: string;
+    @Input() targetTitle: string;
+    
+    index:number = undefined;
+    selected = undefined;
+    changes = undefined;
 
-resolveConflictsFormComponentCtrl.$inject = ['utilService'];
+    constructor(@Inject('utilService') private util) {
+    }
 
-function resolveConflictsFormComponentCtrl(utilService) {
-    var dvm = this;
-    dvm.util = utilService;
-    dvm.index = undefined;
-    dvm.selected = undefined;
-    dvm.changes = undefined;
-
-    dvm.select = function(index) {
-        dvm.index = index;
-        dvm.selected = dvm.conflicts[dvm.index];
-        dvm.changes = {
+    select(index: number): void {
+        this.index = index;
+        this.selected = this.conflicts[this.index];
+        this.changes = {
             left: {
-                additions: dvm.util.getChangesById(dvm.selected.iri, dvm.selected.left.additions),
-                deletions: dvm.util.getChangesById(dvm.selected.iri, dvm.selected.left.deletions)
+                additions: this.util.getChangesById(this.selected.iri, this.selected.left.additions),
+                deletions: this.util.getChangesById(this.selected.iri, this.selected.left.deletions)
             },
             right: {
-                additions: dvm.util.getChangesById(dvm.selected.iri, dvm.selected.right.additions),
-                deletions: dvm.util.getChangesById(dvm.selected.iri, dvm.selected.right.deletions)
+                additions: this.util.getChangesById(this.selected.iri, this.selected.right.additions),
+                deletions: this.util.getChangesById(this.selected.iri, this.selected.right.deletions)
             }
         };
     }
-    dvm.hasNext = function() {
-        return (dvm.index + 1) < dvm.conflicts.length;
+    hasNext(): boolean {
+        return (this.index + 1) < this.conflicts.length;
     }
-    dvm.backToList = function() {
-        dvm.index = undefined;
-        dvm.selected = undefined;
-        dvm.changes = undefined;
+    backToList(): void {
+        this.index = undefined;
+        this.selected = undefined;
+        this.changes = undefined;
     }
 }
-
-export default resolveConflictsFormComponent;

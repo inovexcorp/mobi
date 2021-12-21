@@ -23,24 +23,47 @@
 <div class="editor-top-bar">
     <div class="top-bar-content d-flex justify-content-between">
         <div class="left-side">
-            <editor-record-select class="pr-1"></editor-record-select>
+            <editor-record-select class="pr-1" [recordIri]="state?.listItem?.versionedRdfRecord?.recordId"></editor-record-select>
             <div class="versioned-rdf-record-actions d-inline-block">
-<!--                <editor-branch-select></editor-branch-select>-->
+                <editor-branch-select [recordIri]="state?.listItem?.versionedRdfRecord?.recordId" [branchTitle]="state?.listItem?.currentVersionTitle"></editor-branch-select>
 <!--                <button mat-icon-button color="primary"><mat-icon>local_offer</mat-icon></button>-->
-<!--                <button mat-icon-button color="primary"><i class="fa fa-code-fork"></i></button>-->
-<!--                <button mat-icon-button color="primary"><mat-icon>call_merge</mat-icon></button>-->
-                <button class="download-record" mat-icon-button color="primary" (click)="download()" [disabled]="downloadDisabled()"><mat-icon>get_app</mat-icon></button>
-                <button mat-icon-button color="primary" (click)="upload()" [disabled]="state.isCommittable() || !this.state.currentShapesGraphRecordIri"><mat-icon>publish</mat-icon></button>
-                <mat-chip-list>
-                    <mat-chip *ngIf="state.isCommittable()" color="warn" selected>Uncommitted Changes</mat-chip>
+                <button mat-icon-button color="primary"
+                        [disabled]="!state?.listItem?.versionedRdfRecord?.branchId"
+                        (click)="createBranch()"
+                        matTooltip="Create Branch">
+                    <i class="fa fa-code-fork"></i>
+                </button>
+                <button class="create-branch"
+                        mat-icon-button color="primary"
+                        [disabled]="state.isCommittable() || !state?.listItem?.versionedRdfRecord?.branchId"
+                        (click)="state.listItem.merge.active = true"
+                        matTooltip="Merge Branch">
+                    <mat-icon>call_merge</mat-icon>
+                </button>
+                <button class="download-record"
+                        mat-icon-button color="primary"
+                        (click)="download()"
+                        [disabled]="downloadDisabled()"
+                        matTooltip="Download Shapes Graph">
+                    <mat-icon>get_app</mat-icon>
+                </button>
+                <button class="upload-changes"
+                        mat-icon-button color="primary"
+                        (click)="upload()"
+                        [disabled]="state.isCommittable() || !this.state?.listItem?.versionedRdfRecord?.recordId || !state?.listItem?.versionedRdfRecord?.branchId"
+                        matTooltip="Upload Changes">
+                    <mat-icon>publish</mat-icon>
+                </button>
+                <mat-chip-list [selectable]="false">
+                    <mat-chip *ngIf="state.isCommittable()" class="uncommitted" color="warn" [selectable]="false">Uncommitted Changes</mat-chip>
                     <!-- <mat-chip color="warn">Unsaved</mat-chip> -->
                 </mat-chip-list>
             </div>
         </div>
         <div class="right-side">
             <div class="versioned-rdf-record-actions">
-                <button mat-button class="changes" (click)="toggleChanges()" color="primary" [disabled]="!this.state.currentShapesGraphRecordIri">{{ state.changesPageOpen ? 'Hide Changes' : 'Show Changes' }}</button>
-                <button mat-raised-button color="primary" (click)="commit()" [disabled]="!state.isCommittable()">Commit</button>
+                <button mat-button class="changes" (click)="toggleChanges()" color="primary" [disabled]="!this.state?.listItem?.versionedRdfRecord?.recordId">{{ state?.listItem?.changesPageOpen ? 'Hide Changes' : 'Show Changes' }}</button>
+                <button mat-raised-button class="commit" color="primary" (click)="commit()" [disabled]="!state.isCommittable()">Commit</button>
             </div>
         </div>
     </div>

@@ -29,7 +29,11 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import 'ng-mocks/dist/jasmine'; // Ensures every method in Mocked Components are Jasmine spies
 
-import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { of } from 'rxjs';
+
+import { cleanStylesFromDOM, mockUtil, mockPrefixes} from '../../../../../../test/ts/Shared';
+
+import { SettingEditPageComponent } from '../../../shared/components/settingEditPage/settingEditPage.component';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { GroupsPageComponent } from '../groupsPage/groupsPage.component';
 import { PermissionsPageComponent } from '../permissionsPage/permissionsPage.component';
@@ -52,10 +56,16 @@ describe('User Management Page component', function() {
                 UserManagementPageComponent,
                 MockComponent(UsersPageComponent),
                 MockComponent(GroupsPageComponent),
-                MockComponent(PermissionsPageComponent)
+                MockComponent(PermissionsPageComponent),
+                MockComponent(SettingEditPageComponent)
             ],
             providers: [
-                MockProvider(UserStateService)
+                MockProvider(UserStateService),
+                { provide: 'utilService', useClass: mockUtil },
+                { provide: 'prefixes', useClass: mockPrefixes },
+                { provide: 'settingManagerService', useFactory: () => jasmine.createSpyObj('settingManagerService', {
+                    open: { afterClosed: () => of(true)}
+                }) }
             ]
         });
     });
@@ -95,6 +105,13 @@ describe('User Management Page component', function() {
                 component.onTabChanged(event);
                 expect(component.permissionsPage.reset).toHaveBeenCalled();
             });
+            it('to the application settings page', function() {
+                const event = new MatTabChangeEvent();
+                event.index = 3;
+                component.onTabChanged(event);
+                expect(component.permissionsPage.reset).not.toHaveBeenCalled();
+            });
+
         });
     });
     describe('contains the correct html', function() {
@@ -107,7 +124,7 @@ describe('User Management Page component', function() {
         it('with tabs for each page', fakeAsync(function() {
             fixture.detectChanges();
             tick();
-            expect(element.queryAll(By.css('mat-tab-body')).length).toBe(3);
+            expect(element.queryAll(By.css('mat-tab-body')).length).toBe(4);
         }));
         it('with a tab for users-page', fakeAsync(function() {
             fixture.detectChanges();
@@ -125,6 +142,12 @@ describe('User Management Page component', function() {
             fixture.detectChanges();
             tick();
             expect(element.queryAll(By.css('permissions-page')).length).toBe(1);
+        }));
+        it('with a tab for application-settings-page', fakeAsync(function() {
+            userStateStub.tabIndex = 3;
+            fixture.detectChanges();
+            tick();
+            expect(element.queryAll(By.css('setting-edit-page')).length).toBe(1);
         }));
     });
 });

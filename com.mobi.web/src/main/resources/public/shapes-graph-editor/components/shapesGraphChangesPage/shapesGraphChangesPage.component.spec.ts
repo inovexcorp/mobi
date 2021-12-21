@@ -27,6 +27,8 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { cleanStylesFromDOM, mockUtil, mockCatalogManager } from '../../../../../../test/ts/Shared';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
+import { Difference } from '../../../shared/models/difference.class';
+import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { ShapesGraphChangesPageComponent } from '../shapesGraphChangesPage/shapesGraphChangesPage.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 
@@ -58,10 +60,8 @@ describe('Shapes Graph Changes Page component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
-        shapesGraphStateStub.inProgressCommit = {
-            additions: [],
-            deletions: []
-        };
+        shapesGraphStateStub.listItem = new VersionedRdfListItem();
+        shapesGraphStateStub.listItem.inProgressCommit = new Difference();
         catalogManagerStub = TestBed.get('catalogManagerService');
         catalogManagerStub.deleteInProgressCommit.and.returnValue(Promise.resolve());
         utilStub = TestBed.get('utilService');
@@ -80,7 +80,7 @@ describe('Shapes Graph Changes Page component', function() {
     describe('controller methods', function() {
         describe('should remove in progress changes', function() {
             it('successfully', async function() {
-                shapesGraphStateStub.inProgressCommit = {
+                shapesGraphStateStub.listItem.inProgressCommit = {
                     additions: [{'@id': '12345'}],
                     deletions: []
                 };
@@ -93,7 +93,7 @@ describe('Shapes Graph Changes Page component', function() {
             });
             it('unless an error occurs', async function() {
                 catalogManagerStub.deleteInProgressCommit.and.returnValue(Promise.reject());
-                shapesGraphStateStub.inProgressCommit = {
+                shapesGraphStateStub.listItem.inProgressCommit = {
                     additions: [{'@id': '12345'}],
                     deletions: []
                 };
@@ -101,7 +101,7 @@ describe('Shapes Graph Changes Page component', function() {
                 fixture.detectChanges();
                 await fixture.whenStable();
 
-                expect(shapesGraphStateStub.inProgressCommit).toEqual({
+                expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual({
                     additions: [{'@id': '12345'}],
                     deletions: []
                 });
@@ -118,7 +118,7 @@ describe('Shapes Graph Changes Page component', function() {
             expect(infoMessage.length).toEqual(0);
 
             shapesGraphStateStub.isCommittable.and.returnValue(false);
-            shapesGraphStateStub.currentShapesGraphRecordIri = 'record';
+            shapesGraphStateStub.listItem.versionedRdfRecord.recordId = 'record';
             fixture.detectChanges();
             await fixture.whenStable();
             infoMessage = element.queryAll(By.css('info-message'));
@@ -134,7 +134,7 @@ describe('Shapes Graph Changes Page component', function() {
             expect(infoMessage.length).toEqual(0);
 
             shapesGraphStateStub.isCommittable.and.returnValue(true);
-            shapesGraphStateStub.currentShapesGraphRecordIri = 'record';
+            shapesGraphStateStub.listItem.versionedRdfRecord.recordId = 'record';
             fixture.detectChanges();
             await fixture.whenStable();
             infoMessage = element.queryAll(By.css('info-message'));
@@ -147,7 +147,7 @@ describe('Shapes Graph Changes Page component', function() {
     });
     it('should call removeChanges when the button is clicked', async function() {
         shapesGraphStateStub.isCommittable.and.returnValue(true);
-        shapesGraphStateStub.currentShapesGraphRecordIri = 'record';
+        shapesGraphStateStub.listItem.versionedRdfRecord.recordId = 'record';
         fixture.detectChanges();
         await fixture.whenStable();
 

@@ -21,8 +21,7 @@
  * #L%
  */
 import './statementContainer.component.scss';
-
-const template = require('./statementContainer.component.html');
+import { Component, Input, OnInit } from '@angular/core';
 
 /**
  * @ngdoc component
@@ -38,24 +37,20 @@ const template = require('./statementContainer.component.html');
  * @param {string} additions Whether the statements are additions. The presence of the attribute is enough to set it
  * @param {string} deletions Whether the statements are deletions. The presence of the attribute is enough to set it
  */
-const statementContainerComponent = {
-    template,
-    transclude: true,
-    bindings: {
-        additions: '@',
-        deletions: '@'
-    },
-    controllerAs: 'dvm',
-    controller: statementContainerComponentCtrl
-};
 
-function statementContainerComponentCtrl() {
-    var dvm = this;
+@Component({
+    selector: 'statement-container',
+    templateUrl: 'statementContainer.component.html'
+})
+export class StatementContainerComponent implements OnInit {
+    @Input() additions: boolean;
+    @Input() deletions: boolean;
 
-    dvm.$onInit = function() {
-        dvm.hasAdditions = dvm.additions !== undefined;
-        dvm.hasDeletions = dvm.deletions !== undefined;
+    hasAdditions: boolean;
+    hasDeletions: boolean;
+
+    ngOnInit(): void {
+        this.hasAdditions = this.additions !== undefined;
+        this.hasDeletions = this.deletions !== undefined;
     }
 }
-
-export default statementContainerComponent;

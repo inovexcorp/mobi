@@ -42,16 +42,16 @@
                         </ui-select-choices>
                     </ui-select>
                 </div>
-                <checkbox ng-if="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title') !== 'MASTER'" bind-model="dvm.state.requestConfig.removeSource" change-event="dvm.state.requestConfig.removeSource = value" display-text="'Remove ' + dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title') + ' after merge.'"></checkbox>
+                <checkbox ng-if="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title') !== 'MASTER'" [(model)]="dvm.state.requestConfig.removeSource" [display-text]="'Remove ' + dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title') + ' after merge.'"></checkbox>
             </form>
         </div>
     </div>
-    <commit-difference-tabset difference="dvm.state.requestConfig.difference"
-                              branch-title="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')"
-                              target-id="dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head')"
-                              commit-id="dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head')"
-                              entity-name-func="dvm.state.getEntityNameLabel"
-                              show-more-results-func="dvm.state.retrieveMoreResults(limit, offset)"
-                              start-index="dvm.state.requestConfig.startIndex"
-                              record-id="dvm.state.requestConfig.recordId"></commit-difference-tabset>
+    <commit-difference-tabset [difference]="dvm.state.requestConfig.difference"
+                              [branch-title]="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')"
+                              [target-id]="dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head')"
+                              [commit-id]="dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head')"
+                              [entity-name-func]="dvm.state.getEntityNameLabel"
+                              [show-more-results-func]="dvm.state.retrieveMoreResults"
+                              [start-index]="dvm.state.requestConfig.startIndex"
+                              [record-id]="dvm.state.requestConfig.recordId"></commit-difference-tabset>
 </div>

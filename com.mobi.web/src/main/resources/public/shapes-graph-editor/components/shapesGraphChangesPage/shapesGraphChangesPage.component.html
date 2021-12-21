@@ -22,7 +22,7 @@
   -->
 <div class="shapes-graph-changes-page h-100 row m-0">
     <div class="col-8 offset-2 pt-2 h-100">
-        <info-message *ngIf="!state.isCommittable() && state.currentShapesGraphRecordIri">No Changes to Display</info-message>
+        <info-message *ngIf="!state.isCommittable() && state?.listItem?.versionedRdfRecord?.recordId">No Changes to Display</info-message>
         <div class="has-changes h-100 d-flex flex-column" *ngIf="state.isCommittable()">
             <div class="changes-info">
                 <div class="btn-container clearfix">

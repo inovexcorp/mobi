@@ -461,13 +461,27 @@ export function mockSettingManager() {
     angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('settingManagerService', function($q) {
-            this.defaultNamespace = '';
-            this.getUserPreferences = jasmine.createSpy('getUserPreferences').and.returnValue(Promise.resolve(''));
-            this.updateUserPreference = jasmine.createSpy('updateUserPreference').and.returnValue(Promise.resolve(''));
-            this.createUserPreference = jasmine.createSpy('createUserPreference').and.returnValue(Promise.resolve(''));
-            this.getPreferenceGroups = jasmine.createSpy('getPreferenceGroups').and.returnValue(Promise.resolve(''));
-            this.getPreferenceDefinitions = jasmine.createSpy('getPreferenceDefinitions').and.returnValue(Promise.resolve(''));
+            this.prefSettingType = { iri: `http://mobitest.com/Preference`, userText: 'Preferences'};
+            this.appSettingType = { iri: `http://mobitest.com/ApplicationSetting`, userText: 'Application Settings'};
             this.initialize = jasmine.createSpy('initialize');
+            this.getDefaultNamespace = jasmine.createSpy('getDefaultNamespace').and.returnValue(Promise.resolve(''));
+            this.getApplicationSettings = jasmine.createSpy('getApplicationSettings').and.returnValue(Promise.resolve(''));
+            this.getSettings = jasmine.createSpy('getSettings').and.returnValue(Promise.resolve([]));
+            this.getApplicationSettingByType = jasmine.createSpy('getApplicationSettingByType').and.returnValue(Promise.resolve(''));
+            this.getUserPreferenceByType = jasmine.createSpy('getUserPreferenceByType').and.returnValue(Promise.resolve(''));
+            this.getSettingByType = jasmine.createSpy('getSettingByType').and.returnValue(Promise.resolve(''));
+            this.updateUserPreference = jasmine.createSpy('updateUserPreference').and.returnValue(Promise.resolve(''));
+            this.updateApplicationSetting = jasmine.createSpy('updateApplicationSetting').and.returnValue(Promise.resolve(''));
+            this.updateSetting = jasmine.createSpy('updateSetting').and.returnValue(Promise.resolve(''));
+            this.createUserPreference = jasmine.createSpy('createUserPreference').and.returnValue(Promise.resolve(''));
+            this.createApplicationSetting = jasmine.createSpy('createApplicationSetting').and.returnValue(Promise.resolve(''));
+            this.createSetting = jasmine.createSpy('createSetting').and.returnValue(Promise.resolve(''));
+            this.getSettingGroups = jasmine.createSpy('getSettingGroups').and.returnValue(Promise.resolve(''));
+            this.getPreferenceGroups = jasmine.createSpy('getPreferenceGroups').and.returnValue(Promise.resolve(''));
+            this.getApplicationSettingGroups = jasmine.createSpy('getApplicationSettingGroups').and.returnValue(Promise.resolve(''));
+            this.getPreferenceDefinitions = jasmine.createSpy('getPreferenceDefinitions').and.returnValue(Promise.resolve(''));
+            this.getApplicationSettingDefinitions = jasmine.createSpy('getApplicationSettingDefinitions').and.returnValue(Promise.resolve(''));
+            this.getSettingDefinitions = jasmine.createSpy('getSettingDefinitions').and.returnValue(Promise.resolve(''));
         });
     });
 }
@@ -1373,6 +1387,15 @@ export function mockRecordPermissionsManager() {
         $provide.service('recordPermissionsManagerService', function($q) {
             this.getRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue($q.when({}));
             this.updateRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue($q.when());
+        });
+    });
+}
+
+export function mockShapesGraphState() {
+    angular.mock.module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
+        $provide.service('shapesGraphStateService', function($q) {
+            this.openShapesGraph = jasmine.createSpy('openShapesGraph').and.returnValue($q.when());
         });
     });
 }

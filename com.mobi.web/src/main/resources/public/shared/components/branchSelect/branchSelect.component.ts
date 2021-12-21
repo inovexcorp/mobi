@@ -22,9 +22,12 @@
  */
 
 import './branchSelect.component.scss';
-
-const template = require('./branchSelect.component.html');
-
+import { Component, EventEmitter, Inject, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { Observable } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
 /**
  * @ngdoc component
@@ -37,37 +40,68 @@ const template = require('./branchSelect.component.html');
  * `bindModel`, but only one way. The provided `changeEvent` function is expected to update the value of
  * `bindModel`. The select can be disabled and set to be required using parameters.
  *
- * @param {Object} bindModel The variable to bind the value of the select field to
- * @param {Function} changeEvent A function to call when the value of the select is changed. Should update the value
- * of `bindModel`. Expects an argument called `value`.
- * @param {Object[]} branches An array of JSON-LD objects representing Branches
+ * @param {Object} model The variable to bind the value of the select field to
+ * @param {Function} modelChange An event emitted when value of the select is changed. Should update the value
+ * of `model`.
+ * @param {JSONLDObject[]} branches An array of JSON-LD objects representing Branches
  * @param {boolean} required An expression that determines whether the select is required
  * @param {boolean} isDisabledWhen An expression that determines whether the select is disabled
  */
-const branchSelectComponent = {
-    template,
-    bindings: {
-        bindModel: '<',
-        changeEvent: '&',
-        branches: '<',
-        required: '<',
-        isDisabledWhen: '<',
-    },
-    controllerAs: 'dvm',
-    controller: branchSelectComponentCtrl
-};
+@Component({
+    selector: 'branch-select',
+    templateUrl: './branchSelect.component.html'
+})
+export class BranchSelectComponent implements OnInit, OnChanges {
+    @Input() model: JSONLDObject;
+    @Output() modelChange = new EventEmitter<JSONLDObject>();
 
-branchSelectComponentCtrl.$inject = ['$timeout', 'utilService'];
+    @Input() branches: JSONLDObject[];
+    @Input() required: boolean;
+    @Input() isDisabledWhen: boolean;
 
-function branchSelectComponentCtrl($timeout, utilService) {
-    var dvm = this;
-    dvm.util = utilService;
+    branchControl = new FormControl();
+    filteredBranches: Observable<JSONLDObject[]>;
 
-    dvm.onChange = function() {
-        $timeout(function() {
-            dvm.changeEvent({value: dvm.bindModel});
-        });
+    constructor(@Inject('utilService') public util) {
+    }
+
+    ngOnInit(): void {
+        this._setFilteredBranches();
+    }
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes?.isDisabledWhen) {
+            if (changes?.isDisabledWhen) {
+                this.branchControl.enable();
+            } else {
+                this.branchControl.disable();
+            }
+        }
+        if (changes?.branches) {
+            this._setFilteredBranches();
+        }
+    }
+    selectedBranch(event: MatAutocompleteSelectedEvent): void {
+        const branch: JSONLDObject = event.option.value;
+        this.modelChange.emit(branch);
+    }
+    getDisplayText(value: JSONLDObject): string {
+        if (!value) {
+            return '';
+        }
+        return this.util.getDctermsValue(value, 'title');
+    }
+
+    private _setFilteredBranches(): void {
+        this.filteredBranches = this.branchControl.valueChanges.pipe(
+            startWith(''),
+            map(value => this._filter(value)),
+        );
+    }
+    private _filter(value: string): JSONLDObject[] {
+        if (typeof value !== 'string') {
+            return this.branches;
+        }
+        const filterValue = value.toLowerCase();
+        return this.branches.filter(branch => this.util.getDctermsValue(branch, 'title').toLowerCase().includes(filterValue));
     }
 }
-
-export default branchSelectComponent;

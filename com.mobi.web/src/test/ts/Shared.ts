@@ -96,6 +96,7 @@ export class mockUtil {
     getChangesById = jasmine.createSpy('getChangesById');
     getPredicatesAndObjects = jasmine.createSpy('getPredicatesAndObjects');
     getPredicateLocalName = jasmine.createSpy('getPredicateLocalName');
+    getPredicateLocalNameOrdered = jasmine.createSpy('getPredicateLocalNameOrdered').and.returnValue([]);
     getIdForBlankNode = jasmine.createSpy('getIdForBlankNode').and.returnValue('');
     getSkolemizedIRI = jasmine.createSpy('getSkolemizedIRI').and.returnValue('');
     getInputType = jasmine.createSpy('getInputType').and.returnValue('');
@@ -103,14 +104,30 @@ export class mockUtil {
     startDownload = jasmine.createSpy('startDownload');
     rejectError = jasmine.createSpy('rejectError').and.callFake(() => Promise.reject(''));
     rejectErrorObject = jasmine.createSpy('rejectError').and.callFake(() => Promise.reject(''));
+    getObjIrisFromDifference = jasmine.createSpy('getObjIrisFromDifference').and.returnValue('');
 }
 
 export class mockSettingManager {
-    getUserPreferences = jasmine.createSpy('getUserPreferences').and.returnValue(Promise.resolve(''));
+    prefSettingType = { iri: `http://mobitest.com/Preference`, userText: 'Preferences'};
+    appSettingType = { iri: `http://mobitest.com/ApplicationSetting`, userText: 'Application Settings'};
+    getDefaultNamespace = jasmine.createSpy('getDefaultNamespace').and.returnValue(Promise.resolve(''));
+    getApplicationSettings = jasmine.createSpy('getApplicationSettings').and.returnValue(Promise.resolve(''));
+    getSettings = jasmine.createSpy('getSettings').and.returnValue(Promise.resolve([]));
+    getApplicationSettingByType = jasmine.createSpy('getApplicationSettingByType').and.returnValue(Promise.resolve(''));
+    getUserPreferenceByType = jasmine.createSpy('getUserPreferenceByType').and.returnValue(Promise.resolve(''));
+    getSettingByType = jasmine.createSpy('getSettingByType').and.returnValue(Promise.resolve(''));
     updateUserPreference = jasmine.createSpy('updateUserPreference').and.returnValue(Promise.resolve(''));
+    updateApplicationSetting = jasmine.createSpy('updateApplicationSetting').and.returnValue(Promise.resolve(''));
+    updateSetting = jasmine.createSpy('updateSetting').and.returnValue(Promise.resolve(''));
     createUserPreference = jasmine.createSpy('createUserPreference').and.returnValue(Promise.resolve(''));
+    createApplicationSetting = jasmine.createSpy('createApplicationSetting').and.returnValue(Promise.resolve(''));
+    createSetting = jasmine.createSpy('createSetting').and.returnValue(Promise.resolve(''));
+    getSettingGroups = jasmine.createSpy('getSettingGroups').and.returnValue(Promise.resolve(''));
     getPreferenceGroups = jasmine.createSpy('getPreferenceGroups').and.returnValue(Promise.resolve(''));
+    getApplicationSettingGroups = jasmine.createSpy('getApplicationSettingGroups').and.returnValue(Promise.resolve(''));
     getPreferenceDefinitions = jasmine.createSpy('getPreferenceDefinitions').and.returnValue(Promise.resolve(''));
+    getApplicationSettingDefinitions = jasmine.createSpy('getApplicationSettingDefinitions').and.returnValue(Promise.resolve(''));
+    getSettingDefinitions = jasmine.createSpy('getSettingDefinitions').and.returnValue(Promise.resolve(''));
 }
 
 export class mockModal {
@@ -119,10 +136,10 @@ export class mockModal {
 }
 
 export class mockPrefixes {
-    owl = '';
-    delim = '';
-    data = '';
-    mappings = '';
+    owl = 'owl:';
+    delim = 'delim:';
+    data = 'data:';
+    mappings = 'mappings:';
     rdfs = 'rdfs:';
     dc = 'dc:';
     dcterms = 'dcterms:';
@@ -511,7 +528,7 @@ export class mockCatalogManager {
     coreRecordTypes = [];
     sortOptions = [];
     recordTypes = [];
-    localCatalog = undefined;
+    localCatalog = {'@id': 'catalog'};
     distributedCatalog = undefined;
     initialize = jasmine.createSpy('initialize').and.returnValue(Promise.resolve());
     getSortOptions = jasmine.createSpy('getSortOptions').and.returnValue(Promise.resolve([]));
@@ -790,4 +807,19 @@ export class MockOntologyVisualizationService {
             'ontologyId': 'http://www.co-ode.org/ontologies/pizza/pizza.owl'
         }
     ]);
+}
+
+export class mockStateManager {
+    states = [];
+    initialize = jasmine.createSpy('initialize');
+    getStates = jasmine.createSpy('getStates').and.returnValue(Promise.resolve());
+    createState = jasmine.createSpy('createState').and.returnValue(Promise.resolve());
+    getState = jasmine.createSpy('getState').and.returnValue(Promise.resolve());
+    updateState = jasmine.createSpy('updateState').and.returnValue(Promise.resolve());
+    deleteState = jasmine.createSpy('deleteState').and.returnValue(Promise.resolve());
+}
+
+export class mockShapesGraphManager {
+    createShapesGraphRecord = jasmine.createSpy('createShapesGraphRecord').and.returnValue(Promise.resolve());
+    deleteShapesGraphRecord = jasmine.createSpy('deleteShapesGraphRecord').and.returnValue(Promise.resolve());
 }

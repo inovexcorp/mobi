@@ -21,7 +21,8 @@
  * #L%
  */
 
-const template = require('./checkbox.component.html');
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { MatCheckboxChange } from '@angular/material/checkbox';
 
 /**
  * @ngdoc component
@@ -34,35 +35,25 @@ const template = require('./checkbox.component.html');
  * false values. The `bindModel` variable is one way bound so the provided `changeEvent` function is expected to
  * update the value of `bindModel`.
  *
- * @param {boolean} bindModel the variable to bind the value of the checkbox to
- * @param {function} changeEvent a function to be called when the value of the checkbox changes. Should
- * update the value of `bindModel`. Expects an argument called `value`
+ * @param {boolean} model the variable to bind the value of the checkbox to
+ * @param {function} modelChange an EventEmitter for when the checkbox value is updated. Should update the value of `model`.
  * @param {string} [displayText=''] label text to display for the checkbox
  * @param {boolean} [isDisabledWhen=false] when the checkbox should be disabled
  */
-const checkboxComponent = {
-    template,
-    bindings: {
-        bindModel: '<',
-        changeEvent: '&',
-        displayText: '<',
-        inline: '<?',
-        isDisabled: '<'
-    },
-    controllerAs: 'dvm',
-    controller: checkboxComponentCtrl
-};
 
-checkboxComponentCtrl.$inject = ['$timeout'];
+@Component({
+    selector: 'checkbox',
+    templateUrl: './checkbox.component.html'
+})
+export class CheckboxComponent {
+    @Input() model: boolean;
+    @Output() modelChange = new EventEmitter<boolean>();
 
-function checkboxComponentCtrl($timeout) {
-    var dvm = this;
+    @Input() displayText: string;
+    @Input() inline?: boolean;
+    @Input() isDisabled: boolean;
 
-    dvm.onChange = function() {
-        $timeout(function() {
-            dvm.changeEvent({value: dvm.bindModel});
-        });
+    onChange($event: MatCheckboxChange): void {
+        setTimeout(() => this.modelChange.emit($event.checked));
     }
 }
-
-export default checkboxComponent;

@@ -21,12 +21,11 @@
  * #L%
  */
 
-import { map, forEach, filter, has, union, orderBy, isEmpty } from 'lodash';
+import { Component, Inject, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { map, forEach, filter, union, orderBy, isEmpty } from 'lodash';
 
 import './commitChangesDisplay.component.scss';
-
-const template = require('./commitChangesDisplay.component.html');
-
+import { CommitChange } from '../../models/commitChange.interface';
 /**
  * @ngdoc component
  * @name shared.component:commitChangesDisplay
@@ -45,66 +44,60 @@ const template = require('./commitChangesDisplay.component.html');
  * @param {boolean} hasMoreResults A boolean indicating if the commit has more results to display
  * @param {int} startIndex The startIndex for the offset. Used when reloading the display.
  */
-const commitChangesDisplayComponent = {
-    template,
-    bindings: {
-        additions: '<',
-        deletions: '<',
-        entityNameFunc: '<?',
-        showMoreResultsFunc: '&',
-        hasMoreResults: '<',
-        startIndex: '<?'
-    },
-    controllerAs: 'dvm',
-    controller: commitChangesDisplayComponentCtrl
-};
 
-commitChangesDisplayComponentCtrl.$inject = ['utilService'];
+@Component({
+    selector: 'commit-changes-display',
+    templateUrl: './commitChangesDisplay.component.html'
+})
+export class CommitChangesDisplayComponent implements OnInit, OnChanges {
+    @Input() additions: CommitChange[];
+    @Input() deletions: CommitChange[];
+    @Input() entityNameFunc?: (args: any) => string;
+    @Input() hasMoreResults: boolean;
+    @Input() startIndex?: number;
+    @Input() showMoreResultsFunc: (limit: number, offset: number) => void
 
-function commitChangesDisplayComponentCtrl(utilService) {
-    var dvm = this;
-    dvm.size = 100; // Must be the same as the limit prop in the commitHistoryTable
-    dvm.index = 0;
-    dvm.util = utilService;
-    dvm.list = [];
-    dvm.chunkList = [];
-    dvm.results = {};
-    dvm.showMore = false;
+    size = 100; // Must be the same as the limit prop in the commitHistoryTable
+    index = 0;
+    list = [];
+    chunkList = [];
+    results = {};
+    showMore = false;
+    
+    constructor(@Inject('utilService') private util) {}
 
-    dvm.$onInit = function() {
-        if (dvm.startIndex) {
-            dvm.index = dvm.startIndex;
+    ngOnInit(): void {
+        if (this.startIndex) {
+            this.index = this.startIndex;
         }
     }
-    dvm.$onChanges = function(changesObj) {
-        if (has(changesObj, 'additions') || has(changesObj, 'deletions')) {
-            var adds;
-            var deletes;
-            if (isEmpty(dvm.results)) {
-                adds = map(dvm.additions, '@id');
-                deletes = map(dvm.deletions, '@id');
+    ngOnChanges(changesObj: SimpleChanges): void {
+        if (changesObj?.additions?.currentValue || changesObj?.deletions?.currentValue) {
+            let adds;
+            let deletes;
+            if (isEmpty(this.results)) {
+                adds = map(this.additions, '@id');
+                deletes = map(this.deletions, '@id');
             } else {
-                adds = filter(map(dvm.additions, '@id'), id => !dvm.results[id]);
-                deletes = filter(map(dvm.deletions, '@id'), id => !dvm.results[id]);
+                adds = filter(map(this.additions, '@id'), id => !this.results[id]);
+                deletes = filter(map(this.deletions, '@id'), id => !this.results[id]);
             }
-            var combined = union(adds, deletes);
-            dvm.list = orderBy(combined, item => item, 'asc');
-            dvm.addPagedChangesToResults();
+            const combined = union(adds, deletes);
+            this.list = orderBy(combined, item => item, 'asc');
+            this.addPagedChangesToResults();
         }
     }
-    dvm.addPagedChangesToResults = function() {
-        forEach(dvm.list, id => {
-            addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, dvm.results);
+    addPagedChangesToResults(): void {
+        forEach(this.list, id => {
+            this.addToResults(this.util.getChangesById(id, this.additions), this.util.getChangesById(id, this.deletions), id, this.results);
         });
-        dvm.showMore = dvm.hasMoreResults;
+        this.showMore = this.hasMoreResults;
     }
-    dvm.getMorePagedChanges = function() {
-        dvm.index += dvm.size;
-        dvm.showMoreResultsFunc({limit: dvm.size, offset: dvm.index}); // Should trigger $onChanges
+    getMorePagedChanges(): void {
+        this.index += this.size;
+        this.showMoreResultsFunc(this.size, this.index); // Should trigger ngOnChanges
     }
-    function addToResults(additions, deletions, id, results) {
+    private addToResults(additions, deletions, id, results): void {
         results[id] = { additions: additions, deletions: deletions };
     }
 }
-
-export default commitChangesDisplayComponent;

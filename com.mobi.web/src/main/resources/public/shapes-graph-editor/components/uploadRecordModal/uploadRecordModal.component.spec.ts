@@ -37,6 +37,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { cleanStylesFromDOM, mockUtil, mockCatalogManager } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { FileInputComponent } from '../../../shared/components/fileInput/fileInput.component';
+import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { UploadRecordModalComponent } from './uploadRecordModal.component';
 import { RdfUpdate } from '../../../shared/models/rdfUpdate.interface';
@@ -100,13 +101,18 @@ describe('Upload Record Modal component', function() {
         matDialogRef = TestBed.get(MatDialogRef);
         shapesGraphManagerStub = TestBed.get(ShapesGraphManagerService);
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
-        shapesGraphStateStub.inProgressCommit = {
+        shapesGraphStateStub.listItem = new VersionedRdfListItem();
+        shapesGraphStateStub.listItem.inProgressCommit = {
             additions: [],
             deletions: []
         };
-        shapesGraphStateStub.currentShapesGraphRecordIri = 'record1';
-        shapesGraphStateStub.currentShapesGraphBranchIri = 'branch1';
-        shapesGraphStateStub.currentShapesGraphCommitIri = 'commit1';
+        shapesGraphStateStub.listItem.versionedRdfRecord = {
+            recordId: 'record1',
+            branchId: 'branch1',
+            commitId: 'commit1',
+            title: 'title'
+        };
+
         shapesGraphManagerStub.uploadChanges.and.returnValue(Promise.resolve(uploadResponse));
         catalogManagerStub = TestBed.get('catalogManagerService');
         catalogManagerStub.getInProgressCommit.and.returnValue({
@@ -132,7 +138,7 @@ describe('Upload Record Modal component', function() {
         describe('should upload changes and update the inProgressCommit and close the dialog', function() {
             it('successfully', async function() {
                 component.selectedFile = file;
-                expect(shapesGraphStateStub.inProgressCommit).toEqual({
+                expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual({
                     additions: [],
                     deletions: []
                 });
@@ -141,7 +147,7 @@ describe('Upload Record Modal component', function() {
                 await fixture.whenStable();
 
                 expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith(rdfUpdate);
-                expect(shapesGraphStateStub.inProgressCommit).toEqual({
+                expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual({
                     additions: [{'@id': '12345'}],
                     deletions: []
                 });
@@ -151,7 +157,7 @@ describe('Upload Record Modal component', function() {
             it('unless an error occurs', async function() {
                 component.selectedFile = file;
                 shapesGraphManagerStub.uploadChanges.and.returnValue(Promise.reject(''));
-                expect(shapesGraphStateStub.inProgressCommit).toEqual({
+                expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual({
                     additions: [],
                     deletions: []
                 });
@@ -160,7 +166,7 @@ describe('Upload Record Modal component', function() {
                 await fixture.whenStable();
 
                 expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith(rdfUpdate);
-                expect(shapesGraphStateStub.inProgressCommit).toEqual({
+                expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual({
                     additions: [],
                     deletions: []
                 });
@@ -170,7 +176,7 @@ describe('Upload Record Modal component', function() {
             it('unless there are no changes in the uploaded file', async function() {
                 component.selectedFile = file;
                 shapesGraphManagerStub.uploadChanges.and.returnValue(Promise.resolve({status: 204}));
-                expect(shapesGraphStateStub.inProgressCommit).toEqual({
+                expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual({
                     additions: [],
                     deletions: []
                 });
@@ -179,7 +185,7 @@ describe('Upload Record Modal component', function() {
                 await fixture.whenStable();
 
                 expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith(rdfUpdate);
-                expect(shapesGraphStateStub.inProgressCommit).toEqual({
+                expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual({
                     additions: [],
                     deletions: []
                 });

@@ -23,7 +23,7 @@
 <span uib-dropdown class="hierarchy-filter w-100 h-100 d-block" is-open="dvm.dropdownOpen" on-toggle="dvm.dropdownToggled(open)">
     <a uib-dropdown-toggle class="h-100 w-100"><span ng-class="{'disappear': !dvm.numFilters }" class="badge fa-stack fa" data-count="{{dvm.numFilters}}"><i class="fa fa-filter fa-stack-1x xfa-inverse"></i></span></a>
     <ul uib-dropdown-menu ng-click="$event.stopPropagation()">
-        <checkbox ng-repeat="filter in dvm.filters" class="dropdown-item" display-text="filter.name" bind-model="filter.checked" change-event="filter.checked = value"></checkbox>
+        <checkbox ng-repeat="filter in dvm.filters" class="dropdown-item" [display-text]="filter.name" [(model)]="filter.checked"></checkbox>
         <div class="modal-footer"><button class="btn btn-primary float-right" ng-click="dvm.apply()" data-toggle="dropdown">Apply</button></div>
     </ul>
 </span>

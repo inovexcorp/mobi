@@ -422,7 +422,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
                 any(RepositoryConnection.class));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
                 anyString(), any(Model.class), eq(null), any(RepositoryConnection.class));
-        verify(xacmlPolicyManager, times(0)).addPolicy(any(XACMLPolicy.class));
+        verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
     }
