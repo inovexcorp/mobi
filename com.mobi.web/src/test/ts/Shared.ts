@@ -23,8 +23,10 @@
 
 import { identity, get, has } from 'lodash';
 import { Observable } from 'rxjs';
-import { GraphState, StateNode, StateEdge, ControlRecordI } from '../../main/resources/public/ontology-visualization/services/visualization.interfaces';
 import 'hammerjs';
+
+import { ControlRecordI } from '../../main/resources/public/ontology-visualization/interfaces/visualization.interfaces';
+import { GraphState, StateNode, StateEdge } from  '../../main/resources/public/ontology-visualization/classes';
 
 export function cleanStylesFromDOM(): void {
     const head: HTMLHeadElement = document.getElementsByTagName('head')[0];
@@ -691,8 +693,11 @@ export class MockOntologyVisualizationService {
     spinnerId: 'ontology-visualization';
     DEFAULT_NODE_LIMIT: 100;
 
-    public get graphStateCache(): Map<String, GraphState> {
-        throw new Error('graphStateCache not implemented.');
+    public get graphStateCache(): Map<string, GraphState> {
+       return jasmine.createSpyObj('graphStateCache',['get'], {
+           get: jasmine.createSpy('get').and.callThrough(),
+           has: jasmine.createSpy('has').and.returnValue(true)
+       });
     }
 
     _sidePanelActionSubjectSubscription = jasmine.createSpyObj('Subscription', {

@@ -22,11 +22,20 @@
  */
 import * as _ from 'lodash';    
 import { Inject, Injectable, } from '@angular/core';
+import { Observable, Subject, Subscriber, from, of, forkJoin } from 'rxjs';
+import { map, tap, switchMap, catchError, shareReplay } from 'rxjs/operators';
 
 import { buildColorScale } from '../helpers/graphSettings';
-import { StateNode, StateEdge, RangesI, ControlRecordI, GraphState, SidePanelPayload, ParentMapI, ChildIrisI, EntityInfoI, inProgressCommitI} from './visualization.interfaces';
-import { Observable, Subject, Subscriber, from, of, forkJoin } from 'rxjs';
-import { map, tap, switchMap, catchError} from 'rxjs/operators';
+import { StateNode, SidebarState, StateEdge, GraphState } from '../classes/index';
+import { 
+    RangesI, 
+    ControlRecordI, 
+    SidePanelPayloadI, 
+    ParentMapI, 
+    ChildIrisI, 
+    EntityInfoI, 
+    inProgressCommitI 
+} from '../interfaces/visualization.interfaces';
 
 
 /**
@@ -38,8 +47,18 @@ import { map, tap, switchMap, catchError} from 'rxjs/operators';
 
 @Injectable()
 export class OntologyVisualizationService {
-    private _graphStateCache = new Map<string, GraphState>(); // Used to store the graph state for a specific commitId
-    private _sidePanelActionSubject$ = new Subject<SidePanelPayload>(); // Used for controling graph outside of OntologyVisualization component
+    // Used to store the graph state for a specific commitId
+    private _graphStateCache = new Map<string, GraphState>();
+    private _sidebarCache = new Map<string, SidebarState>();
+    // Observable string source
+    // Only the service has access to the subject
+    private _sidePanelActionSubject = new Subject<SidePanelPayloadI>(); // Used for controling graph outside of OntologyVisualization component
+    private _ontologyClassSelectedSubject = new Subject<string>();
+
+    // Observable Streams
+    // enable subscription
+    sidePanelActionAction$ = this._sidePanelActionSubject.asObservable();
+    ontologyClassSelectedAction$ = this._ontologyClassSelectedSubject.asObservable().pipe(shareReplay(1));
     
     readonly ERROR_MESSAGE: string = 'Something went wrong. Please try again later.';
     readonly IN_PROGRESS_COMMIT_MESSAGE: string = 'Uncommitted changes will not appear in the graph';
@@ -49,16 +68,39 @@ export class OntologyVisualizationService {
 
     constructor(@Inject('ontologyStateService') private os,
         @Inject('ontologyManagerService') private om,
-        @Inject('utilService') private utilService) { }
+        @Inject('utilService') private utilService) {
+        if (this.os.ontologyAction$) {
+            this.os.ontologyAction$.subscribe( record => this.removeOntologyCache(record));
+        }
+    }
 
     public get graphStateCache() {
         return this._graphStateCache;
     }
 
-    public get sidePanelActionSubject$() {
-        return this._sidePanelActionSubject$;
+    // BEGIN dispatch messages
+    // Emitt messsages from the sevice.
+
+    /**
+     *
+     * @param action
+     */
+    public emitSelectAction(action):void {
+        this._ontologyClassSelectedSubject.next(action);
     }
 
+    /**
+     * Emit SidePanel evetns or actions
+     * @param action
+     */
+    public emitSidePanelAction(action:SidePanelPayloadI) {
+        this._sidePanelActionSubject.next(action);
+    }
+
+    public getSidePanelActionActionObserver() {
+        return  this.sidePanelActionAction$;
+    }
+    // END dispatch messages
     /**
      * @name init
      * 
@@ -84,13 +126,15 @@ export class OntologyVisualizationService {
                     const commitGraphState: GraphState = new GraphState({
                         commitId: commitId,
                         ontologyId: this.os.listItem.ontologyId,
+                        recordId: this.os.listItem.ontologyRecord.recordId,
                         importedOntologies: this.os.listItem.importedOntologies || [],
                         positioned: false,
                         isOverLimit: false,
                         nodeLimit: self.DEFAULT_NODE_LIMIT,
                         allGraphNodes: [],
                         allGraphEdges: [],
-                        data: { nodes: [], edges: [] }
+                        data: { nodes: [], edges: [] },
+                        selectedNodes: false
                     });
                     this.graphStateCache.set(commitId, commitGraphState);
                     return commitGraphState;
@@ -110,10 +154,22 @@ export class OntologyVisualizationService {
                 });
                 commitGraphState.ontologiesClassMap = ontologiesClassMap;
                 commitGraphState.isOverLimit = commitGraphState.allGraphNodes.length > commitGraphState.nodeLimit;
+                commitGraphState.getName = (iri) => this.utilService.getBeautifulIRI(iri);
                 const controlRecordSearch = commitGraphState.getControlRecordSearch(0);
                 commitGraphState.emitGraphData(controlRecordSearch);
             })
         );
+    }
+
+    public getSidebarState(commitId) {
+        let state;
+        if (this._sidebarCache.has(commitId)) {
+          state = this._sidebarCache.get(commitId);
+        } else {
+            state = new SidebarState({commitId, recordId: this.os.listItem.ontologyRecord.recordId});
+            this._sidebarCache.set(commitId, state);
+        }
+        return  state;
     }
 
     /**
@@ -541,5 +597,19 @@ export class OntologyVisualizationService {
             });
         }
         return ranges;
+    }
+
+    /**
+     * Remove OntologyRecord from cache
+     * @param recordInfo
+     */
+    public removeOntologyCache(recordInfo:any) : void {
+        if (recordInfo && recordInfo.action && recordInfo.action === 'close') {
+            this._graphStateCache.forEach(item => {
+                if (item.recordId === recordInfo.recordId) {
+                    this._graphStateCache.delete(item.commitId);
+                }
+            })
+        }
     }
 }

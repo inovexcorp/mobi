@@ -32,6 +32,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SharedModule } from '../shared/shared.module';
 import { FormsModule } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
+import { MatExpansionModule } from "@angular/material/expansion";
 
  @NgModule({
      declarations: [
@@ -39,11 +40,15 @@ import { ReactiveFormsModule } from '@angular/forms';
         VisualizationSidebar
      ],
      imports: [
-        BrowserModule,
-        SharedModule,
-        BrowserAnimationsModule,
-        FormsModule,
-        ReactiveFormsModule
+         BrowserModule,
+         SharedModule,
+         BrowserAnimationsModule,
+         FormsModule,
+         ReactiveFormsModule,
+         MatExpansionModule
+     ],
+     exports: [
+         MatExpansionModule
      ],
      entryComponents: [ 
         OntologyVisualization,

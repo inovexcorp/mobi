@@ -86,7 +86,7 @@ const style = [{
         "border-color": `${highlighted}`,
         "text-outline-color": `${primary}`
     }
-}, {
+},{
     "selector": "edge",
     "style": {
         "haystack-radius": "1",
@@ -216,7 +216,7 @@ const buildColorScale = (importedOntologies, ontologyId) => {
     const ontologyColorMap = {}; // iri -> color
     ontologyColorMap[ontologyId] = `${primary}`
 
-    if(importedOntologies && importedOntologies.length > 0){
+    if (importedOntologies && importedOntologies.length > 0){
         const scaleNo = importedOntologies.length;
 
         const ontologyColors =  getScale(scaleNo);
@@ -236,7 +236,7 @@ const buildColorScale = (importedOntologies, ontologyId) => {
                 }
             });
 
-            ontologyColorMap[importedOntologies[i].id] = `${ontologyColors[i]}`
+            ontologyColorMap[importedOntologies[i].id] = `${ontologyColors[i]}`;
         }
 
     }

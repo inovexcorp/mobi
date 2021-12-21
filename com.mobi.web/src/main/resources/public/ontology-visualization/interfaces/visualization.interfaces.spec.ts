@@ -20,16 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {fakeAsync, flush} from '@angular/core/testing';
-import { ControlRecordI, ControlRecordSearchI, StateNode, GraphState, ObjectComparer, ControlRecordSearchResultI, ControlRecordType } from './visualization.interfaces';
+import { fakeAsync, flush } from '@angular/core/testing';
+import { ControlRecordI, ControlRecordSearchI, ControlRecordSearchResultI, ControlRecordType } from './visualization.interfaces';
+import { StateNode, GraphState, ObjectComparer } from '../classes';
 import { Subject, Subscription } from 'rxjs';
 
-
+const getName = (iri) => iri;
 const expectGraphStateDefault = (graphState: GraphState, overrideState = {}) => {
-    var expectedGraphState = Object.assign({
+
+    const expectedGraphState = Object.assign({
         commitId: 'commitId',
-        ontologyId: 'ontologyId',
-        importedOntologies: [],
+        ontologyId: 'Ont1',
+        importedOntologies: [{id:'Ont2'},{id:'Ont4'}],
         allGraphNodes: [],
         isOverLimit: false,
         data: undefined,
@@ -38,7 +40,8 @@ const expectGraphStateDefault = (graphState: GraphState, overrideState = {}) => 
         ontologyColorMap: undefined,
         ontologiesClassMap: undefined,
         d3Forces: graphState.d3Forces,
-        nodeLimit: 500
+        nodeLimit: 500,
+        getName
     }, overrideState);
 
     expect(graphState.commitId).toEqual(expectedGraphState.commitId);
@@ -52,7 +55,7 @@ const expectGraphStateDefault = (graphState: GraphState, overrideState = {}) => 
     expect(graphState.ontologiesClassMap).toEqual(expectedGraphState.ontologiesClassMap);
     expect(graphState.d3Forces).toEqual(expectedGraphState.d3Forces);
     expect(graphState.nodeLimit).toEqual(expectedGraphState.nodeLimit);
-}
+};
 
 const cru1: ControlRecordI = { type: ControlRecordType.NODE, id: '0.0', name: "A",  isImported: undefined,  ontologyId: undefined, onGraph: true};
 const cru2: ControlRecordI = { type: ControlRecordType.NODE, id: '0.1', name: undefined,  isImported: undefined,  ontologyId: undefined, onGraph: true};
@@ -61,7 +64,6 @@ const cr21: ControlRecordI = { type: ControlRecordType.NODE, id: '2.1', name: 'A
 const cr22: ControlRecordI = { type: ControlRecordType.NODE, id: '2.2', name: 'B',  isImported: true,  ontologyId: 'Ont2', onGraph: true};
 const cr41: ControlRecordI = { type: ControlRecordType.NODE, id: '4.1', name: 'A',  isImported: true,  ontologyId: 'Ont4', onGraph: true};
 const cr410: ControlRecordI = { type: ControlRecordType.NODE, id: '4.10', name: 'Z',  isImported: true,  ontologyId: 'Ont4', onGraph: true};
-
 
 describe('Visualization Interface', () => {
     let controlRecordSubject$;
@@ -78,14 +80,17 @@ describe('Visualization Interface', () => {
 
         graphState = new GraphState({
             commitId: 'commitId',
-            ontologyId: 'ontologyId',
-            importedOntologies: [],
+            ontologyId: 'Ont1',
+            recordId: 'recordId',
+            importedOntologies: [{id:'Ont2'},{id:'Ont4'}],
             isOverLimit: false,
             positioned: false,
             allGraphNodes: [],
             allGraphEdges: [],
             ontologyColorMap: ontologyColorMap,
             nodeLimit: 500,
+            selectedNodes: false,
+            getName
         }, controlRecordSubject$);
     });
 
@@ -166,7 +171,7 @@ describe('Visualization Interface', () => {
                     subCount.push(controlRecordSearchResultI.count);
                     expect(controlRecordSearchResultI.count).toEqual(6);
                     expect(controlRecordSearchResultI.limit).toEqual(500);
-                    expect(controlRecordSearchResultI.records.length).toEqual(6);
+                    expect(controlRecordSearchResultI.records.length).toEqual(3);
                 });
 
                 graphState.emitGraphData(controlRecordSearch);
@@ -177,7 +182,7 @@ describe('Visualization Interface', () => {
                     subCount.push(controlRecordSearchResultI.count);
                     expect(controlRecordSearchResultI.count).toEqual(6);
                     expect(controlRecordSearchResultI.limit).toEqual(500);
-                    expect(controlRecordSearchResultI.records.length).toEqual(6);
+                    expect(controlRecordSearchResultI.records.length).toEqual(3);
                 });
                 
                 flush();
@@ -203,12 +208,12 @@ describe('Visualization Interface', () => {
             stateNode.data = {id: 'id1', ontologyId: 'ont1'};
             const controlRecordOnGraphFalse = stateNode.asControlRecord(false);
             expect(controlRecordOnGraphFalse.onGraph).toEqual(false);
-
+    
             expect(controlRecordOnGraphFalse.id).toEqual('id1');
             expect(controlRecordOnGraphFalse.name).toEqual(undefined);
             expect(controlRecordOnGraphFalse.isImported).toEqual(undefined);
             expect(controlRecordOnGraphFalse.ontologyId).toEqual('ont1');
-
+    
             const controlRecordOnGraphTrue = stateNode.asControlRecord(true);
             expect(controlRecordOnGraphTrue.onGraph).toEqual(true);
         });

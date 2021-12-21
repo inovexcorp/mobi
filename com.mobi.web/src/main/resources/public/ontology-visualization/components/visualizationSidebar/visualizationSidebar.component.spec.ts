@@ -25,10 +25,11 @@ import { FormsModule } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
-import { fakeAsync, TestBed, ComponentFixture } from "@angular/core/testing";
+import { fakeAsync, TestBed, ComponentFixture, flush } from '@angular/core/testing';
 import { MatSelectModule } from '@angular/material';
+import { MatExpansionModule } from '@angular/material/expansion';
 
-import { Observable } from 'rxjs';
+import {Observable, Subject} from 'rxjs';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent } from 'ng-mocks';
 
@@ -37,7 +38,13 @@ import { InfoMessageComponent } from '../../../shared/components/infoMessage/inf
 import { SpinnerComponent } from '../../../shared/components/progress-spinner/spinner.component';
 import { MockOntologyVisualizationService } from  '../../../../../../test/ts/Shared';
 import { VisualizationSidebar } from './visualizationSidebar.component';
-import { ControlRecordI, ControlRecordSearchI, ControlRecordSearchResultI, ControlRecordType, SidePanelAction } from '../../services/visualization.interfaces';
+import {
+    ControlRecordI,
+    ControlRecordSearchI,
+    ControlRecordSearchResultI,
+    ControlRecordType,
+    SidePanelAction
+} from '../../interfaces/visualization.interfaces';
 
 describe('Visualization sidebar component', () => {
     let component: VisualizationSidebar;
@@ -46,6 +53,8 @@ describe('Visualization sidebar component', () => {
     let serviceStub: OntologyVisualizationService;
     let controlRecords: ControlRecordI[];
     let localNodeLimit;
+    let subject;
+    let groupedOntologies;
     
     configureTestSuite(() =>  {
         TestBed.configureTestingModule({
@@ -58,7 +67,8 @@ describe('Visualization sidebar component', () => {
                 FormsModule,
                 ReactiveFormsModule,
                 BrowserAnimationsModule,
-                MatSelectModule
+                MatSelectModule,
+                MatExpansionModule
             ],
             providers: [
                 { provide: OntologyVisualizationService, useClass: MockOntologyVisualizationService },
@@ -69,6 +79,7 @@ describe('Visualization sidebar component', () => {
         fixture = TestBed.createComponent(VisualizationSidebar);
         localNodeLimit = 500;
         component = fixture.componentInstance;
+        subject = new Subject<any>();
         controlRecords = [
             {
                 type: ControlRecordType.NODE,
@@ -78,20 +89,39 @@ describe('Visualization sidebar component', () => {
                 type: ControlRecordType.NODE,
                 id: 'record2', name: 'label2', ontologyId: 'ont2', isImported: false, onGraph: false
             }
-        ]
+        ];
+        groupedOntologies =  [{
+            'ontologyId' : 'ont1',
+            'classes': [
+                {
+                    type: ControlRecordType.NODE,
+                    id: 'record1', name: 'label1', ontologyId: 'ont1', isImported: false, onGraph: true
+                },
+                {
+                    type: ControlRecordType.NODE,
+                    id: 'record2', name: 'label2', ontologyId: 'ont2', isImported: false, onGraph: false
+                }
+            ]
+        }];
         component.graphState = jasmine.createSpyObj('graphState', ['emitGraphData', 'getControlRecordSearch'], { 
             nodeLimit: localNodeLimit,
             controlRecordObservable$: new Observable<ControlRecordSearchResultI>(subscriber => {
                 subscriber.next({
                     limit: 500,
                     count: 1,
-                    records: controlRecords
+                    records: groupedOntologies
                 });
             })
         });
         element = fixture.debugElement;
         serviceStub = TestBed.get(OntologyVisualizationService);
         serviceStub.getGraphState = jasmine.createSpy('getGraphState').and.returnValue(component.graphState);
+        serviceStub.getSidebarState = jasmine.createSpy('getSidebarState').and.returnValue({
+            commitId: 'commitId1',
+            recordId: 'recordId1'
+        });
+        serviceStub.emitSidePanelAction = jasmine.createSpy('emitSidePanelAction').and.callFake(() => {});
+        serviceStub.emitSelectAction = jasmine.createSpy('emitSelectAction').and.callFake(() => {});
     });
     afterEach(() => {
         element = null;
@@ -105,6 +135,7 @@ describe('Visualization sidebar component', () => {
             component.commitId = 'commitId1';
             component.ngOnInit();
             expect(serviceStub.getGraphState).toHaveBeenCalledWith('commitId1');
+            expect(serviceStub.getSidebarState).toHaveBeenCalledWith('commitId1');
         }));
     });
     describe('component onToggledClick method', () => {
@@ -119,17 +150,19 @@ describe('Visualization sidebar component', () => {
     describe('component onClickRecordSelect method', () => {
         it('emits correctly', fakeAsync(() => {
             component.onClickRecordSelect(controlRecords[0])
-            expect(serviceStub.sidePanelActionSubject$.next).toHaveBeenCalledWith({action: SidePanelAction.RECORD_SELECT, controlRecord: controlRecords[0]});
+            expect(serviceStub.emitSidePanelAction).toHaveBeenCalledWith({action: SidePanelAction.RECORD_SELECT, controlRecord: controlRecords[0]});
+            expect(serviceStub.emitSelectAction).toHaveBeenCalledWith({ action: SidePanelAction.RECORD_SELECT, nodeId: controlRecords[0].id});
         }));
     });
     describe('component onRightClickRecordSelect method', () => {
         it('emits correctly', fakeAsync(() => {
             const event = jasmine.createSpyObj('event', ['preventDefault'])
             component.onRightClickRecordSelect(event, controlRecords[0])
-            expect(serviceStub.sidePanelActionSubject$.next).toHaveBeenCalledWith({action: SidePanelAction.RECORD_CENTER, controlRecord: controlRecords[0]});
+            expect(serviceStub.emitSidePanelAction).toHaveBeenCalledWith({action: SidePanelAction.RECORD_CENTER, controlRecord: controlRecords[0]});
             expect(event.preventDefault).toHaveBeenCalled();
         }));
     });
+
     describe('component searchRecords method', () => {
         it('emits emitGraphData correctly', () => {
             const controlRecordSearch: ControlRecordSearchI = { 
@@ -171,4 +204,15 @@ describe('Visualization sidebar component', () => {
             expect(element.query(By.css('.sidebar-wrapper'))).toBeTruthy();
         });
     });
+    it('ontology class emit a value on click', fakeAsync(() => {
+        // trigger the click
+        fixture.detectChanges();
+        const panel = fixture.debugElement.nativeElement.querySelector('mat-expansion-panel-header');
+        fixture.detectChanges();
+        expect(panel).toBeTruthy();
+        panel.click();
+        flush();
+        fixture.detectChanges();
+        expect(component.sidebarState.selectedOntologyId).toBe('ont1');
+    }));
 });

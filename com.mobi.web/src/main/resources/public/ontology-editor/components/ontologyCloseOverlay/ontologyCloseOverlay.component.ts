@@ -50,8 +50,8 @@ const ontologyCloseOverlayComponent = {
 
 ontologyCloseOverlayComponentCtrl.$inject = ['$q', 'ontologyStateService'];
 
-function ontologyCloseOverlayComponentCtrl($q, ontologyStateService) {
-    var dvm = this;
+function ontologyCloseOverlayComponentCtrl($q, ontologyStateService): void {
+    const dvm = this;
     dvm.os = ontologyStateService;
     dvm.error = '';
 
@@ -59,14 +59,14 @@ function ontologyCloseOverlayComponentCtrl($q, ontologyStateService) {
         dvm.os.saveChanges(dvm.os.listItem.ontologyRecord.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions})
             .then(() => dvm.os.afterSave(), $q.reject)
             .then(() => dvm.closeModal(), errorMessage => dvm.error = errorMessage);
-    }
+    };
     dvm.closeModal = function() {
         dvm.os.closeOntology(dvm.os.recordIdToClose);
         dvm.close();
-    }
+    };
     dvm.cancel = function() {
         dvm.dismiss();
-    }
+    };
 }
 
 export default ontologyCloseOverlayComponent;
