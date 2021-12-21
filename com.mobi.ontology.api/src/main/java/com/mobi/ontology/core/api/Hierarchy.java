@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.OutputStream;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -55,6 +56,7 @@ public class Hierarchy {
     private Set<Resource> iris = ConcurrentHashMap.newKeySet();
     private Map<String, Set<String>> parentMap = new ConcurrentHashMap<>();
     private Map<String, Set<String>> childMap = new ConcurrentHashMap<>();
+    private Map<String, Map<String, Set<String>>> circularMap = new ConcurrentHashMap<>();
 
     private IRI type;
     private IRI nodeType;
@@ -81,6 +83,10 @@ public class Hierarchy {
 
     public Map<String, Set<String>> getParentMap() {
         return parentMap;
+    }
+
+    public Map<String, Map<String, Set<String>>> getCircularMap() {
+        return circularMap;
     }
 
     public Model getModel() {
@@ -122,6 +128,27 @@ public class Hierarchy {
             Set<String> set = ConcurrentHashMap.newKeySet();
             set.add(childStr);
             parentMap.put(parentStr, set);
+        }
+    }
+
+    /**
+     * Adjusts the internal {@link Map Maps} and {@link Model} to represent a circular relationship between the
+     * provided {@link Resource Resources}.
+     *
+     * @param parent entity that would cause a circular relationship if it were subclassed
+     * @param child entity already currently being subclassed by the parent entity
+     * @param path A set of entities that are included in list of links to the parent entity
+     */
+    public void addCircularRelationship(Resource parent, Resource child, HashSet<String> path) {
+        String parentString = parent.stringValue();
+        String childString = child.stringValue();
+
+        if (circularMap.containsKey(parentString)) {
+            circularMap.get(parentString).put(childString, path);
+        } else {
+            Map<String, Set<String>> childObject = new ConcurrentHashMap<>();
+            childObject.put(childString, path);
+            circularMap.put(parentString, childObject);
         }
     }
 

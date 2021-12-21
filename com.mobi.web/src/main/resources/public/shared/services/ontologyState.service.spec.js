@@ -36,8 +36,8 @@ import {
 } from '../../../../../test/js/Shared';
 
 describe('Ontology State Service', function() {
-    var ontologyStateSvc, $q, scope, util, stateManagerSvc, propertyManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, policyEnforcementSvc, httpSvc, uuidSvc, $document, splitIRI, manchesterConverterSvc;
-    var listItem;
+    let ontologyStateSvc, $q, scope, util, stateManagerSvc, propertyManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, policyEnforcementSvc, httpSvc, uuidSvc, $document, splitIRI, manchesterConverterSvc;
+    let listItem;
 
     beforeEach(function() {
         angular.mock.module('shared');
@@ -176,6 +176,8 @@ describe('Ontology State Service', function() {
                 'node3a': ['node2a', 'node2b', 'node3b'],
                 'node3b': ['node1b', 'node2c'],
                 'node3c': ['node2a'],
+            },
+            circularMap: {
             }
         };
         this.hierarchy = [{
@@ -406,12 +408,12 @@ describe('Ontology State Service', function() {
     });
     describe('getOntologyStateByRecordId', function() {
         it('when state is not present', function() {
-            var result = ontologyStateSvc.getOntologyStateByRecordId(this.recordId);
+            let result = ontologyStateSvc.getOntologyStateByRecordId(this.recordId);
             expect(result).toEqual(undefined);
         });
         it('when state is present', function() {
             stateManagerSvc.states = [{id: this.stateId, model: this.ontologyState}];
-            var result = ontologyStateSvc.getOntologyStateByRecordId(this.recordId);
+            let result = ontologyStateSvc.getOntologyStateByRecordId(this.recordId);
             expect(result).toEqual({id: this.stateId, model: this.ontologyState});
         });
     });
@@ -507,7 +509,7 @@ describe('Ontology State Service', function() {
         expect(stateManagerSvc.deleteState).toHaveBeenCalledWith(this.stateId);
     });
     it('deleteOntologyBranchState calls the correct method', function() {
-        var tempState = _.cloneDeep(this.ontologyState);
+        let tempState = _.cloneDeep(this.ontologyState);
         this.recordState[prefixes.ontologyState + 'branchStates'] = [{'@id': 'branchState'}];
         this.ontologyState.push({'@id': 'branchState', [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}]});
         spyOn(ontologyStateSvc, 'getOntologyStateByRecordId').and.returnValue({
@@ -540,7 +542,7 @@ describe('Ontology State Service', function() {
         expect(ontologyStateSvc.getCurrentState({model: [{'@id': 'id'}]})).toEqual({'@id': 'id'});
     });
     it('isStateTag determines if an object is a StateTag', function() {
-        var obj = {};
+        let obj = {};
         expect(ontologyStateSvc.isStateTag(obj)).toEqual(false);
         obj['@type'] = ['Test'];
         expect(ontologyStateSvc.isStateTag(obj)).toEqual(false);
@@ -548,7 +550,7 @@ describe('Ontology State Service', function() {
         expect(ontologyStateSvc.isStateTag(obj)).toEqual(true);
     });
     it('isStateBranch determines if an object is a StateBranch', function() {
-        var obj = {};
+        let obj = {};
         expect(ontologyStateSvc.isStateBranch(obj)).toEqual(false);
         obj['@type'] = ['Test'];
         expect(ontologyStateSvc.isStateBranch(obj)).toEqual(false);
@@ -1606,7 +1608,7 @@ describe('Ontology State Service', function() {
             });
             it('and createOntologyState is resolved', function() {
                 ontologyStateSvc.createOntologyState.and.returnValue($q.when());
-                var expected = {
+                let expected = {
                     recordId: this.recordId,
                     branchId: this.branchId,
                     commitId: this.commitId,
@@ -1912,7 +1914,7 @@ describe('Ontology State Service', function() {
     });
     describe('saveChanges should call the correct methods', function() {
         it('when updateInProgressCommit resolves', function() {
-            var resolved = 'this';
+            let resolved = 'this';
             catalogManagerSvc.updateInProgressCommit.and.returnValue($q.when(resolved));
             ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
                 .then(response => {
@@ -1935,16 +1937,16 @@ describe('Ontology State Service', function() {
     });
     describe('addToAdditions should call the correct functions', function() {
         it('when entity is in the additions list', function() {
-            var statement = {'@id': 'id', 'prop': 'value'};
-            var listItem = {'additions': [{'@id': 'id'}]};
+            let statement = {'@id': 'id', 'prop': 'value'};
+            let listItem = {'additions': [{'@id': 'id'}]};
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
             ontologyStateSvc.addToAdditions(this.recordId, statement);
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
             expect(listItem.additions[0]).toEqual(statement);
         });
         it('when entity is not in the additions list', function() {
-            var statement = {'@id': 'id', 'prop': 'value'};
-            var listItem = {'additions': []};
+            let statement = {'@id': 'id', 'prop': 'value'};
+            let listItem = {'additions': []};
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
             ontologyStateSvc.addToAdditions(this.recordId, statement);
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
@@ -1953,16 +1955,16 @@ describe('Ontology State Service', function() {
     });
     describe('addToDeletions should call the correct functions', function() {
         it('when entity is in the deletions list', function() {
-            var statement = {'@id': 'id', 'prop': 'value'};
-            var listItem = {'deletions': [{'@id': 'id'}]};
+            let statement = {'@id': 'id', 'prop': 'value'};
+            let listItem = {'deletions': [{'@id': 'id'}]};
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
             ontologyStateSvc.addToDeletions(this.recordId, statement);
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
             expect(listItem.deletions[0]).toEqual(statement);
         });
         it('when entity is not in the deletions list', function() {
-            var statement = {'@id': 'id', 'prop': 'value'};
-            var listItem = {'deletions': []};
+            let statement = {'@id': 'id', 'prop': 'value'};
+            let listItem = {'deletions': []};
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
             ontologyStateSvc.addToDeletions(this.recordId, statement);
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
@@ -2157,8 +2159,8 @@ describe('Ontology State Service', function() {
                 expect(util.createErrorToast).not.toHaveBeenCalled();
             });
             it('rejects', function() {
-                var originalConcepts = angular.copy(ontologyStateSvc.listItem.concepts);
-                var originalConceptSchemes = angular.copy(ontologyStateSvc.listItem.conceptSchemes);
+                let originalConcepts = angular.copy(ontologyStateSvc.listItem.concepts);
+                let originalConceptSchemes = angular.copy(ontologyStateSvc.listItem.conceptSchemes);
                 ontologyManagerSvc.getVocabularyStuff.and.returnValue($q.reject(this.error));
                 ontologyStateSvc.setVocabularyStuff();
                 scope.$apply();
@@ -2205,8 +2207,8 @@ describe('Ontology State Service', function() {
                 expect(util.createErrorToast).not.toHaveBeenCalled();
             });
             it('rejects', function() {
-                var originalConcepts = angular.copy(listItem.concepts);
-                var originalConceptSchemes = angular.copy(listItem.conceptSchemes);
+                let originalConcepts = angular.copy(listItem.concepts);
+                let originalConceptSchemes = angular.copy(listItem.conceptSchemes);
                 ontologyManagerSvc.getVocabularyStuff.and.returnValue($q.reject(this.error));
                 ontologyStateSvc.setVocabularyStuff(listItem);
                 scope.$apply();
@@ -2225,7 +2227,7 @@ describe('Ontology State Service', function() {
     });
     it('flattenHierarchy properly flattens the provided hierarchy', function() {
         spyOn(ontologyStateSvc, 'getEntityNameByListItem').and.callFake(_.identity);
-        var hierarchyInfo = {
+        let hierarchyInfo = {
             iris: {
                 'Class B': 'ontology',
                 'Class B1': 'ontology',
@@ -2527,7 +2529,7 @@ describe('Ontology State Service', function() {
             it('and it is not a userBranch', function() {
                 ontologyStateSvc.createOntologyListItem(this.recordId, this.branchId, this.commitId, this.inProgressCommit, false, '', this.clearCache)
                     .then(response => {
-                        var expectedIriObj = {};
+                        let expectedIriObj = {};
                         expectedIriObj[this.annotationId] = this.ontologyId;
                         expectedIriObj[this.annotationId2] = this.ontologyId2;
                         expect(_.get(response, 'annotations.iris')).toEqual(expectedIriObj);
@@ -2718,7 +2720,7 @@ describe('Ontology State Service', function() {
             it('and it is a userBranch', function() {
                 ontologyStateSvc.createOntologyListItem(this.recordId, this.userBranchId, this.commitId, this.inProgressCommit, false, '', this.clearCache)
                     .then(response => {
-                        var expectedIriObj = {};
+                        let expectedIriObj = {};
                         expectedIriObj[this.annotationId] = this.ontologyId;
                         expectedIriObj[this.annotationId2] = this.ontologyId2;
                         expect(_.get(response, 'annotations.iris')).toEqual(expectedIriObj);
@@ -2910,7 +2912,7 @@ describe('Ontology State Service', function() {
                 util.getPropertyId.and.returnValue('deletedBranchId');
                 ontologyStateSvc.createOntologyListItem(this.recordId, this.userBranchId, this.commitId, this.inProgressCommit, false, '', this.clearCache)
                     .then(response => {
-                        var expectedIriObj = {};
+                        let expectedIriObj = {};
                         expectedIriObj[this.annotationId] = this.ontologyId;
                         expectedIriObj[this.annotationId2] = this.ontologyId2;
                         expect(_.get(response, 'annotations.iris')).toEqual(expectedIriObj);
@@ -3481,9 +3483,9 @@ describe('Ontology State Service', function() {
             _.set(ontologyStateSvc.listItem.editorTabStates, 'individuals.open.' + this.node.joinedPath, true);
         });
         it('joinedPaths correctly', function() {
-            var classInQuestion = _.filter(ontologyStateSvc.listItem.classes.flat, {'entityIRI': 'iri'});
+            let classInQuestion = _.filter(ontologyStateSvc.listItem.classes.flat, {'entityIRI': 'iri'});
             expect(classInQuestion.length).toEqual(1);
-            var individualInQuestion = _.filter(ontologyStateSvc.listItem.individuals.flat, {'entityIRI': 'iri'});
+            let individualInQuestion = _.filter(ontologyStateSvc.listItem.individuals.flat, {'entityIRI': 'iri'});
             expect(individualInQuestion.length).toEqual(1);
             expect(classInQuestion[0].joinedPath).toEqual(this.recordId + '.otherIRI.andAnotherIRI.iri');
             expect(individualInQuestion[0].joinedPath).toEqual(this.recordId + '.otherIRI.andAnotherIRI.iri');
@@ -3545,8 +3547,8 @@ describe('Ontology State Service', function() {
             });
         });
         it('when getEntityUsages resolves', function() {
-            var statement = {'@id': 'test-id'};
-            var response = [statement];
+            let statement = {'@id': 'test-id'};
+            let response = [statement];
             ontologyManagerSvc.getEntityUsages.and.returnValue($q.when(response));
             ontologyStateSvc.onEdit(this.iriBegin, this.iriThen, this.iriEnd);
             scope.$apply();
@@ -3646,7 +3648,7 @@ describe('Ontology State Service', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue(this.key);
         });
         it('when getEntityUsages resolves', function() {
-            var response = [{'@idx': 'this.id'}];
+            let response = [{'@idx': 'this.id'}];
             ontologyManagerSvc.getEntityUsages.and.returnValue($q.when(response));
             ontologyStateSvc.setEntityUsages(this.id);
             scope.$apply();
@@ -3861,17 +3863,34 @@ describe('Ontology State Service', function() {
             expect(this.hierarchyInfo.childMap['new-node']).toEqual(['node3c']);
         });
         it('unless the parent entity is not in the hierarchy', function() {
-            var originalParentMap = angular.copy(this.hierarchyInfo.parentMap);
-            var originalChildMap = angular.copy(this.hierarchyInfo.childMap);
+            let originalParentMap = angular.copy(this.hierarchyInfo.parentMap);
+            let originalChildMap = angular.copy(this.hierarchyInfo.childMap);
             ontologyStateSvc.addEntityToHierarchy(this.hierarchyInfo, 'new-node', 'not-there');
             expect(this.hierarchyInfo.parentMap).toEqual(originalParentMap);
             expect(this.hierarchyInfo.childMap).toEqual(originalChildMap);
         });
+        it('when the relationships are circular', function() {
+            let originalParentMap = angular.copy(this.hierarchyInfo.parentMap);
+            let originalChildMap = angular.copy(this.hierarchyInfo.childMap);
+            ontologyStateSvc.addEntityToHierarchy(this.hierarchyInfo, 'node1a', 'node2a');
+            expect(this.hierarchyInfo.parentMap).toEqual(originalParentMap);
+            expect(this.hierarchyInfo.childMap).toEqual(originalChildMap);
+            expect(this.hierarchyInfo.circularMap).toEqual({'node2a': {'node1a': ['node1a', 'node2a']}});
+        });
     });
-    it('deleteEntityFromParentInHierarchy should remove the provided entityIRI from the parentIRI', function() {
-        ontologyStateSvc.deleteEntityFromParentInHierarchy(this.hierarchyInfo, 'node3a', 'node3b');
-        expect(this.hierarchyInfo.parentMap['node3b']).toBeUndefined();
-        expect(this.hierarchyInfo.childMap['node3a']).toEqual(['node2a', 'node2b']);
+    describe('deleteEntityFromParentInHierarchy should remove the provided entityIRI from the parentIRI', function() {
+        it('with non-circular nodes', function() {
+            ontologyStateSvc.deleteEntityFromParentInHierarchy(this.hierarchyInfo, 'node3a', 'node3b');
+            expect(this.hierarchyInfo.parentMap['node3b']).toBeUndefined();
+            expect(this.hierarchyInfo.childMap['node3a']).toEqual(['node2a', 'node2b']);
+        });
+        it('with circular nodes', function() {
+            this.hierarchyInfo.circularMap = {'node3a' : {'node2c' : ['node2c', 'node3b', 'node3a']}}
+            ontologyStateSvc.deleteEntityFromParentInHierarchy(this.hierarchyInfo, 'node3b', 'node2c');
+            expect(this.hierarchyInfo.parentMap['node3a']).toEqual(['node2c']);
+            expect(this.hierarchyInfo.childMap['node2c']).toEqual(['node1a', 'node3a']);
+            expect(this.hierarchyInfo.circularMap).toEqual({});
+        });
     });
     describe('deleteEntityFromHierarchy', function() {
         it('should delete the entity from the hierarchy tree', function() {
@@ -3891,13 +3910,13 @@ describe('Ontology State Service', function() {
         });
     });
     it('getPathsTo should return all paths to provided node', function() {
-        var expectedPaths = [
+        let expectedPaths = [
             ['node1a', 'node2a', 'node3a'],
             ['node1a', 'node2b', 'node3a'],
             ['node1a', 'node2c', 'node3b', 'node3a'],
             ['node1b', 'node3b', 'node3a']
         ];
-        var result = ontologyStateSvc.getPathsTo(this.hierarchyInfo, 'node3a');
+        let result = ontologyStateSvc.getPathsTo(this.hierarchyInfo, 'node3a');
         expect(result.length).toBe(4);
         expect(_.sortBy(result)).toEqual(_.sortBy(expectedPaths));
     });
@@ -4282,7 +4301,7 @@ describe('Ontology State Service', function() {
                 });
             });
             it('with a range of xsd:decimal, xsd:double, xsd:float, xsd:int, xsd:integer, xsd:long, or xsd:nonNegativeInteger', function() {
-                var tests = [prefixes.xsd + 'decimal', prefixes.xsd + 'double', prefixes.xsd + 'float', prefixes.xsd + 'int', prefixes.xsd + 'integer', prefixes.xsd + 'long', prefixes.xsd + 'nonNegativeInteger'];
+                let tests = [prefixes.xsd + 'decimal', prefixes.xsd + 'double', prefixes.xsd + 'float', prefixes.xsd + 'int', prefixes.xsd + 'integer', prefixes.xsd + 'long', prefixes.xsd + 'nonNegativeInteger'];
                 _.forEach(tests, test => {
                     _.set(this.entity, "['" + prefixes.rdfs + "range'][0]['@id']", test);
                     ontologyStateSvc.updatePropertyIcon(this.entity);
@@ -4305,7 +4324,7 @@ describe('Ontology State Service', function() {
                 expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id']])).toBe('fa-clock-o');
             });
             it('with a range of xsd:boolean or xsd:byte', function() {
-                var tests = [prefixes.xsd + 'boolean', prefixes.xsd + 'byte'];
+                let tests = [prefixes.xsd + 'boolean', prefixes.xsd + 'byte'];
                 _.forEach(tests, test => {
                     _.set(this.entity, "['" + prefixes.rdfs + "range'][0]['@id']", test);
                     ontologyStateSvc.updatePropertyIcon(this.entity);
@@ -4571,7 +4590,7 @@ describe('Ontology State Service', function() {
         it('resolves', function() {
             ontologyStateSvc.listItem.merge = {};
             ontologyStateSvc.listItem.merge.difference = undefined;
-            var data = {
+            let data = {
                 additions: [{'@id': 'iri1'}],
                 deletions: [{'@id': 'iri2'}]
             };
@@ -4837,7 +4856,7 @@ describe('Ontology State Service', function() {
             it('annotationIri is owl:deprecated and value is true', function() {
                 ontologyStateSvc.listItem.ontologyId = 'ontologyId';
                 ontologyStateSvc.listItem.deprecatedIris = {};
-                var expected = { iri: ontologyStateSvc.listItem.ontologyId };
+                let expected = { iri: ontologyStateSvc.listItem.ontologyId };
                 ontologyStateSvc.annotationModified('iri', prefixes.owl + "deprecated", "true");
                 expect(ontologyStateSvc.listItem.deprecatedIris).toEqual(expected);
             });
@@ -4846,7 +4865,7 @@ describe('Ontology State Service', function() {
             it('annotationIri is owl:deprecated and value is false', function() {
                 ontologyStateSvc.listItem.ontologyId = 'ontologyId';
                 ontologyStateSvc.listItem.deprecatedIris = { iri: ontologyStateSvc.listItem.ontologyId };
-                var expected = {};
+                let expected = {};
                 ontologyStateSvc.annotationModified('iri', prefixes.owl + "deprecated", "false");
                 expect(ontologyStateSvc.listItem.deprecatedIris).toEqual(expected);
             });
@@ -4855,7 +4874,7 @@ describe('Ontology State Service', function() {
             it('annotationIri is not owl:deprecated and value is something', function() {
                 ontologyStateSvc.listItem.ontologyId = 'ontologyId';
                 ontologyStateSvc.listItem.deprecatedIris = { iri: ontologyStateSvc.listItem.ontologyId };
-                var expected = { iri: ontologyStateSvc.listItem.ontologyId };
+                let expected = { iri: ontologyStateSvc.listItem.ontologyId };
                 ontologyStateSvc.annotationModified('iri', prefixes.owl + "annotation1", "false");
                 expect(ontologyStateSvc.listItem.deprecatedIris).toEqual(expected);
             });

@@ -112,6 +112,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -1188,15 +1189,26 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         // Setup:
         Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#Class1a"), vf.createIRI("http://mobi.com/ontology#Class1b"),
                 vf.createIRI("http://mobi.com/ontology#Class1c"), vf.createIRI("http://mobi.com/ontology#Class2a"), vf.createIRI("http://mobi.com/ontology#Class2b"),
-                vf.createIRI("http://mobi.com/ontology#Class3a")).collect(Collectors.toSet());
+                vf.createIRI("http://mobi.com/ontology#Class3a"), vf.createIRI("http://mobi.com/ontology#Class4a"),vf.createIRI("http://mobi.com/ontology#Class4b"))
+                .collect(Collectors.toSet());
         Map<String, Set<String>> expectedParentMap = new HashMap<>();
         expectedParentMap.put("http://mobi.com/ontology#Class1a", Collections.singleton("http://mobi.com/ontology#Class1b"));
         expectedParentMap.put("http://mobi.com/ontology#Class1b", Collections.singleton("http://mobi.com/ontology#Class1c"));
         expectedParentMap.put("http://mobi.com/ontology#Class2a", Collections.singleton("http://mobi.com/ontology#Class2b"));
+        expectedParentMap.put("http://mobi.com/ontology#Class4a", Collections.singleton("http://mobi.com/ontology#Class4b"));
         Map<String, Set<String>> expectedChildMap = new HashMap<>();
         expectedChildMap.put("http://mobi.com/ontology#Class1b", Collections.singleton("http://mobi.com/ontology#Class1a"));
         expectedChildMap.put("http://mobi.com/ontology#Class1c", Collections.singleton("http://mobi.com/ontology#Class1b"));
         expectedChildMap.put("http://mobi.com/ontology#Class2b", Collections.singleton("http://mobi.com/ontology#Class2a"));
+        expectedChildMap.put("http://mobi.com/ontology#Class4b", Collections.singleton("http://mobi.com/ontology#Class4a"));
+
+        Map<String, Map<String, Set<String>>> expectedCircularMap = new HashMap<>();
+        Map<String, Set<String>> childObject = new HashMap<>();
+        HashSet<String> path = new HashSet<>();
+        path.add("http://mobi.com/ontology#Class4a");
+        path.add("http://mobi.com/ontology#Class4b");
+        childObject.put("http://mobi.com/ontology#Class4a", path);
+        expectedCircularMap.put("http://mobi.com/ontology#Class4b", childObject);
 
         Hierarchy result = queryOntology.getSubClassesOf(vf, mf);
         Map<String, Set<String>> parentMap = result.getParentMap();
@@ -1209,6 +1221,11 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         assertEquals(expectedChildMap.keySet(), childKeys);
         childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
 
+        Map<String, Map<String, Set<String>>> circularMap = result.getCircularMap();
+        Set<String> topLevelKeys = circularMap.keySet();
+        assertEquals(expectedCircularMap.keySet(), topLevelKeys);
+        topLevelKeys.forEach(iri -> assertEquals(expectedCircularMap.get(iri), circularMap.get(iri)));
+
         assertEquals(expectedSubjects, result.getModel().subjects());
     }
 
@@ -1218,15 +1235,18 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         IRI newClass = vf.createIRI("http://test.com/ontology1#ClassNew");
         Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#Class1a"), vf.createIRI("http://mobi.com/ontology#Class1b"),
                 vf.createIRI("http://mobi.com/ontology#Class1c"), vf.createIRI("http://mobi.com/ontology#Class2a"), vf.createIRI("http://mobi.com/ontology#Class2b"),
-                vf.createIRI("http://mobi.com/ontology#Class3a"), newClass).collect(Collectors.toSet());
+                vf.createIRI("http://mobi.com/ontology#Class3a"), vf.createIRI("http://mobi.com/ontology#Class4a"),vf.createIRI("http://mobi.com/ontology#Class4b"),
+                newClass).collect(Collectors.toSet());
         Map<String, Set<String>> expectedParentMap = new HashMap<>();
         expectedParentMap.put("http://mobi.com/ontology#Class1a", Stream.of("http://mobi.com/ontology#Class1b", newClass.stringValue()).collect(Collectors.toSet()));
         expectedParentMap.put("http://mobi.com/ontology#Class1b", Collections.singleton("http://mobi.com/ontology#Class1c"));
         expectedParentMap.put("http://mobi.com/ontology#Class2a", Collections.singleton("http://mobi.com/ontology#Class2b"));
+        expectedParentMap.put("http://mobi.com/ontology#Class4a", Collections.singleton("http://mobi.com/ontology#Class4b"));
         Map<String, Set<String>> expectedChildMap = new HashMap<>();
         expectedChildMap.put("http://mobi.com/ontology#Class1b", Collections.singleton("http://mobi.com/ontology#Class1a"));
         expectedChildMap.put("http://mobi.com/ontology#Class1c", Collections.singleton("http://mobi.com/ontology#Class1b"));
         expectedChildMap.put("http://mobi.com/ontology#Class2b", Collections.singleton("http://mobi.com/ontology#Class2a"));
+        expectedChildMap.put("http://mobi.com/ontology#Class4b", Collections.singleton("http://mobi.com/ontology#Class4a"));
         expectedChildMap.put(newClass.stringValue(), Collections.singleton("http://mobi.com/ontology#Class1a"));
 
         Model additions = mf.createModel();
@@ -1830,7 +1850,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     public void testGetSearchResults() throws Exception {
         Set<String> entities = Stream.of("http://mobi.com/ontology#Class3a", "http://mobi.com/ontology#Class2a",
                 "http://mobi.com/ontology#Class2b", "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
-                "http://mobi.com/ontology#Class1a").collect(Collectors.toSet());
+                "http://mobi.com/ontology#Class1a", "http://mobi.com/ontology#Class4a", "http://mobi.com/ontology#Class4b")
+                .collect(Collectors.toSet());
 
         TupleQueryResult result = queryOntology.getSearchResults("class", vf);
         assertTrue(result.hasNext());
@@ -1848,7 +1869,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         IRI newClass = vf.createIRI("http://test.com/ontology1#ClassNew");
         Set<String> entities = Stream.of("http://mobi.com/ontology#Class3a", "http://mobi.com/ontology#Class2a",
                 "http://mobi.com/ontology#Class2b", "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
-                "http://mobi.com/ontology#Class1a", newClass.stringValue()).collect(Collectors.toSet());
+                "http://mobi.com/ontology#Class1a", "http://mobi.com/ontology#Class4a", "http://mobi.com/ontology#Class4b",
+                newClass.stringValue()).collect(Collectors.toSet());
 
         Model additions = mf.createModel();
         additions.add(newClass, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()));
@@ -1871,7 +1893,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test
     public void testGetTupleQueryResults() throws Exception {
         List<BindingSet> result = QueryResults.asList(queryOntology.getTupleQueryResults("select distinct ?s where { ?s ?p ?o . }", true));
-        assertEquals(19, result.size());
+        assertEquals(21, result.size());
     }
 
     @Test
@@ -1884,7 +1906,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         SimpleOntology ont = (SimpleOntology) queryOntology;
         ont.setDifference(createDifference(additions, null));
         List<BindingSet> result = QueryResults.asList(ont.getTupleQueryResults("select distinct ?s where { ?s ?p ?o . }", true));
-        assertEquals(20, result.size());
+        assertEquals(22, result.size());
     }
 
     @Test
@@ -1928,7 +1950,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test
     public void testGetGraphQueryResultsStreamJsonLd() throws Exception {
         RDFFormat rdfFormat = RDFFormat.JSONLD;
-        int actualLength = 4597;
+        int actualLength = 5457;
 
         getGraphQueryResultStreamHelper(rdfFormat, actualLength);
         getGraphQueryResultStreamParameterHelper(rdfFormat, actualLength);
@@ -1937,7 +1959,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test
     public void testGetGraphQueryResultsStreamRDFXml() throws Exception {
         RDFFormat rdfFormat = RDFFormat.RDFXML;
-        int actualLength = 7798;
+        int actualLength = 9180;
 
         getGraphQueryResultStreamHelper(rdfFormat, actualLength);
         getGraphQueryResultStreamParameterHelper(rdfFormat, actualLength);
@@ -1946,7 +1968,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test
     public void testGetGraphQueryResultsStreamTurtle() throws Exception {
         RDFFormat rdfFormat = RDFFormat.TURTLE;
-        int actualLength = 3362;
+        int actualLength = 3892;
 
         getGraphQueryResultStreamHelper(rdfFormat, actualLength);
         getGraphQueryResultStreamParameterHelper(rdfFormat, actualLength);

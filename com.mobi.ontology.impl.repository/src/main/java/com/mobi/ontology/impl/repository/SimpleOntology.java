@@ -96,6 +96,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -1167,26 +1168,12 @@ public class SimpleOntology implements Ontology {
                     String parent = key.stringValue();
                     String child = value.getValue().stringValue();
                     Map<String, Set<String>> parentMap = hierarchy.getParentMap();
-                    Map<String, Set<String>> childMap = hierarchy.getChildMap();
 
-                    // Remove if Parent and Child are directly subclasses of each other
-                    boolean existsInParent = parentMap.containsKey(child) && parentMap.get(child).contains(parent);
-                    boolean existsInChild = childMap.containsKey(parent) && childMap.get(parent).contains(child);
-                    if (existsInParent) {
-                        parentMap.get(child).remove(parent);
-                        if (parentMap.get(child).size() == 0) {
-                            parentMap.remove(child);
-                        }
-                    }
-                    if (existsInChild) {
-                        childMap.get(parent).remove(child);
-                        if (childMap.get(parent).size() == 0) {
-                            childMap.remove(parent);
-                        }
-                    }
-
-                    if (!existsInChild && !existsInParent) {
+                    Map<String, Object> result = checkChildren(parentMap, parent, child, null, new HashSet<>());
+                    if (!((boolean) result.get("circular"))) {
                         hierarchy.addParentChild((IRI) key, (IRI) value.getValue());
+                    } else {
+                        hierarchy.addCircularRelationship((IRI) key, (IRI) value.getValue(), (HashSet) result.get("entities"));
                     }
                 }
             }
@@ -1778,5 +1765,43 @@ public class SimpleOntology implements Ontology {
         if (LOG.isTraceEnabled()) {
             LOG.trace(String.format(methodName + " complete in %d ms", System.currentTimeMillis() - start));
         }
+    }
+
+    /**
+     *  Checks to see if entities are subclassing each other in a circular manner
+     *
+     * @param parentMap A map that contains the most up-to-date parent-to-child relationships
+     * @param parentIRI The parent entity in a parent/child set
+     * @param childIRI The child entity in a parent/child set
+     * @param root The top level child element for a circular relationship
+     * @param path A set of entities that are along the path to the circular entity if there is one
+     *
+     */
+    private Map<String, Object> checkChildren(Map<String, Set<String>> parentMap, String parentIRI, String childIRI, String root,
+                                  Set<String> path) {
+
+        if (root == null) {root = childIRI;}
+        Map<String, Object> result = new ConcurrentHashMap<>();
+        result.put("circular", false);
+        result.put("entities", new HashSet<String>());
+
+        Set<String> childList = parentMap.get(childIRI);
+        if (childList != null && !childList.isEmpty()) {
+            for (String child : childList) {
+                if (((Boolean) result.get("circular")) == false) {
+                    if (parentMap.get(root).contains(child)) { path.clear(); }
+                    if (((HashSet) result.get("entities")).isEmpty()) { path.add(childIRI); }
+                    path.add(child);
+                    if (child.equals(parentIRI)) {
+                        result.put("circular", true);
+                    } else {
+                        result = checkChildren(parentMap, parentIRI, child, root, path);
+                    }
+                }
+                result.put("entities", path);
+            }
+        }
+
+        return result;
     }
 }

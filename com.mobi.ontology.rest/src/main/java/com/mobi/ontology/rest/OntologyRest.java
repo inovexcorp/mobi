@@ -3518,6 +3518,8 @@ public class OntologyRest {
         outputStream.write(mapper.valueToTree(hierarchy.getParentMap()).toString().getBytes());
         outputStream.write(", \"childMap\": ".getBytes());
         outputStream.write(mapper.valueToTree(hierarchy.getChildMap()).toString().getBytes());
+        outputStream.write(", \"circularMap\": ".getBytes());
+        outputStream.write(mapper.valueToTree(hierarchy.getCircularMap()).toString().getBytes());
         if (iris != null) {
             outputStream.write(", \"iris\": ".getBytes());
             outputStream.write(irisToJsonArray(iris).toString().getBytes());
