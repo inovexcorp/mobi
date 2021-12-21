@@ -52,20 +52,35 @@
                         </div>
                         <div class="sidebar-records">
                             <ng-container *ngIf="this.graphState.controlRecordObservable$ | async as results">
-                                <ul class="list-group list-group-flush">
-                                    <li *ngFor="let record of results.records" class="list-group-item ontologyClass"> 
-                                        <div class="ontologyClass__color">
-                                            <button type="button" class="btn btn-primary btn-circle" [style.background-color]="record.ontologyColor" (click)="onClickRecordSelect(record)"  (contextmenu)="onRightClickRecordSelect($event, record)"></button>
-                                        </div>
-                                        <div class="ontologyClass__info">
-                                            <span class="ontologyClass__name">{{ record.name }}</span> 
-                                            <span class="badge badge-primary ontologyClass__imported" [style.background-color]="record.ontologyColor" *ngIf="record.isImported" [title]="record.ontologyId">Imported</span> 
-                                        </div>
-                                        <div class="ontologyClass__actions">
-                                            <input type="checkbox" class="checkbox ontologyClass__check" [checked]="record.onGraph" disabled>
-                                        </div>
-                                    </li>
-                                </ul>
+                                <mat-accordion>
+                                    <mat-expansion-panel
+                                            class="ontologyPanel"
+                                            [expanded]="sidebarState?.selectedOntologyId === ontology.ontologyId"
+                                            *ngFor="let ontology of results.records"
+                                            (opened)="beforePanelOpened($event, ontology.ontologyId, true)"
+                                            (closed)="beforePanelClosed($event, ontology.ontologyId, false)">
+                                        <mat-expansion-panel-header>
+                                            <mat-panel-title>
+                                                <span type="button" class="ontology__color" [style.background-color]="ontology.ontologyColor"></span>
+                                                <span class="ontology__name" [title]="ontology.name">{{ontology.name}}</span>
+                                                <span class="ontology__imported" *ngIf="ontology.isImported" [title]="ontology.ontologyId">Imported</span>
+                                            </mat-panel-title>
+                                        </mat-expansion-panel-header>
+                                        <ul class="list-group list-group-flush" >
+                                            <li *ngFor="let record of ontology.classes" class="list-group-item ontologyClass"
+                                                (click)="onClickRecordSelect(record)"
+                                                (contextmenu)="onRightClickRecordSelect($event, record)"
+                                                [ngClass]="{'active': record?.id === (selectedRecord$ | async)?.nodeId}">
+                                                <div class="ontologyClass__info" >
+                                                    <span class="ontologyClass__name">{{ record.name }}</span>
+                                                </div>
+                                                <div class="ontologyClass__actions">
+                                                    <input type="checkbox" class="checkbox ontologyClass__check" [checked]="record.onGraph"  (click)="toggleClass(record)" disabled>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </mat-expansion-panel>
+                                </mat-accordion>
                                 <div class="sidebar__show-more">
                                     <button *ngIf="results.count >= results.limit" class="load-button btn" (click)="searchRecords(results.limit)">
                                         <i class="fa fa-fw fa-plus"></i><span>Load More</span>

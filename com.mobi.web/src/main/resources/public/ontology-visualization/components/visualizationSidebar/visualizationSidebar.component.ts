@@ -20,15 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { trigger, state, style, transition, animate } from '@angular/animations';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { animate, state, style, transition, trigger } from '@angular/animations';
 import { FormBuilder, Validators } from '@angular/forms';
 
+import { ControlRecordI, SidePanelAction } from '../../interfaces/visualization.interfaces';
+import { GraphState } from '../../classes';
 import { OntologyVisualizationService } from '../../services/ontologyVisualizaton.service';
 
 import './visualizationSidebar.component.scss';
-
-import { ControlRecordI, ControlRecordSearchI, GraphState, SidePanelAction } from '../../services/visualization.interfaces';
 
 /**
  * @class VisualizationSidebar
@@ -43,14 +43,17 @@ import { ControlRecordI, ControlRecordSearchI, GraphState, SidePanelAction } fro
           state('down', style({ height: '*' })),
           transition('up <=> down', animate(200))
         ])
-      ]
+      ],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VisualizationSidebar implements OnInit, OnChanges {
     @Input() commitId;
-
     constructor(private ovis: OntologyVisualizationService, public fb: FormBuilder) {}
 
+    OntologyPanelOpenState = false;
+    sidebarState = null;
     toggled = true;
+    selectedRecord$ = this.ovis.ontologyClassSelectedAction$;
     importOptions = [
         {'value': 'all', 'text': 'All'},
         {'value': 'local', 'text': 'Local'},
@@ -69,18 +72,18 @@ export class VisualizationSidebar implements OnInit, OnChanges {
 
     ngOnInit(): void {
         this.graphState = this.ovis.getGraphState(this.commitId);
-        if (this.graphState.searchForm != undefined) {
+        this.sidebarState = this.ovis.getSidebarState(this.commitId);
+        if (this.graphState.searchForm !== undefined) {
             this.searchForm.patchValue(this.graphState.searchForm);
         } else {
             this.searchForm.patchValue(this.searchFormDefaults);
         }
 
     }
-
     ngOnChanges(changes: SimpleChanges): void {
         if (changes?.commitId?.currentValue) {
             this.graphState = this.ovis.getGraphState(changes.commitId.currentValue);
-            if (this.graphState.searchForm != undefined) {
+            if (this.graphState.searchForm !== undefined) {
                 this.searchForm.patchValue(this.graphState.searchForm);
             } else {
                 this.searchForm.patchValue(this.searchFormDefaults);
@@ -99,11 +102,27 @@ export class VisualizationSidebar implements OnInit, OnChanges {
     }
 
     onClickRecordSelect(record: ControlRecordI) {
-        this.ovis.sidePanelActionSubject$.next({action: SidePanelAction.RECORD_SELECT, controlRecord: record});
+        this.ovis.emitSelectAction({action: SidePanelAction.RECORD_SELECT, nodeId: record.id});
+        this.ovis.emitSidePanelAction({action: SidePanelAction.RECORD_SELECT, controlRecord: record});
     }
     
     onRightClickRecordSelect(event, record: ControlRecordI) {
         event.preventDefault();
-        this.ovis.sidePanelActionSubject$.next({action: SidePanelAction.RECORD_CENTER, controlRecord: record});
+        this.ovis.emitSidePanelAction({action: SidePanelAction.RECORD_CENTER, controlRecord: record});
+    }
+
+    toggleClass(event:MouseEvent | TouchEvent, record: ControlRecordI) {
+        event.preventDefault();
+        console.log(record);
+    }
+
+    beforePanelClosed(event, ontologyId, isOpended: boolean): void {
+        this.OntologyPanelOpenState = true;
+        this.sidebarState.selectedOntologyId = false;
+    }
+
+    beforePanelOpened(event, ontologyId, isClosed: boolean): void {
+        this.OntologyPanelOpenState = true;
+        this.sidebarState.selectedOntologyId = ontologyId;
     }
 }

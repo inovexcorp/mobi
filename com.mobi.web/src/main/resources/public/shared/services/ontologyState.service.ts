@@ -21,6 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
+import { Subject } from 'rxjs';
 import {
     assign,
     concat,
@@ -61,6 +62,7 @@ import {
     unset,
     values
 } from 'lodash';
+import { SidePanelPayloadI } from '../../ontology-visualization/interfaces/visualization.interfaces';
 
 ontologyStateService.$inject = ['$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'policyEnforcementService', 'policyManagerService', 'httpService', 'uuid'];
 
@@ -93,6 +95,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     var tagStateNamespace = 'http://mobi.com/states/ontology-editor/tag-id/';
     var branchStateNamespace = 'http://mobi.com/states/ontology-editor/branch-id/';
     var commitStateNamespace = 'http://mobi.com/states/ontology-editor/commit-id/';
+    // Only the service has access to the subject
+    const _ontologyActionSubject = new Subject<SidePanelPayloadI>();
 
     var ontologyEditorTabStates = {
         project: {
@@ -282,6 +286,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
 
     self.vocabularySpinnerId = 'concepts-spinner';
 
+    self.ontologyAction$ = _ontologyActionSubject.asObservable();
     /**
      * @ngdoc property
      * @name uploadFiles
@@ -1378,7 +1383,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             self.listItem = {};
         }
         remove(self.list, { ontologyRecord: { recordId }});
-    }
+        self.emitOntologyAction({action: 'close', recordId: recordId});
+    };
     /**
      * @ngdoc method
      * @name removeBranch
@@ -2212,6 +2218,16 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         checkForPropertyDomains(property);
     }
 
+
+    /**
+     * Emit ontology evetns or actions
+     * @param { Object } - The action Object
+     * { string } action.action  - The action name eg. Selected, closed....
+     * { string } action.recordId - Ontology RecordId
+     */
+    self.emitOntologyAction = function(action: SidePanelPayloadI)  {
+        _ontologyActionSubject.next(action);
+    };
     /* Private helper functions */
     function removePropertyClassRelationships(propertyIRI, classIRI) {
         if (self.listItem.classToChildProperties[classIRI] && self.listItem.classToChildProperties[classIRI].includes(propertyIRI)) {

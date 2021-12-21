@@ -24,9 +24,9 @@
 
 .visualization-sidebar {
   $hoverBtn : #4C9AFF;
-  $hoverList : #ebecf0;
+  $listState : #eee;
   --hover-btn: #{$hoverBtn};
-  --hover-list: #{$hoverList};
+  --state-list: #{$listState};
   
 
   &:hover {
@@ -105,8 +105,7 @@
         position: relative;
         background-color: transparent;
         height: 100%;
-      
-          .sidebar-accordion {
+        .sidebar-accordion {
             overflow-x: hidden;
             &__section {
               .accordion__item {
@@ -119,15 +118,40 @@
               }
             }
           }
+          .mat-expansion-panel-header-title {
+            align-items: center;
+            .ontology__color {
+              border-radius: 50%;
+              width: 1em;
+              height: 1em;
+            }
+            .ontology__name {
+              margin-left: .5em;
+              margin-right: .5rem;
+              width: 7.5rem;
+              overflow: hidden;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              box-sizing: border-box;
+            }
+            .ontology__imported {
+              display: block;
+              font-size: .8rem;
+              color: var(--secondary);
+            }
+          }
+
           .ontologyClass {
             background: transparent;
             display: flex;
             flex-flow: row wrap;
             justify-content: flex-start;
             align-items: center;
+            min-height: 1rem;
 
-            &:hover {
-              background-color: var(--hover-list);
+            &:hover,  &.active {
+              cursor: pointer;
+              background-color: var(--state-list)
             }
 
             &__color {

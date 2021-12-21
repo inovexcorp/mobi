@@ -88,6 +88,12 @@ describe('OntologyVisualization Service', () => {
         }])));
 
         visualizationStub.getOntologyLocalObservable = jasmine.createSpy('getOntologyLocalObservable').and.returnValue(mockRequest(visData));
+        visualizationStub.getSidebarState = jasmine.createSpy('getSidebarState').and.returnValue({
+            commitId: 'commitId',
+            recordId: 'recordId'
+        });
+        visualizationStub.emitSidePanelAction = jasmine.createSpy('emitSidePanelAction').and.callFake(() => {});
+        visualizationStub.emitSelectAction = jasmine.createSpy('emitSelectAction').and.callFake(() => {});
     });
 
     afterEach(() => {

@@ -22,7 +22,7 @@
  */
 import { DebugElement, SimpleChange } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { fakeAsync, TestBed, tick, ComponentFixture } from "@angular/core/testing";
+import { fakeAsync, TestBed, tick, ComponentFixture } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent } from 'ng-mocks';
 
@@ -31,6 +31,8 @@ import { OntologyVisualization } from './ontologyVisualization.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { SpinnerComponent } from '../../../shared/components/progress-spinner/spinner.component';
 import { MockOntologyVisualizationService, mockUtil, mockHttpService} from  '../../../../../../test/ts/Shared';
+import { Subject } from 'rxjs';
+import { SidePanelPayloadI }  from '../../interfaces/visualization.interfaces';
 
 describe('Ontology Visualization component', () => {
     let component: OntologyVisualization;
@@ -62,6 +64,8 @@ describe('Ontology Visualization component', () => {
         serviceStub = TestBed.get(OntologyVisualizationService);
         utilStub = TestBed.get('utilService');
         httpStub = TestBed.get('httpService');
+        serviceStub.sidePanelActionAction$ = new Subject<SidePanelPayloadI>().asObservable();
+
     }));
     afterEach(() => {
         element = null;
@@ -93,13 +97,14 @@ describe('Ontology Visualization component', () => {
             fixture.detectChanges();
             tick(5000);
         }));
-
         it('ngOnInit', fakeAsync(() =>  {
             component.commitId = 'commitId12345';
             const cyChart = jasmine.createSpyObj('cyChart', ['ready']);
             spyOn(component, 'updateGraphState');
             spyOn(component, 'createCytoscapeInstance').and.returnValue(cyChart);
             component.ngOnInit();
+            component.sidePanelActionSub$ = serviceStub.sidePanelActionAction$.subscribe();
+            spyOn(component.sidePanelActionSub$, 'unsubscribe').and.callThrough();
             expect(cyChart.ready).toHaveBeenCalled();
             expect(serviceStub.init).toHaveBeenCalled();
             expect(component.sidePanelActionSub$.unsubscribe).not.toHaveBeenCalled();
@@ -111,10 +116,9 @@ describe('Ontology Visualization component', () => {
             spyOn(component, 'updateGraphState');
             component.cyChart = jasmine.createSpy('cyChart');
             component.status.initialized = true;
-            component.sidePanelActionSub$ = serviceStub.sidePanelActionSubject$.asObservable().subscribe();
             component.ngOnDestroy();
             expect(utilStub.clearToast).toHaveBeenCalled();
-            expect(component.sidePanelActionSub$.unsubscribe).toHaveBeenCalled();
+            expect(component.sidePanelActionSub$).toEqual(undefined);
             expect(component.updateGraphState).toHaveBeenCalledWith('commitId12345');
         }));
         it('onDestroy was not initialized', fakeAsync(() =>  {

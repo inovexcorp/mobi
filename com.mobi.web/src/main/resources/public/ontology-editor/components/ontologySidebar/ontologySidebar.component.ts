@@ -52,7 +52,7 @@ const ontologySidebarComponent = {
 
 ontologySidebarComponentCtrl.$inject = ['ontologyStateService', 'modalService'];
 
-function ontologySidebarComponentCtrl(ontologyStateService, modalService) {
+function ontologySidebarComponentCtrl(ontologyStateService, modalService, ontologyVisualizationService) {
     var dvm = this;
     dvm.os = ontologyStateService;
 

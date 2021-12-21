@@ -26,7 +26,8 @@ import { Component, Inject, Input, OnChanges, OnDestroy, OnInit, SimpleChanges }
 import { OntologyVisualizationService } from '../../services/ontologyVisualizaton.service';
 import './ontologyVisualization.component.scss';
 import { Subscription } from 'rxjs';
-import { GraphState, SidePanelAction, SidePanelPayload } from '../../services/visualization.interfaces';
+import {  SidePanelAction, SidePanelPayloadI as SidePanelPayload } from '../../interfaces/visualization.interfaces';
+import { GraphState } from '../../classes';
 
 /**
  * @class OntologyVisualization
@@ -55,7 +56,6 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         id: null
     };
     public hasInProgressCommit = false;
-
     public cyChart: any; // cytoscape instance
     public cyChartSize = 1;
     public cyLayout: any; // cytoscape layout
@@ -65,7 +65,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
     public graphCollections = {
         highlighted: new Set(),
         selectedNode: new Set(),
-        selectedEdge: new Set()
+        selectedNeighbor: new Set()
     }
     public status = { 
         loaded: false, // Graph data was loaded
@@ -103,7 +103,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
                 this.ovis.init(this.commitId, changes?.inProgress?.currentValue).subscribe({
                     next(commitGraphState: GraphState) { 
                        if (self.cyChart && commitGraphState.positioned) {
-                            self.updateCytoscapeGraph(commitGraphState);
+                           self.updateCytoscapeGraph(commitGraphState);
                         } else {
                             self.initGraph(commitGraphState);
                         }
@@ -125,7 +125,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         this.cyChart = this.createCytoscapeInstance();
         
         this.cyChart.ready(this.setChartBindings());
-        this.sidePanelActionSub$ = this.ovis.sidePanelActionSubject$.asObservable()
+        this.sidePanelActionSub$ = this.ovis.sidePanelActionAction$
             .subscribe(this.sidePanelActionObserver());
 
         // inProgress really only matters when initially creating the commitId graphState
@@ -148,7 +148,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         if (this.sidePanelActionSub$) {
             this.sidePanelActionSub$.unsubscribe();  
         }
-        if (this.cyChart && this.status.initialized) {
+        if (this.cyChart && this.status.initialized && this.ovis.graphStateCache.has(this.commitId)) {
             this.updateGraphState(this.commitId);
         }
     }
@@ -174,7 +174,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
      */
     private initFailed(reason: string): void{
         const commitGraphState = this.ovis.getGraphState(this.commitId);
-        this.cyChartSize = commitGraphState.getElementsLength()
+        this.cyChartSize = commitGraphState.getElementsLength();
         this.util.createWarningToast(reason, this._toastrConfig);
         this.status.hasWarningsMsg = true;
         this.status.loaded = true;
@@ -199,10 +199,11 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
                             break;
                         }
                         case SidePanelAction.RECORD_SELECT: {
-                            self.cyChart.elements().unselect();
                             const target = self.cyChart.$id(payload.controlRecord.id);
+                            self.cyChart.elements().unselect();
+                            self.clearNodeStyle();
                             target.select();
-                            self.focusElement(target, 'select', self.graphCollections); 
+                            self.focusElement(target, 'select', self.graphCollections);
                             break;
                         }
                         case SidePanelAction.RECORD_CENTER: {
@@ -258,8 +259,20 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         const layout = this.createLayoutOptions(layoutName);
         this.cyLayout = this.cyChart.layout(layout);
         this.updateCytoscapeGraph(commitGraphState, true);
-        this.cyLayout.run(); 
+        this.cyLayout.run();
         this.status.initialized = true;
+        if (commitGraphState.selectedNodes) {
+           const selectedNode =  this.cyChart.$('.focused');
+           const neighborhood = selectedNode.neighborhood();
+            if (neighborhood && neighborhood.length > 0) {
+                this.graphCollections.selectedNeighbor.add(neighborhood);
+            }
+            this.graphCollections.selectedNode.add(selectedNode);
+            this.ovis.emitSelectAction({
+                action: SidePanelAction.RECORD_SELECT,
+                nodeId: selectedNode.id()
+            });
+        }
     }
 
     /**
@@ -284,7 +297,8 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         if (commitGraphState.positionData != undefined) {
             this.cyChart.json(commitGraphState.positionData )
         } else {
-            this.cyChart.fit(); // https://js.cytoscape.org/#cy.fit
+            // https://js.cytoscape.org/#cy.fit
+            this.cyChart.fit();
         }
         this.status.loaded = true;
     }
@@ -305,9 +319,10 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         const graphElements = {
             nodes: elements.nodes ? elements.nodes : [],
             edges: elements.edges ? elements.edges : []
-        }
+        };
         const commitGraphState: GraphState = this.ovis.getGraphState(commitId);
         commitGraphState.data = graphElements;
+        commitGraphState.selectedNodes = this.graphCollections.selectedNode.size > 0;
         commitGraphState.positionData = { pan: cyChartJson.pan, zoom: cyChartJson.zoom };
     }
 
@@ -323,20 +338,61 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
     }
 
     /**
-     * clearHighlightedElements
+     * clearCollectionElements
      * Info https://github.com/cytoscape/cytoscape.js/blob/master/src/collection/index.js
      * @param collection Set of https://github.com/cytoscape/cytoscape.js/blob/master/src/collection/element.js
      * @param classes 
      */
-    private clearHighlightedElements(collection: Set<any>, classes): void {
+    private clearCollectionElements(collection: Set<any>): void {
         if (collection.size > 0) {
-            collection.forEach(entry => {
-                entry.removeClass(classes);
-            });
             collection.clear();
         } 
-    };
+    }
 
+    /**
+     * Remove class from element.
+     * ClassName { string } represents the token to be removed.
+     * @param collection 
+     * @param className 
+     */
+    private removeItemFormCollection(collection, className : string): void {
+        if (collection.hasClass(className)) {
+            collection.removeClass(className);
+        }
+    }
+    /**
+     * Remove class from collection
+     * @param collection
+     * @param classes
+     * @param action
+     * @private
+     */
+    private removeCollectionClass(collection: Set<any>, classes, action = 'select'): void {
+        const getExclusiveState = {
+            'highlighted': 'focused',
+            'focused': 'highlighted',
+        };
+        let exClass = getExclusiveState[classes];
+        if (collection.size > 0) {
+            collection.forEach(entry => {
+                // check if entry is a single node or collection.
+                if (entry.length > 1) {
+                    entry.forEach(i => {
+                        this.removeItemFormCollection(i, classes);
+                    });
+                    collection.delete(entry);
+                } else {
+                    this.removeItemFormCollection(entry, classes);
+                    const hasOtherClass = entry.filter(function( ele ){
+                        return ele.hasClass(exClass);
+                    });
+                    if (hasOtherClass.length === 0) {
+                        collection.delete(entry);
+                    }
+                }
+            });
+        }
+    };
     /**
      * Focus Cytoscape Elements
      * - https://js.cytoscape.org/#eles.select
@@ -344,34 +400,51 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
      * @param target target element
      * @param action action string
      * @param highlighted highlight or select
-     * @param selectedEdge set of edges that are selected
+     * @param selectedNeighbor set of edges that are selected
      * @param selectedNode set of nodes that are selected
      */
     private focusElement(target, action: string, graphCollections): void{
         const highlighted = graphCollections.highlighted;
-        const selectedEdge = graphCollections.selectedEdge;
+        const selectedNeighbor = graphCollections.selectedNeighbor;
         const selectedNode = graphCollections.selectedNode;
-        
-        const edges = target.connectedEdges();
-        const nodes = target.neighborhood();
+        const neighborhood = target.neighborhood();
         // clear style
-        this.clearHighlightedElements(highlighted, 'highlighted');
-        this.clearHighlightedElements(selectedEdge, 'highlighted');
+        this.removeCollectionClass(highlighted, 'highlighted');
+        this.removeCollectionClass(selectedNeighbor, 'highlighted');
+        this.removeCollectionClass(selectedNode, 'highlighted');
+
 
         if (target) {
-            this.addClassToCollection(selectedNode, target, 'focused');
-        }
-
-        // apply style 
-        if (action === 'highlight') {
-            this.addClassToCollection(highlighted, edges, 'highlighted');
-            this.addClassToCollection(highlighted, nodes, 'highlighted');
-        } else {
-            edges.select();
-            nodes.select();
+            if (action === 'select') {
+                this.removeCollectionClass(selectedNode, 'focused');
+                this.addClassToCollection(selectedNode, target, 'focused');
+                this.addClassToCollection(selectedNeighbor, neighborhood, 'highlighted');
+                neighborhood.select();
+            } else {
+                this.addClassToCollection(highlighted, neighborhood, 'highlighted');
+                this.addClassToCollection(highlighted, target, 'highlighted');
+            }
         }
     }
 
+    private clearNodeStyle() {
+        if (this.graphCollections.selectedNeighbor.size > 0) {
+            this.graphCollections.selectedNeighbor.forEach((item:any) => {
+                item.unselect();
+            });
+            this.removeCollectionClass(this.graphCollections.selectedNeighbor, 'highlighted');
+            this.removeCollectionClass(this.graphCollections.selectedNeighbor, 'focused');
+        }
+        if (this.graphCollections.highlighted.size > 0) {
+            this.removeCollectionClass(this.graphCollections.highlighted, 'highlighted');
+        }
+        if (this.graphCollections.selectedNode.size > 0) {
+            this.graphCollections.selectedNode.forEach((item:any) => {
+                item.unselect();
+            });
+            this.removeCollectionClass(this.graphCollections.selectedNode, 'focused');
+        }
+    }
     /**
      * Set Chart User Event Bindings, method gets called when cy.ready occurs
      * 
@@ -381,7 +454,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
      * - https://js.cytoscape.org/#events/event-object
      * 
      * @param highlighted set of elements that are selected
-     * @param selectedEdge set of edges that are selected
+     * @param selectedNeighbor set of edges that are selected
      * @param selectedNode set of nodes that are selected
      * @returns ReadyEvent Function
      */
@@ -396,35 +469,36 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             });
 
             chart.bind('mouseout', 'node', function (event) {
-                self.clearHighlightedElements(self.graphCollections.selectedNode, 'focused');
-                self.clearHighlightedElements(self.graphCollections.highlighted, 'highlighted');
+                clearTimeout(self.debounceTimeId);
+                self.removeCollectionClass(self.graphCollections.selectedNode, 'highlighted', event.type);
+                self.removeCollectionClass(self.graphCollections.highlighted, 'highlighted', event.type);
             });
 
             // bind tap to edges and add the highlighted class to connected nodes
             chart.bind('tap', 'edge', function (event: { target: any }) {
                 const target = event.target;
                 // clear style
-                self.clearHighlightedElements(self.graphCollections.highlighted, 'highlighted');
-                self.clearHighlightedElements(self.graphCollections.selectedEdge, 'highlighted');
+                self.removeCollectionClass(self.graphCollections.highlighted, 'highlighted', 'tap');
+                self.removeCollectionClass(self.graphCollections.selectedNeighbor, 'highlighted', 'tap');
                 if (target.hasClass('ranges')) {
                     //add Style
-                    self.addClassToCollection(self.graphCollections.selectedEdge, target.edges(), 'highlighted');
+                    self.addClassToCollection(self.graphCollections.selectedNeighbor, target.edges(), 'highlighted');
                     self.addClassToCollection(self.graphCollections.highlighted, target.connectedNodes(), 'highlighted');
                 }
             });
 
             chart.on('tap', function (event: { target: any }) {
-                const evtTarget = event.target;
-                if (self.graphCollections.selectedEdge.size > 0 && evtTarget.group('edge')) {
-                    self.clearHighlightedElements(self.graphCollections.selectedEdge, 'highlighted');
-                    self.clearHighlightedElements(self.graphCollections.highlighted, 'highlighted');
+                if (self.graphCollections.selectedNeighbor.size > 0 || self.graphCollections.selectedNode.size > 0) {
+                    self.clearNodeStyle();
+                    self.ovis.emitSelectAction({action: SidePanelAction.RECORD_SELECT, nodeId: ''});
                 }
             });
 
-            chart.on('click', 'node', function (event: { target: any; }) {
+            chart.on('click', 'node', function (event: { target: any }) {
                 clearTimeout(self.debounceTimeId);
                 self.debounceTimeId = setTimeout(function () {
                     self.focusElement(event.target, 'select', self.graphCollections);
+                    self.ovis.emitSelectAction({action: SidePanelAction.RECORD_SELECT, nodeId: event.target.id()});
                 }, 100);
             });
         };
