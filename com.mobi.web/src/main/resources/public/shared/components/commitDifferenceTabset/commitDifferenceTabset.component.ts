@@ -21,7 +21,9 @@
  * #L%
  */
 
-const template = require('./commitDifferenceTabset.component.html');
+import { Component, Input } from '@angular/core';
+import { Difference } from '../../models/difference.class';
+import './commitDifferenceTabset.component.scss';
 
 /**
  * @ngdoc component
@@ -42,29 +44,17 @@ const template = require('./commitDifferenceTabset.component.html');
  * @oaram {string} [recordId=''] recordId An optional IRI string representing an OntologyRecord to query for names if present
  * each entity's name
  */
-const commitDifferenceTabsetComponent = {
-    template,
-    bindings: {
-        branchTitle: '<',
-        commitId: '<',
-        targetId: '<',
-        difference: '<',
-        showMoreResultsFunc: '&',
-        entityNameFunc: '<?',
-        startIndex: '<?',
-        recordId: '<?'
-    },
-    controllerAs: 'dvm',
-    controller: commitDifferenceTabsetComponentCtrl
-};
-
-function commitDifferenceTabsetComponentCtrl() {
-    var dvm = this;
-
-    dvm.tabs = {
-        changes: true,
-        commits: false
-    };
+@Component({
+    selector: 'commit-difference-tabset',
+    templateUrl: './commitDifferenceTabset.component.html'
+})
+export class CommitDifferenceTabsetComponent {
+    @Input() branchTitle: string;
+    @Input() commitId: string;
+    @Input() targetId: string;
+    @Input() difference: Difference;
+    @Input() showMoreResultsFunc: (limit: number, offset: number) => void
+    @Input() entityNameFunc?: (args: any) => string;
+    @Input() startIndex?: number;
+    @Input() recordId?: string;
 }
-
-export default commitDifferenceTabsetComponent;

@@ -28,5 +28,6 @@ export interface RdfDownload {
     branchId?: string,
     commitId?: string,
     rdfFormat?: string,
-    fileName?: string
+    fileName?: string,
+    applyInProgressCommit?: boolean
 }

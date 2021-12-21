@@ -21,14 +21,36 @@
   #L%
   -->
 <mat-form-field class="editor-branch-select">
-    <!-- <i class="fa fa-{{}}" *ngIf="false" matPrefix></i> -->
-    <!-- TODO: Prevent floating label -->
-    <input matInput placeholder="Select a branch" [matAutocomplete]="branchAutocomplete" [formControl]="branchSearchControl"/>
+    <input matInput #textInput placeholder="Select a branch/tag" [matAutocomplete]="branchAutocomplete" [formControl]="branchSearchControl"/>
+    <mat-icon *ngIf="selectedIcon.mat" matSuffix>{{selectedIcon.icon}}</mat-icon>
+    <i *ngIf="!selectedIcon.mat" class="{{selectedIcon.icon}}" matSuffix></i>
     <mat-icon matSuffix>keyboard_arrow_down</mat-icon>
-    <mat-autocomplete #branchAutocomplete="matAutocomplete" (optionSelected)="selectBranch($event)">
+    <mat-autocomplete class="panel-max-height"
+                      #branchAutocomplete="matAutocomplete"
+                      (optionSelected)="selectVersion($event)"
+                      (opened)="retrieveBranchesAndTags()"
+                      (closed)="close()"
+                      [panelWidth]="301">
         <mat-optgroup *ngFor="let group of filteredOptions | async" [label]="group.title">
-            <mat-option *ngFor="let option of group.options" [value]="option">
-                {{option}}
+            <mat-option *ngFor="let option of group.options" [ngStyle]="{ 'height': option.description ? 'unset' : '48px' }" [value]="option">
+                <span class="d-flex">
+                    <span class="flex-1 text-truncate">{{option.title}}</span>
+                    <button *ngIf="!option.tagIri && option.branchIri !== state.listItem.versionedRdfRecord?.branchId && option.title !== 'MASTER'"
+                            class="delete-branch"
+                            mat-icon-button
+                            color="primary"
+                            (click)="showDeleteBranchConfirmationOverlay(option, $event)">
+                        <mat-icon class="w-100">delete</mat-icon>
+                    </button>
+                    <button *ngIf="option.tagIri && option.title !== state.listItem.currentVersionTitle"
+                            class="delete-tag"
+                            mat-icon-button
+                            color="primary"
+                            (click)="showDeleteTagConfirmationOverlay(option, $event)">
+                        <mat-icon class="w-100">delete</mat-icon>
+                    </button>
+                </span>
+                <p class="description-text pl-3 small text-muted text-truncate">{{option.description}}</p>
             </mat-option>
         </mat-optgroup>
     </mat-autocomplete>

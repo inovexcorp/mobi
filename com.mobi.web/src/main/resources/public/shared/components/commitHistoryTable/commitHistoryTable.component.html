@@ -20,17 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="commit-history-table" targeted-spinner="dvm.id">
-    <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-    <info-message ng-if="!dvm.commits.length && !dvm.error">No commits to display</info-message>
+<div class="commit-history-table" targeted-spinner="id">
+    <error-display *ngIf="error">{{error}}</error-display>
+    <info-message *ngIf="!commits.length && !error">No commits to display</info-message>
     <div class="wrapper">
         <div class="h-100 commit-graph-wrapper">
-            <svg class="commit-graph" ng-style="{'height': (dvm.showGraph ? dvm.commits.length * dvm.circleSpacing + dvm.deltaY : 0) + 'px', 'width': (dvm.showGraph ? dvm.deltaX + 10 : 0) + 'px'}"></svg>
+            <svg class="commit-graph" [ngStyle]="{'height': (showGraph ? commits.length * circleSpacing + deltaY : 0) + 'px', 'width': (showGraph ? deltaX + 10 : 0) + 'px'}"></svg>
         </div>
-        <table class="table table-hover" ng-if="dvm.commits.length">
+        <table class="table table-hover" *ngIf="commits.length">
             <thead class="thead-default">
                 <tr>
-                    <th class="graph-column" ng-if="dvm.showGraph" style="min-width: 100px; width: 100px;" ></th>
+                    <th class="graph-column" *ngIf="showGraph" style="min-width: 100px; width: 100px;" ></th>
                     <th class="fit">Creator</th>
                     <th class="fit">Commit</th>
                     <th>Message</th>
@@ -38,12 +38,12 @@
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="commit in dvm.commits track by commit.id">
-                    <td class="graph-column" ng-if="dvm.showGraph"></td>
-                    <td class="fit" title="Username: {{commit.creator.username}}">{{dvm.um.getUserDisplay(commit.creator)}}</td>
-                    <td class="fit commit-id" title="{{commit.id}}"><a ng-click="dvm.openCommitOverlay(commit.id)">{{dvm.util.condenseCommitId(commit.id)}}</a></td>
+                <tr *ngFor="let commit of commits; trackBy: getCommitId">
+                    <td class="graph-column" *ngIf="showGraph"></td>
+                    <td class="fit" title="Username: {{commit.creator.username}}">{{um.getUserDisplay(commit.creator)}}</td>
+                    <td class="fit commit-id" title="{{commit.id}}"><a (click)="openCommitOverlay(commit.id)">{{util.condenseCommitId(commit.id)}}</a></td>
                     <td title="{{commit.message}}" class="commit-message"><div><span>{{commit.message}}</span></div></td>
-                    <td class="fit" title="{{dvm.util.getDate(commit.date, 'medium')}}">{{dvm.util.getDate(commit.date, 'd MMM yyyy')}}</td>
+                    <td class="fit" title="{{util.getDate(commit.date, 'medium')}}">{{util.getDate(commit.date, 'd MMM yyyy')}}</td>
                 </tr>
             </tbody>
         </table>

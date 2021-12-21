@@ -90,7 +90,8 @@ describe('Shapes Graph Manager service', function() {
             branchId: 'branch1',
             commitId: 'commit1',
             rdfFormat: 'turtle',
-            fileName: 'filename'
+            fileName: 'filename',
+            applyInProgressCommit: false
         };
     });
 
@@ -181,7 +182,7 @@ describe('Shapes Graph Manager service', function() {
 
             expect(helper.createHttpParams).toHaveBeenCalledWith(downloadParams);
             expect(utilStub.startDownload).toHaveBeenCalledWith(service.prefix + '/' + encodeURIComponent(rdfDownload.recordId)
-                + '?' + 'branchId=branch1&commitId=commit1&rdfFormat=turtle&fileName=filename');
+                + '?' + 'branchId=branch1&commitId=commit1&rdfFormat=turtle&fileName=filename&applyInProgressCommit=false');
         });
 
         it('with rdfFormat not set', function() {
@@ -191,7 +192,7 @@ describe('Shapes Graph Manager service', function() {
 
             expect(helper.createHttpParams).toHaveBeenCalledWith(downloadParams);
             expect(utilStub.startDownload).toHaveBeenCalledWith(service.prefix + '/' + encodeURIComponent(rdfDownload.recordId)
-                + '?' + 'branchId=branch1&commitId=commit1&rdfFormat=jsonld&fileName=filename');
+                + '?' + 'branchId=branch1&commitId=commit1&rdfFormat=jsonld&fileName=filename&applyInProgressCommit=false');
         });
 
         it('with fileName not set', function() {
@@ -201,7 +202,7 @@ describe('Shapes Graph Manager service', function() {
 
             expect(helper.createHttpParams).toHaveBeenCalledWith(downloadParams);
             expect(utilStub.startDownload).toHaveBeenCalledWith(service.prefix + '/' + encodeURIComponent(rdfDownload.recordId)
-                + '?' + 'branchId=branch1&commitId=commit1&rdfFormat=turtle&fileName=shapesGraph');
+                + '?' + 'branchId=branch1&commitId=commit1&rdfFormat=turtle&fileName=shapesGraph&applyInProgressCommit=false');
         });
     });
 });

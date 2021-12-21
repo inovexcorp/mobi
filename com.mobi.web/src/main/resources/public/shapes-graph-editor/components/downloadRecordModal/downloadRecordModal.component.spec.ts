@@ -42,9 +42,13 @@ describe('Download Record Modal component', function() {
     let fixture: ComponentFixture<DownloadRecordModalComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<DownloadRecordModalComponent>>;
     let shapesGraphManagerStub;
-    const recordId = 'urn:test';
+    const recordId = 'urn:record';
+    const branchId = 'urn:branch';
+    const commitId = 'urn:commit';
     const data = {
-        recordId
+        recordId,
+        branchId,
+        commitId
     };
 
     configureTestSuite(function() {
@@ -94,9 +98,12 @@ describe('Download Record Modal component', function() {
             component.download();
             expect(shapesGraphManagerStub.downloadShapesGraph).toHaveBeenCalledWith({
                 recordId,
+                branchId,
+                commitId,
                 rdfFormat: 'turtle',
-                fileName: 'filename.ttl'
-            })
+                fileName: 'filename.ttl',
+                applyInProgressCommit: true
+            });
             expect(matDialogRef.close).toHaveBeenCalledWith(true);
         });
     });

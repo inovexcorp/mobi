@@ -36,6 +36,7 @@ import { MatInputModule } from "@angular/material/input";
 import { MatChipsModule } from "@angular/material/chips";
 import { ErrorDisplayComponent } from "../../../shared/components/errorDisplay/errorDisplay.component";
 import { MatIconModule } from "@angular/material/icon";
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { CommitModalComponent } from './commitModal.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 
@@ -49,7 +50,7 @@ describe('Commit Modal component', function() {
     
     configureTestSuite(function() {
         TestBed.configureTestingModule({
-            imports: [ // Figure out which ones to delete
+            imports: [
                 FormsModule,
                 ReactiveFormsModule,
                 MatInputModule,
@@ -80,7 +81,14 @@ describe('Commit Modal component', function() {
         element = fixture.debugElement;
         matDialogRef = TestBed.get(MatDialogRef);
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
-        shapesGraphStateStub.currentShapesGraphRecordIri = 'urn:test';
+        shapesGraphStateStub.listItem = new ShapesGraphListItem();
+        shapesGraphStateStub.listItem.versionedRdfRecord = {
+            recordId: 'record1',
+            branchId: 'branch1',
+            commitId: 'commit1',
+            title: 'title'
+        };
+        shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.resolve());
         component.catalogId = 'catalog';
         catalogManagerStub = TestBed.get('catalogManagerService');
         catalogManagerStub.localCatalog = {'@id': 'catalog'};
@@ -100,41 +108,40 @@ describe('Commit Modal component', function() {
         describe('should commit changes on a shapes graph record and close the dialog',  function() {
             it('successfully', async function() {
                 catalogManagerStub.createBranchCommit.and.returnValue(Promise.resolve('urn:newCommitIri'));
-                shapesGraphStateStub.currentShapesGraphCommitIri = 'urn:originalCommitIri';
+                shapesGraphStateStub.listItem.versionedRdfRecord.commitId = 'urn:originalCommitIri';
                 component.createCommitForm.controls['comment'].setValue('testComment');
                 component.createCommit('branch1');
                 fixture.detectChanges();
                 await fixture.whenStable();
 
-                expect(catalogManagerStub.createBranchCommit).toHaveBeenCalledWith('branch1', 'urn:test', 'catalog', 'testComment');
-                expect(shapesGraphStateStub.clearInProgressCommit).toHaveBeenCalled();
+                expect(catalogManagerStub.createBranchCommit).toHaveBeenCalledWith('branch1', 'record1', 'catalog', 'testComment');
+                expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record1', 'branch1', 'urn:newCommitIri', undefined, undefined, true);
                 expect(matDialogRef.close).toHaveBeenCalledWith(true);
-                expect(shapesGraphStateStub.currentShapesGraphCommitIri).toEqual('urn:newCommitIri');
             });
             it('unless an error occurs', async function() {
                 catalogManagerStub.createBranchCommit.and.returnValue(Promise.reject('There was an error'));
-                shapesGraphStateStub.currentShapesGraphCommitIri = 'urn:originalCommitIri';
+                shapesGraphStateStub.listItem.versionedRdfRecord.commitId = 'urn:originalCommitIri';
                 component.createCommitForm.controls['comment'].setValue('testComment');
                 component.createCommit('branch1');
                 fixture.detectChanges();
                 await fixture.whenStable();
 
-                expect(catalogManagerStub.createBranchCommit).toHaveBeenCalledWith('branch1', 'urn:test', 'catalog', 'testComment');
-                expect(shapesGraphStateStub.clearInProgressCommit).not.toHaveBeenCalled();
-                expect(shapesGraphStateStub.currentShapesGraphCommitIri).toEqual('urn:originalCommitIri');
+                expect(catalogManagerStub.createBranchCommit).toHaveBeenCalledWith('branch1', 'record1', 'catalog', 'testComment');
+                expect(shapesGraphStateStub.changeShapesGraphVersion).not.toHaveBeenCalled();
+                expect(shapesGraphStateStub.listItem.versionedRdfRecord.commitId).toEqual('urn:originalCommitIri');
                 expect(component.errorMessage).toEqual('There was an error');
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             });
         });
         describe('should',  function() {
             it('create a commit if the branch is up to date', function() {
-                shapesGraphStateStub.upToDate = true;
+                shapesGraphStateStub.listItem.upToDate = true;
                 spyOn(component, 'createCommit');
                 component.commit();
                 expect(component.createCommit).toHaveBeenCalled();
             });
             it('not create a commit if the branch is up to date', function() {
-                shapesGraphStateStub.upToDate = false;
+                shapesGraphStateStub.listItem.upToDate = false;
                 spyOn(component, 'createCommit');
                 component.commit();
                 expect(component.createCommit).not.toHaveBeenCalled();

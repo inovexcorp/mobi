@@ -31,8 +31,11 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { CreateBranchModal } from '../createBranchModal/createBranchModal.component';
 import { DownloadRecordModalComponent } from '../downloadRecordModal/downloadRecordModal.component';
+import { EditorBranchSelectComponent } from '../editorBranchSelect/editorBranchSelect.component';
 import { EditorRecordSelectComponent } from '../editorRecordSelect/editorRecordSelect.component';
 import { EditorTopBarComponent } from './editorTopBar.component';
 import { MatChipsModule, MatButtonToggleModule } from '@angular/material';
@@ -57,7 +60,8 @@ describe('Editor Top Bar component', function() {
             ],
             declarations: [
                 EditorTopBarComponent,
-                MockComponent(EditorRecordSelectComponent)
+                MockComponent(EditorRecordSelectComponent),
+                MockComponent(EditorBranchSelectComponent)
             ],
             providers: [
                 MockProvider(ShapesGraphStateService),
@@ -75,7 +79,13 @@ describe('Editor Top Bar component', function() {
         element = fixture.debugElement;
         matDialog = TestBed.get(MatDialog);
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
-        shapesGraphStateStub.currentShapesGraphRecordIri = 'record1';
+        shapesGraphStateStub.listItem = new ShapesGraphListItem();
+        shapesGraphStateStub.listItem.versionedRdfRecord = {
+            recordId: 'record1',
+            branchId: 'branch1',
+            commitId: 'commit1',
+            title: 'title'
+        };
     });
 
     afterEach(function() {
@@ -88,9 +98,21 @@ describe('Editor Top Bar component', function() {
     });
 
     describe('controller methods', function() {
+        it('should open the create branch modal', function() {
+            component.createBranch();
+            expect(matDialog.open).toHaveBeenCalledWith(CreateBranchModal, {});
+        });
         it('should open the download modal', function() {
             component.download();
-            expect(matDialog.open).toHaveBeenCalledWith(DownloadRecordModalComponent, { data: { recordId: 'record1'}});
+            expect(matDialog.open).toHaveBeenCalledWith(DownloadRecordModalComponent,
+                {
+                    data: {
+                        recordId: 'record1',
+                        branchId: 'branch1',
+                        commitId: 'commit1',
+                        title: 'title'
+                    }
+                });
         });
         it('should open the upload modal', function() {
             component.upload();
@@ -102,7 +124,7 @@ describe('Editor Top Bar component', function() {
         });
         it('should check if the download button is disabled', function() {
             expect(component.downloadDisabled()).toBeFalse();
-            shapesGraphStateStub.currentShapesGraphRecordIri = '';
+            shapesGraphStateStub.listItem.versionedRdfRecord = {};
             expect(component.downloadDisabled()).toBeTrue();
         });
     });
@@ -114,17 +136,79 @@ describe('Editor Top Bar component', function() {
             const recordSelect = element.queryAll(By.css('editor-record-select'));
             expect(recordSelect.length).toEqual(1);
         });
+        it('with an editor branch select', function() {
+            const recordSelect = element.queryAll(By.css('editor-branch-select'));
+            expect(recordSelect.length).toEqual(1);
+        });
+        it('with button to create a branch', async function() {
+            let branchButton = element.queryAll(By.css('button.create-branch'));
+            expect(branchButton.length).toEqual(1);
+            expect(branchButton[0].nativeElement.getAttribute('disabled')).toBeNull();
+
+            shapesGraphStateStub.listItem.versionedRdfRecord = {};
+            fixture.detectChanges();
+            await fixture.whenStable();
+            branchButton = element.queryAll(By.css('button.create-branch'));
+            expect(branchButton.length).toEqual(1);
+            expect(branchButton[0].nativeElement.getAttribute('disabled')).toEqual('');
+        });
         it('with button to download', async function() {
             let downloadButton = element.queryAll(By.css('button.download-record'));
             expect(downloadButton.length).toEqual(1);
             expect(downloadButton[0].nativeElement.getAttribute('disabled')).toBeNull();
 
-            shapesGraphStateStub.currentShapesGraphRecordIri = '';
+            shapesGraphStateStub.listItem.versionedRdfRecord = {};
             fixture.detectChanges();
             await fixture.whenStable();
             downloadButton = element.queryAll(By.css('button.download-record'));
             expect(downloadButton.length).toEqual(1);
             expect(downloadButton[0].nativeElement.getAttribute('disabled')).toEqual('');
+        });
+        it('with button to upload changes', async function() {
+            let uploadButton = element.queryAll(By.css('button.upload-changes'));
+            expect(uploadButton.length).toEqual(1);
+            expect(uploadButton[0].nativeElement.getAttribute('disabled')).toBeNull();
+
+            shapesGraphStateStub.listItem.versionedRdfRecord = {};
+            fixture.detectChanges();
+            await fixture.whenStable();
+            uploadButton = element.queryAll(By.css('button.upload-changes'));
+            expect(uploadButton.length).toEqual(1);
+            expect(uploadButton[0].nativeElement.getAttribute('disabled')).toEqual('');
+        });
+        it('with a chip to indicate uncommitted changes', async function() {
+            let chip = element.queryAll(By.css('mat-chip.uncommitted'));
+            expect(chip.length).toEqual(0);
+
+            shapesGraphStateStub.isCommittable.and.returnValue(true);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            chip = element.queryAll(By.css('mat-chip.uncommitted'));
+            expect(chip.length).toEqual(1);
+        });
+        it('with button to view changes', async function() {
+            let changesButton = element.queryAll(By.css('button.changes'));
+            expect(changesButton.length).toEqual(1);
+            expect(changesButton[0].nativeElement.getAttribute('disabled')).toBeNull();
+
+            shapesGraphStateStub.listItem.versionedRdfRecord = {};
+            fixture.detectChanges();
+            await fixture.whenStable();
+            changesButton = element.queryAll(By.css('button.upload-changes'));
+            expect(changesButton.length).toEqual(1);
+            expect(changesButton[0].nativeElement.getAttribute('disabled')).toEqual('');
+        });
+        it('with button to commit', async function() {
+            let commitButton = element.queryAll(By.css('button.commit'));
+            expect(commitButton.length).toEqual(1);
+            expect(commitButton[0].nativeElement.getAttribute('disabled')).toBeNull();
+
+            shapesGraphStateStub.isCommittable.and.returnValue(false);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            commitButton = element.queryAll(By.css('button.commit'));
+            expect(commitButton.length).toEqual(1);
+            expect(commitButton[0].nativeElement.getAttribute('disabled')).toEqual('');
         });
     });
     it('should call download when the download button is clicked', async function() {

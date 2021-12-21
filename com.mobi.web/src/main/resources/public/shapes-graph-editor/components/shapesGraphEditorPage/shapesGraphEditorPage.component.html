@@ -21,6 +21,7 @@
   #L%
   -->
 <div class="shapes-graph-editor-page vertical-scroll">
-    <editor-top-bar></editor-top-bar>
-    <shapes-graph-changes-page *ngIf="state.changesPageOpen"></shapes-graph-changes-page>
+    <editor-top-bar *ngIf="!state?.listItem?.merge?.active"></editor-top-bar>
+    <shapes-graph-merge-page *ngIf="state?.listItem?.merge?.active"></shapes-graph-merge-page>
+    <shapes-graph-changes-page *ngIf="state?.listItem?.changesPageOpen"></shapes-graph-changes-page>
 </div>

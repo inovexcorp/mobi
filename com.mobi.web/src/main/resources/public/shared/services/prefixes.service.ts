@@ -56,6 +56,7 @@ function prefixes() {
     self.shacl = 'http://www.w3.org/ns/shacl#';
     self.setting = 'http://mobi.com/ontologies/setting#';
     self.shapesGraphEditor = 'http://mobi.com/ontologies/shapes-graph-editor#';
+    self.shapesGraphState = 'http://mobi.com/ontologies/shapes-graph/state#';
 }
 
 export default prefixes;

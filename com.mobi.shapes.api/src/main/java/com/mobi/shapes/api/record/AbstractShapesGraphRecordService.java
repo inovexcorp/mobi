@@ -30,16 +30,22 @@ import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.osgi.service.component.annotations.Reference;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,6 +63,10 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
     private final Semaphore semaphore = new Semaphore(1, true);
 
     public static final String DEFAULT_PREFIX = "http://mobi.com/ontologies/shapes-graph/";
+    private static final String USER_IRI_BINDING = "%USERIRI%";
+    private static final String RECORD_IRI_BINDING = "%RECORDIRI%";
+    private static final String ENCODED_RECORD_IRI_BINDING = "%RECORDIRIENCODED%";
+    private static final String MASTER_BRANCH_IRI_BINDING = "%MASTER%";
 
     @Override
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
@@ -76,12 +86,34 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
             versioningManager.commit(catalogIdIRI, record.getResource(),
                     masterBranchId, user, "The initial commit.", shaclModel, null, conn);
             conn.commit();
+            writePolicies(user, record);
         } catch (InterruptedException e) {
             throw new MobiException(e);
         } finally {
             semaphore.release();
         }
         return record;
+    }
+
+    @Override
+    protected Resource writeRecordPolicy(Resource user, Resource recordId, Resource masterBranchId) {
+        try {
+            // Record Policy
+            InputStream recordPolicyStream = AbstractShapesGraphRecordService.class
+                    .getResourceAsStream("/shapesGraphRecordPolicy.xml");
+            String encodedRecordIRI = ResourceUtils.encode(recordId);
+
+            String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING,
+                    MASTER_BRANCH_IRI_BINDING};
+            String[] replace = {user.stringValue(), recordId.stringValue(), encodedRecordIRI,
+                    masterBranchId.stringValue()};
+            String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, StandardCharsets.UTF_8),
+                    search, replace);
+
+            return addPolicy(recordPolicy);
+        } catch (IOException e) {
+            throw new MobiException("Error writing record policy.", e);
+        }
     }
 
     /**

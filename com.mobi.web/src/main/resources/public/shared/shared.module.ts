@@ -39,6 +39,7 @@ import {
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatSelectModule } from '@angular/material';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTableModule } from '@angular/material/table';
 import { CdkTableModule } from '@angular/cdk/table';
 import { HttpClientModule } from '@angular/common/http';
@@ -49,15 +50,9 @@ import blockContentComponent from './components/blockContent/blockContent.compon
 import blockFooterComponent from './components/blockFooter/blockFooter.component';
 import blockHeaderComponent from './components/blockHeader/blockHeader.component';
 import blockSearchComponent from './components/blockSearch/blockSearch.component';
-import branchSelectComponent from './components/branchSelect/branchSelect.component';
 import breadcrumbsComponent from './components/breadcrumbs/breadcrumbs.component';
-import checkboxComponent from './components/checkbox/checkbox.component';
 import circleButtonStackComponent from './components/circleButtonStack/circleButtonStack.component';
-import commitChangesDisplayComponent from './components/commitChangesDisplay/commitChangesDisplay.component';
 import commitCompiledResourceComponent from './components/commitCompiledResource/commitCompiledResource.component';
-import commitDifferenceTabsetComponent from './components/commitDifferenceTabset/commitDifferenceTabset.component';
-import commitHistoryTableComponent from './components/commitHistoryTable/commitHistoryTable.component';
-import commitInfoOverlayComponent from './components/commitInfoOverlay/commitInfoOverlay.component';
 import confirmModalComponent from './components/confirmModal/confirmModal.component.ajs';
 import editIriOverlayComponent from './components/editIriOverlay/editIriOverlay.component';
 import emailInputComponent from './components/emailInput/emailInput.component';
@@ -75,11 +70,8 @@ import pagingComponent from './components/paging/paging.component';
 import radioButtonComponent from './components/radioButton/radioButton.component';
 import rdfVisualizationComponent from './components/rdfVisualization/rdfVisualization.component';
 import recordKeywordsComponent from './components/recordKeywords/recordKeywords.component';
-import resolveConflictsFormComponent from './components/resolveConflictsForm/resolveConflictsForm.component';
 import searchBarComponent from './components/searchBar/searchBar.component';
 import sidebarComponent from './components/sidebar/sidebar.component';
-import statementContainerComponent from './components/statementContainer/statementContainer.component';
-import statementDisplayComponent from './components/statementDisplay/statementDisplay.component';
 import stepProgressBarComponent from './components/stepProgressBar/stepProgressBar.component';
 import textAreaComponent from './components/textArea/textArea.component';
 import textInputComponent from './components/textInput/textInput.component';
@@ -156,7 +148,8 @@ import {
     ontologyStateServiceProvider,
     discoverStateServiceProvider,
     ontologyManagerServiceProvider,
-    catalogManagerServiceProvider
+    catalogManagerServiceProvider,
+    stateManagerServiceProvider, toastrProvider
 } from '../ajs.upgradedProviders';
 
 import { ConfirmModalComponent } from './components/confirmModal/confirmModal.component';
@@ -169,15 +162,28 @@ import { HelperService } from './services/helper.service';
 import { PolicyManagerService } from './services/policyManager.service';
 import { UserManagerService } from './services/userManager.service';
 import { UserStateService } from './services/userState.service';
-import { ShapesGraphManagerService } from "./services/shapesGraphManager.service";
-import { ShapesGraphStateService } from "./services/shapesGraphState.service";
+import { ShapesGraphManagerService } from './services/shapesGraphManager.service';
+import { ShapesGraphStateService } from './services/shapesGraphState.service';
 import { WindowRef } from './services/windowRef.service';
 import { HighlightTextPipe } from './pipes/highlightText.pipe';
 import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
 import { SpinnerComponent } from './components/progress-spinner/spinner.component';
 import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
-import { FileInputComponent } from "./components/fileInput/fileInput.component";
-import { CustomLabelComponent } from "./components/customLabel/customLabel.component";
+import { FileInputComponent } from './components/fileInput/fileInput.component';
+import { CustomLabelComponent } from './components/customLabel/customLabel.component';
+import { StatementDisplayComponent } from './components/statementDisplay/statementDisplay.component';
+import { StatementContainerComponent } from './components/statementContainer/statementContainer.component';
+import { CommitHistoryTableComponent } from './components/commitHistoryTable/commitHistoryTable.component';
+import { CommitInfoOverlayComponent } from './components/commitInfoOverlay/commitInfoOverlay.component';
+import { CommitChangesDisplayComponent } from './components/commitChangesDisplay/commitChangesDisplay.component';
+import { ResolveConflictsFormComponent } from './components/resolveConflictsForm/resolveConflictsForm.component';
+import { CommitDifferenceTabsetComponent } from './components/commitDifferenceTabset/commitDifferenceTabset.component';
+import { CheckboxComponent } from './components/checkbox/checkbox.component';
+import { BranchSelectComponent } from './components/branchSelect/branchSelect.component';
+import { ResolveConflictsBlock } from './components/resolveConflictsBlock/resolveConflictsBlock.component';
+import { PrefixationPipe } from './pipes/prefixation.pipe';
+import { SplitIRIPipe } from './pipes/splitIRI.pipe';
+import { CopyClipboardDirective } from './directives/copyClipboard/copyClipboard.directive';
 
 import { SettingEditPageComponent } from './components/settingEditPage/settingEditPage.component';
 import { SettingGroupComponent } from './components/settingGroup/settingGroup.component';
@@ -210,7 +216,8 @@ import { SettingFormFieldComponent } from './components/settingFormField/setting
         MatProgressSpinnerModule,
         MatTableModule,
         MatTooltipModule,
-        MatSelectModule
+        MatSelectModule,
+        MatCheckboxModule
     ],
     declarations: [
         ConfirmModalComponent,
@@ -221,12 +228,25 @@ import { SettingFormFieldComponent } from './components/settingFormField/setting
         SpinnerComponent,
         HighlightTextPipe,
         TrustedHtmlPipe,
+        PrefixationPipe,
+        SplitIRIPipe,
         FileInputComponent,
         CustomLabelComponent,
         SettingEditPageComponent,
         SettingGroupComponent,
         SettingFormComponent,
-        SettingFormFieldComponent
+        SettingFormFieldComponent,
+        StatementDisplayComponent,
+        StatementContainerComponent,
+        CommitHistoryTableComponent,
+        CommitInfoOverlayComponent,
+        CommitChangesDisplayComponent,
+        ResolveConflictsFormComponent,
+        CommitDifferenceTabsetComponent,
+        CheckboxComponent,
+        BranchSelectComponent,
+        ResolveConflictsBlock,
+        CopyClipboardDirective
     ],
     entryComponents: [
         ConfirmModalComponent,
@@ -236,7 +256,17 @@ import { SettingFormFieldComponent } from './components/settingFormField/setting
         SpinnerComponent,
         UserAccessControlsComponent,
         FileInputComponent,
-        CustomLabelComponent
+        CustomLabelComponent,
+        StatementDisplayComponent,
+        StatementContainerComponent,
+        CommitHistoryTableComponent,
+        CommitInfoOverlayComponent,
+        CommitChangesDisplayComponent,
+        ResolveConflictsFormComponent,
+        CommitDifferenceTabsetComponent,
+        CheckboxComponent,
+        BranchSelectComponent,
+        ResolveConflictsBlock
     ],
     exports: [
         CommonModule,
@@ -266,9 +296,22 @@ import { SettingFormFieldComponent } from './components/settingFormField/setting
         UserAccessControlsComponent,
         HighlightTextPipe,
         TrustedHtmlPipe,
+        PrefixationPipe,
+        SplitIRIPipe,
         FileInputComponent,
-        CustomLabelComponent, 
-        SettingEditPageComponent
+        CustomLabelComponent,
+        SettingEditPageComponent,
+        StatementDisplayComponent,
+        StatementContainerComponent,
+        CommitHistoryTableComponent,
+        CommitInfoOverlayComponent,
+        CommitChangesDisplayComponent,
+        ResolveConflictsFormComponent,
+        CommitDifferenceTabsetComponent,
+        CheckboxComponent,
+        BranchSelectComponent,
+        ResolveConflictsBlock,
+        CopyClipboardDirective
     ],
     providers: [
         loginManagerServiceProvider,
@@ -282,6 +325,8 @@ import { SettingFormFieldComponent } from './components/settingFormField/setting
         discoverStateServiceProvider,
         catalogManagerServiceProvider,
         ontologyManagerServiceProvider,
+        stateManagerServiceProvider,
+        toastrProvider,
         HelperService,
         PolicyManagerService,
         UserManagerService,
@@ -290,7 +335,9 @@ import { SettingFormFieldComponent } from './components/settingFormField/setting
         ShapesGraphStateService,
         WindowRef,
         OntologyVisualizationService,
-        { provide: ErrorStateMatcher, useClass: MobiErrorStateMatcher }
+        { provide: ErrorStateMatcher, useClass: MobiErrorStateMatcher },
+        PrefixationPipe,
+        SplitIRIPipe
     ]
 })
 export class SharedModule {}
@@ -302,15 +349,9 @@ angular.module('shared', [])
     .component('blockFooter', blockFooterComponent)
     .component('blockHeader', blockHeaderComponent)
     .component('blockSearch', blockSearchComponent)
-    .component('branchSelect', branchSelectComponent)
     .component('breadcrumbs', breadcrumbsComponent)
-    .component('checkbox', checkboxComponent)
     .component('circleButtonStack', circleButtonStackComponent)
-    .component('commitChangesDisplay', commitChangesDisplayComponent)
     .component('commitCompiledResource', commitCompiledResourceComponent)
-    .component('commitDifferenceTabset', commitDifferenceTabsetComponent)
-    .component('commitHistoryTable', commitHistoryTableComponent)
-    .component('commitInfoOverlay', commitInfoOverlayComponent)
     .component('confirmModalAjs', confirmModalComponent)
     .component('editIriOverlay', editIriOverlayComponent)
     .component('emailInput', emailInputComponent)
@@ -328,11 +369,8 @@ angular.module('shared', [])
     .component('radioButton', radioButtonComponent)
     .component('rdfVisualization', rdfVisualizationComponent)
     .component('recordKeywords', recordKeywordsComponent)
-    .component('resolveConflictsForm', resolveConflictsFormComponent)
     .component('searchBar', searchBarComponent)
     .component('sidebar', sidebarComponent)
-    .component('statementContainer', statementContainerComponent)
-    .component('statementDisplay', statementDisplayComponent)
     .component('stepProgressBar', stepProgressBarComponent)
     .component('textArea', textAreaComponent)
     .component('textInput', textInputComponent)
@@ -408,5 +446,15 @@ angular.module('shared', [])
     .directive('settingEditPage', downgradeComponent({component: SettingEditPageComponent}) as angular.IDirectiveFactory)
     .directive('settingGroup', downgradeComponent({component: SettingGroupComponent}) as angular.IDirectiveFactory)
     .directive('settingForm', downgradeComponent({component: SettingFormComponent}) as angular.IDirectiveFactory)
-    .directive('settingFormField', downgradeComponent({component: SettingFormFieldComponent}) as angular.IDirectiveFactory);
-
+    .directive('settingFormField', downgradeComponent({component: SettingFormFieldComponent}) as angular.IDirectiveFactory)
+    .directive('statementDisplay', downgradeComponent({component: StatementDisplayComponent}) as angular.IDirectiveFactory)
+    .directive('statementContainer', downgradeComponent({component: StatementContainerComponent}) as angular.IDirectiveFactory)
+    .directive('commitHistoryTable', downgradeComponent({component: CommitHistoryTableComponent}) as angular.IDirectiveFactory)
+    .directive('commitInfoOverlay', downgradeComponent({component: CommitInfoOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('commitChangesDisplay', downgradeComponent({component: CommitChangesDisplayComponent}) as angular.IDirectiveFactory)
+    .directive('resolveConflictsForm', downgradeComponent({component: ResolveConflictsFormComponent}) as angular.IDirectiveFactory)
+    .directive('commitDifferenceTabset', downgradeComponent({component: CommitDifferenceTabsetComponent}) as angular.IDirectiveFactory)
+    .directive('checkbox', downgradeComponent({component: CheckboxComponent}) as angular.IDirectiveFactory)
+    .directive('branchSelect', downgradeComponent({component: BranchSelectComponent}) as angular.IDirectiveFactory)
+    .directive('resolveConflictsBlock', downgradeComponent({component: ResolveConflictsBlock}) as angular.IDirectiveFactory)
+    .directive('copyClipboard', downgradeComponent({component: CopyClipboardDirective}) as angular.IDirectiveFactory);

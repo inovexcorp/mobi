@@ -44,6 +44,7 @@
 
             .mat-chip.mat-warn {
                 background-color: map-get($mat-amber, 500);
+                color: white;
             }
         }
     }

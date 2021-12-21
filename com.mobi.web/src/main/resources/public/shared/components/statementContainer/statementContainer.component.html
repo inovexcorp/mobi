@@ -20,8 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="statement-container" ng-class="{'additions': dvm.hasAdditions, 'deletions': dvm.hasDeletions}">
-    <h5 ng-if="dvm.hasAdditions" class="m-0">Added Statements</h5>
-    <h5 ng-if="dvm.hasDeletions" class="m-0">Deleted Statements</h5>
-    <div class="statement-table w-100" ng-transclude></div>
+<div class="statement-container" [ngClass]="{'additions': hasAdditions, 'deletions': hasDeletions}">
+    <h5 *ngIf="hasAdditions" class="m-0">Added Statements</h5>
+    <h5 *ngIf="hasDeletions" class="m-0">Deleted Statements</h5>
+    <ng-content class="statement-table w-100"></ng-content>
 </div>

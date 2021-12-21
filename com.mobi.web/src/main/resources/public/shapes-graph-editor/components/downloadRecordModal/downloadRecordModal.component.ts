@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -36,7 +36,7 @@ import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphM
     selector: 'download-record-modal',
     templateUrl: './downloadRecordModal.component.html'
 })
-export class DownloadRecordModalComponent {
+export class DownloadRecordModalComponent implements OnInit {
     downloadRecordForm = this.fb.group({
         selectedValue: ['turtle', Validators.required],
         fileName: ['shapesGraph', Validators.required]
@@ -46,12 +46,17 @@ export class DownloadRecordModalComponent {
     constructor(private dialogRef: MatDialogRef<DownloadRecordModalComponent>, @Inject(MAT_DIALOG_DATA) public data: any,
                 private fb: FormBuilder, private sm: ShapesGraphManagerService) {}
 
+    ngOnInit() {
+        this.downloadRecordForm.controls.fileName.setValue(this.data.title);
+    }
     download(): void {
         const downloadParams: RdfDownload = {
-            // TODO: Add more handling for branch/commit when added
             recordId: this.data.recordId,
+            branchId: this.data.branchId,
+            commitId: this.data.commitId,
             rdfFormat: this.downloadRecordForm.controls.selectedValue.value,
-            fileName: this.downloadRecordForm.controls.fileName.value
+            fileName: this.downloadRecordForm.controls.fileName.value,
+            applyInProgressCommit: true
         };
         this.sm.downloadShapesGraph(downloadParams);
         this.dialogRef.close(true);

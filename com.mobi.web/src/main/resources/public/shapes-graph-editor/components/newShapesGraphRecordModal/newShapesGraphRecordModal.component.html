@@ -32,7 +32,7 @@
             <mat-label>Description</mat-label>
             <textarea matInput name="description" formControlName="description"></textarea>
         </mat-form-field>
-        <mat-form-field class="example-chip-list" class="w-100">
+        <mat-form-field class="w-100">
             <mat-label>Keywords</mat-label>
             <mat-chip-list #chipList aria-label="Keywords">
                 <mat-chip *ngFor="let keyword of keywordControls.value" [selectable]="selectable"

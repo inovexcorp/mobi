@@ -79,11 +79,11 @@ export class ShapesGraphManagerService {
             branchId: rdfDownload.branchId,
             commitId: rdfDownload.commitId,
             rdfFormat: rdfDownload.rdfFormat || 'jsonld',
-            fileName: rdfDownload.fileName || 'shapesGraph'
+            fileName: rdfDownload.fileName || 'shapesGraph',
+            applyInProgressCommit: rdfDownload.applyInProgressCommit || false
         });
         this.util.startDownload(this.prefix + '/' + encodeURIComponent(rdfDownload.recordId) + '?' + params);
     }
-
     /**
      * Calls the DELETE /mobirest/shapes-graphs/{recordId} endpoint to delete a SHACL shapes graph record. Returns
      * a Promise that resolves if it was successful and rejects with an error message if it was not.
@@ -95,7 +95,6 @@ export class ShapesGraphManagerService {
         return this.http.delete(`${this.prefix}/${encodeURIComponent(recordId)}`)
             .toPromise().then((response: any) => response, this.util.rejectErrorObject);
     }
-
     /**
      * Calls the PUT /mobirest/shapes-graphs/{recordId} endpoint which will update the in-progress commit
      * object to be applied to the shapes graph.
@@ -134,7 +133,8 @@ export class ShapesGraphManagerService {
             shapesGraphId: response.shapesGraphId,
             recordId: response.recordId,
             branchId: response.branchId,
-            commitId: response.commitId
+            commitId: response.commitId,
+            title: response.title
         };
     }
 }

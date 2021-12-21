@@ -27,6 +27,7 @@ import { downgradeComponent } from '@angular/upgrade/static';
 import * as angular from 'angular';
 
 import { SharedModule } from '../shared/shared.module';
+import { CreateBranchModal } from './components/createBranchModal/createBranchModal.component';
 import { DownloadRecordModalComponent } from './components/downloadRecordModal/downloadRecordModal.component';
 import { EditorBranchSelectComponent } from './components/editorBranchSelect/editorBranchSelect.component';
 import { EditorRecordSelectComponent } from './components/editorRecordSelect/editorRecordSelect.component';
@@ -35,6 +36,7 @@ import { NewShapesGraphRecordModalComponent } from './components/newShapesGraphR
 import { ShapesGraphEditorPageComponent } from './components/shapesGraphEditorPage/shapesGraphEditorPage.component';
 import { ShapesGraphChangesPageComponent } from './components/shapesGraphChangesPage/shapesGraphChangesPage.component';
 import { CommitModalComponent } from './components/commitModal/commitModal.component';
+import { ShapesGraphMergePageComponent } from './components/shapesGraphMergePage/shapesGraphMergePage.component';
 import { UploadRecordModalComponent } from './components/uploadRecordModal/uploadRecordModal.component';
 
 /**
@@ -59,7 +61,9 @@ import { UploadRecordModalComponent } from './components/uploadRecordModal/uploa
         DownloadRecordModalComponent,
         UploadRecordModalComponent,
         CommitModalComponent,
-        ShapesGraphChangesPageComponent
+        ShapesGraphChangesPageComponent,
+        ShapesGraphMergePageComponent,
+        CreateBranchModal
     ],
     providers: [],
     entryComponents: [
@@ -68,7 +72,9 @@ import { UploadRecordModalComponent } from './components/uploadRecordModal/uploa
         DownloadRecordModalComponent,
         UploadRecordModalComponent,
         CommitModalComponent,
-        ShapesGraphChangesPageComponent
+        ShapesGraphChangesPageComponent,
+        ShapesGraphMergePageComponent,
+        CreateBranchModal
     ]
 })
 export class ShapesGraphEditorModule {}
@@ -83,3 +89,5 @@ angular.module('shapes-graph-editor', [])
     .directive('editorTopBar', downgradeComponent({component: EditorTopBarComponent}) as angular.IDirectiveFactory)
     .directive('shapesGraphEditorPage', downgradeComponent({component: ShapesGraphEditorPageComponent}) as angular.IDirectiveFactory)
     .directive('shapesGraphChangesPage', downgradeComponent({component: ShapesGraphChangesPageComponent}) as angular.IDirectiveFactory)
+    .directive('shapesGraphMergePage', downgradeComponent({component: ShapesGraphMergePageComponent}) as angular.IDirectiveFactory)
+    .directive('createBranchModal', downgradeComponent({component: CreateBranchModal}) as angular.IDirectiveFactory);

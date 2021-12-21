@@ -157,26 +157,26 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     };
 
     var ontologyListItemTemplate = {
-        active: true,
-        upToDate: true,
+        active: true, // TODO: Moved to shared versionedRdfListItem interface
+        upToDate: true, // TODO: Moved to shared versionedRdfListItem interface
         isVocabulary: false,
         editorTabStates: angular.copy(ontologyEditorTabStates),
-        ontologyRecord: {
+        ontologyRecord: { // TODO: Moved to shared versionedRdfListItem interface. Renamed to versionedRdfRecord
             title: '',
             recordId: '',
             branchId: '',
             commitId: ''
         },
-        ontologyId: '',
+        ontologyId: '', // TODO: Should be in own listItem class.
         ontology: [],
         importedOntologies: [],
         importedOntologyIds: [],
-        userBranch: false,
+        userBranch: false, // TODO: Moved to shared versionedRdfListItem interface
         createdFromExists: true,
         userCanModify: false,
         userCanModifyMaster: false,
-        masterBranchIRI: '',
-        merge: {
+        masterBranchIRI: '', // TODO: Moved to shared versionedRdfListItem interface
+        merge: { // TODO: Moved to shared versionedRdfListItem interface
             active: false,
             target: undefined,
             checkbox: false,
@@ -235,9 +235,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         },
         blankNodes: {},
         entityInfo: {},
-        additions: [],
-        deletions: [],
-        inProgressCommit: {
+        additions: [], // TODO: Moved to shared versionedRdfListItem interface
+        deletions: [], // TODO: Moved to shared versionedRdfListItem interface
+        inProgressCommit: { // TODO: Moved to shared versionedRdfListItem interface
             additions: [],
             deletions: []
         },
@@ -336,6 +336,11 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.initialize = function() {
         catalogId = get(cm.localCatalog, '@id', '');
     }
+
+    // TODO: When migrating service to Angular, remove all state methods below through `makeOntologyState` and extend
+    // TODO: `versionedRdfState.service.ts`. Will require changing `ontologyState` calls to these methods to calls to
+    // TODO: the newer more generic methods without `ontology` in the method name.
+
     /**
      * @ngdoc method
      * @name createOntologyState
@@ -650,6 +655,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {string} recordId The record ID of the ontology you want to get from the repository.
      * @returns {Promise} A promise containing the record id, branch id, commit id, and inProgressCommit.
      */
+    // TODO: Added to parent class of versionedRdfState. Remove and change references when upgrading module.
     self.getOntologyCatalogDetails = function(recordId) {
         let state = self.getOntologyStateByRecordId(recordId);
         if (!isEmpty(state)) {
@@ -718,6 +724,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @return {Promise} A promise containing the ontology id, record id, branch id, commit id, and
      *                    inProgressCommit.
      */
+    // TODO: Added to parent class of versionedRdfState. Remove and change references when upgrading module.
     self.getLatestOntology = function(recordId) {
         var branchId, commitId;
         return cm.getRecordMasterBranch(recordId, catalogId)
@@ -1828,10 +1835,12 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         delete listItem.classes.iris[iri];
     }
+    // TODO: Added to parent class of versionedRdfState. Remove and change references when upgrading module.
     self.attemptMerge = function() {
         return self.checkConflicts()
             .then(() => self.merge(), $q.reject);
     }
+    // TODO: Added to parent class of versionedRdfState. Remove and change references when upgrading module.
     self.checkConflicts = function() {
         return cm.getBranchConflicts(self.listItem.ontologyRecord.branchId, self.listItem.merge.target['@id'], self.listItem.ontologyRecord.recordId, catalogId)
             .then(conflicts => {
@@ -1878,6 +1887,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             return $q.when();
         }, $q.reject);
     }
+    // TODO: Added to parent class of versionedRdfState. Remove and change references when upgrading module. Add this implementation to the new ontologyState
     self.merge = function() {
         var sourceId = self.listItem.ontologyRecord.branchId;
         var checkbox = self.listItem.merge.checkbox;

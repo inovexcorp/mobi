@@ -25,9 +25,10 @@
  * be used in the ontology-editor or shapes-graph-editor.
  */
 export interface VersionedRdfUploadResponse {
-    shapesGraphId?: string,
-    ontologyId?: string,
-    recordId: string,
-    branchId: string,
-    commitId: string
+    shapesGraphId?: string;
+    ontologyId?: string;
+    title?: string;
+    recordId: string;
+    branchId: string;
+    commitId: string;
 }

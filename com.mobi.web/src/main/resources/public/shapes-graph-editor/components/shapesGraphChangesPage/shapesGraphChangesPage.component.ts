@@ -51,7 +51,7 @@ export class ShapesGraphChangesPageComponent {
     constructor(public state: ShapesGraphStateService, @Inject('catalogManagerService') private cm, @Inject('utilService') private util) {}
 
     removeChanges(): void {
-        this.cm.deleteInProgressCommit(this.state.currentShapesGraphRecordIri, this.catalogId)
+        this.cm.deleteInProgressCommit(this.state.listItem.versionedRdfRecord.recordId, this.catalogId)
             .then(() => {
                 this.state.clearInProgressCommit();
                 this.util.createSuccessToast('In Progress Commit removed successfully.');

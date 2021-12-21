@@ -21,28 +21,28 @@
   #L%
   -->
 <div class="commit-changes-display">
-    <div class="property-values mt-3" ng-repeat="(key, value) in dvm.results">
+    <div class="property-values mt-3" *ngFor="let result of results | keyvalue">
         <div class="clearfix prop-header d-flex align-items-center">
-            <p class="text text-truncate m-0" title="{{key}}">{{!!dvm.entityNameFunc ? dvm.entityNameFunc(key) : dvm.util.getBeautifulIRI(key)}}</p>
-            <small class="text-muted ml-1 text-truncate flex-1">&lt;{{key}}&gt;</small>
+            <p class="text text-truncate m-0" title="{{result.key}}">{{!!entityNameFunc ? entityNameFunc(result.key) : util.getBeautifulIRI(result.key)}}</p>
+            <small class="text-muted ml-1 text-truncate flex-1">&lt;{{result.key}}&gt;</small>
         </div>
         <div class="prop-value-container ml-3 mt-1 p-1">
-            <statement-container ng-if="value.additions.length" additions>
+            <statement-container *ngIf="result.value.additions.length" additions>
                 <statement-display
-                        ng-repeat="addition in value.additions | orderBy:dvm.util.getPredicateLocalName"
-                        predicate="addition.p" object="addition.o"
-                        entity-name-func="dvm.entityNameFunc"></statement-display>
+                        *ngFor="let addition of util.getPredicateLocalNameOrdered(result.value.additions)"
+                        [predicate]="addition.p" [object]="addition.o"
+                        [entityNameFunc]="entityNameFunc"></statement-display>
             </statement-container>
-            <statement-container ng-if="value.deletions.length" deletions>
+            <statement-container *ngIf="result.value.deletions.length" deletions>
                 <statement-display
-                        ng-repeat="deletion in value.deletions | orderBy:dvm.util.getPredicateLocalName"
-                        predicate="deletion.p" object="deletion.o"
-                        entity-name-func="dvm.entityNameFunc"></statement-display>
+                        *ngFor="let deletion of util.getPredicateLocalNameOrdered(result.value.deletions)"
+                        [predicate]="deletion.p" [object]="deletion.o"
+                        [entityNameFunc]="entityNameFunc"></statement-display>
             </statement-container>
         </div>
     </div>
     <div class="text-center">
-        <a ng-if="dvm.showMore" ng-click="dvm.getMorePagedChanges()">
+        <a *ngIf="showMore" (click)="getMorePagedChanges()">
             <i class="fa fa-fw fa-plus"></i><span>Load More</span>
         </a>
     </div>

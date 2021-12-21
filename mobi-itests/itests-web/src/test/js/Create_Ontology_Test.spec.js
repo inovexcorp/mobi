@@ -293,13 +293,17 @@ module.exports = {
             .click('circle-button-stack .fa-random')
             .waitForElementVisible('.merge-message')
             .assert.containsText('.merge-message', 'newBranchTitle')
-            .click('branch-select div[placeholder="Select a Branch"] span.btn')
             .useXpath()
-            .waitForElementVisible('//merge-block//branch-select//span[text()[contains(.,"MASTER")]]')
-            .click('//merge-block//branch-select//span[text()[contains(.,"MASTER")]]')
+            .click('//branch-select//div[@class=\'branch-select\']//div[@class=\'mat-form-field-infix\']')
+            .waitForElementVisible('//mat-option//span[text()[contains(.,"MASTER")]]')
+            .click('//mat-option//span[text()[contains(.,"MASTER")]]')
+            .waitForElementVisible('//branch-select//input')
+            .getValue("//branch-select//input", function(result) {
+                this.assert.equal(typeof result, "object");
+                this.assert.equal(result.status, 0);
+                this.assert.equal(result.value, "MASTER");
+            })
             .useCss()
-            .waitForElementVisible('div[placeholder="Select a Branch"] > span > span > span')
-            .assert.containsText('div[placeholder="Select a Branch"] > span > span > span', 'Branch: MASTER')
             .waitForElementVisible('merge-block commit-changes-display p[title*="FirstClass"]')
             .assert.containsText('merge-block commit-changes-display p[title*="FirstClass"]', 'firstClass')
             .waitForElementVisible('merge-block commit-changes-display p[title*="FirstClass"] ~ small')

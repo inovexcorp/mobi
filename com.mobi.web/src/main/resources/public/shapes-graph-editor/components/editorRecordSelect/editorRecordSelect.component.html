@@ -21,19 +21,44 @@
   #L%
   -->
 <mat-form-field class="editor-record-select">
-    <input matInput placeholder="Select a record" [matAutocomplete]="recordAutocomplete" [formControl]="recordSearchControl"/>
+    <input matInput #textInput placeholder="Select a record" [matAutocomplete]="recordAutocomplete" [formControl]="recordSearchControl"/>
     <mat-icon matSuffix>keyboard_arrow_down</mat-icon>
-    <mat-autocomplete class="panel-max-height" #recordAutocomplete="matAutocomplete" (optionSelected)="selectRecord($event)" (opened)="retrieveShapesGraphRecords()" (closed)="resetSearch()" [panelWidth]="301">
-        <mat-option [disabled]="true"><span class="center-in-overlay"><button class="create-record" mat-button color="primary" (click)="createShapesGraph($event)">Create Shapes Graph</button></span></mat-option>
+    <mat-autocomplete class="panel-max-height"
+                      #recordAutocomplete="matAutocomplete"
+                      (optionSelected)="selectRecord($event)"
+                      (opened)="retrieveShapesGraphRecords()"
+                      (closed)="close()"
+                      [panelWidth]="301">
+        <mat-option [disabled]="true">
+            <span class="center-in-overlay">
+                <button class="create-record"
+                        mat-button color="primary"
+                        (click)="createShapesGraph($event)">
+                    Create Shapes Graph
+                </button>
+            </span>
+        </mat-option>
         <mat-divider></mat-divider>
         <mat-optgroup *ngFor="let group of filteredOptions | async" [label]="group.title">
             <mat-option *ngFor="let option of group.options" [ngStyle]="{ 'height': option.description ? 'unset' : '48px' }" [value]="option">
                 <span class="d-flex">
                     <span class="flex-1 text-truncate">{{option.title}}</span>
-                    <button class="close-record" *ngIf="group.title === 'Open'" mat-icon-button color="primary" (click)="closeShapesGraphRecord(option.recordId)"><mat-icon>close</mat-icon></button>
-                    <button class="delete-record" *ngIf="group.title !== 'Open'" mat-icon-button color="primary" (click)="showDeleteConfirmationOverlay(option, $event)"><mat-icon>delete</mat-icon></button>
+                    <button *ngIf="group.title === 'Open'"
+                            class="close-record"
+                            mat-icon-button
+                            color="primary"
+                            (click)="closeShapesGraphRecord(option.recordId)">
+                        <mat-icon class="w-100">close</mat-icon>
+                    </button>
+                    <button *ngIf="group.title !== 'Open'"
+                            class="delete-record"
+                            mat-icon-button
+                            color="primary"
+                            (click)="showDeleteConfirmationOverlay(option, $event)">
+                        <mat-icon class="w-100">delete</mat-icon>
+                    </button>
                 </span>
-                <p class="description-text pl-3 small text-muted">{{option.description}}</p>
+                <p class="description-text pl-3 small text-muted text-truncate">{{option.description}}</p>
             </mat-option>
         </mat-optgroup>
     </mat-autocomplete>
