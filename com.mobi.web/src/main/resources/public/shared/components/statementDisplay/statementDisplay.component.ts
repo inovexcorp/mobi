@@ -20,11 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Input, OnInit } from '@angular/core';
 import { has, get } from 'lodash';
-
 import './statementDisplay.component.scss';
-
-const template = require('./statementDisplay.component.html');
+import { CommitChange } from '../../models/commitChange.interface';
+import { PrefixationPipe } from '../../pipes/prefixation.pipe';
+import { SplitIRIPipe } from '../../pipes/splitIRI.pipe';
 
 /**
  * @ngdoc component
@@ -37,38 +38,34 @@ const template = require('./statementDisplay.component.html');
  * @param {Object} object An object representing the object of a triple to display
  * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by its IRI.
  */
-const statementDisplayComponent = {
-    template,
-    require: '^^statementContainer',
-    bindings: {
-        predicate: '<',
-        object: '<',
-        entityNameFunc: '<?'
-    },
-    controllerAs: 'dvm',
-    controller: statementDisplayComponentCtrl
-};
+@Component({
+    selector: 'statement-display',
+    templateUrl: './statementDisplay.component.html'
+})
+export class StatementDisplayComponent implements OnInit {
+    @Input() predicate: string;
+    @Input() object: CommitChange;
+    @Input() entityNameFunc: (args: any) => string;
 
-statementDisplayComponentCtrl.$inject = ['$filter'];
+    fullObject: string;
+    o: string;
 
-function statementDisplayComponentCtrl($filter) {
-    var dvm = this;
-    dvm.$onInit = function () {
-        if (has(dvm.object, '@id')) {
-            dvm.fullObject = dvm.object['@id'];
-            if (dvm.entityNameFunc) {
-                dvm.o = dvm.entityNameFunc(dvm.fullObject) + ' <' + dvm.fullObject + '>';
+    constructor(private splitIRI: SplitIRIPipe, private prefixation: PrefixationPipe) {}
+
+    ngOnInit(): void {
+        if (has(this.object, '@id')) {
+            this.fullObject = this.object['@id'];
+            if (this.entityNameFunc) {
+                this.o = this.entityNameFunc(this.fullObject) + ' <' + this.fullObject + '>';
             } else {
-                var split = $filter('splitIRI')(dvm.fullObject).end;
-                dvm.o = split ? split + ' <' + dvm.fullObject + '>' : dvm.fullObject;
+                const split: string = this.splitIRI.transform(this.fullObject).end;
+                this.o = split ? split + ' <' + this.fullObject + '>' : this.fullObject;
             }
         } else {
-            dvm.o = get(dvm.object, '@value', dvm.object)
-                + (has(dvm.object, '@language') ? ' [language: ' + dvm.object['@language'] + ']' : '')
-                + (has(dvm.object, '@type') ? ' [type: ' + $filter('prefixation')(dvm.object['@type']) + ']' : '');
-            dvm.fullObject = dvm.o;
+            this.o = get(this.object, '@value', this.object)
+                + (has(this.object, '@language') ? ' [language: ' + this.object['@language'] + ']' : '')
+                + (has(this.object, '@type') ? ' [type: ' + this.prefixation.transform(this.object['@type']) + ']' : '');
+            this.fullObject = this.o;
         }
     }
 }
-
-export default statementDisplayComponent;

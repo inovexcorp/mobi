@@ -26,9 +26,7 @@ import { FormArray, FormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { RdfUpload } from '../../../shared/models/rdfUpload.interface';
-import { VersionedRdfUploadResponse } from '../../../shared/models/versionedRdfUploadResponse.interface';
-import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
-import { RecordSelectFiltered } from '../../models/recordSelectFiltered.interface';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 
 import './newShapesGraphRecordModal.component.scss';
 
@@ -56,7 +54,7 @@ export class NewShapesGraphRecordModalComponent {
     readonly separatorKeysCodes = [ENTER, COMMA] as const;
 
     constructor(private dialogRef: MatDialogRef<NewShapesGraphRecordModalComponent>, private fb: FormBuilder,
-                private sm: ShapesGraphManagerService, @Inject('utilService') private util) {}
+                private state: ShapesGraphStateService, @Inject('utilService') private util) {}
 
     create(): void {
         const rdfUpload: RdfUpload = {
@@ -65,26 +63,14 @@ export class NewShapesGraphRecordModalComponent {
             keywords: this.createRecordForm.controls.keywords.value,
             file: this.selectedFile
         };
-        this.sm.createShapesGraphRecord(rdfUpload)
-            .then((response: VersionedRdfUploadResponse) => {
-                this.util.createSuccessToast('Record ' + response.recordId + ' successfully created.');
-                const record: RecordSelectFiltered = {
-                    recordId: response.recordId,
-                    title: this.createRecordForm.controls.title.value,
-                    description: this.createRecordForm.controls.description.value
-                };
-                
-                this.dialogRef.close(record);
-            }, error => {
-                this.util.createErrorToast(error.errorMessage);
-                this.dialogRef.close(null);
-            });
+        this.state.uploadShapesGraph(rdfUpload)
+            .then(() => this.dialogRef.close(true),
+                    error => {
+                        this.util.createErrorToast(error);
+                        this.dialogRef.close(false);
+                    }
+            );
     }
-
-    get keywordControls(): FormArray {
-        return this.createRecordForm.controls.keywords as FormArray;
-    }
-
     add(event: MatChipInputEvent): void {
         const value = (event.value || '').trim();
         const input = event.input;
@@ -97,11 +83,14 @@ export class NewShapesGraphRecordModalComponent {
             input.value = '';
         }
     }
-
     remove(keyword: string): void {
         const index = this.keywordControls.value.indexOf(keyword);
         if (index >= 0) {
             this.keywordControls.removeAt(index);
         }
+    }
+
+    get keywordControls(): FormArray {
+        return this.createRecordForm.controls.keywords as FormArray;
     }
 }

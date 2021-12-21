@@ -21,9 +21,11 @@
  * #L%
  */
 
-import {get, map, merge, union, concat} from 'lodash';
-
-const template = require('./commitInfoOverlay.component.html');
+import { Component, Inject, OnInit } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import {get, map, merge, union} from 'lodash';
+import { UserManagerService } from '../../services/userManager.service';
+import './commitInfoOverlay.component.scss'
 
 /**
  * @ngdoc component
@@ -48,75 +50,66 @@ const template = require('./commitInfoOverlay.component.html');
  * including the username, first name, and last name
  * @param {string} resolve.commit.date The date string of when the commit was created
  * @oaram {string} [recordId=''] resolve.recordId An optional IRI string representing an OntologyRecord to query for names if present
- * @param {Function} dismiss A function that dismisses the modal
  */
-const commitInfoOverlayComponent = {
-    template,
-    bindings: {
-        resolve: '<',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: commitInfoOverlayComponentCtrl
-};
+@Component({
+    selector: 'commit-info-overlay',
+    templateUrl: './commitInfoOverlay.component.html'
+})
+export class CommitInfoOverlayComponent implements OnInit {
+    additions = [];
+    deletions = [];
+    hasMoreResults = false;
+    entityNames = {};
+    tempAdditions = [];
+    tempDeletions = [];
 
-commitInfoOverlayComponentCtrl.$inject = ['$q', 'utilService', 'userManagerService', 'catalogManagerService', 'ontologyManagerService'];
-
-function commitInfoOverlayComponentCtrl($q, utilService, userManagerService, catalogManagerService, ontologyManagerService) {
-    var dvm = this;
-    var om = ontologyManagerService;
-    dvm.util = utilService;
-    dvm.um = userManagerService;
-    dvm.cm = catalogManagerService;
-    dvm.additions = [];
-    dvm.deletions = [];
-    dvm.hasMoreResults = false;
-    dvm.entityNames = {};
-    dvm.tempAdditions = [];
-    dvm.tempDeletions = [];
-
-    dvm.$onInit = function() {
-        dvm.retrieveMoreResults(100, 0);
+    constructor(private dialogRef: MatDialogRef<CommitInfoOverlayComponent>, @Inject(MAT_DIALOG_DATA) public data: any,
+                @Inject('utilService') public util, public um: UserManagerService,
+                @Inject('catalogManagerService') private cm, @Inject('ontologyManagerService') private om) {
     }
-    dvm.cancel = function() {
-        dvm.dismiss();
+
+    ngOnInit(): void {
+        this.retrieveMoreResults(100, 0);
     }
-    dvm.retrieveMoreResults = function(limit, offset) {
-        dvm.cm.getDifference(dvm.resolve.commit.id, null, limit, offset)
+    cancel(): void {
+        this.dialogRef.close(false);
+    }
+    retrieveMoreResults(limit: number, offset: number): Promise<any> {
+        return this.cm.getDifference(this.data.commit.id, null, limit, offset)
             .then(response => {
-                dvm.tempAdditions = response.data.additions;
-                dvm.tempDeletions = response.data.deletions;
-                var headers = response.headers();
-                dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+                this.tempAdditions = response.data.additions;
+                this.tempDeletions = response.data.deletions;
+                const headers = response.headers();
+                this.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
 
-                if (dvm.resolve.ontRecordId) {
-                    var diffIris = union(map(dvm.tempAdditions, '@id'), map(dvm.tempDeletions, '@id'));
-                    var filterIris = union(diffIris, dvm.util.getObjIrisFromDifference(dvm.tempAdditions), dvm.util.getObjIrisFromDifference(dvm.tempDeletions));
-                    return om.getOntologyEntityNames(dvm.resolve.ontRecordId, '', dvm.resolve.commit.id, false, false, filterIris);
+                if (this.data.ontRecordId) {
+                    const diffIris = union(map(this.tempAdditions, '@id'), map(this.tempDeletions, '@id'));
+                    const filterIris = union(diffIris, this.util.getObjIrisFromDifference(this.tempAdditions), this.util.getObjIrisFromDifference(this.tempDeletions));
+                    return this.om.getOntologyEntityNames(this.data.ontRecordId, '', this.data.commit.id, false, false, filterIris);
                 }
-                return $q.when();
-            }, $q.reject)
+                return Promise.resolve();
+            }, errorMessage => {
+                return Promise.reject(errorMessage);
+            })
             .then(data => {
                 if (data) {
-                    merge(dvm.entityNames, data);
+                    merge(this.entityNames, data);
                 }
-                dvm.additions = dvm.tempAdditions;
-                dvm.deletions = dvm.tempDeletions;
-                dvm.tempAdditions = [];
-                dvm.tempDeletions = [];
+                this.additions = this.tempAdditions;
+                this.deletions = this.tempDeletions;
+                this.tempAdditions = [];
+                this.tempDeletions = [];
             }, errorMessage => {
                 if (errorMessage) {
-                    dvm.util.createErrorToast(errorMessage);
+                    this.util.createErrorToast(errorMessage);
                 }
             });
     }
-    dvm.getEntityName = function(iri) {
-        if (get(dvm, ['entityNames', iri, 'label'])) {
-            return dvm.entityNames[iri].label;
+    getEntityName(iri: string): string {
+        if (get(this.entityNames, [iri, 'label'])) {
+            return this.entityNames[iri].label;
         } else {
-            return dvm.util.getBeautifulIRI(iri);
+            return this.util.getBeautifulIRI(iri);
         }
     }
 }
-
-export default commitInfoOverlayComponent;

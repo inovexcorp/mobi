@@ -22,23 +22,57 @@
  */
 
 import { TestBed } from '@angular/core/testing';
+import { get } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
+import {
+    mockCatalogManager,
+    mockPrefixes,
+    mockShapesGraphManager,
+    mockStateManager,
+    mockUtil
+} from '../../../../../test/ts/Shared';
 import { RecordSelectFiltered } from '../../shapes-graph-editor/models/recordSelectFiltered.interface';
+import { Difference } from '../models/difference.class';
+import { RdfUpload } from '../models/rdfUpload.interface';
+import { ShapesGraphListItem } from '../models/shapesGraphListItem.class';
+import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
+import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
+import catalogManagerService from './catalogManager.service';
+import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { ShapesGraphStateService } from './shapesGraphState.service';
 
 describe('Shapes Graph State service', function() {
     let service: ShapesGraphStateService;
+    let shapesGraphManagerStub;
+    let utilStub;
+    let catalogManagerStub;
+    let prefixesStub;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
             providers: [
-                ShapesGraphStateService
+                ShapesGraphStateService,
+                { provide: 'stateManagerService', useClass: mockStateManager },
+                { provide: 'prefixes', useClass: mockPrefixes },
+                { provide: 'catalogManagerService', useClass: mockCatalogManager },
+                { provide: 'utilService', useClass: mockUtil },
+                { provide: ShapesGraphManagerService, useClass: mockShapesGraphManager },
             ]
         });
     });
 
     beforeEach(function() {
         service = TestBed.get(ShapesGraphStateService);
+        service.listItem = new ShapesGraphListItem();
+
+        utilStub = TestBed.get('utilService');
+        utilStub.getDctermsValue.and.callFake((obj, prop) => {
+            return get(obj, "['" + prefixesStub.dcterms + prop + "'][0]['@value']", '');
+        });
+
+        shapesGraphManagerStub = TestBed.get(ShapesGraphManagerService);
+        catalogManagerStub = TestBed.get('catalogManagerService');
+        prefixesStub = TestBed.get('prefixes');
     });
 
     afterEach(function() {
@@ -46,42 +80,526 @@ describe('Shapes Graph State service', function() {
     });
 
     it('should reset variables', function() {
-        service.currentShapesGraphRecordIri = 'test';
-        service.currentShapesGraphRecordTitle = 'test';
-        service.openRecords = [{recordId: 'record1'} as RecordSelectFiltered];
+        service.listItem.versionedRdfRecord.recordId = 'test';
+        service.listItem.versionedRdfRecord.title = 'test';
         service.reset();
 
-        expect(service.currentShapesGraphRecordIri).toEqual('');
-        expect(service.currentShapesGraphRecordTitle).toEqual('');
-        expect(service.openRecords).toEqual([]);
+        expect(service.listItem.versionedRdfRecord.recordId).toEqual('');
+        expect(service.listItem.versionedRdfRecord.title).toEqual('');
+        expect(service.listItem).toEqual(new ShapesGraphListItem());
     });
     describe('should check if the current shapes graph is committable', function() {
         it('when no shapes graph is open', function() {
-            service.currentShapesGraphRecordIri = '';
+            service.listItem.versionedRdfRecord.recordId = '';
             expect(service.isCommittable()).toEqual(false);
         });
         it('when a shapes graph is open with no changes', function() {
-            service.currentShapesGraphRecordIri = 'test';
+            service.listItem.versionedRdfRecord.recordId = 'test';
             expect(service.isCommittable()).toEqual(false);
         });
         it('when a shapes graph is open with changes', function() {
-            service.currentShapesGraphRecordIri = 'test';
-            service.inProgressCommit = {
+            service.listItem.versionedRdfRecord.recordId = 'test';
+            service.listItem.inProgressCommit = {
                 additions: [{'@id': 'testId'}],
-                deletions: []
+                deletions: [],
+                hasMoreResults: false
             };
             expect(service.isCommittable()).toEqual(true);
         });
     });
     it('should clear the in progress commit', function() {
-        service.inProgressCommit = {
+        service.listItem.inProgressCommit = {
             additions: [{'@id': 'testId'}],
-            deletions: []
+            deletions: [],
+            hasMoreResults: false
         };
         service.clearInProgressCommit();
-        expect(service.inProgressCommit).toEqual({
-            additions: [],
-            deletions: []
+        expect(service.listItem.inProgressCommit).toEqual(new Difference());
+    });
+    describe('should upload shapes graph', function() {
+        beforeEach(function() {
+            this.createResponse = {
+                recordId: 'recordId',
+                branchId: 'branchId',
+                commitId: 'commitId',
+                title: 'title',
+                shapesGraphId: 'shapesGraphId'
+            } as VersionedRdfUploadResponse;
+            shapesGraphManagerStub.createShapesGraphRecord.and.returnValue(Promise.resolve(this.createResponse));
+            this.file = new File([''], 'filename', { type: 'text/html' });
+            this.rdfUpload = {
+                title: 'Record Name',
+                description: 'Some description',
+                keywords: ['keyword1', 'keyword2'],
+                file: this.file
+            } as RdfUpload;
+
+            this.createStateSpy = spyOn(service, 'createState');
+        });
+        describe('and create the record', function() {
+            describe('and create the state', function() {
+               describe('successfully', function() {
+                   it('with a success toast', async function() {
+                       await service.uploadShapesGraph(this.rdfUpload);
+                       expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(this.rdfUpload);
+                       expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                       expect(this.createStateSpy).toHaveBeenCalledWith({
+                           recordId: this.createResponse.recordId,
+                           branchId: this.createResponse.branchId,
+                           commitId: this.createResponse.commitId
+                       } as VersionedRdfStateBase);
+
+                       expect(service.listItem.shapesGraphId).toEqual(this.createResponse.shapesGraphId);
+                       expect(service.listItem.masterBranchIri).toEqual(this.createResponse.branchId);
+                       expect(service.listItem.versionedRdfRecord).toEqual({
+                           title: this.createResponse.title,
+                           recordId: this.createResponse.recordId,
+                           branchId: this.createResponse.branchId,
+                           commitId: this.createResponse.commitId,
+                       });
+                       expect(service.listItem.currentVersionTitle).toEqual('MASTER');
+                       expect(service.list.length).toEqual(1);
+                       expect(service.list).toContain(service.listItem);
+                   });
+                   it('without a success toast', async function() {
+                       await service.uploadShapesGraph(this.rdfUpload, false);
+                       expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(this.rdfUpload);
+                       expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                       expect(this.createStateSpy).toHaveBeenCalledWith({
+                           recordId: this.createResponse.recordId,
+                           branchId: this.createResponse.branchId,
+                           commitId: this.createResponse.commitId
+                       } as VersionedRdfStateBase);
+
+                       expect(service.listItem.shapesGraphId).toEqual(this.createResponse.shapesGraphId);
+                       expect(service.listItem.masterBranchIri).toEqual(this.createResponse.branchId);
+                       expect(service.listItem.versionedRdfRecord).toEqual({
+                           title: this.createResponse.title,
+                           recordId: this.createResponse.recordId,
+                           branchId: this.createResponse.branchId,
+                           commitId: this.createResponse.commitId,
+                       });
+                       expect(service.listItem.currentVersionTitle).toEqual('MASTER');
+                       expect(service.list.length).toEqual(1);
+                       expect(service.list).toContain(service.listItem);
+                   });
+               });
+               describe('unless an error occurs', function() {
+                   beforeEach(function() {
+                      this.createStateSpy.and.returnValue(Promise.reject('Error'));
+                   });
+                   it('with a success toast', async function() {
+                       await service.uploadShapesGraph(this.rdfUpload)
+                           .then(() => {
+                               fail('Promise should have rejected');
+                           }, response => {
+                               expect(response).toEqual('Error');
+                           });
+                       expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(this.rdfUpload);
+                       expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                       expect(this.createStateSpy).toHaveBeenCalledWith({
+                           recordId: this.createResponse.recordId,
+                           branchId: this.createResponse.branchId,
+                           commitId: this.createResponse.commitId
+                       } as VersionedRdfStateBase);
+
+                       expect(service.listItem.shapesGraphId).toEqual(this.createResponse.shapesGraphId);
+                       expect(service.listItem.masterBranchIri).toEqual(this.createResponse.branchId);
+                       expect(service.listItem.versionedRdfRecord).toEqual({
+                           title: this.createResponse.title,
+                           recordId: this.createResponse.recordId,
+                           branchId: this.createResponse.branchId,
+                           commitId: this.createResponse.commitId,
+                       });
+                       expect(service.listItem.currentVersionTitle).toEqual('MASTER');
+                       expect(service.list.length).toEqual(1);
+                       expect(service.list).toContain(service.listItem);
+                   });
+                   it('without a success toast', async function() {
+                       await service.uploadShapesGraph(this.rdfUpload, false)
+                           .then(() => {
+                               fail('Promise should have rejected');
+                           }, response => {
+                               expect(response).toEqual('Error');
+                           });
+                       expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(this.rdfUpload);
+                       expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                       expect(this.createStateSpy).toHaveBeenCalledWith({
+                           recordId: this.createResponse.recordId,
+                           branchId: this.createResponse.branchId,
+                           commitId: this.createResponse.commitId
+                       } as VersionedRdfStateBase);
+
+                       expect(service.listItem.shapesGraphId).toEqual(this.createResponse.shapesGraphId);
+                       expect(service.listItem.masterBranchIri).toEqual(this.createResponse.branchId);
+                       expect(service.listItem.versionedRdfRecord).toEqual({
+                           title: this.createResponse.title,
+                           recordId: this.createResponse.recordId,
+                           branchId: this.createResponse.branchId,
+                           commitId: this.createResponse.commitId
+                       });
+                       expect(service.listItem.currentVersionTitle).toEqual('MASTER');
+                       expect(service.list.length).toEqual(1);
+                       expect(service.list).toContain(service.listItem);
+                   });
+               });
+            });
+            it('unless an error occurs', async function() {
+                shapesGraphManagerStub.createShapesGraphRecord.and.returnValue(Promise.reject('Error'));
+                await service.uploadShapesGraph(this.rdfUpload,)
+                    .then(() => {
+                        fail('Promise should have rejected');
+                    }, response => {
+                        expect(response).toEqual('Error');
+                    });
+                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(this.createStateSpy).not.toHaveBeenCalled();
+            });
+       });
+    });
+    describe('should open shapes graph', function() {
+        beforeEach(function() {
+            service.listItem = undefined;
+            this.selectedRecord = {
+                recordId: 'recordId',
+               title: 'title'
+            } as RecordSelectFiltered;
+            this.catalogDetailsResponse = {
+               recordId: 'recordId',
+               branchId: 'branchId',
+               commitId: 'commitId',
+               inProgressCommit: new Difference()
+            };
+            this.catalogDetailsSpy = spyOn(service, 'getCatalogDetails').and.returnValue(Promise.resolve(this.catalogDetailsResponse));
+        });
+        it('when the item is already opened', async function() {
+            const tempItem = new ShapesGraphListItem();
+            tempItem.versionedRdfRecord.recordId = this.selectedRecord.recordId;
+            service.list.push(tempItem);
+
+            expect(service.listItem).toBeUndefined();
+            await service.openShapesGraph(this.selectedRecord);
+            expect(service.listItem).toEqual(tempItem);
+            expect(this.catalogDetailsSpy).not.toHaveBeenCalled();
+        });
+        describe('when the item is not open and retrieves catalog details', function() {
+            it('successfully', async function() {
+                await service.openShapesGraph(this.selectedRecord);
+                expect(this.catalogDetailsSpy).toHaveBeenCalledWith(this.selectedRecord.recordId);
+                expect(service.listItem.shapesGraphId).toEqual(this.catalogDetailsResponse.recordId);
+                expect(service.listItem.versionedRdfRecord).toEqual({
+                    title: this.selectedRecord.title,
+                    recordId: this.catalogDetailsResponse.recordId,
+                    branchId: this.catalogDetailsResponse.branchId,
+                    commitId: this.catalogDetailsResponse.commitId
+                });
+                expect(service.listItem.inProgressCommit).toEqual(new Difference());
+                expect(service.listItem).toBeDefined();
+                expect(service.list.length).toEqual(1);
+                expect(service.list).toContain(service.listItem);
+            });
+            it('unless an error occurs', async function() {
+                this.catalogDetailsSpy.and.returnValue(Promise.reject('Error'));
+                expect(service.listItem).toBeUndefined();
+                await service.openShapesGraph(this.selectedRecord)
+                    .then(() => {
+                        fail('Promise should have rejected');
+                    }, response => {
+                        expect(response).toEqual('Error');
+                    });
+                expect(service.listItem).toBeUndefined();
+                expect(service.list.length).toEqual(0);
+            });
+        });
+    });
+    it('should close an open shapes graph', function() {
+        const tempItem = new ShapesGraphListItem();
+        tempItem.versionedRdfRecord.recordId = 'recordId';
+        service.list.push(tempItem);
+        expect(service.list.length).toEqual(1);
+        expect(service.list).toContain(tempItem);
+        service.closeShapesGraph('recordId');
+        expect(service.list.length).toEqual(0);
+        expect(service.list).not.toContain(tempItem);
+    });
+    describe('should delete shapes graph', function() {
+        beforeEach(function() {
+           this.deleteStateSpy = spyOn(service, 'deleteState').and.returnValue(Promise.resolve());
+        });
+        describe('first deleting the state', function() {
+            describe('then deleting the record', function() {
+                it('successfully', async function() {
+                    await service.deleteShapesGraph('recordId');
+                    expect(this.deleteStateSpy).toHaveBeenCalledWith('recordId');
+                    expect(shapesGraphManagerStub.deleteShapesGraphRecord).toHaveBeenCalledWith('recordId');
+                });
+                it('unless an error occurs', async function() {
+                    shapesGraphManagerStub.deleteShapesGraphRecord.and.returnValue(Promise.reject('Error'));
+                    await service.deleteShapesGraph('recordId')
+                        .then(() => {
+                            fail('Promise should have rejected');
+                        }, response => {
+                            expect(response).toEqual('Error');
+                        });
+                    expect(this.deleteStateSpy).toHaveBeenCalledWith('recordId');
+                    expect(shapesGraphManagerStub.deleteShapesGraphRecord).toHaveBeenCalledWith('recordId');
+                });
+            });
+            it('unless an error occurs', async function() {
+                this.deleteStateSpy.and.returnValue(Promise.reject('Error'));
+                await service.deleteShapesGraph('recordId')
+                    .then(() => {
+                        fail('Promise should have rejected');
+                    }, response => {
+                        expect(response).toEqual('Error');
+                    });
+                expect(this.deleteStateSpy).toHaveBeenCalledWith('recordId');
+                expect(shapesGraphManagerStub.deleteShapesGraphRecord).not.toHaveBeenCalled();
+            });
+        });
+    });
+    describe('should change open shapes graph version', function() {
+        beforeEach(function() {
+            service.listItem.versionedRdfRecord = {
+                recordId: 'recordId',
+                branchId: 'branchIdDifferent',
+                commitId: 'commitIdDifferent',
+                title: 'recordTitle'
+            };
+            service.listItem.currentVersionTitle = 'currentBranchTitle';
+            this.inProgressCommit = new Difference();
+            this.inProgressCommit.additions.push({'change': 'change'});
+            service.listItem.inProgressCommit = this.inProgressCommit;
+            this.updateStateSpy = spyOn(service, 'updateState').and.returnValue(Promise.resolve());
+        });
+        describe('for a branch and update state', function() {
+            beforeEach(function() {
+                this.stateBase = {
+                    recordId: 'recordId',
+                    branchId: 'branchId',
+                    commitId: 'commitId',
+                    tagId: undefined
+                };
+            });
+            describe('successfully', function() {
+                it('and inProgressCommit should be reset', async function() {
+                    expect(service.list.length).toEqual(0);
+                    await service.changeShapesGraphVersion('recordId', 'branchId', 'commitId', undefined, 'versionTitle', true);
+                    expect(this.updateStateSpy).toHaveBeenCalledWith(this.stateBase);
+                    expect(service.listItem.versionedRdfRecord).toEqual({
+                       recordId: 'recordId',
+                       branchId: 'branchId',
+                       commitId: 'commitId',
+                       title: 'recordTitle'
+                    });
+                    expect(service.listItem.currentVersionTitle).toEqual('versionTitle');
+                    expect(service.listItem.inProgressCommit).toEqual(new Difference());
+                    expect(service.list.length).toEqual(1);
+                });
+                it('and inProgressCommit should not be reset', async function() {
+                    expect(service.list.length).toEqual(0);
+                    await service.changeShapesGraphVersion('recordId', 'branchId', 'commitId', undefined, 'versionTitle');
+                    expect(this.updateStateSpy).toHaveBeenCalledWith(this.stateBase);
+                    expect(service.listItem.versionedRdfRecord).toEqual({
+                        recordId: 'recordId',
+                        branchId: 'branchId',
+                        commitId: 'commitId',
+                        title: 'recordTitle'
+                    });
+                    expect(service.listItem.currentVersionTitle).toEqual('versionTitle');
+                    expect(service.listItem.inProgressCommit).toEqual(this.inProgressCommit);
+                    expect(service.list.length).toEqual(1);
+                });
+            });
+            it('unless an error occurs', async function() {
+                service.listItem = undefined;
+                this.updateStateSpy.and.returnValue(Promise.reject('Error'));
+                await service.changeShapesGraphVersion('recordId', 'branchId', 'commitId', undefined, 'versionTitle')
+                    .then(() => {
+                        fail('Promise should have rejected');
+                    }, response => {
+                        expect(response).toEqual('Error');
+                    });
+                expect(this.updateStateSpy).toHaveBeenCalledWith(this.stateBase);
+                expect(service.listItem).toBeUndefined();
+            });
+        });
+        describe('for a tag', function() {
+            beforeEach(function() {
+                this.stateBase = {
+                    recordId: 'recordId',
+                    branchId: undefined,
+                    commitId: 'commitId',
+                    tagId: 'tagId'
+                };
+            });
+            describe('successfully', function() {
+                it('and inProgressCommit should be reset', async function() {
+                    expect(service.list.length).toEqual(0);
+                    await service.changeShapesGraphVersion('recordId', undefined, 'commitId', 'tagId', 'versionTitle', true);
+                    expect(this.updateStateSpy).toHaveBeenCalledWith(this.stateBase);
+                    expect(service.listItem.versionedRdfRecord).toEqual({
+                        recordId: 'recordId',
+                        branchId: undefined,
+                        commitId: 'commitId',
+                        title: 'recordTitle'
+                    });
+                    expect(service.listItem.currentVersionTitle).toEqual('versionTitle');
+                    expect(service.listItem.inProgressCommit).toEqual(new Difference());
+                    expect(service.list.length).toEqual(1);
+                });
+                it('and inProgressCommit should not be reset', async function() {
+                    expect(service.list.length).toEqual(0);
+                    await service.changeShapesGraphVersion('recordId', undefined, 'commitId', 'tagId', 'versionTitle');
+                    expect(this.updateStateSpy).toHaveBeenCalledWith(this.stateBase);
+                    expect(service.listItem.versionedRdfRecord).toEqual({
+                        recordId: 'recordId',
+                        branchId: undefined,
+                        commitId: 'commitId',
+                        title: 'recordTitle'
+                    });
+                    expect(service.listItem.currentVersionTitle).toEqual('versionTitle');
+                    expect(service.listItem.inProgressCommit).toEqual(this.inProgressCommit);
+                    expect(service.list.length).toEqual(1);
+                });
+            });
+            it('unless an error occurs', async function() {
+                service.listItem = undefined;
+                this.updateStateSpy.and.returnValue(Promise.reject('Error'));
+                await service.changeShapesGraphVersion('recordId', undefined, 'commitId', 'tagId', 'versionTitle')
+                    .then(() => {
+                        fail('Promise should have rejected');
+                    }, response => {
+                        expect(response).toEqual('Error');
+                    });
+                expect(this.updateStateSpy).toHaveBeenCalledWith(this.stateBase);
+                expect(service.listItem).toBeUndefined();
+            });
+        });
+    });
+    describe('should delete shapes graph branch', function() {
+        beforeEach(function() {
+            this.deleteBranchStateSpy = spyOn(service, 'deleteBranchState').and.returnValue(Promise.resolve());
+        });
+        describe('first deleting the branch', function() {
+            describe('then deleting the branch state', function() {
+                it('successfully', async function() {
+                    await service.deleteShapesGraphBranch('recordId', 'branchId');
+                    expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('branchId', 'recordId', 'catalog');
+                    expect(this.deleteBranchStateSpy).toHaveBeenCalledWith('recordId', 'branchId');
+                });
+                it('unless an error occurs', async function() {
+                    this.deleteBranchStateSpy.and.returnValue(Promise.reject('Error'));
+                    await service.deleteShapesGraphBranch('recordId', 'branchId')
+                        .then(() => {
+                            fail('Promise should have rejected');
+                        }, response => {
+                            expect(response).toEqual('Error');
+                        });
+                    expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('branchId', 'recordId', 'catalog');
+                    expect(this.deleteBranchStateSpy).toHaveBeenCalledWith('recordId', 'branchId');
+                });
+            });
+            it('unless an error occurs', async function() {
+                catalogManagerStub.deleteRecordBranch.and.returnValue(Promise.reject('Error'));
+                await service.deleteShapesGraphBranch('recordId', 'branchId')
+                    .then(() => {
+                        fail('Promise should have rejected');
+                    }, response => {
+                        expect(response).toEqual('Error');
+                    });
+                expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('branchId', 'recordId', 'catalog');
+            });
+        });
+    });
+    describe('should merge shapes graph branches', function() {
+        beforeEach(function() {
+            service.listItem.versionedRdfRecord.recordId = 'recordId'
+            service.listItem.versionedRdfRecord.branchId = 'sourceBranchId';
+            service.listItem.merge.target = {
+                '@id': 'targetBranchId',
+                '@type': [],
+                [prefixesStub.dcterms + 'title']: [{'@value': 'branchTitle'}]
+            };
+            this.changeShapesGraphVersionSpy = spyOn(service, 'changeShapesGraphVersion').and.returnValue(Promise.resolve());
+            this.deleteShapesGraphBranchSpy = spyOn(service, 'deleteShapesGraphBranch').and.returnValue(Promise.resolve());
+            catalogManagerStub.mergeBranches.and.returnValue(Promise.resolve('commitId'));
+        });
+        describe('and delete the branch if the checkbox is', function() {
+            describe('checked', function() {
+                beforeEach(function() {
+                   service.listItem.merge.checkbox = true;
+                });
+                describe('and should change the shapes graph version to the target branch', function() {
+                    it('successfully', async function() {
+                        await service.merge();
+                        expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
+                        expect(this.deleteShapesGraphBranchSpy).toHaveBeenCalledWith('recordId', 'sourceBranchId');
+                        expect(this.changeShapesGraphVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle');
+                    });
+                    it('unless an error occurs', async function() {
+                        this.changeShapesGraphVersionSpy.and.returnValue(Promise.reject('Error'));
+                        await service.merge()
+                            .then(() => {
+                                fail('Promise should have rejected');
+                            }, response => {
+                                expect(response).toEqual('Error');
+                            });
+                        expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
+                        expect(this.deleteShapesGraphBranchSpy).toHaveBeenCalledWith('recordId', 'sourceBranchId');
+                        expect(this.changeShapesGraphVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle');
+                    });
+                });
+                it('unless an error occurs', async function() {
+                    this.deleteShapesGraphBranchSpy.and.returnValue(Promise.reject('Error'));
+                    await service.merge()
+                        .then(() => {
+                            fail('Promise should have rejected');
+                        }, response => {
+                            expect(response).toEqual('Error');
+                        });
+                    expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
+                    expect(this.deleteShapesGraphBranchSpy).toHaveBeenCalledWith('recordId', 'sourceBranchId');
+                    expect(this.changeShapesGraphVersionSpy).not.toHaveBeenCalled();
+                });
+            });
+            describe('unchecked', function() {
+                beforeEach(function() {
+                    service.listItem.merge.checkbox = false;
+                });
+                describe('and should change the shapes graph version to the target branch', function() {
+                    it('successfully', async function() {
+                        await service.merge();
+                        expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
+                        expect(this.deleteShapesGraphBranchSpy).not.toHaveBeenCalled();
+                        expect(this.changeShapesGraphVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle');
+                    });
+                    it('unless an error occurs', async function() {
+                        this.changeShapesGraphVersionSpy.and.returnValue(Promise.reject('Error'));
+                        await service.merge()
+                            .then(() => {
+                                fail('Promise should have rejected');
+                            }, response => {
+                                expect(response).toEqual('Error');
+                            });
+                        expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
+                        expect(this.deleteShapesGraphBranchSpy).not.toHaveBeenCalled();
+                        expect(this.changeShapesGraphVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle');
+                    });
+                });
+            });
+        });
+        it('unless an error occurs', async function() {
+            catalogManagerStub.mergeBranches.and.returnValue(Promise.reject('Error'));
+            await service.merge()
+                .then(() => {
+                    fail('Promise should have rejected');
+                }, response => {
+                    expect(response).toEqual('Error');
+                });
+            expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
+            expect(this.deleteShapesGraphBranchSpy).not.toHaveBeenCalled();
+            expect(this.changeShapesGraphVersionSpy).not.toHaveBeenCalled();
         });
     });
 });

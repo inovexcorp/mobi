@@ -27,7 +27,8 @@ import {
     mockPolicyEnforcement,
     mockPolicyManager,
     mockUtil,
-    mockPrefixes
+    mockPrefixes,
+    mockShapesGraphState
 } from '../../../../../../test/js/Shared';
 
 describe('Open Record Button component', function() {
@@ -42,14 +43,11 @@ describe('Open Record Button component', function() {
         mockPolicyManager();
         mockUtil();
         mockPrefixes();
+        mockShapesGraphState();
 
         angular.mock.module(function($provide) {
             $provide.service('$state', function() {
                 this.go = jasmine.createSpy('go');
-            });
-
-            $provide.service('shapesGraphStateService', function() {
-                this.sgs = jasmine.createSpy('sgs');
             });
         });
 
@@ -89,6 +87,7 @@ describe('Open Record Button component', function() {
         policyEnforcementSvc = null;
         utilSvc = null;
         prefixes = null;
+        shapesGraphStateService = null;
         this.element.remove();
     });
 
@@ -208,6 +207,16 @@ describe('Open Record Button component', function() {
         it('openDataset navigates to the dataset module', function() {
             this.controller.openDataset();
             expect($state.go).toHaveBeenCalledWith('root.datasets');
+        });
+        it('openShapesGraphRecord navigates to the shapes graph module', function() {
+            const recordSelect = {
+                recordId: 'recordId',
+                title: '',
+                description: ''
+            };
+            this.controller.openShapesGraph();
+            expect($state.go).toHaveBeenCalledWith('root.shapes-graph-editor');
+            expect(shapesGraphStateService.openShapesGraph).toHaveBeenCalledWith(recordSelect);
         });
     });
     describe('contains the correct html', function() {

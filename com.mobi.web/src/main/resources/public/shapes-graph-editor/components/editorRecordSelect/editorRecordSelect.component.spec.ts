@@ -39,6 +39,8 @@ import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
 import { cleanStylesFromDOM, mockCatalogManager, mockPrefixes, mockUtil, mockModal } from '../../../../../../test/ts/Shared';
+import { Difference } from '../../../shared/models/difference.class';
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { RecordSelectFiltered } from '../../models/recordSelectFiltered.interface';
 import { NewShapesGraphRecordModalComponent } from '../newShapesGraphRecordModal/newShapesGraphRecordModal.component';
@@ -55,18 +57,25 @@ describe('Editor Record Select component', function() {
     let catalogManagerStub;
     let modalStub;
     let shapesGraphManagerStub;
+    let utilStub;
+
+    let record1Item = new ShapesGraphListItem();
+    let record2Item = new ShapesGraphListItem();
 
     const record1: RecordSelectFiltered = {
         title: 'Record One',
-        recordId: 'record1'
+        recordId: 'record1',
+        description: ''
     } as const;
     const record2: RecordSelectFiltered = {
         title: 'Record Two',
-        recordId: 'record2'
+        recordId: 'record2',
+        description: ''
     } as const;
     const record3: RecordSelectFiltered = {
         title: 'Record Three One',
-        recordId: 'record3'
+        recordId: 'record3',
+        description: ''
     } as const;
 
     configureTestSuite(function() {
@@ -108,15 +117,17 @@ describe('Editor Record Select component', function() {
         element = fixture.debugElement;
         matDialog = TestBed.get(MatDialog);
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
-        shapesGraphStateStub.openRecords = [record1, record2];
-        shapesGraphStateStub.currentShapesGraphRecordIri = '';
-        shapesGraphStateStub.currentShapesGraphRecordTitle = '';
-        shapesGraphStateStub.currentShapesGraphBranchIri = '';
-        shapesGraphStateStub.currentShapesGraphCommitIri = '';
-        shapesGraphStateStub.inProgressCommit = {
-            additions: [],
-            deletions: []
-        };
+        shapesGraphStateStub.listItem = new ShapesGraphListItem();
+
+        record1Item.versionedRdfRecord.recordId = record1.recordId;
+        record1Item.versionedRdfRecord.title = record1.title;
+        record2Item.versionedRdfRecord.recordId = record2.recordId;
+        record2Item.versionedRdfRecord.title = record2.title;
+        shapesGraphStateStub.list = [record1Item, record2Item];
+        shapesGraphStateStub.openShapesGraph.and.returnValue(Promise.resolve());
+        shapesGraphStateStub.reset.and.callFake(ShapesGraphStateService.prototype.reset);
+        shapesGraphStateStub.closeShapesGraph.and.callFake(ShapesGraphStateService.prototype.closeShapesGraph);
+
         shapesGraphManagerStub = TestBed.get(ShapesGraphManagerService);
         prefixesStub = TestBed.get('prefixes');
         modalStub = TestBed.get('modalService');
@@ -125,11 +136,21 @@ describe('Editor Record Select component', function() {
         catalogManagerStub.sortOptions = {field: prefixesStub.dcterms + 'title', asc: true};
         catalogManagerStub.getRecords.and.returnValue(Promise.resolve({
             data: [
-                {'@id': record1.recordId},
-                {'@id': record2.recordId},
-                {'@id': record3.recordId}
+                {'@id': record1.recordId, 'title': record1.title},
+                {'@id': record2.recordId, 'title': record2.title},
+                {'@id': record3.recordId, 'title': record3.title}
             ]
         }));
+
+        utilStub = TestBed.get('utilService');
+        utilStub.getDctermsValue.and.callFake((obj, prop) => {
+            if (prop === 'title') {
+                return obj.title;
+            } else {
+                return '';
+            }
+        });
+        component.recordIri = record1.recordId;
     });
 
     afterEach(function() {
@@ -143,6 +164,11 @@ describe('Editor Record Select component', function() {
         catalogManagerStub = null;
     });
 
+    describe('should initialize with the correct data for', function() {
+        it('recordIri', function() {
+            expect(component.recordIri).toEqual(record1.recordId);
+        });
+    });
     describe('controller methods', function() {
         it('should initialize by calling the correct methods', function() {
             spyOn<any>(component, 'setFilteredOptions');
@@ -152,6 +178,31 @@ describe('Editor Record Select component', function() {
             expect(component['setFilteredOptions']).toHaveBeenCalled();
             expect(component.resetSearch).toHaveBeenCalled();
         });
+        it('should blur the input and call reset search on close', function() {
+            spyOn(component, 'resetSearch');
+            spyOn(component.textInput.nativeElement, 'blur');
+            component.close();
+            expect(component.textInput.nativeElement.blur).toHaveBeenCalled();
+            expect(component.resetSearch).toHaveBeenCalled();
+        });
+        it('should change reset the search if the record has changed', function() {
+            expect(component.recordIri).toEqual(record1.recordId);
+            spyOn(component, 'resetSearch').and.callThrough();
+            spyOn(component.recordSearchControl, 'setValue');
+            shapesGraphStateStub.listItem.versionedRdfRecord.title = 'newRecordId';
+            component.ngOnChanges({
+                recordIri: {
+                    currentValue: 'newRecordId',
+                    previousValue: 'recordId',
+                    firstChange: false,
+                    isFirstChange(): boolean {
+                        return false;
+                    }
+                }
+            });
+            expect(component.resetSearch).toHaveBeenCalled();
+            expect(component.recordSearchControl.setValue).toHaveBeenCalledWith('newRecordId');
+        });
         it('should open the delete confirmation modal', function() {
             spyOn(component.autocompleteTrigger, 'closePanel');
             component.showDeleteConfirmationOverlay(record1, new Event('delete'));
@@ -159,8 +210,8 @@ describe('Editor Record Select component', function() {
             expect(component.autocompleteTrigger.closePanel).toHaveBeenCalled();
 
         });
-        it('should filter records based on provided text', function() {
-            component.unopened.push(record3);
+        it('should filter records based on provided text', async function() {
+            await component.ngOnInit();
             const result: any = component.filter('one');
             const open: any = find(result, {title: 'Open'});
 
@@ -179,120 +230,80 @@ describe('Editor Record Select component', function() {
             expect(matDialog.open).toHaveBeenCalledWith(NewShapesGraphRecordModalComponent);
         });
         it('should select the record and update state', async function() {
-            catalogManagerStub.getRecordMasterBranch.and.returnValue(Promise.resolve({
-                "@id": "https://mobi.com/branches#a1111111111111111111111111",
-                "@type": [
-                    "http://www.w3.org/2002/07/owl#Thing",
-                    "http://mobi.com/ontologies/catalog#Branch"
-                ],
-                "catalog:head": [
-                    {
-                        "@id": "https://mobi.com/commits#bbbbbbbbbbbbbbbbbbbbbbbbb"
-                    }
-                ]
-            }));
-
-            catalogManagerStub.getInProgressCommit.and.returnValue(Promise.resolve({
-                "additions": [
-                    {
-                        "@id": "https://mobi.com/ontologies/a#First",
-                        "@type": [
-                            "http://www.w3.org/2002/07/owl#Class"
-                        ],
-                        "http://purl.org/dc/terms/title": [
-                            {
-                                "@value": "first"
-                            }
-                        ]
-                    }
-                ],
-                "deletions": []
-            }));
-
-            shapesGraphStateStub.openRecords = [];
-
-            expect(shapesGraphStateStub.currentShapesGraphRecordIri).toEqual('');
-            expect(shapesGraphStateStub.currentShapesGraphBranchIri).toEqual('');
-            expect(shapesGraphStateStub.currentShapesGraphCommitIri).toEqual('');
-            expect(shapesGraphStateStub.currentShapesGraphRecordTitle).toEqual('');
-            expect(shapesGraphStateStub.openRecords).toEqual([]);
-            expect(shapesGraphStateStub.inProgressCommit).toEqual({
-                additions: [],
-                deletions: []
-            });
+            await component.ngOnInit();
+            spyOn(component.recordSearchControl, 'setValue');
+            expect(component.opened.length).toEqual(2);
+            expect(component.unopened.length).toEqual(1);
+            expect(component.opened).not.toContain(record3);
+            expect(component.unopened).toContain(record3);
             const event: MatAutocompleteSelectedEvent = {
                 option: {
-                    value: record1
+                    value: record3
                 }
             } as MatAutocompleteSelectedEvent;
             await component.selectRecord(event);
+            expect(component.opened.length).toEqual(3);
+            expect(component.unopened.length).toEqual(0);
+            expect(component.opened).toContain(record3);
+            expect(component.unopened).not.toContain(record3);
+            expect(shapesGraphStateStub.openShapesGraph).toHaveBeenCalledWith(record3);
+            expect(component.recordSearchControl.setValue).toHaveBeenCalledWith(record3.title);
 
-            expect(shapesGraphStateStub.currentShapesGraphRecordIri).toEqual(record1.recordId);
-            expect(shapesGraphStateStub.currentShapesGraphRecordTitle).toEqual(record1.title);
-            expect(shapesGraphStateStub.currentShapesGraphBranchIri).toEqual('https://mobi.com/branches#a1111111111111111111111111');
-            expect(shapesGraphStateStub.currentShapesGraphCommitIri).toEqual('https://mobi.com/commits#bbbbbbbbbbbbbbbbbbbbbbbbb');
-            expect(shapesGraphStateStub.inProgressCommit).toEqual({
-                "additions": [
-                    {
-                        "@id": "https://mobi.com/ontologies/a#First",
-                        "@type": [
-                            "http://www.w3.org/2002/07/owl#Class"
-                        ],
-                        "http://purl.org/dc/terms/title": [
-                            {
-                                "@value": "first"
-                            }
-                        ]
-                    }
-                ],
-                "deletions": []
-            });
-            expect(shapesGraphStateStub.openRecords).toEqual([record1]);
         });
         it('should reset the search value', function() {
             component.recordSearchControl.setValue('');
-            shapesGraphStateStub.currentShapesGraphRecordTitle = 'Test';
+            shapesGraphStateStub.listItem.versionedRdfRecord.title = 'Test';
             component.resetSearch();
 
             expect(component.recordSearchControl.value).toEqual('Test');
         });
         it('should retrieve shapes graph records', async function() {
-            shapesGraphStateStub.openRecords = [record1];
+            shapesGraphStateStub.list = [record1Item];
             component.unopened = [];
             await component.retrieveShapesGraphRecords();
 
             expect(catalogManagerStub.getRecords).toHaveBeenCalledWith('catalog', jasmine.anything(), component.spinnerId);
-            expect(shapesGraphStateStub.openRecords).toContain({ recordId: 'record1', title: '', description: '' });
+            expect(shapesGraphStateStub.list).toContain(record1Item);
         });
-        it('should delete shapes graph record', function() {
-            shapesGraphManagerStub.deleteShapesGraphRecord.and.returnValue(Promise.resolve({}));
-            component.deleteShapesGraphRecord('record1');
-            expect(shapesGraphManagerStub.deleteShapesGraphRecord).toHaveBeenCalledWith('record1');
+        describe('should delete shapes graph record', function() {
+            it('successfully', async function() {
+                shapesGraphStateStub.deleteShapesGraph.and.returnValue(Promise.resolve({}));
+                await component.deleteShapesGraphRecord('record1');
+                expect(shapesGraphStateStub.deleteShapesGraph).toHaveBeenCalledWith('record1');
+                expect(utilStub.createSuccessToast).toHaveBeenCalled();
+            });
+            it('unless an error occurs', async function() {
+                shapesGraphStateStub.deleteShapesGraph.and.returnValue(Promise.reject('error'));
+                await component.deleteShapesGraphRecord('record1');
+                expect(shapesGraphStateStub.deleteShapesGraph).toHaveBeenCalledWith('record1');
+                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith('error');
+            });
         });
-        it('should close shapes graph record', function() {
-            shapesGraphStateStub.currentShapesGraphRecordTitle = 'this is a different title';
-            shapesGraphStateStub.currentShapesGraphRecordIri = record1.recordId;
-            shapesGraphStateStub.currentShapesGraphBranchIri = 'branch1';
-            shapesGraphStateStub.currentShapesGraphCommitIri = 'commit1';
-            shapesGraphStateStub.inProgressCommit = {
-                additions: ['something'],
-                deletions: []
-            };
+        it('should close shapes graph record', async function() {
+            await component.ngOnInit();
             spyOn<any>(component, 'setFilteredOptions');
-            expect(shapesGraphStateStub.openRecords).toContain(record1);
+
+            shapesGraphStateStub.listItem.versionedRdfRecord.title = 'this is a different title';
+            shapesGraphStateStub.listItem.versionedRdfRecord.recordId = record1.recordId;
+            shapesGraphStateStub.listItem.versionedRdfRecord.branchId = 'branch1';
+            shapesGraphStateStub.listItem.versionedRdfRecord.commitId = 'commit1';
+            shapesGraphStateStub.listItem.inProgressCommit = new Difference();
+            shapesGraphStateStub.listItem.inProgressCommit.additions.push({
+                '@id': 'something'
+            });
+
+            expect(shapesGraphStateStub.list).toContain(record1Item);
             expect(component.unopened).not.toContain(record1);
             component.closeShapesGraphRecord(record1.recordId);
 
-            expect(shapesGraphStateStub.openRecords).not.toContain(record1);
+            expect(shapesGraphStateStub.list).not.toContain(record1Item);
             expect(component.unopened).toContain(record1);
-            expect(shapesGraphStateStub.currentShapesGraphRecordTitle).toEqual('');
-            expect(shapesGraphStateStub.currentShapesGraphRecordIri).toEqual('');
-            expect(shapesGraphStateStub.currentShapesGraphBranchIri).toEqual('');
-            expect(shapesGraphStateStub.currentShapesGraphCommitIri).toEqual('');
-            expect(shapesGraphStateStub.inProgressCommit).toEqual({
-                additions: [],
-                deletions: []
-            });
+            expect(shapesGraphStateStub.listItem.versionedRdfRecord.title).toEqual('');
+            expect(shapesGraphStateStub.listItem.versionedRdfRecord.recordId).toEqual('');
+            expect(shapesGraphStateStub.listItem.versionedRdfRecord.branchId).toEqual('');
+            expect(shapesGraphStateStub.listItem.versionedRdfRecord.commitId).toEqual('');
+            expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(new Difference());
 
             expect(component['setFilteredOptions']).toHaveBeenCalled();
         });

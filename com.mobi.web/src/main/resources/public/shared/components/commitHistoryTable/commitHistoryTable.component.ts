@@ -21,11 +21,27 @@
  * #L%
  */
 
-import { has, find, startsWith, split, forEach, includes, join, map, indexOf, head } from 'lodash';
+import {
+    Component,
+    EventEmitter,
+    Inject,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    Output,
+    SimpleChanges
+} from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { find, startsWith, split, forEach, includes, join, map, indexOf, head } from 'lodash';
 
 import './commitHistoryTable.component.scss';
-
-const template = require('./commitHistoryTable.component.html');
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { UserManagerService } from '../../services/userManager.service';
+import { v4 } from 'uuid';
+import * as Snap from 'snapsvg';
+import * as chroma from 'chroma-js';
+import { CommitInfoOverlayComponent } from '../commitInfoOverlay/commitInfoOverlay.component';
 
 /**
  * @ngdoc component
@@ -53,131 +69,124 @@ const template = require('./commitHistoryTable.component.html');
  * @param {Function} [receiveCommits=undefined] receiveCommits The optional function receive more commits
  * @param {string} graph A string that if present, shows graph data of the commits
  */
-const commitHistoryTableComponent = {
-    template,
-    transclude: true,
-    bindings: {
-        commitId: '<',
-        headTitle: '<?',
-        targetId: '<?',
-        entityId: '<?',
-        recordId: '<?',
-        receiveCommits: '&?',
-        graph: '@'
-    },
-    controllerAs: 'dvm',
-    controller: commitHistoryTableComponentCtrl
-};
+@Component({
+    selector: 'commit-history-table',
+    templateUrl: './commitHistoryTable.component.html'
+})
+export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy {
+    @Input() commitId: string;
+    @Input() headTitle?: string;
+    @Input() targetId?: string;
+    @Input() entityId?: string;
+    @Input() recordId?: string;
+    @Input() graph: boolean;
 
-commitHistoryTableComponentCtrl.$inject = ['$scope', 'httpService', 'catalogManagerService', 'utilService', 'userManagerService', 'modalService', 'Snap', 'chroma'];
+    @Output() receiveCommits = new EventEmitter<JSONLDObject[]>();
 
-function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerService, utilService, userManagerService, modalService, Snap, chroma) {
-    var dvm = this;
-    var titleWidth = 75;
-    var cm = catalogManagerService;
-    var graphCommits = [];
-    var cols = [];
-    var wrapper;
-    var xI = 1;
-    var colorIdx = 0;
-    dvm.util = utilService;
-    dvm.um = userManagerService;
-    dvm.snap = undefined;
-    dvm.colors = [];
-    dvm.limit = 100;
-    dvm.error = '';
-    dvm.commit = undefined;
-    dvm.commits = [];
-    dvm.circleRadius = 5;
-    dvm.circleSpacing = 48;
-    dvm.columnSpacing = 25;
-    dvm.deltaX = 5 + dvm.circleRadius;
-    dvm.deltaY = 56;
-    dvm.id = 'commit-history-table' + $scope.$id;
-
-    dvm.$onInit = function() {
-        dvm.showGraph = dvm.graph !== undefined;
-        dvm.colors = chroma.brewer.Set1;
-        dvm.snap = Snap('.commit-graph');
+    constructor(@Inject('httpService') private httpService, @Inject('catalogManagerService') private cm,
+                @Inject('utilService') private util, private um: UserManagerService,
+                private dialog: MatDialog) {
     }
-    dvm.$onChanges = function(changesObj) {
-        if (has(changesObj, 'headTitle') || has(changesObj, 'commitId') || has(changesObj, 'targetId') || has(changesObj, 'entityId')) {
-            dvm.getCommits();
+    
+    titleWidth = 75;
+    graphCommits = [];
+    cols = [];
+    wrapper;
+    xI = 1;
+    colorIdx = 0;
+    snap = undefined;
+    colors = [];
+    limit = 100;
+    error = '';
+    commit = undefined;
+    commits = [];
+    circleRadius = 5;
+    circleSpacing = 48;
+    columnSpacing = 25;
+    deltaX = 5 + this.circleRadius;
+    deltaY = 56;
+    id = 'commit-history-table' + v4();
+    showGraph
+
+    ngOnInit(): void {
+        this.showGraph = this.graph !== undefined;
+        this.colors = chroma.brewer.Set1;
+        this.snap = Snap('.commit-graph');
+    }
+    ngOnChanges(changesObj: SimpleChanges): void {
+        if (changesObj?.headTitle || changesObj?.commitId || changesObj?.targetId || changesObj?.entityId) {
+            this.getCommits();
         }
     }
-    dvm.$onDestroy = function() {
-        httpService.cancel(dvm.id);
+    ngOnDestroy(): void {
+        this.httpService.cancel(this.id);
     }
-    dvm.openCommitOverlay = function(commitId) {
-        modalService.openModal('commitInfoOverlay', {
-            commit: find(dvm.commits, {id: commitId}),
-            ontRecordId: dvm.recordId
-        }, undefined, 'lg');
+    openCommitOverlay(commitId: string): void {
+        this.dialog.open(CommitInfoOverlayComponent, {
+            data: {
+                commit: find(this.commits, {id: commitId}),
+                ontRecordId: this.recordId
+            }
+        });
     }
-    dvm.getCommits = function() {
-        if (dvm.commitId) {
-            httpService.cancel(dvm.id);
-            var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId, dvm.entityId, dvm.id);
+    getCommits(): void {
+        if (this.commitId) {
+            this.httpService.cancel(this.id);
+            const promise = this.cm.getCommitHistory(this.commitId, this.targetId, this.entityId, this.id);
             promise.then(commits => {
-                if (dvm.receiveCommits) {
-                    dvm.receiveCommits({commits});
-                }
-                dvm.commits = commits;
-                dvm.error = '';
-                if (dvm.showGraph) {
-                    dvm.drawGraph();
+                this.receiveCommits.emit(commits);
+                this.commits = commits;
+                this.error = '';
+                if (this.showGraph) {
+                    this.drawGraph();
                 }
             }, errorMessage => {
-                dvm.error = errorMessage;
-                dvm.commits = [];
-                if (dvm.receiveCommits) {
-                    dvm.receiveCommits({commits: []});
-                }
-                if (dvm.showGraph) {
-                    dvm.reset();
+                this.error = errorMessage;
+                this.commits = [];
+                this.receiveCommits.emit([]);
+                if (this.showGraph) {
+                    this.reset();
                 }
             });
         } else {
-            dvm.commits = [];
-            if (dvm.receiveCommits) {
-                dvm.receiveCommits({commits: []});
-            }
-            if (dvm.showGraph) {
-                dvm.reset();
+            this.commits = [];
+            this.receiveCommits.emit([]);
+            if (this.showGraph) {
+                this.reset();
             }
         }
     }
-    dvm.drawGraph = function() {
-        dvm.reset();
-        if (dvm.commits.length > 0) {
-            wrapper = dvm.snap.group();
+    drawGraph(): void {
+        this.reset();
+        if (this.commits.length > 0) {
+            this.wrapper = this.snap.group();
             // First draw circles in a straight line
-            forEach(dvm.commits, (commit, index : number) => {
-                var circle = dvm.snap.circle(0, dvm.circleSpacing/2 + (index * dvm.circleSpacing), dvm.circleRadius);
-                var title = Snap.parse('<title>' + dvm.util.condenseCommitId(commit.id) + '</title>')
+            forEach(this.commits, (commit, index : number) => {
+                const circle = this.snap.circle(0, this.circleSpacing/2 + (index * this.circleSpacing), this.circleRadius);
+                const title = Snap.parse('<title>' + this.util.condenseCommitId(commit.id) + '</title>')
                 circle.append(title);
-                circle.click(() => dvm.openCommitOverlay(commit.id));
-                wrapper.add(circle);
-                graphCommits.push({commit: commit, circle: circle});
+                circle.click(() => this.openCommitOverlay(commit.id));
+                this.wrapper.add(circle);
+                this.graphCommits.push({commit: commit, circle: circle});
             });
             // Set up head commit and begin recursion
-            var c = graphCommits[0];
-            var color = dvm.colors[colorIdx % dvm.colors.length];
-            colorIdx++;
+            const c = this.graphCommits[0];
+            const color = this.colors[this.colorIdx % this.colors.length];
+            this.colorIdx++;
             c.circle.attr({fill: color});
-            cols.push({x: 0, commits: [c.commit.id], color: color});
-            if (dvm.headTitle) {
-                drawHeadTitle(c.circle);
+            this.cols.push({x: 0, commits: [c.commit.id], color: color});
+            if (this.headTitle) {
+                this.drawHeadTitle(c.circle);
             }
-            recurse(c);
+            this.recurse(c);
             // Update deltaX based on how many columns there are or the minimum width
-            dvm.deltaX = Math.max(dvm.deltaX + xI * dvm.columnSpacing, titleWidth + 10 + dvm.circleRadius);
+            this.deltaX = Math.max(this.deltaX + this.xI * this.columnSpacing, this.titleWidth + 10 + this.circleRadius);
             // Shift the x and y coordinates of everything using deltaX and deltaY
-            forEach(graphCommits, (c, idx) => c.circle.attr({cx: c.circle.asPX('cx') + dvm.deltaX, cy: c.circle.asPX('cy') + dvm.deltaY}));
-            forEach(wrapper.selectAll('path'), path => {
-                var points = map(split(path.attr('d'), ' '), s => {
-                    var sections;
-                    var headStr;
+            forEach(this.graphCommits, (c, idx) => c.circle.attr({cx: c.circle.asPX('cx') + this.deltaX, cy: c.circle.asPX('cy') + this.deltaY}));
+            forEach(this.wrapper.selectAll('path'), path => {
+                const points = map(split(path.attr('d'), ' '), s => {
+                    let sections;
+                    let headStr;
                     if (startsWith(s, 'M') || startsWith(s, 'C') || startsWith(s, 'L')) {
                         headStr = head(s);
                         sections = split(s.substring(1), ',');
@@ -185,136 +194,138 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
                         headStr = '';
                         sections = split(s, ',');
                     }
-                    sections[0] = '' + (parseFloat(sections[0]) + dvm.deltaX);
-                    sections[1] = '' + (parseFloat(sections[1]) + dvm.deltaY);
+                    sections[0] = '' + (parseFloat(sections[0]) + this.deltaX);
+                    sections[1] = '' + (parseFloat(sections[1]) + this.deltaY);
                     return headStr + join(sections, ',');
                 });
                 path.attr({d: join(points, ' ')});
             });
-            forEach(wrapper.selectAll('rect'), rect => rect.attr({x: rect.asPX('x') + dvm.deltaX, y: rect.asPX('y') + dvm.deltaY}));
-            forEach(wrapper.selectAll('text'), text => text.attr({x: text.asPX('x') + dvm.deltaX, y: text.asPX('y') + dvm.deltaY}));
+            forEach(this.wrapper.selectAll('rect'), rect => rect.attr({x: rect.asPX('x') + this.deltaX, y: rect.asPX('y') + this.deltaY}));
+            forEach(this.wrapper.selectAll('text'), text => text.attr({x: text.asPX('x') + this.deltaX, y: text.asPX('y') + this.deltaY}));
         }
     }
-    dvm.reset = function() {
-        graphCommits = [];
-        cols = [];
-        xI = 1;
-        colorIdx = 0;
-        dvm.snap.clear();
-        dvm.snap = Snap('.commit-graph');
-        wrapper = undefined;
-        dvm.deltaX = 5 + dvm.circleRadius;
+    reset(): void {
+        this.graphCommits = [];
+        this.cols = [];
+        this.xI = 1;
+        this.colorIdx = 0;
+        this.snap.clear();
+        this.snap = new Snap('.commit-graph');
+        this.wrapper = undefined;
+        this.deltaX = 5 + this.circleRadius;
+    }
+    getCommitId(index: number, commit: any) {
+        return commit.id;
     }
 
-    function recurse(c) {
+    private recurse(c): void {
         // Find the column this commit belongs to and the ids of its base and auxiliary commits
-        var col = find(cols, col => includes(col.commits, c.commit.id));
-        var baseParent = c.commit.base;
-        var auxParent = c.commit.auxiliary;
+        const col = find(this.cols, col => includes(col.commits, c.commit.id));
+        const baseParent = c.commit.base;
+        const auxParent = c.commit.auxiliary;
         // If there is an auxiliary parent, there is also a base parent
         if (auxParent) {
             // Determine whether the base parent is already in a column
-            var baseC = find(graphCommits, {commit: {id: baseParent}});
-            var baseCol = find(cols, col => includes(col.commits, baseParent));
-            var baseColor = col.color;
+            const baseC = find(this.graphCommits, {commit: {id: baseParent}});
+            const baseCol = find(this.cols, col => includes(col.commits, baseParent));
             if (!baseCol) {
                 // If not in a column, shift the base parent to be beneath the commit
                 baseC.circle.attr({cx: col.x, fill: col.color});
                 col.commits.push(baseParent);
             }
             // Draw a line between commit and base parent
-            drawLine(c, baseC, col.color);
+            this.drawLine(c, baseC, col.color);
             // Determine whether auxiliary parent is already in a column
-            var auxC = find(graphCommits, {commit: {id: auxParent}});
-            var auxCol = find(cols, col => includes(col.commits, auxParent));
-            var auxColor;
+            const auxC = find(this.graphCommits, {commit: {id: auxParent}});
+            const auxCol = find(this.cols, col => includes(col.commits, auxParent));
+            let auxColor;
             if (auxCol) {
                 // If in a column, collect line color
                 auxColor = auxCol.color;
             } else {
                 // If not in a column, shift the auxiliary parent to the left in new column and collect line color
-                auxColor = dvm.colors[colorIdx % dvm.colors.length];
-                colorIdx++;
-                auxC.circle.attr({cx: -dvm.columnSpacing * xI, fill: auxColor});
-                cols.push({x: -dvm.columnSpacing * xI, commits: [auxParent], color: auxColor});
-                xI++;
+                auxColor = this.colors[this.colorIdx % this.colors.length];
+                this.colorIdx++;
+                auxC.circle.attr({cx: -this.columnSpacing * this.xI, fill: auxColor});
+                this.cols.push({x: -this.columnSpacing * this.xI, commits: [auxParent], color: auxColor});
+                this.xI++;
             }
             // Draw a line between commit and auxiliary parent
-            drawLine(c, auxC, auxColor);
+            this.drawLine(c, auxC, auxColor);
             // Recurse on right only if it wasn't in a column to begin with
             if (!baseCol) {
-                recurse(baseC);
+                this.recurse(baseC);
             }
             // Recurse on left only if it wasn't in a column to begin with
             if (!auxCol) {
-                recurse(auxC);
+                this.recurse(auxC);
             }
         } else if (baseParent) {
             // Determine whether the base parent is already in a column
-            var baseC = find(graphCommits, {commit: {id: baseParent}});
-            var baseCol = find(cols, col => includes(col.commits, baseParent));
+            const baseC = find(this.graphCommits, {commit: {id: baseParent}});
+            const baseCol = find(this.cols, col => includes(col.commits, baseParent));
             if (!baseCol) {
                 // If not in a column, push into current column and draw a line between them
                 baseC.circle.attr({cx: col.x, fill: col.color});
                 col.commits.push(baseParent);
-                drawLine(c, baseC, col.color);
+                this.drawLine(c, baseC, col.color);
                 // Continue recursion
-                recurse(baseC);
+                this.recurse(baseC);
             } else {
                 // If in a column, draw a line between them and end this branch of recusion
-                drawLine(c, baseC, col.color);
+                this.drawLine(c, baseC, col.color);
             }
         }
     }
-    function drawLine(c, parentC, color) {
-        var start = {x: c.circle.asPX('cx'), y: c.circle.asPX('cy')};
-        var end = {x: parentC.circle.asPX('cx'), y: parentC.circle.asPX('cy')};
-        var pathStr = 'M' + start.x + ',' + (start.y + dvm.circleRadius);
+    private drawLine(c, parentC, color): void {
+        const start = {x: c.circle.asPX('cx'), y: c.circle.asPX('cy')};
+        const end = {x: parentC.circle.asPX('cx'), y: parentC.circle.asPX('cy')};
+        let pathStr = 'M' + start.x + ',' + (start.y + this.circleRadius);
         if (start.x > end.x) {
             // If the starting commit is further right than the ending commit, curve first then go straight down
-            pathStr += ' C' + start.x + ',' + (start.y + 3 * dvm.circleSpacing/4) + ' ' + end.x + ',' + (start.y + dvm.circleSpacing/4) + ' '
-                + end.x + ',' + (Math.min(start.y + dvm.circleSpacing, end.y - dvm.circleRadius)) + ' L';
+            pathStr += ' C' + start.x + ',' + (start.y + 3 * this.circleSpacing/4) + ' ' + end.x + ',' + (start.y + this.circleSpacing/4) + ' '
+                + end.x + ',' + (Math.min(start.y + this.circleSpacing, end.y - this.circleRadius)) + ' L';
         } else if (start.x < end.x) {
             // If the starting commit is further left than the ending commmit, check if there are any commits in between in the same column
             // as the starting commit
-            var inBetweenCommits = graphCommits.slice(indexOf(graphCommits, c) + 1, indexOf(graphCommits, parentC));
+            const inBetweenCommits = this.graphCommits.slice(indexOf(this.graphCommits, c) + 1, indexOf(this.graphCommits, parentC));
             if (find(inBetweenCommits, commit => commit.circle.asPX('cx') === start.x)) {
                 // If there is a commit in the way, curve first then go straight down
-                pathStr += ' C' + start.x + ',' + (start.y + 3 * dvm.circleSpacing/4) + ' ' + end.x + ',' + (start.y + dvm.circleSpacing/4) + ' '
-                    + end.x + ',' + (start.y + dvm.circleSpacing) + ' L';
+                pathStr += ' C' + start.x + ',' + (start.y + 3 * this.circleSpacing/4) + ' ' + end.x + ',' + (start.y + this.circleSpacing/4) + ' '
+                    + end.x + ',' + (start.y + this.circleSpacing) + ' L';
             } else {
                 // If there isn't a commit in the way, go straight down then curve
-                pathStr += ' L' + start.x + ',' + (Math.max(end.y - dvm.circleSpacing, start.y + dvm.circleRadius)) + ' C' + start.x + ',' + (end.y - dvm.circleSpacing/4) + ' '
-                    + end.x + ',' + (end.y - 3 * dvm.circleSpacing/4) + ' ';
+                pathStr += ' L' + start.x + ',' + (Math.max(end.y - this.circleSpacing, start.y + this.circleRadius)) + ' C' + start.x + ',' + (end.y - this.circleSpacing/4) + ' '
+                    + end.x + ',' + (end.y - 3 * this.circleSpacing/4) + ' ';
             }
         } else {
             // If the starting and ending commits are in the same column, go straight down
             pathStr += ' L';
         }
-        pathStr += end.x + ',' + (end.y - dvm.circleRadius);
-        var path = dvm.snap.path(pathStr);
+        pathStr += end.x + ',' + (end.y - this.circleRadius);
+        const path = this.snap.path(pathStr);
         path.attr({
             fill: 'none',
             'stroke-width': 2,
             stroke: color
         });
-        wrapper.add(path);
+        this.wrapper.add(path);
     }
-    function drawHeadTitle(circle) {
-        var cx = circle.asPX('cx'),
+    private drawHeadTitle(circle): void {
+        const cx = circle.asPX('cx'),
             cy = circle.asPX('cy'),
             r = circle.asPX('r');
-        var rect = dvm.snap.rect(cx - r - titleWidth - 5, cy - r - 5, titleWidth, 20, 5, 5);
+        const rect = this.snap.rect(cx - r - this.titleWidth - 5, cy - r - 5, this.titleWidth, 20, 5, 5);
         rect.attr({
             'fill-opacity': '0.5'
         });
-        var triangle = dvm.snap.path('M' + (cx - r - 5) + ',' + (cy - r) + ' L' + (cx - r) + ',' + cy + ' L' + (cx - r - 5) + ',' + (cy + r));
+        const triangle = this.snap.path('M' + (cx - r - 5) + ',' + (cy - r) + ' L' + (cx - r) + ',' + cy + ' L' + (cx - r - 5) + ',' + (cy + r));
         triangle.attr({
             'fill-opacity': '0.5'
         });
-        var displayText = dvm.headTitle;
-        var title = Snap.parse('<title>' + displayText + '</title>');
-        var text = dvm.snap.text(rect.asPX('x') + (rect.asPX('width'))/2, rect.asPX('y') + (rect.asPX('height')/2), displayText);
+        let displayText = this.headTitle;
+        const title = Snap.parse('<title>' + displayText + '</title>');
+        const text = this.snap.text(rect.asPX('x') + (rect.asPX('width'))/2, rect.asPX('y') + (rect.asPX('height')/2), displayText);
         text.attr({
             'text-anchor': 'middle',
             'alignment-baseline': 'central',
@@ -325,8 +336,6 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
             text.node.innerHTML = displayText + '...';
         }
         text.append(title);
-        wrapper.add(rect, triangle, text);
+        this.wrapper.add(rect, triangle, text);
     }
 }
-
-export default commitHistoryTableComponent;

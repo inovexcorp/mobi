@@ -1391,6 +1391,15 @@ export function mockRecordPermissionsManager() {
     });
 }
 
+export function mockShapesGraphState() {
+    angular.mock.module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
+        $provide.service('shapesGraphStateService', function($q) {
+            this.openShapesGraph = jasmine.createSpy('openShapesGraph').and.returnValue($q.when());
+        });
+    });
+}
+
 export function flushAndVerify($httpBackend) {
     $httpBackend.flush();
     $httpBackend.verifyNoOutstandingExpectation();

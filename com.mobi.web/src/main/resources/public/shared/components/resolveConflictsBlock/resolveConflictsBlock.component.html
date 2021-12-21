@@ -22,15 +22,15 @@
   -->
 <div class="resolve-conflicts-block h-100 d-flex flex-column">
     <div class="merge-details">
-        <p class="text-center">Merge <strong>Branch: {{dvm.branchTitle}}</strong> into <strong>Branch: {{dvm.targetTitle}}</strong></p>
-        <p class="text-center" ng-if="dvm.os.listItem.merge.checkbox">Branch: {{dvm.branchTitle}} will be removed after conflicts are resolved.</p>
+        <p class="text-center">Merge <strong>Branch: {{branchTitle}}</strong> into <strong>Branch: {{targetTitle}}</strong></p>
+        <p class="text-center" *ngIf="state.listItem.merge.checkbox">Branch: {{branchTitle}} will be removed after conflicts are resolved.</p>
     </div>
     <div class="flex-1 vertical-scroll p-2 remove-min-height">
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <resolve-conflicts-form branch-title="dvm.branchTitle" target-title="dvm.targetTitle" conflicts="dvm.os.listItem.merge.conflicts" resolutions="dvm.os.listItem.merge.resolutions"></resolve-conflicts-form>
+        <error-display *ngIf="error">{{error}}</error-display>
+        <resolve-conflicts-form [branchTitle]="branchTitle" [targetTitle]="targetTitle" [conflicts]="state.listItem.merge.conflicts"></resolve-conflicts-form>
     </div>
     <div class="btn-container pt-2">
-        <button class="btn btn-primary float-right" ng-click="dvm.submit()" ng-disabled="!dvm.allResolved() || !dvm.os.listItem.upToDate">Submit with Resolutions</button>
-        <button class="btn float-right mr-2" ng-click="dvm.os.cancelMerge()">Cancel</button>
+        <button class="btn btn-primary float-right" (click)="submit()" [disabled]="!allResolved() || !state.listItem.upToDate">Submit with Resolutions</button>
+        <button class="btn float-right mr-2" (click)="state.cancelMerge()">Cancel</button>
     </div>
 </div>

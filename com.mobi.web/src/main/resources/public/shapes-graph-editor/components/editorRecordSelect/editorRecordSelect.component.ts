@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Inject, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent, MatDialog } from '@angular/material';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
@@ -54,12 +54,15 @@ interface SearchConfig {
     selector: 'editor-record-select',
     templateUrl: './editorRecordSelect.component.html'
 })
-export class EditorRecordSelectComponent implements OnInit {
+export class EditorRecordSelectComponent implements OnInit, OnChanges {
+    @Input() recordIri: string;
     @ViewChild(MatAutocompleteTrigger) autocompleteTrigger: MatAutocompleteTrigger;
+    @ViewChild('textInput') textInput: ElementRef;
 
     recordSearchControl: FormControl = new FormControl();
     catalogId: string = get(this.cm.localCatalog, '@id', '');
 
+    opened: RecordSelectFiltered[] = [];
     unopened: RecordSelectFiltered[] = [];
     createGroup: OptionGroup = {
         title: '',
@@ -74,123 +77,93 @@ export class EditorRecordSelectComponent implements OnInit {
 
     filteredOptions: Observable<OptionGroup[]>
    
-    constructor(private dialog: MatDialog, private state: ShapesGraphStateService, @Inject('catalogManagerService') private cm, private sm: ShapesGraphManagerService, @Inject('modalService') private modalService,
-                @Inject('prefixes') private prefixes, @Inject('utilService') private util) {}
+    constructor(private dialog: MatDialog, private state: ShapesGraphStateService,
+                @Inject('catalogManagerService') private cm, private sm: ShapesGraphManagerService,
+                @Inject('modalService') private modalService, @Inject('prefixes') private prefixes,
+                @Inject('utilService') private util) {}
 
     ngOnInit(): void {
         this.retrieveShapesGraphRecords();
         this.setFilteredOptions();
         this.resetSearch();
     }
-
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes?.recordIri) {
+            this.resetSearch();
+        }
+    }
     filter(val: string): OptionGroup[] {
-        const filteredOpen = this.state.openRecords.filter(option => option.title.toLowerCase().includes(val.toString().toLowerCase()));
+        const filteredOpen = this.opened.filter(option => option.title.toLowerCase().includes(val.toString().toLowerCase()));
         const filteredUnopen = this.unopened.filter(option => option.title.toLowerCase().includes(val.toString().toLowerCase()));
         return [
             { title: 'Open', options: filteredOpen },
             { title: 'Unopened', options: filteredUnopen }
         ];
     }
-
     createShapesGraph(event: Event): void {
         this.autocompleteTrigger.closePanel();
         event.stopPropagation();
-        this.dialog.open(NewShapesGraphRecordModalComponent).afterClosed().subscribe((record: RecordSelectFiltered) => { // Strip out subscribe after functionality is moved in future MR. It causes a slight delay.
-            if (record) {
-                this.openRecord(record);
-            }
-        });
+        this.dialog.open(NewShapesGraphRecordModalComponent);
     }
-
     selectRecord(event: MatAutocompleteSelectedEvent): Promise<any> {
-        return this.openRecord(event.option.value);
+        const record = event.option.value;
+        return this.state.openShapesGraph(record)
+            .then(() => {
+                this.recordSearchControl.setValue(record.title);
+                this.opened.push(record);
+                remove(this.unopened, {recordId: record.recordId});
+            }, this.util.createErrorToast);
     }
-
-    openRecord(record: RecordSelectFiltered): Promise<any> {
-        this.state.currentShapesGraphRecordIri = record.recordId;
-        this.recordSearchControl.setValue(record.title);
-        this.state.currentShapesGraphRecordTitle = record.title;
-        if (!find(this.state.openRecords, {recordId: record.recordId})) {
-            this.state.openRecords.push(record);
-        }
-        remove(this.unopened, {recordId: record.recordId});
-        this.state.inProgressCommit = {
-            additions: [],
-            deletions: []
-        };
-        this.state.changesPageOpen = false;
-        return this.cm.getRecordMasterBranch(this.state.currentShapesGraphRecordIri, this.catalogId)
-            .then(masterBranch => {
-                const branchId = get(masterBranch, '@id', '');
-                const commitId = get(masterBranch, "['" + this.prefixes.catalog + "head'][0]['@id']", '');
-                this.state.currentShapesGraphBranchIri = branchId;
-                this.state.currentShapesGraphCommitIri = commitId;
-                return this.cm.getInProgressCommit(this.state.currentShapesGraphRecordIri, this.catalogId);
-            }).then(commit => {
-                this.state.inProgressCommit = commit;
-            });
+    close(): void {
+        this.textInput.nativeElement.blur();
+        this.resetSearch();
     }
-
     resetSearch(): void {
-        this.recordSearchControl.setValue(this.state.currentShapesGraphRecordTitle);
+        if (this?.state?.listItem?.versionedRdfRecord?.title) {
+            this.recordSearchControl.setValue(this.state.listItem.versionedRdfRecord.title);
+        } else {
+            this.recordSearchControl.setValue('');
+        }
     }
-
     retrieveShapesGraphRecords(): void {
         this.cm.getRecords(get(this.cm.localCatalog, '@id'), this.shapesRecordSearchConfig, this.spinnerId)
             .then(response => {
                 const openTmp: RecordSelectFiltered[] = [];
                 const unopenedTmp: RecordSelectFiltered[] = [];
                 forEach(response.data, (recordJsonld: JSONLDObject) => {
-                    if (find(this.state.openRecords, ['recordId', recordJsonld['@id']])) {
+                    const listItem = this.state.list.find(item => item.versionedRdfRecord.recordId === recordJsonld['@id']);
+                    if (listItem) {
                         openTmp.push(this.getRecordSelectFiltered(recordJsonld));
                     } else {
                         unopenedTmp.push(this.getRecordSelectFiltered(recordJsonld));
                     }
                 });
 
-                // TODO: test when delete functionality is added
-                this.state.openRecords.forEach(value => {
-                    if (find(openTmp, ['recordId', value.recordId]) === undefined) {
-                        this.util.createWarningToast('Previously opened ShapesGraphRecord ' + value.title + ' was removed.');
-                        if (value.recordId === this.state.currentShapesGraphRecordIri) {
-                            this.state.reset();
-                            this.resetSearch();
-                        }
-                    }
-                });
-
-                this.state.openRecords = openTmp;
+                this.opened = openTmp;
                 this.unopened = unopenedTmp;
+                this.checkRecordDeleted();
                 this.setFilteredOptions();
             }, errorMessage => this.util.createErrorToast(errorMessage));
     }
-
     closeShapesGraphRecord(recordIri: string): void {
-        const closed = remove(this.state.openRecords, {recordId: recordIri})[0];
+        const closed = remove(this.opened, {recordId: recordIri})[0];
         this.unopened.push(<RecordSelectFiltered> closed);
-        if (recordIri === this.state.currentShapesGraphRecordIri) {
-            this.state.currentShapesGraphRecordIri = '';
-            this.state.currentShapesGraphRecordTitle = '';
-            this.state.currentShapesGraphBranchIri = '';
-            this.state.currentShapesGraphCommitIri = '';
-            this.state.inProgressCommit = {
-                additions: [],
-                deletions: []
-            };
+        if (recordIri === this.recordIri) {
+            this.state.reset();
         }
+        this.state.closeShapesGraph(recordIri);
         this.setFilteredOptions();
     }
-
     showDeleteConfirmationOverlay(record: RecordSelectFiltered, event: Event): void {
         this.autocompleteTrigger.closePanel();
         event.stopPropagation();
         this.modalService.openConfirmModal('<p>Are you sure you want to delete <strong>' + record.title + '</strong>?</p>', () => this.deleteShapesGraphRecord(record.recordId));
     }
-
     deleteShapesGraphRecord(recordIri: string): void {
-        this.sm.deleteShapesGraphRecord(recordIri).then(() => {
-            this.util.createSuccessToast(recordIri + ' deleted successfully!');
-        }, errorMessage => this.util.createErrorToast(errorMessage));
+        this.state.deleteShapesGraph(recordIri)
+            .then(() => {
+                this.util.createSuccessToast(recordIri + ' deleted successfully!');
+            }, errorMessage => this.util.createErrorToast(errorMessage));
     }
 
     private getRecordSelectFiltered(record: JSONLDObject): RecordSelectFiltered {
@@ -200,12 +173,23 @@ export class EditorRecordSelectComponent implements OnInit {
             description: this.util.getDctermsValue(record, 'description')
         };
     }
-
     protected setFilteredOptions(): void {
         this.filteredOptions = this.recordSearchControl.valueChanges
             .pipe(
                 startWith(''),
                 map(val => this.filter(val))
             );
+    }
+    private checkRecordDeleted() {
+        if (this?.state?.listItem?.versionedRdfRecord.recordId) {
+            const record = find([...this.opened, ...this.unopened], {recordId: this.state.listItem.versionedRdfRecord.recordId});
+            if (!record) {
+                this.util.createWarningToast('Previously opened ShapesGraphRecord ' + this.state.listItem.versionedRdfRecord.title + ' was removed.');
+                this.state.closeShapesGraph(this.state.listItem.versionedRdfRecord.recordId);
+                remove(this.opened, {recordId: this.state.listItem.versionedRdfRecord.recordId});
+                this.state.reset();
+            }
+            this.resetSearch();
+        }
     }
 }

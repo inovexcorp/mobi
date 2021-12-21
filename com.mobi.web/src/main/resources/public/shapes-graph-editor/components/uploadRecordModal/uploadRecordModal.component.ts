@@ -29,7 +29,6 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { RdfUpdate } from '../../../shared/models/rdfUpdate.interface';
 
-
 /**
  * @class shapes-graph-editor.UploadRecordModalComponent
  * 
@@ -45,20 +44,22 @@ export class UploadRecordModalComponent {
     catalogId: string = get(this.cm.localCatalog, '@id', '');
 
     constructor(private dialogRef: MatDialogRef<UploadRecordModalComponent>, private fb: FormBuilder,
-                private sm: ShapesGraphManagerService, private state: ShapesGraphStateService, @Inject('utilService') private util, @Inject('catalogManagerService') private cm, @Inject(MAT_DIALOG_DATA) public data: any) {}
+                private sm: ShapesGraphManagerService, private state: ShapesGraphStateService,
+                @Inject('utilService') private util, @Inject('catalogManagerService') private cm,
+                @Inject(MAT_DIALOG_DATA) public data: any) {}
 
     uploadChanges(): void {
         this.error = '';
         const updateParams: RdfUpdate = {
-            recordId: this.state.currentShapesGraphRecordIri,
+            recordId: this.state.listItem.versionedRdfRecord.recordId,
             file: this.selectedFile,
             replaceInProgressCommit: false
         };
-        if (this.state.currentShapesGraphBranchIri) {
-            updateParams.branchId = this.state.currentShapesGraphBranchIri;
+        if (this.state?.listItem?.versionedRdfRecord?.branchId) {
+            updateParams.branchId = this.state.listItem.versionedRdfRecord.branchId;
         }
-        if (this.state.currentShapesGraphCommitIri) {
-            updateParams.commitId = this.state.currentShapesGraphCommitIri;
+        if (this.state?.listItem?.versionedRdfRecord?.commitId) {
+            updateParams.commitId = this.state.listItem.versionedRdfRecord.commitId;
         }
         this.sm.uploadChanges(updateParams)
             .then((response) => {
@@ -66,12 +67,12 @@ export class UploadRecordModalComponent {
                     this.util.createWarningToast('No changes were found in the uploaded file.');
                     return Promise.reject('No changes');
                 }
-                return this.cm.getInProgressCommit(this.state.currentShapesGraphRecordIri, this.catalogId);
+                return this.cm.getInProgressCommit(this.state.listItem.versionedRdfRecord.recordId, this.catalogId);
             }, error => {
                 return Promise.reject(error);
             }).then(commit => {
-                this.state.inProgressCommit = commit;
-                this.util.createSuccessToast('Record ' + this.state.currentShapesGraphRecordIri + ' successfully updated.');
+                this.state.listItem.inProgressCommit = commit;
+                this.util.createSuccessToast('Record ' + this.state.listItem.versionedRdfRecord.recordId + ' successfully updated.');
                 this.dialogRef.close(true);
         }, error => {
             if (error !== 'No changes') {

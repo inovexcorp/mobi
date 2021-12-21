@@ -55,6 +55,14 @@ md-backdrop.md-select-backdrop {
     max-height: 500px !important;
 }
 
+.cdk-global-overlay-wrapper, .cdk-overlay-container {
+    z-index: 8000 !important;
+}
+
+mat-checkbox label {
+    color: black
+}
+
 // Fixes for Material Bootstrap
 .ui-select-bootstrap > .ui-select-choices,
 .ui-select-bootstrap > .ui-select-no-choice {

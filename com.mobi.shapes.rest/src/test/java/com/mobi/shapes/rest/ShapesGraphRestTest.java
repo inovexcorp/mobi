@@ -32,7 +32,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -223,6 +222,10 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         when(catalogManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(shaclModel);
         when(catalogManager.getMasterBranch(any(), any())).thenReturn(branch);
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
+        when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), eq(user))).thenReturn(Optional.of(inProgressCommit));
+        when(catalogManager.applyInProgressCommit(any(Resource.class), any(Model.class))).thenAnswer(i -> {
+            return i.getArgumentAt(1, Model.class);
+        });
         when(transformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
         when(transformer.mobiStatement(any(org.eclipse.rdf4j.model.Statement.class))).thenAnswer(i -> {
                 return Values.mobiStatement(i.getArgumentAt(0, org.eclipse.rdf4j.model.Statement.class));
@@ -251,8 +254,8 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         Response response = target().path("shapes-graphs").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
-        String ontologyId = getResponse(response).optString("shapesGraphId");
-        assertEquals(ontologyId, shapesGraphId.stringValue());
+        String id = getResponse(response).optString("shapesGraphId");
+        assertEquals(id, shapesGraphId.stringValue());
         ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
         verify(catalogManager).createRecord(any(User.class), config.capture(), eq(ShapesGraphRecord.class));
         assertEquals(catalogId.stringValue(), config.getValue().get(RecordCreateSettings.CATALOG_ID));
@@ -345,27 +348,44 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
     }
 
     @Test
-    public void downloadOntologyFileTest() {
+    public void downloadShapesGraphFileTest() {
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
+        verify(catalogManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
     }
 
     @Test
-    public void downloadOntologyFileWithCommitIdAndMissingBranchIdTest() {
+    public void downloadShapesGraphFileDontApplyCommitTest() {
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("applyInProgressCommit", false)
+                .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager, never()).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
+        verify(catalogManager, never()).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
+    }
+
+    @Test
+    public void downloadShapesGraphFileWithCommitIdAndMissingBranchIdTest() {
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
                 .queryParam("commitId", commitId.stringValue()).queryParam("entityId", catalogId.stringValue())
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getCompiledResource(eq(commitId));
+        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
+        verify(catalogManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
     }
 
     @Test
-    public void downloadOntologyFileWithBranchIdTest() {
+    public void downloadShapesGraphFileWithBranchIdTest() {
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
@@ -373,10 +393,12 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getHeadCommit(eq(catalogId), eq(recordId), eq(branchId));
         verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
+        verify(catalogManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
     }
 
     @Test
-    public void downloadOntologyFileWithBranchIdCantGetHeadCommitTest() {
+    public void downloadShapesGraphFileWithBranchIdCantGetHeadCommitTest() {
         doThrow(IllegalStateException.class).when(catalogManager).getHeadCommit(any(), any(), any());
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).request()
@@ -384,6 +406,8 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
 
         assertEquals(response.getStatus(), 500);
         verify(catalogManager).getHeadCommit(eq(catalogId), eq(recordId), eq(branchId));
+        verify(catalogManager, never()).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
+        verify(catalogManager, never()).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
 
         resetMocks();
         setupMocks();        
@@ -394,10 +418,12 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
 
         assertEquals(response.getStatus(), 400);
         verify(catalogManager).getHeadCommit(eq(catalogId), eq(recordId), eq(branchId));
+        verify(catalogManager, never()).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
+        verify(catalogManager, never()).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
     }
 
     @Test
-    public void downloadOntologyFileWithBranchIdCantGetCompiledResourceTest() {
+    public void downloadShapesGraphFileWithBranchIdCantGetCompiledResourceTest() {
         doThrow(IllegalStateException.class).when(catalogManager).getCompiledResource(any(), any(), any());
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).request()
@@ -415,26 +441,32 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
 
         assertEquals(response.getStatus(), 400);
         verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager, never()).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
+        verify(catalogManager, never()).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
     }
 
     @Test
-    public void downloadOntologyFileOnlyRecordIdTest() {
+    public void downloadShapesGraphFileOnlyRecordIdTest() {
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue())).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getMasterBranch(eq(catalogId), eq(recordId));
         verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
+        verify(catalogManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
     }
 
     @Test
-    public void downloadOntologyFileOnlyRecordIdCantGetBranchTest() {
+    public void downloadShapesGraphFileOnlyRecordIdCantGetBranchTest() {
         doThrow(IllegalStateException.class).when(catalogManager).getMasterBranch(any(), any());
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue())).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
         assertEquals(response.getStatus(), 500);
         verify(catalogManager).getMasterBranch(eq(catalogId), eq(recordId));
+        verify(catalogManager, never()).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
+        verify(catalogManager, never()).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
 
         resetMocks();
         setupMocks();
@@ -444,16 +476,20 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
 
         assertEquals(response.getStatus(), 400);
         verify(catalogManager).getMasterBranch(eq(catalogId), eq(recordId));
+        verify(catalogManager, never()).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
+        verify(catalogManager, never()).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
     }
 
     @Test
-    public void downloadOntologyFileOnlyRecordIdCantGetCompiledResourceTest() {
+    public void downloadShapesGraphFileOnlyRecordIdCantGetCompiledResourceTest() {
         doThrow(IllegalStateException.class).when(catalogManager).getCompiledResource(any(), any(), any());
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue())).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
         assertEquals(response.getStatus(), 500);
         verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager, never()).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
+        verify(catalogManager, never()).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
 
         resetMocks();
         setupMocks();
@@ -463,10 +499,12 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
 
         assertEquals(response.getStatus(), 400);
         verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager, never()).getInProgressCommit(eq(catalogId), eq(recordId), eq(user));
+        verify(catalogManager, never()).applyInProgressCommit(eq(inProgressCommitId), any(Model.class));
     }
 
     @Test
-    public void downloadOntologyFileNoRecordIdTest() {
+    public void downloadShapesGraphFileNoRecordIdTest() {
         Response response = target().path("shapes-graphs/").request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
@@ -505,7 +543,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
     }
 
     @Test
-    public void testUploadChangesToOntology() {
+    public void testUploadChangesToShapesGraph() {
         when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(shaclModel);
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
@@ -534,7 +572,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
     }
 
     @Test
-    public void testUploadChangesToOntologyWithoutBranchId() {
+    public void testUploadChangesToShapesGraphWithoutBranchId() {
         when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(shaclModel);
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
@@ -562,7 +600,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
     }
 
     @Test
-    public void testUploadChangesToOntologyWithoutCommitId() {
+    public void testUploadChangesToShapesGraphWithoutCommitId() {
         when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(shaclModel);
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
@@ -591,7 +629,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
     }
 
     @Test
-    public void testUploadChangesToOntologyWithExistingInProgressCommit() {
+    public void testUploadChangesToShapesGraphWithExistingInProgressCommit() {
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId), any(User.class))).thenReturn(Optional.of(inProgressCommit));
 
         FormDataMultiPart fd = new FormDataMultiPart();
@@ -612,7 +650,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
     }
 
     @Test
-    public void testUploadChangesToOntologyNoDiff() {
+    public void testUploadChangesToShapesGraphNoDiff() {
         when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(shaclModel);
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
@@ -643,7 +681,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
     }
 
     @Test
-    public void testUploadChangesTrigToOntologyNoDiff() {
+    public void testUploadChangesTrigToShapesGraphNoDiff() {
         when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(shaclModel);
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
@@ -669,7 +707,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
         JSONObject responseObject = getResponse(response);
         assertEquals(responseObject.get("error"), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage"), "TriG data is not supported for ontology upload changes.");
+        assertEquals(responseObject.get("errorMessage"), "TriG data is not supported for shapes graph upload changes.");
         assertNotEquals(responseObject.get("errorDetails"), null);
     }
 

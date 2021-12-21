@@ -91,7 +91,6 @@ import propertyHierarchyBlockComponent from './components/propertyHierarchyBlock
 import propertyTreeComponent from './components/propertyTree/propertyTree.component';
 import propertyValuesComponent from './components/propertyValues/propertyValues.component';
 import recordAccessOverlayComponent from './components/recordAccessOverlay/recordAccessOverlay.component';
-import resolveConflictsBlockComponent from './components/resolveConflictsBlock/resolveConflictsBlock.component';
 import savedChangesTabComponent from './components/savedChangesTab/savedChangesTab.component';
 import searchTabComponent from './components/searchTab/searchTab.component';
 import seeHistoryComponent from './components/seeHistory/seeHistory.component';
@@ -185,7 +184,6 @@ angular.module('ontology-editor', [])
     .component('propertyTree', propertyTreeComponent)
     .component('propertyValues', propertyValuesComponent)
     .component('recordAccessOverlay', recordAccessOverlayComponent)
-    .component('resolveConflictsBlock', resolveConflictsBlockComponent)
     .component('savedChangesTab', savedChangesTabComponent)
     .component('searchTab', searchTabComponent)
     .component('seeHistory', seeHistoryComponent)

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { forEach, pull, includes, get, unset, find, isEqual, remove } from 'lodash';
+import { forEach, pull, includes, get, unset, find, isEqual, remove, filter } from 'lodash';
 
 import './characteristicsBlock.component.scss';
 
@@ -101,7 +101,11 @@ function characteristicsBlockComponentCtrl(prefixes, ontologyStateService, ontol
             objectOnly: true
         }
     ];
+    dvm.filteredCharacteristics = [];
 
+    dvm.$onInit = function() {
+        setVariables();
+    }
     dvm.$onChanges = function() {
         setVariables();
     }
@@ -148,6 +152,7 @@ function characteristicsBlockComponentCtrl(prefixes, ontologyStateService, ontol
         forEach(dvm.characteristics, obj => {
             obj.checked = includes(dvm.types, obj.typeIRI);
         });
+        dvm.filteredCharacteristics = filter(dvm.characteristics, dvm.filter);
     }
 }
 

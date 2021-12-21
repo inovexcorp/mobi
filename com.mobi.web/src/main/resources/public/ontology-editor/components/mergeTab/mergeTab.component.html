@@ -23,6 +23,6 @@
 <div class="merge-tab row m-0 h-100 vertical-scroll">
     <div class="col p-3 h-100">
         <merge-block class="h-100" ng-if="!dvm.os.listItem.merge.conflicts.length"></merge-block>
-        <resolve-conflicts-block class="h-100" ng-if="dvm.os.listItem.merge.conflicts.length"></resolve-conflicts-block>
+        <resolve-conflicts-block class="h-100" ng-if="dvm.os.listItem.merge.conflicts.length" [state]="dvm.os"></resolve-conflicts-block>
     </div>
 </div>

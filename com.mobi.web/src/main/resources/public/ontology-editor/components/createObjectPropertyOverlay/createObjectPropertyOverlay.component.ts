@@ -162,6 +162,9 @@ function createObjectPropertyOverlayComponentCtrl($filter, ontologyStateService,
     dvm.cancel = function() {
         dvm.dismiss();
     }
+    dvm.getObjType = function(obj) {
+        return obj.typeIRI;
+    }
 
     function updateLists() {
         dvm.os.listItem.objectProperties.iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;

@@ -48,19 +48,19 @@ export class CommitModalComponent {
     constructor(private state: ShapesGraphStateService, @Inject('utilService') private util, @Inject('catalogManagerService') private cm, private fb: FormBuilder, private dialogRef: MatDialogRef<CommitModalComponent>) {}
 
     commit(): void {
-        if (this.state.upToDate) {
-            this.createCommit(this.state.currentShapesGraphBranchIri);
+        if (this.state.listItem.upToDate) {
+            this.createCommit(this.state.listItem.versionedRdfRecord.branchId);
         } else {
             this.util.createErrorToast('Cannot commit. Not up to date.');
         }
     }
-
     createCommit(branchId: string): void {
-        this.cm.createBranchCommit(branchId, this.state.currentShapesGraphRecordIri, this.catalogId, this.createCommitForm.controls.comment.value)
+        this.cm.createBranchCommit(branchId, this.state.listItem.versionedRdfRecord.recordId, this.catalogId, this.createCommitForm.controls.comment.value)
             .then(commitIri => {
-                this.state.currentShapesGraphCommitIri = commitIri;
-                this.state.clearInProgressCommit();
-                this.dialogRef.close(true);
+                return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, this.state.listItem.versionedRdfRecord.branchId, commitIri, undefined, undefined, true)
+                    .then(() => {
+                        this.dialogRef.close(true);
+                    }, Promise.reject);
             }, error => {
                 this.errorMessage = error;
             });

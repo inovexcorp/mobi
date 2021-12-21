@@ -270,6 +270,7 @@ public class ShapesGraphRest {
             objectNode.put("recordId", record.getResource().stringValue());
             objectNode.put("branchId", branchId.toString());
             objectNode.put("commitId", commitId.toString());
+            objectNode.put("title", title);
 
             return Response.status(Response.Status.CREATED).entity(objectNode.toString()).build();
         } catch (IllegalArgumentException | RDFParseException ex) {
@@ -312,6 +313,7 @@ public class ShapesGraphRest {
     @RolesAllowed("user")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadShapesGraph(
+            @Context ContainerRequestContext context,
             @Parameter(description = "String representing the Record Resource ID. "
                     + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"", required = true)
             @PathParam("recordId") String recordIdStr,
@@ -327,11 +329,15 @@ public class ShapesGraphRest {
                     schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "turtle"}))
             @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
             @Parameter(description = "File name for the SHACL Shapes Graph file")
-            @DefaultValue("shapesGraph") @QueryParam("fileName") String fileName
+            @DefaultValue("shapesGraph") @QueryParam("fileName") String fileName,
+            @Parameter(description = "Whether or not any in progress commits by user should be applied "
+                    + "to the return value")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         checkStringParam(recordIdStr, "The recordIdStr is missing.");
         try {
-            Model model = getShapesGraphModel(recordIdStr, branchIdStr, commitIdStr);
+            User user = getActiveUser(context, engineManager);
+            Model model = getShapesGraphModel(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, user);
             StreamingOutput output = outputStream ->
                     writeShapesGraphToStream(model, RestUtils.getRDFFormat(rdfFormat), outputStream);
             return Response.ok(output).header("Content-Disposition", "attachment;filename=" + fileName
@@ -526,9 +532,12 @@ public class ShapesGraphRest {
      * @param recordIdStr the record ID String.
      * @param branchIdStr the branch ID String.
      * @param commitIdStr the commit ID String.
+     * @param applyInProgressCommit boolean indicating to apply the inProgressCommit
+     * @param user the {@link User} whose inProgressCommit to apply
      * @return The SHACL Shapes Graph as a Model.
      */
-    private Model getShapesGraphModel(String recordIdStr, String branchIdStr, String commitIdStr) {
+    private Model getShapesGraphModel(String recordIdStr, String branchIdStr, String commitIdStr,
+                                      boolean applyInProgressCommit, User user) {
         Model model;
         Resource recordId = vf.createIRI(recordIdStr);
 
@@ -548,6 +557,15 @@ public class ShapesGraphRest {
             Resource headResource = branch.getHead_resource().orElseThrow(() ->
                     new IllegalStateException("Could not retrieve head commit for branch " + branch.getResource()));
             model = catalogManager.getCompiledResource(recordId, branch.getResource(), headResource);
+        }
+
+        if (applyInProgressCommit) {
+            Optional<InProgressCommit> inProgressCommitOpt = catalogManager.getInProgressCommit(
+                    configProvider.getLocalCatalogIRI(), recordId, user);
+            if (inProgressCommitOpt.isPresent()) {
+                InProgressCommit inProgressCommit = inProgressCommitOpt.get();
+                model = catalogManager.applyInProgressCommit(inProgressCommit.getResource(), model);
+            }
         }
 
         return model;
@@ -582,7 +600,7 @@ public class ShapesGraphRest {
                 mf, transformer, bNodeService, bNodesMap);
 
         if ("trig".equalsIgnoreCase(parsedModel.getRdfFormatName())) {
-            throw new IllegalArgumentException("TriG data is not supported for ontology upload changes.");
+            throw new IllegalArgumentException("TriG data is not supported for shapes graph upload changes.");
         }
 
         return parsedModel.getModel();

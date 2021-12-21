@@ -23,6 +23,7 @@
 import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { CreateBranchModal } from '../createBranchModal/createBranchModal.component';
 import { DownloadRecordModalComponent } from '../downloadRecordModal/downloadRecordModal.component';
 import { UploadRecordModalComponent } from '../uploadRecordModal/uploadRecordModal.component';
 import { CommitModalComponent } from '../commitModal/commitModal.component';
@@ -42,11 +43,17 @@ export class EditorTopBarComponent {
 
     constructor(private dialog: MatDialog, public state: ShapesGraphStateService) {}
 
+    createBranch(): void {
+        this.dialog.open(CreateBranchModal, {});
+    }
+
     download(): void {
         this.dialog.open(DownloadRecordModalComponent, {
             data: {
-                // TODO: Add params for branch and commit
-                recordId: this.state.currentShapesGraphRecordIri
+                recordId: this.state.listItem.versionedRdfRecord.recordId,
+                branchId: this.state.listItem.versionedRdfRecord.branchId,
+                commitId: this.state.listItem.versionedRdfRecord.commitId,
+                title: this.state.listItem.versionedRdfRecord.title
             }
         });
     }
@@ -60,10 +67,10 @@ export class EditorTopBarComponent {
     }
 
     toggleChanges(): void {
-        this.state.changesPageOpen = !this.state.changesPageOpen;
+        this.state.listItem.changesPageOpen = !this.state.listItem.changesPageOpen;
     }
 
     downloadDisabled(): boolean {
-        return !this.state.currentShapesGraphRecordIri;
+        return !this.state?.listItem?.versionedRdfRecord?.recordId;
     }
 }
