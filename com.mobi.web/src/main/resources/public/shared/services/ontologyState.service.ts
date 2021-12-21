@@ -197,24 +197,28 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             iris: {},
             parentMap: {},
             childMap: {},
+            circularMap: {},
             flat: []
         },
         dataProperties: {
             iris: {},
             parentMap: {},
             childMap: {},
+            circularMap: {},
             flat: []
         },
         objectProperties: {
             iris: {},
             parentMap: {},
             childMap: {},
+            circularMap: {},
             flat: []
         },
         annotations: {
             iris: {},
             parentMap: {},
             childMap: {},
+            circularMap: {},
             flat: []
         },
         individuals: {
@@ -225,12 +229,14 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             iris: {},
             parentMap: {},
             childMap: {},
+            circularMap: {},
             flat: []
         },
         conceptSchemes: {
             iris: {},
             parentMap: {},
             childMap: {},
+            circularMap: {},
             flat: []
         },
         blankNodes: {},
@@ -1667,12 +1673,31 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         self.listItem.isSaved = self.isCommittable(self.listItem);
     }
     self.addEntityToHierarchy = function(hierarchyInfo, entityIRI, parentIRI) {
-        if (parentIRI && has(hierarchyInfo.iris, parentIRI)) {
-            hierarchyInfo.parentMap[parentIRI] = union(get(hierarchyInfo.parentMap, parentIRI), [entityIRI]);
-            hierarchyInfo.childMap[entityIRI] = union(get(hierarchyInfo.childMap, entityIRI), [parentIRI]);
+        let result = checkChildren(hierarchyInfo, entityIRI, parentIRI);
+        if (!result.circular) {
+            if (parentIRI && has(hierarchyInfo.iris, parentIRI)) {
+                hierarchyInfo.parentMap[parentIRI] = union(get(hierarchyInfo.parentMap, parentIRI), [entityIRI]);
+                hierarchyInfo.childMap[entityIRI] = union(get(hierarchyInfo.childMap, entityIRI), [parentIRI]);
+            }
+        } else {
+            let value = {[entityIRI]: result.path}
+            hierarchyInfo.circularMap[parentIRI] = assign(value,get(hierarchyInfo.circularMap, parentIRI))
         }
     }
     self.deleteEntityFromParentInHierarchy = function(hierarchyInfo, entityIRI, parentIRI) {
+        forEach(hierarchyInfo.circularMap, (values, parent) => {
+            forEach(values, (path, child) => {
+                if (includes(path, entityIRI) && includes(path, parentIRI)) {
+                    hierarchyInfo.parentMap[parent] = union(get(hierarchyInfo.parentMap, parent), [child]);
+                    hierarchyInfo.childMap[child] = union(get(hierarchyInfo.childMap, child), [parent]);
+                    delete hierarchyInfo.circularMap[parent][child];
+                    if (get(hierarchyInfo.circularMap, [parent])) {
+                        delete hierarchyInfo.circularMap[parent];
+                    }
+                }
+            });
+        });
+
         pull(hierarchyInfo.parentMap[parentIRI], entityIRI);
         if (!get(hierarchyInfo.parentMap, parentIRI, []).length) {
             delete hierarchyInfo.parentMap[parentIRI];
@@ -2221,6 +2246,30 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             }
         }
     }
+    function checkChildren(hierarchyInfo, childIRI, parentIRI, root = '', path = []) {
+        let parentMap = hierarchyInfo.parentMap;
+        if (!root) { root = childIRI }
+        let result = {
+            circular: false,
+            path: []
+        };
+
+        forEach(parentMap[childIRI], child => {
+            if (!result.circular) {
+                if (includes(parentMap[root], child)) { path = [] }
+                if (path.length === 0) { path.push(childIRI) }
+                path.push(child);
+                if (child === parentIRI) {
+                    result.circular = true;
+                } else {
+                    result = checkChildren(hierarchyInfo, child, parentIRI, root, path);
+                }
+            }
+            result.path = path;
+        });
+
+        return result;
+    }
     function checkForPropertyDomains(property) {
         if (!property[prefixes.rdfs + 'domain']) {
             self.listItem.noDomainProperties.push(property['@id']);
@@ -2350,9 +2399,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         listItem.importedOntologies.push(importedOntologyListItem);
     }
     function setHierarchyInfo(obj, response, key) {
-        var hierarchyInfo = get(response, key, {parentMap: {}, childMap: {}});
+        var hierarchyInfo = get(response, key, {parentMap: {}, childMap: {}, circularMap: {}});
         obj.parentMap = hierarchyInfo.parentMap;
         obj.childMap = hierarchyInfo.childMap;
+        obj.circularMap = hierarchyInfo.circularMap;
     }
     function getArrWithoutEntity(iri, arr) {
         if (!arr || !arr.length) {

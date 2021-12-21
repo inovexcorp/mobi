@@ -494,6 +494,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Hierarchy hierarchy = new Hierarchy(vf, mf);
         hierarchy.addParentChild(vf.createIRI("https://mobi.com#parent"), vf.createIRI("https://mobi.com#child"));
+        hierarchy.addCircularRelationship(vf.createIRI("https://mobi.com#parent"), vf.createIRI("https://mobi.com#child"),
+                new HashSet<>(Arrays.asList(new String[]{"https://mobi.com#child", "https://mobi.com#parent"})));
         when(ontology.getSubClassesOf(vf, mf)).thenReturn(hierarchy);
         when(importedOntology.getSubClassesOf(vf, mf)).thenReturn(hierarchy);
         when(ontology.getSubObjectPropertiesOf(vf, mf)).thenReturn(hierarchy);

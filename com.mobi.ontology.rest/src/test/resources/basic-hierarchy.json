@@ -8,5 +8,12 @@
     "https://mobi.com#child": [
       "https://mobi.com#parent"
     ]
+  },
+  "circularMap": {
+    "https://mobi.com#parent": {
+      "https://mobi.com#child": [
+        "https://mobi.com#child", "https://mobi.com#parent"
+      ]
+    }
   }
 }

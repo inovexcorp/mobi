@@ -97,6 +97,18 @@
          <http://purl.org/dc/terms/title> "Class 3a"^^xsd:string ;
          owl:deprecated "true"^^xsd:boolean .
 
+###  http://mobi.com/ontology#Class4a
+:Class4a rdf:type owl:Class ;
+         rdfs:subClassOf :Class4b ;
+         <http://purl.org/dc/terms/title> "Class 4a"^^xsd:string ;
+         owl:deprecated "false"^^xsd:boolean .
+
+###  http://mobi.com/ontology#Class4b
+:Class4b rdf:type owl:Class ;
+         rdfs:subClassOf :Class4a ;
+         <http://purl.org/dc/terms/title> "Class 4b"^^xsd:string ;
+         owl:deprecated "false"^^xsd:boolean .
+
 
 #################################################################
 #    Individuals
