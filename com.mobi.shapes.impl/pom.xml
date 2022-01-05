@@ -46,6 +46,10 @@
 
         <!-- Test Dependencies -->
         <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
             <version>${project.version}</version>

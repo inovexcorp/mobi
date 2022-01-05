@@ -21,7 +21,7 @@
  * #L%
  */
 import { NgModule } from '@angular/core';
-import { MatChipsModule, MatDividerModule, MatButtonToggleModule } from '@angular/material';
+import { MatChipsModule, MatDividerModule, MatButtonToggleModule, MatExpansionModule, MatTooltipModule } from '@angular/material';
 import { MatSelectModule } from '@angular/material/select';
 import { downgradeComponent } from '@angular/upgrade/static';
 import * as angular from 'angular';
@@ -50,7 +50,9 @@ import { UploadRecordModalComponent } from './components/uploadRecordModal/uploa
          MatDividerModule,
          MatChipsModule,
          MatSelectModule,
-         MatButtonToggleModule
+         MatButtonToggleModule,
+         MatExpansionModule,
+         MatTooltipModule
      ],
     declarations: [
         NewShapesGraphRecordModalComponent,

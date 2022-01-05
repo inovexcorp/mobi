@@ -40,7 +40,7 @@ import './newShapesGraphRecordModal.component.scss';
     templateUrl: './newShapesGraphRecordModal.component.html'
 })
 export class NewShapesGraphRecordModalComponent {
-    errorMessage = '';
+    error: any = '';
     createRecordForm = this.fb.group({
         title: ['', Validators.required],
         description: [''],
@@ -57,6 +57,7 @@ export class NewShapesGraphRecordModalComponent {
                 private state: ShapesGraphStateService, @Inject('utilService') private util) {}
 
     create(): void {
+        this.error = '';
         const rdfUpload: RdfUpload = {
             title: this.createRecordForm.controls.title.value,
             description: this.createRecordForm.controls.description.value,
@@ -66,8 +67,7 @@ export class NewShapesGraphRecordModalComponent {
         this.state.uploadShapesGraph(rdfUpload)
             .then(() => this.dialogRef.close(true),
                     error => {
-                        this.util.createErrorToast(error);
-                        this.dialogRef.close(false);
+                        this.error = error;
                     }
             );
     }

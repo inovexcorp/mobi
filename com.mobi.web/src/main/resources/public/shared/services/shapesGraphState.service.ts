@@ -75,7 +75,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
     }
     /**
      * Uploads a shapes graph and sets the state to use the newly uploaded shapes graph.
-     * 
+     *
      * @param rdfUpload {RdfUpload} the new ShapesGraphRecord to create.
      * @param showToast {boolean} to display a success toast on creation.
      * @return {Promise} A Promise that resolves if the upload was successful or not.
@@ -109,7 +109,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
     /**
      * Opens the provided record, retrieving previous state information for the record, and setting it as the active
      * shapes graph.
-     * 
+     *
      * @param record {RecordSelectFiltered} the ShapesGraphRecord to open.
      * @return {Promise} A Promise that resolves if the open was successful or not.
      */
@@ -139,7 +139,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
     }
     /**
      * Closes the ShapesGraphRecord by removing it from the list of open records.
-     * 
+     *
      * @param recordId {string} the IRI of the record to close.
      */
     closeShapesGraph(recordId: string): void {
@@ -147,7 +147,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
     }
     /**
      * Deletes the shapes graph record and its corresponding state.
-     * 
+     *
      * @param recordId {string} the IRI of the record to delete.
      * @return {Promise} A Promise that resolves if the delete was successful or not.
      */
@@ -169,7 +169,8 @@ export class ShapesGraphStateService extends VersionedRdfState {
      * @param clearInProgressCommit {boolean} indicates whether the inProgressCommit should be cleared.
      * @return {Promise} A Promise that resolves if the version change was successful or not.
      */
-    changeShapesGraphVersion(recordId: string, branchId: string, commitId: string, tagId: string, versionTitle: string, clearInProgressCommit=false): Promise<any> {
+    changeShapesGraphVersion(recordId: string, branchId: string, commitId: string, tagId: string, versionTitle: string,
+                             clearInProgressCommit=false, changesPageOpen=false): Promise<any> {
         const state = {
             recordId,
             branchId,
@@ -190,6 +191,10 @@ export class ShapesGraphStateService extends VersionedRdfState {
             if (this.listItem.inProgressCommit && !clearInProgressCommit) {
                 item.inProgressCommit = this.listItem.inProgressCommit;
             }
+            if (clearInProgressCommit) {
+                item.inProgressCommit = new Difference();
+            }
+            item.changesPageOpen = changesPageOpen;
             this.listItem = item;
             this.list.push(this.listItem);
             return Promise.resolve();

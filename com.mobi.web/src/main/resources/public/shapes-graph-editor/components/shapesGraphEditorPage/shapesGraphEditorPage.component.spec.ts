@@ -32,6 +32,7 @@ import { ShapesGraphMergePageComponent } from '../shapesGraphMergePage/shapesGra
 import { ShapesGraphEditorPageComponent } from './shapesGraphEditorPage.component';
 import { ShapesGraphChangesPageComponent } from '../shapesGraphChangesPage/shapesGraphChangesPage.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { MatExpansionModule } from '@angular/material';
 
 describe('Shapes Graph Editor Page component', function() {
     let component: ShapesGraphEditorPageComponent;
@@ -41,7 +42,9 @@ describe('Shapes Graph Editor Page component', function() {
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
-            imports: [ ],
+            imports: [ 
+                MatExpansionModule
+            ],
             declarations: [
                 ShapesGraphEditorPageComponent,
                 MockComponent(EditorTopBarComponent),

@@ -149,13 +149,15 @@ describe('New Shapes Graph Record Modal component', function() {
             let errorDisplay = element.queryAll(By.css('error-display'));
             expect(errorDisplay.length).toEqual(0);
 
-            component.errorMessage = 'error';
+            component.error = {'errorMessage': 'error', 'errorDetails': []};
             fixture.detectChanges();
             await fixture.whenStable();
             errorDisplay = element.queryAll(By.css('error-display'));
 
             expect(errorDisplay.length).toBe(1);
             expect(errorDisplay[0].nativeElement.innerText).toEqual('error');
+            expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+            expect(matDialogRef.close).not.toHaveBeenCalled();
         });
         it('with fields for record details',  function() {
             const formFields = element.queryAll(By.css('mat-form-field'));

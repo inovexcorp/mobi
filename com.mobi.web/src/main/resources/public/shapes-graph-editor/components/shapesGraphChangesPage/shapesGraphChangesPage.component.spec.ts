@@ -25,12 +25,17 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { cleanStylesFromDOM, mockUtil, mockCatalogManager } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM, mockUtil, mockCatalogManager, mockPrefixes } from '../../../../../../test/ts/Shared';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { ShapesGraphChangesPageComponent } from '../shapesGraphChangesPage/shapesGraphChangesPage.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { MatExpansionModule, MatTooltipModule } from '@angular/material';
+import { StatementContainerComponent } from '../../../shared/components/statementContainer/statementContainer.component';
+import { StatementDisplayComponent } from '../../../shared/components/statementDisplay/statementDisplay.component';
+import { CommitHistoryTableComponent } from '../../../shared/components/commitHistoryTable/commitHistoryTable.component';
+import { range, map, forEach } from 'lodash';
 
 describe('Shapes Graph Changes Page component', function() {
     let component: ShapesGraphChangesPageComponent;
@@ -42,19 +47,25 @@ describe('Shapes Graph Changes Page component', function() {
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
-            imports: [ ],
+            imports: [ 
+                MatExpansionModule,
+                MatTooltipModule
+            ],
             declarations: [
                 MockComponent(InfoMessageComponent),
+                MockComponent(CommitHistoryTableComponent),
+                MockComponent(StatementContainerComponent),
+                MockComponent(StatementDisplayComponent),
                 ShapesGraphChangesPageComponent
             ],
             providers: [
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: 'catalogManagerService', useClass: mockCatalogManager },
+                { provide: 'prefixes', useClass: mockPrefixes },
                 MockProvider(ShapesGraphStateService)
             ]
         });
     });
-
     beforeEach(function() {
         fixture = TestBed.createComponent(ShapesGraphChangesPageComponent);
         component = fixture.componentInstance;
@@ -66,7 +77,6 @@ describe('Shapes Graph Changes Page component', function() {
         catalogManagerStub.deleteInProgressCommit.and.returnValue(Promise.resolve());
         utilStub = TestBed.get('utilService');
     });
-
     afterEach(function() {
         cleanStylesFromDOM();
         component = null;
@@ -76,7 +86,36 @@ describe('Shapes Graph Changes Page component', function() {
         utilStub = null;
         catalogManagerStub = null;
     });
-
+    describe('should update the list of changes when additions/deletions change', function() {
+        beforeEach(function() {
+            utilStub.getChangesById.and.returnValue([{}]);
+            utilStub.getPredicatesAndObjects.and.returnValue([{}]);
+        });
+        it('if there are less than 100 changes', function() {
+            component.additions = [{'@id': '1', 'value': ['stuff']}];
+            component.deletions = [{'@id': '1', 'value': ['otherstuff']}, {'@id': '2'}];
+            component.ngOnChanges();
+            forEach(shapesGraphStateStub.listItem.inProgressCommit.additions, change => {
+                expect(utilStub.getPredicatesAndObjects).toHaveBeenCalledWith(change);
+            });
+            forEach(shapesGraphStateStub.listItem.inProgressCommit.deletions, change => {
+                expect(utilStub.getPredicatesAndObjects).toHaveBeenCalledWith(change);
+            });
+            expect(component.showList).toEqual([
+                {id: '1', additions: [{}], deletions: [{}], disableAll: false},
+                {id: '2', additions: [], deletions: [{}], disableAll: false},
+            ]);
+        });
+        it('if there are more than 100 changes', function() {
+            var ids = range(102);
+            component.additions = map(ids, id => ({'@id': id}));
+            component.ngOnChanges();
+            forEach(shapesGraphStateStub.listItem.inProgressCommit.additions, change => {
+                expect(utilStub.getPredicatesAndObjects).toHaveBeenCalledWith(change);
+            });
+            expect(component.showList.length).toEqual(100);
+        });
+    });
     describe('controller methods', function() {
         describe('should remove in progress changes', function() {
             it('successfully', async function() {
