@@ -21,13 +21,52 @@
   #L%
   -->
 <div class="shapes-graph-changes-page h-100 row m-0">
-    <div class="col-8 offset-2 pt-2 h-100">
-        <info-message *ngIf="!state.isCommittable() && state?.listItem?.versionedRdfRecord?.recordId">No Changes to Display</info-message>
-        <div class="has-changes h-100 d-flex flex-column" *ngIf="state.isCommittable()">
-            <div class="changes-info">
-                <div class="btn-container clearfix">
-                    <button mat-raised-button *ngIf="state.isCommittable()" class="btn btn-danger m-2" (click)="removeChanges()">Remove All Changes</button>
+    <div class="col-lg-10 pt-2 h-100">
+        <div class="row h-100 flex-nowrap">
+            <div class="col-6 offset-1">
+                <info-message *ngIf="!state.isCommittable() && state?.listItem?.versionedRdfRecord?.recordId">No Changes to Display</info-message>
+                <div class="has-changes h-100 d-flex flex-column" *ngIf="state.isCommittable()">
+                    <div class="changes-info">
+                        <div class="btn-container clearfix">
+                            <button mat-raised-button
+                                    *ngIf="state.isCommittable()"
+                                    class="btn btn-danger m-2"
+                                    (click)="removeChanges()">Remove All Changes
+                            </button>
+                        </div>
+                    </div>
+                    <div class="changes-display">
+                        <mat-accordion>
+                        <mat-expansion-panel *ngFor="let item of showList">
+                            <mat-expansion-panel-header>
+                                <mat-panel-title matTooltip="{{util.getBeautifulIRI(item.id)}}" class="text-truncate">
+                                    {{ util.getBeautifulIRI(item.id) }}
+                                </mat-panel-title>
+                            <mat-panel-description matTooltip="{{item.id}}" class="text-truncate">
+                                {{ item.id }}
+                            </mat-panel-description>
+                            </mat-expansion-panel-header>
+
+                            <statement-container *ngIf="item.additions.length" additions>
+                                <statement-display *ngFor="let addition of util.getPredicateLocalNameOrdered(item.additions)" [predicate]="addition.p" [object]="addition.o"></statement-display>
+                            </statement-container>
+                            <statement-container *ngIf="item.deletions.length" deletions>
+                                <statement-display *ngFor="let deletion of util.getPredicateLocalNameOrdered(item.deletions)" [predicate]="deletion.p" [object]="deletion.o"></statement-display>
+                            </statement-container>
+
+                        </mat-expansion-panel>
+                        </mat-accordion>
+                        <div class="text-center">
+                            <button *ngIf="showList.length !== list.length" (click)="getMoreResults()" class="btn btn-outline-primary"><i class="fa fa-fw fa-plus"></i><span>Load More</span></button>
+                        </div>
+                    </div>        
                 </div>
+            </div>
+            <div class="col offset-1 d-flex flex-column remove-min-width">
+                <commit-history-table class="flex-1" 
+                                    [commitId]="state.listItem.versionedRdfRecord.commitId" 
+                                    [headTitle]="state?.listItem?.currentVersionTitle" graph>
+                </commit-history-table>
             </div>
         </div>
     </div>

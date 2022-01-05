@@ -20,8 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="shapes-graph-editor-page vertical-scroll">
+<div class="shapes-graph-editor-page">
     <editor-top-bar *ngIf="!state?.listItem?.merge?.active"></editor-top-bar>
     <shapes-graph-merge-page *ngIf="state?.listItem?.merge?.active"></shapes-graph-merge-page>
-    <shapes-graph-changes-page *ngIf="state?.listItem?.changesPageOpen"></shapes-graph-changes-page>
+    <shapes-graph-changes-page *ngIf="state?.listItem?.changesPageOpen" 
+                            [additions]="state?.listItem?.inProgressCommit?.additions" 
+                            [deletions]="state?.listItem?.inProgressCommit?.deletions">
+    </shapes-graph-changes-page>
 </div>

@@ -45,7 +45,9 @@ export class CommitModalComponent {
         comment: ['', Validators.required]
     });
 
-    constructor(private state: ShapesGraphStateService, @Inject('utilService') private util, @Inject('catalogManagerService') private cm, private fb: FormBuilder, private dialogRef: MatDialogRef<CommitModalComponent>) {}
+    constructor(private state: ShapesGraphStateService, @Inject('utilService') private util,
+                @Inject('catalogManagerService') private cm, private fb: FormBuilder,
+                private dialogRef: MatDialogRef<CommitModalComponent>) {}
 
     commit(): void {
         if (this.state.listItem.upToDate) {
@@ -55,9 +57,12 @@ export class CommitModalComponent {
         }
     }
     createCommit(branchId: string): void {
-        this.cm.createBranchCommit(branchId, this.state.listItem.versionedRdfRecord.recordId, this.catalogId, this.createCommitForm.controls.comment.value)
+        this.cm.createBranchCommit(branchId, this.state.listItem.versionedRdfRecord.recordId, this.catalogId,
+            this.createCommitForm.controls.comment.value)
             .then(commitIri => {
-                return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, this.state.listItem.versionedRdfRecord.branchId, commitIri, undefined, undefined, true)
+                return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, 
+                    this.state.listItem.versionedRdfRecord.branchId, commitIri, undefined, undefined, true,
+                    this.state.listItem.changesPageOpen)
                     .then(() => {
                         this.dialogRef.close(true);
                     }, Promise.reject);

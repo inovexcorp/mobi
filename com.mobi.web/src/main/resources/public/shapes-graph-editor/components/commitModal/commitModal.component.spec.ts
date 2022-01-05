@@ -115,7 +115,7 @@ describe('Commit Modal component', function() {
                 await fixture.whenStable();
 
                 expect(catalogManagerStub.createBranchCommit).toHaveBeenCalledWith('branch1', 'record1', 'catalog', 'testComment');
-                expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record1', 'branch1', 'urn:newCommitIri', undefined, undefined, true);
+                expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record1', 'branch1', 'urn:newCommitIri', undefined, undefined, true, false);
                 expect(matDialogRef.close).toHaveBeenCalledWith(true);
             });
             it('unless an error occurs', async function() {

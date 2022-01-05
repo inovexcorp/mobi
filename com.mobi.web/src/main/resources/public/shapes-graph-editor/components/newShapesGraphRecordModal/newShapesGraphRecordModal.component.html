@@ -23,7 +23,14 @@
 <div class="new-shapes-graph-record-modal">
     <h1 mat-dialog-title>Create Shapes Graph Record</h1>
     <div mat-dialog-content [formGroup]="createRecordForm">
-        <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+        <error-display *ngIf="error.errorMessage">
+            {{error.errorMessage}}
+            <ul>
+                <li class="text-danger m-0" *ngFor="let detailError of error.errorDetails">
+                    {{ detailError }}
+                </li>
+            </ul>
+        </error-display>
         <mat-form-field class="w-100">
             <mat-label>Record Title</mat-label>
             <input matInput type="text" name="title" formControlName="title" required/>

@@ -24,7 +24,32 @@
 @import "../../../css/variables";
 
 .shapes-graph-changes-page {
-  .btn-container {
-    text-align: center;
-  }
+    .btn-container {
+        text-align: center;
+    }
+    .has-changes {
+        padding-top: 20px;
+        .changes-display {
+            padding-top: 20px;
+            max-height: 80%;
+            overflow: scroll;
+            .mat-expansion-panel {
+                .mat-expansion-panel-header {
+                    .mat-expansion-panel-header-title {
+                        max-width: 50%;
+                        flex: 0 0 50%;
+                        display: block !important;
+                    }
+                    .mat-expansion-panel-header-description {
+                        max-width: 45%;
+                        flex: 0 0 45%;
+                        display: inline-block;
+                    }
+                }
+            }
+        }
+    }
+    commit-history-table {
+        padding-top: 35px;
+    }
 }

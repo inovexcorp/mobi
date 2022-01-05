@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Inject, Component } from '@angular/core';
-import { get } from 'lodash';
+import { Inject, Component, OnChanges, Input } from '@angular/core';
+import { get, map, concat, intersection, filter, chunk } from 'lodash';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 
 import './shapesGraphChangesPage.component.scss';
@@ -44,17 +44,74 @@ import './shapesGraphChangesPage.component.scss';
     selector: 'shapes-graph-changes-page',
     templateUrl: './shapesGraphChangesPage.component.html'
 })
-export class ShapesGraphChangesPageComponent {
+export class ShapesGraphChangesPageComponent implements OnChanges {
+
+    @Input() additions;
+    @Input() deletions;
 
     catalogId: string = get(this.cm.localCatalog, '@id', '');
-    
-    constructor(public state: ShapesGraphStateService, @Inject('catalogManagerService') private cm, @Inject('utilService') private util) {}
+    typeIRI = this.prefixes.rdf + 'type';
+    types = [this.prefixes.owl + 'Class', this.prefixes.owl + 'ObjectProperty', this.prefixes.owl + 'DatatypeProperty',
+             this.prefixes.owl + 'AnnotationProperty', this.prefixes.owl + 'NamedIndividual', this.prefixes.skos
+             + 'Concept', this.prefixes.skos + 'ConceptScheme'];
 
+    list = [];
+    showList = [];
+    checkedStatements = {
+        additions: [],
+        deletions: []
+    };
+
+    index = 0;
+    size = 100;
+
+    constructor(public state: ShapesGraphStateService, @Inject('catalogManagerService') private cm,
+                @Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
+
+    ngOnChanges(): void {
+        const inProgressAdditions = map(this.additions, addition => ({
+            additions: this.util.getPredicatesAndObjects(addition),
+            id: addition['@id']
+        }));
+        const inProgressDeletions = map(this.deletions, deletion => ({
+            deletions: this.util.getPredicatesAndObjects(deletion),
+            id: deletion['@id']
+        }));
+        const mergedInProgressCommitsMap = [].concat(inProgressAdditions, inProgressDeletions).reduce((dict,
+            currentItem) => {
+            const existingValue = dict[currentItem['id']] || {};
+            const mergedValue = Object.assign({ 'id' : '', 'additions' : [], 'deletions' : []}, existingValue,
+                currentItem);
+            dict[currentItem.id] = mergedValue;
+            return dict;
+        }, {});
+        const mergedInProgressCommits = Object.keys(mergedInProgressCommitsMap).map(key => 
+            mergedInProgressCommitsMap[key]);
+        this.list = map(mergedInProgressCommits, inProgressItem => ({
+                id: inProgressItem.id,
+                additions: inProgressItem.additions,
+                deletions: inProgressItem.deletions,
+                disableAll: this.hasSpecificType(inProgressItem.additions) || this.hasSpecificType(inProgressItem.deletions)
+        }));
+        this.showList = this.getList();
+    }
     removeChanges(): void {
         this.cm.deleteInProgressCommit(this.state.listItem.versionedRdfRecord.recordId, this.catalogId)
             .then(() => {
                 this.state.clearInProgressCommit();
                 this.util.createSuccessToast('In Progress Commit removed successfully.');
             }, errorMessage => this.util.createErrorToast(`Error removing In Progress Commit: ${errorMessage}`));
+    }
+    getMoreResults = function() {
+        this.index++;
+        const currChunk = get(this.chunks, this.index, []);
+        this.showList = concat(this.showList, currChunk);
+    }
+    hasSpecificType = function(array) {
+        return !!intersection(map(filter(array, {p: this.typeIRI}), 'o'), this.types).length;
+    }
+    getList = function() {
+        this.chunks = chunk(this.list, this.size);
+        return get(this.chunks, this.index, []);
     }
 }
