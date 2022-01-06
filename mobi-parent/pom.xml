@@ -649,25 +649,25 @@
     <distributionManagement>
         <repository>
             <id>inovex</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/</url>
+            <url>https://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/</url>
         </repository>
         <snapshotRepository>
             <id>inovex</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/</url>
+            <url>https://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/</url>
         </snapshotRepository>
     </distributionManagement>
 
     <repositories>
         <repository>
             <id>inovex</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-group/</url>
+            <url>https://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-group/</url>
         </repository>
     </repositories>
 
     <pluginRepositories>
         <pluginRepository>
             <id>inovex</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-group/</url>
+            <url>https://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-group/</url>
         </pluginRepository>
     </pluginRepositories>
 </project>
