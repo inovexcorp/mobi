@@ -156,6 +156,7 @@ CatalogPage.prototype.searchRecords = function(browser, searchObj) {
            .setValue(this.recordsViewSearchBarCssSelector, [searchObj.searchText, browser.Keys.ENTER])
            .waitForElementNotPresent('div.spinner');
         browser.expect.element(this.recordsViewSearchBarCssSelector).value.to.contain(searchObj.searchText);
+        browser.waitForElementNotPresent('div.spinner');
     } else {
         this.clearCatalogSearchBar(browser);
     }
@@ -164,6 +165,7 @@ CatalogPage.prototype.searchRecords = function(browser, searchObj) {
         browser
             .waitForElementVisible(this.recordsViewCssSelector + ' form sort-options select')
             .setValue(this.recordsViewCssSelector + ' form sort-options select', searchObj.order)
+            .waitForElementNotPresent('div.spinner');
     }
 
     if('keywords' in searchObj) {
@@ -174,7 +176,7 @@ CatalogPage.prototype.searchRecords = function(browser, searchObj) {
             var keywordFilterXPathSelector = this.createRecordFiltersXPathSelector('Keywords', keywords[keyword]);
             browser.assert.elementPresent({ selector: keywordFilterXPathSelector, locateStrategy: 'xpath' });
             browser.click('xpath', keywordFilterXPathSelector, clickFunc).waitForElementNotPresent('div.spinner');
-
+            browser.waitForElementNotPresent('div.spinner');
         }
     }
 
@@ -237,20 +239,35 @@ module.exports = {
         catalogPage.assertRecordList(browser, 'z-catalog-ontology-1.ttl');
     },
 
-    'Step 8: Click on z-catalog-ontology-9p.ttl and see if modified date is updated' : function(browser) {
+    'Step 8: Check metadata of z-catalog-ontology-9p.ttl' : function(browser) {
         catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (desc)'});
         catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl,z-catalog-ontology-4.ttl,z-catalog-ontology-3.ttl,z-catalog-ontology-2.ttl,z-catalog-ontology-1.ttl');
         catalogPage.openRecordItem(browser, 'z-catalog-ontology-9p.ttl');
         catalogPage.changeRecordFields(browser, 'z-catalog-ontology-9p.ttl', {'description': 'new description', 'keywords': keywordsList});
 
-        browser.expect.element({
-            locateStrategy: 'xpath',
-            selector: '//catalog-page//record-view//div[contains(@class, "record-sidebar")]//dd[contains(@class, "ng-binding")][1]'}).text.to.not.contain('5/27/21 1:12 PM');
+        browser.expect.element('//catalog-page//record-view//div[contains(@class,"record-sidebar")]//dd[contains(@class, "ng-binding")][1]', 'xpath').text.to.not.contain('5/27/21 1:12 PM')
 
         catalogPage.leaveCatalogRecord(browser);
     },
 
-    'Step 9: Search catalog page one item ASC' : function(browser) {
+    'Step 9: Check metadata of z-catalog-ontology-1.ttl' : function(browser) {
+        catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (desc)'});
+        catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl,z-catalog-ontology-4.ttl,z-catalog-ontology-3.ttl,z-catalog-ontology-2.ttl,z-catalog-ontology-1.ttl');
+        catalogPage.openRecordItem(browser, 'z-catalog-ontology-1.ttl');
+
+        browser
+            .useXpath()
+            .click('//material-tabset//li//a//span[text()[contains(.,"Branches")]]')
+            .useCss()
+            .waitForElementNotPresent('div.spinner')
+            .useXpath()
+            .waitForElementVisible('//branch-list//entity-publisher//span[text()[contains(.,"admin")]]')
+            .useCss();
+
+        catalogPage.leaveCatalogRecord(browser);
+    },
+
+    'Step 10: Search catalog page one item ASC' : function(browser) {
         catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (asc)', keywords: ['1,1', '1\'1', '\\/', '/\\']});
         catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl');
     },

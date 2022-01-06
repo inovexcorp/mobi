@@ -57,6 +57,7 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
+import com.mobi.rdf.api.Value;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
 import com.mobi.security.policy.api.ontologies.policy.Policy;
@@ -324,6 +325,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      */
     protected Branch createMasterBranch(VersionedRDFRecord record) {
         Branch branch = createBranch("MASTER", "The master branch.");
+        Optional<Value> publisher = record.getProperty(valueFactory.createIRI(_Thing.publisher_IRI));
+        branch.setProperty(publisher.get(), valueFactory.createIRI(_Thing.publisher_IRI));
         record.setMasterBranch(branch);
         Set<Branch> branches = record.getBranch_resource().stream()
                 .map(branchFactory::createNew)
