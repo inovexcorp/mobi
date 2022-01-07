@@ -182,13 +182,13 @@ This can be any valid RDF format, such a Turtle.
     <repositories>
         <repository>
             <id>inovex</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-group/</url>
+            <url>https://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-group/</url>
         </repository>
     </repositories>
     <pluginRepositories>
         <pluginRepository>
             <id>inovex</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-group/</url>
+            <url>https://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-group/</url>
         </pluginRepository>
     </pluginRepositories>
     <build>
@@ -231,11 +231,11 @@ This can be any valid RDF format, such a Turtle.
                             </generates>
                             <references>
                                 <ontology>
-                                    <ontologyFile>jar:http://nexus.inovexcorp.com/nexus/repository/public-maven-prod-group/com/mobi/rdf.orm.ontologies/1.20.0/rdf.orm.ontologies-1.20.0.jar!shacl.ttl</ontologyFile>
+                                    <ontologyFile>jar:https://nexus.inovexcorp.com/nexus/repository/public-maven-prod-group/com/mobi/rdf.orm.ontologies/1.20.0/rdf.orm.ontologies-1.20.0.jar!shacl.ttl</ontologyFile>
                                     <outputPackage>com.mobi.ontologies.shacl</outputPackage>
                                 </ontology>
                                 <ontology>
-                                    <ontologyFile>jar:http://nexus.inovexcorp.com/nexus/repository/public-maven-prod-group/com/mobi/setting.api/1.20.0/setting.api-1.20.0.jar!setting.ttl</ontologyFile>
+                                    <ontologyFile>jar:https://nexus.inovexcorp.com/nexus/repository/public-maven-prod-group/com/mobi/setting.api/1.20.0/setting.api-1.20.0.jar!setting.ttl</ontologyFile>
                                     <outputPackage>com.mobi.setting.api.ontologies</outputPackage>
                                     <ontologyName>Setting</ontologyName>
                                 </ontology>

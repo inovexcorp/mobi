@@ -8,7 +8,7 @@ stages:
 
 variables:
   GIT_DEPTH: 10 #Sets git depth to a lower number to optimize speed
-  NEXUS_URL: "http://nexus.inovexcorp.com/nexus"
+  NEXUS_URL: "https://nexus.inovexcorp.com/nexus"
   # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log. `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
   MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true -XX:+TieredCompilation -XX:TieredStopAtLevel=1"
   MAVEN_CLI_OPTS: "--batch-mode --errors --show-version"
@@ -26,7 +26,7 @@ before_script:
   - cp /m2/settings.xml ~/.m2/settings.xml
   # Sets Version variables for use in job steps and updates pom to correct version for run
   - REGEX="^v([0-9]+)\.([0-9]+)\.([0-9]+)" #Uses bash regex - matches pattern vX.X.X)
-  - DEPLOY_REPO=http://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/ # Sets default repo to deploy to dev repo
+  - DEPLOY_REPO=https://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/ # Sets default repo to deploy to dev repo
   - mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout  #print version for a sanity check
   # Following script parses version and determines whether to build a release, RC (release candidate), or snapshot. Also updates deploy repo accordingly.
   - |- 
@@ -37,7 +37,7 @@ before_script:
       MICRO=`echo $VERSION | cut -d. -f3`
       mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$VERSION -DprocessAllModules -DgenerateBackupPoms=false
       MESSAGE="Building release"
-      DEPLOY_REPO=http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/
+      DEPLOY_REPO=https://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/
     elif [[ $CI_COMMIT_REF_NAME == "master" ]]
     then
       POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
