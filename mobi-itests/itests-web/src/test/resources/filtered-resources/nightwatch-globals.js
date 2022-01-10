@@ -40,6 +40,10 @@ GeneralUtils.prototype.switchToPage = function(browser, page, waitForElement){
 module.exports = {
   'globalPort' : '${https-port}',
 
+    // default timeout value in milliseconds for waitFor commands and implicit waitFor value for
+    // expect assertions
+  waitForConditionTimeout : 15000,
+
   'initial_steps' : function (browser, user, password) {
       browser
           .url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home')
@@ -85,7 +89,7 @@ module.exports = {
           .clearValue('open-ontology-tab search-bar input')
           .setValue('open-ontology-tab search-bar input', '')
           .keys(browser.Keys.ENTER)
-          .waitForElementNotPresent('.spinner', 5000)
+          .waitForElementNotPresent('.spinner')
   },
 
   'open_ontology' : function (browser, ontology) {
@@ -97,7 +101,7 @@ module.exports = {
           .waitForElementVisible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
           .click('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
           .useCss()
-          .waitForElementNotPresent('.spinner', 5000)
+          .waitForElementNotPresent('.spinner')
           .waitForElementVisible('div.material-tabset li.nav-item') // ensures that project tab is showing
   },
 

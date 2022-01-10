@@ -24,6 +24,7 @@ package com.mobi.catalog.rest;
  */
 
 import static com.mobi.persistence.utils.ResourceUtils.encode;
+import static com.mobi.rest.util.RestUtils.createIRI;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static org.mockito.Matchers.any;
@@ -46,6 +47,7 @@ import static org.testng.Assert.fail;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
+import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.Comment;
 import com.mobi.catalog.api.ontologies.mergerequests.CommentFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
@@ -107,6 +109,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
     private MergeRequestFactory mergeRequestFactory;
     private CommentFactory commentFactory;
     private UserFactory userFactory;
+    private BranchFactory branchFactory;
     private ValueFactory vf;
     private ModelFactory mf;
     private ValueConverterRegistry vcr;
@@ -121,7 +124,8 @@ public class MergeRequestRestTest extends MobiRestTestNg {
 
     private final String CATALOG_IRI = "http://test.org/catalog";
     private final String RECORD_ID = "http://mobi.com/records#record";
-    private final String BRANCH_ID = "http://mobi.com/branches#branch";
+    private final String SOURCE_BRANCH_ID = "http://mobi.com/branches#sourceBranch";
+    private final String TARGET_BRANCH_ID = "http://mobi.com/branches#targetBranch";
 
     private final String doesNotExist = "urn:doesNotExist";
     private final String invalidIRIString = "invalidIRI";
@@ -165,6 +169,12 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         userFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(userFactory);
 
+        branchFactory = new BranchFactory();
+        branchFactory.setModelFactory(mf);
+        branchFactory.setValueFactory(vf);
+        branchFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(branchFactory);
+
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -189,6 +199,8 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         Model contextModel1 = mf.createModel();
         request1.getModel().forEach(statement -> contextModel1.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), request1.getResource()));
         request1 = mergeRequestFactory.getExisting(request1.getResource(), contextModel1).get();
+        request1.setSourceBranch(branchFactory.createNew(createIRI(SOURCE_BRANCH_ID, vf)));
+        request1.setTargetBranch(branchFactory.createNew(createIRI(TARGET_BRANCH_ID, vf)));
 
         request2 = mergeRequestFactory.createNew(vf.createIRI("http://mobi.com/merge-requests#2"));
         Model contextModel2 = mf.createModel();
@@ -308,8 +320,8 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         fd.field("title", "Title");
         fd.field("description", "Description");
         fd.field("recordId", RECORD_ID);
-        fd.field("sourceBranchId", BRANCH_ID);
-        fd.field("targetBranchId", BRANCH_ID);
+        fd.field("sourceBranchId", SOURCE_BRANCH_ID);
+        fd.field("targetBranchId", TARGET_BRANCH_ID);
         fd.field("assignees", UsernameTestFilter.USERNAME);
         fd.field("removeSource", "true");
 
@@ -322,13 +334,30 @@ public class MergeRequestRestTest extends MobiRestTestNg {
     }
 
     @Test
+    public void createMergeRequestTestWithSameBranch() {
+        // Setup:
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Title");
+        fd.field("description", "Description");
+        fd.field("recordId", RECORD_ID);
+        fd.field("sourceBranchId", SOURCE_BRANCH_ID);
+        fd.field("targetBranchId", SOURCE_BRANCH_ID);
+        fd.field("assignees", UsernameTestFilter.USERNAME);
+        fd.field("removeSource", "true");
+
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+        verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
+    }
+
+    @Test
     public void createMergeRequestWithInvalidAssigneeTest() {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "Title");
         fd.field("recordId", RECORD_ID);
-        fd.field("sourceBranchId", BRANCH_ID);
-        fd.field("targetBranchId", BRANCH_ID);
+        fd.field("sourceBranchId", SOURCE_BRANCH_ID);
+        fd.field("targetBranchId", TARGET_BRANCH_ID);
         fd.field("assignees", "error");
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
@@ -343,8 +372,8 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("recordId", RECORD_ID);
-        fd.field("sourceBranchId", BRANCH_ID);
-        fd.field("targetBranchId", BRANCH_ID);
+        fd.field("sourceBranchId", SOURCE_BRANCH_ID);
+        fd.field("targetBranchId", TARGET_BRANCH_ID);
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
@@ -358,8 +387,8 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "Title");
-        fd.field("sourceBranchId", BRANCH_ID);
-        fd.field("targetBranchId", BRANCH_ID);
+        fd.field("sourceBranchId", SOURCE_BRANCH_ID);
+        fd.field("targetBranchId", TARGET_BRANCH_ID);
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
@@ -374,7 +403,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "Title");
         fd.field("recordId", RECORD_ID);
-        fd.field("targetBranchId", BRANCH_ID);
+        fd.field("targetBranchId", TARGET_BRANCH_ID);
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
@@ -389,7 +418,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "Title");
         fd.field("recordId", RECORD_ID);
-        fd.field("sourceBranchId", BRANCH_ID);
+        fd.field("sourceBranchId", SOURCE_BRANCH_ID);
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
@@ -404,8 +433,8 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "Title");
         fd.field("recordId", RECORD_ID);
-        fd.field("sourceBranchId", BRANCH_ID);
-        fd.field("targetBranchId", BRANCH_ID);
+        fd.field("sourceBranchId", SOURCE_BRANCH_ID);
+        fd.field("targetBranchId", TARGET_BRANCH_ID);
         doThrow(new IllegalArgumentException()).when(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
@@ -422,7 +451,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         fd.field("title", "Title");
         fd.field("recordId", RECORD_ID);
         fd.field("sourceBranchId", invalidIRIString);
-        fd.field("targetBranchId", BRANCH_ID);
+        fd.field("targetBranchId", TARGET_BRANCH_ID);
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
@@ -434,7 +463,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "Title");
         fd.field("recordId", RECORD_ID);
-        fd.field("sourceBranchId", BRANCH_ID);
+        fd.field("sourceBranchId", SOURCE_BRANCH_ID);
         fd.field("targetBranchId", invalidIRIString);
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
@@ -447,8 +476,8 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "Title");
         fd.field("recordId", RECORD_ID);
-        fd.field("sourceBranchId", BRANCH_ID);
-        fd.field("targetBranchId", BRANCH_ID);
+        fd.field("sourceBranchId", SOURCE_BRANCH_ID);
+        fd.field("targetBranchId", TARGET_BRANCH_ID);
         doThrow(new IllegalStateException()).when(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
@@ -464,8 +493,8 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "Title");
         fd.field("recordId", RECORD_ID);
-        fd.field("sourceBranchId", BRANCH_ID);
-        fd.field("targetBranchId", BRANCH_ID);
+        fd.field("sourceBranchId", SOURCE_BRANCH_ID);
+        fd.field("targetBranchId", TARGET_BRANCH_ID);
         doThrow(new MobiException()).when(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));

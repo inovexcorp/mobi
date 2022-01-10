@@ -52,9 +52,9 @@ const requestBranchSelectComponent = {
 requestBranchSelectComponentCtrl.$inject = ['$q', 'mergeRequestsStateService', 'catalogManagerService', 'utilService', 'prefixes'];
 
 function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalogManagerService, utilService, prefixes) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    var catalogId = get(cm.localCatalog, '@id');
+    const dvm = this;
+    const cm = catalogManagerService;
+    let catalogId = get(cm.localCatalog, '@id');
     dvm.util = utilService;
     dvm.state = mergeRequestsStateService;
     dvm.prefixes = prefixes;
@@ -64,18 +64,15 @@ function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalog
 
     dvm.$onInit = function() {
         dvm.state.requestConfig.entityNames = {};
+        dvm.state.requestConfig.sourceBranchId = '';
+        dvm.state.requestConfig.targetBranchId = '';
+        dvm.state.requestConfig.sourceBranch = '';
+        dvm.state.requestConfig.targetBranch = '';
         dvm.state.requestConfig.difference = undefined;
         dvm.state.requestConfig.previousDiffIris = [];
         dvm.state.requestConfig.startIndex = 0;
         cm.getRecordBranches(dvm.state.requestConfig.recordId, catalogId)
-            .then(response => {
-                dvm.branches = response.data;
-                dvm.state.updateRequestConfigBranch('sourceBranch', dvm.branches);
-                dvm.state.updateRequestConfigBranch( 'targetBranch', dvm.branches);
-                if (dvm.state.requestConfig.sourceBranch && dvm.state.requestConfig.targetBranch) {
-                    return dvm.state.updateRequestConfigDifference();
-                }
-            }, $q.reject)
+            .then(response => dvm.branches = response.data, $q.reject)
             .then(noop, error => {
                 dvm.util.createErrorToast(error);
                 dvm.branches = [];
@@ -86,6 +83,7 @@ function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalog
         dvm.state.requestConfig.difference = undefined;
         dvm.state.requestConfig.previousDiffIris = [];
         dvm.state.requestConfig.startIndex = 0;
+        delete dvm.state.requestConfig.sameBranch;
     }
     dvm.changeSource = function(value) {
         dvm.state.requestConfig.sourceBranch = value;
@@ -93,10 +91,13 @@ function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalog
         dvm.state.requestConfig.difference = undefined;
         dvm.state.requestConfig.previousDiffIris = [];
         dvm.state.requestConfig.startIndex = 0;
+        dvm.state.requestConfig.sameBranch = false;
         if (dvm.state.requestConfig.sourceBranch) {
             dvm.state.requestConfig.sourceBranchId = dvm.state.requestConfig.sourceBranch['@id'];
             if (dvm.state.requestConfig.targetBranch) {
-                dvm.state.updateRequestConfigDifference().then(noop, dvm.util.createErrorToast);
+                if (dvm.state.requestConfig.targetBranchId === dvm.state.requestConfig.sourceBranchId) {
+                    dvm.state.requestConfig.sameBranch = true;
+                } else { dvm.state.updateRequestConfigDifference().then(noop, dvm.util.createErrorToast) }
             } else {
                 dvm.state.requestConfig.difference = undefined;
             }
@@ -110,10 +111,13 @@ function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalog
         dvm.state.requestConfig.difference = undefined;
         dvm.state.requestConfig.previousDiffIris = [];
         dvm.state.requestConfig.startIndex = 0;
+        dvm.state.requestConfig.sameBranch = false;
         if (dvm.state.requestConfig.targetBranch) {
             dvm.state.requestConfig.targetBranchId = dvm.state.requestConfig.targetBranch['@id'];
             if (dvm.state.requestConfig.sourceBranch) {
-                dvm.state.updateRequestConfigDifference().then(noop, dvm.util.createErrorToast);
+                if (dvm.state.requestConfig.targetBranchId === dvm.state.requestConfig.sourceBranchId) {
+                    dvm.state.requestConfig.sameBranch = true;
+                } else { dvm.state.updateRequestConfigDifference().then(noop, dvm.util.createErrorToast) }
             } else {
                 dvm.state.requestConfig.difference = undefined;
             }

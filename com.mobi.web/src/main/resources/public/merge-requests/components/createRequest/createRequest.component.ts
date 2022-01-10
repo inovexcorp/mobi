@@ -77,6 +77,7 @@ function createRequestComponentCtrl(mergeRequestManagerService, mergeRequestsSta
                 delete dvm.state.requestConfig.targetBranch;
                 delete dvm.state.requestConfig.difference;
                 delete dvm.state.requestConfig.removeSource;
+                delete dvm.state.requestConfig.sameBranch;
             }
             } else {
             dvm.state.createRequest = false;
@@ -86,7 +87,8 @@ function createRequestComponentCtrl(mergeRequestManagerService, mergeRequestsSta
         if (dvm.state.createRequestStep === 0) {
             return !dvm.state.requestConfig.recordId;
         } else if (dvm.state.createRequestStep === 1) {
-            return !dvm.state.requestConfig.sourceBranchId || !dvm.state.requestConfig.targetBranchId;
+            return !dvm.state.requestConfig.sourceBranchId || !dvm.state.requestConfig.targetBranchId
+                || dvm.state.requestConfig.sameBranch
         } else {
             return !dvm.state.requestConfig.title;
         }

@@ -271,6 +271,9 @@ public class MergeRequestRest {
                 builder.addAssignee(assignee.get());
             });
         }
+        if (targetBranchId.equals(sourceBranchId)) {
+            throw ErrorUtils.sendError("Cannot merge the same branch into itself.", Response.Status.BAD_REQUEST);
+        }
         try {
             MergeRequest request = manager.createMergeRequest(builder.build(), configProvider.getLocalCatalogIRI());
             manager.addMergeRequest(request);
@@ -690,8 +693,17 @@ public class MergeRequestRest {
 
     private MergeRequest jsonToMergeRequest(Resource requestId, String jsonMergeRequest) {
         Model mergeReqModel = jsonldToModel(jsonMergeRequest, transformer);
-        return mergeRequestFactory.getExisting(requestId, mergeReqModel).orElseThrow(() ->
+        MergeRequest mergeRequest = mergeRequestFactory.getExisting(requestId, mergeReqModel).orElseThrow(() ->
                 ErrorUtils.sendError("MergeRequest IDs must match", Response.Status.BAD_REQUEST));
+
+        Optional<Resource> sourceBranch = mergeRequest.getSourceBranch_resource();
+        Optional<Resource> targetBranch = mergeRequest.getTargetBranch_resource();
+
+        if (sourceBranch.equals(targetBranch)) {
+            throw ErrorUtils.sendError("Cannot merge the same branch into itself.", Response.Status.BAD_REQUEST);
+        }
+
+        return mergeRequest;
     }
 
     private Comment jsonToComment(Resource commentId, String jsonComment) {
