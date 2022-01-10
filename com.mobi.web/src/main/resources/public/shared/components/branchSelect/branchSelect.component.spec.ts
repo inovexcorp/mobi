@@ -28,6 +28,7 @@ import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/ma
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
@@ -48,7 +49,8 @@ describe('Branch Select component', function() {
                 MatAutocompleteModule,
                 MatInputModule,
                 MatFormFieldModule,
-                MatSelectModule
+                MatSelectModule,
+                MatIconModule
             ],
             declarations: [
                 BranchSelectComponent

@@ -33,7 +33,7 @@ import {
 } from '../../../../../../test/js/Shared';
 
 describe('Edit Request Overlay Component', function() {
-    var $compile, scope, $q, mergeRequestsStateSvc, mergeRequestManagerSvc, utilSvc, prefixes;
+    let $compile, scope, $q, mergeRequestsStateSvc, mergeRequestManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         angular.mock.module('merge-requests');
@@ -108,7 +108,7 @@ describe('Edit Request Overlay Component', function() {
         });
     });
     it('initializes with the correct values', function() {
-        var expectedRequest = {
+        const expectedRequest = {
             recordId: mergeRequestsStateSvc.selected.recordIri,
             title: mergeRequestsStateSvc.selected.title,
             description: mergeRequestsStateSvc.selected.jsonld[prefixes.dcterms + 'description'][0]['@value'],
@@ -154,7 +154,7 @@ describe('Edit Request Overlay Component', function() {
             expect(this.element.find('checkbox').length).toBe(1);
         });
         it('with buttons to submit and cancel', function() {
-            var buttons = this.element.querySelectorAll('.modal-footer button');
+            const buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
@@ -169,7 +169,7 @@ describe('Edit Request Overlay Component', function() {
                     entity[prefixes.dcterms + 'description'][0]['@value'] = 'Updated description.';
                 }
             });
-            var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
+            let updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
             updatedJson[prefixes.dcterms + 'title'][0]['@value'] = 'Updated Title';
             updatedJson[prefixes.dcterms + 'description'][0]['@value'] = 'Updated description.';
             updatedJson[[prefixes.mergereq + 'targetBranch']][0]['@id'] = 'urn://test/branch/new-target';

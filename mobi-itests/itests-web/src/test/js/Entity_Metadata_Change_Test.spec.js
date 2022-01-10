@@ -83,7 +83,7 @@ module.exports = {
             .setValue('//create-class-overlay//label[text()="Name"]/parent::custom-label/following-sibling::input', 'class A')
             .click('//create-class-overlay//button[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('create-class-overlay .modal-header h3', 5000)
+            .waitForElementNotPresent('create-class-overlay .modal-header h3')
     },
 
     'Step 6: Verify class was created': function(browser) {
@@ -107,7 +107,7 @@ module.exports = {
             .useXpath()
             .click('//commit-overlay//button[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('commit-overlay .modal-header h3', 5000)
+            .waitForElementNotPresent('commit-overlay .modal-header h3')
     },
 
     'Step 8: Verify Commit': function(browser) {
@@ -148,8 +148,8 @@ module.exports = {
     'Step 10: Verify Changes to Class': function(browser) {
         browser
             .useCss()
-            .waitForElementNotPresent('create-class-overlay .modal-header h3', 5000)
-            .waitForElementNotPresent('div.spinner', 5000)
+            .waitForElementNotPresent('create-class-overlay .modal-header h3')
+            .waitForElementNotPresent('div.spinner')
             .useXpath()
             .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
             .assert.visible('//value-display//div//span[text()[contains(.,"A Edited")]]')
@@ -167,7 +167,7 @@ module.exports = {
             .useXpath()
             .click('//commit-overlay//button[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('commit-overlay .modal-header h3', 5000)
+            .waitForElementNotPresent('commit-overlay .modal-header h3')
     },
 
     'Step 12: Verify Commit': function(browser) {

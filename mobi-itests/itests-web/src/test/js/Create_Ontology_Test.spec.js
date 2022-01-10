@@ -188,7 +188,7 @@ module.exports = {
             .useXpath()
             .click('//create-class-overlay//button[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('create-class-overlay .modal-header h3', 5000)
+            .waitForElementNotPresent('create-class-overlay .modal-header h3')
     },
 
     'Step 14: Verify class was created': function(browser) {
@@ -233,7 +233,7 @@ module.exports = {
             .useXpath()
             .click('//commit-overlay//button[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('commit-overlay .modal-header h3', 5000)
+            .waitForElementNotPresent('commit-overlay .modal-header h3')
     },
 
     'Step 17: Verify no changes are shown': function(browser) {

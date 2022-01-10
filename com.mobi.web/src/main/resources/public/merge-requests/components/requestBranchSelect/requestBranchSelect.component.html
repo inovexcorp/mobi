@@ -21,6 +21,7 @@
   #L%
   -->
 <div class="request-branch-select h-100">
+    <error-display ng-if="dvm.state.requestConfig.sameBranch">A branch cannot be merged into itself.</error-display>
     <div class="form-container">
         <form name="dvm.form" class="branch-select-form form-horizontal justify-content-center" novalidate autocomplete="off">
             <div class="form-group">
@@ -38,7 +39,7 @@
             </div>
         </form>
     </div>
-    <commit-difference-tabset ng-if="dvm.state.requestConfig.difference"
+    <commit-difference-tabset ng-if="dvm.state.requestConfig.difference && !dvm.state.requestConfig.sameBranch"
                               [difference]="dvm.state.requestConfig.difference"
                               [branch-title]="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')"
                               [target-id]="dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head')"

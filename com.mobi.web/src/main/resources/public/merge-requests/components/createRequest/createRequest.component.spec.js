@@ -127,6 +127,7 @@ describe('Create Request component', function() {
                     expect(_.has(mergeRequestsStateSvc.requestConfig, 'targetBranch')).toEqual(false);
                     expect(_.has(mergeRequestsStateSvc.requestConfig, 'difference')).toEqual(false);
                     expect(_.has(mergeRequestsStateSvc.requestConfig, 'removeSource')).toEqual(false);
+                    expect(_.has(mergeRequestsStateSvc.requestConfig, 'sameBranch')).toEqual(false);
                 });
                 it('2', function() {
                     mergeRequestsStateSvc.createRequestStep = 2;
@@ -152,13 +153,24 @@ describe('Create Request component', function() {
                 mergeRequestsStateSvc.requestConfig.recordId = 'record';
                 expect(this.controller.isDisabled()).toEqual(false);
             });
-            it('1', function() {
-                mergeRequestsStateSvc.createRequestStep = 1;
-                expect(this.controller.isDisabled()).toEqual(true);
-                mergeRequestsStateSvc.requestConfig.sourceBranchId = 'branch';
-                expect(this.controller.isDisabled()).toEqual(true);
-                mergeRequestsStateSvc.requestConfig.targetBranchId = 'branch';
-                expect(this.controller.isDisabled()).toEqual(false);
+            describe('1', function() {
+                it('and both of the branches are the same', function() {
+                    mergeRequestsStateSvc.createRequestStep = 1;
+                    mergeRequestsStateSvc.requestConfig.sameBranch = true;
+                    expect(this.controller.isDisabled()).toEqual(true);
+                    mergeRequestsStateSvc.requestConfig.sourceBranchId = 'branch';
+                    mergeRequestsStateSvc.requestConfig.targetBranchId = 'branch';
+                    expect(this.controller.isDisabled()).toEqual(true);
+                });
+                it('and the two branches are different', function() {
+                    mergeRequestsStateSvc.createRequestStep = 1;
+                    mergeRequestsStateSvc.requestConfig.sameBranch = false;
+                    expect(this.controller.isDisabled()).toEqual(true);
+                    mergeRequestsStateSvc.requestConfig.sourceBranchId = 'branch';
+                    expect(this.controller.isDisabled()).toEqual(true);
+                    mergeRequestsStateSvc.requestConfig.targetBranchId = 'branch';
+                    expect(this.controller.isDisabled()).toEqual(false);
+                })
             });
             it('2', function() {
                 mergeRequestsStateSvc.createRequestStep = 2;

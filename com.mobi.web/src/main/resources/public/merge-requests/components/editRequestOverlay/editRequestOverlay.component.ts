@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import { forEach, get } from 'lodash';
+import {forEach, get, reject} from 'lodash';
 
 import './editRequestOverlay.component.scss';
 
@@ -74,7 +74,10 @@ function editRequestOverlayComponentCtrl(mergeRequestsStateService, mergeRequest
         initRequestConfig();
 
         cm.getRecordBranches(dvm.request.recordId, catalogId)
-            .then(response => dvm.branches = response.data, error => {
+            .then(response => {
+                let sourceBranchId = dvm.request.sourceBranch['@id']
+                dvm.branches = reject(response.data, {'@id': sourceBranchId});
+            }, error => {
                 dvm.util.createErrorToast(error);
                 dvm.branches = [];
             });
