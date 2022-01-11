@@ -67,7 +67,7 @@ function rdfPreviewFormComponentCtrl(delimitedManagerService, mapperStateService
     dvm.generatePreview = function() {
         dvm.dm.previewMap(dvm.state.mapping.jsonld, dvm.serializeFormat).then(preview => {
             setMode();
-            dvm.dm.preview = (dvm.serializeFormat === 'jsonld') ? JSON.stringify(preview) : toString(preview);
+            dvm.dm.preview = (dvm.serializeFormat === 'jsonld') ? JSON.stringify(preview, null, 4) : toString(preview);
             dvm.dm.serializeFormat = dvm.serializeFormat;
         }, errorMessage => {
             dvm.errorMessage = errorMessage;
