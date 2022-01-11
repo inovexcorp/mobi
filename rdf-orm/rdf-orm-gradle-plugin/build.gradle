@@ -17,7 +17,7 @@ repositories {
         url "~/.m2/repository"
     }
     maven {
-        url "http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/"
+        url "https://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/"
     }
 }
 
@@ -29,8 +29,8 @@ dependencies {
 publishing {
     repositories {
         maven {
-            def releasesRepoUrl = "http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/"
-            def snapshotsRepoUrl = "http://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/"
+            def releasesRepoUrl = "https://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/"
+            def snapshotsRepoUrl = "https://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/"
             // Testing purposes
             // def releasesRepoUrl = "$buildDir/repos/releases"
             // def snapshotsRepoUrl = "$buildDir/repos/snapshots"
