@@ -23,11 +23,6 @@ package com.mobi.itests.orm;
  * #L%
  */
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import com.mobi.itests.support.KarafTestSupport;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -36,19 +31,35 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.impl.ThingFactory;
+import org.apache.karaf.itests.KarafTestSupport;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.CoreOptions;
+import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.junit.PaxExam;
+import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
+import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
-import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.math.BigInteger;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import javax.inject.Inject;
+import java.util.List;
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
@@ -56,12 +67,35 @@ public class OrmIT extends KarafTestSupport {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OrmIT.class);
 
-    @Inject
-    protected BundleContext thisBundleContext;
+    @Override
+    public MavenArtifactUrlReference getKarafDistribution() {
+        return CoreOptions.maven().groupId("com.mobi").artifactId("mobi-distribution").versionAsInProject().type("tar.gz");
+    }
 
-    @Before
-    public synchronized void setup() throws Exception {
-        setup(thisBundleContext);
+    @Configuration
+    @Override
+    public Option[] config() {
+        try {
+            List<Option> options = new ArrayList<>(Arrays.asList(
+                    KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
+                            Paths.get(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg").toURI()).toFile()),
+                    KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false")
+            ));
+
+            Files.list(getFileResource("/etc").toPath()).forEach(path ->
+                    options.add(KarafDistributionOption.replaceConfigurationFile("etc/" + path.getFileName(), path.toFile())));
+            return OptionUtils.combine(super.config(), options.toArray(new Option[0]));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    protected File getFileResource(String path) throws URISyntaxException {
+        URL res = this.getClass().getResource(path);
+        if (res == null) {
+            throw new RuntimeException("File resource " + path + " not found");
+        }
+        return Paths.get(res.toURI()).toFile();
     }
 
     @Test

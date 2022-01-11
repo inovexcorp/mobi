@@ -24,8 +24,8 @@ package com.mobi.itests.rest;
  */
 
 import static com.mobi.itests.rest.utils.RestITUtils.authenticateUser;
-import static com.mobi.itests.rest.utils.RestITUtils.getBaseUrl;
 import static com.mobi.itests.rest.utils.RestITUtils.createHttpClient;
+import static com.mobi.itests.rest.utils.RestITUtils.getBaseUrl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -34,7 +34,7 @@ import static org.junit.Assert.fail;
 
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.itests.support.KarafTestSupport;
+import com.mobi.itests.rest.utils.RestITUtils;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
@@ -53,10 +53,17 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.apache.karaf.itests.KarafTestSupport;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.CoreOptions;
+import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.junit.PaxExam;
+import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
+import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.osgi.framework.BundleContext;
@@ -67,6 +74,9 @@ import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.inject.Inject;
 
 @RunWith(PaxExam.class)
@@ -80,15 +90,37 @@ public class OntologyRestIT extends KarafTestSupport {
 
     private HttpClientContext context = HttpClientContext.create();
 
+    @Override
+    public MavenArtifactUrlReference getKarafDistribution() {
+        return CoreOptions.maven().groupId("com.mobi").artifactId("mobi-distribution").versionAsInProject().type("tar.gz");
+    }
+
+    @Configuration
+    @Override
+    public Option[] config() {
+        try {
+            String httpsPort = Integer.toString(getAvailablePort(9540, 9999));
+            List<Option> options = new ArrayList<>(Arrays.asList(
+                    KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port.secure", httpsPort),
+                    KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
+                            Paths.get(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg").toURI()).toFile()),
+                    KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false")
+            ));
+            return OptionUtils.combine(super.config(), options.toArray(new Option[0]));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     @Before
     public synchronized void setup() throws Exception {
         if (setupComplete) return;
 
         String ontology = "test-ontology.ttl";
-        Files.copy(getBundleEntry(thisBundleContext, "/" + ontology), Paths.get(ontology));
+        Files.copy(thisBundleContext.getBundle().getEntry("/" + ontology).openStream(), Paths.get(ontology));
 
         String vocabulary = "test-vocabulary.ttl";
-        Files.copy(getBundleEntry(thisBundleContext, "/" + vocabulary), Paths.get(vocabulary));
+        Files.copy(thisBundleContext.getBundle().getEntry("/" + vocabulary).openStream(), Paths.get(vocabulary));
 
         waitForService("(&(objectClass=com.mobi.ontology.impl.core.record.SimpleOntologyRecordService))", 10000L);
         waitForService("(&(objectClass=com.mobi.jaas.rest.AuthRest))", 10000L);
@@ -151,7 +183,7 @@ public class OntologyRestIT extends KarafTestSupport {
     }
 
     private HttpEntity createFormData(String filename, String title) throws IOException {
-        InputStream ontology = getBundleEntry(thisBundleContext, filename);
+        InputStream ontology = thisBundleContext.getBundle().getEntry(filename).openStream();
         MultipartEntityBuilder mb = MultipartEntityBuilder.create();
         mb.addBinaryBody("file", ontology, ContentType.APPLICATION_OCTET_STREAM, filename);
         mb.addTextBody("title", title);
@@ -161,15 +193,15 @@ public class OntologyRestIT extends KarafTestSupport {
     }
 
     private CloseableHttpResponse uploadFile(CloseableHttpClient client, HttpEntity entity) throws IOException, GeneralSecurityException {
-        authenticateUser(context, getHttpsPort());
-        HttpPost post = new HttpPost(getBaseUrl(getHttpsPort()) + "/ontologies");
+        authenticateUser(context, RestITUtils.getHttpsPort(configurationAdmin));
+        HttpPost post = new HttpPost(getBaseUrl(RestITUtils.getHttpsPort(configurationAdmin)) + "/ontologies");
         post.setEntity(entity);
         return client.execute(post, context);
     }
 
     private CloseableHttpResponse deleteOntology(CloseableHttpClient client, String recordId) throws IOException, GeneralSecurityException {
-        authenticateUser(context, getHttpsPort());
-        HttpDelete delete = new HttpDelete(getBaseUrl(getHttpsPort()) + "/ontologies/" + URLEncoder.encode(recordId, "UTF-8"));
+        authenticateUser(context, RestITUtils.getHttpsPort(configurationAdmin));
+        HttpDelete delete = new HttpDelete(getBaseUrl(RestITUtils.getHttpsPort(configurationAdmin)) + "/ontologies/" + URLEncoder.encode(recordId, "UTF-8"));
         return client.execute(delete, context);
     }
 

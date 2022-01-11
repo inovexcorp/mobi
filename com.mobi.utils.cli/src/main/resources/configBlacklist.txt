@@ -4,3 +4,6 @@ branding-ssh.properties
 branding.properties
 com.mobi.platform.server.cfg
 license.lic
+jre.properties
+config.properties
+startup.properties
