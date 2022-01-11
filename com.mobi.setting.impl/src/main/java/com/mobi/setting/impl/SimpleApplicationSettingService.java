@@ -50,7 +50,10 @@ import java.util.stream.Collectors;
 
 @Component(
         immediate = true,
-        service = { SettingService.class, SimpleApplicationSettingService.class }
+        service = { SettingService.class, SimpleApplicationSettingService.class },
+        property = {
+                "settingType=Application"
+        }
 )
 public class SimpleApplicationSettingService extends AbstractSettingService<ApplicationSetting> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleApplicationSettingService.class);

@@ -56,9 +56,10 @@
         <commons-lang3.version>3.8.1</commons-lang3.version>
         <rdf4j.version>2.5.5</rdf4j.version>
         <owlapi.version>5.1.9</owlapi.version>
-        <karaf.version>4.2.0</karaf.version>
+        <karaf.version>4.2.14</karaf.version>
         <httpclient.version>4.5.2</httpclient.version>
         <jaxrs.version>2.0.1</jaxrs.version>
+        <jaxb.version>2.3.2</jaxb.version>
         <jersey.version>2.25.1</jersey.version>
         <swagger.version>2.1.1</swagger.version>
         <osgi.version>6.0.0</osgi.version>
@@ -307,6 +308,16 @@
                 <groupId>org.glassfish.jersey.media</groupId>
                 <artifactId>jersey-media-multipart</artifactId>
                 <version>${jersey.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>${jaxb.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>${jaxb.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.swagger.core.v3</groupId>
@@ -648,25 +659,25 @@
     <distributionManagement>
         <repository>
             <id>inovex</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/</url>
+            <url>https://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/</url>
         </repository>
         <snapshotRepository>
             <id>inovex</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/</url>
+            <url>https://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/</url>
         </snapshotRepository>
     </distributionManagement>
 
     <repositories>
         <repository>
             <id>inovex</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-group/</url>
+            <url>https://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-group/</url>
         </repository>
     </repositories>
 
     <pluginRepositories>
         <pluginRepository>
             <id>inovex</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-group/</url>
+            <url>https://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-group/</url>
         </pluginRepository>
     </pluginRepositories>
 </project>
