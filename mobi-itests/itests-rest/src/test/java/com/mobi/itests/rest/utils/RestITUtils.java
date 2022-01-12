@@ -41,9 +41,9 @@ import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
+import org.osgi.service.cm.ConfigurationAdmin;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -110,5 +110,13 @@ public class RestITUtils {
 
     public static String getBaseUrl(String port) {
         return hostUrl + port + path;
+    }
+
+    public static String getHttpsPort(ConfigurationAdmin configurationAdmin) throws IOException {
+        org.osgi.service.cm.Configuration configuration = configurationAdmin.getConfiguration("org.ops4j.pax.web", null);
+        if (configuration != null) {
+            return configuration.getProperties().get("org.osgi.service.http.port.secure").toString();
+        }
+        return "9082";
     }
 }

@@ -71,7 +71,7 @@ public class SimpleSettingUtilsService implements SettingUtilsService {
     @Reference
     OrmFactoryRegistry factoryRegistry;
 
-    @Reference
+    @Reference(target = "(settingType=Application)")
     SettingService<ApplicationSetting> applicationSettingService;
 
     /** Only supports Simple Settings with no nested property shapes */

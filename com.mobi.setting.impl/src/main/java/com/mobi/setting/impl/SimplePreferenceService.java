@@ -49,7 +49,10 @@ import java.util.stream.Collectors;
 
 @Component(
         immediate = true,
-        service = { SettingService.class, SimplePreferenceService.class }
+        service = { SettingService.class, SimplePreferenceService.class },
+        property = {
+                "settingType=Preference"
+        }
 )
 public class SimplePreferenceService extends AbstractSettingService<Preference> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleApplicationSettingService.class);

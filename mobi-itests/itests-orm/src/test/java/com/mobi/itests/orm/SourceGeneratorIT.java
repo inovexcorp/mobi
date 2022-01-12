@@ -66,7 +66,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-public class SourceGeneratorTest {
+public class SourceGeneratorIT {
 
     private static ValueFactory valueFactory;
 

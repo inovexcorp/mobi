@@ -29,18 +29,24 @@ import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.api.builder.DatasetRecordConfig;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
-import com.mobi.itests.support.KarafTestSupport;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.utils.Values;
+import org.apache.karaf.itests.KarafTestSupport;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.CoreOptions;
+import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.junit.PaxExam;
+import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
+import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.osgi.framework.BundleContext;
@@ -50,6 +56,7 @@ import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
@@ -68,12 +75,32 @@ public class ImportIT extends KarafTestSupport {
     @Inject
     protected static BundleContext thisBundleContext;
 
+    @Override
+    public MavenArtifactUrlReference getKarafDistribution() {
+        return CoreOptions.maven().groupId("com.mobi").artifactId("mobi-distribution").versionAsInProject().type("tar.gz");
+    }
+
+    @Configuration
+    @Override
+    public Option[] config() {
+        try {
+            List<Option> options = new ArrayList<>(Arrays.asList(
+                    KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
+                            Paths.get(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg").toURI()).toFile()),
+                    KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false")
+            ));
+            return OptionUtils.combine(super.config(), options.toArray(new Option[0]));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     @Before
     public synchronized void setup() throws Exception {
         if (setupComplete) return;
 
         String dataFile = "testData.trig";
-        Files.copy(getBundleEntry(thisBundleContext, "/" + dataFile), Paths.get(dataFile));
+        Files.copy(thisBundleContext.getBundle().getEntry("/" + dataFile).openStream(), Paths.get(dataFile));
 
         waitForService("(&(objectClass=com.mobi.etl.api.delimited.RDFImportService))", 10000L);
         waitForService("(&(objectClass=com.mobi.ontology.orm.impl.ThingFactory))", 10000L);

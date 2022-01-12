@@ -31,7 +31,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
-import com.mobi.itests.support.KarafTestSupport;
+import com.mobi.itests.rest.utils.RestITUtils;
 import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.Statements;
 import com.mobi.rdf.api.IRI;
@@ -50,10 +50,17 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.apache.karaf.itests.KarafTestSupport;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.CoreOptions;
+import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.junit.PaxExam;
+import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
+import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.osgi.framework.BundleContext;
@@ -63,6 +70,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 
@@ -78,11 +88,33 @@ public class DatasetRestIT extends KarafTestSupport {
 
     private HttpClientContext context = HttpClientContext.create();
 
+    @Override
+    public MavenArtifactUrlReference getKarafDistribution() {
+        return CoreOptions.maven().groupId("com.mobi").artifactId("mobi-distribution").versionAsInProject().type("tar.gz");
+    }
+
+    @Configuration
+    @Override
+    public Option[] config() {
+        try {
+            String httpsPort = Integer.toString(getAvailablePort(9540, 9999));
+            List<Option> options = new ArrayList<>(Arrays.asList(
+                    KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port.secure", httpsPort),
+                    KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
+                            Paths.get(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg").toURI()).toFile()),
+                    KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false")
+            ));
+            return OptionUtils.combine(super.config(), options.toArray(new Option[0]));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     @Before
     public synchronized void setup() throws Exception {
         if (setupComplete) return;
 
-        Files.copy(getBundleEntry(thisBundleContext, "/" + DATA_FILE), Paths.get(DATA_FILE));
+        Files.copy(thisBundleContext.getBundle().getEntry("/" + DATA_FILE).openStream(), Paths.get(DATA_FILE));
 
         waitForService("(&(objectClass=com.mobi.ontology.rest.DatasetRest))", 10000L);
         waitForService("(&(objectClass=com.mobi.jaas.rest.AuthRest))", 10000L);
@@ -152,23 +184,23 @@ public class DatasetRestIT extends KarafTestSupport {
 
     private HttpEntity createUploadFormData(String fileName) throws IOException {
         MultipartEntityBuilder mb = MultipartEntityBuilder.create();
-        InputStream ontology = getBundleEntry(thisBundleContext, fileName);
+        InputStream ontology = thisBundleContext.getBundle().getEntry(fileName).openStream();
         mb.addBinaryBody("file", ontology, ContentType.APPLICATION_OCTET_STREAM, fileName);
         return mb.build();
     }
 
     private CloseableHttpResponse createDataset(CloseableHttpClient client, HttpEntity entity)
             throws IOException, GeneralSecurityException {
-        authenticateUser(context, getHttpsPort());
-        HttpPost post = new HttpPost(getBaseUrl(getHttpsPort()) + "/datasets");
+        authenticateUser(context, RestITUtils.getHttpsPort(configurationAdmin));
+        HttpPost post = new HttpPost(getBaseUrl(RestITUtils.getHttpsPort(configurationAdmin)) + "/datasets");
         post.setEntity(entity);
         return client.execute(post, context);
     }
 
     private CloseableHttpResponse uploadFile(CloseableHttpClient client, Resource datasetId, HttpEntity entity)
             throws IOException, GeneralSecurityException {
-        authenticateUser(context, getHttpsPort());
-        HttpPost post = new HttpPost(getBaseUrl(getHttpsPort()) + "/datasets/" + ResourceUtils.encode(datasetId.stringValue()) + "/data");
+        authenticateUser(context, RestITUtils.getHttpsPort(configurationAdmin));
+        HttpPost post = new HttpPost(getBaseUrl(RestITUtils.getHttpsPort(configurationAdmin)) + "/datasets/" + ResourceUtils.encode(datasetId.stringValue()) + "/data");
         post.setEntity(entity);
         return client.execute(post, context);
     }

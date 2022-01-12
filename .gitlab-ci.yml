@@ -61,7 +61,7 @@ unit_test:
   stage: test
   script:
     # Runs tests, skipping sections that are integration/functional test only
-    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test -P release-build
+    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test -P release-build
   only:
     - merge_requests
 
