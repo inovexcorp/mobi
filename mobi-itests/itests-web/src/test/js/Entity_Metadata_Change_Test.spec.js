@@ -79,7 +79,7 @@ module.exports = {
             .waitForElementVisible('create-class-overlay .modal-header h3')
             .assert.containsText('create-class-overlay .modal-header h3', 'Create New OWL Class')
             .useXpath()
-            .waitForElementVisible('//create-class-overlay//span[text()="Name"]/parent::label/parent::custom-label/following-sibling::input', 'firstClass')
+            .waitForElementVisible('//create-class-overlay//span[text()="Name"]/parent::label/parent::custom-label/following-sibling::input')
             .setValue('//create-class-overlay//span[text()="Name"]/parent::label/parent::custom-label/following-sibling::input', 'class A')
             .click('//create-class-overlay//button[text()="Submit"]')
             .useCss()

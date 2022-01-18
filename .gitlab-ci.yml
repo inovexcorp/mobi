@@ -92,7 +92,6 @@ full_test:
   stage: test
   only: 
     - master # Any commit to master triggers this job
-    - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
   except:
     variables:
       - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/ #Should not run on automated commits
