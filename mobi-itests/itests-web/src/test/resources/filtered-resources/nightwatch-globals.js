@@ -42,7 +42,7 @@ module.exports = {
 
   // default timeout value in milliseconds for waitFor commands and implicit waitFor value for
   // expect assertions
-  waitForConditionTimeout : 15000,
+  waitForConditionTimeout : 60000,
 
 
   'initial_steps' : function (browser, user, password) {
