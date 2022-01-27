@@ -34,10 +34,10 @@ class SimpleIRISpec extends Specification {
             "http://test.com/#ClassName",
             "urn:ClassName",
             "http://test.com/Class#",
-            "http://test.com/Class Name",
-            "http://te st.com/ClassName",
             "http://te%20st.com/ClassName",
-            "ht tp://te st.com/Class Name"
+            "http://mobi.com/policies/record/https%3A%2F%2Fmobi.com%2Frecords%2FtestRecord1",
+            "http://mobi.com/policy/prop-path(%3Chttp%3A%2F%2Fmobi.com%2Fontologies%2Fpolicy%23relatedResource%3E%2F%3Chttp%3A%2F%2Fwww.w3.org%2F1999%2F02%2F22-rdf-syntax-ns%23type%3E)",
+            "http://mobi.com/policy/prop-path(%5E%3Chttp%3A%2F%2Ftest.com%2Fpath%3E%2F%3Chttp%3A%2F%2Fpurl.org%2Fdc%2Fterms%2Ftitle%3E)"
     ]
 
     @Shared
@@ -47,10 +47,10 @@ class SimpleIRISpec extends Specification {
             "ClassName",
             "ClassName",
             "",
-            "Class Name",
             "ClassName",
-            "ClassName",
-            "Class Name"
+            "https%3A%2F%2Fmobi.com%2Frecords%2FtestRecord1",
+            "prop-path(%3Chttp%3A%2F%2Fmobi.com%2Fontologies%2Fpolicy%23relatedResource%3E%2F%3Chttp%3A%2F%2Fwww.w3.org%2F1999%2F02%2F22-rdf-syntax-ns%23type%3E)",
+            "prop-path(%5E%3Chttp%3A%2F%2Ftest.com%2Fpath%3E%2F%3Chttp%3A%2F%2Fpurl.org%2Fdc%2Fterms%2Ftitle%3E)"
     ]
 
     @Shared
@@ -60,17 +60,21 @@ class SimpleIRISpec extends Specification {
             "http://test.com/#",
             "urn:",
             "http://test.com/Class#",
-            "http://test.com/",
-            "http://te st.com/",
             "http://te%20st.com/",
-            "ht tp://te st.com/"
+            "http://mobi.com/policies/record/",
+            "http://mobi.com/policy/",
+            "http://mobi.com/policy/"
     ]
 
     @Shared
     def badIris = [
             "http//test.com",
             "",
-            "this is not an iri"
+            "this is not an iri",
+            "urn:test#multiple#fragments",
+            "http://test.com/Class Name",
+            "http://te st.com/ClassName",
+            "ht tp://te st.com/Class Name"
     ]
 
     def "local name of #iriString is #localName"() {
@@ -164,7 +168,6 @@ class SimpleIRISpec extends Specification {
         where:
         iriString1 | iriString2
         "http://test.com/Class#ClassName" | "http://test.com/test2"
-        "http://te st.com/Class#ClassName" | "http://te%20st.com/Class#ClassName"
         "http://test.com/Class#" | "http://te%20st.com/Class#ClassName"
         "http://test.com/Class" | "http://test.com/"
         "urn:test1" | "urn:test2"

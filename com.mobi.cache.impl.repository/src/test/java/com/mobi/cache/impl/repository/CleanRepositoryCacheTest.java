@@ -96,8 +96,8 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
     @Test
     public void executeNothingExpiredTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(dataset1, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createIRI(OffsetDateTime.now().plusSeconds(10000).toString()));
-            conn.add(dataset2, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createIRI(OffsetDateTime.now().plusSeconds(10000).toString()));
+            conn.add(dataset1, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now().plusSeconds(10000).toString()));
+            conn.add(dataset2, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now().plusSeconds(10000).toString()));
         }
 
         cleanJob.execute(jobContext);
@@ -109,8 +109,8 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
     @Test
     public void executeOneExpiredTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(dataset1, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createIRI(OffsetDateTime.now().minusSeconds(10000).toString()));
-            conn.add(dataset2, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createIRI(OffsetDateTime.now().plusSeconds(10000).toString()));
+            conn.add(dataset1, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now().minusSeconds(10000).toString()));
+            conn.add(dataset2, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now().plusSeconds(10000).toString()));
         }
 
         cleanJob.execute(jobContext);
@@ -122,8 +122,8 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
     @Test
     public void executeAllExpiredTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(dataset1, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createIRI(OffsetDateTime.now().minusSeconds(10000).toString()));
-            conn.add(dataset2, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createIRI(OffsetDateTime.now().minusSeconds(10000).toString()));
+            conn.add(dataset1, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now().minusSeconds(10000).toString()));
+            conn.add(dataset2, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now().minusSeconds(10000).toString()));
         }
 
         cleanJob.execute(jobContext);
@@ -142,8 +142,8 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
     @Test
     public void executeNothingExpiredLongExpiryTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(dataset1, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createIRI(OffsetDateTime.now().toString()));
-            conn.add(dataset2, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createIRI(OffsetDateTime.now().toString()));
+            conn.add(dataset1, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now().toString()));
+            conn.add(dataset2, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now().toString()));
         }
 
         cleanJob.execute(jobContext);

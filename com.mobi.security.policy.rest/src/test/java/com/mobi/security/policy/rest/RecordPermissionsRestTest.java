@@ -103,8 +103,8 @@ public class RecordPermissionsRestTest extends MobiRestTestNg {
         recordJson = IOUtils.toString(getClass().getResourceAsStream("/recordPolicy.json"),
                 StandardCharsets.UTF_8);
         recordIRI = vf.createIRI("http://mobi.com/records/testRecord1");
-        recordPolicyIRI = vf.createIRI("http://mobi.com/policies/record/https%3A%2F%2Fmobi.com%2Frecords%testRecord1");
-        policyPolicyIRI = vf.createIRI("http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%testRecord1");
+        recordPolicyIRI = vf.createIRI("http://mobi.com/policies/record/https%3A%2F%2Fmobi.com%2Frecords%2FtestRecord1");
+        policyPolicyIRI = vf.createIRI("http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%2FtestRecord1");
         invalidIRI = vf.createIRI("urn:invalidRecordId");
 
         IRI type = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
