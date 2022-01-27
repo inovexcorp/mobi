@@ -73,7 +73,7 @@ function editIriOverlayComponentCtrl(REGEX) {
     dvm.$onInit = function() {
         dvm.namespacePattern = REGEX.IRI;
         dvm.localNamePattern = REGEX.LOCALNAME;
-        dvm.endsWithPattern = /^[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/;
+        dvm.endsWithPattern = /^[\w\-\._~:/?[\]@!\$&'\(\)\*\+,;=.]+$/;
         
         dvm.iriBegin = dvm.resolve.iriBegin;
         dvm.iriThen = dvm.resolve.iriThen;
@@ -90,6 +90,14 @@ function editIriOverlayComponentCtrl(REGEX) {
     dvm.cancel = function() {
         dvm.dismiss();
     }
+    dvm.validateNamespace = (function() {
+        const noPoundSigns = /^[^#]+$/;
+        return {
+            test: function(value) {
+                return noPoundSigns.test(value) && dvm.namespacePattern.test(value);
+            }
+        };
+    })();
 }
 
 export default editIriOverlayComponent;

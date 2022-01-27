@@ -184,5 +184,16 @@ describe('Edit IRI Overlay component', function() {
             this.controller.cancel();
             expect(scope.dismiss).toHaveBeenCalled();
         });
+        describe('validates the namespace (without the separator) as', function() {
+            it('valid when it is a valid namespace', function() {
+                expect(this.controller.validateNamespace.test('https://test.com')).toBe(true);
+            }) ;
+            it('invalid when there is a pound sign', function() {
+                expect(this.controller.validateNamespace.test('https://test.com#')).toBe(false);
+            }) ;
+            it('invalid when there is a protocol missing', function() {
+                expect(this.controller.validateNamespace.test('//test.com#')).toBe(false);
+            }) ;
+        });
     });
 });

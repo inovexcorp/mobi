@@ -258,7 +258,7 @@ public class RestUtils {
             return transformer.mobiModel(Rio.parse(IOUtils.toInputStream(jsonld, StandardCharsets.UTF_8), "",
                     RDFFormat.JSONLD));
         } catch (Exception e) {
-            throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } finally {
             LOG.trace("jsonldToModel took {}ms", System.currentTimeMillis() - start);
         }

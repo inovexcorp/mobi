@@ -84,7 +84,7 @@ public class MobiPIPTest extends OrmEnabledTestCase {
         repo.initialize();
 
         pathId = VALUE_FACTORY.createIRI(MobiPIP.PROP_PATH_NAMESPACE + "("
-                + ResourceUtils.encode("^<" + pathPropId.stringValue() + ">/<" + titleIRI.stringValue()) + ">)");
+                + ResourceUtils.encode("^<" + pathPropId.stringValue() + ">/<" + titleIRI.stringValue() + ">") + ")");
 
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(subjectId, prop1Id, VALUE_FACTORY.createLiteral(true));

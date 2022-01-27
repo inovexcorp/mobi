@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Policy PolicyId="http://mobi.com/policies/record/https%3A%2F%2Fmobi.com%2Frecords%testRecord1" Version="1.0" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17">
+<Policy PolicyId="http://mobi.com/policies/record/https%3A%2F%2Fmobi.com%2Frecords%2FtestRecord1" Version="1.0" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17">
     <Description>Who can access Record https://mobi.com/records#testRecord1</Description>
     <Target>
         <AnyOf>

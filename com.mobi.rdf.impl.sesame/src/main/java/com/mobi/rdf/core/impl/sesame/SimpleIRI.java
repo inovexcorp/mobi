@@ -24,6 +24,9 @@ package com.mobi.rdf.core.impl.sesame;
  */
 
 import com.mobi.rdf.api.IRI;
+import org.eclipse.rdf4j.common.net.ParsedIRI;
+
+import java.net.URISyntaxException;
 
 public class SimpleIRI extends org.eclipse.rdf4j.model.impl.SimpleIRI implements IRI {
     private static final long serialVersionUID = 2569239388718344294L;
@@ -43,5 +46,12 @@ public class SimpleIRI extends org.eclipse.rdf4j.model.impl.SimpleIRI implements
      */
     public SimpleIRI(String iriString) {
         super(iriString);
+        try {
+            if (!new ParsedIRI(iriString).isAbsolute()) {
+                throw new IllegalArgumentException("IRI must be absolute");
+            }
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid IRI " + iriString, e);
+        }
     }
 }
