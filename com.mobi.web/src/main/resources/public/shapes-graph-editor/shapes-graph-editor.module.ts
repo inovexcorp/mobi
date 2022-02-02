@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -38,6 +38,10 @@ import { ShapesGraphChangesPageComponent } from './components/shapesGraphChanges
 import { CommitModalComponent } from './components/commitModal/commitModal.component';
 import { ShapesGraphMergePageComponent } from './components/shapesGraphMergePage/shapesGraphMergePage.component';
 import { UploadRecordModalComponent } from './components/uploadRecordModal/uploadRecordModal.component';
+import { ShapesGraphDetailsComponent } from './components/shapesGraphDetails/shapesGraphDetails.component';
+import { StaticIriLimitedComponent } from './components/staticIriLimited/staticIriLimited.component';
+import { ShapesGraphPropertiesBlockComponent } from './components/shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
+import { ShapesGraphPropertyValuesComponent } from './components/shapesGraphPropertyValues/shapesGraphPropertyValues.component';
 
 /**
  * @namspace shapes-graph-editor
@@ -56,6 +60,7 @@ import { UploadRecordModalComponent } from './components/uploadRecordModal/uploa
      ],
     declarations: [
         NewShapesGraphRecordModalComponent,
+        ShapesGraphDetailsComponent,
         EditorBranchSelectComponent,
         EditorRecordSelectComponent,
         EditorTopBarComponent,
@@ -65,24 +70,32 @@ import { UploadRecordModalComponent } from './components/uploadRecordModal/uploa
         CommitModalComponent,
         ShapesGraphChangesPageComponent,
         ShapesGraphMergePageComponent,
-        CreateBranchModal
+        ShapesGraphPropertiesBlockComponent,
+        ShapesGraphPropertyValuesComponent,
+        CreateBranchModal,
+        StaticIriLimitedComponent
     ],
     providers: [],
     entryComponents: [
         NewShapesGraphRecordModalComponent,
+        ShapesGraphDetailsComponent,
         ShapesGraphEditorPageComponent,
         DownloadRecordModalComponent,
         UploadRecordModalComponent,
         CommitModalComponent,
         ShapesGraphChangesPageComponent,
         ShapesGraphMergePageComponent,
-        CreateBranchModal
+        ShapesGraphPropertiesBlockComponent,
+        ShapesGraphPropertyValuesComponent,
+        CreateBranchModal,
+        StaticIriLimitedComponent
     ]
 })
 export class ShapesGraphEditorModule {}
 
 angular.module('shapes-graph-editor', [])
     .directive('newShapesGraphRecordModal', downgradeComponent({component: NewShapesGraphRecordModalComponent}) as angular.IDirectiveFactory)
+    .directive('shapesGraphDetailsComponent', downgradeComponent({component: ShapesGraphDetailsComponent}) as angular.IDirectiveFactory)
     .directive('uploadRecordModal', downgradeComponent({component: UploadRecordModalComponent}) as angular.IDirectiveFactory)
     .directive('downloadRecordModal', downgradeComponent({component: DownloadRecordModalComponent}) as angular.IDirectiveFactory)
     .directive('commitModal', downgradeComponent({component: CommitModalComponent}) as angular.IDirectiveFactory)
@@ -92,4 +105,7 @@ angular.module('shapes-graph-editor', [])
     .directive('shapesGraphEditorPage', downgradeComponent({component: ShapesGraphEditorPageComponent}) as angular.IDirectiveFactory)
     .directive('shapesGraphChangesPage', downgradeComponent({component: ShapesGraphChangesPageComponent}) as angular.IDirectiveFactory)
     .directive('shapesGraphMergePage', downgradeComponent({component: ShapesGraphMergePageComponent}) as angular.IDirectiveFactory)
+    .directive('staticIriLimited', downgradeComponent({component: StaticIriLimitedComponent}) as angular.IDirectiveFactory)
+    .directive('shapesGraphPropertiesBlock', downgradeComponent({component: ShapesGraphPropertiesBlockComponent}) as angular.IDirectiveFactory)
+    .directive('shapesGraphPropertyValues', downgradeComponent({component: ShapesGraphPropertyValuesComponent}) as angular.IDirectiveFactory)
     .directive('createBranchModal', downgradeComponent({component: CreateBranchModal}) as angular.IDirectiveFactory);

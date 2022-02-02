@@ -33,6 +33,9 @@ import { ShapesGraphEditorPageComponent } from './shapesGraphEditorPage.componen
 import { ShapesGraphChangesPageComponent } from '../shapesGraphChangesPage/shapesGraphChangesPage.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { MatExpansionModule } from '@angular/material';
+import { ShapesGraphDetailsComponent } from '../shapesGraphDetails/shapesGraphDetails.component';
+import { ShapesGraphPropertiesBlockComponent } from '../shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
+import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 
 describe('Shapes Graph Editor Page component', function() {
     let component: ShapesGraphEditorPageComponent;
@@ -49,10 +52,13 @@ describe('Shapes Graph Editor Page component', function() {
                 ShapesGraphEditorPageComponent,
                 MockComponent(EditorTopBarComponent),
                 MockComponent(ShapesGraphChangesPageComponent),
-                MockComponent(ShapesGraphMergePageComponent)
+                MockComponent(ShapesGraphMergePageComponent),
+                MockComponent(ShapesGraphDetailsComponent),
+                MockComponent(ShapesGraphPropertiesBlockComponent)
             ],
             providers: [
-                MockProvider(ShapesGraphStateService)
+                MockProvider(ShapesGraphStateService),
+                MockProvider(ShapesGraphManagerService)
             ]
         });
     });

@@ -60,7 +60,7 @@ export class CommitModalComponent {
         this.cm.createBranchCommit(branchId, this.state.listItem.versionedRdfRecord.recordId, this.catalogId,
             this.createCommitForm.controls.comment.value)
             .then(commitIri => {
-                return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, 
+                return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId,
                     this.state.listItem.versionedRdfRecord.branchId, commitIri, undefined, undefined, true,
                     this.state.listItem.changesPageOpen)
                     .then(() => {

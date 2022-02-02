@@ -10,18 +10,18 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
 import { Inject, Injectable } from '@angular/core';
-import { get, remove } from 'lodash';
+import { get, remove, find } from 'lodash';
 import { RecordSelectFiltered } from '../../shapes-graph-editor/models/recordSelectFiltered.interface';
 import { Difference } from '../models/difference.class';
 import { RdfUpload } from '../models/rdfUpload.interface';
@@ -30,6 +30,8 @@ import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { VersionedRdfState } from './versionedRdfState.service';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { OptionalJSONLD } from '../models/OptionalJSONLD.class';
 
 /**
  * @class shared.ShapesGraphStateService
@@ -51,6 +53,10 @@ export class ShapesGraphStateService extends VersionedRdfState {
             'shapes-graph-editor',
             get(cm.localCatalog, '@id', '')
         );
+    }
+
+    getId(): Promise<string> {
+        return this.sgm.getShapesGraphIRI(this.listItem?.versionedRdfRecord?.recordId, this.listItem?.versionedRdfRecord?.branchId, this.listItem?.versionedRdfRecord?.commitId);
     }
 
     /**
@@ -96,14 +102,18 @@ export class ShapesGraphStateService extends VersionedRdfState {
                     commitId: response.commitId
                 };
                 listItem.currentVersionTitle = 'MASTER';
-                this.listItem = listItem;
-                this.list.push(listItem);
-                const stateBase: VersionedRdfStateBase = {
-                    recordId: response.recordId,
-                    commitId: response.commitId,
-                    branchId: response.branchId
-                };
-                return this.createState(stateBase);
+                return this.sgm.getShapesGraphMetadata(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, listItem.shapesGraphId)
+                    .then(arr => {
+                        listItem.metadata = find(arr, {'@id': listItem.shapesGraphId});
+                        this.listItem = listItem;
+                        this.list.push(listItem);
+                        const stateBase: VersionedRdfStateBase = {
+                            recordId: response.recordId,
+                            commitId: response.commitId,
+                            branchId: response.branchId
+                        };
+                        return this.createState(stateBase);
+                    }, error => Promise.reject(error));
             }, error => Promise.reject(error));
     }
     /**
@@ -122,7 +132,6 @@ export class ShapesGraphStateService extends VersionedRdfState {
         return this.getCatalogDetails(record.recordId)
             .then(response => {
                 const listItem = new ShapesGraphListItem();
-                listItem.shapesGraphId = response.recordId; // TODO: this should be retrieved from the record's shapesGraphId
                 listItem.versionedRdfRecord = {
                     title: record.title,
                     recordId: response.recordId,
@@ -131,11 +140,35 @@ export class ShapesGraphStateService extends VersionedRdfState {
                 };
                 listItem.inProgressCommit = response.inProgressCommit;
                 listItem.changesPageOpen = false;
-
                 this.listItem = listItem;
+                return this.updateShapesGraphMetadata(response.recordId, response.branchId, response.commitId);
+            })
+            .catch(error => Promise.reject(error));
+    }
+
+    /**
+     * Updates the shapes graph metadata for the given recordId, branchId, commitId combination. Retrieves the
+     * shapesGraphId as well. Should be used in cases where the shapesGraphId may have been changed in the backend.
+     * Applies the inProgressCommit when retrieving data.
+     *
+     * @param recordId {string} the IRI of the record to retrieve metadata for.
+     * @param branchId {string} the IRI of the branch to retrieve metadata for.
+     * @param commitId {string} the IRI of the commit to retrieve metadata for.
+
+     * @return {Promise} A Promise that resolves if the metadata update was successful.
+     */
+    updateShapesGraphMetadata(recordId: string, branchId: string, commitId: string): Promise<any> {
+        return this.sgm.getShapesGraphIRI(recordId, branchId, commitId)
+            .then(shapesGraphId => {
+                this.listItem.shapesGraphId = shapesGraphId;
+                return this.sgm.getShapesGraphMetadata(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId, this.listItem.shapesGraphId);
+            })
+            .then((arr: Array<OptionalJSONLD>) => {
+                this.listItem.metadata = find(arr, {'@id': this.listItem.shapesGraphId});
                 this.list.push(this.listItem);
                 return Promise.resolve();
-            }, error => Promise.reject(error));
+            })
+            .catch(error => Promise.reject(error));
     }
     /**
      * Closes the ShapesGraphRecord by removing it from the list of open records.
@@ -196,8 +229,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
             }
             item.changesPageOpen = changesPageOpen;
             this.listItem = item;
-            this.list.push(this.listItem);
-            return Promise.resolve();
+            return this.updateShapesGraphMetadata(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId);
         }, error => Promise.reject(error));
     }
     /**

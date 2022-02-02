@@ -25,13 +25,49 @@ package com.mobi.shapes.api;
 
 import com.mobi.rdf.api.Resource;
 
+import java.util.Optional;
+import javax.annotation.Nonnull;
+
 public interface ShapesGraphManager {
 
     /**
-     * Tests whether a ShaclRecord with the provided shapesGraphId Resource exists in the Catalog.
+     * Tests whether a ShapesGraphRecord with the provided shapesGraphId Resource exists in the Catalog.
      *
      * @param shapesGraphId A shapes graph {@link Resource}
      * @return True if the shapes graph exists; false otherwise
      */
     boolean shapesGraphIriExists(Resource shapesGraphId);
+
+    /**
+     * Retrieves a ShapesGraph using a record id and the head commit of its MASTER branch.
+     *
+     * @param recordId the record id for the ShapesGraphRecord you want to retrieve.
+     * @return Returns an Optional of the ShapesGraph if found, otherwise Optional.empty().
+     */
+    Optional<ShapesGraph> retrieveShapesGraph(@Nonnull Resource recordId);
+
+    /**
+     * Collects a {@link ShapesGraph} specified by the passed IRI {@link Resource Resources} for a
+     * {@link com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord} and a
+     * {@link com.mobi.catalog.api.ontologies.mcat.Branch} from the repository if it exists.
+     *
+     * @param recordId the IRI {@link Resource} for a Shapes Graph Record
+     * @param branchId the IRI {@link Resource} for a {@link com.mobi.catalog.api.ontologies.mcat.Branch}
+     * @return an {@link Optional} with a Shapes Graph with the mapping RDF if it was found
+     */
+    Optional<ShapesGraph> retrieveShapesGraph(@Nonnull Resource recordId, @Nonnull Resource branchId);
+
+    /**
+     * Collects a {@link ShapesGraph} specified by the passed shapesGraph IRI {@link Resource Resources} for a
+     * {@link com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord},
+     * {@link com.mobi.catalog.api.ontologies.mcat.Branch}, and a
+     * {@link com.mobi.catalog.api.ontologies.mcat.Commit} from the repository if it exists.
+     *
+     * @param recordId the IRI {@link Resource} for a Shapes Graph Record
+     * @param branchId the IRI {@link Resource} for a {@link com.mobi.catalog.api.ontologies.mcat.Branch}
+     * @param commitId the IRI {@link Resource} for a {@link com.mobi.catalog.api.ontologies.mcat.Commit}
+     * @return an {@link Optional} with a Shapes Graph with the mapping RDF if it was found
+     */
+    Optional<ShapesGraph> retrieveShapesGraph(@Nonnull Resource recordId, @Nonnull Resource branchId,
+                                              @Nonnull Resource commitId);
 }

@@ -1,10 +1,12 @@
+package com.mobi.shapes.api;
+
 /*-
  * #%L
- * com.mobi.web
+ * com.mobi.shapes.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2022 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2021 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,21 +22,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { VersionedRdfListItem } from './versionedRdfListItem.class';
-import { JSONLDObject } from './JSONLDObject.interface';
-import { OptionalJSONLD } from './OptionalJSONLD.class';
 
-export class ShapesGraphListItem extends VersionedRdfListItem {
-    shapesGraphId: string;
-    changesPageOpen: boolean;
-    currentVersionTitle: string;
-    metadata: OptionalJSONLD;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
 
-    constructor() {
-        super();
-        this.shapesGraphId = '';
-        this.changesPageOpen = false;
-        this.currentVersionTitle = '';
-        this.metadata = new OptionalJSONLD();
-    }
+import java.util.Optional;
+
+public interface ShapesGraph {
+    Model getModel();
+
+    void setModel(Model model);
+
+    Model getEntity(Resource subjectId);
+
+    Optional<IRI> getShapesGraphId();
 }

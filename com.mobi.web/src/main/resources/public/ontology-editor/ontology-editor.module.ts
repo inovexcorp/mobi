@@ -30,7 +30,6 @@ import annotationOverlayComponent from './components/annotationOverlay/annotatio
 import associationBlockComponent from './components/associationBlock/associationBlock.component';
 import axiomBlockComponent from './components/axiomBlock/axiomBlock.component';
 import axiomOverlayComponent from './components/axiomOverlay/axiomOverlay.component';
-import blankNodeValueDisplayComponent from './components/blankNodeValueDisplay/blankNodeValueDisplay.component';
 import characteristicsBlockComponent from './components/characteristicsBlock/characteristicsBlock.component';
 import characteristicsRowComponent from './components/characteristicsRow/characteristicsRow.component';
 import classAxiomsComponent from './components/classAxioms/classAxioms.component';
@@ -105,7 +104,7 @@ import uploadOntologyOverlayComponent from './components/uploadOntologyOverlay/u
 import uploadErrorsOverlayComponent from './components/uploadErrorsOverlay/uploadErrorsOverlay.component';
 import uploadSnackbarComponent from './components/uploadSnackbar/uploadSnackbar.component';
 import usagesBlockComponent from './components/usagesBlock/usagesBlock.component';
-import visualizationTabComponent from './components/visualizationTab/visualizationTab.component'
+import visualizationTabComponent from './components/visualizationTab/visualizationTab.component';
 
 /**
  * @ngdoc overview
@@ -123,7 +122,6 @@ angular.module('ontology-editor', [])
     .component('associationBlock', associationBlockComponent)
     .component('axiomBlock', axiomBlockComponent)
     .component('axiomOverlay', axiomOverlayComponent)
-    .component('blankNodeValueDisplay', blankNodeValueDisplayComponent)
     .component('characteristicsBlock', characteristicsBlockComponent)
     .component('characteristicsRow', characteristicsRowComponent)
     .component('classAxioms', classAxiomsComponent)

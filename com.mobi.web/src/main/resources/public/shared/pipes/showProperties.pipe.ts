@@ -20,21 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { VersionedRdfListItem } from './versionedRdfListItem.class';
-import { JSONLDObject } from './JSONLDObject.interface';
-import { OptionalJSONLD } from './OptionalJSONLD.class';
+import { Pipe, PipeTransform } from '@angular/core';
+import { filter, isArray, has } from 'lodash';
+@Pipe({
+    name: 'showProperties'
+})
+export class ShowPropertiesPipe implements PipeTransform {
 
-export class ShapesGraphListItem extends VersionedRdfListItem {
-    shapesGraphId: string;
-    changesPageOpen: boolean;
-    currentVersionTitle: string;
-    metadata: OptionalJSONLD;
-
-    constructor() {
-        super();
-        this.shapesGraphId = '';
-        this.changesPageOpen = false;
-        this.currentVersionTitle = '';
-        this.metadata = new OptionalJSONLD();
+    public transform(entity: any, properties: Array<string>): Array<string> {
+        let arr = [];
+        if (isArray(properties)) {
+            arr = filter(properties, property => has(entity, property));
+        }
+        return arr;
     }
 }

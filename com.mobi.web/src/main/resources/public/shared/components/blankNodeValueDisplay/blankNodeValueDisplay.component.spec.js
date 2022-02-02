@@ -28,7 +28,7 @@ describe('Blank Node Value Display component', function() {
     var $compile, scope, ontoUtils;
 
     beforeEach(function() {
-        angular.mock.module('ontology-editor');
+        angular.mock.module('shared');
         mockOntologyUtilsManager();
 
         inject(function(_$compile_, _$rootScope_, _ontologyUtilsManagerService_) {

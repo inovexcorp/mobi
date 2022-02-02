@@ -26,4 +26,46 @@
 .shapes-graph-editor-page {
     width: 100%;
     height: 100%;
+
+    shapes-graph-changes-page {
+        overflow: hidden;
+    }
+
+    .editor-content {
+        overflow: hidden;
+    }
+
+    .shapes-graph-properties {
+        overflow: hidden;
+
+        .shapes-graph-properties-container {
+            padding-left: 0px !important;
+        }
+    }
+    
+    .section-header {
+        border-bottom: 1px solid var(--light-dark);
+        padding-bottom: 0.5rem;
+
+        h5 {
+            font-weight: bold;
+            display: inline-block;
+            margin: 0;
+        }
+        a {
+            line-height: 1.5;
+        }
+    }
+    .up-to-date .nav-link .fa.fa-exclamation-triangle {
+        display: none;
+    }
+    .nav-link {
+        &.active .fa.fa-exclamation-triangle {
+            color: var(--danger);
+        }
+
+        .fa.fa-exclamation-triangle {
+            color: var(--danger-light);
+        }
+    }
 }

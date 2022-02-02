@@ -110,6 +110,26 @@ export const ontologyManagerServiceProvider = {
     deps: ['$injector']
 };
 
+export function ontologyUtilsManagerServiceFactory(i: any) {
+    return i.get('ontologyUtilsManagerService');
+}
+
+export const ontologyUtilsManagerServiceProvider = {
+    provide: 'ontologyUtilsManagerService',
+    useFactory: ontologyUtilsManagerServiceFactory,
+    deps: ['$injector']
+};
+
+export function propertyManagerServiceFactory(i: any) {
+    return i.get('propertyManagerService');
+}
+
+export const propertyManagerServiceProvider = {
+    provide: 'propertyManagerService',
+    useFactory: propertyManagerServiceFactory,
+    deps: ['$injector']
+};
+
 export function discoverStateServiceFactory(i: any) {
     return i.get('discoverStateService');
 }
