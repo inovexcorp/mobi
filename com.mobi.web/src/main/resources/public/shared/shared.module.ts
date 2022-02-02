@@ -45,6 +45,7 @@ import { CdkTableModule } from '@angular/cdk/table';
 import { HttpClientModule } from '@angular/common/http';
 
 import actionMenuComponent from './components/actionMenu/actionMenu.component';
+import blankNodeValueDisplayComponent from './components/blankNodeValueDisplay/blankNodeValueDisplay.component';
 import blockComponent from './components/block/block.component';
 import blockContentComponent from './components/blockContent/blockContent.component';
 import blockFooterComponent from './components/blockFooter/blockFooter.component';
@@ -76,7 +77,6 @@ import stepProgressBarComponent from './components/stepProgressBar/stepProgressB
 import textAreaComponent from './components/textArea/textArea.component';
 import textInputComponent from './components/textInput/textInput.component';
 import unmaskPasswordComponent from './components/unmaskPassword/unmaskPassword.component.ajs';
-import valueDisplayComponent from './components/valueDisplay/valueDisplay.component';
 
 import emailIri from './directives/emailIri/emailIri.directive';
 import aDisabled from './directives/aDisabled/aDisabled.directive';
@@ -149,7 +149,10 @@ import {
     discoverStateServiceProvider,
     ontologyManagerServiceProvider,
     catalogManagerServiceProvider,
-    stateManagerServiceProvider, toastrProvider
+    stateManagerServiceProvider,
+    toastrProvider,
+    propertyManagerServiceProvider,
+    ontologyUtilsManagerServiceProvider
 } from '../ajs.upgradedProviders';
 
 import { ConfirmModalComponent } from './components/confirmModal/confirmModal.component';
@@ -189,6 +192,8 @@ import { SettingEditPageComponent } from './components/settingEditPage/settingEd
 import { SettingGroupComponent } from './components/settingGroup/settingGroup.component';
 import { SettingFormComponent } from './components/settingForm/settingForm.component';
 import { SettingFormFieldComponent } from './components/settingFormField/settingFormField.component';
+import { ShowPropertiesPipe } from './pipes/showProperties.pipe';
+import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.component';
 
 /**
  * @namespace shared
@@ -230,6 +235,7 @@ import { SettingFormFieldComponent } from './components/settingFormField/setting
         TrustedHtmlPipe,
         PrefixationPipe,
         SplitIRIPipe,
+        ShowPropertiesPipe,
         FileInputComponent,
         CustomLabelComponent,
         SettingEditPageComponent,
@@ -246,7 +252,8 @@ import { SettingFormFieldComponent } from './components/settingFormField/setting
         CheckboxComponent,
         BranchSelectComponent,
         ResolveConflictsBlock,
-        CopyClipboardDirective
+        CopyClipboardDirective,
+        ValueDisplayComponent
     ],
     entryComponents: [
         ConfirmModalComponent,
@@ -266,7 +273,8 @@ import { SettingFormFieldComponent } from './components/settingFormField/setting
         CommitDifferenceTabsetComponent,
         CheckboxComponent,
         BranchSelectComponent,
-        ResolveConflictsBlock
+        ResolveConflictsBlock,
+        ValueDisplayComponent
     ],
     exports: [
         CommonModule,
@@ -298,6 +306,7 @@ import { SettingFormFieldComponent } from './components/settingFormField/setting
         TrustedHtmlPipe,
         PrefixationPipe,
         SplitIRIPipe,
+        ShowPropertiesPipe,
         FileInputComponent,
         CustomLabelComponent,
         SettingEditPageComponent,
@@ -311,7 +320,8 @@ import { SettingFormFieldComponent } from './components/settingFormField/setting
         CheckboxComponent,
         BranchSelectComponent,
         ResolveConflictsBlock,
-        CopyClipboardDirective
+        CopyClipboardDirective,
+        ValueDisplayComponent
     ],
     providers: [
         loginManagerServiceProvider,
@@ -322,6 +332,8 @@ import { SettingFormFieldComponent } from './components/settingFormField/setting
         httpServiceProvider,
         modalServiceProvider,
         ontologyStateServiceProvider,
+        propertyManagerServiceProvider,
+        ontologyUtilsManagerServiceProvider,
         discoverStateServiceProvider,
         catalogManagerServiceProvider,
         ontologyManagerServiceProvider,
@@ -337,13 +349,16 @@ import { SettingFormFieldComponent } from './components/settingFormField/setting
         OntologyVisualizationService,
         { provide: ErrorStateMatcher, useClass: MobiErrorStateMatcher },
         PrefixationPipe,
-        SplitIRIPipe
+        SplitIRIPipe,
+        ShowPropertiesPipe,
+        TrustedHtmlPipe
     ]
 })
 export class SharedModule {}
 
 angular.module('shared', [])
     .component('actionMenu', actionMenuComponent)
+    .component('blankNodeValueDisplay', blankNodeValueDisplayComponent)
     .component('block', blockComponent)
     .component('blockContent', blockContentComponent)
     .component('blockFooter', blockFooterComponent)
@@ -375,7 +390,6 @@ angular.module('shared', [])
     .component('textArea', textAreaComponent)
     .component('textInput', textInputComponent)
     .component('unmaskPasswordAjs', unmaskPasswordComponent)
-    .component('valueDisplay', valueDisplayComponent)
     .directive('emailIri', emailIri)
     .directive('aDisabled', aDisabled)
     .directive('buttonHoverText', buttonHoverText)
@@ -458,4 +472,5 @@ angular.module('shared', [])
     .directive('checkbox', downgradeComponent({component: CheckboxComponent}) as angular.IDirectiveFactory)
     .directive('branchSelect', downgradeComponent({component: BranchSelectComponent}) as angular.IDirectiveFactory)
     .directive('resolveConflictsBlock', downgradeComponent({component: ResolveConflictsBlock}) as angular.IDirectiveFactory)
+    .directive('valueDisplay', downgradeComponent({component: ValueDisplayComponent}) as angular.IDirectiveFactory)
     .directive('copyClipboard', downgradeComponent({component: CopyClipboardDirective}) as angular.IDirectiveFactory);

@@ -26,7 +26,7 @@ import { Pipe, PipeTransform } from '@angular/core';
   name: 'highlightText',
 })
 export class HighlightTextPipe implements PipeTransform {
-  transform(value: any, args: any): any {
+  transform(value: any, args: any, background = false): any {
     if (!args) {
       return value;
     }
@@ -38,6 +38,9 @@ export class HighlightTextPipe implements PipeTransform {
       return value;
     }
 
+    if (background) {
+      return value.replace(regex, '<span class="highlight-text"><mark>' + match[0] + '</mark></span>');
+    }
     return value.replace(regex, '<span class="highlight-text">' + match[0] + '</span>');
   }
 }

@@ -37,7 +37,6 @@ import { RdfUpload } from '../models/rdfUpload.interface';
 import { ShapesGraphListItem } from '../models/shapesGraphListItem.class';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
-import catalogManagerService from './catalogManager.service';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { ShapesGraphStateService } from './shapesGraphState.service';
 
@@ -52,6 +51,7 @@ describe('Shapes Graph State service', function() {
         TestBed.configureTestingModule({
             providers: [
                 ShapesGraphStateService,
+                { provide: 'shapesGraphManagerService', useClass: mockShapesGraphManager },
                 { provide: 'stateManagerService', useClass: mockStateManager },
                 { provide: 'prefixes', useClass: mockPrefixes },
                 { provide: 'catalogManagerService', useClass: mockCatalogManager },
@@ -77,6 +77,10 @@ describe('Shapes Graph State service', function() {
 
     afterEach(function() {
         service = null;
+        utilStub = null;
+        shapesGraphManagerStub = null;
+        catalogManagerStub = null;
+        prefixesStub = null;
     });
 
     it('should reset variables', function() {
@@ -141,8 +145,10 @@ describe('Shapes Graph State service', function() {
                describe('successfully', function() {
                    it('with a success toast', async function() {
                        await service.uploadShapesGraph(this.rdfUpload);
+                       shapesGraphManagerStub.getShapesGraphMetadata.and.returnValue(Promise.resolve('theId'));
                        expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(this.rdfUpload);
                        expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                       expect(shapesGraphManagerStub.getShapesGraphMetadata).toHaveBeenCalledWith(this.createResponse.recordId, this.createResponse.branchId, this.createResponse.commitId, this.createResponse.shapesGraphId);
                        expect(this.createStateSpy).toHaveBeenCalledWith({
                            recordId: this.createResponse.recordId,
                            branchId: this.createResponse.branchId,
@@ -284,9 +290,11 @@ describe('Shapes Graph State service', function() {
         });
         describe('when the item is not open and retrieves catalog details', function() {
             it('successfully', async function() {
+                shapesGraphManagerStub.getShapesGraphIRI.and.returnValue(Promise.resolve('theId'));
+                shapesGraphManagerStub.getShapesGraphMetadata.and.returnValue(Promise.resolve([{'@id': 'theId'}]));
                 await service.openShapesGraph(this.selectedRecord);
                 expect(this.catalogDetailsSpy).toHaveBeenCalledWith(this.selectedRecord.recordId);
-                expect(service.listItem.shapesGraphId).toEqual(this.catalogDetailsResponse.recordId);
+                expect(service.listItem.shapesGraphId).toEqual('theId');
                 expect(service.listItem.versionedRdfRecord).toEqual({
                     title: this.selectedRecord.title,
                     recordId: this.catalogDetailsResponse.recordId,

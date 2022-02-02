@@ -43,6 +43,9 @@ class VersionedRdfStateImpl extends VersionedRdfState {
             'catalog'
         );
     }
+    getId(): Promise<any> {
+        return Promise.resolve();
+    }
     protected merge(): Promise<any> {
         return Promise.resolve();
     }

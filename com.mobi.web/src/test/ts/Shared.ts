@@ -61,6 +61,27 @@ export class mockProvManager {
     getActivities = jasmine.createSpy('getActivities').and.returnValue(Promise.resolve(this.response));
 }
 
+export class mockPropertyManager {
+    defaultAnnotations = [];
+    owlAnnotations = [];
+    skosAnnotations = [];
+    ontologyProperties = [];
+    conceptSchemeRelationshipList = [];
+    conceptRelationshipList = [];
+    schemeRelationshipList = [];
+    defaultDatatypes = [];
+    getValuesKey = jasmine.createSpy('getValuesKey').and.returnValue('');
+    getDefaultAnnotations = jasmine.createSpy('getDefaultAnnotations').and.returnValue([]);
+    remove = jasmine.createSpy('remove');
+    addValue = jasmine.createSpy('addValue');
+    addId = jasmine.createSpy('addId');
+    editValue = jasmine.createSpy('editValue');
+    editId = jasmine.createSpy('editId');
+    createValueObj = jasmine.createSpy('createValueObj').and.returnValue({});
+    create = jasmine.createSpy('create').and.returnValue(Promise.resolve({}));
+    getDatatypeMap = jasmine.createSpy('getDatatypeMap').and.returnValue({});
+}
+
 export class mockUtil {
     getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(identity);
     getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
@@ -484,6 +505,7 @@ export class mockDiscoverState {
             changed: [],
             entity: [{}],
             metadata: {},
+            objectMap: {},
             original: []
         },
         instanceDetails: {
@@ -827,4 +849,6 @@ export class mockStateManager {
 export class mockShapesGraphManager {
     createShapesGraphRecord = jasmine.createSpy('createShapesGraphRecord').and.returnValue(Promise.resolve());
     deleteShapesGraphRecord = jasmine.createSpy('deleteShapesGraphRecord').and.returnValue(Promise.resolve());
+    getShapesGraphMetadata = jasmine.createSpy('getShapesGraphMetadata').and.returnValue(Promise.resolve());
+    getShapesGraphIRI = jasmine.createSpy('getShapesGraphIRI').and.returnValue(Promise.resolve());
 }

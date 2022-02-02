@@ -20,21 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { VersionedRdfListItem } from './versionedRdfListItem.class';
-import { JSONLDObject } from './JSONLDObject.interface';
-import { OptionalJSONLD } from './OptionalJSONLD.class';
+export class OptionalJSONLD {
+    '@id'?: string;
+    '@type'?: string[];
+    [key: string]: any;
 
-export class ShapesGraphListItem extends VersionedRdfListItem {
-    shapesGraphId: string;
-    changesPageOpen: boolean;
-    currentVersionTitle: string;
-    metadata: OptionalJSONLD;
-
-    constructor() {
-        super();
-        this.shapesGraphId = '';
-        this.changesPageOpen = false;
-        this.currentVersionTitle = '';
-        this.metadata = new OptionalJSONLD();
+    populated(): boolean {
+        return (!!this['@id'] && !!this['@type'].length);
     }
 }

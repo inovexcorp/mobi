@@ -123,6 +123,43 @@ export class ShapesGraphManagerService {
     }
 
     /**
+     * Calls the GET /mobirest/shapes-graphs/{recordId}/entities/{entityId} endpoint which will
+     * retrieve all the directly attached predicates and objects of the passed in entityId.
+     *
+     * @param recordId {string} the IRI of the record to retrieve.
+     * @param branchId {string} the IRI of the branch to retrieve.
+     * @param commitId {string} the IRI of the commit to retrieve.
+     * @param commitId {string} the IRI of the entity to retrieve.
+     * @param format {string} the format of the rdf that will be retrieved.
+     * @param applyInProgressCommit {boolean} whether to apply the current in progress commit.
+     * 
+     * @returns {Promise} A Promise that resolves if the request was successful; rejects with an error message otherwise
+     */
+    getShapesGraphMetadata(recordId, branchId, commitId, entityId, format = 'jsonld', applyInProgressCommit = true): Promise<any>  {
+        const config = { params: this.helper.createHttpParams({ branchId, commitId, format, applyInProgressCommit }) };
+        const url = this.prefix + '/' + encodeURIComponent(recordId) + '/entities/' + encodeURIComponent(entityId);
+        const promise = this.http.get(url, config).toPromise();
+        return promise.then((response:any) => response, this.util.rejectError);
+    }
+
+    /**
+     * Calls the GET /mobirest/shapes-graphs/{recordId}/id endpoint which will
+     * retrieve the IRI of the shapes graph with the passed in recordId, branchId, and commitId.
+     *
+     * @param recordId {string} the IRI of the record to retrieve.
+     * @param branchId {string} the IRI of the branch to retrieve.
+     * @param commitId {string} the IRI of the commit to retrieve.
+     * @param applyInProgressCommit {boolean} whether to apply the current in progress commit.
+     *
+     * @returns {Promise} A Promise that resolves if the request was successful; rejects with an error message otherwise
+     */
+    getShapesGraphIRI(recordId, branchId, commitId, applyInProgressCommit = true): Promise<string> {
+        const url = this.prefix + '/' + encodeURIComponent(recordId) + '/id';
+        const promise = this.http.get(url, {params: this.helper.createHttpParams({ branchId, commitId, applyInProgressCommit }), responseType: 'text'}).toPromise();
+        return promise.then((response:string) => response, this.util.rejectError);
+    }
+
+    /**
      * Returns a VersionedRdfUploadResponse from the provided response.
      *
      * @returns {any} A VersionedRdfUploadResponse

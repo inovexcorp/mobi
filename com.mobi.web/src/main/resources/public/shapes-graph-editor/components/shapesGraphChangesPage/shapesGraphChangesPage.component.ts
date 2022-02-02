@@ -85,7 +85,7 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
             dict[currentItem.id] = mergedValue;
             return dict;
         }, {});
-        const mergedInProgressCommits = Object.keys(mergedInProgressCommitsMap).map(key => 
+        const mergedInProgressCommits = Object.keys(mergedInProgressCommitsMap).map(key =>
             mergedInProgressCommitsMap[key]);
         this.list = map(mergedInProgressCommits, inProgressItem => ({
                 id: inProgressItem.id,
@@ -99,6 +99,7 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
         this.cm.deleteInProgressCommit(this.state.listItem.versionedRdfRecord.recordId, this.catalogId)
             .then(() => {
                 this.state.clearInProgressCommit();
+                this.state.updateShapesGraphMetadata(this.state.listItem.versionedRdfRecord.recordId, this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.commitId);
                 this.util.createSuccessToast('In Progress Commit removed successfully.');
             }, errorMessage => this.util.createErrorToast(`Error removing In Progress Commit: ${errorMessage}`));
     }

@@ -21,10 +21,10 @@
  * #L%
  */
 import { has } from 'lodash';
+import { Inject, Component, Input } from '@angular/core';
 
 import './valueDisplay.component.scss';
-
-const template = require('./valueDisplay.component.html');
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
 /**
  * @ngdoc component
@@ -38,26 +38,18 @@ const template = require('./valueDisplay.component.html');
  *
  * @param {object} value the json-ld value to display to a user.
  */
-const valueDisplayComponent = {
-    template,
-    bindings: {
-        value: '<',
-        highlightText: '<'
-    },
-    controllerAs: 'dvm',
-    controller: valueDisplayComponentCtrl
-};
+@Component({
+    selector: 'value-display',
+    templateUrl: './valueDisplay.component.html'
+})
+export class ValueDisplayComponent {
 
-valueDisplayComponentCtrl.$inject = ['discoverStateService', 'utilService'];
+    @Input() value: JSONLDObject;
+    @Input() highlightText: string;
 
-function valueDisplayComponentCtrl(discoverStateService, utilService) {
-    var dvm = this;
-    dvm.util = utilService;
-    dvm.ds = discoverStateService;
+    constructor(@Inject('discoverStateService') public ds, @Inject('utilService') public util) {}
 
-    dvm.has = function(obj, key) {
+    has(obj, key): boolean {
         return has(obj, key);
     }
 }
-
-export default valueDisplayComponent;

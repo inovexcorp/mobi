@@ -58,6 +58,13 @@ export abstract class VersionedRdfState {
     }
 
     /**
+     * Retrieves the id of the listItem.
+     *
+     * @return {Promise} A Promise containing the id of the listItem that resolves if the state creation was successful.
+     */
+    abstract getId(): Promise<string>;
+
+    /**
      * Creates a new state for the application type for the current user.
      *
      * @param versionedRdfStateBase {VersionedRdfStateBase} the state base containing VersionedRDFRecord information.

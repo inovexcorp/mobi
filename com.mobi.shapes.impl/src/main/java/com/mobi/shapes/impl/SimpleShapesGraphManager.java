@@ -23,12 +23,18 @@ package com.mobi.shapes.impl;
  * #L%
  */
 
+import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.TupleQuery;
+import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.shapes.api.ShapesGraph;
 import com.mobi.shapes.api.ShapesGraphManager;
 import org.apache.commons.io.IOUtils;
 import org.osgi.service.component.annotations.Component;
@@ -36,6 +42,8 @@ import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+import javax.annotation.Nonnull;
 
 @Component(
         service = { SimpleShapesGraphManager.class, ShapesGraphManager.class }
@@ -60,6 +68,12 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
     @Reference
     CatalogConfigProvider configProvider;
 
+    @Reference
+    CatalogManager catalogManager;
+
+    @Reference
+    ValueFactory vf;
+
     @Override
     public boolean shapesGraphIriExists(Resource shapesGraphId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -70,7 +84,33 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
             boolean exists = result.hasNext();
             result.close();
             return exists;
-
         }
+    }
+
+    @Override
+    public Optional<ShapesGraph> retrieveShapesGraph(@Nonnull Resource recordId) {
+        Branch masterBranch = catalogManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId);
+        return Optional.of(getShapesGraphFromModel(catalogManager.getCompiledResource(getHeadOfBranch(masterBranch))));
+    }
+
+    @Override
+    public Optional<ShapesGraph> retrieveShapesGraph(@Nonnull Resource recordId, @Nonnull Resource branchId) {
+        Commit commit = catalogManager.getHeadCommit(configProvider.getLocalCatalogIRI(), recordId, branchId);
+        return Optional.of(getShapesGraphFromModel(catalogManager.getCompiledResource(commit.getResource())));
+    }
+
+    @Override
+    public Optional<ShapesGraph> retrieveShapesGraph(@Nonnull Resource recordId, @Nonnull Resource branchId,
+                                                     @Nonnull Resource commitId) {
+        return Optional.of(getShapesGraphFromModel(catalogManager.getCompiledResource(recordId, branchId, commitId)));
+    }
+
+    private Resource getHeadOfBranch(Branch branch) {
+        return branch.getHead_resource().orElseThrow(() ->
+                new IllegalStateException("Branch " + branch.getResource() + "has no head Commit set."));
+    }
+
+    private ShapesGraph getShapesGraphFromModel(Model model) {
+        return new SimpleShapesGraph(model, vf);
     }
 }

@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2022 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,21 +20,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { VersionedRdfListItem } from './versionedRdfListItem.class';
-import { JSONLDObject } from './JSONLDObject.interface';
-import { OptionalJSONLD } from './OptionalJSONLD.class';
+/* Core variables */
+@import "../../../css/variables";
 
-export class ShapesGraphListItem extends VersionedRdfListItem {
-    shapesGraphId: string;
-    changesPageOpen: boolean;
-    currentVersionTitle: string;
-    metadata: OptionalJSONLD;
+.shapes-graph-details {
+    padding-bottom: 15px;
 
-    constructor() {
-        super();
-        this.shapesGraphId = '';
-        this.changesPageOpen = false;
-        this.currentVersionTitle = '';
-        this.metadata = new OptionalJSONLD();
+    .entity-name {
+        font-size: 18px;
+        word-break: break-word;
+    }
+
+    .type-wrapper {
+        margin: 0;
+
+        .type-label {
+            padding-right: 3px;
+        }
+
+        .types {
+            font-size: .85em;
+        }
     }
 }

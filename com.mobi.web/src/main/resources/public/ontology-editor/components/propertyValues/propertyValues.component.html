@@ -29,8 +29,8 @@
         <span ng-if="::dvm.ontoUtils.isLinkable(value['@id'])" class="value-display-wrapper flex-1 remove-min-width">{{dvm.ontoUtils.getLabelForIRI(value['@id'])}} <small><<a ng-click="dvm.os.goTo(value['@id'])">{{value['@id']}}</a>></small></span>
         <span ng-if="::!dvm.ontoUtils.isLinkable(value['@id'])" class="value-display-wrapper flex-1 remove-min-width">
             <blank-node-value-display ng-if="::dvm.om.isBlankNodeId(value['@id'])" node-id="value['@id']"></blank-node-value-display>
-            <value-display ng-if="::!dvm.om.isBlankNodeId(value['@id']) && dvm.valueInList()" value="value" highlight-text="dvm.highlightText"></value-display>
-            <value-display ng-if="::!dvm.om.isBlankNodeId(value['@id']) && !dvm.valueInList()" value="value"></value-display>
+            <value-display ng-if="::!dvm.om.isBlankNodeId(value['@id']) && dvm.valueInList()" [value]="value" [highlight-text]="dvm.highlightText"></value-display>
+            <value-display ng-if="::!dvm.om.isBlankNodeId(value['@id']) && !dvm.valueInList()" [value]="value"></value-display>
         </span>
         <div class="button-container">
             <button ng-if="dvm.remove && !dvm.os.isImported(dvm.entity['@id']) && dvm.os.canModify()" type="button" class="btn btn-link remove-min-width p-0 fa fa-times fa-fw" ng-click="dvm.remove({iri: dvm.property, index: $index})" title="Delete"></button>
