@@ -81,6 +81,7 @@
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
+                        <_dsannotations-options>inherit</_dsannotations-options>
                     </instructions>
                 </configuration>
             </plugin>

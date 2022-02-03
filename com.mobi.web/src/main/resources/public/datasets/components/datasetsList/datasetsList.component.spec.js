@@ -26,12 +26,13 @@ import {
     mockCatalogManager,
     mockUtil,
     mockPrefixes,
+    mockPolicyEnforcement,
     mockModal,
     injectInArrayFilter
 } from '../../../../../../test/js/Shared';
 
 describe('Datasets List component', function() {
-    var $compile, scope, $q, datasetStateSvc, datasetManagerSvc, catalogManagerSvc, utilSvc, prefixes, modalSvc;
+    var $compile, scope, $q, datasetStateSvc, datasetManagerSvc, catalogManagerSvc, utilSvc, prefixes, modalSvc, policyEnforcementSvc;
 
     beforeEach(function() {
         angular.mock.module('datasets');
@@ -42,8 +43,9 @@ describe('Datasets List component', function() {
         mockPrefixes();
         mockModal();
         injectInArrayFilter();
+        mockPolicyEnforcement();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _datasetStateService_, _datasetManagerService_, _catalogManagerService_, _utilService_, _prefixes_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _datasetStateService_, _datasetManagerService_, _catalogManagerService_, _utilService_, _prefixes_, _modalService_, _policyEnforcementService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
@@ -53,6 +55,7 @@ describe('Datasets List component', function() {
             utilSvc = _utilService_;
             prefixes = _prefixes_;
             modalSvc = _modalService_;
+            policyEnforcementSvc = _policyEnforcementService_;
         });
 
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
@@ -71,6 +74,7 @@ describe('Datasets List component', function() {
         utilSvc = null;
         prefixes = null;
         modalSvc = null;
+        policyEnforcementSvc = null;
         this.element.remove();
     });
 
@@ -220,22 +224,60 @@ describe('Datasets List component', function() {
             });
         });
         it('should show the editDatasetOverlay', function() {
-            this.controller.showEdit({});
-            expect(datasetStateSvc.selectedDataset).toEqual({});
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
+            this.controller.showEdit({record: {'@id': 'dataset'}});
+            scope.$apply();
+            expect(datasetStateSvc.selectedDataset).toEqual({record: {'@id': 'dataset'}});
             expect(modalSvc.openModal).toHaveBeenCalledWith('editDatasetOverlay');
         });
+        it('should show the editDatasetOverlay permission denied', function() {
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
+            this.controller.showEdit({record: {'@id': 'dataset'}});
+            scope.$apply();
+            expect(datasetStateSvc.selectedDataset).not.toEqual({record: {'@id': 'dataset'}});
+            expect(modalSvc.openModal).not.toHaveBeenCalledWith('editDatasetOverlay');
+            expect(utilSvc.createErrorToast).toHaveBeenCalled();
+        });
         it('should show the uploadDataOverlay', function() {
-            this.controller.showUploadData({});
-            expect(datasetStateSvc.selectedDataset).toEqual({});
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
+            this.controller.showUploadData({record: {'@id': 'dataset'}});
+            scope.$apply();
+            expect(datasetStateSvc.selectedDataset).toEqual({record: {'@id': 'dataset'}});
             expect(modalSvc.openModal).toHaveBeenCalledWith('uploadDataOverlay');
         });
+        it('should show the uploadDataOverlay permission denied', function() {
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
+            this.controller.showUploadData({record: {'@id': 'dataset'}});
+            scope.$apply();
+            expect(datasetStateSvc.selectedDataset).not.toEqual({record: {'@id': 'dataset'}});
+            expect(modalSvc.openModal).not.toHaveBeenCalledWith('uploadDataOverlay');
+            expect(utilSvc.createErrorToast).toHaveBeenCalled();
+        });
         it('should confirm deleting a dataset', function() {
-            this.controller.showDelete({});
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
+            this.controller.showDelete({record: {'@id': 'dataset'}});
+            scope.$apply();
             expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('Are you sure'), jasmine.any(Function));
         });
+        it('should confirm deleting a dataset permission denied', function() {
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
+            this.controller.showDelete({record: {'@id': 'dataset'}});
+            scope.$apply();
+            expect(modalSvc.openConfirmModal).not.toHaveBeenCalledWith(jasmine.stringMatching('Are you sure'), jasmine.any(Function));
+            expect(utilSvc.createErrorToast).toHaveBeenCalled();
+        });
         it('should confirm clearing a dataset', function() {
-            this.controller.showClear({});
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
+            this.controller.showClear({record: {'@id': 'dataset'}});
+            scope.$apply();
             expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('Are you sure'), jasmine.any(Function));
+        });
+        it('should confirm clearing a dataset permission denied', function() {
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
+            this.controller.showClear({record: {'@id': 'dataset'}});
+            scope.$apply();
+            expect(modalSvc.openConfirmModal).not.toHaveBeenCalledWith(jasmine.stringMatching('Are you sure'), jasmine.any(Function));
+            expect(utilSvc.createErrorToast).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {

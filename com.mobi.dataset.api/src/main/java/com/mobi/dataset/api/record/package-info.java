@@ -1,10 +1,10 @@
-@Version("1.1.4.${build}")
+@Version("1.0.0.${build}")
 
-package com.mobi.dataset.api;
+package com.mobi.dataset.api.record;
 
 /*-
  * #%L
- * com.mobi.dataset.api
+ * com.mobi.dataset.api.record
  * $Id:$
  * $HeadURL:$
  * %%

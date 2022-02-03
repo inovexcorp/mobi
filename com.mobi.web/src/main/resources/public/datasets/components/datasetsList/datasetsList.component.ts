@@ -51,13 +51,14 @@ const datasetsListComponent = {
     controller: datasetsListComponentCtrl
 };
 
-datasetsListComponentCtrl.$inject = ['$q', 'datasetManagerService', 'datasetStateService', 'catalogManagerService', 'utilService', 'prefixes', 'modalService'];
+datasetsListComponentCtrl.$inject = ['$q', 'datasetManagerService', 'datasetStateService', 'catalogManagerService', 'utilService', 'prefixes', 'modalService', 'policyEnforcementService'];
 
-function datasetsListComponentCtrl($q, datasetManagerService, datasetStateService, catalogManagerService, utilService, prefixes, modalService) {
+function datasetsListComponentCtrl($q, datasetManagerService, datasetStateService, catalogManagerService, utilService, prefixes, modalService, policyEnforcementService) {
     var dvm = this;
     var dm = datasetManagerService;
     var cm = catalogManagerService;
     var cachedOntologyRecords = [];
+    var pep = policyEnforcementService;
     dvm.state = datasetStateService;
     dvm.util = utilService;
     dvm.prefixes = prefixes;
@@ -112,18 +113,74 @@ function datasetsListComponentCtrl($q, datasetManagerService, datasetStateServic
             }, dvm.util.createErrorToast);
     }
     dvm.showUploadData = function(dataset) {
-        dvm.state.selectedDataset = dataset;
-        modalService.openModal('uploadDataOverlay');
+        const request = {
+            resourceId: dataset.record['@id'],
+            actionId: prefixes.catalog + 'Modify'
+        };
+        pep.evaluateRequest(request)
+            .then(response => {
+                const hasPermission = response !== pep.deny;
+                if (hasPermission) {
+                    dvm.state.selectedDataset = dataset;
+                    modalService.openModal('uploadDataOverlay');
+                } else {
+                    dvm.util.createErrorToast('You do not have permission to modify dataset record');
+                }
+            }, () => {
+                dvm.util.createErrorToast('Could not retrieve record permissions');
+            });
     }
     dvm.showEdit = function(dataset) {
-        dvm.state.selectedDataset = dataset;
-        modalService.openModal('editDatasetOverlay');
+        const request = {
+            resourceId: dataset.record['@id'],
+            actionId: prefixes.policy + 'Update'
+        };
+        pep.evaluateRequest(request)
+            .then(response => {
+                const hasPermission = response !== pep.deny;
+                if (hasPermission) {
+                    dvm.state.selectedDataset = dataset;
+                    modalService.openModal('editDatasetOverlay');
+                } else {
+                    dvm.util.createErrorToast('You do not have permission to update dataset record');
+                }
+            }, () => {
+                dvm.util.createErrorToast('Could not retrieve record permissions');
+            });
     }
     dvm.showClear = function(dataset) {
-        modalService.openConfirmModal('<p>Are you sure that you want to clear <strong>' + dvm.util.getDctermsValue(dataset.record, 'title') + '</strong>?</p>', () => dvm.clear(dataset));
+        const request = {
+            resourceId: dataset.record['@id'],
+            actionId: prefixes.catalog + 'Modify'
+        };
+        pep.evaluateRequest(request)
+            .then(response => {
+                const hasPermission = response !== pep.deny;
+                if (hasPermission) {
+                    modalService.openConfirmModal('<p>Are you sure that you want to clear <strong>' + dvm.util.getDctermsValue(dataset.record, 'title') + '</strong>?</p>', () => dvm.clear(dataset));
+                } else {
+                    dvm.util.createErrorToast('You do not have permission to modify dataset record');
+                }
+            }, () => {
+                dvm.util.createErrorToast('Could not retrieve record permissions');
+            });
     }
     dvm.showDelete = function(dataset) {
-        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.util.getDctermsValue(dataset.record, 'title') + '</strong>?</p>', () => dvm.delete(dataset));
+        const request = {
+            resourceId: dataset.record['@id'],
+            actionId: prefixes.policy + 'Delete'
+        };
+        pep.evaluateRequest(request)
+            .then(response => {
+                const hasPermission = response !== pep.deny;
+                if (hasPermission) {
+                    modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.util.getDctermsValue(dataset.record, 'title') + '</strong>?</p>', () => dvm.delete(dataset));
+                } else {
+                    dvm.util.createErrorToast('You do not have permission to delete dataset record');
+                }
+            }, () => {
+                dvm.util.createErrorToast('Could not retrieve record permissions');
+            });
     }
 }
 
