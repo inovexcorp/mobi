@@ -32,10 +32,15 @@ import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.Modify;
+import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.record.config.OperationConfig;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
-import com.mobi.dataset.api.builder.DatasetRecordConfig;
 import com.mobi.dataset.api.builder.OntologyIdentifier;
+import com.mobi.dataset.api.record.config.DatasetRecordCreateSettings;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.dataset.pagination.DatasetPaginatedSearchParams;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
@@ -45,18 +50,21 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.security.annotations.ActionAttributes;
+import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
+import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
+import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -64,7 +72,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
@@ -75,9 +82,10 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -107,6 +115,7 @@ public class DatasetRest {
     private ModelFactory mf;
     private CatalogProvUtils provUtils;
     private RDFImportService importService;
+    private PDP pdp;
 
     @Reference
     void setManager(DatasetManager manager) {
@@ -158,6 +167,10 @@ public class DatasetRest {
         this.importService = importService;
     }
 
+    @Reference
+    void setPdp(PDP pdp) {
+        this.pdp = pdp;
+    }
     /**
      * Retrieves all the DatasetRecords in the local Catalog in a JSON array. Can optionally be paged if passed a
      * limit and offset. Can optionally be sorted by property value if passed a sort IRI.
@@ -184,6 +197,7 @@ public class DatasetRest {
             }
     )
     public Response getDatasetRecords(
+            @Context ContainerRequestContext context,
             @Context UriInfo uriInfo,
             @Parameter(description = "Offset for a page of DatasetRecords", required = true)
             @QueryParam("offset") int offset,
@@ -208,7 +222,11 @@ public class DatasetRest {
             if (searchText != null && !searchText.isEmpty()) {
                 params.setSearchText(searchText);
             }
-            PaginatedSearchResults<DatasetRecord> results = manager.getDatasetRecords(params);
+
+            PaginatedSearchResults<Record> results = catalogManager.findRecord(
+                    vf.createIRI("http://mobi.com/catalog-local"), params.build(),
+                    getActiveUser(context, engineManager), pdp);
+
             JSONArray array = JSONArray.fromObject(results.getPage().stream()
                     .map(datasetRecord -> removeContext(datasetRecord.getModel()))
                     .map(model -> modelToSkolemizedJsonld(model, transformer, bNodeService))
@@ -291,39 +309,32 @@ public class DatasetRest {
             @FormDataParam("ontologies") List<FormDataBodyPart> ontologies) {
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
-        User activeUser = getActiveUser(context, engineManager);
-        CreateActivity createActivity = null;
+        User user = getActiveUser(context, engineManager);
         try {
-            createActivity = provUtils.startCreateActivity(activeUser);
-            DatasetRecordConfig.DatasetRecordBuilder builder = new DatasetRecordConfig.DatasetRecordBuilder(title,
-                    Collections.singleton(activeUser), repositoryId);
-            if (StringUtils.isNotEmpty(datasetIRI)) {
-                builder.dataset(datasetIRI);
-            }
-            if (StringUtils.isNotEmpty(description)) {
-                builder.description(description);
-            }
-            if (StringUtils.isNotEmpty(markdown)) {
-                builder.markdown(markdown);
-            }
+            RecordOperationConfig config = new OperationConfig();
+            config.set(RecordCreateSettings.CATALOG_ID, configProvider.getLocalCatalogIRI().stringValue());
+            config.set(RecordCreateSettings.RECORD_TITLE, title);
+            config.set(RecordCreateSettings.RECORD_DESCRIPTION, description);
+            config.set(RecordCreateSettings.RECORD_MARKDOWN, markdown);
             if (keywords != null) {
-                builder.keywords(keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet()));
+                config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords.stream().map(FormDataBodyPart::getValue)
+                        .collect(Collectors.toSet()));
             }
+            config.set(RecordCreateSettings.RECORD_PUBLISHERS, Stream.of(user).collect(Collectors.toSet()));
+            config.set(DatasetRecordCreateSettings.DATASET, datasetIRI);
+            config.set(DatasetRecordCreateSettings.REPOSITORY_ID, repositoryId);
             if (ontologies != null) {
-                ontologies.forEach(formDataBodyPart -> builder.ontology(
-                        getOntologyIdentifier(vf.createIRI(formDataBodyPart.getValue()))));
+                Set<OntologyIdentifier> ontologyIdentifiers = ontologies.stream().map(formDataBodyPart ->
+                        getOntologyIdentifier(vf.createIRI(formDataBodyPart.getValue()))).collect(Collectors.toSet());
+                config.set(DatasetRecordCreateSettings.ONTOLOGIES, ontologyIdentifiers);
             }
-            DatasetRecord record = manager.createDataset(builder.build());
-            provUtils.endCreateActivity(createActivity, record.getResource());
+            DatasetRecord record = catalogManager.createRecord(user, config, DatasetRecord.class);
             return Response.status(201).entity(record.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
-            provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
-            provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (Exception ex) {
-            provUtils.removeActivity(createActivity);
             throw ex;
         }
     }
@@ -350,6 +361,7 @@ public class DatasetRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "datasetRecordId")
     public Response getDatasetRecord(
             @Parameter(description = "IRI of a DatasetRecord", required = true)
             @PathParam("datasetRecordId") String datasetRecordId) {
@@ -390,6 +402,8 @@ public class DatasetRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ActionId(value = Delete.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "datasetRecordId")
     public Response deleteDatasetRecord(
             @Context ContainerRequestContext context,
             @Parameter(schema = @Schema(description = "DatasetRecord IRI", required = true,
@@ -439,6 +453,8 @@ public class DatasetRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "datasetRecordId")
     public Response clearDatasetRecord(
             @Parameter(description = "IRI of a DatasetRecord", required = true)
             @PathParam("datasetRecordId") String datasetRecordId,
@@ -480,6 +496,8 @@ public class DatasetRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "datasetRecordId")
     public Response uploadData(
             @Parameter(description = "IRI of a DatasetRecord", required = true)
             @PathParam("datasetRecordId") String datasetRecordId,

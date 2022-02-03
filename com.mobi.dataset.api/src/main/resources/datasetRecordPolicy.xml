@@ -1,6 +1,6 @@
 <!--
   #%L
-  com.mobi.mobi-distribution
+  com.mobi.dataset
   $Id:$
   $HeadURL:$
   %%
@@ -20,38 +20,20 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="http://mobi.com/policies/admin-user-only-access-versioned-rdf-record" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" Version="1.0">
-    <Description>The admin user can perform any action to any record</Description>
+<Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="http://mobi.com/policies/record/%RECORDIRIENCODED%" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" Version="1.0">
+    <Description>Who can access dataset record %RECORDIRI%</Description>
     <Target>
         <AnyOf>
             <AllOf>
                 <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/ontologies/catalog#VersionedRDFRecord</AttributeValue>
-                    <AttributeDesignator AttributeId="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
-                </Match>
-            </AllOf>
-            <AllOf>
-                <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/ontologies/catalog#VersionedRDFRecord</AttributeValue>
-                    <AttributeDesignator AttributeId="http://mobi.com/policy/prop-path(%3Chttp%3A%2F%2Fmobi.com%2Fontologies%2Fpolicy%23relatedResource%3E%2F%3Chttp%3A%2F%2Fwww.w3.org%2F1999%2F02%2F22-rdf-syntax-ns%23type%3E)" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
-                </Match>
-            </AllOf>
-            <AllOf>
-                <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/ontologies/catalog#UnversionedRecord</AttributeValue>
-                    <AttributeDesignator AttributeId="http://www.w3.org/1999/02/22-rdf-syntax-ns#type" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
-                </Match>
-            </AllOf>
-            <AllOf>
-                <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/ontologies/catalog#UnversionedRecord</AttributeValue>
-                    <AttributeDesignator AttributeId="http://mobi.com/policy/prop-path(%3Chttp%3A%2F%2Fmobi.com%2Fontologies%2Fpolicy%23relatedResource%3E%2F%3Chttp%3A%2F%2Fwww.w3.org%2F1999%2F02%2F22-rdf-syntax-ns%23type%3E)" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
+                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">%RECORDIRI%</AttributeValue>
+                    <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                 </Match>
             </AllOf>
         </AnyOf>
     </Target>
     <Rule Effect="Permit" RuleId="urn:read">
-        <Description>The admin user can read all Records and their branches</Description>
+        <Description>Who can read dataset record %RECORDIRI%</Description>
         <Target>
             <AnyOf>
                 <AllOf>
@@ -64,15 +46,15 @@
             <AnyOf>
                 <AllOf>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">admin</AttributeValue>
-                        <AttributeDesignator AttributeId="http://mobi.com/ontologies/user/management#username" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/roles/user</AttributeValue>
+                        <AttributeDesignator AttributeId="http://mobi.com/ontologies/user/management#hasUserRole" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                     </Match>
                 </AllOf>
             </AnyOf>
         </Target>
     </Rule>
     <Rule Effect="Permit" RuleId="urn:delete">
-        <Description>The admin user can delete all Records</Description>
+        <Description>Who can delete dataset record %RECORDIRI%</Description>
         <Target>
             <AnyOf>
                 <AllOf>
@@ -85,15 +67,15 @@
             <AnyOf>
                 <AllOf>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">admin</AttributeValue>
-                        <AttributeDesignator AttributeId="http://mobi.com/ontologies/user/management#username" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">%USERIRI%</AttributeValue>
+                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                     </Match>
                 </AllOf>
             </AnyOf>
         </Target>
     </Rule>
     <Rule Effect="Permit" RuleId="urn:update">
-        <Description>The admin user can update all Records</Description>
+        <Description>Who can update dataset record %RECORDIRI%</Description>
         <Target>
             <AnyOf>
                 <AllOf>
@@ -106,15 +88,15 @@
             <AnyOf>
                 <AllOf>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">admin</AttributeValue>
-                        <AttributeDesignator AttributeId="http://mobi.com/ontologies/user/management#username" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">%USERIRI%</AttributeValue>
+                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                     </Match>
                 </AllOf>
             </AnyOf>
         </Target>
     </Rule>
     <Rule Effect="Permit" RuleId="urn:modify">
-        <Description>The admin user can modify all Records</Description>
+        <Description>Who can modify dataset record %RECORDIRI%</Description>
         <Target>
             <AnyOf>
                 <AllOf>
@@ -127,8 +109,8 @@
             <AnyOf>
                 <AllOf>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">admin</AttributeValue>
-                        <AttributeDesignator AttributeId="http://mobi.com/ontologies/user/management#username" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/roles/user</AttributeValue>
+                        <AttributeDesignator AttributeId="http://mobi.com/ontologies/user/management#hasUserRole" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                     </Match>
                 </AllOf>
             </AnyOf>

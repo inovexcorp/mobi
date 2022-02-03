@@ -28,6 +28,8 @@ import com.mobi.security.policy.api.exception.PolicySyntaxException;
 import com.mobi.security.policy.api.exception.ProcessingException;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.wso2.balana.AbstractPolicy;
 import org.wso2.balana.ParsingException;
@@ -43,6 +45,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 public class BalanaPolicy extends XACMLPolicy {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BalanaPolicy.class);
 
     private AbstractPolicy abstractPolicy;
 
@@ -76,6 +80,7 @@ public class BalanaPolicy extends XACMLPolicy {
             Document doc = docFactory.newDocumentBuilder().parse(stream);
             return org.wso2.balana.Policy.getInstance(doc.getDocumentElement());
         } catch (SAXException | ParsingException e) {
+            LOGGER.error(e.toString(), e);
             throw new PolicySyntaxException("Error parsing Policy");
         } catch (ParserConfigurationException | IOException e) {
             throw new ProcessingException("Error retrieving Policy");

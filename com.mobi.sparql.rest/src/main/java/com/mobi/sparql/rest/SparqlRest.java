@@ -43,11 +43,13 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
+import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.DefaultResourceId;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.MobiWebException;
+import com.mobi.security.policy.api.ontologies.policy.Read;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -274,6 +276,7 @@ public class SparqlRest {
     @Produces({XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE,
             JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
+    @ActionId(value = Read.TYPE)
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response postQueryRdf(
             @QueryParam("dataset") String datasetRecordId,
@@ -305,6 +308,7 @@ public class SparqlRest {
     @Consumes("application/sparql-query")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
+    @ActionId(value = Read.TYPE)
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response postDownloadRdfQuery(
             @QueryParam("dataset") String datasetRecordId,
@@ -336,6 +340,7 @@ public class SparqlRest {
     @Produces({XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE,
             JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
+    @ActionId(value = Read.TYPE)
     @ResourceId(type = ValueType.BODY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response postUrlEncodedQueryRdf(
             @FormParam("query") String queryString,
@@ -415,6 +420,7 @@ public class SparqlRest {
                             in = ParameterIn.QUERY)
             }
     )
+    @ActionId(value = Read.TYPE)
     @ResourceId(type = ValueType.BODY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response postUrlEncodedDownloadRdfQuery(
             @FormParam("query") String queryString,
@@ -502,6 +508,7 @@ public class SparqlRest {
     @Path("/limited-results")
     @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
+    @ActionId(value = Read.TYPE)
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response postLimitedResults(@QueryParam("dataset") String datasetRecordId,
                                        @HeaderParam("accept") String acceptString, String queryString) {
@@ -577,6 +584,7 @@ public class SparqlRest {
                             in = ParameterIn.QUERY)
             }
     )
+    @ActionId(value = Read.TYPE)
     @ResourceId(type = ValueType.BODY, value = "dataset",defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response postUrlEncodedLimitedResults(@FormParam("query") String queryString,
                                                  @FormParam("dataset") String datasetRecordId,

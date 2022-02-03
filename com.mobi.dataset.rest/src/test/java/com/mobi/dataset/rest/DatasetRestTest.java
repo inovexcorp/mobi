@@ -37,18 +37,22 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
+import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.api.builder.DatasetRecordConfig;
+import com.mobi.dataset.api.record.config.DatasetRecordCreateSettings;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.dataset.pagination.DatasetPaginatedSearchParams;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
@@ -71,6 +75,7 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.exception.RepositoryException;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
+import com.mobi.security.policy.api.PDP;
 import net.sf.json.JSONArray;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.glassfish.jersey.client.ClientConfig;
@@ -136,6 +141,9 @@ public class DatasetRestTest extends MobiRestTestNg {
 
     @Mock
     private PaginatedSearchResults<DatasetRecord> results;
+
+    @Mock
+    private PaginatedSearchResults<Record> recordResults;
 
     @Mock
     private BNodeService service;
@@ -205,7 +213,7 @@ public class DatasetRestTest extends MobiRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(datasetManager, catalogManager, transformer, results, service, provUtils, importService);
+        reset(datasetManager, catalogManager, transformer, recordResults, results, service, provUtils, importService);
 
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
@@ -221,7 +229,14 @@ public class DatasetRestTest extends MobiRestTestNg {
         when(datasetManager.safeDeleteDataset(record1.getResource())).thenReturn(record1);
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 
+        when(recordResults.getPage()).thenReturn(Stream.of(record1, record2, record3).collect(Collectors.toList()));
+        when(recordResults.getPageNumber()).thenReturn(1);
+        when(recordResults.getPageSize()).thenReturn(10);
+        when(recordResults.getTotalSize()).thenReturn(3);
+
         when(catalogManager.getMasterBranch(localIRI, ontologyRecordIRI)).thenReturn(branch);
+        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(PDP.class))).thenReturn(recordResults);
+        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), any())).thenReturn(record1);
 
         when(results.getPage()).thenReturn(Stream.of(record1, record2, record3).collect(Collectors.toList()));
         when(results.getPageNumber()).thenReturn(1);
@@ -238,7 +253,8 @@ public class DatasetRestTest extends MobiRestTestNg {
     public void getDatasetRecordsTest() {
         Response response = target().path("datasets").request().get();
         assertEquals(response.getStatus(), 200);
-        verify(datasetManager).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
+        verify(catalogManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(PDP.class));
+        verify(datasetManager, never()).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
         verify(service, atLeastOnce()).skolemize(any(Statement.class));
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
@@ -251,13 +267,16 @@ public class DatasetRestTest extends MobiRestTestNg {
     @Test
     public void getDatasetRecordsWithLinksTest() {
         // Setup:
-        when(results.getPage()).thenReturn(Collections.singletonList(record2));
-        when(results.getPageNumber()).thenReturn(2);
-        when(results.getPageSize()).thenReturn(1);
+        when(recordResults.getPage()).thenReturn(Collections.singletonList(record2));
+        when(recordResults.getPageNumber()).thenReturn(2);
+        when(recordResults.getPageSize()).thenReturn(1);
 
         Response response = target().path("datasets").queryParam("offset", 1).queryParam("limit", 1).request().get();
         assertEquals(response.getStatus(), 200);
-        verify(datasetManager).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
+
+        verify(catalogManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(PDP.class));
+        verify(datasetManager, never()).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
+
         verify(service, atLeastOnce()).skolemize(any(Statement.class));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "3");
@@ -288,7 +307,7 @@ public class DatasetRestTest extends MobiRestTestNg {
     @Test
     public void getDatasetRecordsWithErrorTest() {
         // Setup:
-        when(datasetManager.getDatasetRecords(any(DatasetPaginatedSearchParams.class))).thenThrow(new MobiException());
+        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(PDP.class))).thenThrow(new MobiException());
 
         Response response = target().path("datasets").request().get();
         assertEquals(response.getStatus(), 500);
@@ -310,21 +329,19 @@ public class DatasetRestTest extends MobiRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
-        ArgumentCaptor<DatasetRecordConfig> config = ArgumentCaptor.forClass(DatasetRecordConfig.class);
-        verify(datasetManager).createDataset(config.capture());
-        assertEquals("http://example.com/dataset", config.getValue().getDataset());
-        assertEquals("system", config.getValue().getRepositoryId());
-        assertEquals(1, config.getValue().getOntologies().size());
-        assertEquals("title", config.getValue().getTitle());
-        assertEquals("description", config.getValue().getDescription());
-        assertEquals("#markdown", config.getValue().getMarkdown());
-        assertNull(config.getValue().getIdentifier());
-        assertEquals(Stream.of("test", "demo").collect(Collectors.toSet()), config.getValue().getKeywords());
-        assertEquals(Collections.singleton(user), config.getValue().getPublishers());
+        ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
+        verify(catalogManager).createRecord(any(User.class), config.capture(), any());
+        assertEquals("http://example.com/dataset", config.getValue().get(DatasetRecordCreateSettings.DATASET));
+        assertEquals("title", config.getValue().get(RecordCreateSettings.RECORD_TITLE));
+        assertEquals("description", config.getValue().get(RecordCreateSettings.RECORD_DESCRIPTION));
+        assertEquals("#markdown", config.getValue().get(RecordCreateSettings.RECORD_MARKDOWN));
+        assertEquals(Stream.of("test", "demo").collect(Collectors.toSet()), config.getValue().get(RecordCreateSettings.RECORD_KEYWORDS));
+        assertEquals(Collections.singleton(user), config.getValue().get(RecordCreateSettings.RECORD_PUBLISHERS));
+        assertEquals("http://example.com/dataset", config.getValue().get(DatasetRecordCreateSettings.DATASET));
+        assertEquals("system", config.getValue().get(DatasetRecordCreateSettings.REPOSITORY_ID));
+        assertEquals(1, config.getValue().get(DatasetRecordCreateSettings.ONTOLOGIES).size());
         verify(catalogManager).getMasterBranch(localIRI, ontologyRecordIRI);
         assertEquals(response.readEntity(String.class), record1.getResource().stringValue());
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(createActivity, record1.getResource());
     }
 
     @Test
@@ -352,12 +369,10 @@ public class DatasetRestTest extends MobiRestTestNg {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("repositoryId", "error");
-        when(datasetManager.createDataset(any(DatasetRecordConfig.class))).thenThrow(new IllegalArgumentException());
+        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), any())).thenThrow(new IllegalArgumentException());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
     }
 
     @Test
@@ -370,8 +385,6 @@ public class DatasetRestTest extends MobiRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
     }
 
     @Test
@@ -384,8 +397,6 @@ public class DatasetRestTest extends MobiRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
     }
 
     @Test
@@ -399,8 +410,6 @@ public class DatasetRestTest extends MobiRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
     }
 
     @Test
@@ -408,12 +417,10 @@ public class DatasetRestTest extends MobiRestTestNg {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("repositoryId", "system");
-        when(datasetManager.createDataset(any(DatasetRecordConfig.class))).thenThrow(new MobiException());
+        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), any())).thenThrow(new MobiException());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
     }
 
     /* GET datasets/{datasetId} */

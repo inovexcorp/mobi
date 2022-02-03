@@ -90,6 +90,7 @@ import javax.xml.namespace.QName;
 public class RecordPermissionsRest {
     private final Logger LOGGER = LoggerFactory.getLogger(RecordPermissionsRest.class);
 
+    private static final String ONTOLOGIES_CATALOG_MODIFY = "http://mobi.com/ontologies/catalog#Modify";
     private ValueFactory vf;
     private XACMLPolicyManager policyManager;
     private Repository repo;
@@ -332,19 +333,34 @@ public class RecordPermissionsRest {
      * @return The updated XACMLPolicy object
      */
     private XACMLPolicy recordJsonToPolicy(String json, PolicyType policyType) {
-        String masterBranch = policyType.getRule().get(4).getTarget().getAnyOf().get(0).getAllOf().get(0).getMatch()
-                .get(1).getAttributeValue().getContent().get(0).toString();
+        Optional<String> masterBranch = Optional.empty();
+
+        List<RuleType> policyTypeRules = policyType.getRule();
+        for (RuleType ruleType: policyTypeRules) {
+            switch (ruleType.getRuleId()) {
+                case "urn:modifyMaster":
+                    try {
+                        masterBranch = Optional.of(ruleType.getTarget().getAnyOf().get(0).getAllOf().get(0).getMatch()
+                                .get(1).getAttributeValue().getContent().get(0).toString());
+                    } catch (IndexOutOfBoundsException e){
+                        LOGGER.error("Policy File is corrupted: master branch target invalid");
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
         policyType.getRule().clear();
 
         AttributeDesignatorType actionIdAttrDesig = createActionIdAttrDesig();
         AttributeDesignatorType subjectIdAttrDesig = createSubjectIdAttrDesig();
         AttributeDesignatorType groupAttrDesig = createGroupAttrDesig();
         AttributeDesignatorType branchAttrDesig = createBranchAttrDesig();
-        AttributeValueType branchAttrVal = createAttributeValue(XSD.STRING, masterBranch);
 
         JSONObject jsonObject = JSONObject.fromObject(json);
         Iterator<?> keys = jsonObject.keys();
-
+        // iterate all json keys
         while (keys.hasNext()) {
             String key = (String)keys.next();
             TargetType target = new TargetType();
@@ -366,10 +382,10 @@ public class RecordPermissionsRest {
                     ruleTypeAttrVal.getContent().add(Update.TYPE);
                     break;
                 case "urn:modify":
-                    ruleTypeAttrVal.getContent().add("http://mobi.com/ontologies/catalog#Modify");
+                    ruleTypeAttrVal.getContent().add(ONTOLOGIES_CATALOG_MODIFY);
                     break;
                 case "urn:modifyMaster":
-                    ruleTypeAttrVal.getContent().add("http://mobi.com/ontologies/catalog#Modify");
+                    ruleTypeAttrVal.getContent().add(ONTOLOGIES_CATALOG_MODIFY);
                     break;
                 default:
                     throw new MobiException("Invalid rule key: " + key);
@@ -380,7 +396,8 @@ public class RecordPermissionsRest {
             anyOfType.getAllOf().add(allOfType);
             allOfType.getMatch().add(ruleTypeMatch);
 
-            if (key.equalsIgnoreCase("urn:modifyMaster")) {
+            if (key.equalsIgnoreCase("urn:modifyMaster") && masterBranch.isPresent()) {
+                AttributeValueType branchAttrVal = createAttributeValue(XSD.STRING, masterBranch.get());
                 MatchType branchMatch = createMatch(XACML.STRING_EQUALS, branchAttrDesig, branchAttrVal);
                 allOfType.getMatch().add(branchMatch);
             }
@@ -408,19 +425,21 @@ public class RecordPermissionsRest {
                     throw new IllegalArgumentException("Invalid JSON representation of a Policy."
                             + " Users or groups not set properly for " + key);
                 }
+                if (usersArray.size() == 0 && groupsArray.size() == 0){
+                    throw new IllegalArgumentException("Need to have at least one user or group since everybody is false");
+                }
                 addUsersOrGroupsToAnyOf(usersArray, subjectIdAttrDesig, usersGroups);
                 addUsersOrGroupsToAnyOf(groupsArray, groupAttrDesig, usersGroups);
             }
             rule.getTarget().getAnyOf().add(usersGroups);
 
-            if (key.equalsIgnoreCase("urn:modify")) {
+            if (key.equalsIgnoreCase("urn:modify") && masterBranch.isPresent()) {
                 ConditionType condition = new ConditionType();
-                condition.setExpression(createMasterBranchExpression(masterBranch));
+                condition.setExpression(createMasterBranchExpression(masterBranch.get()));
                 rule.setCondition(condition);
             }
             policyType.getRule().add(rule);
         }
-
         return policyManager.createPolicy(policyType);
     }
 
