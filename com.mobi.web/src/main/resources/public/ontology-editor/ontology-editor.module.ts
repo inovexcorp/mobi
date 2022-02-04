@@ -50,7 +50,7 @@ import createDataPropertyOverlayComponent from './components/createDataPropertyO
 import createEntityModalComponent from './components/createEntityModal/createEntityModal.component';
 import createIndividualOverlayComponent from './components/createIndividualOverlay/createIndividualOverlay.component';
 import createObjectPropertyOverlayComponent from './components/createObjectPropertyOverlay/createObjectPropertyOverlay.component';
-import createTagModalComponent from './components/createTagModal/createTagModal.component';
+import createTagModalComponentAjs from './components/createTagModal/createTagModal.component.ajs';
 import datatypePropertyAxiomsComponent from './components/datatypePropertyAxioms/datatypePropertyAxioms.component';
 import datatypePropertyBlockComponent from './components/datatypePropertyBlock/datatypePropertyBlock.component';
 import datatypePropertyOverlayComponent from './components/datatypePropertyOverlay/datatypePropertyOverlay.component';
@@ -142,7 +142,7 @@ angular.module('ontology-editor', [])
     .component('createEntityModal', createEntityModalComponent)
     .component('createIndividualOverlay', createIndividualOverlayComponent)
     .component('createObjectPropertyOverlay', createObjectPropertyOverlayComponent)
-    .component('createTagModal', createTagModalComponent)
+    .component('createTagModalAjs', createTagModalComponentAjs)
     .component('datatypePropertyAxioms', datatypePropertyAxiomsComponent)
     .component('datatypePropertyBlock', datatypePropertyBlockComponent)
     .component('datatypePropertyOverlay', datatypePropertyOverlayComponent)

@@ -20,15 +20,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="shapes-graph-editor-page p-3 ">
-   
+<div class="shapes-graph-editor-page p-3  h-100">
+    <editor-top-bar *ngIf="!state?.listItem?.merge?.active"></editor-top-bar>
     <shapes-graph-merge-page *ngIf="state?.listItem?.merge?.active"></shapes-graph-merge-page>
     <shapes-graph-changes-page *ngIf="state?.listItem?.changesPageOpen"
                             [additions]="state?.listItem?.inProgressCommit?.additions"
                             [deletions]="state?.listItem?.inProgressCommit?.deletions">
     </shapes-graph-changes-page>
-    <div class="editor-content-wrapper d-flex flex-column h-100">
-        <editor-top-bar *ngIf="!state?.listItem?.merge?.active"></editor-top-bar>
+    <div class="editor-content-wrapper d-flex flex-column">
         <div class="editor-content d-flex flex-column h-100" *ngIf="state.listItem?.metadata && keys(state.listItem?.metadata).length && !state?.listItem?.changesPageOpen && !state?.listItem?.merge?.active">
             <shapes-graph-details class="py-2" *ngIf="state?.listItem?.active"></shapes-graph-details>
             <div class="h-100 py-2 remove-min-height shapes-graph-properties">
@@ -38,5 +37,4 @@
             </div>
         </div>
     </div>
- 
 </div>

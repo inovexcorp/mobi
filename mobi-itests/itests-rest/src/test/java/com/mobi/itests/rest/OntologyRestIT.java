@@ -73,6 +73,7 @@ import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -117,10 +118,10 @@ public class OntologyRestIT extends KarafTestSupport {
         if (setupComplete) return;
 
         String ontology = "test-ontology.ttl";
-        Files.copy(thisBundleContext.getBundle().getEntry("/" + ontology).openStream(), Paths.get(ontology));
+        Files.copy(thisBundleContext.getBundle().getEntry("/" + ontology).openStream(), Paths.get(ontology), StandardCopyOption.REPLACE_EXISTING);
 
         String vocabulary = "test-vocabulary.ttl";
-        Files.copy(thisBundleContext.getBundle().getEntry("/" + vocabulary).openStream(), Paths.get(vocabulary));
+        Files.copy(thisBundleContext.getBundle().getEntry("/" + vocabulary).openStream(), Paths.get(vocabulary), StandardCopyOption.REPLACE_EXISTING);
 
         waitForService("(&(objectClass=com.mobi.ontology.impl.core.record.SimpleOntologyRecordService))", 10000L);
         waitForService("(&(objectClass=com.mobi.jaas.rest.AuthRest))", 10000L);

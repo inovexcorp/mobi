@@ -131,7 +131,7 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
         if (this.state?.listItem?.currentVersionTitle) {
             this.branchSearchControl.setValue(this.state.listItem.currentVersionTitle);
             const branch = find(this.branches, {'branchIri': this.state.listItem.versionedRdfRecord.branchId});
-            const tag = find(this.tags, {'commitIri': this.state.listItem.versionedRdfRecord.commitId});
+            const tag = find(this.tags, {'commitIri': this.state.listItem.versionedRdfRecord.commitId, 'tagIri': this.state.listItem.versionedRdfRecord.tagId});
             const commit = find(this.commits, {'commitIri': this.state.listItem.versionedRdfRecord.commitId});
 
             if (branch) {
@@ -245,7 +245,7 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
                 this.state.listItem.currentVersionTitle = branch.title;
             }
         } else if (this.state.listItem.versionedRdfRecord.commitId) {
-            const tag = find(this.tags, {commitIri: this.state.listItem.versionedRdfRecord.commitId});
+            const tag = find(this.tags, {commitIri: this.state.listItem.versionedRdfRecord.commitId, tagIri: this.state.listItem.versionedRdfRecord.tagId});
             if (!tag) {
                 this.util.createWarningToast('Tag ' + this.state.listItem.currentVersionTitle
                     + ' cannot be found. Switching to MASTER');

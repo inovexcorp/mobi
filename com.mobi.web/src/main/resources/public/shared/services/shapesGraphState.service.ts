@@ -136,7 +136,8 @@ export class ShapesGraphStateService extends VersionedRdfState {
                     title: record.title,
                     recordId: response.recordId,
                     branchId: response.branchId,
-                    commitId: response.commitId
+                    commitId: response.commitId,
+                    tagId: response.tagId
                 };
                 listItem.inProgressCommit = response.inProgressCommit;
                 listItem.changesPageOpen = false;
@@ -218,6 +219,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
                 recordId,
                 branchId,
                 commitId,
+                tagId,
                 title
             };
             item.currentVersionTitle = versionTitle ? versionTitle : this.listItem.currentVersionTitle;

@@ -355,6 +355,7 @@ describe('Versioned RDF State service', function() {
                 recordId: recordId,
                 branchId: branchId,
                 commitId: commitId,
+                tagId: '',
                 upToDate: true,
                 inProgressCommit: inProgressCommit
             };
@@ -362,6 +363,7 @@ describe('Versioned RDF State service', function() {
                 recordId: recordId,
                 branchId: branchId,
                 commitId: commitId,
+                tagId: '',
                 upToDate: true,
                 inProgressCommit: new Difference()
             };
@@ -648,6 +650,8 @@ describe('Versioned RDF State service', function() {
                     commitStateModel[VersionedRdfStateImpl.testPrefix + 'tag'] = [{'@id': tagId}];
                     this.expected.branchId = '';
                     this.expected2.branchId = '';
+                    this.expected.tagId = tagId;
+                    this.expected2.tagId = tagId;
                 });
                 describe('and getRecordVersion is resolved', function() {
                     beforeEach(function() {

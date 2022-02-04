@@ -417,6 +417,7 @@ describe('Editor Branch Select component', function() {
                 });
                 it('and is a tag', function() {
                     shapesGraphStateStub.listItem.currentVersionTitle = tag1.title;
+                    shapesGraphStateStub.listItem.versionedRdfRecord.tagId = tag1.tagIri;
                     shapesGraphStateStub.listItem.versionedRdfRecord.commitId = tag1.commitIri;
                     spyOn(component.branchSearchControl, 'setValue');
                     component.resetSearch();
@@ -509,6 +510,7 @@ describe('Editor Branch Select component', function() {
 
                             shapesGraphStateStub.listItem.versionedRdfRecord.branchId = '';
                             shapesGraphStateStub.listItem.versionedRdfRecord.commitId = tag1.commitIri;
+                            shapesGraphStateStub.listItem.versionedRdfRecord.tagId = tag1.tagIri;
                             expect(shapesGraphStateStub.listItem.currentVersionTitle).toEqual('');
                             await component.retrieveBranchesAndTags();
 

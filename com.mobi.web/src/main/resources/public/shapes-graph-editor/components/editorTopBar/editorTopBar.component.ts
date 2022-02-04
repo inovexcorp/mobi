@@ -24,6 +24,7 @@ import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CreateBranchModal } from '../createBranchModal/createBranchModal.component';
+import { CreateTagModal } from '../createTagModal/createTagModal.component';
 import { DownloadRecordModalComponent } from '../downloadRecordModal/downloadRecordModal.component';
 import { UploadRecordModalComponent } from '../uploadRecordModal/uploadRecordModal.component';
 import { CommitModalComponent } from '../commitModal/commitModal.component';
@@ -45,6 +46,10 @@ export class EditorTopBarComponent {
 
     createBranch(): void {
         this.dialog.open(CreateBranchModal, {});
+    }
+
+    createTag(): void {
+        this.dialog.open(CreateTagModal, {});
     }
 
     download(): void {

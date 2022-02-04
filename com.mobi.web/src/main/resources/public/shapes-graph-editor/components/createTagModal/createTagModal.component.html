@@ -20,12 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="create-branch-modal">
-    <h1 mat-dialog-title>Create Branch</h1>
-    <div mat-dialog-content [formGroup]="createBranchForm">
+<div class="create-tag-modal">
+    <h1 mat-dialog-title>Create Tag</h1>
+    <error-display *ngIf="error">{{error}}</error-display>
+    <div mat-dialog-content [formGroup]="createTagForm">
         <mat-form-field class="w-100">
             <mat-label>Title</mat-label>
-            <input matInput name="title" formControlName="title" required/>
+            <input matInput (keyup)="nameChanged()" name="title" formControlName="title" required/>
+        </mat-form-field>
+        <mat-form-field class="w-100">
+            <mat-label>IRI</mat-label>
+            <input matInput (change)="iriHasChanged = true" name="iri" formControlName="iri" required/>
         </mat-form-field>
         <mat-form-field class="w-100">
             <mat-label>Description</mat-label>
@@ -34,6 +39,6 @@
     </div>
     <div mat-dialog-actions>
         <button mat-raised-button [mat-dialog-close]="">Cancel</button>
-        <button mat-raised-button color="primary" (click)="createBranch()" [disabled]="createBranchForm.invalid">Submit</button>
+        <button mat-raised-button color="primary" (click)="createTag()" [disabled]="createTagForm.invalid">Submit</button>
     </div>
 </div>

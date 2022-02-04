@@ -210,6 +210,7 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
 
         manager.retrieveShapesGraph(recordIRI, branchIRI, commitIRI);
     }
+
     @Test
     public void testRetrieveShapesGraphUsingACommitSuccess() {
         // Setup:
@@ -217,5 +218,24 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
 
         Optional<ShapesGraph> optionalOntology = manager.retrieveShapesGraph(recordIRI, branchIRI, commitIRI);
         assertTrue(optionalOntology.isPresent());
+    }
+
+    // Testing retrieveShapesGraphByCommit(Resource commitId)
+
+    @Test
+    public void testRetrieveShapesGraphByCommit() {
+        // Setup:
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
+
+        Optional<ShapesGraph> optionalOntology = manager.retrieveShapesGraphByCommit(commitIRI);
+        assertTrue(optionalOntology.isPresent());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRetrieveShapesGraphByCommitWhenCompiledResourceCannotBeFound() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(catalogManager).getCompiledResource(commitIRI);
+
+        manager.retrieveShapesGraphByCommit(commitIRI);
     }
 }

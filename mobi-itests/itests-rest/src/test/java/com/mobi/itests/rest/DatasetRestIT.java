@@ -69,6 +69,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -114,7 +115,7 @@ public class DatasetRestIT extends KarafTestSupport {
     public synchronized void setup() throws Exception {
         if (setupComplete) return;
 
-        Files.copy(thisBundleContext.getBundle().getEntry("/" + DATA_FILE).openStream(), Paths.get(DATA_FILE));
+        Files.copy(thisBundleContext.getBundle().getEntry("/" + DATA_FILE).openStream(), Paths.get(DATA_FILE), StandardCopyOption.REPLACE_EXISTING);
 
         waitForService("(&(objectClass=com.mobi.ontology.rest.DatasetRest))", 10000L);
         waitForService("(&(objectClass=com.mobi.jaas.rest.AuthRest))", 10000L);

@@ -564,15 +564,7 @@ public class ShapesGraphRest {
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try {
-            Optional<ShapesGraph> shapesGraphOpt;
-            if (StringUtils.isNotBlank(commitIdStr)) {
-                checkStringParam(branchIdStr, "The branchIdStr is missing.");
-                shapesGraphOpt = shapesGraphManager.retrieveShapesGraph(vf.createIRI(recordIdStr), vf.createIRI(branchIdStr), vf.createIRI(commitIdStr));
-            } else if (StringUtils.isNotBlank(branchIdStr)) {
-                shapesGraphOpt = shapesGraphManager.retrieveShapesGraph(vf.createIRI(recordIdStr), vf.createIRI(branchIdStr));
-            } else {
-                shapesGraphOpt = shapesGraphManager.retrieveShapesGraph((vf.createIRI(recordIdStr)));
-            }
+            Optional<ShapesGraph> shapesGraphOpt = getShapesGraph(recordIdStr, branchIdStr, commitIdStr);
 
             if (shapesGraphOpt.isPresent() && applyInProgressCommit) {
                 User user = getActiveUser(context, engineManager);
@@ -641,15 +633,7 @@ public class ShapesGraphRest {
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try {
-            Optional<ShapesGraph> shapesGraphOpt;
-            if (StringUtils.isNotBlank(commitIdStr)) {
-                checkStringParam(branchIdStr, "The branchIdStr is missing.");
-                shapesGraphOpt = shapesGraphManager.retrieveShapesGraph(vf.createIRI(recordIdStr), vf.createIRI(branchIdStr), vf.createIRI(commitIdStr));
-            } else if (StringUtils.isNotBlank(branchIdStr)) {
-                shapesGraphOpt = shapesGraphManager.retrieveShapesGraph(vf.createIRI(recordIdStr), vf.createIRI(branchIdStr));
-            } else {
-                shapesGraphOpt = shapesGraphManager.retrieveShapesGraph((vf.createIRI(recordIdStr)));
-            }
+            Optional<ShapesGraph> shapesGraphOpt = getShapesGraph(recordIdStr, branchIdStr, commitIdStr);
 
             ShapesGraph shapesGraph = shapesGraphOpt.orElseThrow(() ->
                     ErrorUtils.sendError("The shapes graph could not be found.", Response.Status.BAD_REQUEST));
@@ -658,15 +642,14 @@ public class ShapesGraphRest {
             Optional<InProgressCommit> inProgressCommitOpt = catalogManager.getInProgressCommit(
                     configProvider.getLocalCatalogIRI(), vf.createIRI(recordIdStr), user);
 
-            if (inProgressCommitOpt.isPresent()) {
-                shapesGraph.setModel(catalogManager.applyInProgressCommit(
-                        inProgressCommitOpt.get().getResource(), shapesGraphOpt.get().getModel()));
-            }
+            inProgressCommitOpt.ifPresent(inProgressCommit -> shapesGraph.setModel(catalogManager.applyInProgressCommit(
+                    inProgressCommit.getResource(), shapesGraphOpt.get().getModel())));
 
             Optional<IRI> shapesGraphId = shapesGraph.getShapesGraphId();
 
             if (!shapesGraphId.isPresent()) {
-                ErrorUtils.sendError("Shapes Graph IRI could not be found.", Response.Status.INTERNAL_SERVER_ERROR);
+                throw ErrorUtils.sendError("Shapes Graph IRI could not be found.",
+                        Response.Status.INTERNAL_SERVER_ERROR);
             }
 
             return Response.ok(shapesGraphId.get().stringValue()).build();
@@ -776,5 +759,20 @@ public class ShapesGraphRest {
         }
 
         return parsedModel.getModel();
+    }
+
+    private Optional<ShapesGraph> getShapesGraph(String recordIdStr, String branchIdStr, String commitIdStr) {
+        if (StringUtils.isNotBlank(commitIdStr) && StringUtils.isNotBlank(branchIdStr)) {
+            checkStringParam(branchIdStr, "The branchIdStr is missing.");
+            return shapesGraphManager.retrieveShapesGraph(vf.createIRI(recordIdStr),
+                    vf.createIRI(branchIdStr), vf.createIRI(commitIdStr));
+        } else if (StringUtils.isNotBlank(branchIdStr)) {
+            return shapesGraphManager.retrieveShapesGraph(vf.createIRI(recordIdStr),
+                    vf.createIRI(branchIdStr));
+        } else if (StringUtils.isNotBlank(commitIdStr)) {
+            return shapesGraphManager.retrieveShapesGraphByCommit(vf.createIRI(commitIdStr));
+        } else {
+            return shapesGraphManager.retrieveShapesGraph(vf.createIRI(recordIdStr));
+        }
     }
 }

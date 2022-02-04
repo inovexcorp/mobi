@@ -24,11 +24,11 @@ import { get } from 'lodash';
 
 import './createTagModal.component.scss';
 
-const template = require('./createTagModal.component.html');
+const template = require('./createTagModal.component.ajs.html');
 
 /**
  * @ngdoc component
- * @name ontology-editor.component:createTagModal
+ * @name ontology-editor.component:createTagModalAjs
  * @requires shared.service:catalogManagerService
  * @requires shared.service:ontologyStateService
  *
@@ -41,7 +41,7 @@ const template = require('./createTagModal.component.html');
  * @param {Function} close A function that closes the modal
  * @param {Function} dismiss A function that dismisses the modal
  */
-const createTagModalComponent = {
+const createTagModalComponentAjs = {
     template,
     bindings: {
         close: '&',
@@ -103,4 +103,4 @@ function createTagModalComponentCtrl($q, $filter, REGEX, catalogManagerService, 
     }
 }
 
-export default createTagModalComponent;
+export default createTagModalComponentAjs;

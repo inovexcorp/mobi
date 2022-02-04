@@ -70,4 +70,13 @@ public interface ShapesGraphManager {
      */
     Optional<ShapesGraph> retrieveShapesGraph(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                               @Nonnull Resource commitId);
+
+    /**
+     * Collects a {@link ShapesGraph} specified by the passed IRI {@link Resource Resources} for a
+     * {@link com.mobi.catalog.api.ontologies.mcat.Commit} from the repository if it exists.
+     *
+     * @param commitId the IRI {@link Resource} for a {@link com.mobi.catalog.api.ontologies.mcat.Commit}
+     * @return an {@link Optional} with a Shapes Graph with the mapping RDF if it was found
+     */
+    Optional<ShapesGraph> retrieveShapesGraphByCommit(@Nonnull Resource commitId);
 }

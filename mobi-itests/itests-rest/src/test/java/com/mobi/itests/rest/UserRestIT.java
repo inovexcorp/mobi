@@ -63,6 +63,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -107,7 +108,7 @@ public class UserRestIT extends KarafTestSupport {
         if (setupComplete) return;
 
         String dataFile = "testData.trig";
-        Files.copy(thisBundleContext.getBundle().getEntry("/" + dataFile).openStream(), Paths.get(dataFile));
+        Files.copy(thisBundleContext.getBundle().getEntry("/" + dataFile).openStream(), Paths.get(dataFile), StandardCopyOption.REPLACE_EXISTING);
 
         waitForService("(&(objectClass=com.mobi.etl.api.delimited.RDFImportService))", 10000L);
         waitForService("(&(objectClass=com.mobi.jaas.rest.AuthRest))", 10000L);
