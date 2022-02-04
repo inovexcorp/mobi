@@ -104,6 +104,7 @@ import showProperties from './filters/showProperties.filter';
 import splitIRI from './filters/splitIRI.filter';
 import trusted from './filters/trusted.filter';
 import uniqueKey from './filters/uniqueKey.filter';
+import { CamelCasePipe } from './pipes/camelCase.pipe';
 
 import catalogManagerService from './services/catalogManager.service';
 import catalogStateService from './services/catalogState.service';
@@ -236,6 +237,7 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         PrefixationPipe,
         SplitIRIPipe,
         ShowPropertiesPipe,
+        CamelCasePipe,
         FileInputComponent,
         CustomLabelComponent,
         SettingEditPageComponent,
@@ -307,6 +309,7 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         PrefixationPipe,
         SplitIRIPipe,
         ShowPropertiesPipe,
+        CamelCasePipe,
         FileInputComponent,
         CustomLabelComponent,
         SettingEditPageComponent,
@@ -351,7 +354,9 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         PrefixationPipe,
         SplitIRIPipe,
         ShowPropertiesPipe,
-        TrustedHtmlPipe
+        TrustedHtmlPipe,
+        SplitIRIPipe,
+        CamelCasePipe
     ]
 })
 export class SharedModule {}

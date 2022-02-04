@@ -57,7 +57,7 @@ function ontologyButtonStackComponentCtrl(ontologyStateService, modalService) {
         modalService.openModal('createBranchOverlay');
     }
     dvm.showCreateTagModal = function() {
-        modalService.openModal('createTagModal');
+        modalService.openModal('createTagModalAjs');
     }
     dvm.showCommitOverlay = function() {
         modalService.openModal('commitOverlay');

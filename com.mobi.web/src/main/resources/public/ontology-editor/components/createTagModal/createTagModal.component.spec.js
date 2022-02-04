@@ -61,9 +61,9 @@ describe('Create Tag Modal component', function() {
 
         scope.close = jasmine.createSpy('close');
         scope.dismiss = jasmine.createSpy('dismiss');
-        this.element = $compile(angular.element('<create-tag-modal close="close()" dismiss="dismiss()"></create-tag-modal>'))(scope);
+        this.element = $compile(angular.element('<create-tag-modal-ajs close="close()" dismiss="dismiss()"></create-tag-modal-ajs>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('createTagModal');
+        this.controller = this.element.controller('createTagModalAjs');
     });
 
     afterEach(function() {
@@ -88,7 +88,7 @@ describe('Create Tag Modal component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toEqual('CREATE-TAG-MODAL');
+            expect(this.element.prop('tagName')).toEqual('CREATE-TAG-MODAL-AJS');
             expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);

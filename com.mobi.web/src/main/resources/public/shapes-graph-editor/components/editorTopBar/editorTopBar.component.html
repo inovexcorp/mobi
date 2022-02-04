@@ -26,19 +26,26 @@
             <editor-record-select class="pr-1" [recordIri]="state?.listItem?.versionedRdfRecord?.recordId"></editor-record-select>
             <div class="versioned-rdf-record-actions d-inline-block">
                 <editor-branch-select [recordIri]="state?.listItem?.versionedRdfRecord?.recordId" [branchTitle]="state?.listItem?.currentVersionTitle"></editor-branch-select>
-<!--                <button mat-icon-button color="primary"><mat-icon>local_offer</mat-icon></button>-->
-                <button mat-icon-button color="primary"
+                <button class="create-branch"
+                        mat-icon-button color="primary"
                         [disabled]="!state?.listItem?.versionedRdfRecord?.branchId"
                         (click)="createBranch()"
                         matTooltip="Create Branch">
                     <i class="fa fa-code-fork"></i>
                 </button>
-                <button class="create-branch"
+                <button class="merge-branch"
                         mat-icon-button color="primary"
                         [disabled]="state.isCommittable() || !state?.listItem?.versionedRdfRecord?.branchId"
                         (click)="state.listItem.merge.active = true"
                         matTooltip="Merge Branch">
                     <mat-icon>call_merge</mat-icon>
+                </button>
+                <button class="create-tag"
+                        mat-icon-button color="primary"
+                        [disabled]="state.isCommittable() || !this.state?.listItem?.versionedRdfRecord?.recordId"
+                        (click)="createTag()"
+                        matTooltip="Create Tag">
+                    <mat-icon>local_offer</mat-icon>
                 </button>
                 <button class="download-record"
                         mat-icon-button color="primary"

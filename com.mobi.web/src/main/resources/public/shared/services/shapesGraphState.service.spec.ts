@@ -299,7 +299,8 @@ describe('Shapes Graph State service', function() {
                     title: this.selectedRecord.title,
                     recordId: this.catalogDetailsResponse.recordId,
                     branchId: this.catalogDetailsResponse.branchId,
-                    commitId: this.catalogDetailsResponse.commitId
+                    commitId: this.catalogDetailsResponse.commitId,
+                    tagId: undefined
                 });
                 expect(service.listItem.inProgressCommit).toEqual(new Difference());
                 expect(service.listItem).toBeDefined();
@@ -395,10 +396,11 @@ describe('Shapes Graph State service', function() {
                     await service.changeShapesGraphVersion('recordId', 'branchId', 'commitId', undefined, 'versionTitle', true);
                     expect(this.updateStateSpy).toHaveBeenCalledWith(this.stateBase);
                     expect(service.listItem.versionedRdfRecord).toEqual({
-                       recordId: 'recordId',
-                       branchId: 'branchId',
-                       commitId: 'commitId',
-                       title: 'recordTitle'
+                        recordId: 'recordId',
+                        branchId: 'branchId',
+                        commitId: 'commitId',
+                        tagId: undefined,
+                        title: 'recordTitle'
                     });
                     expect(service.listItem.currentVersionTitle).toEqual('versionTitle');
                     expect(service.listItem.inProgressCommit).toEqual(new Difference());
@@ -412,6 +414,7 @@ describe('Shapes Graph State service', function() {
                         recordId: 'recordId',
                         branchId: 'branchId',
                         commitId: 'commitId',
+                        tagId: undefined,
                         title: 'recordTitle'
                     });
                     expect(service.listItem.currentVersionTitle).toEqual('versionTitle');
@@ -450,6 +453,7 @@ describe('Shapes Graph State service', function() {
                         recordId: 'recordId',
                         branchId: undefined,
                         commitId: 'commitId',
+                        tagId: 'tagId',
                         title: 'recordTitle'
                     });
                     expect(service.listItem.currentVersionTitle).toEqual('versionTitle');
@@ -464,6 +468,7 @@ describe('Shapes Graph State service', function() {
                         recordId: 'recordId',
                         branchId: undefined,
                         commitId: 'commitId',
+                        tagId: 'tagId',
                         title: 'recordTitle'
                     });
                     expect(service.listItem.currentVersionTitle).toEqual('versionTitle');

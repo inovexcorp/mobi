@@ -309,7 +309,7 @@ export abstract class VersionedRdfState {
                     }
                     return Promise.reject(response);
                 })
-                .then(() => ({recordId, branchId, commitId, upToDate, inProgressCommit}), () => {
+                .then(() => ({recordId, branchId, commitId, tagId, upToDate, inProgressCommit}), () => {
                     if (!branchToastShown) {
                         this.util.createWarningToast('Commit ' + this.util.condenseCommitId(commitId) + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                     }

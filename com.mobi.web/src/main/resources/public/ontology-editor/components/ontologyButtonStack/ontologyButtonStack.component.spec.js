@@ -145,9 +145,9 @@ describe('Ontology Button Stack component', function() {
         });
     });
     describe('controller methods', function() {
-        it('should open the createTagModal', function() {
+        it('should open the createTagModalAjs', function() {
             this.controller.showCreateTagModal();
-            expect(modalSvc.openModal).toHaveBeenCalledWith('createTagModal');
+            expect(modalSvc.openModal).toHaveBeenCalledWith('createTagModalAjs');
         });
         it('should open the createBranchOverlay', function() {
             this.controller.showCreateBranchOverlay();

@@ -55,6 +55,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -100,7 +101,7 @@ public class ImportIT extends KarafTestSupport {
         if (setupComplete) return;
 
         String dataFile = "testData.trig";
-        Files.copy(thisBundleContext.getBundle().getEntry("/" + dataFile).openStream(), Paths.get(dataFile));
+        Files.copy(thisBundleContext.getBundle().getEntry("/" + dataFile).openStream(), Paths.get(dataFile), StandardCopyOption.REPLACE_EXISTING);
 
         waitForService("(&(objectClass=com.mobi.etl.api.delimited.RDFImportService))", 10000L);
         waitForService("(&(objectClass=com.mobi.ontology.orm.impl.ThingFactory))", 10000L);

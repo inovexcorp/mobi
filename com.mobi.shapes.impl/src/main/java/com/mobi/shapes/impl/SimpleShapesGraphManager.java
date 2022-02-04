@@ -105,6 +105,11 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
         return Optional.of(getShapesGraphFromModel(catalogManager.getCompiledResource(recordId, branchId, commitId)));
     }
 
+    @Override
+    public Optional<ShapesGraph> retrieveShapesGraphByCommit(@Nonnull Resource commitId) {
+        return Optional.of(getShapesGraphFromModel(catalogManager.getCompiledResource(commitId)));
+    }
+
     private Resource getHeadOfBranch(Branch branch) {
         return branch.getHead_resource().orElseThrow(() ->
                 new IllegalStateException("Branch " + branch.getResource() + "has no head Commit set."));

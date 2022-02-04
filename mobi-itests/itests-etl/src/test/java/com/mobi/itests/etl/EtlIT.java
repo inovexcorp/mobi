@@ -58,6 +58,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -104,10 +105,10 @@ public class EtlIT extends KarafTestSupport {
         if (setupComplete) return;
 
         String delimitedFile = "testFile.xlsx";
-        Files.copy(thisBundleContext.getBundle().getEntry("/" + delimitedFile).openStream(), Paths.get(delimitedFile));
+        Files.copy(thisBundleContext.getBundle().getEntry("/" + delimitedFile).openStream(), Paths.get(delimitedFile), StandardCopyOption.REPLACE_EXISTING);
 
         String mappingFile = "newestMapping.ttl";
-        Files.copy(thisBundleContext.getBundle().getEntry("/" + mappingFile).openStream(), Paths.get(mappingFile));
+        Files.copy(thisBundleContext.getBundle().getEntry("/" + mappingFile).openStream(), Paths.get(mappingFile), StandardCopyOption.REPLACE_EXISTING);
 
         waitForService("(&(objectClass=com.mobi.etl.api.delimited.DelimitedConverter))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 10000L);

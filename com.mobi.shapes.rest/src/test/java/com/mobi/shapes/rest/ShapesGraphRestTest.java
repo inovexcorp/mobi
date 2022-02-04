@@ -53,7 +53,6 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
 import com.mobi.rdf.api.IRI;
@@ -745,11 +744,11 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
     }
 
     @Test
-    public void testGetEntityWithoutBranchId() {
+    public void testGetEntityWithCommitId() {
         ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel, getValueFactory());
         ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
 
-        when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId)))
+        when(shapesGraphManager.retrieveShapesGraphByCommit(eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
                 any(User.class))).thenReturn(Optional.empty());
@@ -760,12 +759,11 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
                 .request()
                 .get();
 
-        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
-        verify(catalogManager, times(0)).getInProgressCommit(eq(catalogId), eq(recordId),
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId),
                 any(User.class));
-        verify(shapesGraphManager, times(0)).retrieveShapesGraph(eq(recordId), eq(branchId),
-                eq(commitId));
-        verify(shapesGraphSpy, times(0)).getEntity(vf.createIRI("urn:test"));
+        verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(commitId));
+        verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"));
     }
 
     @Test
@@ -860,12 +858,12 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
     }
 
     @Test
-    public void testGetShapesGraphIdWithoutBranchId() {
+    public void testGetShapesGraphIdWithCommitId() {
         ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel, getValueFactory());
         ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
 
         when(shapesGraphSpy.getShapesGraphId()).thenReturn(Optional.of(getValueFactory().createIRI("urn:test")));
-        when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId)))
+        when(shapesGraphManager.retrieveShapesGraphByCommit(eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
                 any(User.class))).thenReturn(Optional.empty());
@@ -875,11 +873,10 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
                 .request()
                 .get();
 
-        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
-        verify(catalogManager, times(0)).getInProgressCommit(eq(catalogId), eq(recordId),
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId),
                 any(User.class));
-        verify(shapesGraphManager, times(0)).retrieveShapesGraph(eq(recordId), eq(branchId),
-                eq(commitId));
+        verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(commitId));
     }
 
     @Test

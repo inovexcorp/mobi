@@ -34,7 +34,8 @@ export class VersionedRdfListItem {
         title: string,
         recordId: string,
         branchId?: string,
-        commitId: string
+        commitId: string,
+        tagId?: string
     };
     additions: CommitChange[];
     deletions: CommitChange[];

@@ -28,6 +28,7 @@ import * as angular from 'angular';
 
 import { SharedModule } from '../shared/shared.module';
 import { CreateBranchModal } from './components/createBranchModal/createBranchModal.component';
+import { CreateTagModal } from './components/createTagModal/createTagModal.component';
 import { DownloadRecordModalComponent } from './components/downloadRecordModal/downloadRecordModal.component';
 import { EditorBranchSelectComponent } from './components/editorBranchSelect/editorBranchSelect.component';
 import { EditorRecordSelectComponent } from './components/editorRecordSelect/editorRecordSelect.component';
@@ -73,7 +74,8 @@ import { ShapesGraphPropertyValuesComponent } from './components/shapesGraphProp
         ShapesGraphPropertiesBlockComponent,
         ShapesGraphPropertyValuesComponent,
         CreateBranchModal,
-        StaticIriLimitedComponent
+        StaticIriLimitedComponent,
+        CreateTagModal
     ],
     providers: [],
     entryComponents: [
@@ -88,7 +90,8 @@ import { ShapesGraphPropertyValuesComponent } from './components/shapesGraphProp
         ShapesGraphPropertiesBlockComponent,
         ShapesGraphPropertyValuesComponent,
         CreateBranchModal,
-        StaticIriLimitedComponent
+        StaticIriLimitedComponent,
+        CreateTagModal
     ]
 })
 export class ShapesGraphEditorModule {}
@@ -108,4 +111,5 @@ angular.module('shapes-graph-editor', [])
     .directive('staticIriLimited', downgradeComponent({component: StaticIriLimitedComponent}) as angular.IDirectiveFactory)
     .directive('shapesGraphPropertiesBlock', downgradeComponent({component: ShapesGraphPropertiesBlockComponent}) as angular.IDirectiveFactory)
     .directive('shapesGraphPropertyValues', downgradeComponent({component: ShapesGraphPropertyValuesComponent}) as angular.IDirectiveFactory)
-    .directive('createBranchModal', downgradeComponent({component: CreateBranchModal}) as angular.IDirectiveFactory);
+    .directive('createBranchModal', downgradeComponent({component: CreateBranchModal}) as angular.IDirectiveFactory)
+    .directive('createTagModal', downgradeComponent({component: CreateTagModal}) as angular.IDirectiveFactory);
