@@ -24,18 +24,20 @@ package com.mobi.dataset.impl.record;
  */
 
 import com.mobi.catalog.api.record.RecordService;
-import com.mobi.dataset.api.record.AbstractDatasetRecordService;
+import com.mobi.dataset.api.record.DatasetRecordService;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.dataset.ontology.dataset.DatasetRecordFactory;
+import com.mobi.rdf.api.Resource;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 @Component(
         immediate = true,
-        service = { RecordService.class, SimpleDatasetRecordService.class }
+        service = { RecordService.class, DatasetRecordService.class, SimpleDatasetRecordService.class }
 )
-public class SimpleDatasetRecordService extends AbstractDatasetRecordService<DatasetRecord> {
+public class SimpleDatasetRecordService extends DatasetRecordService {
+    public static final String DCTERMS_PUBLISHER = "http://purl.org/dc/terms/publisher";
 
     @Reference
     DatasetRecordFactory datasetRecordFactory;
@@ -53,5 +55,13 @@ public class SimpleDatasetRecordService extends AbstractDatasetRecordService<Dat
     @Override
     public String getTypeIRI() {
         return DatasetRecord.TYPE;
+    }
+
+    @Override
+    public void overwritePolicyDefault(DatasetRecord datasetRecord) {
+        String publisherIri = datasetRecord.getProperty(valueFactory.createIRI(DCTERMS_PUBLISHER))
+                .orElseThrow(() -> new IllegalArgumentException("Publisher target does not exist.")).stringValue();
+        Resource publisher = valueFactory.createIRI(publisherIri);
+        writePolicies(publisher, datasetRecord.getResource());
     }
 }

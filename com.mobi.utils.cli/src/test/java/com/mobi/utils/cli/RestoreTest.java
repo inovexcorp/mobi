@@ -22,13 +22,19 @@ package com.mobi.utils.cli;
  * #L%
  */
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.api.record.DatasetRecordService;
+import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.platform.config.api.state.StateManager;
 import com.mobi.query.TupleQueryResult;
@@ -68,6 +74,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +116,18 @@ public class RestoreTest {
     @Mock
     private ServiceReference<XACMLPolicyManager> xacmlServiceRef;
 
+    @Mock
+    private ServiceReference<DatasetManager> datasetManagerRef;
+
+    @Mock
+    private DatasetManager datasetManager;
+
+    @Mock
+    private ServiceReference<DatasetRecordService> datasetRecordServiceRef;
+
+    @Mock
+    private DatasetRecordService datasetRecordService;
+
     @Before
     public void setupMocks() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -128,11 +147,20 @@ public class RestoreTest {
         when(catalogConfigProvider.getRepository()).thenReturn(repo);
 
         when(bundleContext.getServiceReference(eq(VirtualFilesystem.class))).thenReturn(vfsServiceRef);
-        when(bundleContext.getServiceReference(eq(XACMLPolicyManager.class))).thenReturn(xacmlServiceRef);
         when(bundleContext.getService(eq(vfsServiceRef))).thenReturn(vfs);
-        when(xacmlServiceRef.getProperty(eq("policyFileLocation"))).thenReturn(POLICY_FILE_LOCATION);
         when(vfs.resolveVirtualFile(anyString())).thenReturn(virtualFile);
         when(virtualFile.exists()).thenReturn(true);
+
+        when(bundleContext.getServiceReference(eq(DatasetRecordService.class))).thenReturn(datasetRecordServiceRef);
+        when(bundleContext.getService(eq(datasetRecordServiceRef))).thenReturn(datasetRecordService);
+
+        when(bundleContext.getServiceReference(eq(DatasetManager.class))).thenReturn(datasetManagerRef);
+        when(bundleContext.getService(eq(datasetManagerRef))).thenReturn(datasetManager);
+        DatasetRecord datasetRecordMock = mock(DatasetRecord.class);
+        when(datasetManager.getDatasetRecord(any(Resource.class))).thenReturn(Optional.of(datasetRecordMock));
+
+        when(bundleContext.getServiceReference(eq(XACMLPolicyManager.class))).thenReturn(xacmlServiceRef);
+        when(xacmlServiceRef.getProperty(eq("policyFileLocation"))).thenReturn(POLICY_FILE_LOCATION);
     }
 
     private Repository mockRepo(Class<? extends RepositoryConfig> configClassToMock) {
@@ -198,9 +226,9 @@ public class RestoreTest {
         when(repositoryManager.getAllRepositories()).thenReturn(repos);
         Assert.assertEquals(restore.clearAllRepos(repositoryManager).toString(), "[httpRepo]");
 
-        Mockito.verify(nativeRepo.getConnection(), Mockito.times(1)).clear();
-        Mockito.verify(memoryRepo.getConnection(), Mockito.times(1)).clear();
-        Mockito.verify(httpRepo.getConnection(), Mockito.times(0)).clear();
+        Mockito.verify(nativeRepo.getConnection(), times(1)).clear();
+        Mockito.verify(memoryRepo.getConnection(), times(1)).clear();
+        Mockito.verify(httpRepo.getConnection(), times(0)).clear();
     }
     
     @Test
@@ -210,9 +238,9 @@ public class RestoreTest {
                 "https://mobi.com/in-progress-commits#R5U29I1;https://mobi.com/additions#R5U29I1A1").collect(Collectors.toList());
 
         Assert.assertEquals(graphExpect, queryResource("/queries/searchInProgressCommits.rq", "inProgressCommit", "diffGraph"));
-
-        restore.cleanCatalogRepo("2", bundleContext);
-
+        
+        restore.restorePostProcess(bundleContext, "2");
+        
         graphExpect = Stream.of("https://mobi.com/in-progress-commits#R5U29I1;https://mobi.com/additions#R5U29I1A1").collect(Collectors.toList());
 
         Assert.assertEquals(graphExpect, queryResource("/queries/searchInProgressCommits.rq", "inProgressCommit", "diffGraph"));
@@ -226,10 +254,9 @@ public class RestoreTest {
 
         Assert.assertEquals(graphExpect, queryResource("/queries/searchInProgressCommits.rq", "inProgressCommit", "diffGraph"));
 
-        restore.cleanCatalogRepo("2", bundleContext);
+        restore.restorePostProcess( bundleContext, "2");
 
         graphExpect = Stream.of("https://mobi.com/in-progress-commits#R5U29I1;https://mobi.com/additions#R5U29I1A1").collect(Collectors.toList());
-
         Assert.assertEquals(graphExpect, queryResource("/queries/searchInProgressCommits.rq", "inProgressCommit", "diffGraph"));
     }
 
@@ -239,7 +266,9 @@ public class RestoreTest {
         List<String> graphExpect = Stream.of("https://mobi.com/additions#hasNoRevision",
                 "https://mobi.com/deletions#hasNoRevision").collect(Collectors.toList());
         Assert.assertEquals(graphExpect, queryResource("/queries/searchDanglingAdditionsDeletions.rq", "diffGraph"));
-        restore.cleanCatalogRepo("2", bundleContext);
+
+        restore.restorePostProcess(bundleContext, "2");
+        
         Assert.assertEquals(0, queryResource("/queries/searchDanglingAdditionsDeletions.rq", "diffGraph").size());
         // ensure it did not delete good graphs
         graphExpect = Stream.of("https://mobi.com/additions#hasRevision001",
@@ -248,12 +277,37 @@ public class RestoreTest {
     }
 
     @Test
+    public void getDatasetNoPolicyResourcesTest() {
+        loadFiles("/systemState.trig");
+
+        List<Resource> datasetResources;
+        try (RepositoryConnection conn = repo.getConnection()) {
+            datasetResources = restore.getDatasetNoPolicyResources(conn);
+        }
+        List<String> datasetResourcesExpect = Stream.of(
+                "https://mobi.com/records#89d40d76-8d49-4af7-8782-ada078b09aa7",
+                "https://mobi.com/records#25bb9187-0a21-4c95-8b36-90b9b0e985ba",
+                "https://mobi.com/records#a1341aca-0a3c-4048-9b8c-64821dacdf0e").collect(Collectors.toList());
+
+        List<String> datasetActual = datasetResources.stream().map(e -> e.stringValue()).collect(Collectors.toList());
+        Assert.assertEquals(datasetResourcesExpect, datasetActual);
+    }
+
+    @Test
+    public void createDatesetPoliciesTest(){
+        loadFiles("/systemState.trig");
+        restore.createDatesetPolicies(bundleContext);
+        verify(datasetRecordService, times(3)).overwritePolicyDefault(any(DatasetRecord.class));
+    }
+
+    @Test
     public void cleanGraphStateInstanceNoUserTest() {
         loadFiles("/systemState.trig");
         List<String> graphExpect = Stream.of("http://mobi.com/states#0001",
                 "http://mobi.com/states#0002").collect(Collectors.toList());
         Assert.assertEquals(graphExpect, queryResource("/queries/searchStateInstanceNoUser.rq", "state"));
-        restore.cleanCatalogRepo("1.20", bundleContext);
+
+        restore.restorePostProcess(bundleContext, "1.20");
 
         Mockito.verify(stateManager).deleteState(vf.createIRI("http://mobi.com/states#0002"));
         Mockito.verify(stateManager).deleteState(vf.createIRI("http://mobi.com/states#0001"));
@@ -263,8 +317,12 @@ public class RestoreTest {
     @Test
     public void cleanGraphStatePolicyFileStatementsTest() {
         loadFiles("/systemState.trig");
-        Assert.assertEquals(16, queryResource("/queries/searchPolicy.rq", "policyGraph", "policy").size());
-        restore.cleanCatalogRepo("2", bundleContext);
+        List<String> policies = queryResource("/queries/searchPolicy.rq", "policyGraph", "policy");
+        Assert.assertEquals(policies.size(), new HashSet<>(policies).size());
+        Assert.assertEquals(28, policies.size());
+
+        restore.restorePostProcess(bundleContext, "2");
+
         Assert.assertEquals(0, queryResource("/queries/searchPolicy.rq", "policyGraph", "policy").size());
         Assert.assertEquals(8, Mockito.mockingDetails(stateManager).getInvocations().size());
     }
