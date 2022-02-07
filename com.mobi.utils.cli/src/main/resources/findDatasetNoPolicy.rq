@@ -1,0 +1,9 @@
+PREFIX dataset: <http://mobi.com/ontologies/dataset#>
+PREFIX policy: <http://mobi.com/ontologies/policy#>
+
+SELECT ?datasetRecord WHERE {
+  ?datasetRecord a dataset:DatasetRecord .
+  FILTER NOT EXISTS {
+    ?recordPolicy policy:relatedResource ?datasetRecord .
+  }
+}

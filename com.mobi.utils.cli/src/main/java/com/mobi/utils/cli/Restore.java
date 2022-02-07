@@ -24,6 +24,9 @@ package com.mobi.utils.cli;
  */
 
 import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.api.record.DatasetRecordService;
+import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.exception.MobiException;
@@ -83,6 +86,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -98,6 +102,7 @@ public class Restore implements Action {
     private static final String CLEAR_INPROGRESS_COMMIT_NO_USER;
     private static final String SEARCH_STATE_INSTANCES_NO_USER;
     private static final String CLEAR_POLICY_STATEMENTS;
+    private static final String FIND_DATASET_NO_POLICIES;
 
     static {
         try {
@@ -121,48 +126,55 @@ public class Restore implements Action {
                     Restore.class.getResourceAsStream("/clearPolicyStatements.rq"),
                     StandardCharsets.UTF_8
             );
+            FIND_DATASET_NO_POLICIES = IOUtils.toString(
+                    Restore.class.getResourceAsStream("/findDatasetNoPolicy.rq"),
+                    StandardCharsets.UTF_8
+            );
         } catch (IOException e) {
             throw new MobiException(e);
         }
     }
 
     private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + File.separator + "restoreZip";
+    public static final String CONFIG_PATH = RESTORE_PATH + File.separator + "configurations";
+    public static final String MANIFEST_FILE = RESTORE_PATH + File.separator + "manifest.json";
     private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15", "1.16", "1.17",
             "1.18", "1.19", "1.20", "1.21");
-
+    private final List<String> POLICES_TO_REMOVE = Arrays.asList("http://mobi.com/policies/system-repo-access",
+            "http://mobi.com/policies/all-access-versioned-rdf-record");
+    
     // Service References
-
     @Reference
     private RepositoryManager repositoryManager;
+
+    @Reference
+    private RDFImportService importService;
+    
+    @Reference
+    private StateManager stateManager;
+
+    @Reference
+    private CatalogConfigProvider config;
+
+    @Reference
+    private ValueFactory vf;
 
     public void setRepositoryManager(RepositoryManager repositoryManager) {
         this.repositoryManager = repositoryManager;
     }
 
-    @Reference
-    private RDFImportService importService;
-
     void setImportService(RDFImportService importService) {
         this.importService = importService;
     }
-
-    @Reference
-    private StateManager stateManager;
 
     void setStateManager(StateManager stateManager) {
         this.stateManager = stateManager;
     }
 
-    @Reference
-    private CatalogConfigProvider config;
-
     void setConfig(CatalogConfigProvider config) {
         this.config = config;
     }
-
-    @Reference
-    private ValueFactory vf;
-
+    
     void setVf(ValueFactory vf) {
         this.vf = vf;
     }
@@ -179,77 +191,74 @@ public class Restore implements Action {
     // Implementation
     @Override
     public Object execute() throws Exception {
-        // Unzip archive into temp directory
         try {
             unzipFile(backupFilePath, RESTORE_PATH);
         } catch (IOException e) {
-            String msg = "Error unzipping backup file: " + e.getMessage();
-            LOGGER.error(msg, e);
-            System.out.println(msg);
+            error("Error unzipping backup file: " + e.getMessage(), e);
             return null;
         }
         JSONObject manifest;
+        JSONObject manifestRepos;
         try {
-            String manifestStr = new String(Files.readAllBytes(Paths.get(RESTORE_PATH + File.separator
-                    + "manifest.json")));
+            String manifestStr = new String(Files.readAllBytes(Paths.get(MANIFEST_FILE)));
             manifest = JSONObject.fromObject(manifestStr);
+            manifestRepos = manifest.optJSONObject("repositories");
         } catch (IOException e) {
-            String msg = "Error loading manifest file: " + e.getMessage();
-            LOGGER.error(msg, e);
-            System.out.println(msg);
+            error("Error loading manifest file: " + e.getMessage(), e);
             return null;
         }
 
         String fullBackupVer = manifest.optString("version");
         if (StringUtils.isEmpty(fullBackupVer)) {
-            String msg = "Manifest must contain the Mobi 'version' identifier of backup";
-            LOGGER.error(msg);
-            System.out.println(msg);
+            error("Manifest must contain the Mobi 'version' identifier of backup");
             return null;
         }
         Pattern versionPattern = Pattern.compile("([0-9]+\\.[0-9]+)");
         Matcher matcher = versionPattern.matcher(fullBackupVer);
         if (!matcher.find()) {
-            String msg = "Mobi version in manifest must match regex pattern [0-9]+\\\\.[0-9]+";
-            LOGGER.error(msg);
-            System.out.println(msg);
+            error("Mobi version in manifest must match regex pattern [0-9]+\\\\.[0-9]+");
             return null;
         }
         String backupVersion = matcher.group(1);
         if (!mobiVersions.contains(backupVersion)) {
-            String msg = "A valid version of Mobi is required (" + String.join(".*, ", mobiVersions) + ").";
-            LOGGER.error(msg);
-            System.out.println(msg);
+            error("A valid version of Mobi is required (" + String.join(".*, ", mobiVersions) + ").");
             return null;
         }
 
-        BundleContext bundleContext = FrameworkUtil.getBundle(XACMLPolicyManager.class).getBundleContext();
-        copyConfigFiles(bundleContext, backupVersion);
-        if (!backupVersion.startsWith(mobiVersions.get(0))) {
-            copyPolicyFiles(bundleContext);
-        }
-        restoreRepositories(manifest, backupVersion, bundleContext);
+        // Copy Configs, Copy Policies, Clear Repos, Restore Repos
+        BundleContext xacmlBundleContext = FrameworkUtil.getBundle(XACMLPolicyManager.class).getBundleContext();
+        copyConfigFiles(xacmlBundleContext, backupVersion);
+        copyPolicyFiles(xacmlBundleContext, backupVersion);
+        Set<String> remoteRepos = clearAllRepos(repositoryManager);
+        restoreRepositories(manifestRepos, remoteRepos);
+        restorePostProcess(xacmlBundleContext, backupVersion);
 
+        // Clear temp restore folder
         File tempArchive = new File(RESTORE_PATH);
         tempArchive.delete();
 
-        // Restart all services
-        System.out.println("Restarting all services");
-        LOGGER.trace("Restarting all services");
-        Bundle systemBundle = bundleContext.getBundle(0);
-        bundleContext.getBundle().update();
+        // Restart XACMLPolicyManager bundle - recreate policies that were deleted
+        out("Restarting XACMLPolicyManager bundle");
+        long start = System.currentTimeMillis();
+        xacmlBundleContext.getBundle().update();
+        out("Restarted XACMLPolicyManager bundle. Took:" + (System.currentTimeMillis() - start)+ " ms");
+
+        out("Restarting all services");
+        start = System.currentTimeMillis();
+        xacmlBundleContext = FrameworkUtil.getBundle(XACMLPolicyManager.class)
+                .getBundleContext(); // Prevent Invalid BundleContext Exception
+        Bundle systemBundle = xacmlBundleContext.getBundle(0);
         FrameworkWiring frameworkWiring = systemBundle.adapt(FrameworkWiring.class);
         frameworkWiring.refreshBundles(null);
-
+        out("Finished restarting all services. Took " + (System.currentTimeMillis() - start) + " ms");
         return null;
     }
 
     private void copyConfigFiles(BundleContext bundleContext, String version) throws IOException, InterruptedException,
             InvalidSyntaxException {
         // Copy config files to karaf.etc directory
-
         List<String> repoServices = new ArrayList<>();
-        File configDir = new File(RESTORE_PATH + File.separator + "configurations");
+        File configDir = new File(CONFIG_PATH);
 
         // Generate list of repoServices from the repository configuration filenames in the the backup
         File[] repoFiles = configDir.listFiles((d, name) -> name.contains("com.mobi.service.repository"));
@@ -303,7 +312,7 @@ public class Restore implements Action {
             }
         });
 
-        System.out.println("Waiting for services to restart");
+        System.out.println("Waiting for services to restart after copying config files");
         TimeUnit.SECONDS.sleep(20);
 
         // Verify services have started
@@ -324,19 +333,31 @@ public class Restore implements Action {
         }
     }
 
-    private void copyPolicyFiles(BundleContext bundleContext) throws IOException {
-        // Copy policy files to proper destination
-        ServiceReference<XACMLPolicyManager> serviceRef = bundleContext.getServiceReference(XACMLPolicyManager.class);
-        if (serviceRef == null) {
-            throw new IllegalStateException("Policy Manager service is not available");
+    /**
+     * Copy policy files to proper destination. Directory contains all policies for runtime.
+     * @param bundleContext XamclPolicyManager bundleContext
+     * @param backupVersion backup versoin
+     * @throws IOException
+     */
+    private void copyPolicyFiles(BundleContext bundleContext, String backupVersion) throws IOException {
+        if (!backupVersion.startsWith(mobiVersions.get(0))) {
+            ServiceReference<XACMLPolicyManager> serviceRef = bundleContext.getServiceReference(XACMLPolicyManager.class);
+            if (serviceRef == null) {
+                throw new IllegalStateException("Policy Manager service is not available");
+            }
+            String policyFileLocation = (String) serviceRef.getProperty("policyFileLocation");
+            LOGGER.trace("Identified policy directory as " + policyFileLocation);
+            File policyDir = new File(policyFileLocation);
+            File tmpPolicyDir = new File(RESTORE_PATH + File.separator + "policies");
+            FileUtils.copyDirectory(tmpPolicyDir, policyDir);
         }
-        String policyFileLocation = (String) serviceRef.getProperty("policyFileLocation");
-        LOGGER.trace("Identified policy directory as " + policyFileLocation);
-        File policyDir = new File(policyFileLocation);
-        File tmpPolicyDir = new File(RESTORE_PATH + File.separator + "policies");
-        FileUtils.copyDirectory(tmpPolicyDir, policyDir);
     }
 
+    /**
+     * Clear All Repos
+     * @param repositoryManager Repository Manager
+     * @return A list of remote repos
+     */
     protected Set<String> clearAllRepos(RepositoryManager repositoryManager) {
         Set<String> remoteRepos = new HashSet<>();
         repositoryManager.getAllRepositories().forEach((repoID, repo) -> {
@@ -352,77 +373,129 @@ public class Restore implements Action {
         return remoteRepos;
     }
 
-    private void restoreRepositories(JSONObject manifest, String backupVersion, BundleContext bundleContext)
+    private void restoreRepositories(JSONObject manifestRepos, Set<String> remoteRepos)
             throws IOException {
-        // Clear populated repositories
-        Set<String> remoteRepos = clearAllRepos(repositoryManager);
-
         // Populate Repositories
-        JSONObject repos = manifest.optJSONObject("repositories");
         ImportServiceConfig.Builder builder = new ImportServiceConfig.Builder()
                 .continueOnError(false)
                 .logOutput(true)
                 .printOutput(true)
                 .batchSize(batchSize);
 
-        for (Object key : repos.keySet()) {
+        for (Object key : manifestRepos.keySet()) {
             String repoName = key.toString();
             if (!remoteRepos.contains(repoName)) {
-                String repoPath = repos.optString(key.toString());
+                String repoPath = manifestRepos.optString(key.toString());
                 String repoDirectoryPath = repoPath.substring(0, repoPath.lastIndexOf(repoName + ".zip"));
                 builder.repository(repoName);
                 File repoFile = new File(RESTORE_PATH + File.separator + repoDirectoryPath + File.separator
                         + repoName + ".trig");
                 importService.importFile(builder.build(), repoFile);
-                LOGGER.trace("Data successfully loaded to " + repoName + " repository.");
-                System.out.println("Data successfully loaded to " + repoName + " repository.");
+                out("Data successfully loaded to " + repoName + " repository.");
             } else {
-                LOGGER.trace("Skipping data load of remote repository " + repoName);
-                System.out.println("Skipping data load of remote repository " + repoName);
+                out("Skipping data load of remote repository " + repoName);
             }
         }
-        // Remove Statements
-        cleanCatalogRepo(backupVersion, bundleContext);
     }
 
-    protected void cleanCatalogRepo(String backupVersion, BundleContext bundleContext) {
+    /**
+     * Post processing of restore process
+     * @param xacmlBundleContext xacmlBundleContext
+     * @param backupVersion backupVersion
+     */
+    protected void restorePostProcess(BundleContext xacmlBundleContext, String backupVersion) {
         try (RepositoryConnection conn = config.getRepository().getConnection()) {
-            LOGGER.trace("Remove All In progress Commits where User doesn’t exist");
-            conn.prepareUpdate(CLEAR_INPROGRESS_COMMIT_NO_USER).execute();
+            cleanCatalogRepo(conn, backupVersion);
+            cleanPolicies(conn, backupVersion, xacmlBundleContext);
+        }
+    }
 
-            LOGGER.trace("Remove In Progress Commits where Record doesn’t exist");
-            conn.prepareUpdate(CLEAR_INPROGRESS_COMMIT_NO_RECORD).execute();
+    private void cleanCatalogRepo(RepositoryConnection conn, String backupVersion) {
+        LOGGER.trace("Remove All In progress Commits where User doesn’t exist");
+        conn.prepareUpdate(CLEAR_INPROGRESS_COMMIT_NO_USER).execute();
 
-            LOGGER.trace("Remove Addition and Deletion Graphs with no Revision");
-            conn.prepareUpdate(CLEAN_DANGLING_ADDITIONS_DELETIONS).execute();
+        LOGGER.trace("Remove In Progress Commits where Record doesn’t exist");
+        conn.prepareUpdate(CLEAR_INPROGRESS_COMMIT_NO_RECORD).execute();
 
-            if (mobiVersions.indexOf(backupVersion) < 8) {
-                // 1.20 changed admin policy and system repo query policy. Need to remove old versions so updated
-                // policy takes effect.
-                ServiceReference<XACMLPolicyManager> service =
-                        bundleContext.getServiceReference(XACMLPolicyManager.class);
-                List<Resource> policiesToRemove = new ArrayList<>();
-                policiesToRemove.add(vf.createIRI("http://mobi.com/policies/system-repo-access"));
-                policiesToRemove.add(vf.createIRI("http://mobi.com/policies/all-access-versioned-rdf-record"));
-                String policyFileLocation = (String) service.getProperty("policyFileLocation");
-                removePolicyFiles(bundleContext, conn, policyFileLocation, policiesToRemove);
-            }
+        LOGGER.trace("Remove Addition and Deletion Graphs with no Revision");
+        conn.prepareUpdate(CLEAN_DANGLING_ADDITIONS_DELETIONS).execute();
 
-            LOGGER.trace("Remove PolicyFile statements");
-            conn.prepareUpdate(CLEAR_POLICY_STATEMENTS).execute();
+        LOGGER.trace("Remove State instances where User doesn’t exist");
+        TupleQueryResult results = conn.prepareTupleQuery(SEARCH_STATE_INSTANCES_NO_USER).evaluate();
+        results.forEach(bindingSet -> stateManager.deleteState(Bindings.requiredResource(bindingSet, "state")));
 
-            LOGGER.trace("Remove State instances where User doesn’t exist");
+        if (mobiVersions.indexOf(backupVersion) < 2) {
+            // Clear ontology editor state
+            RepositoryResult<Statement> stateResults = conn.getStatements(null,
+                    vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), vf.createIRI(State.TYPE));
+            stateResults.forEach(statement -> stateManager.deleteState(statement.getSubject()));
+            LOGGER.trace("Remove state statements");
+        }
+    }
 
-            TupleQueryResult results = conn.prepareTupleQuery(SEARCH_STATE_INSTANCES_NO_USER).evaluate();
-            results.forEach(bindingSet -> stateManager.deleteState(Bindings.requiredResource(bindingSet, "state")));
+    private void cleanPolicies(RepositoryConnection conn, String backupVersion, BundleContext bundleContext) {
+        if (mobiVersions.indexOf(backupVersion) < 8) {
+            LOGGER.trace("Remove old versions of admin policy and system repo query policy");
+            // 1.20 changed admin policy and system repo query policy. Need to remove old versions so updated
+            // policy takes effect.
+            List<Resource> policiesToRemove = POLICES_TO_REMOVE.stream().map(iri -> vf.createIRI(iri))
+                    .collect(Collectors.toList());
+            ServiceReference<XACMLPolicyManager> service =
+                    bundleContext.getServiceReference(XACMLPolicyManager.class);
+            String policyFileLocation = (String) service.getProperty("policyFileLocation");
+            removePolicyFiles(bundleContext, conn, policyFileLocation, policiesToRemove);
+        }
 
-            if (mobiVersions.indexOf(backupVersion) < 2) {
-                // Clear ontology editor state
-                RepositoryResult<Statement> stateResults = conn.getStatements(null,
-                        vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), vf.createIRI(State.TYPE));
-                stateResults.forEach(statement -> stateManager.deleteState(statement.getSubject()));
-                LOGGER.trace("Remove state statements");
-            }
+        createDatesetPolicies(bundleContext);
+
+        LOGGER.trace("Remove PolicyFile statements");
+        conn.prepareUpdate(CLEAR_POLICY_STATEMENTS).execute();
+    }
+
+    /**
+     * Get a list of Dataset Records that do not have policies
+     * @param conn RepositoryConnection
+     * @return  List<Resource> Dataset Resources
+     */
+    protected List<Resource> getDatasetNoPolicyResources(RepositoryConnection conn) {
+        List<Resource> datasetResources = new ArrayList<>();
+        TupleQueryResult results = conn.prepareTupleQuery(FIND_DATASET_NO_POLICIES).evaluate();
+        results.forEach(bindingSet -> datasetResources.add(Bindings.requiredResource(bindingSet, "datasetRecord")));
+        return datasetResources;
+    }
+
+    /**
+     * Create Dataset Policies for datasets that do not have polices.
+     *
+     * Steps:
+     * - Find all dataset records that does not have policies
+     * - Create dataset policies for those records
+     *
+     */
+    protected void createDatesetPolicies(BundleContext bundleContext) {
+        List<Resource> datasetResources;
+        try (RepositoryConnection conn = config.getRepository().getConnection()) {
+            datasetResources = getDatasetNoPolicyResources(conn);
+        }
+        out("There are " + datasetResources.size() + " dataset records without policies");
+        LOGGER.trace("Records: " + datasetResources.toString());
+
+        ServiceReference<DatasetManager> serviceReference = bundleContext
+                .getServiceReference(DatasetManager.class);
+        DatasetManager datasetManager = bundleContext.getService(serviceReference);
+
+        ServiceReference<DatasetRecordService> datasetRecordServiceRef = bundleContext
+                .getServiceReference(DatasetRecordService.class);
+        DatasetRecordService datasetRecordService = bundleContext.getService(datasetRecordServiceRef);
+
+        List<DatasetRecord> datasetRecords = datasetResources.stream()
+                .map(resource -> datasetManager.getDatasetRecord(resource))
+                .filter(datasetRecord -> datasetRecord.isPresent())
+                .map(datasetRecordOptional -> datasetRecordOptional.get())
+                .collect(Collectors.toList());
+
+        for(DatasetRecord datasetRecord : datasetRecords){
+            datasetRecordService.overwritePolicyDefault(datasetRecord);
         }
     }
 
@@ -462,6 +535,12 @@ public class Restore implements Action {
         }
     }
 
+    /**
+     * Unzip archive into temp directory
+     * @param filePath file to unzip
+     * @param destination directory
+     * @throws IOException
+     */
     private void unzipFile(String filePath, String destination) throws IOException {
         File destDir = new File(destination);
         byte[] buffer = new byte[1024];
@@ -524,5 +603,20 @@ public class Restore implements Action {
         }
 
         return destFile;
+    }
+
+    private void out(String msg){
+        LOGGER.trace(msg);
+        System.out.println(msg);
+    }
+
+    private void error(String msg){
+        LOGGER.error(msg);
+        System.out.println(msg);
+    }
+
+    private void error(String msg, Exception e){
+        LOGGER.error(msg, e);
+        System.out.println(msg);
     }
 }

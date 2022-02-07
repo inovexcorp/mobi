@@ -55,7 +55,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
-public abstract class AbstractDatasetRecordService<T extends DatasetRecord>
+public abstract class DatasetRecordService<T extends DatasetRecord>
         extends AbstractUnversionedRecordService<T> implements RecordService<T> {
 
     @Reference
@@ -131,7 +131,7 @@ public abstract class AbstractDatasetRecordService<T extends DatasetRecord>
     @Override
     protected Optional<Resource> writeRecordPolicy(Resource user, Resource recordId) {
         try {
-            InputStream recordPolicyStream = AbstractDatasetRecordService.class
+            InputStream recordPolicyStream = DatasetRecordService.class
                     .getResourceAsStream("/datasetRecordPolicy.xml");
             String encodedRecordIRI = ResourceUtils.encode(recordId);
 
@@ -146,4 +146,9 @@ public abstract class AbstractDatasetRecordService<T extends DatasetRecord>
         }
     }
 
+    /**
+     * Overwrite Dataset Record with default policy
+     * @param datasetRecord Dataset record to overwrite
+     */
+    public abstract void overwritePolicyDefault(DatasetRecord datasetRecord);
 }
