@@ -29,13 +29,24 @@ import { cleanStylesFromDOM, mockUtil, mockCatalogManager, mockPrefixes } from '
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { ShapesGraphChangesPageComponent } from '../shapesGraphChangesPage/shapesGraphChangesPage.component';
+import { ShapesGraphChangesPageComponent } from './shapesGraphChangesPage.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { MatExpansionModule, MatTooltipModule } from '@angular/material';
 import { StatementContainerComponent } from '../../../shared/components/statementContainer/statementContainer.component';
 import { StatementDisplayComponent } from '../../../shared/components/statementDisplay/statementDisplay.component';
 import { CommitHistoryTableComponent } from '../../../shared/components/commitHistoryTable/commitHistoryTable.component';
 import { range, map, forEach } from 'lodash';
+
+interface PredicateObject {
+    p: string,
+    o: string
+}
+interface CommitChanges {
+    id: string,
+    additions: PredicateObject[],
+    deletions: PredicateObject[],
+    disableAll: boolean
+}
 
 describe('Shapes Graph Changes Page component', function() {
     let component: ShapesGraphChangesPageComponent;
@@ -44,6 +55,8 @@ describe('Shapes Graph Changes Page component', function() {
     let shapesGraphStateStub;
     let utilStub;
     let catalogManagerStub;
+    let prefixesStub;
+    const commitChanges: CommitChanges = {id: 'test', additions: [], deletions: [], disableAll: false};
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -72,10 +85,14 @@ describe('Shapes Graph Changes Page component', function() {
         element = fixture.debugElement;
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
         shapesGraphStateStub.listItem = new VersionedRdfListItem();
+        shapesGraphStateStub.listItem.versionedRdfRecord.recordId = 'record';
         shapesGraphStateStub.listItem.inProgressCommit = new Difference();
         catalogManagerStub = TestBed.get('catalogManagerService');
         catalogManagerStub.deleteInProgressCommit.and.returnValue(Promise.resolve());
         utilStub = TestBed.get('utilService');
+        utilStub.getPredicatesAndObjects.and.returnValue([{p: '', o: ''}]);
+        utilStub.condenseCommitId.and.returnValue('test');
+        prefixesStub = TestBed.get('prefixes');
     });
     afterEach(function() {
         cleanStylesFromDOM();
@@ -89,7 +106,6 @@ describe('Shapes Graph Changes Page component', function() {
     describe('should update the list of changes when additions/deletions change', function() {
         beforeEach(function() {
             utilStub.getChangesById.and.returnValue([{}]);
-            utilStub.getPredicatesAndObjects.and.returnValue([{}]);
         });
         it('if there are less than 100 changes', function() {
             component.additions = [{'@id': '1', 'value': ['stuff']}];
@@ -102,8 +118,8 @@ describe('Shapes Graph Changes Page component', function() {
                 expect(utilStub.getPredicatesAndObjects).toHaveBeenCalledWith(change);
             });
             expect(component.showList).toEqual([
-                {id: '1', additions: [{}], deletions: [{}], disableAll: false},
-                {id: '2', additions: [], deletions: [{}], disableAll: false},
+                {id: '1', additions: [{p: '', o: ''}], deletions: [{p: '', o: ''}], disableAll: false},
+                {id: '2', additions: [], deletions: [{p: '', o: ''}], disableAll: false},
             ]);
         });
         it('if there are more than 100 changes', function() {
@@ -147,6 +163,49 @@ describe('Shapes Graph Changes Page component', function() {
                 expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
             });
         });
+        it('should get more results', function() {
+            component.chunks = [[commitChanges], [commitChanges]];
+            expect(component.index).toEqual(0);
+            expect(component.showList).toEqual([]);
+
+            component.getMoreResults();
+            expect(component.index).toEqual(1);
+            expect(component.showList).toEqual([commitChanges]);
+        });
+        describe('should check if a specific type exists', function() {
+            it('when it exists', function() {
+                const commitChange: PredicateObject = {p: prefixesStub.rdf + 'type', o: prefixesStub.owl + 'Class'};
+                expect(component.hasSpecificType([commitChange])).toBeTrue();
+            });
+            it('when it does not exist', function() {
+                const commitChange: PredicateObject = {p: 'thing', o: 'type'};
+                expect(component.hasSpecificType([commitChange])).toBeFalse();
+            });
+        });
+        it('should retrieve a list of commit changes', function() {
+            component.list = [commitChanges];
+            expect(component.chunks).toEqual([]);
+            expect(component.getList()).toEqual([commitChanges]);
+        });
+        it('should return the commit id', function() {
+            expect(component.getCommitId(commitChanges)).toEqual('test');
+        });
+        describe('should open a selected commit', function() {
+            it('successfully', async function() {
+                shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.resolve());
+
+                await component.openCommit(commitChanges);
+                expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record', null, 'test', null, 'test');
+                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+            });
+            it('unless an error occurs', async function() {
+                shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.reject('Error'));
+
+                await component.openCommit(commitChanges);
+                expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record', null, 'test', null, 'test');
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
+            });
+        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -157,7 +216,6 @@ describe('Shapes Graph Changes Page component', function() {
             expect(infoMessage.length).toEqual(0);
 
             shapesGraphStateStub.isCommittable.and.returnValue(false);
-            shapesGraphStateStub.listItem.versionedRdfRecord.recordId = 'record';
             fixture.detectChanges();
             await fixture.whenStable();
             infoMessage = element.queryAll(By.css('info-message'));
@@ -173,7 +231,6 @@ describe('Shapes Graph Changes Page component', function() {
             expect(infoMessage.length).toEqual(0);
 
             shapesGraphStateStub.isCommittable.and.returnValue(true);
-            shapesGraphStateStub.listItem.versionedRdfRecord.recordId = 'record';
             fixture.detectChanges();
             await fixture.whenStable();
             infoMessage = element.queryAll(By.css('info-message'));
@@ -186,7 +243,6 @@ describe('Shapes Graph Changes Page component', function() {
     });
     it('should call removeChanges when the button is clicked', async function() {
         shapesGraphStateStub.isCommittable.and.returnValue(true);
-        shapesGraphStateStub.listItem.versionedRdfRecord.recordId = 'record';
         fixture.detectChanges();
         await fixture.whenStable();
 

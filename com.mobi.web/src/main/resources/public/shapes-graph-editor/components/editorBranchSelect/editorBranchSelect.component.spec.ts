@@ -87,6 +87,12 @@ describe('Editor Branch Select component', function() {
         title: 'Totally Cool Tag',
         description: ''
     };
+    const commit1: Option = {
+        tagIri: '',
+        commitIri: 'urn:commit',
+        title: 'Commit',
+        description: ''
+    };
     const branchEvent = {
         option: {
             value: branch1
@@ -176,6 +182,7 @@ describe('Editor Branch Select component', function() {
         utilStub.getDctermsValue.and.callFake((obj, prop) => {
             return get(obj, "['" + prefixesStub.dcterms + prop + "'][0]['@value']", '');
         });
+        utilStub.condenseCommitId.and.returnValue(commit1.title);
 
         component.recordIri = 'recordId';
         component.branchTitle = 'MASTER';
@@ -412,7 +419,7 @@ describe('Editor Branch Select component', function() {
                     expect(component.branchSearchControl.setValue).toHaveBeenCalledWith(branch1.title);
                     expect(component.selectedIcon).toEqual({
                         mat: false,
-                        icon: 'fa fa-code-fork'
+                        icon: 'fa fa-code-fork fa-lg'
                     });
                 });
                 it('and is a tag', function() {
@@ -423,8 +430,21 @@ describe('Editor Branch Select component', function() {
                     component.resetSearch();
                     expect(component.branchSearchControl.setValue).toHaveBeenCalledWith(tag1.title);
                     expect(component.selectedIcon).toEqual({
-                        mat: false,
-                        icon: 'fa fa-tag'
+                        mat: true,
+                        icon: 'local_offer'
+                    });
+                });
+                it('and is a commit', function() {
+                    component.commits = [commit1];
+                    shapesGraphStateStub.listItem.currentVersionTitle = commit1.title;
+                    shapesGraphStateStub.listItem.versionedRdfRecord.tagId = '';
+                    shapesGraphStateStub.listItem.versionedRdfRecord.commitId = commit1.commitIri;
+                    spyOn(component.branchSearchControl, 'setValue');
+                    component.resetSearch();
+                    expect(component.branchSearchControl.setValue).toHaveBeenCalledWith(commit1.title);
+                    expect(component.selectedIcon).toEqual({
+                        mat: true,
+                        icon: 'commit'
                     });
                 });
             });
@@ -521,9 +541,10 @@ describe('Editor Branch Select component', function() {
                             expect(component['setFilteredOptions']).toHaveBeenCalled();
                             expect(component.resetSearch).toHaveBeenCalled();
                         });
-                        describe(' does not exists and it resets to master', function() {
+                        describe('does not exists and it resets to master', function() {
                             beforeEach(function() {
                                 shapesGraphStateStub.listItem.versionedRdfRecord.branchId = '';
+                                shapesGraphStateStub.listItem.versionedRdfRecord.tagId = tag1.tagIri;
                                 shapesGraphStateStub.listItem.versionedRdfRecord.commitId = 'urn:doesntExist';
                                 shapesGraphStateStub.listItem.currentVersionTitle = 'Not Exists';
                             });
@@ -574,6 +595,25 @@ describe('Editor Branch Select component', function() {
                                 });
                             });
                         });
+                    });
+                    it('of a commit', async function() {
+                        component.commits = [commit1];
+                        spyOn<any>(component, 'setFilteredOptions');
+                        spyOn<any>(component, 'resetToMaster');
+                        spyOn(component, 'resetSearch');
+
+                        shapesGraphStateStub.listItem.versionedRdfRecord.branchId = '';
+                        shapesGraphStateStub.listItem.versionedRdfRecord.commitId = commit1.commitIri;
+                        shapesGraphStateStub.listItem.versionedRdfRecord.tagId = '';
+                        expect(shapesGraphStateStub.listItem.currentVersionTitle).toEqual('');
+                        await component.retrieveBranchesAndTags();
+
+                        expect(component.branches).toEqual([branch1, branch2]);
+                        expect(component.tags).toEqual([tag1]);
+                        expect(shapesGraphStateStub.listItem.currentVersionTitle).toEqual(commit1.title);
+                        expect(component['resetToMaster']).not.toHaveBeenCalled();
+                        expect(component['setFilteredOptions']).toHaveBeenCalled();
+                        expect(component.resetSearch).toHaveBeenCalled();
                     });
                 });
             });

@@ -33,7 +33,7 @@
             <mat-option *ngFor="let option of group.options" [ngStyle]="{ 'height': option.description ? 'unset' : '48px' }" [value]="option">
                 <span class="d-flex">
                     <span class="flex-1 text-truncate">{{option.title}}</span>
-                    <button *ngIf="!option.tagIri && option.branchIri !== state.listItem.versionedRdfRecord?.branchId && option.title !== 'MASTER'"
+                    <button *ngIf="option.branchIri && !option.tagIri && option?.branchIri !== state.listItem.versionedRdfRecord?.branchId && option.title !== 'MASTER'"
                             class="delete-branch"
                             mat-icon-button
                             color="primary"
