@@ -28,10 +28,10 @@
                 <editor-branch-select [recordIri]="state?.listItem?.versionedRdfRecord?.recordId" [branchTitle]="state?.listItem?.currentVersionTitle"></editor-branch-select>
                 <button class="create-branch"
                         mat-icon-button color="primary"
-                        [disabled]="!state?.listItem?.versionedRdfRecord?.branchId"
+                        [disabled]="!state?.listItem?.versionedRdfRecord?.commitId"
                         (click)="createBranch()"
                         matTooltip="Create Branch">
-                    <i class="fa fa-code-fork"></i>
+                    <i class="fa fa-code-fork fa-lg"></i>
                 </button>
                 <button class="merge-branch"
                         mat-icon-button color="primary"

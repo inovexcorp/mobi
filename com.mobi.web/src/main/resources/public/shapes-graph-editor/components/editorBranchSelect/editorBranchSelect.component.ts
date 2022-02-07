@@ -96,10 +96,10 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
             const filteredTags = this.tags.filter(option => option.title.toLowerCase().includes(val.toString().toLowerCase()));
             rtn.push({ title: 'Tags', options: filteredTags });
         }
-        // if (this.commits.length > 0) {
-        //     const filteredCommits = this.commits.filter(option => option.toLowerCase().includes(val.toString().toLowerCase()));
-        //     rtn.push({ title: 'Commits', options: filteredCommits });
-        // } TODO: Future add option to checkout a commit.
+        if (this.commits.length > 0) {
+            const filteredCommits = this.commits.filter(option => option.title.toLowerCase().includes(val.toString().toLowerCase()));
+            rtn.push({ title: 'Commits', options: filteredCommits });
+        }
         return rtn;
     }
     selectVersion(event: MatAutocompleteSelectedEvent): void {
@@ -137,12 +137,12 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
             if (branch) {
                 this.selectedIcon = {
                     mat: false,
-                    icon: 'fa fa-code-fork'
+                    icon: 'fa fa-code-fork fa-lg'
                 };
             } else if (tag) {
                 this.selectedIcon = {
-                    mat: false,
-                    icon: 'fa fa-tag'
+                    mat: true,
+                    icon: 'local_offer'
                 };
             } else if (commit) {
                 this.selectedIcon = {
@@ -235,6 +235,7 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
     }
     private checkVersionDeleted(): Promise<any> {
         let promise = Promise.resolve();
+        this.commits = [];
         if (this.state.listItem.versionedRdfRecord.branchId) {
             const branch = find(this.branches, {branchIri: this.state.listItem.versionedRdfRecord.branchId});
             if (!branch) {
@@ -244,7 +245,7 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
             } else {
                 this.state.listItem.currentVersionTitle = branch.title;
             }
-        } else if (this.state.listItem.versionedRdfRecord.commitId) {
+        } else if (this.state.listItem.versionedRdfRecord.tagId) {
             const tag = find(this.tags, {commitIri: this.state.listItem.versionedRdfRecord.commitId, tagIri: this.state.listItem.versionedRdfRecord.tagId});
             if (!tag) {
                 this.util.createWarningToast('Tag ' + this.state.listItem.currentVersionTitle
@@ -253,6 +254,13 @@ export class EditorBranchSelectComponent implements OnInit, OnChanges {
             } else {
                 this.state.listItem.currentVersionTitle = tag.title;
             }
+        } else if (this.state.listItem.versionedRdfRecord.commitId) {
+            const title = this.util.condenseCommitId(this.state.listItem.versionedRdfRecord.commitId);
+            this.state.listItem.currentVersionTitle = title;
+            this.commits = [{
+                title,
+                commitIri: this.state.listItem.versionedRdfRecord.commitId
+            }];
         }
         return promise;
     }

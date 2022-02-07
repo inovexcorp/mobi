@@ -21,10 +21,27 @@
  * #L%
  */
 import { Inject, Component, OnChanges, Input } from '@angular/core';
-import { get, map, concat, intersection, filter, chunk } from 'lodash';
+import { get, map, concat, intersection, filter, chunk, noop } from 'lodash';
+import { CommitChange } from '../../../shared/models/commitChange.interface';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 
 import './shapesGraphChangesPage.component.scss';
+
+interface PredicateObject {
+    p: string,
+    o: string
+}
+interface Statements {
+    id: string,
+    additions?: PredicateObject[],
+    deletions?: PredicateObject[]
+}
+interface CommitChanges {
+    id: string,
+    additions: PredicateObject[],
+    deletions: PredicateObject[],
+    disableAll: boolean
+}
 
  /**
  * @class shapes-graph-editor.ShapesGraphChangesPageComponent
@@ -46,8 +63,8 @@ import './shapesGraphChangesPage.component.scss';
 })
 export class ShapesGraphChangesPageComponent implements OnChanges {
 
-    @Input() additions;
-    @Input() deletions;
+    @Input() additions: CommitChange[];
+    @Input() deletions: CommitChange[];
 
     catalogId: string = get(this.cm.localCatalog, '@id', '');
     typeIRI = this.prefixes.rdf + 'type';
@@ -55,8 +72,10 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
              this.prefixes.owl + 'AnnotationProperty', this.prefixes.owl + 'NamedIndividual', this.prefixes.skos
              + 'Concept', this.prefixes.skos + 'ConceptScheme'];
 
-    list = [];
-    showList = [];
+    commits: CommitChanges[] = [];
+    list: CommitChanges[] = [];
+    showList: CommitChanges[] = [];
+    chunks: CommitChanges[][] = [];
     checkedStatements = {
         additions: [],
         deletions: []
@@ -69,18 +88,19 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
                 @Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
 
     ngOnChanges(): void {
-        const inProgressAdditions = map(this.additions, addition => ({
+        const inProgressAdditions: Statements[] = map(this.additions, addition => ({
             additions: this.util.getPredicatesAndObjects(addition),
             id: addition['@id']
         }));
-        const inProgressDeletions = map(this.deletions, deletion => ({
+        const inProgressDeletions: Statements[] = map(this.deletions, deletion => ({
             deletions: this.util.getPredicatesAndObjects(deletion),
             id: deletion['@id']
         }));
+
         const mergedInProgressCommitsMap = [].concat(inProgressAdditions, inProgressDeletions).reduce((dict,
             currentItem) => {
             const existingValue = dict[currentItem['id']] || {};
-            const mergedValue = Object.assign({ 'id' : '', 'additions' : [], 'deletions' : []}, existingValue,
+            const mergedValue = Object.assign({ 'id': '', 'additions': [], 'deletions': []}, existingValue,
                 currentItem);
             dict[currentItem.id] = mergedValue;
             return dict;
@@ -92,7 +112,7 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
                 additions: inProgressItem.additions,
                 deletions: inProgressItem.deletions,
                 disableAll: this.hasSpecificType(inProgressItem.additions) || this.hasSpecificType(inProgressItem.deletions)
-        }));
+        } as CommitChanges));
         this.showList = this.getList();
     }
     removeChanges(): void {
@@ -103,16 +123,23 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
                 this.util.createSuccessToast('In Progress Commit removed successfully.');
             }, errorMessage => this.util.createErrorToast(`Error removing In Progress Commit: ${errorMessage}`));
     }
-    getMoreResults = function() {
+    getMoreResults(): void {
         this.index++;
         const currChunk = get(this.chunks, this.index, []);
         this.showList = concat(this.showList, currChunk);
     }
-    hasSpecificType = function(array) {
+    hasSpecificType(array: PredicateObject[]): boolean {
         return !!intersection(map(filter(array, {p: this.typeIRI}), 'o'), this.types).length;
     }
-    getList = function() {
+    getList(): CommitChanges[] {
         this.chunks = chunk(this.list, this.size);
         return get(this.chunks, this.index, []);
+    }
+    getCommitId(commit: CommitChanges): string {
+        return commit.id;
+    }
+    openCommit(commit: CommitChanges): Promise<any> {
+        return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, null, commit.id, null, this.util.condenseCommitId(commit.id))
+            .then(noop, error => this.util.createErrorToast(error));
     }
 }

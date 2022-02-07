@@ -201,6 +201,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
      * @param tagId {string} the IRI of the tag to open.
      * @param versionTitle {string} the title of the version to open.
      * @param clearInProgressCommit {boolean} indicates whether the inProgressCommit should be cleared.
+     * @param changesPageOpen {boolean} indicates whether or not to open the changes page.
      * @return {Promise} A Promise that resolves if the version change was successful or not.
      */
     changeShapesGraphVersion(recordId: string, branchId: string, commitId: string, tagId: string, versionTitle: string,
