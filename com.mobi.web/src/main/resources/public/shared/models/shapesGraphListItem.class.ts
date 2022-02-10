@@ -21,7 +21,6 @@
  * #L%
  */
 import { VersionedRdfListItem } from './versionedRdfListItem.class';
-import { JSONLDObject } from './JSONLDObject.interface';
 import { OptionalJSONLD } from './OptionalJSONLD.class';
 
 export class ShapesGraphListItem extends VersionedRdfListItem {
@@ -29,6 +28,7 @@ export class ShapesGraphListItem extends VersionedRdfListItem {
     changesPageOpen: boolean;
     currentVersionTitle: string;
     metadata: OptionalJSONLD;
+    content: string;
 
     constructor() {
         super();
@@ -36,5 +36,6 @@ export class ShapesGraphListItem extends VersionedRdfListItem {
         this.changesPageOpen = false;
         this.currentVersionTitle = '';
         this.metadata = new OptionalJSONLD();
+        this.content = '';
     }
 }

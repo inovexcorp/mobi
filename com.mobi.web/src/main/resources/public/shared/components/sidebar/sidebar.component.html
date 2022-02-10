@@ -33,7 +33,9 @@
             <a class="nav-link" ui-sref="{{per.sref}}">
                 <i ng-if="!per.mat" class="fa fa-{{per.icon}}"></i>
                 <md-icon ng-if="per.mat">{{per.icon}}</md-icon>
-                <span class="collapsed-hide ml-1" ng-if="!$root.collapsedNav">{{per.name}}</span>
+                <span class="collapsed-hide ml-1" ng-if="!$root.collapsedNav">{{per.name}}
+                    <span class="badge badge-pill badge-beta" ng-if="per.name == 'Shapes Editor'">Beta</span>
+                </span>
             </a>
         </li>
     </ul>

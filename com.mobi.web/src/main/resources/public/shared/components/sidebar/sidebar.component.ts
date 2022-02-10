@@ -62,7 +62,7 @@ function sidebarComponentCtrl($rootScope, $state, loginManagerService, userManag
             { icon: 'home', sref: 'root.home', isActive: $state.is('root.home'), name: 'Home' },
             { icon: 'book', sref: 'root.catalog', isActive: $state.is('root.catalog'), name: 'Catalog' },
             { icon: 'pencil-square-o', sref: 'root.ontology-editor', isActive: $state.is('root.ontology-editor'), name: 'Ontology Editor'},
-            { mat: true, icon: 'rule', sref: 'root.shapes-graph-editor', isActive: $state.is('root.shapes-graph-editor'), name: 'Shapes Graph Editor'},
+            { mat: true, icon: 'rule', sref: 'root.shapes-graph-editor', isActive: $state.is('root.shapes-graph-editor'), name: 'Shapes Editor'},
             { icon: 'envelope-o', sref: 'root.merge-requests', isActive: $state.is('root.merge-requests'), name: 'Merge Requests' },
             { icon: 'map-o', sref: 'root.mapper', isActive: $state.is('root.mapper'), name: 'Mapping Tool' },
             { icon: 'database', sref: 'root.datasets', isActive: $state.is('root.datasets'), name: 'Datasets' },

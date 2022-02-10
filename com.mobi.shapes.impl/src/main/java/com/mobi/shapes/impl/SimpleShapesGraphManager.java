@@ -31,6 +31,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
@@ -74,6 +75,9 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
     @Reference
     ValueFactory vf;
 
+    @Reference
+    ModelFactory mf;
+
     @Override
     public boolean shapesGraphIriExists(Resource shapesGraphId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -116,6 +120,6 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
     }
 
     private ShapesGraph getShapesGraphFromModel(Model model) {
-        return new SimpleShapesGraph(model, vf);
+        return new SimpleShapesGraph(model, vf, mf);
     }
 }

@@ -103,18 +103,23 @@ export class ShapesGraphStateService extends VersionedRdfState {
                 };
                 listItem.currentVersionTitle = 'MASTER';
                 return this.sgm.getShapesGraphMetadata(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, listItem.shapesGraphId)
-                    .then(arr => {
-                        listItem.metadata = find(arr, {'@id': listItem.shapesGraphId});
-                        this.listItem = listItem;
-                        this.list.push(listItem);
-                        const stateBase: VersionedRdfStateBase = {
-                            recordId: response.recordId,
-                            commitId: response.commitId,
-                            branchId: response.branchId
-                        };
-                        return this.createState(stateBase);
-                    }, error => Promise.reject(error));
-            }, error => Promise.reject(error));
+            .then((arr: Array<OptionalJSONLD>) => {
+                listItem.metadata = find(arr, {'@id': listItem.shapesGraphId});
+                this.listItem = listItem;
+                return this.sgm.getShapesGraphContent(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId);
+            })
+            .then(content => {
+                this.listItem.content = content;
+                this.list.push(this.listItem);
+                const stateBase: VersionedRdfStateBase = {
+                    recordId: response.recordId,
+                    commitId: response.commitId,
+                    branchId: response.branchId
+                };
+                return this.createState(stateBase); 
+            })
+            .catch(error => Promise.reject(error));
+        });
     }
     /**
      * Opens the provided record, retrieving previous state information for the record, and setting it as the active
@@ -141,6 +146,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
                 };
                 listItem.inProgressCommit = response.inProgressCommit;
                 listItem.changesPageOpen = false;
+
                 this.listItem = listItem;
                 return this.updateShapesGraphMetadata(response.recordId, response.branchId, response.commitId);
             })
@@ -166,6 +172,10 @@ export class ShapesGraphStateService extends VersionedRdfState {
             })
             .then((arr: Array<OptionalJSONLD>) => {
                 this.listItem.metadata = find(arr, {'@id': this.listItem.shapesGraphId});
+                return this.sgm.getShapesGraphContent(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId);
+            })
+            .then(content => {
+                this.listItem.content = content;
                 this.list.push(this.listItem);
                 return Promise.resolve();
             })

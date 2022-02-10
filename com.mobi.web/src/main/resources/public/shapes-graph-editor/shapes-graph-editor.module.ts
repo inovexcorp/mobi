@@ -43,9 +43,10 @@ import { ShapesGraphDetailsComponent } from './components/shapesGraphDetails/sha
 import { StaticIriLimitedComponent } from './components/staticIriLimited/staticIriLimited.component';
 import { ShapesGraphPropertiesBlockComponent } from './components/shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
 import { ShapesGraphPropertyValuesComponent } from './components/shapesGraphPropertyValues/shapesGraphPropertyValues.component';
+import { YateComponent } from './components/yate/yate.component';
 
 /**
- * @namspace shapes-graph-editor
+ * @namespace shapes-graph-editor
  *
  * The `shapes-graph-editor` module provides components that make up the Shapes Graph Editor module in the Mobi application.
  */
@@ -75,6 +76,7 @@ import { ShapesGraphPropertyValuesComponent } from './components/shapesGraphProp
         ShapesGraphPropertyValuesComponent,
         CreateBranchModal,
         StaticIriLimitedComponent,
+        YateComponent,
         CreateTagModal
     ],
     providers: [],
@@ -91,7 +93,8 @@ import { ShapesGraphPropertyValuesComponent } from './components/shapesGraphProp
         ShapesGraphPropertyValuesComponent,
         CreateBranchModal,
         StaticIriLimitedComponent,
-        CreateTagModal
+        CreateTagModal,
+        YateComponent
     ]
 })
 export class ShapesGraphEditorModule {}
@@ -112,4 +115,5 @@ angular.module('shapes-graph-editor', [])
     .directive('shapesGraphPropertiesBlock', downgradeComponent({component: ShapesGraphPropertiesBlockComponent}) as angular.IDirectiveFactory)
     .directive('shapesGraphPropertyValues', downgradeComponent({component: ShapesGraphPropertyValuesComponent}) as angular.IDirectiveFactory)
     .directive('createBranchModal', downgradeComponent({component: CreateBranchModal}) as angular.IDirectiveFactory)
-    .directive('createTagModal', downgradeComponent({component: CreateTagModal}) as angular.IDirectiveFactory);
+    .directive('createTagModal', downgradeComponent({component: CreateTagModal}) as angular.IDirectiveFactory)
+    .directive('yate', downgradeComponent({component: YateComponent}) as angular.IDirectiveFactory);

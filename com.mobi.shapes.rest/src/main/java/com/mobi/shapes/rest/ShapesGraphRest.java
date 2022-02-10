@@ -33,7 +33,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
@@ -341,10 +340,10 @@ public class ShapesGraphRest {
     ) {
         checkStringParam(recordIdStr, "The recordIdStr is missing.");
         try {
-            User user = getActiveUser(context, engineManager);
-            Model model = getShapesGraphModel(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, user);
+            ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
+                    context);
             StreamingOutput output = outputStream ->
-                    writeShapesGraphToStream(model, RestUtils.getRDFFormat(rdfFormat), outputStream);
+                    writeShapesGraphToStream(shapesGraph.getModel(), RestUtils.getRDFFormat(rdfFormat), outputStream);
             return Response.ok(output).header("Content-Disposition", "attachment;filename=" + fileName
                     + "." + getRDFFormatFileExtension(rdfFormat)).header("Content-Type",
                     getRDFFormatMimeType(rdfFormat)).build();
@@ -396,31 +395,31 @@ public class ShapesGraphRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateShapesGraph(@Context ContainerRequestContext context,
-              @Parameter(schema = @Schema(type = "string", format = "binary",
-                      description = "SHACL Shapes Graph file to upload."))
-              @FormDataParam("file") InputStream fileInputStream,
-              @Parameter(description = "File details", hidden = true)
-                  @FormDataParam("file") FormDataContentDisposition fileDetail,
-              @Parameter(schema = @Schema(type = "string",
-                      description = "SHACL Shapes Graph JSON-LD to upload"))
-                  @FormDataParam("json") String json,
+                                      @Parameter(schema = @Schema(type = "string", format = "binary",
+                                              description = "SHACL Shapes Graph file to upload."))
+                                      @FormDataParam("file") InputStream fileInputStream,
+                                      @Parameter(description = "File details", hidden = true)
+                                      @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                      @Parameter(schema = @Schema(type = "string",
+                                              description = "SHACL Shapes Graph JSON-LD to upload"))
+                                      @FormDataParam("json") String json,
                                       @Parameter(description = "String representing the Record Resource ID. "
                                               + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"",
                                               required = true)
-                                          @PathParam("recordId") String recordIdStr,
+                                      @PathParam("recordId") String recordIdStr,
                                       @Parameter(description = "Optional String representing the Branch Resource id. "
                                               + "NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
                                               + "Defaults to Master branch if missing")
-                                          @QueryParam("branchId") String branchIdStr,
+                                      @FormDataParam("branchId") String branchIdStr,
                                       @Parameter(description = "Optional String representing the Commit Resource id."
                                               + " NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
                                               + "Defaults to head commit if missing. The provided commitId must be on "
                                               + "the Branch identified by the provided branchId; otherwise, nothing "
                                               + "will be returned")
-                                          @QueryParam("commitId") String commitIdStr,
+                                      @FormDataParam("commitId") String commitIdStr,
                                       @Parameter(description = "Boolean representing whether the in progress commit "
                                               + "should be overwritten")
-                                      @QueryParam("replaceInProgressCommit") boolean replaceInProgressCommit
+                                      @FormDataParam("replaceInProgressCommit") boolean replaceInProgressCommit
     ) {
         if (replaceInProgressCommit) {
             throw ErrorUtils.sendError("This functionality has not yet been implemented.",
@@ -564,23 +563,71 @@ public class ShapesGraphRest {
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try {
-            Optional<ShapesGraph> shapesGraphOpt = getShapesGraph(recordIdStr, branchIdStr, commitIdStr);
+            ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
+                    context);
+            return Response.ok(RestUtils.modelToString(shapesGraph.getEntity(vf.createIRI(entityIdStr)), format,
+                    transformer)).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MobiException | IllegalStateException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-            if (shapesGraphOpt.isPresent() && applyInProgressCommit) {
-                User user = getActiveUser(context, engineManager);
-                Optional<InProgressCommit> inProgressCommitOpt = catalogManager.getInProgressCommit(
-                        configProvider.getLocalCatalogIRI(), vf.createIRI(recordIdStr), user);
-
-                if (inProgressCommitOpt.isPresent()) {
-                    shapesGraphOpt.get().setModel(catalogManager.applyInProgressCommit(
-                            inProgressCommitOpt.get().getResource(), shapesGraphOpt.get().getModel()));
-                }
+    /**
+     * Retrieves all triples in a Shapes Graph not directly attached to the Shapes Graph IRI subjectId.
+     *
+     * @param context        Context of the request.
+     * @param recordIdStr    String representing the Record Resource ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param branchIdStr    String representing the Branch Resource ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                       master Branch.
+     * @param commitIdStr    String representing the Commit Resource ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                       head Commit. The provided commitId must be on the Branch identified by the provided
+     *                       branchId; otherwise, nothing will be returned.
+     * @param format         the specified format for the return data. Valid values include "jsonld", "turtle",
+     *                       "rdf/xml", and "trig"
+     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @return The RDF triples for the Shapes Graph not including those directly attached to the Shapes Graph IRI
+     *         subjectId.
+     */
+    @GET
+    @Path("{recordId}/content")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "shapes-graphs",
+            summary = "Retrieves the triples for a specified entity",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "RDF triples for a specified entity"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
-
-            ShapesGraph shapesGraph = shapesGraphOpt.orElseThrow(() ->
-                    ErrorUtils.sendError("The shapes graph could not be found.", Response.Status.BAD_REQUEST));
-
-            return Response.ok(RestUtils.modelToString(shapesGraph.getEntity(vf.createIRI(entityIdStr)), format, transformer)).build();
+    )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response getShapesGraphContent(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Specified format for the return data. Valid values include 'jsonld', "
+                    + "'turtle', 'rdf/xml', and 'trig'")
+            @DefaultValue("turtle") @QueryParam("format") String format,
+            @Parameter(description = "Whether or not to apply the in progress commit "
+                    + "for the user making the request")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
+    ) {
+        try {
+            ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
+                    context);
+            return Response.ok(shapesGraph.serializeShapesGraph(format, transformer)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException | IllegalStateException ex) {
@@ -633,26 +680,13 @@ public class ShapesGraphRest {
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try {
-            Optional<ShapesGraph> shapesGraphOpt = getShapesGraph(recordIdStr, branchIdStr, commitIdStr);
+            ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr,
+                    applyInProgressCommit, context);
 
-            ShapesGraph shapesGraph = shapesGraphOpt.orElseThrow(() ->
-                    ErrorUtils.sendError("The shapes graph could not be found.", Response.Status.BAD_REQUEST));
+            IRI shapesGraphId = shapesGraph.getShapesGraphId().orElseThrow(() ->
+                    ErrorUtils.sendError("Shapes Graph ID could not be found.", Response.Status.INTERNAL_SERVER_ERROR));
 
-            User user = getActiveUser(context, engineManager);
-            Optional<InProgressCommit> inProgressCommitOpt = catalogManager.getInProgressCommit(
-                    configProvider.getLocalCatalogIRI(), vf.createIRI(recordIdStr), user);
-
-            inProgressCommitOpt.ifPresent(inProgressCommit -> shapesGraph.setModel(catalogManager.applyInProgressCommit(
-                    inProgressCommit.getResource(), shapesGraphOpt.get().getModel())));
-
-            Optional<IRI> shapesGraphId = shapesGraph.getShapesGraphId();
-
-            if (!shapesGraphId.isPresent()) {
-                throw ErrorUtils.sendError("Shapes Graph IRI could not be found.",
-                        Response.Status.INTERNAL_SERVER_ERROR);
-            }
-
-            return Response.ok(shapesGraphId.get().stringValue()).build();
+            return Response.ok(shapesGraphId.stringValue()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException | IllegalStateException ex) {
@@ -681,49 +715,37 @@ public class ShapesGraphRest {
         }
     }
 
-    /**
-     * Gets the SHACL Shapes Graph as a Model based on the provided IDs.
-     *
-     * @param recordIdStr the record ID String.
-     * @param branchIdStr the branch ID String.
-     * @param commitIdStr the commit ID String.
-     * @param applyInProgressCommit boolean indicating to apply the inProgressCommit
-     * @param user the {@link User} whose inProgressCommit to apply
-     * @return The SHACL Shapes Graph as a Model.
-     */
-    private Model getShapesGraphModel(String recordIdStr, String branchIdStr, String commitIdStr,
-                                      boolean applyInProgressCommit, User user) {
-        Model model;
-        Resource recordId = vf.createIRI(recordIdStr);
-
-        if (StringUtils.isNotBlank(commitIdStr)) {
-            if (StringUtils.isNotBlank(branchIdStr)) {
-                model = catalogManager.getCompiledResource(recordId, vf.createIRI(branchIdStr),
-                        vf.createIRI(commitIdStr));
-            } else {
-                model = catalogManager.getCompiledResource(vf.createIRI(commitIdStr));
-            }
+    private ShapesGraph getShapesGraph(String recordIdStr, String branchIdStr, String commitIdStr,
+                                       boolean applyInProgressCommit, ContainerRequestContext context) {
+        Optional<ShapesGraph> shapesGraphOpt;
+        if (StringUtils.isNotBlank(commitIdStr) && StringUtils.isNotBlank(branchIdStr)) {
+            checkStringParam(branchIdStr, "The branchIdStr is missing.");
+            shapesGraphOpt = shapesGraphManager.retrieveShapesGraph(vf.createIRI(recordIdStr),
+                    vf.createIRI(branchIdStr), vf.createIRI(commitIdStr));
         } else if (StringUtils.isNotBlank(branchIdStr)) {
-            Resource branchId = vf.createIRI(branchIdStr);
-            Commit head = catalogManager.getHeadCommit(configProvider.getLocalCatalogIRI(), recordId, branchId);
-            model = catalogManager.getCompiledResource(recordId, branchId, head.getResource());
+            shapesGraphOpt = shapesGraphManager.retrieveShapesGraph(vf.createIRI(recordIdStr),
+                    vf.createIRI(branchIdStr));
+        } else if (StringUtils.isNotBlank(commitIdStr)) {
+            shapesGraphOpt = shapesGraphManager.retrieveShapesGraphByCommit(vf.createIRI(commitIdStr));
         } else {
-            Branch branch = catalogManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId);
-            Resource headResource = branch.getHead_resource().orElseThrow(() ->
-                    new IllegalStateException("Could not retrieve head commit for branch " + branch.getResource()));
-            model = catalogManager.getCompiledResource(recordId, branch.getResource(), headResource);
+            shapesGraphOpt = shapesGraphManager.retrieveShapesGraph((vf.createIRI(recordIdStr)));
         }
+
+        ShapesGraph shapesGraph = shapesGraphOpt.orElseThrow(() ->
+                ErrorUtils.sendError("The shapes graph could not be found.", Response.Status.BAD_REQUEST));
 
         if (applyInProgressCommit) {
+            User user = getActiveUser(context, engineManager);
             Optional<InProgressCommit> inProgressCommitOpt = catalogManager.getInProgressCommit(
-                    configProvider.getLocalCatalogIRI(), recordId, user);
+                    configProvider.getLocalCatalogIRI(), vf.createIRI(recordIdStr), user);
+
             if (inProgressCommitOpt.isPresent()) {
-                InProgressCommit inProgressCommit = inProgressCommitOpt.get();
-                model = catalogManager.applyInProgressCommit(inProgressCommit.getResource(), model);
+                shapesGraph.setModel(catalogManager.applyInProgressCommit(
+                        inProgressCommitOpt.get().getResource(), shapesGraphOpt.get().getModel()));
             }
         }
 
-        return model;
+        return shapesGraph;
     }
 
     private Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId, Map<BNode, IRI> bNodesMap) {
@@ -759,20 +781,5 @@ public class ShapesGraphRest {
         }
 
         return parsedModel.getModel();
-    }
-
-    private Optional<ShapesGraph> getShapesGraph(String recordIdStr, String branchIdStr, String commitIdStr) {
-        if (StringUtils.isNotBlank(commitIdStr) && StringUtils.isNotBlank(branchIdStr)) {
-            checkStringParam(branchIdStr, "The branchIdStr is missing.");
-            return shapesGraphManager.retrieveShapesGraph(vf.createIRI(recordIdStr),
-                    vf.createIRI(branchIdStr), vf.createIRI(commitIdStr));
-        } else if (StringUtils.isNotBlank(branchIdStr)) {
-            return shapesGraphManager.retrieveShapesGraph(vf.createIRI(recordIdStr),
-                    vf.createIRI(branchIdStr));
-        } else if (StringUtils.isNotBlank(commitIdStr)) {
-            return shapesGraphManager.retrieveShapesGraphByCommit(vf.createIRI(commitIdStr));
-        } else {
-            return shapesGraphManager.retrieveShapesGraph(vf.createIRI(recordIdStr));
-        }
     }
 }

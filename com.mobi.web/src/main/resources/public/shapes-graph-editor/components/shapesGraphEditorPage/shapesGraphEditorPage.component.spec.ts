@@ -36,6 +36,7 @@ import { MatExpansionModule } from '@angular/material';
 import { ShapesGraphDetailsComponent } from '../shapesGraphDetails/shapesGraphDetails.component';
 import { ShapesGraphPropertiesBlockComponent } from '../shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
+import { YateComponent } from '../yate/yate.component';
 
 describe('Shapes Graph Editor Page component', function() {
     let component: ShapesGraphEditorPageComponent;
@@ -54,7 +55,8 @@ describe('Shapes Graph Editor Page component', function() {
                 MockComponent(ShapesGraphChangesPageComponent),
                 MockComponent(ShapesGraphMergePageComponent),
                 MockComponent(ShapesGraphDetailsComponent),
-                MockComponent(ShapesGraphPropertiesBlockComponent)
+                MockComponent(ShapesGraphPropertiesBlockComponent),
+                MockComponent(YateComponent)
             ],
             providers: [
                 MockProvider(ShapesGraphStateService),

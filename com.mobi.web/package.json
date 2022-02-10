@@ -111,6 +111,7 @@
     "lodash": "^4.17.21",
     "ng-handsontable": "^0.13.0",
     "ngclipboard": "^1.1.1",
+    "perfectkb-yate": "^0.10.0",
     "popper.js": "^1.14.3",
     "reflect-metadata": "^0.1.12",
     "rxjs": "^6.6.7",

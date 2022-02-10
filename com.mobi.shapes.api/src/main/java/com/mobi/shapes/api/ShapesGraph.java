@@ -23,18 +23,59 @@ package com.mobi.shapes.api;
  * #L%
  */
 
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 
 import java.util.Optional;
+import javax.ws.rs.core.StreamingOutput;
 
 public interface ShapesGraph {
+
+    /**
+     * Retrieves the model backing the SimpleShapesGraph object.
+     *
+     * @return The {@link Model} backing the Shapes Graph.
+     */
     Model getModel();
 
+    /**
+     * Sets the model containing the contents of the Shapes Graph.
+     *
+     * @param model The {@link Model} containing the data in this Shapes Graph
+     */
     void setModel(Model model);
 
+    /**
+     * Retrieves the model containing all Statements in the Shapes Graph with the passed in subjectId.
+     *
+     * @param subjectId The {@link Resource} to retrieve statements for.
+     *
+     * @return The {@link Model} containing all statements with the passed in subjectId.
+     */
     Model getEntity(Resource subjectId);
 
+    /**
+     * Retrieves an Optional of the Shapes Graph IRI.
+     *
+     * @return An optional of the Shapes Graph IRI if it exists. Otherwise an empty Optional.
+     */
     Optional<IRI> getShapesGraphId();
+
+    /**
+     * Retrieves the model containing all Statements in the Shapes Graph except for those with a subjectID of the Shapes
+     * Graph IRI.
+     *
+     * @return The model containing all Statements in the Shapes Graph except for statements with a subjectID of the
+     * Shapes Graph IRI.
+     */
+    Model getShapesGraphContent();
+
+    /**
+     * Retrieves a serialization of the Shapes Graph except for statements with a subjectID of the Shapes Graph IRI.
+     *
+     * @return The serialization of the Shapes Graph except for statements with a subjectID of the Shapes Graph IRI.
+     */
+    StreamingOutput serializeShapesGraph(String format, SesameTransformer transformer);
 }

@@ -55,10 +55,6 @@ md-backdrop.md-select-backdrop {
     max-height: 500px !important;
 }
 
-.cdk-global-overlay-wrapper, .cdk-overlay-container {
-    z-index: 8000 !important;
-}
-
 mat-checkbox label {
     color: black
 }
