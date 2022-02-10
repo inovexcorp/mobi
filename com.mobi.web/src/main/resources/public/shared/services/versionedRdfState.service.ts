@@ -190,11 +190,14 @@ export abstract class VersionedRdfState {
      * Deletes the state for the provided recordId.
      *
      * @param recordId {string} the IRI of the VersionedRdfRecord state to delete.
-     * @return {Promise} A Promise that resolves if the state deletion was successful or not.
+     * @return {Promise} A Promise that resolves if the state deletion was successful and rejects if not.
      */
     deleteState(recordId: string): Promise<unknown> {
-        const stateId = this.getStateByRecordId(recordId).id;
-        return this.sm.deleteState(stateId);
+        const state = this.getStateByRecordId(recordId);
+        if (state === undefined) {
+            return Promise.resolve();
+        }
+        return this.sm.deleteState(state.id);
     }
     /**
      * Retrieves the ID of the current State object for the provided recordId.

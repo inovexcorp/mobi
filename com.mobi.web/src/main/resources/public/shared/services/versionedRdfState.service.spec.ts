@@ -286,13 +286,24 @@ describe('Versioned RDF State service', function() {
             });
         });
     });
-    it('deleteState calls the correct method', function() {
-        spyOn(service, 'getStateByRecordId').and.returnValue({
-            id: stateId,
-            model: versionedRdfStateModel
+    describe('deleteState calls the correct method', function() {
+        it('when state exists', function() {
+            spyOn(service, 'getStateByRecordId').and.returnValue({
+                id: stateId,
+                model: versionedRdfStateModel
+            });
+            service.deleteState(recordId);
+            expect(stateManagerStub.deleteState).toHaveBeenCalledWith(stateId);
         });
-        service.deleteState(recordId);
-        expect(stateManagerStub.deleteState).toHaveBeenCalledWith(stateId);
+        it('when state does not exist', async function() {
+            spyOn(service, 'getStateByRecordId').and.returnValue(undefined);
+            await service.deleteState(recordId)
+                                .then(noop, () => {
+                                    fail('Promise should have resolved');
+                                });
+            service.deleteState(recordId);
+            expect(stateManagerStub.deleteState).not.toHaveBeenCalled();
+        });    
     });
     it('deleteBranchState calls the correct method', function() {
         const tempState = cloneDeep(versionedRdfStateModel);
