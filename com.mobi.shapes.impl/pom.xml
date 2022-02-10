@@ -48,6 +48,11 @@
             <artifactId>ontology.utils</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>rest.util</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Test Dependencies -->
         <dependency>

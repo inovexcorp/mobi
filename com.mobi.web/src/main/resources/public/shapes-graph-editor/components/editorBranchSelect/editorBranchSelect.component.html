@@ -19,20 +19,25 @@
   #L%
   -->
 <mat-form-field class="editor-branch-select">
-    <input matInput #textInput placeholder="Select a branch/tag" [matAutocomplete]="branchAutocomplete" [formControl]="branchSearchControl"/>
+    <input class="text-truncate" matInput #textInput placeholder="Select a branch/tag" [matAutocomplete]="branchAutocomplete"
+           [formControl]="branchSearchControl"/>
     <mat-icon *ngIf="selectedIcon.mat" matSuffix>{{selectedIcon.icon}}</mat-icon>
     <i *ngIf="!selectedIcon.mat" class="{{selectedIcon.icon}}" matSuffix></i>
     <mat-icon matSuffix>keyboard_arrow_down</mat-icon>
-    <mat-autocomplete class="panel-max-height"
+    <mat-autocomplete class="panel-max-height branch-options-select"
                       #branchAutocomplete="matAutocomplete"
                       (optionSelected)="selectVersion($event)"
                       (opened)="retrieveBranchesAndTags()"
                       (closed)="close()"
                       [panelWidth]="301">
         <mat-optgroup *ngFor="let group of filteredOptions | async" [label]="group.title">
-            <mat-option *ngFor="let option of group.options" [ngStyle]="{ 'height': option.description ? 'unset' : '48px' }" [value]="option">
+            <mat-option *ngFor="let option of group.options" [ngStyle]="{ 'height':
+            option.description ? 'unset' :
+            '48px' }" [value]="option">
                 <span class="d-flex">
-                    <span class="flex-1 text-truncate">{{option.title}}</span>
+                    <span class="flex-1 text-truncate">{{option.title}}
+                        <p class="description-text pl-3 small text-muted text-truncate">{{option.description}}</p>
+                    </span>
                     <button *ngIf="option.branchIri && !option.tagIri && option?.branchIri !== state.listItem.versionedRdfRecord?.branchId && option.title !== 'MASTER'"
                             class="delete-branch"
                             mat-icon-button
@@ -48,7 +53,6 @@
                         <mat-icon class="w-100">delete</mat-icon>
                     </button>
                 </span>
-                <p class="description-text pl-3 small text-muted text-truncate">{{option.description}}</p>
             </mat-option>
         </mat-optgroup>
     </mat-autocomplete>

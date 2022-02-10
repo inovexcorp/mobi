@@ -132,13 +132,29 @@ export class ShapesGraphManagerService {
      * @param commitId {string} the IRI of the entity to retrieve.
      * @param format {string} the format of the rdf that will be retrieved.
      * @param applyInProgressCommit {boolean} whether to apply the current in progress commit.
-     * 
+     *
      * @returns {Promise} A Promise that resolves if the request was successful; rejects with an error message otherwise
      */
     getShapesGraphMetadata(recordId, branchId, commitId, entityId, format = 'jsonld', applyInProgressCommit = true): Promise<any>  {
         const config = { params: this.helper.createHttpParams({ branchId, commitId, format, applyInProgressCommit }) };
         const url = this.prefix + '/' + encodeURIComponent(recordId) + '/entities/' + encodeURIComponent(entityId);
         const promise = this.http.get(url, config).toPromise();
+        return promise.then((response:any) => response, this.util.rejectError);
+    }
+
+    /**
+     * Calls the GET /mobirest/shapes-graphs/{recordId}/content endpoint which will retrieve all triples in a Shapes 
+     * Graph not directly attached to the Shapes Graph IRI subjectId.
+     *
+     * @param recordId {string} the IRI of the record to retrieve.
+     * @param branchId {string} the IRI of the branch to retrieve.
+     * @param commitId {string} the IRI of the commit to retrieve.
+     * @param format {string} the format of the rdf that will be retrieved.
+     * @param applyInProgressCommit {boolean} whether to apply the current in progress commit.
+     */
+    getShapesGraphContent(recordId, branchId, commitId, format = 'turtle', applyInProgressCommit = true): Promise<any>  {
+        const url = this.prefix + '/' + encodeURIComponent(recordId) + '/content';
+        const promise = this.http.get(url, { params: this.helper.createHttpParams({ branchId, commitId, format, applyInProgressCommit }), responseType: 'text' }).toPromise();
         return promise.then((response:any) => response, this.util.rejectError);
     }
 

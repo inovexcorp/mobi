@@ -19,9 +19,10 @@
   #L%
   -->
 <mat-form-field class="editor-record-select">
-    <input matInput #textInput placeholder="Select a record" [matAutocomplete]="recordAutocomplete" [formControl]="recordSearchControl"/>
+    <input class="text-truncate" matInput #textInput placeholder="Select a record" [matAutocomplete]="recordAutocomplete"
+           [formControl]="recordSearchControl"/>
     <mat-icon matSuffix>keyboard_arrow_down</mat-icon>
-    <mat-autocomplete class="panel-max-height"
+    <mat-autocomplete class="panel-max-height record-options-select"
                       #recordAutocomplete="matAutocomplete"
                       (optionSelected)="selectRecord($event)"
                       (opened)="retrieveShapesGraphRecords()"
@@ -40,7 +41,9 @@
         <mat-optgroup *ngFor="let group of filteredOptions | async" [label]="group.title">
             <mat-option *ngFor="let option of group.options" [ngStyle]="{ 'height': option.description ? 'unset' : '48px' }" [value]="option">
                 <span class="d-flex">
-                    <span class="flex-1 text-truncate">{{option.title}}</span>
+                    <span class="flex-1 text-truncate">{{option.title}}
+                        <p class="description-text pl-3 small text-muted text-truncate">{{option.description}}</p>
+                    </span>
                     <button *ngIf="group.title === 'Open'"
                             class="close-record"
                             mat-icon-button
@@ -56,7 +59,6 @@
                         <mat-icon class="w-100">delete</mat-icon>
                     </button>
                 </span>
-                <p class="description-text pl-3 small text-muted text-truncate">{{option.description}}</p>
             </mat-option>
         </mat-optgroup>
     </mat-autocomplete>

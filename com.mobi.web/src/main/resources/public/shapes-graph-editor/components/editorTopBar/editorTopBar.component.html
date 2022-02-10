@@ -23,9 +23,11 @@
 <div class="editor-top-bar">
     <div class="top-bar-content d-flex justify-content-between">
         <div class="left-side">
-            <editor-record-select class="pr-1" [recordIri]="state?.listItem?.versionedRdfRecord?.recordId"></editor-record-select>
+            <editor-record-select class="pr-1"
+                                  [recordIri]="state?.listItem?.versionedRdfRecord?.recordId"></editor-record-select>
             <div class="versioned-rdf-record-actions d-inline-block">
-                <editor-branch-select [recordIri]="state?.listItem?.versionedRdfRecord?.recordId" [branchTitle]="state?.listItem?.currentVersionTitle"></editor-branch-select>
+                <editor-branch-select [recordIri]="state?.listItem?.versionedRdfRecord?.recordId"
+                                      [branchTitle]="state?.listItem?.currentVersionTitle"></editor-branch-select>
                 <button class="create-branch"
                         mat-icon-button color="primary"
                         [disabled]="!state?.listItem?.versionedRdfRecord?.commitId"

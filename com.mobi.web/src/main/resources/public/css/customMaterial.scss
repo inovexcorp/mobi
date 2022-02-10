@@ -22,6 +22,8 @@
  */
 /* Core variables */
 @import "./variables";
+@import '~codemirror/lib/codemirror';
+@import '~codemirror/theme/material';
 
 $primary: (
     color: map-get($mobi-primary, 500),

@@ -79,6 +79,7 @@ describe('Shapes Graph Manager service', function() {
 
         spyOn(helper, 'createHttpParams').and.callThrough();
         utilStub.rejectErrorObject.and.callFake(() => Promise.reject(error));
+        utilStub.rejectError.and.callFake(() => Promise.reject(error));
         rdfDownload = {
             recordId: 'record1',
             branchId: 'branch1',
@@ -173,6 +174,29 @@ describe('Shapes Graph Manager service', function() {
                 }, () => fail('Promise should have resolved')).catch(done.fail);
             const request = httpMock.expectOne({url: service.prefix + '/' + encodeURIComponent(rdfUpdate.recordId), method: 'DELETE'});
             request.flush([]);
+        });
+    });
+
+    describe('should retrieve shapes graph content of a shapes graph record', function() {
+        it('unless an error occurs', function(done) {
+            service.getShapesGraphContent('record1', 'branch1', 'commit1')
+                .then(() => fail('Promise should have rejected'), response => {
+                    expect(response).toEqual(error);
+                    expect(utilStub.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: error}));
+                    done();
+                }).catch(done.fail);
+            const request = httpMock.expectOne(req => req.method === 'GET' && req.url === service.prefix + '/record1/content');
+
+            request.flush('flush', { status: 400, statusText: error });
+        });
+        it('successfully', function(done) {
+            service.getShapesGraphContent('record1', 'branch1', 'commit1')
+                .then(response => {
+                    expect(response).toEqual('content');
+                    done();
+                }, () => fail('Promise should have resolved')).catch(done.fail);
+            const request = httpMock.expectOne(req => req.method === 'GET' && req.url === service.prefix + '/record1/content');
+            request.flush('content');
         });
     });
 

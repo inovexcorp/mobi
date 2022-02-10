@@ -851,4 +851,5 @@ export class mockShapesGraphManager {
     deleteShapesGraphRecord = jasmine.createSpy('deleteShapesGraphRecord').and.returnValue(Promise.resolve());
     getShapesGraphMetadata = jasmine.createSpy('getShapesGraphMetadata').and.returnValue(Promise.resolve());
     getShapesGraphIRI = jasmine.createSpy('getShapesGraphIRI').and.returnValue(Promise.resolve());
+    getShapesGraphContent = jasmine.createSpy('getShapesGraphContent').and.returnValue(Promise.resolve());
 }

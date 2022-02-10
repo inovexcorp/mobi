@@ -58,3 +58,19 @@
         }
     }
 }
+
+.branch-options-select, .record-options-select {
+    .mat-option {
+        line-height: normal;
+        align-items: baseline;
+        min-height: 48px;
+    
+        span {
+            align-self: center;
+        }
+    
+        p {
+            margin-bottom: 0;
+        }
+    }
+}

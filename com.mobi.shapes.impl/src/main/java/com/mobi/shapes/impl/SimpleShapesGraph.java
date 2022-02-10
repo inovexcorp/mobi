@@ -23,29 +23,24 @@ package com.mobi.shapes.impl;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.dataset.api.DatasetManager;
-import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.utils.OntologyModels;
-import com.mobi.ontology.utils.imports.ImportsResolver;
-import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
+import com.mobi.rest.util.RestUtils;
 import com.mobi.shapes.api.ShapesGraph;
 
-import java.io.File;
 import java.util.Optional;
+import javax.ws.rs.core.StreamingOutput;
 
 public class SimpleShapesGraph implements ShapesGraph {
 
     private Model model;
     private ValueFactory vf;
+    private ModelFactory mf;
 
     /**
      * Creates a SimpleShapesGraph object that represents a Shapes Graph.
@@ -53,48 +48,49 @@ public class SimpleShapesGraph implements ShapesGraph {
      * @param model           The {@link Model} containing the data in this Shapes Graph
      * @param vf              The {@link ValueFactory} used to create Statements
      */
-    public SimpleShapesGraph(Model model, ValueFactory vf) {
+    public SimpleShapesGraph(Model model, ValueFactory vf, ModelFactory mf) {
         this.model = model;
         this.vf = vf;
+        this.mf = mf;
     }
 
-    /**
-     * Retrieves the model backing the SimpleShapesGraph object.
-     *
-     * @return The {@link Model} backing the Shapes Graph.
-     */
     @Override
     public Model getModel() {
         return this.model;
     }
 
-    /**
-     * Sets the model containing the contents of the Shapes Graph.
-     *
-     * @param model The {@link Model} containing the data in this Shapes Graph
-     */
     @Override
-    public void setModel(Model model) { this.model = model; }
+    public void setModel(Model model) {
+        this.model = model;
+    }
 
-    /**
-     * Retrieves the model containing all Statements in the Shapes Graph with the passed in subjectId.
-     *
-     * @param subjectId The {@link Resource} to retrieve statements for.
-     *
-     * @return The {@link Model} containing all statements with the passed in subjectId.
-     */
     @Override
     public Model getEntity(Resource subjectId) {
         return this.model.filter(subjectId, null, null);
     }
 
-    /**
-     * Retrieves an Optional of the Shapes Graph IRI.
-     *
-     * @return An optional of the Shapes Graph IRI if it exists. Otherwise an empty Optional.
-     */
     @Override
     public Optional<IRI> getShapesGraphId() {
         return OntologyModels.findFirstOntologyIRI(this.getModel(), vf);
+    }
+
+    @Override
+    public Model getShapesGraphContent() {
+        Model shapesGraphContent = mf.createModel();
+        IRI shapesGraphId = OntologyModels.findFirstOntologyIRI(this.getModel(), vf)
+                .orElseThrow(() -> new IllegalStateException("Missing OntologyIRI")); // Check for empty
+        this.model.unmodifiable().forEach(statement -> {
+            if (!statement.getSubject().equals(shapesGraphId)) {
+                shapesGraphContent.add(statement);
+            }
+        });
+        return shapesGraphContent;
+    }
+
+    @Override
+    public StreamingOutput serializeShapesGraph(String format, SesameTransformer transformer) {
+        StreamingOutput output = outputStream ->
+                RestUtils.groupedModelToOutputStream(this.getShapesGraphContent(), RestUtils.getRDFFormat(format), transformer, outputStream);
+        return output;
     }
 }

@@ -23,16 +23,6 @@
 /* Core variables */
 @import "../../../css/variables";
 
-.ontology-tab {
-    position: relative;
-
-    .saved-text {
-        position: absolute;
-        right: 15px;
-        top: 16px;
-    }
-
-    .search-tab {
-        height: 100%;
-    }
+.yate {
+    height: 100% !important;
 }
