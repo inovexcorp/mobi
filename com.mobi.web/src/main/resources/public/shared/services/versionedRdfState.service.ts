@@ -47,13 +47,12 @@ export abstract class VersionedRdfState {
     public list: VersionedRdfListItem[];
     public listItem: VersionedRdfListItem;
 
-    protected constructor(statePrefix: string, branchStateNamespace: string, tagStateNamespace: string, commitStateNamespace: string, application: string, catalogId: string) {
+    protected constructor(statePrefix: string, branchStateNamespace: string, tagStateNamespace: string, commitStateNamespace: string, application: string) {
         this.statePrefix = statePrefix;
         this.branchStateNamespace = branchStateNamespace;
         this.tagStateNamespace = tagStateNamespace;
         this.commitStateNamespace = commitStateNamespace;
         this.application = application;
-        this.catalogId = catalogId;
         this.list = [];
     }
 

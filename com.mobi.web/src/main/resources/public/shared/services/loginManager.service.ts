@@ -32,7 +32,7 @@ loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
     'mergeRequestsStateService',
     'ontologyManagerService',
     'ontologyStateService',
-    'settingManagerService',
+    'shapesGraphStateService',
     'sparqlManagerService',
     'stateManagerService',
     'userManagerService',
@@ -56,8 +56,8 @@ loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
  * @requires shared.service:mergeRequestsStateService
  * @requires shared.service:ontologyManagerService
  * @requires shared.service:ontologyStateService
- * @requires shared.service:settingManagerService
  * @requires shared.service:sparqlManagerService
+ * @requires shared.service:shapesGraphStateService
  * @requires shared.service:stateManagerService
  * @requires shared.service:userManagerService
  * @requires shared.service:userStateService
@@ -66,7 +66,7 @@ loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
  * `loginManagerService` is a service that provides access to the Mobi login REST
  * endpoints so users can log into and out of Mobi.
  */
-function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, settingManagerService, sparqlManagerService, stateManagerService, userManagerService, userStateService, yasguiService) {
+function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, shapesGraphStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService, yasguiService) {
     var self = this,
         prefix = REST_PREFIX + 'session';
     
@@ -150,6 +150,7 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
         ontologyManagerService.reset();
         ontologyStateService.reset();
         sparqlManagerService.reset();
+        shapesGraphStateService.reset();
         catalogStateService.reset();
         yasguiService.reset();
         $http.delete(prefix)
@@ -206,6 +207,7 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
                         mergeRequestsStateService.initialize();
                         ontologyManagerService.initialize();
                         ontologyStateService.initialize();
+                        shapesGraphStateService.initialize();
                     }),
                     datasetManagerService.initialize()
                 ]);

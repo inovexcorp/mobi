@@ -50,9 +50,12 @@ export class ShapesGraphStateService extends VersionedRdfState {
             'http://mobi.com/states/shapes-graph-editor/branch-id/',
             'http://mobi.com/states/shapes-graph-editor/tag-id/',
             'http://mobi.com/states/shapes-graph-editor/commit-id/',
-            'shapes-graph-editor',
-            get(cm.localCatalog, '@id', '')
+            'shapes-graph-editor'
         );
+    }
+
+    initialize(): void {
+        this.catalogId = get(this.cm.localCatalog, '@id', '');
     }
 
     getId(): Promise<string> {
@@ -64,6 +67,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
      */
     reset(): void {
         this.listItem = new ShapesGraphListItem();
+        this.list = [];
     }
     /**
      * Resets the additions and deletions in the in progress commit.

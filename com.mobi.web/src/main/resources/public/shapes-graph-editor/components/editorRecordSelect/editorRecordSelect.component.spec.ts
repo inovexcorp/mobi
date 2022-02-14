@@ -125,7 +125,6 @@ describe('Editor Record Select component', function() {
         record2Item.versionedRdfRecord.title = record2.title;
         shapesGraphStateStub.list = [record1Item, record2Item];
         shapesGraphStateStub.openShapesGraph.and.returnValue(Promise.resolve());
-        shapesGraphStateStub.reset.and.callFake(ShapesGraphStateService.prototype.reset);
         shapesGraphStateStub.closeShapesGraph.and.callFake(ShapesGraphStateService.prototype.closeShapesGraph);
 
         shapesGraphManagerStub = TestBed.get(ShapesGraphManagerService);

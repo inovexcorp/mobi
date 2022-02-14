@@ -39,9 +39,11 @@ class VersionedRdfStateImpl extends VersionedRdfState {
             VersionedRdfStateImpl.testPrefix + 'branch-id/',
             VersionedRdfStateImpl.testPrefix + 'tag-id/',
             VersionedRdfStateImpl.testPrefix + 'commit-id/',
-            VersionedRdfStateImpl.appName,
-            'catalog'
+            VersionedRdfStateImpl.appName
         );
+    }
+    initialize(): void {
+        this.catalogId = 'catalog';
     }
     getId(): Promise<any> {
         return Promise.resolve();
@@ -96,6 +98,7 @@ describe('Versioned RDF State service', function() {
     beforeEach(function() {
         service = TestBed.get(VersionedRdfStateImpl);
         service.listItem = new VersionedRdfListItem();
+        service.initialize();
 
         stateManagerStub = TestBed.get('stateManagerService');
         catalogManagerStub = TestBed.get('catalogManagerService');
