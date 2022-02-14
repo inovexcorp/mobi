@@ -33,6 +33,7 @@ import { RecordSelectFiltered } from '../../models/recordSelectFiltered.interfac
 
 import { NewShapesGraphRecordModalComponent } from '../newShapesGraphRecordModal/newShapesGraphRecordModal.component';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 
 interface OptionGroup {
     title: string,
@@ -149,7 +150,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
         const closed = remove(this.opened, {recordId: recordIri})[0];
         this.unopened.push(<RecordSelectFiltered> closed);
         if (recordIri === this.recordIri) {
-            this.state.reset();
+            this.state.listItem = new ShapesGraphListItem();
         }
         this.state.closeShapesGraph(recordIri);
         this.setFilteredOptions();
@@ -187,7 +188,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
                 this.util.createWarningToast('Previously opened ShapesGraphRecord ' + this.state.listItem.versionedRdfRecord.title + ' was removed.');
                 this.state.closeShapesGraph(this.state.listItem.versionedRdfRecord.recordId);
                 remove(this.opened, {recordId: this.state.listItem.versionedRdfRecord.recordId});
-                this.state.reset();
+                this.state.listItem = new ShapesGraphListItem();
             }
             this.resetSearch();
         }

@@ -46,6 +46,7 @@ describe('Shapes Graph State service', function() {
     let utilStub;
     let catalogManagerStub;
     let prefixesStub;
+    let catalogId;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -64,6 +65,7 @@ describe('Shapes Graph State service', function() {
     beforeEach(function() {
         service = TestBed.get(ShapesGraphStateService);
         service.listItem = new ShapesGraphListItem();
+        this.catalogId = 'catalog';
 
         utilStub = TestBed.get('utilService');
         utilStub.getDctermsValue.and.callFake((obj, prop) => {
@@ -72,7 +74,9 @@ describe('Shapes Graph State service', function() {
 
         shapesGraphManagerStub = TestBed.get(ShapesGraphManagerService);
         catalogManagerStub = TestBed.get('catalogManagerService');
+        catalogManagerStub.localCatalog = {'@id': this.catalogId};
         prefixesStub = TestBed.get('prefixes');
+        service.initialize();
     });
 
     afterEach(function() {

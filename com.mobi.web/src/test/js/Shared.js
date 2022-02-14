@@ -1396,6 +1396,8 @@ export function mockShapesGraphState() {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('shapesGraphStateService', function($q) {
             this.openShapesGraph = jasmine.createSpy('openShapesGraph').and.returnValue($q.when());
+            this.reset = jasmine.createSpy('reset');
+            this.initialize = jasmine.createSpy('initialize');
         });
     });
 }
