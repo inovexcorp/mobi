@@ -21,9 +21,10 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
+
+import * as YATE from 'perfectkb-yate';
 
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { YateComponent } from './yate.component';
@@ -59,15 +60,15 @@ describe('Yate component', function() {
     });
 
     describe('should initialize the yate editor with content', function() {
-        it('successfully', async function() {
+        it('successfully', fakeAsync(function() {
             component.content = 'content to display';
-            component.ngAfterViewInit();
-            fixture.detectChanges();
-            await fixture.whenStable();
-            await fixture.whenRenderingDone();
-            setTimeout(function(){
-                expect(element.queryAll(By.css('.yate')).length).toEqual(1);
-            }, 2000);
-        });
+            fixture.autoDetectChanges();
+            fixture.whenStable();
+            jasmine.createSpy(YATE.getPrefixesFromDocument).and.returnValue(Promise.resolve());
+            const nativeEle = fixture.elementRef.nativeElement.querySelectorAll('.yate');
+
+            expect(nativeEle.length).toEqual(1);
+            flush();
+        }));
     });
 });

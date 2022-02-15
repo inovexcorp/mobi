@@ -24,12 +24,6 @@
 @import "../../../css/variables";
 @import '~@angular/material/theming';
 
-// Include the common styles for Angular Material. We include this here so that you only
-// have to load a single css file for Angular Material in your app.
-// Be sure that you only ever include this mixin once!
-@include mat-core();
-// @use '@angular/material' as mat;
-
 .editor-top-bar {
     width: 100%;
 
@@ -50,11 +44,16 @@
     }
     .right-side {
         padding: 0.5em;
+        margin-left: auto;
         
         .mat-button {
             &:focus {
                 outline: none;
             }
+        }
+        p {
+            margin: 0;
+            padding: 0;
         }
     }
 }

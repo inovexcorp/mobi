@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="editor-top-bar">
-    <div class="top-bar-content d-flex justify-content-between">
+    <div class="top-bar-content d-flex">
         <div class="left-side">
             <editor-record-select class="pr-1"
                                   [recordIri]="state?.listItem?.versionedRdfRecord?.recordId"></editor-record-select>
@@ -65,14 +65,30 @@
                 </button>
                 <mat-chip-list [selectable]="false">
                     <mat-chip *ngIf="state.isCommittable()" class="uncommitted" color="warn" [selectable]="false">Uncommitted Changes</mat-chip>
-                    <!-- <mat-chip color="warn">Unsaved</mat-chip> -->
                 </mat-chip-list>
             </div>
         </div>
         <div class="right-side">
-            <div class="versioned-rdf-record-actions">
-                <button mat-button class="changes" (click)="toggleChanges()" color="primary" [disabled]="!this.state?.listItem?.versionedRdfRecord?.recordId">{{ state?.listItem?.changesPageOpen ? 'Hide Changes' : 'Show Changes' }}</button>
-                <button mat-raised-button class="commit" color="primary" (click)="commit()" [disabled]="!state.isCommittable()">Commit</button>
+            <div class="versioned-rdf-record-actions d-flex align-items-center">
+                <error-display *ngIf="this.state?.listItem && !this.state.listItem.upToDate && !this.state.listItem.inProgressCommit.hasChanges()"
+                               class="pr-2">Branch is behind HEAD. Update with HEAD to commit.</error-display>
+                <error-display *ngIf="this.state?.listItem && !this.state.listItem.upToDate && this.state.listItem.inProgressCommit.hasChanges()"
+                               class="pr-2">Branch is behind HEAD. Remove changes to continue.</error-display>
+                <button *ngIf="this.state?.listItem && !this.state.listItem.upToDate && !this.state.listItem.inProgressCommit.hasChanges()"
+                        class="update"
+                        mat-raised-button
+                        color="warn"
+                        (click)="update()">Update with HEAD</button>
+                <button mat-button
+                        class="changes"
+                        (click)="toggleChanges()"
+                        color="primary"
+                        [disabled]="!this.state?.listItem?.versionedRdfRecord?.recordId">{{ state?.listItem?.changesPageOpen ? 'Hide Changes' : 'Show Changes' }}</button>
+                <button mat-raised-button
+                        class="commit"
+                        color="primary"
+                        (click)="commit()"
+                        [disabled]="!state.isCommittable()">Commit</button>
             </div>
         </div>
     </div>

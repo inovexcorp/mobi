@@ -69,7 +69,8 @@ export class UploadRecordModalComponent {
                 }
                 return this.cm.getInProgressCommit(this.state.listItem.versionedRdfRecord.recordId, this.catalogId);
             }).then(commit => {
-                this.state.listItem.inProgressCommit = commit;
+                this.state.listItem.inProgressCommit.additions = commit.additions;
+                this.state.listItem.inProgressCommit.deletions = commit.deletions;
                 return this.state.updateShapesGraphMetadata(this.state.listItem.versionedRdfRecord.recordId, this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.commitId);
             })
             .then(() => {
@@ -80,7 +81,6 @@ export class UploadRecordModalComponent {
                 if (error !== 'No changes') {
                     this.error = error;
                 }
-                Promise.reject(error);
             });
         }
 }

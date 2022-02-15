@@ -107,20 +107,16 @@ describe('Shapes Graph State service', function() {
         });
         it('when a shapes graph is open with changes', function() {
             service.listItem.versionedRdfRecord.recordId = 'test';
-            service.listItem.inProgressCommit = {
-                additions: [{'@id': 'testId'}],
-                deletions: [],
-                hasMoreResults: false
-            };
+            service.listItem.inProgressCommit = new Difference();
+            service.listItem.inProgressCommit.additions = [{'@id': 'testId'}];
+            service.listItem.inProgressCommit.deletions = [];
             expect(service.isCommittable()).toEqual(true);
         });
     });
     it('should clear the in progress commit', function() {
-        service.listItem.inProgressCommit = {
-            additions: [{'@id': 'testId'}],
-            deletions: [],
-            hasMoreResults: false
-        };
+        service.listItem.inProgressCommit = new Difference();
+        service.listItem.inProgressCommit.additions = [{'@id': 'testId'}];
+        service.listItem.inProgressCommit.deletions = [];
         service.clearInProgressCommit();
         expect(service.listItem.inProgressCommit).toEqual(new Difference());
     });
@@ -275,10 +271,11 @@ describe('Shapes Graph State service', function() {
                title: 'title'
             } as RecordSelectFiltered;
             this.catalogDetailsResponse = {
-               recordId: 'recordId',
-               branchId: 'branchId',
-               commitId: 'commitId',
-               inProgressCommit: new Difference()
+                recordId: 'recordId',
+                branchId: 'branchId',
+                commitId: 'commitId',
+                inProgressCommit: new Difference(),
+                upToDate: true
             };
             this.catalogDetailsSpy = spyOn(service, 'getCatalogDetails').and.returnValue(Promise.resolve(this.catalogDetailsResponse));
         });
@@ -308,6 +305,7 @@ describe('Shapes Graph State service', function() {
                 });
                 expect(service.listItem.inProgressCommit).toEqual(new Difference());
                 expect(service.listItem).toBeDefined();
+                expect(service.listItem.upToDate).toBeTrue();
                 expect(service.list.length).toEqual(1);
                 expect(service.list).toContain(service.listItem);
             });

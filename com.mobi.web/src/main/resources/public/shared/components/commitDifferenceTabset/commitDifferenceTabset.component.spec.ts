@@ -113,7 +113,9 @@ describe('Commit Difference Tabset component', function() {
             expect(element.query(By.css('mat-tab-group'))).toBeTruthy();
         });
         it('with a commit-changes-display', fakeAsync(function() {
-            component.difference = {additions: [{}], deletions: [], hasMoreResults: false};
+            component.difference = new Difference();
+            component.difference.additions = [{}];
+            component.difference.deletions = [];
             fixture.detectChanges();
             element.queryAll(By.css('.mat-tab-label'))[0].nativeElement.click();
             fixture.detectChanges();

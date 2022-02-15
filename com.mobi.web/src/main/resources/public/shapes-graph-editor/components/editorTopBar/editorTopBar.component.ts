@@ -20,8 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { get } from 'lodash';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CreateBranchModal } from '../createBranchModal/createBranchModal.component';
 import { CreateTagModal } from '../createTagModal/createTagModal.component';
@@ -42,7 +43,8 @@ import './editorTopBar.component.scss';
 })
 export class EditorTopBarComponent {
 
-    constructor(private dialog: MatDialog, public state: ShapesGraphStateService) {}
+    constructor(private dialog: MatDialog, public state: ShapesGraphStateService,
+                @Inject('catalogManagerService') private cm, @Inject('utilService') private util) {}
 
     createBranch(): void {
         this.dialog.open(CreateBranchModal, {});
@@ -77,5 +79,14 @@ export class EditorTopBarComponent {
 
     downloadDisabled(): boolean {
         return !this.state?.listItem?.versionedRdfRecord?.recordId;
+    }
+
+    update(): Promise<void> {
+        return this.cm.getBranchHeadCommit(this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.recordId, get(this.cm.localCatalog, '@id', ''))
+            .then(headCommit => {
+                const commitId = get(headCommit, 'commit[\'@id\']', '');
+                return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, this.state.listItem.versionedRdfRecord.branchId, commitId, undefined, this.state.listItem.versionedRdfRecord.title);
+            }, error => Promise.reject(error))
+            .then(() => this.util.createSuccessToast('Shapes Graph branch has been updated.'), error => this.util.createErrorToast(error));
     }
 }

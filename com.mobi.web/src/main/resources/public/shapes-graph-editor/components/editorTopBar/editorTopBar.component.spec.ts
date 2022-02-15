@@ -21,7 +21,7 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
@@ -30,7 +30,10 @@ import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import * as util from 'util';
+import { cleanStylesFromDOM, mockCatalogManager, mockUtil } from '../../../../../../test/ts/Shared';
+import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CreateBranchModal } from '../createBranchModal/createBranchModal.component';
@@ -48,6 +51,8 @@ describe('Editor Top Bar component', function() {
     let fixture: ComponentFixture<EditorTopBarComponent>;
     let matDialog: jasmine.SpyObj<MatDialog>;
     let shapesGraphStateStub;
+    let catalogManagerStub;
+    let utilStub;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -61,10 +66,13 @@ describe('Editor Top Bar component', function() {
             declarations: [
                 EditorTopBarComponent,
                 MockComponent(EditorRecordSelectComponent),
-                MockComponent(EditorBranchSelectComponent)
+                MockComponent(EditorBranchSelectComponent),
+                MockComponent(ErrorDisplayComponent)
             ],
             providers: [
                 MockProvider(ShapesGraphStateService),
+                { provide: 'catalogManagerService', useClass: mockCatalogManager },
+                { provide: 'utilService', useClass: mockUtil },
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
                     })
@@ -86,6 +94,14 @@ describe('Editor Top Bar component', function() {
             commitId: 'commit1',
             title: 'title'
         };
+        shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.resolve());
+        catalogManagerStub = TestBed.get('catalogManagerService');
+        catalogManagerStub.getBranchHeadCommit.and.returnValue(Promise.resolve(
+            {
+                commit: { '@id': 'commit3' }
+            }
+        ));
+        utilStub = TestBed.get('utilService');
     });
 
     afterEach(function() {
@@ -95,6 +111,8 @@ describe('Editor Top Bar component', function() {
         fixture = null;
         matDialog = null;
         shapesGraphStateStub = null;
+        catalogManagerStub = null;
+        utilStub = null;
     });
 
     describe('controller methods', function() {
@@ -126,6 +144,38 @@ describe('Editor Top Bar component', function() {
             expect(component.downloadDisabled()).toBeFalse();
             shapesGraphStateStub.listItem.versionedRdfRecord = {};
             expect(component.downloadDisabled()).toBeTrue();
+        });
+        describe('should update the branch with the head', function() {
+            describe('when getBranchHeadCommit returns', function() {
+                describe('and changeShapesGraphVersion returns', function() {
+                   it('successfully', fakeAsync(function() {
+                       component.update();
+                       tick();
+                       expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', 'catalog');
+                       expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record1', 'branch1', 'commit3', undefined, 'title');
+                       expect(utilStub.createSuccessToast).toHaveBeenCalledWith('Shapes Graph branch has been updated.');
+                       expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+                   }));
+                   it('unless an error occurs', fakeAsync(function() {
+                       shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.reject('Error'));
+                       component.update();
+                       tick();
+                       expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', 'catalog');
+                       expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record1', 'branch1', 'commit3', undefined, 'title');
+                       expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                       expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
+                   }));
+                });
+            });
+            it('unless an error occurs', fakeAsync(function() {
+                catalogManagerStub.getBranchHeadCommit.and.returnValue(Promise.reject('Error'));
+                component.update();
+                tick();
+                expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', 'catalog');
+                expect(shapesGraphStateStub.changeShapesGraphVersion).not.toHaveBeenCalled();
+                expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
+            }));
         });
     });
     describe('contains the correct html', function() {
@@ -186,6 +236,46 @@ describe('Editor Top Bar component', function() {
             chip = element.queryAll(By.css('mat-chip.uncommitted'));
             expect(chip.length).toEqual(1);
         });
+        describe('with a warning and button to update with head', function() {
+            it('when there is not an inProgressCommit', async function() {
+                let errorDisplay = element.queryAll(By.css('error-display'));
+                expect(errorDisplay.length).toEqual(0);
+
+                let updateButton = element.queryAll(By.css('button.update'));
+                expect(updateButton.length).toEqual(0);
+
+                shapesGraphStateStub.listItem.upToDate = false;
+
+                fixture.detectChanges();
+                await fixture.whenStable();
+                updateButton = element.queryAll(By.css('button.update'));
+                expect(updateButton.length).toEqual(1);
+                expect(updateButton[0].nativeElement.getAttribute('disabled')).toBeNull();
+
+                errorDisplay = element.queryAll(By.css('error-display'));
+                expect(errorDisplay.length).toEqual(1);
+                expect(errorDisplay[0].nativeElement.innerHTML).toContain('Branch is behind HEAD. Update with HEAD to commit.');
+            });
+            it('when there is an inProgressCommit', async function() {
+                let errorDisplay = element.queryAll(By.css('error-display'));
+                expect(errorDisplay.length).toEqual(0);
+
+                let updateButton = element.queryAll(By.css('button.update'));
+                expect(updateButton.length).toEqual(0);
+
+                shapesGraphStateStub.listItem.upToDate = false;
+                shapesGraphStateStub.listItem.inProgressCommit.additions = [{'@id': 'thing', '@type': 'otherThing'}];
+
+                fixture.detectChanges();
+                await fixture.whenStable();
+                updateButton = element.queryAll(By.css('button.update'));
+                expect(updateButton.length).toEqual(0);
+
+                errorDisplay = element.queryAll(By.css('error-display'));
+                expect(errorDisplay.length).toEqual(1);
+                expect(errorDisplay[0].nativeElement.innerHTML).toContain('Branch is behind HEAD. Remove changes to continue.');
+            });
+        });
         it('with button to view changes', async function() {
             let changesButton = element.queryAll(By.css('button.changes'));
             expect(changesButton.length).toEqual(1);
@@ -221,5 +311,17 @@ describe('Editor Top Bar component', function() {
         fixture.detectChanges();
         await fixture.whenStable();
         expect(component.download).toHaveBeenCalled();
+    });
+    it('should call update when the Update with HEAD button is clicked', async function() {
+        spyOn(component, 'update');
+        shapesGraphStateStub.listItem.upToDate = false;
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const createButton = element.queryAll(By.css('button.update'))[0];
+        createButton.triggerEventHandler('click', null);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.update).toHaveBeenCalled();
     });
 });
