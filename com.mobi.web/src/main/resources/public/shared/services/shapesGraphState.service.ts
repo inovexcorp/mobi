@@ -148,8 +148,10 @@ export class ShapesGraphStateService extends VersionedRdfState {
                     commitId: response.commitId,
                     tagId: response.tagId
                 };
-                listItem.inProgressCommit = response.inProgressCommit;
+                listItem.inProgressCommit.additions = response.inProgressCommit.additions;
+                listItem.inProgressCommit.deletions = response.inProgressCommit.deletions;
                 listItem.changesPageOpen = false;
+                listItem.upToDate = response.upToDate;
 
                 this.listItem = listItem;
                 return this.updateShapesGraphMetadata(response.recordId, response.branchId, response.commitId);

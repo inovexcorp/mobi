@@ -21,12 +21,14 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatButtonModule, MatDialogModule, MatDialogRef } from '@angular/material';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { get } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
+import * as util from 'util';
 
-import { cleanStylesFromDOM, mockUtil, mockCatalogManager } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM, mockUtil, mockCatalogManager, mockPrefixes } from '../../../../../../test/ts/Shared';
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatSelectModule } from "@angular/material/select";
@@ -36,6 +38,7 @@ import { MatInputModule } from "@angular/material/input";
 import { MatChipsModule } from "@angular/material/chips";
 import { ErrorDisplayComponent } from "../../../shared/components/errorDisplay/errorDisplay.component";
 import { MatIconModule } from "@angular/material/icon";
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { CommitModalComponent } from './commitModal.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
@@ -47,6 +50,8 @@ describe('Commit Modal component', function() {
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CommitModalComponent>>;
     let shapesGraphStateStub;
     let catalogManagerStub;
+    let utilStub;
+    let prefixesStub;
     
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -70,6 +75,7 @@ describe('Commit Modal component', function() {
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
                 { provide: 'catalogManagerService', useClass: mockCatalogManager },
                 { provide: 'utilService', useClass: mockUtil },
+                { provide: 'prefixes', useClass: mockPrefixes },
                 MockProvider(ShapesGraphStateService)
             ]
         });
@@ -89,9 +95,18 @@ describe('Commit Modal component', function() {
             title: 'title'
         };
         shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.resolve());
+        prefixesStub = TestBed.get('prefixes');
         component.catalogId = 'catalog';
         catalogManagerStub = TestBed.get('catalogManagerService');
         catalogManagerStub.localCatalog = {'@id': 'catalog'};
+        catalogManagerStub.getRecordBranch.and.returnValue(Promise.resolve(
+            {
+                '@id': 'id',
+                '@type': [],
+                [prefixesStub.catalog + 'head']: [{'@id': 'commit1'}]
+            } as JSONLDObject));
+        utilStub = TestBed.get('utilService');
+        utilStub.getPropertyId.and.callFake((obj, prop) => get(obj, '[\'' + prop + '\'][0][\'@id\']'));
     });
 
     afterEach(function() {
@@ -102,6 +117,8 @@ describe('Commit Modal component', function() {
         matDialogRef = null;
         shapesGraphStateStub = null;
         catalogManagerStub = null;
+        utilStub = null;
+        prefixesStub = null;
     });
 
     describe('controller methods', function() {
@@ -133,18 +150,40 @@ describe('Commit Modal component', function() {
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             });
         });
-        describe('should',  function() {
-            it('create a commit if the branch is up to date', function() {
-                shapesGraphStateStub.listItem.upToDate = true;
-                spyOn(component, 'createCommit');
-                component.commit();
-                expect(component.createCommit).toHaveBeenCalled();
-            });
-            it('not create a commit if the branch is up to date', function() {
-                shapesGraphStateStub.listItem.upToDate = false;
-                spyOn(component, 'createCommit');
-                component.commit();
-                expect(component.createCommit).not.toHaveBeenCalled();
+        describe('should create a commit if',  function() {
+            describe('getRecordBranch', function() {
+                describe('returns successfully', function() {
+                    it('the branch is up to date', fakeAsync(function() {
+                        spyOn(component, 'createCommit');
+                        component.commit();
+                        tick();
+                        expect(component.createCommit).toHaveBeenCalled();
+                        expect(shapesGraphStateStub.listItem.upToDate).toBeTrue();
+                        expect(component.errorMessage).toEqual('');
+                    }));
+                    it('not create a commit if the branch is up to date', fakeAsync(function() {
+                        catalogManagerStub.getRecordBranch.and.returnValue(Promise.resolve(
+                            {
+                                '@id': 'id',
+                                '@type': [],
+                                [prefixesStub.catalog + 'head']:  [{'@id': 'commit2'}]
+                            } as JSONLDObject));
+                        spyOn(component, 'createCommit');
+                        component.commit();
+                        tick();
+                        expect(component.createCommit).not.toHaveBeenCalled();
+                        expect(component.errorMessage).toEqual('Cannot commit. Branch is behind HEAD. Please update.');
+                    }));
+                });
+                it('rejects', fakeAsync(function() {
+                    spyOn(component, 'createCommit');
+                    catalogManagerStub.getRecordBranch.and.returnValue(Promise.reject('Error'));
+                    component.commit();
+                    tick();
+                    expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
+                    expect(component.createCommit).not.toHaveBeenCalled();
+                    expect(component.errorMessage).toEqual('');
+                }));
             });
         });
     });

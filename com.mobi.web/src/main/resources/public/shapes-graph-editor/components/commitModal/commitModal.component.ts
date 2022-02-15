@@ -47,14 +47,18 @@ export class CommitModalComponent {
 
     constructor(private state: ShapesGraphStateService, @Inject('utilService') private util,
                 @Inject('catalogManagerService') private cm, private fb: FormBuilder,
-                private dialogRef: MatDialogRef<CommitModalComponent>) {}
+                private dialogRef: MatDialogRef<CommitModalComponent>, @Inject('prefixes') private prefixes) {}
 
-    commit(): void {
-        if (this.state.listItem.upToDate) {
-            this.createCommit(this.state.listItem.versionedRdfRecord.branchId);
-        } else {
-            this.util.createErrorToast('Cannot commit. Not up to date.');
-        }
+    commit(): Promise<void> {
+        return this.cm.getRecordBranch(this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.recordId, this.catalogId)
+            .then(branch => {
+                this.state.listItem.upToDate = this.util.getPropertyId(branch, this.prefixes.catalog + 'head') === this.state.listItem.versionedRdfRecord.commitId;
+                if (this.state.listItem.upToDate) {
+                    this.createCommit(this.state.listItem.versionedRdfRecord.branchId);
+                } else {
+                    this.errorMessage = 'Cannot commit. Branch is behind HEAD. Please update.';
+                }
+            }, error => this.util.createErrorToast(error));
     }
     createCommit(branchId: string): void {
         this.cm.createBranchCommit(branchId, this.state.listItem.versionedRdfRecord.recordId, this.catalogId,

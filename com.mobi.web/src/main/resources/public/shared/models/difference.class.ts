@@ -32,4 +32,8 @@ export class Difference {
         this.deletions = [];
         this.hasMoreResults = false;
     }
+
+    hasChanges(): boolean {
+        return this.additions.length > 0 || this.deletions.length > 0;
+    }
 }

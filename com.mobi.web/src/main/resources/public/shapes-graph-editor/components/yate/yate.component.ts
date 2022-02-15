@@ -54,7 +54,7 @@ export class YateComponent implements OnChanges, AfterViewInit {
    
     initUI(content: string): void {
         YATE.defaults = {
-            tabMode: "indent",
+            tabMode: 'indent',
             lineNumbers: true,
             lineWrapping: true,
             backdrop: false,
@@ -62,13 +62,14 @@ export class YateComponent implements OnChanges, AfterViewInit {
                 rangeFinder: new YATE.fold.combine(YATE.fold.brace, YATE.fold.prefix)
             },
             collapsePrefixesOnLoad: false,
-            gutters: ["gutterErrorBar", "CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+            gutters: ['gutterErrorBar', 'CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
             matchBrackets: true,
             readOnly: true,
             fixedGutter: true,
             syntaxErrorCheck: true,
             value: content
         };
+        delete YATE.Autocompleters.prefixes;
         this.yate = YATE(this.shapesGraphContent.nativeElement);
         this.yate.setSize('100%', '100%');
     }

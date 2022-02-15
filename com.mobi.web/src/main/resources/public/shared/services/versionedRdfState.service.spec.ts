@@ -131,11 +131,9 @@ describe('Versioned RDF State service', function() {
         };
         versionedRdfStateModel = [recordState];
         versionedRdfState = {id: stateId, model: versionedRdfStateModel};
-        inProgressCommit = {
-            additions: [{'test': 'test'}],
-            deletions: [{'test': 'test'}],
-            hasMoreResults: false
-        };
+        inProgressCommit = new Difference();
+        inProgressCommit.additions = [{'test': 'test'}];
+        inProgressCommit.deletions = [{'test': 'test'}];
     });
 
     afterEach(function() {
