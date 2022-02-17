@@ -38,13 +38,13 @@ GeneralUtils.prototype.switchToPage = function(browser, page, waitForElement){
 
 
 module.exports = {
-  'globalPort' : '${https-port}',
+    'globalPort' : '${https-port}',
 
     // default timeout value in milliseconds for waitFor commands and implicit waitFor value for
     // expect assertions
-  waitForConditionTimeout : 15000,
+    waitForConditionTimeout : 15000,
 
-  'initial_steps' : function (browser, user, password) {
+    'initial_steps': function (browser, user, password) {
       browser
           .url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home')
           .waitForElementVisible('input#username')
@@ -56,10 +56,10 @@ module.exports = {
           .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
           .waitForElementNotPresent('div.spinner')
           .waitForElementVisible('div.btn-container button')
-  },
+    },
 
-  // TODO: Add a check to see if the ontology already exists, and if it does, either skip upload or delete and re-upload.
-  'upload_ontologies' : function (browser, ...args) {
+    // TODO: Add a check to see if the ontology already exists, and if it does, either skip upload or delete and re-upload.
+    'upload_ontologies': function (browser, ...args) {
       browser
           .click('xpath', '//div[@class="btn-container"]//button[text()[contains(.,"Upload Ontology")]]')
       for (var i = 0; i < args.length - 1; i++) {
@@ -77,12 +77,12 @@ module.exports = {
       for (var j = 0; j < args.length; j++) {
           browser
             .clearValue('open-ontology-tab search-bar input')
-            .setValue('open-ontology-tab search-bar input', args[j].replace(process.cwd()+ '/src/test/resources/ontologies/', ''))
+            .setValue('open-ontology-tab search-bar input', args[j].replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
             .keys(browser.Keys.ENTER)
             .waitForElementVisible('open-ontology-tab search-bar input')
             .useXpath()
-            .waitForElementVisible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + args[j].replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
-            .assert.visible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + args[j].replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
+            .waitForElementVisible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + args[j].replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
+            .assert.visible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + args[j].replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
             .useCss()
       }
       browser
@@ -90,21 +90,61 @@ module.exports = {
           .setValue('open-ontology-tab search-bar input', '')
           .keys(browser.Keys.ENTER)
           .waitForElementNotPresent('.spinner')
-  },
+    },
 
-  'open_ontology' : function (browser, ontology) {
+    'open_ontology': function (browser, ontology) {
       browser
-          .setValue('open-ontology-tab search-bar input', ontology.replace(process.cwd()+ '/src/test/resources/ontologies/', ''))
+          .setValue('open-ontology-tab search-bar input', ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
           .keys(browser.Keys.ENTER)
           .waitForElementVisible('open-ontology-tab search-bar')
           .useXpath()
-          .waitForElementVisible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
-          .click('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
+          .waitForElementVisible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
+          .click('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
           .useCss()
           .waitForElementNotPresent('.spinner')
           .waitForElementVisible('div.material-tabset li.nav-item') // ensures that project tab is showing
-  },
+    },
 
-  'generalUtils': new GeneralUtils()
+    'create_shapes_graph': function (browser, title, shapes_file) {
+      browser
+          .useCss()
+          .waitForElementVisible('shapes-graph-editor-page editor-record-select')
+          .click('shapes-graph-editor-page editor-record-select')
+          .waitForElementVisible('mat-option')
+          .click('mat-option button.create-record')
+          .waitForElementVisible('new-shapes-graph-record-modal')
+          .waitForElementVisible('new-shapes-graph-record-modal file-input')
+          .waitForElementVisible('new-shapes-graph-record-modal button.mat-raised-button')
+          .useXpath()
+          .sendKeys('//new-shapes-graph-record-modal//mat-form-field[1]//input', title)
+          .setValue('//new-shapes-graph-record-modal//file-input//input', shapes_file)
+          .useCss()
+          .click('new-shapes-graph-record-modal button.mat-primary')
+    },
+
+    'delete_shapes_graph': function (browser, title) {
+        browser
+            .useXpath()
+            .click('css selector', 'editor-record-select')
+            .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "'+title+'")]/following-sibling::button')
+            .click('//mat-optgroup//mat-option//span[contains(text(), "'+title+'")]/following-sibling::button')
+            .click('css selector', 'editor-record-select')
+            .click('//mat-optgroup//mat-option//span[contains(text(), "'+title+'")]/following-sibling::button')
+            .click('css selector', 'confirm-modal-ajs div.modal-footer button.btn-primary')
+            .click('css selector', 'editor-record-select')
+            .assert.not.elementPresent('//mat-optgroup//mat-option//span[contains(text(), "'+title+'")]')
+            .useCss()
+    },
+
+    'wait_for_no_spinners': function (browser) {
+        browser
+            .useCss()
+            .waitForElementNotPresent('div.spinner')
+            .waitForElementNotPresent('mat-spinner')
+            .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+            .waitForElementNotPresent('div.fade')
+    },
+
+    'generalUtils': new GeneralUtils()
 
 }

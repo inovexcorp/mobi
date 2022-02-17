@@ -23,7 +23,7 @@
 var adminUsername = 'admin'
 var adminPassword = 'admin'
 
-var Onto1 = process.cwd()+ '/src/test/resources/ontologies/pizza.owl'
+var Onto1 = process.cwd()+ '/src/test/resources/rdf_files/pizza.owl'
 
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],

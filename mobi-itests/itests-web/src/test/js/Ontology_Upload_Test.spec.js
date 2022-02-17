@@ -22,14 +22,14 @@
  */
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var Onto1 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl'
-var Onto1e = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1e.ttl'  // has syntax issue
-var Onto1s = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1s.ttl'  // same as test-local-imports-1
-var Onto1Trig = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1s.trig'
-var Onto1TrigZip = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1s.trig.zip'
-var Onto2 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.ttl'
-var Onto3 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.ttl'
-var Onto4 = process.cwd()+ '/src/test/resources/ontologies/unresolvableImport.owl' // OWL Files Processed Differently
+var Onto1 = process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-1.ttl'
+var Onto1e = process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-1e.ttl'  // has syntax issue
+var Onto1s = process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-1s.ttl'  // same as test-local-imports-1
+var Onto1Trig = process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-1s.trig'
+var Onto1TrigZip = process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-1s.trig.zip'
+var Onto2 = process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-2.ttl'
+var Onto3 = process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-3.ttl'
+var Onto4 = process.cwd()+ '/src/test/resources/rdf_files/unresolvableImport.owl' // OWL Files Processed Differently
 
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
@@ -68,18 +68,18 @@ module.exports = {
            .assert.not.elementPresent('div.modal-header')
            .waitForElementVisible('div.ontologies')
            .clearValue('open-ontology-tab search-bar input')
-           .setValue('open-ontology-tab search-bar input', Onto1e.replace(process.cwd()+ '/src/test/resources/ontologies/', ''))
+           .setValue('open-ontology-tab search-bar input', Onto1e.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
            .keys(browser.Keys.ENTER)
            .useXpath()
-           .assert.not.elementPresent('//div[contains(@class, "list-group")]//div[text()[contains(.,"' + Onto1e.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
-           .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"' + Onto1e.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
+           .assert.not.elementPresent('//div[contains(@class, "list-group")]//div[text()[contains(.,"' + Onto1e.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
+           .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"' + Onto1e.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
            .useCss()
            .clearValue('open-ontology-tab search-bar input')
-           .setValue('open-ontology-tab search-bar input', Onto1s.replace(process.cwd()+ '/src/test/resources/ontologies/', ''))
+           .setValue('open-ontology-tab search-bar input', Onto1s.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
            .keys(browser.Keys.ENTER)
            .useXpath()
-           .assert.not.elementPresent('//div[contains(@class, "list-group")]//div[text()[contains(.,"' + Onto1s.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
-           .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"' + Onto1s.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
+           .assert.not.elementPresent('//div[contains(@class, "list-group")]//div[text()[contains(.,"' + Onto1s.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
+           .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"' + Onto1s.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
            .useCss()
            .clearValue('open-ontology-tab search-bar input')
            .setValue('open-ontology-tab search-bar input', '')

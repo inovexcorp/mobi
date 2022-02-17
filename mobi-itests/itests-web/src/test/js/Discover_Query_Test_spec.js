@@ -29,7 +29,7 @@
 var adminUsername = "admin"
 var adminPassword = "admin"
 var dropDownSelector = '//query-tab//form//dataset-form-group//ul[contains(@class, "ui-select-choices")]//li[contains(@class, "ui-select-choices-group")]//div[contains(@class,"ui-select-choices-row")]';
-var Onto1 = process.cwd()+ '/src/test/resources/ontologies/EventOntology.ttl'
+var Onto1 = process.cwd()+ '/src/test/resources/rdf_files/EventOntology.ttl'
 
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],

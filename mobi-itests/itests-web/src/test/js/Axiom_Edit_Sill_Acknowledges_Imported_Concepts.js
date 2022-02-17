@@ -22,10 +22,10 @@
  */
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var vocab = process.cwd()+ '/src/test/resources/ontologies/single-concept-vocab.ttl'
-var Onto2 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.ttl'
-var Onto3 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.ttl'
-var skosOnt = process.cwd()+ '/src/test/resources/ontologies/skos.rdf'
+var vocab = process.cwd()+ '/src/test/resources/rdf_files/single-concept-vocab.ttl'
+var Onto2 = process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-2.ttl'
+var Onto3 = process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-3.ttl'
+var skosOnt = process.cwd()+ '/src/test/resources/rdf_files/skos.rdf'
 
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
