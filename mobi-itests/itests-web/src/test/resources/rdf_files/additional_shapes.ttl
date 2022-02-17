@@ -1,0 +1,36 @@
+@prefix UHTC: <http://matonto.org/ontologies/uhtc#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <http://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@base <http://matonto.org/ontologies/uhtc> .
+
+<http://matonto.org/ontologies/additional/shapes-graph> rdf:type owl:Ontology ;
+                                      <http://purl.org/dc/elements/1.1/description> "Extra shapes graph used for Mobi functional testing"^^xsd:string ;
+                                      <http://purl.org/dc/elements/1.1/title> "Additional Shapes Graph"^^xsd:string ;
+                                      rdfs:label "Additional Shapes Graph"^^xsd:string .
+
+schema:MaterialShape a sh:NodeShape ;
+											<http://purl.org/dc/elements/1.1/title> "UHTC Material shapes graph";
+									    sh:targetClass UHTC:Material ;
+									    sh:property [
+									        sh:path UHTC:chemicalFormula ;
+													sh:name "Chemical Formula"^^xsd:string ;
+									        sh:datatype xsd:string ;
+									       	sh:pattern "[A-Z][a-z]?\d*|\(.*?\)\d+" ; 
+													sh:maxCount 1;
+													sh:minCount 1;
+									    ] ;
+									    sh:property [
+									        sh:path UHTC:density ;
+									        sh:name "Density" ;
+													sh:maxCount 1 ; 
+													sh:minCount 1 ; 
+									    ] ;
+									    sh:property [
+									        sh:path UHTC:crystalStructure ;
+									        sh:maxCount 1 ;
+													sh:minCount 1 ;
+									    ] .
+											

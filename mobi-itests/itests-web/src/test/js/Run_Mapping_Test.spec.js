@@ -22,8 +22,8 @@
  */
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var OntoSample = process.cwd()+ '/src/test/resources/ontologies/uhtc-ontology.ttl'
-var skosOnt = process.cwd()+ '/src/test/resources/ontologies/skos.rdf'
+var OntoSample = process.cwd()+ '/src/test/resources/rdf_files/uhtc-ontology.ttl'
+var skosOnt = process.cwd()+ '/src/test/resources/rdf_files/skos.rdf'
 var OntoCSV= process.cwd()+ '/src/test/resources/ontology_csv\'s/uhtc-compounds.csv'
 
 module.exports = {

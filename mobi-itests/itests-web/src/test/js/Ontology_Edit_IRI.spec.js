@@ -29,7 +29,7 @@ var invalidEndsWidth = 'test`-local-`imports-1';
 var input_iriBegin = '//input[@id="iriBegin"]';
 var input_iriEnds = '//input[@id="iriEnd"]';
 
-var Onto1 = process.cwd()+ '/src/test/resources/ontologies/CurrencyUnitOntology.ttl'
+var Onto1 = process.cwd()+ '/src/test/resources/rdf_files/CurrencyUnitOntology.ttl'
 
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],

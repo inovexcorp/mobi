@@ -22,10 +22,10 @@
  */
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var CatalogOnto1 = process.cwd()+ '/src/test/resources/ontologies/z-catalog-ontology-1.ttl'
-var CatalogOnto2 = process.cwd()+ '/src/test/resources/ontologies/z-catalog-ontology-2.ttl'
-var CatalogOnto3 = process.cwd()+ '/src/test/resources/ontologies/z-catalog-ontology-3.ttl'
-var CatalogOnto4 = process.cwd()+ '/src/test/resources/ontologies/z-catalog-ontology-4.ttl'
+var CatalogOnto1 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-1.ttl'
+var CatalogOnto2 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-2.ttl'
+var CatalogOnto3 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-3.ttl'
+var CatalogOnto4 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-4.ttl'
 
 var CatalogPage = function() {
     this.recordsViewCssSelector = 'catalog-page records-view';

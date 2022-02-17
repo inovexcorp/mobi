@@ -22,9 +22,9 @@
  */
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var Onto1 = process.cwd()+ '/src/test/resources/ontologies/active-entity-filter-1.ttl'
-var Onto2 = process.cwd()+ '/src/test/resources/ontologies/active-entity-filter-2.ttl'
-var Onto3 = process.cwd()+ '/src/test/resources/ontologies/active-entity-filter-3.ttl'
+var Onto1 = process.cwd()+ '/src/test/resources/rdf_files/active-entity-filter-1.ttl'
+var Onto2 = process.cwd()+ '/src/test/resources/rdf_files/active-entity-filter-2.ttl'
+var Onto3 = process.cwd()+ '/src/test/resources/rdf_files/active-entity-filter-3.ttl'
 
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],

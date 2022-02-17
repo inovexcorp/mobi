@@ -26,17 +26,17 @@ var adminUsername = 'admin'
 var adminPassword = 'admin'
 
 var ontologies = [
-    process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl',
-    process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.ttl',
-    process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.ttl',
-    process.cwd()+ '/src/test/resources/ontologies/active-entity-filter-1.ttl',
-    process.cwd()+ '/src/test/resources/ontologies/active-entity-filter-2.ttl',
-    process.cwd()+ '/src/test/resources/ontologies/active-entity-filter-3.ttl',
-    process.cwd()+ '/src/test/resources/ontologies/uhtc-ontology.ttl',
-    process.cwd()+ '/src/test/resources/ontologies/pagination-ontology-1.ttl',
-    process.cwd()+ '/src/test/resources/ontologies/pagination-ontology-2.ttl',
-    process.cwd()+ '/src/test/resources/ontologies/pagination-ontology-3.ttl',
-    process.cwd()+ '/src/test/resources/ontologies/pagination-ontology-4.ttl'
+    process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-1.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-2.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-3.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/active-entity-filter-1.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/active-entity-filter-2.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/active-entity-filter-3.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/uhtc-ontology.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/pagination-ontology-1.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/pagination-ontology-2.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/pagination-ontology-3.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/pagination-ontology-4.ttl'
 ]
 
 module.exports = {
