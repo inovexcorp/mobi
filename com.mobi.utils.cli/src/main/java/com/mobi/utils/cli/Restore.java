@@ -60,12 +60,11 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
-import org.osgi.framework.Bundle;
+import org.apache.karaf.system.SystemService;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
-import org.osgi.framework.wiring.FrameworkWiring;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -144,6 +143,9 @@ public class Restore implements Action {
             "http://mobi.com/policies/all-access-versioned-rdf-record");
     
     // Service References
+    @Reference
+    SystemService systemService;
+
     @Reference
     private RepositoryManager repositoryManager;
 
@@ -244,13 +246,7 @@ public class Restore implements Action {
         out("Restarted XACMLPolicyManager bundle. Took:" + (System.currentTimeMillis() - start)+ " ms");
 
         out("Restarting all services");
-        start = System.currentTimeMillis();
-        xacmlBundleContext = FrameworkUtil.getBundle(XACMLPolicyManager.class)
-                .getBundleContext(); // Prevent Invalid BundleContext Exception
-        Bundle systemBundle = xacmlBundleContext.getBundle(0);
-        FrameworkWiring frameworkWiring = systemBundle.adapt(FrameworkWiring.class);
-        frameworkWiring.refreshBundles(null);
-        out("Finished restarting all services. Took " + (System.currentTimeMillis() - start) + " ms");
+        systemService.reboot();
         return null;
     }
 
