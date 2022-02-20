@@ -39,6 +39,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.apache.karaf.system</groupId>
+            <artifactId>org.apache.karaf.system.core</artifactId>
+            <version>${karaf.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>etl.api</artifactId>
             <version>${project.version}</version>
