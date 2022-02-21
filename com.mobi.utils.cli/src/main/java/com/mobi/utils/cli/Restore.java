@@ -60,12 +60,11 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
-import org.osgi.framework.Bundle;
+import org.apache.karaf.system.SystemService;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
-import org.osgi.framework.wiring.FrameworkWiring;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,11 +138,14 @@ public class Restore implements Action {
     public static final String CONFIG_PATH = RESTORE_PATH + File.separator + "configurations";
     public static final String MANIFEST_FILE = RESTORE_PATH + File.separator + "manifest.json";
     private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15", "1.16", "1.17",
-            "1.18", "1.19", "1.20", "1.21");
+            "1.18", "1.19", "1.20", "1.21", "1.22");
     private final List<String> POLICES_TO_REMOVE = Arrays.asList("http://mobi.com/policies/system-repo-access",
             "http://mobi.com/policies/all-access-versioned-rdf-record");
     
     // Service References
+    @Reference
+    SystemService systemService;
+
     @Reference
     private RepositoryManager repositoryManager;
 
@@ -221,7 +223,7 @@ public class Restore implements Action {
         }
         String backupVersion = matcher.group(1);
         if (!mobiVersions.contains(backupVersion)) {
-            error("A valid version of Mobi is required (" + String.join(".*, ", mobiVersions) + ").");
+            error("A valid version of Mobi is required (" + String.join(".*, ", mobiVersions) + ".*).");
             return null;
         }
 
@@ -244,13 +246,7 @@ public class Restore implements Action {
         out("Restarted XACMLPolicyManager bundle. Took:" + (System.currentTimeMillis() - start)+ " ms");
 
         out("Restarting all services");
-        start = System.currentTimeMillis();
-        xacmlBundleContext = FrameworkUtil.getBundle(XACMLPolicyManager.class)
-                .getBundleContext(); // Prevent Invalid BundleContext Exception
-        Bundle systemBundle = xacmlBundleContext.getBundle(0);
-        FrameworkWiring frameworkWiring = systemBundle.adapt(FrameworkWiring.class);
-        frameworkWiring.refreshBundles(null);
-        out("Finished restarting all services. Took " + (System.currentTimeMillis() - start) + " ms");
+        systemService.reboot();
         return null;
     }
 
