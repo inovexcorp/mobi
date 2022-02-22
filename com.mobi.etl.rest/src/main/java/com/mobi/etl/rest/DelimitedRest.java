@@ -407,6 +407,8 @@ public class DelimitedRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.QUERY, value = "datasetRecordIRI")
     public Response etlFile(
             @Parameter(description = "Name of the delimited document in the data/tmp/ directory", required = true)
             @PathParam("documentName") String fileName,
