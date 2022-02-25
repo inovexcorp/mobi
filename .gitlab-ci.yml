@@ -1,9 +1,10 @@
-image: maven:3.6-jdk-8
+image: gitlab.inovexcorp.com:4567/matonto/mobi-ci-container:master
 
 stages:
   - test
+  - build-distribution
+  - test-functional
   - deploy
-  - deploy-docker
   - post-deploy
 
 variables:
@@ -11,23 +12,25 @@ variables:
   NEXUS_URL: "https://nexus.inovexcorp.com/nexus"
   # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log. `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
   MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true -XX:+TieredCompilation -XX:TieredStopAtLevel=1"
-  MAVEN_CLI_OPTS: "--batch-mode --errors --show-version"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --show-version -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository -Dsurefire.rerunFailingTestsCount=2 -Dfailsafe.rerunFailingTestsCount=2"
+  MAVEN_THREADED: "-T 2C"
+
+# Cache is currently only an explicit include. We need to exclude com/mobi/* so workaround is to have extra paths
+cache:
+  key: maven-cache
+  paths:
+    - .m2/repository/[a-b]*
+    - .m2/repository/[d-z]*
+    - .m2/repository/com/[a-l]*
+    - .m2/repository/com/[n-z]*
 
 before_script:
-  # Setup Node 14
-  - curl -fsSL https://deb.nodesource.com/setup_14.x | bash -
-  - apt-get install -y nodejs
-  # Update Chrome Version to latest
-  - curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - 
-  - echo "deb [arch=amd64]  http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
-  - apt-get update
-  - apt-get -y install google-chrome-stable
   # Copy settings.xml from runner into current docker container (/m2 is a mounted directory)
   - cp /m2/settings.xml ~/.m2/settings.xml
   # Sets Version variables for use in job steps and updates pom to correct version for run
   - REGEX="^v([0-9]+)\.([0-9]+)\.([0-9]+)" #Uses bash regex - matches pattern vX.X.X)
   - DEPLOY_REPO=https://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/ # Sets default repo to deploy to dev repo
-  - mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout  #print version for a sanity check
+  - mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec #print version for a sanity check
   # Following script parses version and determines whether to build a release, RC (release candidate), or snapshot. Also updates deploy repo accordingly.
   - |- 
     if [[ $CI_COMMIT_TAG =~ $REGEX ]]; then
@@ -35,79 +38,134 @@ before_script:
       MAJOR=`echo $VERSION | cut -d. -f1`
       MINOR=`echo $VERSION | cut -d. -f2`
       MICRO=`echo $VERSION | cut -d. -f3`
-      mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$VERSION -DprocessAllModules -DgenerateBackupPoms=false
+      mvn $MAVEN_THREADED $MAVEN_CLI_OPTS versions:set -DnewVersion=$VERSION -DprocessAllModules -DgenerateBackupPoms=false
       MESSAGE="Building release"
       DEPLOY_REPO=https://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/
     elif [[ $CI_COMMIT_REF_NAME == "master" ]]
     then
-      POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
+      POM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
       MAJOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f1)
       MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
       MICRO=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f3)
       VERSION=$MAJOR.$MINOR.$MICRO-rc-$CI_PIPELINE_IID
-      mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$VERSION -DprocessAllModules -DgenerateBackupPoms=false
+      mvn $MAVEN_THREADED $MAVEN_CLI_OPTS versions:set -DnewVersion=$VERSION -DprocessAllModules -DgenerateBackupPoms=false
       MESSAGE="Building release candidate"
     else 
-      VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
+      VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
       MESSAGE="Building snapshot"
     fi
   # Increase node max size to ensure we have enough space to run. This is a temporary fix until the node version is updated.
-  - export NODE_OPTIONS=--max_old_space_size=8192
+  - export NODE_OPTIONS=--max_old_space_size=4096
   # Print version to console for logging.
   - echo "$MESSAGE - $VERSION"
 
-# For merge requests, just do an unit tests
-unit_test:
+# For merge requests, just do unit tests
+unit_test_java:
   stage: test
   script:
-    # Runs tests, skipping sections that are integration/functional test only
-    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test -P release-build
+    # Build and runs tests, skipping sections that are integration/functional and web
+    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS -pl '!:web,!mobi-karaf-feature,!mobi-distribution,!mobi-itests,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' install
   only:
     - merge_requests
-
-# Following is an optional manual job to allow developers to run the integration and functional tests against a MR before merging.
-full_test_manual:
-  stage: test
-  only:
-    - merge_requests
-  except:
-    variables:
-      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/ #Should not run on automated commits
-  script:
-    - apt-get update
-    # Redirect calls to localhost:9080 to host machines (not this container), a 2nd container running mobi will be bound to the host at port 9080 (by functional tests).
-    - apt-get install -y redir
-    - HOST_IP=$(ip route show | awk '/default/ {print $3}')
-    - redir :9080 $HOST_IP:9080
-    # Run integration, and functional tests (skips unit tests as they are included in the automated unit_test job)
-    - mvn $MAVEN_CLI_OPTS clean install -DskipTests -DskipFunctional=false -DskipITs=false -Prelease-build
+    - master # Any commit to master triggers this job
+    - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
   artifacts:
-    when: on_failure
+    expire_in: 1 hrs
     paths:
-      - mobi-itests/itests-web/target/nightwatch-screenshots #in the event that the functional tests fail, screenshots of failures are stored in the directory
-  when: manual # This setting turns a job into a manual one
+      - .m2/repository/com/mobi
+  retry: 1
 
-# For commits to master and releases do a full test
-full_test:
+# For merge requests, just do unit tests
+unit_test_web:
   stage: test
-  only: 
+  script:
+    # Build and run tests for dependencies for web bundle.
+    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS install -P release-build -pl ':api,:persistence.api,:persistence.utils,:rdf.impl.sesame,:rdf.orm,:rdf.orm.ontologies,:rdf.orm.generate,:rdf-orm-maven-plugin,:web.security,:jaas.api,:web'
+  only:
+    - merge_requests
+    - master # Any commit to master triggers this job
+    - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
+  artifacts:
+    expire_in: 1 hrs
+    paths:
+      - .m2/repository/com/mobi/web
+  retry: 1
+
+# builds a distribution to be used by integration and functional tests
+build_distribution:
+  stage: build-distribution
+  only:
+    - merge_requests
     - master # Any commit to master triggers this job
     - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
   except:
     variables:
       - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/ #Should not run on automated commits
   script:
-    - apt-get update
-    # Redirect calls to localhost:9080 to host machines (not this container), a 2nd container running mobi will be bound to the host at port 9080 (by functional tests).
-    - apt-get install -y redir
+    # Build distribution
+    - mvn $MAVEN_CLI_OPTS clean install -pl ':mobi-karaf-feature,:mobi-distribution'
+  dependencies:
+    - unit_test_java
+    - unit_test_web
+  artifacts:
+    expire_in: 1 hrs
+    paths:
+      # Don't pull the zip of the distribution
+      - .m2/repository/com/mobi/[a-l]*
+      - .m2/repository/com/mobi/[n-z]*
+      - .m2/repository/com/mobi/mobi-parent
+      - .m2/repository/com/mobi/mobi-karaf-feature
+      - .m2/repository/com/mobi/mobi-distribution/*.xml
+      - .m2/repository/com/mobi/mobi-distribution/*/*.tar.gz
+      - .m2/repository/com/mobi/mobi-distribution/*/*.tar.gz
+      - .m2/repository/com/mobi/mobi-distribution/*/*.xml
+      - .m2/repository/com/mobi/mobi-distribution/*/*.properties
+      - .m2/repository/com/mobi/mobi-distribution/*/*.pom
+      - .m2/repository/com/mobi/mobi-distribution/*/*.repositories
+  retry: 1
+
+# Following is an optional manual job to allow developers to run the integration and functional tests against a MR before merging.
+integration_tests:
+  stage: test-functional
+  only:
+    - merge_requests
+    - master # Any commit to master triggers this job
+    - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
+  except:
+    variables:
+      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/ #Should not run on automated commits
+  script:
+    # Run integration tests (skips unit tests as they are included in the automated unit_test job)
+    - cd mobi-itests
+    - mvn $MAVEN_CLI_OPTS clean install -DskipITs=false
+  dependencies:
+    - build_distribution
+  retry: 1
+
+# Following is an optional manual job to allow developers to run the integration and functional tests against a MR before merging.
+functional_tests:
+  stage: test-functional
+  only:
+    - merge_requests
+    - master # Any commit to master triggers this job
+    - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
+  except:
+    variables:
+      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/ #Should not run on automated commits
+  script:
+    # Redirect calls to localhost:10000 to host machines (not this container), a 2nd container running mobi will be bound to the host at port 9080 (by functional tests).
     - HOST_IP=$(ip route show | awk '/default/ {print $3}')
-    - redir :9080 $HOST_IP:9080
-    # Run unit, integration, and functional tests
-    - mvn $MAVEN_CLI_OPTS clean install -DskipFunctional=false -DskipITs=false -Prelease-build
+    - redir :10000 $HOST_IP:10000
+    # Run integration tests (skips unit tests as they are included in the automated unit_test job)
+    - cd mobi-itests/itests-web
+    - mvn $MAVEN_CLI_OPTS clean install -DskipFunctional=false
+  dependencies:
+    - build_distribution
   artifacts:
     when: on_failure
     paths:
       - mobi-itests/itests-web/target/nightwatch-screenshots #in the event that the functional tests fail, screenshots of failures are stored in the directory
+  retry: 1
 
 # Happens after commit to master
 deploy_dev:
@@ -119,7 +177,7 @@ deploy_dev:
       - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/
   script:
     # Deploys RC candidate artifacts and distribution to Nexus
-    - mvn $MAVEN_CLI_OPTS deploy -DaltDeploymentRepository=central::default::$DEPLOY_REPO #TODO Skip unit tests and build - Future work to decrease duplication and increase the speed of execution
+    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS -DaltDeploymentRepository=central::default::$DEPLOY_REPO -DdeployAtEnd=true -Dmaven.test.skip=true -DskipTests -P release-build deploy
     - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$VERSION.tar.gz $NEXUS_URL/repository/mobicommunity-raw-dev-hosted/nix/mobi-distribution-$VERSION.tar.gz
     - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$VERSION.zip $NEXUS_URL/repository/mobicommunity-raw-dev-hosted/win/mobi-distribution-$VERSION.zip
     - cd rdf-orm/rdf-orm-gradle-plugin
@@ -133,7 +191,7 @@ deploy_prod:
     - branches
   script:
     # Deploys release artifacts and distribution to Nexus, releases docker image and updates dockerhub repo.
-    - mvn $MAVEN_CLI_OPTS deploy -DaltDeploymentRepository=central::default::$DEPLOY_REPO -P release-build -DproductId=$GA_KEY
+    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS -DaltDeploymentRepository=central::default::$DEPLOY_REPO -DdeployAtEnd=true -Dmaven.test.skip=true -DskipTests -P release-build -DproductId=$GA_KEY deploy
     - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$VERSION.tar.gz $NEXUS_URL/repository/mobicommunity-raw-prod-hosted/nix/mobi-distribution-$VERSION.tar.gz
     - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$VERSION.zip $NEXUS_URL/repository/mobicommunity-raw-prod-hosted/win/mobi-distribution-$VERSION.zip
     - cd rdf-orm/rdf-orm-gradle-plugin
@@ -167,7 +225,7 @@ increment_minor_version:
     # Update minor version
     - NEW_MINOR=$((MINOR + 1))
     - NEW_VERSION="$MAJOR.$NEW_MINOR.0-SNAPSHOT"
-    - mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION -DprocessAllModules -DgenerateBackupPoms=false
+    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION -DprocessAllModules -DgenerateBackupPoms=false
     # Commit change to git
     - git commit -am "AUTOMATED COMMIT - Update version to $NEW_VERSION"
     # Push change to master (gitlab)
@@ -204,7 +262,7 @@ support_branch_increment_micro_version:
     # Update micro version
     - NEW_MICRO=$((MICRO + 1))
     - NEW_VERSION="$MAJOR.$MINOR.$NEW_MICRO-SNAPSHOT"
-    - mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION -DprocessAllModules -DgenerateBackupPoms=false
+    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION -DprocessAllModules -DgenerateBackupPoms=false
     # Commit change to git
     - git commit -am "AUTOMATED COMMIT - Update support branch version to $NEW_VERSION"
     # Push change to master (gitlab)

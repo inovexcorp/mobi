@@ -11,8 +11,8 @@
     "build:dev": "npm run build -- --env.env=dev",
     "build": "npm run antlr && webpack --bail --progress",
     "test": "npm run test:ajs && npm run test:ng",
-    "test:ajs": "karma start karma.conf.build.js",
-    "test:ng": "karma start karma.conf.ng.js --build",
+    "test:ajs": "karma start karma.conf.build.js --fail-on-skipped-tests",
+    "test:ng": "karma start karma.conf.ng.js --build --fail-on-skipped-tests",
     "tdd": "karma start karma.conf.tdd.js",
     "tdd-ng": "karma start karma.conf.ng.js --browsers Chrome --reporters progress --no-single-run"
   },
@@ -54,6 +54,7 @@
     "raw-loader": "^1.0.0",
     "rimraf": "^2.6.3",
     "sass-loader": "^7.1.0",
+    "speed-measure-webpack-plugin": "^1.5.0",
     "style-loader": "^0.23.1",
     "ts-loader": "^3.5.0",
     "typescript": "^3.9.7",

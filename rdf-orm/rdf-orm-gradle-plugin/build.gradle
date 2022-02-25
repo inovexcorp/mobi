@@ -14,7 +14,7 @@ repositories {
     mavenCentral()
     mavenLocal()
     maven {
-        url "~/.m2/repository"
+        url localMavenRepo
     }
     maven {
         url "https://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/"

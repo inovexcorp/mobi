@@ -32,7 +32,7 @@ module.exports = {
     'no-useless-escape': 'warn',
     'no-unreachable': 'warn',
     'no-irregular-whitespace': 'warn',
-    'jasmine/no-focused-tests': 'error',
+    'jasmine/no-focused-tests': 'warn',
     'quotes': ['warn', 'single'],
     // enforces spacing between keys and values in object literal properties
     'key-spacing': ['warn', { beforeColon: false, afterColon: true }],

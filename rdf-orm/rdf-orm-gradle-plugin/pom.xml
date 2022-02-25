@@ -52,6 +52,14 @@
             </properties>
         </profile>
     </profiles>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>rdf.orm.generate</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
     <build>
         <plugins>
             <plugin>
@@ -72,6 +80,7 @@
                                 <argument>build</argument>
                                 <argument>install</argument>
                                 <argument>-Pversion=${project.version}</argument>
+                                <argument>-PlocalMavenRepo=${maven.repo.local}</argument>
                             </arguments>
                         </configuration>
                     </execution>

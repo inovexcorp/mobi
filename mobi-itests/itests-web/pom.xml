@@ -33,11 +33,11 @@
     <artifactId>itests-web</artifactId>
     <name>itests-web</name>
     <properties>
-        <http-port>9081</http-port>
-        <https-port>9080</https-port>
-        <rmi-reg-port>1100</rmi-reg-port>
-        <ssh-port>8102</ssh-port>
-        <rmi-server-port></rmi-server-port>
+        <http-port>9079</http-port>
+        <https-port>10000</https-port>
+        <rmi-reg-port>1098</rmi-reg-port>
+        <ssh-port>8100</ssh-port>
+        <rmi-server-port>44443</rmi-server-port>
     </properties>
 
     <dependencies>
