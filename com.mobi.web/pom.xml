@@ -102,19 +102,6 @@
             <artifactId>web.security</artifactId>
             <version>${project.version}</version>
         </dependency>
-
-        <!-- REST Dependencies -->
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>ontology.rest</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>etl.rest</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
     </dependencies>
 
     <build>
