@@ -190,6 +190,15 @@ public class RestUtilsTest {
     }
 
     @Test
+    public void getRDFFormatForConstructQueryTest() throws Exception {
+        assertEquals(RDFFormat.JSONLD, RestUtils.getRDFFormatForConstructQuery("application/ld+json"));
+        assertEquals(RDFFormat.TURTLE, RestUtils.getRDFFormatForConstructQuery("text/turtle"));
+        assertEquals(RDFFormat.RDFXML, RestUtils.getRDFFormatForConstructQuery("application/rdf+xml"));
+        assertEquals(RDFFormat.JSONLD, RestUtils.getRDFFormatForConstructQuery("something else"));
+        assertEquals(RDFFormat.JSONLD, RestUtils.getRDFFormatForConstructQuery(null));
+    }
+
+    @Test
     public void modelToStringWithRDFFormatTest() throws Exception {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, RDFFormat.JSONLD, transformer)));
         assertEquals(expectedTurtle, RestUtils.modelToString(model, RDFFormat.TURTLE, transformer));

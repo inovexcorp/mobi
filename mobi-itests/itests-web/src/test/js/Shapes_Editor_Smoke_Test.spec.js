@@ -233,6 +233,7 @@ module.exports = {
 
     'Step 15: create and open a new record': function (browser) {
         browser.globals.create_shapes_graph(browser, 'Additional Test Graph', additional_shapes_graph)
+        browser.globals.wait_for_no_spinners(browser)
     },
 
     'Step 16: Verify both records are open': function (browser) {

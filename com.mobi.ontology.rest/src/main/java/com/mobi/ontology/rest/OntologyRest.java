@@ -23,10 +23,16 @@ package com.mobi.ontology.rest;
  * #L%
  */
 
+import static com.mobi.rest.util.RestUtils.JSON_MIME_TYPE;
+import static com.mobi.rest.util.RestUtils.LDJSON_MIME_TYPE;
+import static com.mobi.rest.util.RestUtils.RDFXML_MIME_TYPE;
+import static com.mobi.rest.util.RestUtils.TURTLE_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.convertFileExtensionToMimeType;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
+import static com.mobi.rest.util.RestUtils.getRDFFormatForConstructQuery;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
@@ -92,13 +98,17 @@ import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.MobiWebException;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -154,7 +164,9 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -3239,7 +3251,6 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param format      the specified format for the return of construct queries only.
      * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
      * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
      * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
@@ -3247,7 +3258,7 @@ public class OntologyRest {
      */
     @GET
     @Path("{recordId}/query")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
             tags = "ontologies",
@@ -3273,43 +3284,380 @@ public class OntologyRest {
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Specified format for the return of construct queries only")
-            @DefaultValue("jsonld") @QueryParam("format") String format,
             @Parameter(description = "Boolean indicating whether or not ontology "
                     + "imports should be included in the query")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
-            @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
-        checkStringParam(queryString, "Parameter 'query' must be set.");
-
-        try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-
-            ParsedOperation parsedOperation = QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
-
-            if (parsedOperation instanceof ParsedQuery) {
-                if (parsedOperation instanceof ParsedTupleQuery) {
-                    TupleQueryResult tupResults = ontology.getTupleQueryResults(queryString, includeImports);
-                    if (tupResults.hasNext()) {
-                        ObjectNode json = JSONQueryResults.getResponse(tupResults);
-                        return Response.ok(json.toString(), MediaType.APPLICATION_JSON_TYPE).build();
-                    } else {
-                        return Response.noContent().build();
-                    }
-                } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    return getResponseForGraphQuery(ontology, queryString, includeImports, false, format);
-                } else {
-                    throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
-                }
-            } else {
-                throw ErrorUtils.sendError("Unsupported query type use.", Response.Status.BAD_REQUEST);
-            }
-        } catch (MalformedQueryException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
+            @Parameter(hidden = true)
+            @HeaderParam("accept") String acceptString) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("Parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
+
+        return handleSparqlQuery(context, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
+                acceptString, queryString, "", "").build();
+    }
+
+    /**
+     * Retrieves the results of the provided SPARQL query, which targets a specific ontology, and its import closures.
+     * Accepts SELECT and CONSTRUCT queries.
+     *
+     * @param context     Context of the request.
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
+     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @param queryString SPARQL Query to perform against ontology.
+     * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
+     *      if the query is a CONSTRUCT
+     */
+    @POST
+    @Path("{recordId}/query")
+    @Consumes("application/sparql-query")
+    @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "ontologies",
+            summary = "Retrieves the SPARQL query results of an ontology, "
+                    + "and its import closures in the requested format",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "SPARQL 1.1 results in JSON format if the query is a "
+                                    + "SELECT or the JSONLD serialization of the results if the query is a CONSTRUCT"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    @ActionId(value = Read.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response postQueryOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Boolean indicating whether or not ontology "
+                    + "imports should be included in the query")
+            @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
+            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
+            @Parameter(hidden = true)
+            @HeaderParam("accept") String acceptString,
+            String queryString) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("SPARQL query must be provided in request body.", Response.Status.BAD_REQUEST);
+        }
+
+        return handleSparqlQuery(context, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
+                acceptString, queryString, "", "").build();
+    }
+
+    /**
+     * Retrieves the results of the provided SPARQL query, which targets a specific ontology, and its import closures.
+     * Accepts SELECT and CONSTRUCT queries.
+     *
+     * @param context     Context of the request.
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param queryString SPARQL Query to perform against ontology.
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
+     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
+     *      if the query is a CONSTRUCT
+     */
+    @POST
+    @Path("{recordId}/query")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "ontologies",
+            summary = "Retrieves the SPARQL query results of an ontology, "
+                    + "and its import closures in the requested format",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "The SPARQL 1.1 Response in the format of fileType query parameter",
+                            content = {
+                                    @Content(mediaType = "*/*"),
+                                    @Content(mediaType = TURTLE_MIME_TYPE),
+                                    @Content(mediaType = LDJSON_MIME_TYPE),
+                                    @Content(mediaType = RDFXML_MIME_TYPE),
+                                    @Content(mediaType = JSON_MIME_TYPE),
+                                    @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
+                            }
+                    ),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            },
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(
+                                    mediaType = "application/sparql-query",
+                                    schema = @Schema(
+                                            name = "query", type = "string",
+                                            description = "A sparql query",
+                                            example = "SELECT * WHERE { ?s ?p ?o . }"
+                                    )
+                            ),
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_FORM_URLENCODED,
+                                    schema = @Schema(implementation = EncodedQuery.class)
+                            )
+                    }
+            ),
+            parameters = {
+                    @Parameter(name = "commitId", description = "Optional Commit ID representing the Record to "
+                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
+                            in = ParameterIn.QUERY),
+                    @Parameter(name = "branchId", description = "Optional Branch ID representing the Record to "
+                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
+                            in = ParameterIn.QUERY),
+                    @Parameter(name = "commitId", description = "Optional Commit ID representing the Record to "
+                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
+                            in = ParameterIn.QUERY),
+                    @Parameter(name = "includeImports", description = "Optional boolean representing whether to "
+                            + "include imported ontologies when executing the query when the `CONTENT-TYPE` is " +
+                            "**NOT** set to `application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
+                    @Parameter(name = "applyInProgressCommit", description = "Optional boolean representing whether to "
+                            + "apply the in progress commit when executing the query when the `CONTENT-TYPE` is " +
+                            "**NOT** set to `application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
+                    @Parameter(name = "fileName", description = "File name of the downloaded results file when the " +
+                            "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY),
+                    @Parameter(name = "fileType", description = "Format of the downloaded results file when the `ACCEPT` " +
+                            "header is set to `application/octet-stream`", in = ParameterIn.QUERY,
+                            schema = @Schema(allowableValues = {"ttl", "jsonld", "rdf", "json"}))
+            }
+    )
+    @ActionId(value = Read.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response postQueryUrlEncodedOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "SPARQL Query to perform against ontology", required = true)
+            @FormParam("query") String queryString,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @FormParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @FormParam("commitId") String commitIdStr,
+            @Parameter(description = "Boolean indicating whether or not ontology "
+                    + "imports should be included in the query")
+            @DefaultValue("true") @FormParam("includeImports") boolean includeImports,
+            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @DefaultValue("false") @FormParam("applyInProgressCommit") boolean applyInProgressCommit,
+            @Parameter(hidden = true)
+            @HeaderParam("accept") String acceptString) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("Form parameter 'query' must be set.", Response.Status.BAD_REQUEST);
+        }
+
+        return handleSparqlQuery(context, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
+                acceptString, queryString, "", "").build();
+    }
+
+    /**
+     * Downloads the results of the provided SPARQL query, which targets a specific ontology, and its import closures.
+     * Accepts SELECT and CONSTRUCT queries.
+     *
+     * @param context     Context of the request.
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param queryString SPARQL Query to perform against ontology.
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
+     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
+     *      if the query is a CONSTRUCT
+     */
+    @POST
+    @Path("{recordId}/query")
+    @Consumes("application/sparql-query")
+    @Produces({MediaType.APPLICATION_OCTET_STREAM})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "ontologies",
+            summary = "Downloads the SPARQL query results of an ontology, "
+                    + "and its import closures in the requested format",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "SPARQL 1.1 results in JSON format if the query is a "
+                                    + "SELECT or the JSONLD serialization of the results if the query is a CONSTRUCT"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    @ActionId(value = Read.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response postDownloadQueryOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Boolean indicating whether or not ontology "
+                    + "imports should be included in the query")
+            @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
+            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
+            @Parameter(description = "File name of the downloaded results file when the `ACCEPT` header is set to "
+                    + "`application/octet-stream`")
+            @DefaultValue("results") @QueryParam("fileName") String fileName,
+            @Parameter(description = "Format of the downloaded results file when the `ACCEPT` header is set to "
+                    + "`application/octet-stream`",
+                    schema = @Schema(allowableValues = {"ttl", "jsonld", "rdf", "json"}))
+            @QueryParam("fileType") String fileType,
+            @Parameter(hidden = true)
+            @HeaderParam("accept") String acceptString,
+            String queryString) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("SPARQL query must be provided in request body.", Response.Status.BAD_REQUEST);
+        }
+        return handleSparqlQuery(context, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
+                acceptString, queryString, fileType, fileName).header("Content-Disposition", "attachment;filename="
+                + fileName + "." + fileType).build();
+    }
+
+    /**
+     * Downloads the results of the provided SPARQL query, which targets a specific ontology, and its import closures.
+     * Accepts SELECT and CONSTRUCT queries.
+     *
+     * @param context     Context of the request.
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param queryString SPARQL Query to perform against ontology.
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
+     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
+     *      if the query is a CONSTRUCT
+     */
+    @POST
+    @Path("{recordId}/query")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces({MediaType.APPLICATION_OCTET_STREAM})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "ontologies",
+            summary = "Downloads the SPARQL query results of an ontology, "
+                    + "and its import closures in the requested format",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "The SPARQL 1.1 Response in the format of fileType query parameter",
+                            content = {
+                                    @Content(mediaType = "*/*"),
+                                    @Content(mediaType = TURTLE_MIME_TYPE),
+                                    @Content(mediaType = LDJSON_MIME_TYPE),
+                                    @Content(mediaType = RDFXML_MIME_TYPE),
+                                    @Content(mediaType = JSON_MIME_TYPE),
+                                    @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
+                            }
+                    ),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            },
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(
+                                    mediaType = "application/sparql-query",
+                                    schema = @Schema(
+                                            name = "query", type = "string",
+                                            description = "A sparql query",
+                                            example = "SELECT * WHERE { ?s ?p ?o . }"
+                                    )
+                            ),
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_FORM_URLENCODED,
+                                    schema = @Schema(implementation = EncodedQuery.class)
+                            )
+                    }
+            ),
+            parameters = {
+                    @Parameter(name = "branchId", description = "Optional Branch ID representing the Record to "
+                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
+                            in = ParameterIn.QUERY),
+                    @Parameter(name = "commitId", description = "Optional Commit ID representing the Record to "
+                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
+                            in = ParameterIn.QUERY),
+                    @Parameter(name = "includeImports", description = "Optional boolean representing whether to "
+                            + "include imported ontologies when executing the query when the `CONTENT-TYPE` is " +
+                            "**NOT** set to `application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
+                    @Parameter(name = "applyInProgressCommit", description = "Optional boolean representing whether to "
+                            + "apply the in progress commit when executing the query when the `CONTENT-TYPE` is " +
+                            "**NOT** set to `application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
+                    @Parameter(name = "fileName", description = "File name of the downloaded results file when the " +
+                            "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY),
+                    @Parameter(name = "fileType", description = "Format of the downloaded results file when the `ACCEPT` " +
+                            "header is set to `application/octet-stream`", in = ParameterIn.QUERY,
+                            schema = @Schema(allowableValues = {"ttl", "jsonld", "rdf", "json"}))
+
+            }
+    )
+    @ActionId(value = Read.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response postUrlEncodedDownloadQueryOntology(
+            @Context ContainerRequestContext context,
+            @FormParam("query") String queryString,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @FormParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @FormParam("commitId") String commitIdStr,
+            @Parameter(description = "Boolean indicating whether or not ontology "
+                    + "imports should be included in the query")
+            @DefaultValue("true") @FormParam("includeImports") boolean includeImports,
+            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @DefaultValue("false") @FormParam("applyInProgressCommit") boolean applyInProgressCommit,
+            @Parameter(description = "File name of the downloaded results file when the `ACCEPT` header is set to "
+                    + "`application/octet-stream`")
+            @DefaultValue("results") @QueryParam("fileName") String fileName,
+            @Parameter(description = "Format of the downloaded results file when the `ACCEPT` header is set to "
+                    + "`application/octet-stream`",
+                    schema = @Schema(allowableValues = {"ttl", "jsonld", "rdf", "json"}))
+            @QueryParam("fileType") String fileType,
+            @Parameter(hidden = true)
+            @HeaderParam("accept") String acceptString) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("Form parameter 'query' must be set.", Response.Status.BAD_REQUEST);
+        }
+        return handleSparqlQuery(context, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
+                acceptString, queryString, fileType, fileName).header("Content-Disposition", "attachment;filename="
+                + fileName + "." + fileType).build();
     }
 
     /**
@@ -3378,7 +3726,9 @@ public class OntologyRest {
             IRI entity = valueFactory.createIRI(entityIdStr);
             String queryString = GET_ENTITY_QUERY.replace("%ENTITY%", "<" + entity.stringValue() + ">");
 
-            return getResponseForGraphQuery(ontology, queryString, includeImports, format.equals("jsonld"), format);
+            return getResponseBuilderForGraphQuery(ontology, queryString, includeImports, format.equals("jsonld"),
+                    format).type(format.equals("jsonld") ? MediaType.APPLICATION_JSON_TYPE : MediaType.TEXT_PLAIN_TYPE)
+                    .build();
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -3487,15 +3837,19 @@ public class OntologyRest {
         }
     }
 
-    private Response getResponseForGraphQuery(Ontology ontology, String query, boolean includeImports, boolean skolemize,
-                                              String format) {
-        RDFFormat rdfFormat = getRdfFormat(format);
+    private Response.ResponseBuilder getResponseBuilderForGraphQuery(Ontology ontology, String query,
+                                                                     boolean includeImports, boolean skolemize,
+                                                                     String format) {
+        return getResponseBuilderForGraphQuery(ontology, query, includeImports, skolemize, getRdfFormat(format));
+    }
 
+    private Response.ResponseBuilder getResponseBuilderForGraphQuery(Ontology ontology, String query,
+                                                                     boolean includeImports, boolean skolemize,
+                                                                     RDFFormat format) {
         StreamingOutput output = outputStream -> {
-            ontology.getGraphQueryResultsStream(query, includeImports, rdfFormat, skolemize, outputStream);
+            ontology.getGraphQueryResultsStream(query, includeImports, format, skolemize, outputStream);
         };
-        MediaType type = format.equals("jsonld") ? MediaType.APPLICATION_JSON_TYPE : MediaType.TEXT_PLAIN_TYPE;
-        return Response.ok(output, type).build();
+        return Response.ok(output);
     }
 
     private Set<String> getUnloadableImportIRIs(Ontology ontology) {
@@ -4353,5 +4707,72 @@ public class OntologyRest {
         objectNode.put("commitId", commitId.toString());
 
         return Response.status(Response.Status.CREATED).entity(objectNode.toString()).build();
+    }
+
+    private Response.ResponseBuilder handleSparqlQuery(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                       String commitIdStr, boolean includeImports, boolean applyInProgressCommit,
+                                       String acceptString, String queryString, String fileExtension, String fileName) {
+        try {
+            if (acceptString.equals("application/octet-stream") && (fileName == null || fileExtension == null ||
+                    fileExtension.isEmpty())) {
+                throw ErrorUtils.sendError("Must provide both fileName and fileExtension when accept header is " +
+                        "application/octet-stream", Response.Status.BAD_REQUEST);
+            }
+
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+
+            ParsedOperation parsedOperation = QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
+
+            if (parsedOperation instanceof ParsedQuery) {
+                if (parsedOperation instanceof ParsedTupleQuery) {
+                    if (fileName.isEmpty() && !acceptString.equals("application/json")) {
+                        throw ErrorUtils.sendError("Unsupported response format for SELECT queries. Must be " +
+                                "application/json.", Response.Status.BAD_REQUEST);
+                    }
+                    TupleQueryResult tupResults = ontology.getTupleQueryResults(queryString, includeImports);
+                    if (tupResults.hasNext()) {
+                        ObjectNode json = JSONQueryResults.getResponse(tupResults);
+                        return Response.ok(json.toString(), MediaType.APPLICATION_JSON_TYPE);
+                    } else {
+                        return Response.noContent();
+                    }
+                } else if (parsedOperation instanceof ParsedGraphQuery) {
+                    if (!fileExtension.isEmpty()) {
+                        String mimeType = convertFileExtensionToMimeType(fileExtension);
+                        return getResponseBuilderForGraphQuery(ontology, queryString, includeImports, false,
+                                getRDFFormatForConstructQuery(mimeType))
+                                .type(convertFileExtensionToMimeType(fileExtension));
+                    } else {
+                        return getResponseBuilderForGraphQuery(ontology, queryString, includeImports, false,
+                                getRDFFormatForConstructQuery(acceptString))
+                                .header("Content-Type", acceptString);
+                    }
+                } else {
+                    throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
+                }
+            } else {
+                throw ErrorUtils.sendError("Unsupported query type use.", Response.Status.BAD_REQUEST);
+            }
+        } catch (MalformedQueryException ex) {
+            String statusText = "Query is invalid. Please change the query and re-execute.";
+            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
+            ObjectNode entity = mapper.createObjectNode();
+            entity.put("details", ex.getCause().getMessage());
+            Response response = Response.status(status)
+                    .entity(entity.toString())
+                    .build();
+            throw ErrorUtils.sendError(ex, statusText, response);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Class used for OpenAPI documentation for encoded url endpoint.
+     */
+    private static class EncodedQuery {
+        @Schema(type = "string", description = "The SPARQL query to execute", required = true)
+        public String query;
     }
 }

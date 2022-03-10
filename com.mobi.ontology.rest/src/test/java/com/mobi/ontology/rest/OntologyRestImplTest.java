@@ -90,6 +90,7 @@ import com.mobi.ontology.impl.repository.SimpleObjectProperty;
 import com.mobi.ontology.rest.json.EntityNames;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.QueryResults;
+import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
 import com.mobi.query.api.GraphQuery;
@@ -166,7 +167,9 @@ import java.util.stream.Stream;
 import javax.cache.Cache;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 public class OntologyRestImplTest extends MobiRestTestNg {
@@ -5066,7 +5069,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("query", encode(query))
-                .request().get();
+                .request().accept("application/json").get();
 
         assertEquals(response.getStatus(), 200);
         verify(ontology).getTupleQueryResults(query, true);
@@ -5083,7 +5086,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("query", encode(query))
-                .request().get();
+                .request().accept("application/json").get();
 
         assertEquals(response.getStatus(), 204);
         verify(ontology).getTupleQueryResults(query, true);
@@ -5097,7 +5100,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("query", encode(query))
-                .request().get();
+                .request().accept("application/ld+json").get();
 
         assertEquals(response.getStatus(), 200);
         verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), any(OutputStream.class));
@@ -5112,7 +5115,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("query", encode(query))
-                .request().get();
+                .request().accept("application/ld+json").get();
 
         assertEquals(response.getStatus(), 200);
         verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), any(OutputStream.class));
@@ -5124,7 +5127,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     public void testQueryOntologyMissingQuery() {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
-                .request().get();
+                .request().accept("application/json").get();
 
         assertEquals(response.getStatus(), 400);
     }
@@ -5135,7 +5138,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("query", encode(query))
-                .request().get();
+                .request().accept("application/json").get();
 
         assertEquals(response.getStatus(), 400);
     }
@@ -5149,7 +5152,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("query", encode(query))
-                .request().get();
+                .request().accept("application/json").get();
 
         assertEquals(response.getStatus(), 400);
     }
@@ -5163,7 +5166,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("commitId", commitId.stringValue())
                 .queryParam("query", encode(query))
-                .request().get();
+                .request().accept("application/json").get();
 
         assertEquals(response.getStatus(), 200);
         verify(ontology).getTupleQueryResults(query, true);
@@ -5179,7 +5182,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue())
                 .queryParam("query", encode(query))
-                .request().get();
+                .request().accept("application/json").get();
 
         assertEquals(response.getStatus(), 200);
         verify(ontology).getTupleQueryResults(query, true);
@@ -5194,7 +5197,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         String query = "select * { ?s ?p ?o }";
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("query", encode(query))
-                .request().get();
+                .request().accept("application/json").get();
 
         assertEquals(response.getStatus(), 200);
         verify(ontology).getTupleQueryResults(query, true);
@@ -5210,7 +5213,690 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("query", encode(query))
-                .request().get();
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostQueryOntologyWithSelect() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+//        verify(ontologyManager).getTupleQueryResults(ontology, query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostQueryOntologyWithEmptySelect() {
+        // Setup:
+        String query = "select * { ?s ?p ?o }";
+        when(ontology.getTupleQueryResults(query, true)).thenAnswer(i -> new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 204);
+        verify(ontology).getTupleQueryResults(query, true);
+    }
+
+    @Test
+    public void testPostQueryOntologyWithConstruct() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/ld+json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), any(OutputStream.class));
+        assertConstructQuery(response.readEntity(String.class));
+    }
+
+    @Test
+    public void testPostQueryOntologyWithEmptyConstruct() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s <urn:test> ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/ld+json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), any(OutputStream.class));
+
+        assertConstructQuery(response.readEntity(String.class));
+    }
+
+    @Test
+    public void testPostQueryOntologyMissingQuery() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").post(Entity.entity("", "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostQueryOntologyWithUnsupportedType() {
+        String query = "ask where { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostQueryOntologyWithMalformedQuery() {
+        // Setup:
+        String query = "select 0-2q3u { ?s ?p ?o }";
+        doThrow(new MalformedQueryException()).when(ontology).getTupleQueryResults(query, true);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostQueryOntologyMissingBranchId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostQueryOntologyMissingCommitId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue())
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostQueryOntologyMissingBranchIdAndCommitId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostQueryOntologyWhenRetrieveOntologyIsEmpty() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+        String query = "select * { ?s ?p ?o }";
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyWithSelect() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+//        verify(ontologyManager).getTupleQueryResults(ontology, query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyWithEmptySelect() {
+        // Setup:
+        String query = "select * { ?s ?p ?o }";
+        when(ontology.getTupleQueryResults(query, true)).thenAnswer(i -> new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
+
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 204);
+        verify(ontology).getTupleQueryResults(query, true);
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyWithConstruct() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .request().accept("application/ld+json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false),
+                any(OutputStream.class));
+        assertConstructQuery(response.readEntity(String.class));
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyWithEmptyConstruct() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s <urn:test> ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .request().accept("application/ld+json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), any(OutputStream.class));
+
+        assertConstructQuery(response.readEntity(String.class));
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyMissingQuery() {
+        Form form = new Form();
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .request().accept("application/json").post(Entity.entity(form,
+                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyWithUnsupportedType() {
+        String query = "ask where { ?s ?p ?o }";
+
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyWithMalformedQuery() {
+        // Setup:
+        String query = "select 0-2q3u { ?s ?p ?o }";
+        doThrow(new MalformedQueryException()).when(ontology).getTupleQueryResults(query, true);
+
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyMissingBranchId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyMissingCommitId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyMissingBranchIdAndCommitId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .request().accept("application/json").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testPostUrlEncodedQueryOntologyWhenRetrieveOntologyIsEmpty() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+        String query = "select * { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .request().accept("application/json").post(Entity.entity(query, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testDownloadQueryOntologyWithSelect() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+//        verify(ontologyManager).getTupleQueryResults(ontology, query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testDownloadQueryOntologyWithEmptySelect() {
+        // Setup:
+        String query = "select * { ?s ?p ?o }";
+        when(ontology.getTupleQueryResults(query, true)).thenAnswer(i -> new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 204);
+        verify(ontology).getTupleQueryResults(query, true);
+    }
+
+    @Test
+    public void testDownloadQueryOntologyWithConstruct() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("fileType", "application/ld+json")
+                .request().accept("application/octet-stream").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), any(OutputStream.class));
+        assertConstructQuery(response.readEntity(String.class));
+    }
+
+    @Test
+    public void testDownloadQueryOntologyWithEmptyConstruct() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s <urn:test> ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("fileType", "application/ld+json")
+                .request().accept("application/octet-stream").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), any(OutputStream.class));
+
+        assertConstructQuery(response.readEntity(String.class));
+    }
+
+    @Test
+    public void testDownloadQueryOntologyMissingQuery() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity("", "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testDownloadQueryOntologyWithUnsupportedType() {
+        String query = "ask where { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testDownloadQueryOntologyWithMalformedQuery() {
+        // Setup:
+        String query = "select 0-2q3u { ?s ?p ?o }";
+        doThrow(new MalformedQueryException()).when(ontology).getTupleQueryResults(query, true);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testDownloadQueryOntologyMissingBranchId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("commitId", commitId.stringValue())
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testDownloadQueryOntologyMissingCommitId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testDownloadQueryOntologyMissingBranchIdAndCommitId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testDownloadQueryOntologyWhenRetrieveOntologyIsEmpty() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+        String query = "select * { ?s ?p ?o }";
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(query, "application/sparql-query"));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testDownloadUrlEncodedQueryOntologyWithSelect() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(form,
+                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+//        verify(ontologyManager).getTupleQueryResults(ontology, query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testDownloadUrlEncodedQueryOntologyWithEmptySelect() {
+        // Setup:
+        String query = "select * { ?s ?p ?o }";
+        when(ontology.getTupleQueryResults(query, true)).thenAnswer(i -> new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(form,
+                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 204);
+        verify(ontology).getTupleQueryResults(query, true);
+    }
+
+    @Test
+    public void testDownloadUrlEncodedQueryOntologyWithConstruct() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("fileType", "application/ld+json")
+                .request().accept("application/octet-stream").post(Entity.entity(form,
+                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), any(OutputStream.class));
+        assertConstructQuery(response.readEntity(String.class));
+    }
+
+    @Test
+    public void testDownloadUrlEncodedQueryOntologyWithEmptyConstruct() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s <urn:test> ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("fileType", "application/ld+json")
+                .request().accept("application/octet-stream").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResultsStream(eq(query), eq(true), eq(RDFFormat.JSONLD), eq(false), any(OutputStream.class));
+
+        assertConstructQuery(response.readEntity(String.class));
+    }
+
+    @Test
+    public void testDownloadUrlEncodedQueryOntologyMissingQuery() {
+        Form form = new Form();
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(form,
+                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testDownloadUrlEncodedQueryOntologyWithUnsupportedType() {
+        String query = "ask where { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(form,
+                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testDownloadUrlEncodedQueryOntologyWithMalformedQuery() {
+        // Setup:
+        String query = "select 0-2q3u { ?s ?p ?o }";
+        doThrow(new MalformedQueryException()).when(ontology).getTupleQueryResults(query, true);
+
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(form,
+                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testDownloadUrlEncodedQueryOntologyMissingBranchId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(form,
+                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testDownloadUrlEncodedQueryOntologyMissingCommitId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testDownloadUrlEncodedQueryOntologyMissingBranchIdAndCommitId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(form,
+                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query, true);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testDownloadUrlEncodedQueryOntologyWhenRetrieveOntologyIsEmpty() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+        String query = "select * { ?s ?p ?o }";
+        Form form = new Form();
+        form.param("query", query);
+        form.param("branchId", branchId.stringValue());
+        form.param("commitId", commitId.stringValue());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("fileType", "application/json")
+                .request().accept("application/octet-stream").post(Entity.entity(form,
+                        MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
         assertEquals(response.getStatus(), 400);
     }

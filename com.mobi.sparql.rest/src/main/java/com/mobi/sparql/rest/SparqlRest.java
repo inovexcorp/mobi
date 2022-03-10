@@ -23,6 +23,8 @@ package com.mobi.sparql.rest;
  * #L%
  */
 
+import static com.mobi.rest.util.RestUtils.convertFileExtensionToMimeType;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.dataset.api.DatasetConnection;
@@ -1020,38 +1022,6 @@ public class SparqlRest {
         os.flush();
         os.close();
         return limitExceeded;
-    }
-
-    /**
-     * Convert the file Extension to mime type.
-     *
-     * @param fileExtension fileExtension
-     * @return String returns the mimeType for file extension, if null default is json
-     */
-    private static String convertFileExtensionToMimeType(String fileExtension) {
-        if (fileExtension == null) { // any switch statement can't be null to prevent a NullPointerException
-            fileExtension = "";
-        }
-
-        switch (fileExtension) {
-            case "xlsx":
-                return XLSX_MIME_TYPE;
-            case "xls":
-                return XLS_MIME_TYPE;
-            case "csv":
-                return CSV_MIME_TYPE;
-            case "tsv":
-                return TSV_MIME_TYPE;
-            case "ttl":
-                return TURTLE_MIME_TYPE;
-            case "jsonld":
-                return LDJSON_MIME_TYPE;
-            case "rdf":
-                return RDFXML_MIME_TYPE;
-            case "json":
-            default:
-                return JSON_MIME_TYPE;
-        }
     }
 
     /**

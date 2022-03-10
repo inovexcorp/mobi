@@ -1340,14 +1340,30 @@ describe('Ontology Manager service', function() {
             });
         });
         it('succeeds', function() {
-            $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/query?' + this.params).respond(200, [{}]);
+            $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/query?' + paramSerializer({
+                query: this.query,
+                branchId: this.branchId,
+                commitId: this.commitId,
+                applyInProgressCommit: false,
+                includeImports: true
+            }), function(headers) {
+                return headers['Accept'] === 'application/ld+json';
+            }).respond(200, [{}]);
             ontologyManagerSvc.getQueryResults(this.recordId, this.branchId, this.commitId, this.query, this.format)
                 .then(response => expect(response).toEqual([{}]),
                     () => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('fails', function() {
-            $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/query?' + this.params).respond(400, null, null, this.error);
+            $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/query?' + paramSerializer({
+                query: this.query,
+                branchId: this.branchId,
+                commitId: this.commitId,
+                applyInProgressCommit: false,
+                includeImports: true
+            }), function(headers) {
+                return headers['Accept'] === 'application/ld+json';
+            }).respond(400, null, null, this.error);
             ontologyManagerSvc.getQueryResults(this.recordId, this.branchId, this.commitId, this.query, this.format)
                 .then(() => {
                     fail('Promise should have rejected');
