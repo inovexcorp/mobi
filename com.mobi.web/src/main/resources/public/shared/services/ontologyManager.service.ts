@@ -774,7 +774,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @return {Promise} A promise containing the SPARQL query results
      */
     self.getQueryResults = function(recordId, branchId, commitId, query, format,  id = '', includeImports = true, applyInProgressCommit = false) {
-        const config = { params: { query, branchId, commitId, format, includeImports, applyInProgressCommit } };
+        const config = { params: { query, branchId, commitId, includeImports, applyInProgressCommit }, headers: {'Accept': getMimeType(format)} };
         const url = prefix + '/' + encodeURIComponent(recordId) + '/query';
         const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then(response => response.data, util.rejectError);
@@ -1731,6 +1731,21 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
             });
         });
         return things;
+    }
+
+    function getMimeType(format: string): string {
+        if (format === 'turtle') {
+            return 'text/turtle';
+        } else if (format === 'jsonld') {
+            return 'application/ld+json';
+        } else if (format === 'rdf/xml') {
+            return 'application/rdf+xml';
+        } else if (format === 'application/json') {
+            return 'application/json';
+        } else {
+            console.error(format + ' is not a valid rdf mime type. Changing to application/ld+json.');
+            return 'application/ld+json';
+        }
     }
 }
 

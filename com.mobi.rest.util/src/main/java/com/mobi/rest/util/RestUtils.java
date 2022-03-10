@@ -75,6 +75,15 @@ public class RestUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(RestUtils.class);
     private static final ObjectMapper mapper = new ObjectMapper();
+    public static final String XLSX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    public static final String XLS_MIME_TYPE = "application/vnd.ms-excel";
+    public static final String CSV_MIME_TYPE = "text/csv";
+    public static final String TSV_MIME_TYPE = "text/tab-separated-values";
+    public static final String JSON_MIME_TYPE = "application/json";
+    public static final  String TURTLE_MIME_TYPE = "text/turtle";
+    public static final  String LDJSON_MIME_TYPE = "application/ld+json";
+    public static final  String RDFXML_MIME_TYPE = "application/rdf+xml";
+
 
     /**
      * Returns the specified RDFFormat. Currently supports Turtle, TRiG, RDF/XML, and JSON-LD.
@@ -93,6 +102,60 @@ public class RestUtils {
             case "jsonld":
             default:
                 return RDFFormat.JSONLD;
+        }
+    }
+
+    /**
+     * Returns the specified RDFFormat associated with the provided mimeType for Construct queries. Currently supports
+     * text/turtle, application/rdf+xml, and application/ld+json.
+     *
+     * @param mimeType The mimeType to find the RDF Format for.
+     * @return An RDFFormat object associated with the provided mimeType.
+     */
+    public static RDFFormat getRDFFormatForConstructQuery(String mimeType) {
+        if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
+            return RDFFormat.JSONLD; // default value is JSON-LD
+        }
+
+        switch (mimeType.toLowerCase()) {
+            case TURTLE_MIME_TYPE:
+                return RDFFormat.TURTLE;
+            case RDFXML_MIME_TYPE:
+                return RDFFormat.RDFXML;
+            default:
+                return RDFFormat.JSONLD;
+        }
+    }
+
+    /**
+     * Convert the file Extension to mime type.
+     *
+     * @param fileExtension fileExtension
+     * @return String returns the mimeType for file extension, if null default is json
+     */
+    public static String convertFileExtensionToMimeType(String fileExtension) {
+        if (fileExtension == null) { // any switch statement can't be null to prevent a NullPointerException
+            fileExtension = "";
+        }
+
+        switch (fileExtension) {
+            case "xlsx":
+                return XLSX_MIME_TYPE;
+            case "xls":
+                return XLS_MIME_TYPE;
+            case "csv":
+                return CSV_MIME_TYPE;
+            case "tsv":
+                return TSV_MIME_TYPE;
+            case "ttl":
+                return TURTLE_MIME_TYPE;
+            case "jsonld":
+                return LDJSON_MIME_TYPE;
+            case "rdf":
+                return RDFXML_MIME_TYPE;
+            case "json":
+            default:
+                return JSON_MIME_TYPE;
         }
     }
 
