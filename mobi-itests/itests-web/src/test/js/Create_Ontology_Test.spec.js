@@ -244,7 +244,46 @@ module.exports = {
             .assert.not.elementPresent('saved-changes-tab .expansion-panel')
     },
 
-    'Step 18: Verify Commit': function(browser) {
+    'Step 18: Open the Create Data Property Modal': function(browser) {
+                browser
+                    .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
+                    .waitForElementVisible('circle-button-stack .fa-code-fork')
+                    .click('circle-button-stack .hidden-buttons .fa-plus')
+                    .waitForElementVisible('create-entity-modal .modal-header h3')
+                    .assert.containsText('create-entity-modal .modal-header h3', 'Create Entity')
+                    .click('create-entity-modal .create-data-property')
+                    .waitForElementNotPresent('create-entity-modal .create-data-property')
+                    .waitForElementVisible('create-data-property-overlay .modal-header h3')
+                    .useXpath()
+                    .waitForElementVisible('//create-data-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Functional Property")]]')
+                    .click('//create-data-property-overlay//button[text()="Cancel"]')
+                    .useCss()
+                    .waitForElementNotPresent('create-data-property-overlay .modal-header h3')
+    },
+
+    'Step 19: Open the Create Object Property Modal': function(browser) {
+                browser
+                    .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
+                    .waitForElementVisible('circle-button-stack .fa-code-fork')
+                    .click('circle-button-stack .hidden-buttons .fa-plus')
+                    .waitForElementVisible('create-entity-modal .modal-header h3')
+                    .assert.containsText('create-entity-modal .modal-header h3', 'Create Entity')
+                    .click('create-entity-modal .create-object-property')
+                    .waitForElementNotPresent('create-entity-modal .create-object-property')
+                    .waitForElementVisible('create-object-property-overlay .modal-header h3')
+                    .useXpath()
+                    .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Functional Property")]]')
+                    .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Asymmetric Property")]]')
+                    .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Symmetric Property")]]')
+                    .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Transitive Property")]]')
+                    .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Reflexive Property")]]')
+                    .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Irreflexive Property")]]')
+                    .click('//create-object-property-overlay//button[text()="Cancel"]')
+                    .useCss()
+                    .waitForElementNotPresent('create-object-property-overlay .modal-header h3')
+    },
+
+    'Step 20: Verify Commit': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Commits")]]')
@@ -257,7 +296,7 @@ module.exports = {
             .assert.containsText('commit-history-table .commit-message[title="commit123"] span', 'commit123')
     },
 
-    'Step 19: Verify Master Branch only has initial commit': function(browser) {
+    'Step 21: Verify Master Branch only has initial commit': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"newBranchTitle")]]')
@@ -273,7 +312,7 @@ module.exports = {
             .assert.containsText('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
     },
 
-    'Step 20: Switch back to the other branch': function(browser) {
+    'Step 22: Switch back to the other branch': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"MASTER")]]')
@@ -286,7 +325,7 @@ module.exports = {
             .useCss()
     },
     
-    'Step 21: Perform a merge': function(browser) {
+    'Step 23: Perform a merge': function(browser) {
         browser
             .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
             .waitForElementVisible('circle-button-stack .fa-random')
@@ -320,7 +359,7 @@ module.exports = {
             .useCss()
     },
 
-    'Step 22: Validate Merged Commits': function(browser) {
+    'Step 24: Validate Merged Commits': function(browser) {
         browser
             .waitForElementNotPresent('.spinner')
             .useXpath()

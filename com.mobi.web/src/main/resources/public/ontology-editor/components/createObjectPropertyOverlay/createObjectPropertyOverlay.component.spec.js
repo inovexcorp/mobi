@@ -147,9 +147,7 @@ describe('Create Object Property Overlay component', function() {
             expect(this.element.find('static-iri').length).toEqual(1);
         });
         it('with checkboxes', function() {
-            // TODO: ng-repeat with Angular component not rendering iterations. When upgraded switch back to 6
-            // expect(this.element.find('checkbox').length).toEqual(6);
-            expect(this.element.find('checkbox').length).toEqual(1);
+            expect(this.element.find('checkbox').length).toEqual(6);
         });
         it('with a text-area', function() {
             expect(this.element.find('text-area').length).toEqual(1);
