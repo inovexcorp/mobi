@@ -25,11 +25,13 @@ import {
     mockSearch,
     mockExplore,
     mockUtil,
-    mockModal
+    mockModal,
+    mockPrefixes,
+    mockPolicyEnforcement
 } from '../../../../../../../test/js/Shared';
 
 describe('Search Form component', function() {
-    var $compile, scope, $q, searchSvc, discoverStateSvc, exploreSvc, modalSvc;
+    var $compile, scope, $q, searchSvc, discoverStateSvc, utilSvc, exploreSvc, modalSvc, prefixes, policyEnforcementSvc;
 
     beforeEach(function() {
         angular.mock.module('search');
@@ -38,15 +40,20 @@ describe('Search Form component', function() {
         mockExplore();
         mockUtil();
         mockModal();
+        mockPrefixes();
+        mockPolicyEnforcement();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _searchService_, _discoverStateService_, _exploreService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _searchService_, _discoverStateService_, _exploreService_, _modalService_, _utilService_, _prefixes_, _policyEnforcementService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             searchSvc = _searchService_;
             discoverStateSvc = _discoverStateService_;
             exploreSvc = _exploreService_;
+            utilSvc = _utilService_;
             modalSvc = _modalService_;
+            prefixes = _prefixes_;
+            policyEnforcementSvc = _policyEnforcementService_;
         });
 
         discoverStateSvc.search.queryConfig.filters = [{
@@ -68,6 +75,9 @@ describe('Search Form component', function() {
         discoverStateSvc = null;
         exploreSvc = null;
         modalSvc = null;
+        utilSvc = null;
+        prefixes = null;
+        policyEnforcementSvc = null;
         this.element.remove();
     });
 
@@ -80,7 +90,8 @@ describe('Search Form component', function() {
             beforeEach(function() {
                 discoverStateSvc.search.results = {};
             });
-            it('unless an error occurs', function() {
+            it('unless an error occurs and has record read access', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
                 searchSvc.submitSearch.and.returnValue($q.reject('Error Message'));
                 this.controller.submit();
                 scope.$apply();
@@ -88,13 +99,23 @@ describe('Search Form component', function() {
                 expect(this.controller.errorMessage).toEqual('Error Message');
                 expect(discoverStateSvc.search.results).toBeUndefined();
             });
-            it('and set the results', function() {
+            it('and set the results and has record read access', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
                 searchSvc.submitSearch.and.returnValue($q.when({head: {}}));
                 this.controller.submit();
                 scope.$apply();
                 expect(searchSvc.submitSearch).toHaveBeenCalledWith(discoverStateSvc.search.datasetRecordId, discoverStateSvc.search.queryConfig);
                 expect(this.controller.errorMessage).toEqual('');
                 expect(discoverStateSvc.search.results).toEqual({head: {}});
+            });
+            it('and does not have record read access', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
+                this.controller.submit();
+                scope.$apply();
+                expect(searchSvc.submitSearch).not.toHaveBeenCalledWith(discoverStateSvc.search.datasetRecordId, discoverStateSvc.search.queryConfig);
+                expect(discoverStateSvc.search.datasetRecordId).toEqual('');
+                expect(discoverStateSvc.resetSearchQueryConfig).toHaveBeenCalled();
+                expect(utilSvc.createErrorToast).toHaveBeenCalled();
             });
         });
         describe('getTypes calls the proper method when getClassDetails', function() {

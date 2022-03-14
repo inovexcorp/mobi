@@ -23,25 +23,31 @@
 import { 
     mockDiscoverState,
     mockUtil,
-    mockExplore
+    mockExplore,
+    mockPrefixes,
+    mockPolicyEnforcement
 } from '../../../../../../../test/js/Shared';
 
 describe('Class Cards component', function() {
-    var $compile, scope, discoverStateSvc, exploreSvc, utilSvc, $q;
+    var $compile, scope, discoverStateSvc, exploreSvc, utilSvc, $q, prefixes, policyEnforcementSvc;
 
     beforeEach(function() {
         angular.mock.module('explore');
         mockDiscoverState();
         mockUtil();
         mockExplore();
+        mockPrefixes();
+        mockPolicyEnforcement();
 
-        inject(function(_$compile_, _$rootScope_, _discoverStateService_, _exploreService_, _utilService_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _discoverStateService_, _exploreService_, _utilService_, _$q_, _prefixes_, _policyEnforcementService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             discoverStateSvc = _discoverStateService_;
             exploreSvc = _exploreService_;
             utilSvc = _utilService_;
             $q = _$q_;
+            prefixes = _prefixes_;
+            policyEnforcementSvc = _policyEnforcementService_;
         });
 
         discoverStateSvc.explore.recordId = 'recordId';
@@ -70,6 +76,8 @@ describe('Class Cards component', function() {
         exploreSvc = null;
         utilSvc = null;
         $q = null;
+        prefixes = null;
+        policyEnforcementSvc = null;
         this.element.remove();
     });
 
@@ -111,8 +119,9 @@ describe('Class Cards component', function() {
         });
     });
     describe('controller methods', function() {
-        describe('exploreData should set the correct variables when getClassInstances is', function() {
-            it('resolved', function() {
+        describe('exploreData should set the correct variables', function() {
+            it('when user has read access and getClassInstances is resolved', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
                 var data = [{prop: 'data'}];
                 var nextLink = 'http://example.com/next';
                 var prevLink = 'http://example.com/prev';
@@ -138,12 +147,22 @@ describe('Class Cards component', function() {
                 }));
                 expect(discoverStateSvc.explore.breadcrumbs).toEqual(['', 'new']);
             });
-            it('rejected', function() {
+            it('when user has read access and getClassInstances is rejected', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
                 exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('error'));
                 this.controller.exploreData({classTitle: 'new', classIRI: 'classId'});
                 scope.$apply();
                 expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith('recordId', 'classId', {offset: 0, limit: discoverStateSvc.explore.instanceDetails.limit});
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+            });
+            it('when user does not have read access', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
+                this.controller.exploreData({classTitle: 'new', classIRI: 'classId'});
+                scope.$apply();
+                expect(utilSvc.createErrorToast).toHaveBeenCalled();
+                expect(discoverStateSvc.resetPagedInstanceDetails).toHaveBeenCalled();
+                expect(discoverStateSvc.explore.classDetails).toEqual([]);
+                expect(discoverStateSvc.explore.hasPermissionError).toEqual(true);
             });
         });
     });

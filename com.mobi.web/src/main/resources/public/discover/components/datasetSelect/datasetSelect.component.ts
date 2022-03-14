@@ -48,20 +48,28 @@ const datasetSelectComponent = {
     controller: datasetSelectComponentCtrl
 };
 
-datasetSelectComponentCtrl.$inject = ['utilService', 'datasetManagerService'];
+datasetSelectComponentCtrl.$inject = ['utilService', 'datasetManagerService', 'prefixes'];
 
-function datasetSelectComponentCtrl(utilService, datasetManagerService) {
+function datasetSelectComponentCtrl(utilService, datasetManagerService, prefixes) {
     var dvm = this;
     dvm.dm = datasetManagerService;
     dvm.util = utilService;
     dvm.datasetRecords = [];
 
     dvm.$onInit = function() {
-        dvm.datasetRecords = map(dvm.dm.datasetRecords, dvm.dm.getRecordFromArray);
-        if (!some(dvm.datasetRecords, {'@id': dvm.bindModel})) {
-            dvm.bindModel = '';
-            dvm.changeEvent({value: dvm.bindModel});
+        var paginatedConfig = {
+            sortOption: {
+                field: prefixes.dcterms + 'title'
+            }
         }
+        return dvm.dm.getDatasetRecords(paginatedConfig)
+            .then(response => {
+                dvm.datasetRecords = map(response.data, dvm.dm.getRecordFromArray);
+                if (!some(dvm.datasetRecords, {'@id': dvm.bindModel})) {
+                    dvm.bindModel = '';
+                    dvm.changeEvent({value: dvm.bindModel});
+                }
+            }, utilService.createErrorToast);
     }
 }
 

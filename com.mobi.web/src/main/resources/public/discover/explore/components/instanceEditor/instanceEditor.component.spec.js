@@ -25,11 +25,13 @@ import {
     mockDiscoverState,
     mockUtil,
     mockExplore,
-    mockExploreUtils
+    mockExploreUtils,
+    mockPrefixes,
+    mockPolicyEnforcement
 } from '../../../../../../../test/js/Shared';
 
 describe('Instance Editor component', function() {
-    var $compile, scope, discoverStateSvc, exploreSvc, $q, util, exploreUtilsSvc;
+    var $compile, scope, discoverStateSvc, exploreSvc, $q, util, exploreUtilsSvc, prefixes, policyEnforcementSvc;
 
     beforeEach(function() {
         angular.mock.module('explore');
@@ -38,8 +40,10 @@ describe('Instance Editor component', function() {
         mockUtil();
         mockExplore();
         mockExploreUtils();
+        mockPrefixes();
+        mockPolicyEnforcement();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _discoverStateService_, _exploreService_, _utilService_, _exploreUtilsService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _discoverStateService_, _exploreService_, _utilService_, _exploreUtilsService_, _prefixes_, _policyEnforcementService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -47,6 +51,8 @@ describe('Instance Editor component', function() {
             exploreSvc = _exploreService_;
             util = _utilService_;
             exploreUtilsSvc = _exploreUtilsService_;
+            prefixes = _prefixes_;
+            policyEnforcementSvc = _policyEnforcementService_;
         });
 
         this.element = $compile(angular.element('<instance-editor></instance-editor>'))(scope);
@@ -62,6 +68,8 @@ describe('Instance Editor component', function() {
         $q = null;
         util = null;
         exploreUtilsSvc = null;
+        prefixes = null;
+        policyEnforcementSvc = null;
         this.element.remove();
     });
 

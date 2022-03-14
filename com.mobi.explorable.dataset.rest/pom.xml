@@ -146,6 +146,12 @@
             <groupId>com.mobi</groupId>
             <artifactId>rdf-orm-test</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>rest.security</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

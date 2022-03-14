@@ -34,6 +34,7 @@ const template = require('./instanceView.component.html');
  * @requires shared.service:utilService
  * @requires explore.service:exploreUtilsService
  * @requires shared.service:prefixes
+ * @requires shared.service:policyEnforcementService
  *
  * @description
  * `instanceView` is a component that displays {@link shared.component:breadCrumbs} to the class of the instance
@@ -51,12 +52,13 @@ const instanceViewComponent = {
     controller: instanceViewComponentCtrl
 };
 
-instanceViewComponentCtrl.$inject = ['discoverStateService', 'utilService', 'exploreUtilsService', 'prefixes'];
+instanceViewComponentCtrl.$inject = ['discoverStateService', 'utilService', 'exploreUtilsService', 'prefixes', 'policyEnforcementService'];
 
-function instanceViewComponentCtrl(discoverStateService, utilService, exploreUtilsService, prefixes) {
-    var dvm = this;
+function instanceViewComponentCtrl(discoverStateService, utilService, exploreUtilsService, prefixes, policyEnforcementService) {
+    const dvm = this;
+    const pep = policyEnforcementService;
+    const util = utilService;
     dvm.ds = discoverStateService;
-    dvm.util = utilService;
     dvm.eu = exploreUtilsService;
     dvm.entity = {};
 
@@ -78,8 +80,22 @@ function instanceViewComponentCtrl(discoverStateService, utilService, exploreUti
         return reification;
     }
     dvm.edit = function() {
-        dvm.ds.explore.editing = true;
-        dvm.ds.explore.instance.original = angular.copy(dvm.ds.explore.instance.entity);
+        const pepRequest = {
+            resourceId: dvm.ds.explore.recordId,
+            actionId: prefixes.catalog + 'Modify'
+        };
+        pep.evaluateRequest(pepRequest)
+            .then(response => {
+                const canModify = response !== pep.deny;
+                if (canModify) {
+                    dvm.ds.explore.editing = true;
+                    dvm.ds.explore.instance.original = angular.copy(dvm.ds.explore.instance.entity);
+                } else {
+                    util.createErrorToast('You don\'t have permission to modify dataset');
+                }
+            }, () => {
+                util.createWarningToast('Could not retrieve record permissions');
+            });
     }
 
     function getEntity() {

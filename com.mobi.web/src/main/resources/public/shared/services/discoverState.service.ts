@@ -245,7 +245,8 @@ function discoverStateService() {
                 },
                 total: 0
             },
-            recordId: ''
+            recordId: '',
+            hasPermissionError: false
         };
         self.search = {
             active: false,
@@ -266,6 +267,8 @@ function discoverStateService() {
         };
         self.query = {
             active: false,
+            datasetRecordId: '',
+            submitDisabled: false,
             queryString: '',
             response: {},
             selectedPlugin: ''
@@ -281,6 +284,8 @@ function discoverStateService() {
             entity: {},
             metadata: {}
         };
+        self.query.datasetRecordId = '',
+        self.query.submitDisabled = false;
         self.query.queryString =  '';
         self.query.response = {};
         self.query.selectedPlugin = '';

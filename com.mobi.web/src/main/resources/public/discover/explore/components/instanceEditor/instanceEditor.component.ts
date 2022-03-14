@@ -47,27 +47,43 @@ const instanceEditorComponent = {
     controller: instanceEditorComponentCtrl
 };
 
-instanceEditorComponentCtrl.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'exploreUtilsService'];
+instanceEditorComponentCtrl.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'exploreUtilsService', 'prefixes', 'policyEnforcementService'];
 
-function instanceEditorComponentCtrl($q, discoverStateService, utilService, exploreService, exploreUtilsService) {
-    var dvm = this;
-    var es = exploreService;
-    var eu = exploreUtilsService;
+function instanceEditorComponentCtrl($q, discoverStateService, utilService, exploreService, exploreUtilsService,  prefixes, policyEnforcementService) {
+    const dvm = this;
+    const es = exploreService;
+    const eu = exploreUtilsService;
+    const pep = policyEnforcementService;
     dvm.ds = discoverStateService;
     dvm.util = utilService;
     dvm.isValid = true;
 
     dvm.save = function() {
-        dvm.ds.explore.instance.entity = eu.removeEmptyPropertiesFromArray(dvm.ds.explore.instance.entity);
-        var instance = dvm.ds.getInstance();
-        es.updateInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.metadata.instanceIRI, dvm.ds.explore.instance.entity)
-            .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset: (dvm.ds.explore.instanceDetails.currentPage - 1) * dvm.ds.explore.instanceDetails.limit, limit: dvm.ds.explore.instanceDetails.limit}), $q.reject)
+        const pepRequest = {
+            resourceId: dvm.ds.explore.recordId,
+            actionId: prefixes.catalog + 'Modify'
+        };
+        pep.evaluateRequest(pepRequest)
             .then(response => {
-                dvm.ds.explore.instanceDetails.data = response.data;
-                dvm.ds.explore.instance.metadata = find(response.data, {instanceIRI: instance['@id']});
-                dvm.ds.explore.breadcrumbs[dvm.ds.explore.breadcrumbs.length - 1] = dvm.ds.explore.instance.metadata.title;
-                dvm.ds.explore.editing = false;
-            }, dvm.util.createErrorToast);
+                const canModify = response !== pep.deny;
+                if (canModify) {
+                    dvm.ds.explore.instance.entity = eu.removeEmptyPropertiesFromArray(dvm.ds.explore.instance.entity);
+                    const instance = dvm.ds.getInstance();
+                    es.updateInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.metadata.instanceIRI, dvm.ds.explore.instance.entity)
+                        .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset: (dvm.ds.explore.instanceDetails.currentPage - 1) * dvm.ds.explore.instanceDetails.limit, limit: dvm.ds.explore.instanceDetails.limit}), $q.reject)
+                        .then(response => {
+                            dvm.ds.explore.instanceDetails.data = response.data;
+                            dvm.ds.explore.instance.metadata = find(response.data, {instanceIRI: instance['@id']});
+                            dvm.ds.explore.breadcrumbs[dvm.ds.explore.breadcrumbs.length - 1] = dvm.ds.explore.instance.metadata.title;
+                            dvm.ds.explore.editing = false;
+                        }, dvm.util.createErrorToast);
+                } else {
+                    utilService.createErrorToast('You don\'t have permission to modify dataset');
+                    dvm.cancel();
+                }
+            }, () => {
+                utilService.createWarningToast('Could not retrieve record permissions');
+            });
     }
     dvm.cancel = function() {
         dvm.ds.explore.instance.entity = dvm.ds.explore.instance.original;

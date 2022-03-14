@@ -201,7 +201,8 @@ describe('Discover State Service', function() {
                 },
                 total: 0
             },
-            recordId: ''
+            recordId: '',
+            hasPermissionError: false
         });
         expect(discoverStateSvc.search).toEqual({
             active: false,
@@ -222,6 +223,8 @@ describe('Discover State Service', function() {
         });
         expect(discoverStateSvc.query).toEqual({
             active: false,
+            datasetRecordId: '',
+            submitDisabled: false,
             queryString: '',
             response: {},
             selectedPlugin: ''

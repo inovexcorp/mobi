@@ -70,7 +70,7 @@ unit_test_java:
     - master # Any commit to master triggers this job
     - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
   artifacts:
-    expire_in: 1 hrs
+    expire_in: 4 hrs
     paths:
       - .m2/repository/com/mobi
   retry: 1
@@ -86,7 +86,7 @@ unit_test_web:
     - master # Any commit to master triggers this job
     - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
   artifacts:
-    expire_in: 1 hrs
+    expire_in: 4 hrs
     paths:
       - .m2/repository/com/mobi/web
   retry: 1
@@ -108,7 +108,7 @@ build_distribution:
     - unit_test_java
     - unit_test_web
   artifacts:
-    expire_in: 1 hrs
+    expire_in: 4 hrs
     paths:
       # Don't pull the zip of the distribution
       - .m2/repository/com/mobi/[a-l]*
@@ -165,7 +165,7 @@ functional_tests:
     when: on_failure
     paths:
       - mobi-itests/itests-web/target/nightwatch-screenshots #in the event that the functional tests fail, screenshots of failures are stored in the directory
-  retry: 1
+  retry: 2
 
 # Happens after commit to master
 deploy_dev:
@@ -177,7 +177,7 @@ deploy_dev:
       - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/
   script:
     # Deploys RC candidate artifacts and distribution to Nexus
-    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS -DaltDeploymentRepository=central::default::$DEPLOY_REPO -DdeployAtEnd=true -Dmaven.test.skip=true -DskipTests -P release-build deploy
+    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS -DaltDeploymentRepository=central::default::$DEPLOY_REPO -Dmaven.test.skip=true -DskipTests -P release-build deploy
     - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$VERSION.tar.gz $NEXUS_URL/repository/mobicommunity-raw-dev-hosted/nix/mobi-distribution-$VERSION.tar.gz
     - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$VERSION.zip $NEXUS_URL/repository/mobicommunity-raw-dev-hosted/win/mobi-distribution-$VERSION.zip
     - cd rdf-orm/rdf-orm-gradle-plugin
@@ -191,7 +191,7 @@ deploy_prod:
     - branches
   script:
     # Deploys release artifacts and distribution to Nexus, releases docker image and updates dockerhub repo.
-    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS -DaltDeploymentRepository=central::default::$DEPLOY_REPO -DdeployAtEnd=true -Dmaven.test.skip=true -DskipTests -P release-build -DproductId=$GA_KEY deploy
+    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS -DaltDeploymentRepository=central::default::$DEPLOY_REPO -Dmaven.test.skip=true -DskipTests -P release-build -DproductId=$GA_KEY deploy
     - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$VERSION.tar.gz $NEXUS_URL/repository/mobicommunity-raw-prod-hosted/nix/mobi-distribution-$VERSION.tar.gz
     - curl -u $INOVEX_USERNAME:$INOVEX_PASSWORD --upload-file mobi-distribution/target/mobi-distribution-$VERSION.zip $NEXUS_URL/repository/mobicommunity-raw-prod-hosted/win/mobi-distribution-$VERSION.zip
     - cd rdf-orm/rdf-orm-gradle-plugin

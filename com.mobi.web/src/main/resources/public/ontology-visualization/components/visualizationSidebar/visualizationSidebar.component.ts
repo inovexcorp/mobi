@@ -113,7 +113,6 @@ export class VisualizationSidebar implements OnInit, OnChanges {
 
     toggleClass(event:MouseEvent | TouchEvent, record: ControlRecordI) {
         event.preventDefault();
-        console.log(record);
     }
 
     beforePanelClosed(event, ontologyId, isOpended: boolean): void {

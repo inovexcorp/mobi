@@ -30,6 +30,7 @@ import static com.mobi.rest.util.RestUtils.modelToSkolemizedJsonld;
 
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
+import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
@@ -64,6 +65,9 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.base.RepositoryResult;
+import com.mobi.rest.security.annotations.ActionId;
+import com.mobi.rest.security.annotations.ResourceId;
+import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
@@ -242,6 +246,7 @@ public class ExplorableDatasetRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordIRI")
     public Response getClassDetails(
             @Parameter(description = "ID of the DatasetRecord for the Dataset from which to retrieve the data", required = true)
             @PathParam("recordIRI") String recordIRI) {
@@ -287,6 +292,7 @@ public class ExplorableDatasetRest {
                             description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordIRI")
     public Response getInstanceDetails(
             @Context UriInfo uriInfo,
             @Parameter(description = "IRI of the DatasetRecord for the Dataset to summarize", required = true)
@@ -344,6 +350,7 @@ public class ExplorableDatasetRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordIRI")
     public Response getClassPropertyDetails(
             @Parameter(description = "Id of the DatasetRecord for the Dataset to summarize", required = true)
             @PathParam("recordIRI") String recordIRI,
@@ -383,6 +390,8 @@ public class ExplorableDatasetRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordIRI")
     public Response createInstance(
             @Parameter(description = "Id of the DatasetRecord for the Dataset", required = true)
             @PathParam("recordIRI") String recordIRI,
@@ -432,6 +441,7 @@ public class ExplorableDatasetRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordIRI")
     public Response getInstance(
             @Parameter(description = "IRI of the DatasetRecord for the Dataset to summarize", required = true)
             @PathParam("recordIRI") String recordIRI,
@@ -476,6 +486,8 @@ public class ExplorableDatasetRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordIRI")
     public Response updateInstance(
             @Parameter(description = "Id of the DatasetRecord for the Dataset to summarize.", required = true)
             @PathParam("recordIRI") String recordIRI,
@@ -530,6 +542,8 @@ public class ExplorableDatasetRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordIRI")
     public Response deleteInstance(
             @Parameter(description = "IRI of the DatasetRecord for the Dataset", required = true)
             @PathParam("recordIRI") String recordIRI,
