@@ -3425,21 +3425,20 @@ public class OntologyRest {
                     }
             ),
             parameters = {
-                    @Parameter(name = "commitId", description = "Optional Commit ID representing the Record to "
-                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
-                            in = ParameterIn.QUERY),
-                    @Parameter(name = "branchId", description = "Optional Branch ID representing the Record to "
-                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
-                            in = ParameterIn.QUERY),
-                    @Parameter(name = "commitId", description = "Optional Commit ID representing the Record to "
-                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
-                            in = ParameterIn.QUERY),
+                    @Parameter(name = "branchId", description = "Optional Branch ID representing the branch IRI of the "
+                            + "Record to query when the `CONTENT-TYPE` is **NOT** set to "
+                            + "`application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
+                    @Parameter(name = "commitId", description = "Optional Commit ID representing the commit IRI of the "
+                            + "Record to query when the `CONTENT-TYPE` is **NOT** set to " +
+                            "`application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
                     @Parameter(name = "includeImports", description = "Optional boolean representing whether to "
                             + "include imported ontologies when executing the query when the `CONTENT-TYPE` is " +
-                            "**NOT** set to `application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
+                            "**NOT** set to `application/x-www-form-urlencoded`", schema = @Schema(type = "boolean",
+                            defaultValue = "true"), in = ParameterIn.QUERY),
                     @Parameter(name = "applyInProgressCommit", description = "Optional boolean representing whether to "
                             + "apply the in progress commit when executing the query when the `CONTENT-TYPE` is " +
-                            "**NOT** set to `application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
+                            "**NOT** set to `application/x-www-form-urlencoded`", schema = @Schema(type = "boolean",
+                    defaultValue = "false"), in = ParameterIn.QUERY),
                     @Parameter(name = "fileName", description = "File name of the downloaded results file when the " +
                             "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY),
                     @Parameter(name = "fileType", description = "Format of the downloaded results file when the `ACCEPT` " +
@@ -3607,22 +3606,24 @@ public class OntologyRest {
                     }
             ),
             parameters = {
-                    @Parameter(name = "branchId", description = "Optional Branch ID representing the Record to "
-                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
-                            in = ParameterIn.QUERY),
-                    @Parameter(name = "commitId", description = "Optional Commit ID representing the Record to "
-                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
-                            in = ParameterIn.QUERY),
+                    @Parameter(name = "branchId", description = "Optional Branch ID representing the branch IRI of the "
+                            + "Record to query when the `CONTENT-TYPE` is **NOT** set to "
+                            + "`application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
+                    @Parameter(name = "commitId", description = "Optional Commit ID representing the commit IRI of the "
+                            + "Record to query when the `CONTENT-TYPE` is **NOT** set to " +
+                            "`application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
                     @Parameter(name = "includeImports", description = "Optional boolean representing whether to "
                             + "include imported ontologies when executing the query when the `CONTENT-TYPE` is " +
-                            "**NOT** set to `application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
+                            "**NOT** set to `application/x-www-form-urlencoded`", schema = @Schema(type = "boolean",
+                            defaultValue = "true"), in = ParameterIn.QUERY),
                     @Parameter(name = "applyInProgressCommit", description = "Optional boolean representing whether to "
                             + "apply the in progress commit when executing the query when the `CONTENT-TYPE` is " +
-                            "**NOT** set to `application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
-                    @Parameter(name = "fileName", description = "File name of the downloaded results file when the " +
-                            "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY),
-                    @Parameter(name = "fileType", description = "Format of the downloaded results file when the `ACCEPT` " +
-                            "header is set to `application/octet-stream`", in = ParameterIn.QUERY,
+                            "**NOT** set to `application/x-www-form-urlencoded`", schema = @Schema(type = "boolean",
+                            defaultValue = "false"), in = ParameterIn.QUERY),
+                    @Parameter(name = "fileName", description = "File name of the downloaded results file when the "
+                            + "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY),
+                    @Parameter(name = "fileType", description = "Format of the downloaded results file when the `ACCEPT` "
+                            + "header is set to `application/octet-stream`", in = ParameterIn.QUERY,
                             schema = @Schema(allowableValues = {"ttl", "jsonld", "rdf", "json"}))
 
             }
@@ -4774,5 +4775,15 @@ public class OntologyRest {
     private static class EncodedQuery {
         @Schema(type = "string", description = "The SPARQL query to execute", required = true)
         public String query;
+        @Schema(type = "string", description = "Optional Branch ID representing the branch IRI of the Record to query")
+        public String branchId;
+        @Schema(type = "string", description = "Optional Commit ID representing the commit IRI of the Record to query")
+        public String commitId;
+        @Schema(type = "boolean", description = "Optional boolean representing whether to "
+                + "include imported ontologies when executing the query")
+        public String includeImports;
+        @Schema(type = "boolean", description = "Optional boolean representing whether to "
+                + "apply the in progress commit when executing the query")
+        public String applyInProgressCommit;
     }
 }

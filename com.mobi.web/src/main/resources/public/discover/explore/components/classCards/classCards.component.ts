@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { merge, chunk, orderBy } from 'lodash';
+import { merge, chunk, orderBy, initial } from 'lodash';
 
 import './classCards.component.scss';
 
@@ -48,13 +48,14 @@ const classCardsComponent = {
     controller: classCardsComponentCtrl
 };
 
-classCardsComponentCtrl.$inject = ['discoverStateService', 'exploreService', 'utilService'];
+classCardsComponentCtrl.$inject = ['discoverStateService', 'exploreService', 'utilService', 'prefixes', 'policyEnforcementService'];
 
-function classCardsComponentCtrl(discoverStateService, exploreService, utilService) {
-    var dvm = this;
-    var ds = discoverStateService;
-    var es = exploreService;
-    var util = utilService;
+function classCardsComponentCtrl(discoverStateService, exploreService, utilService, prefixes, policyEnforcementService) {
+    const dvm = this;
+    const ds = discoverStateService;
+    const es = exploreService;
+    const util = utilService;
+    const pep = policyEnforcementService;
 
     dvm.$onInit = function() {
         dvm.chunks = getChunks(dvm.classDetails);
@@ -63,14 +64,31 @@ function classCardsComponentCtrl(discoverStateService, exploreService, utilServi
         dvm.chunks = getChunks(dvm.classDetails);
     }
     dvm.exploreData = function(item) {
-        es.getClassInstanceDetails(ds.explore.recordId, item.classIRI, {offset: 0, limit: ds.explore.instanceDetails.limit})
+        const pepRequest = {
+            resourceId: ds.explore.recordId,
+            actionId: prefixes.policy + 'Read'
+        };
+        pep.evaluateRequest(pepRequest)
             .then(response => {
-                ds.explore.classId = item.classIRI;
-                ds.explore.classDeprecated = item.deprecated;
-                ds.resetPagedInstanceDetails();
-                merge(ds.explore.instanceDetails, es.createPagedResultsObject(response));
-                ds.explore.breadcrumbs.push(item.classTitle);
-            }, util.createErrorToast);
+                const canRead = response !== pep.deny;
+                if (canRead) {
+                    es.getClassInstanceDetails(ds.explore.recordId, item.classIRI, {offset: 0, limit: ds.explore.instanceDetails.limit})
+                        .then(response => {
+                            ds.explore.classId = item.classIRI;
+                            ds.explore.classDeprecated = item.deprecated;
+                            ds.resetPagedInstanceDetails();
+                            merge(ds.explore.instanceDetails, es.createPagedResultsObject(response));
+                            ds.explore.breadcrumbs.push(item.classTitle);
+                        }, util.createErrorToast);
+                } else {
+                    util.createErrorToast('You don\'t have permission to read dataset');
+                    ds.resetPagedInstanceDetails()
+                    ds.explore.classDetails = [];
+                    ds.explore.hasPermissionError = true;
+                }
+            }, () => {
+                util.createWarningToast('Could not retrieve record permissions');
+            });
     }
 
     function getChunks(data) {

@@ -50,7 +50,7 @@ const downloadQueryOverlayComponent = {
 downloadQueryOverlayComponentCtrl.$inject = ['sparqlManagerService'];
 
 function downloadQueryOverlayComponentCtrl(sparqlManagerService) {
-    var dvm = this;
+    const dvm = this;
     const options =  [
         {id: 'csv', name: 'CSV',queryType: 'select'},
         {id: 'tsv', name: 'TSV', queryType: 'select'},
@@ -61,7 +61,7 @@ function downloadQueryOverlayComponentCtrl(sparqlManagerService) {
         {id: 'jsonld', name: 'JSON-LD', queryType: 'construct'}
     ];
 
-    var sparql = sparqlManagerService;
+    const sparql = sparqlManagerService;
     dvm.fileName = 'results';
     dvm.fileType = '';
     dvm.queryType = '';
@@ -72,10 +72,10 @@ function downloadQueryOverlayComponentCtrl(sparqlManagerService) {
         dvm.fileType = dvm.queryType == 'select' ? 'csv' : 'ttl';
         dvm.availableOptions = options.filter( item => item.queryType === dvm.queryType );
     }
-
     dvm.download = function() {
-        sparql.downloadResultsPost(dvm.fileType, dvm.fileName);
-        dvm.close();
+        sparql.downloadResultsPost(dvm.fileType, dvm.fileName)
+            .then(() => { dvm.close({'$value': ''}) }, 
+                error => { dvm.close({'$value': error}) });
     }
     dvm.cancel = function() {
         dvm.dismiss();

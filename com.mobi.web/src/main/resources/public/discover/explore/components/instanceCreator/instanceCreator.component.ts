@@ -48,40 +48,56 @@ const instanceCreatorComponent = {
     controller: instanceCreatorComponentCtrl
 };
 
-instanceCreatorComponentCtrl.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'exploreUtilsService', 'prefixes'];
+instanceCreatorComponentCtrl.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'exploreUtilsService', 'prefixes', 'policyEnforcementService'];
 
-function instanceCreatorComponentCtrl($q, discoverStateService, utilService, exploreService, exploreUtilsService, prefixes) {
-    var dvm = this;
-    var es = exploreService;
-    var eu = exploreUtilsService;
+function instanceCreatorComponentCtrl($q, discoverStateService, utilService, exploreService, exploreUtilsService, prefixes, policyEnforcementService) {
+    const dvm = this;
+    const es = exploreService;
+    const eu = exploreUtilsService;
+    const pep = policyEnforcementService;
     dvm.ds = discoverStateService;
     dvm.util = utilService;
     dvm.isValid = true;
 
     dvm.save = function() {
-        dvm.ds.explore.instance.entity = eu.removeEmptyPropertiesFromArray(dvm.ds.explore.instance.entity);
-        var instance = dvm.ds.getInstance();
-        es.createInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.entity)
-            .then(() => {
-                dvm.ds.explore.instanceDetails.total++;
-                var offset = (dvm.ds.explore.instanceDetails.currentPage - 1) * dvm.ds.explore.instanceDetails.limit;
-                return es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset, limit: dvm.ds.explore.instanceDetails.limit});
-            }, $q.reject)
+        const pepRequest = {
+            resourceId: dvm.ds.explore.recordId,
+            actionId: prefixes.catalog + 'Modify'
+        };
+        pep.evaluateRequest(pepRequest)
             .then(response => {
-                var resultsObject = es.createPagedResultsObject(response);
-                dvm.ds.explore.instanceDetails.data = resultsObject.data;
-                dvm.ds.explore.instanceDetails.links = resultsObject.links;
-                var metadata: any = {instanceIRI: instance['@id']};
-                metadata.title = getPreferredValue(instance, [prefixes.dcterms + 'title', prefixes.rdfs + 'label'], dvm.util.getBeautifulIRI(instance['@id']));
-                metadata.description = getPreferredValue(instance, [prefixes.dcterms + 'description', prefixes.rdfs + 'comment'], '');
-                dvm.ds.explore.instance.metadata = metadata;
-                dvm.ds.explore.breadcrumbs[dvm.ds.explore.breadcrumbs.length - 1] = dvm.ds.explore.instance.metadata.title;
-                dvm.ds.explore.creating = false;
-                return es.getClassDetails(dvm.ds.explore.recordId);
-            }, $q.reject)
-            .then(response => {
-                dvm.ds.explore.classDetails = response;
-            }, dvm.util.createErrorToast);
+                const canModify = response !== pep.deny;
+                if (canModify) {
+                    dvm.ds.explore.instance.entity = eu.removeEmptyPropertiesFromArray(dvm.ds.explore.instance.entity);
+                    var instance = dvm.ds.getInstance();
+                    es.createInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.entity)
+                        .then(() => {
+                            dvm.ds.explore.instanceDetails.total++;
+                            var offset = (dvm.ds.explore.instanceDetails.currentPage - 1) * dvm.ds.explore.instanceDetails.limit;
+                            return es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset, limit: dvm.ds.explore.instanceDetails.limit});
+                        }, $q.reject)
+                        .then(response => {
+                            var resultsObject = es.createPagedResultsObject(response);
+                            dvm.ds.explore.instanceDetails.data = resultsObject.data;
+                            dvm.ds.explore.instanceDetails.links = resultsObject.links;
+                            var metadata: any = {instanceIRI: instance['@id']};
+                            metadata.title = getPreferredValue(instance, [prefixes.dcterms + 'title', prefixes.rdfs + 'label'], dvm.util.getBeautifulIRI(instance['@id']));
+                            metadata.description = getPreferredValue(instance, [prefixes.dcterms + 'description', prefixes.rdfs + 'comment'], '');
+                            dvm.ds.explore.instance.metadata = metadata;
+                            dvm.ds.explore.breadcrumbs[dvm.ds.explore.breadcrumbs.length - 1] = dvm.ds.explore.instance.metadata.title;
+                            dvm.ds.explore.creating = false;
+                            return es.getClassDetails(dvm.ds.explore.recordId);
+                        }, $q.reject)
+                        .then(response => {
+                            dvm.ds.explore.classDetails = response;
+                        }, dvm.util.createErrorToast);
+                } else {
+                    utilService.createErrorToast('You don\'t have permission to modify dataset');
+                    dvm.cancel();
+                }
+            }, () => {
+                utilService.createWarningToast('Could not retrieve record permissions');
+            });
     }
     dvm.cancel = function() {
         dvm.ds.explore.instance.entity = {};

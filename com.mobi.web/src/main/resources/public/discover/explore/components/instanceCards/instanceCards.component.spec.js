@@ -25,11 +25,13 @@ import {
     mockExplore,
     mockUtil,
     mockExploreUtils,
-    mockModal
+    mockModal,
+    mockPrefixes,
+    mockPolicyEnforcement
 } from '../../../../../../../test/js/Shared';
 
 describe('Instance Cards component', function() {
-    var $compile, scope, $q, discoverStateSvc, exploreSvc, utilSvc, exploreUtilsSvc, modalSvc;
+    var $compile, scope, $q, discoverStateSvc, exploreSvc, utilSvc, exploreUtilsSvc, modalSvc, prefixes, policyEnforcementSvc;
 
     beforeEach(function() {
         angular.mock.module('explore');
@@ -38,8 +40,10 @@ describe('Instance Cards component', function() {
         mockUtil();
         mockExploreUtils();
         mockModal();
+        mockPrefixes();
+        mockPolicyEnforcement();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _discoverStateService_, _exploreService_, _utilService_, _exploreUtilsService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _discoverStateService_, _exploreService_, _utilService_, _exploreUtilsService_, _modalService_, _prefixes_, _policyEnforcementService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
@@ -48,6 +52,8 @@ describe('Instance Cards component', function() {
             utilSvc = _utilService_;
             exploreUtilsSvc = _exploreUtilsService_;
             modalSvc = _modalService_;
+            prefixes = _prefixes_;
+            policyEnforcementSvc = _policyEnforcementService_;
         });
 
         discoverStateSvc.explore.recordId = 'recordId';
@@ -74,6 +80,8 @@ describe('Instance Cards component', function() {
         utilSvc = null;
         exploreUtilsSvc = null;
         modalSvc = null;
+        prefixes = null;
+        policyEnforcementSvc = null;
         this.element.remove();
     });
 
@@ -109,8 +117,8 @@ describe('Instance Cards component', function() {
         expect(angular.copy(this.controller.chunks)).toEqual(expected);
     });
     describe('controller methods', function() {
-        describe('view should set the correct variables when getInstance is', function() {
-            describe('resolved and getReferencedTitles is', function() {
+        describe('view should set the correct variables', function() {
+            describe('when getInstance is resolved and getReferencedTitles is', function() {
                 beforeEach(function() {
                     this.data = [{'@id': 'instanceId'}];
                     this.item = {instanceIRI: 'instanceId', title: 'title'};
@@ -131,6 +139,7 @@ describe('Instance Cards component', function() {
                     expect(exploreSvc.getInstance).toHaveBeenCalledWith('recordId', 'instanceId');
                     expect(discoverStateSvc.explore.instance.entity).toEqual(this.data);
                     expect(discoverStateSvc.explore.instance.metadata).toEqual(this.item);
+                    expect(discoverStateSvc.explore.hasPermissionError).toEqual(false);
                     expect(discoverStateSvc.explore.breadcrumbs).toEqual(['', '', 'title']);
                     expect(discoverStateSvc.explore.instance.objectMap).toEqual({object: 'title'});
                 });
@@ -152,6 +161,15 @@ describe('Instance Cards component', function() {
                 expect(exploreSvc.getInstance).toHaveBeenCalledWith('recordId', 'instanceId');
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
             });
+            it('and user does not have read permission', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
+                this.controller.view({instanceIRI: 'instanceId', title: 'title'});
+                scope.$apply();
+                expect(discoverStateSvc.explore.hasPermissionError).toEqual(true);
+                expect(exploreSvc.getInstance).not.toHaveBeenCalledWith('recordId', 'instanceId');
+                expect(utilSvc.createErrorToast).toHaveBeenCalled();
+            });
+
         });
         describe('delete should call the correct methods when deleteInstance is', function() {
             beforeEach(function() {

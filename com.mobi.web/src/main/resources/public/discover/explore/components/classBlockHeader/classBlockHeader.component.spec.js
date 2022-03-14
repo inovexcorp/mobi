@@ -26,11 +26,13 @@ import {
     mockExplore,
     mockExploreUtils,
     mockUtil,
-    mockModal
+    mockModal,
+    mockPrefixes,
+    mockPolicyEnforcement
 } from '../../../../../../../test/js/Shared';
 
 describe('Class Block Header component', function() {
-    var $compile, scope, $q, discoverStateSvc, exploreSvc, exploreUtils, util, modalSvc;
+    var $compile, scope, $q, discoverStateSvc, exploreSvc, exploreUtils, utilSvc, modalSvc, prefixes, policyEnforcementSvc;
 
     beforeEach(function() {
         angular.mock.module('explore');
@@ -40,16 +42,20 @@ describe('Class Block Header component', function() {
         mockExploreUtils();
         mockUtil();
         mockModal();
+        mockPrefixes();
+        mockPolicyEnforcement();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _discoverStateService_, _exploreService_, _exploreUtilsService_, _utilService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _discoverStateService_, _exploreService_, _exploreUtilsService_, _utilService_, _modalService_, _prefixes_, _policyEnforcementService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             discoverStateSvc = _discoverStateService_;
             exploreSvc = _exploreService_;
             exploreUtils = _exploreUtilsService_;
-            util = _utilService_;
+            utilSvc = _utilService_;
             modalSvc = _modalService_;
+            prefixes = _prefixes_;
+            policyEnforcementSvc = _policyEnforcementService_;
         });
 
         this.element = $compile(angular.element('<class-block-header></class-block-header>'))(scope);
@@ -64,8 +70,10 @@ describe('Class Block Header component', function() {
         exploreSvc = null;
         discoverStateSvc = null;
         exploreUtils = null;
-        util = null;
+        utilSvc = null;
         modalSvc = null;
+        prefixes = null;
+        policyEnforcementSvc = null;
         this.element.remove();
     });
 
@@ -112,16 +120,25 @@ describe('Class Block Header component', function() {
                 discoverStateSvc.explore.recordId = 'recordId';
             });
             it('resolves', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
                 exploreUtils.getClasses.and.returnValue($q.when([{}]));
                 this.controller.showCreate();
                 scope.$apply();
                 expect(modalSvc.openModal).toHaveBeenCalledWith('newInstanceClassOverlay', {classes: [{}]});
             });
             it('rejects', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
                 exploreUtils.getClasses.and.returnValue($q.reject('Error message'));
                 this.controller.showCreate();
                 scope.$apply();
-                expect(util.createErrorToast).toHaveBeenCalledWith('Error message');
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
+                expect(modalSvc.openModal).not.toHaveBeenCalled();
+            });
+            it('no modify permission', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
+                this.controller.showCreate();
+                scope.$apply();
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith("You don't have permission to modify dataset");
                 expect(modalSvc.openModal).not.toHaveBeenCalled();
             });
         });
@@ -146,20 +163,35 @@ describe('Class Block Header component', function() {
                 discoverStateSvc.explore.classDetails = [{}];
                 discoverStateSvc.explore.recordId = 'recordId';
             });
-            it('resolves', function() {
+            it('resolves and user have permissions to read', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
                 exploreSvc.getClassDetails.and.returnValue($q.when([{prop: 'details'}]));
                 this.controller.refresh();
                 scope.$apply();
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('recordId');
                 expect(discoverStateSvc.explore.classDetails).toEqual([{prop: 'details'}]);
+                expect(discoverStateSvc.explore.hasPermissionError).toEqual(false);
             });
-            it('rejects', function() {
+            it('rejects and user have permissions to read', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
                 exploreSvc.getClassDetails.and.returnValue($q.reject('error'));
                 this.controller.refresh();
                 scope.$apply();
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('recordId');
                 expect(discoverStateSvc.explore.classDetails).toEqual([]);
-                expect(util.createErrorToast).toHaveBeenCalledWith('error');
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+                expect(discoverStateSvc.explore.hasPermissionError).toEqual(false);
+            });
+            it('rejects and user does not have permission to read', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
+                exploreSvc.getClassDetails.and.returnValue($q.reject('error'));
+                this.controller.refresh();
+                scope.$apply();
+                expect(exploreSvc.getClassDetails).not.toHaveBeenCalled();
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to read dataset');
+                expect(discoverStateSvc.explore.hasPermissionError).toEqual(true);
+                expect(discoverStateSvc.explore.recordId).toEqual('');
+                expect(discoverStateSvc.explore.breadcrumbs).toEqual(['Classes']);
             });
         });
     });

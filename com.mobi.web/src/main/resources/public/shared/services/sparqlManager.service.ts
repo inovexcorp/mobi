@@ -35,10 +35,9 @@ sparqlManagerService.$inject = ['$http', '$q', '$httpParamSerializer', '$rootSco
  * REST endpoint and various state variables for the SPARQL Editor.
  */
 function sparqlManagerService($http, $q, $httpParamSerializer, $rootScope, utilService, httpService, REST_PREFIX) {
-    var prefix = REST_PREFIX + 'sparql';
-    var self = this;
-    var util = utilService;
-
+    const prefix = REST_PREFIX + 'sparql';
+    const self = this;
+    const util = utilService;
     /**
      * @ngdoc property
      * @name prefixes

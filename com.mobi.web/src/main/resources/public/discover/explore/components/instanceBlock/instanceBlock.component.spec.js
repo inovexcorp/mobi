@@ -25,11 +25,13 @@ import {
     mockDiscoverState,
     mockExplore,
     mockUtil,
-    injectSplitIRIFilter
+    injectSplitIRIFilter,
+    mockPrefixes,
+    mockPolicyEnforcement
 } from '../../../../../../../test/js/Shared';
 
 describe('Instance Block component', function() {
-    var $compile, scope, $q, discoverStateSvc, exploreSvc, utilSvc, uuid, splitIRI;
+    var $compile, scope, $q, discoverStateSvc, exploreSvc, utilSvc, uuid, splitIRI,  prefixes, policyEnforcementSvc;
 
     beforeEach(function() {
         angular.mock.module('explore');
@@ -38,6 +40,8 @@ describe('Instance Block component', function() {
         mockExplore();
         mockUtil();
         injectSplitIRIFilter();
+        mockPrefixes();
+        mockPolicyEnforcement();
 
         angular.mock.module(function($provide) {
             $provide.service('uuid', function() {
@@ -45,7 +49,7 @@ describe('Instance Block component', function() {
             });
         });
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _discoverStateService_, _exploreService_, _utilService_, _uuid_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _discoverStateService_, _exploreService_, _utilService_, _uuid_, _splitIRIFilter_, _prefixes_, _policyEnforcementService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
@@ -54,6 +58,8 @@ describe('Instance Block component', function() {
             utilSvc = _utilService_;
             uuid = _uuid_;
             splitIRI = _splitIRIFilter_;
+            prefixes = _prefixes_;
+            policyEnforcementSvc = _policyEnforcementService_;
         });
 
         this.element = $compile(angular.element('<instance-block></instance-block>'))(scope);
@@ -70,6 +76,8 @@ describe('Instance Block component', function() {
         utilSvc = null;
         uuid = null;
         splitIRI = null;
+        prefixes = null;
+        policyEnforcementSvc = null;
         this.element.remove();
     });
 
@@ -84,22 +92,25 @@ describe('Instance Block component', function() {
         });
     });
     describe('controller methods', function() {
-        describe('setPage should call the correct methods when getClassInstanceDetails', function() {
+        describe('setPage should call the correct methods and set variables', function() {
             beforeEach(function() {
                 this.page = 10;
                 exploreSvc.createPagedResultsObject.and.returnValue({prop: 'paged', currentPage: this.page});
             });
-            it('resolves', function() {
+            it('when user has read permission to dataset record', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
                 exploreSvc.getClassInstanceDetails.and.returnValue($q.when({}));
                 this.controller.setPage(this.page);
                 scope.$apply();
                 expect(discoverStateSvc.explore.instanceDetails.currentPage).toEqual(10);
+                expect(discoverStateSvc.explore.hasPermissionError).toEqual(false);
                 expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {limit: discoverStateSvc.explore.instanceDetails.limit, offset: (this.page - 1) * discoverStateSvc.explore.instanceDetails.limit});
                 expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith({});
                 expect(discoverStateSvc.explore.instanceDetails).toEqual(jasmine.objectContaining({prop: 'paged', currentPage: this.page}));
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
-            it('rejects', function() {
+            it('when user has read permission to dataset record and getClassInstanceDetails has error', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
                 exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('Error'));
                 this.controller.setPage(10);
                 scope.$apply();
@@ -108,13 +119,25 @@ describe('Instance Block component', function() {
                 expect(exploreSvc.createPagedResultsObject).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error');
             });
+            it('when user does not have read permission to dataset record', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
+                this.controller.setPage(10);
+                scope.$apply();
+                expect(exploreSvc.getClassInstanceDetails).not.toHaveBeenCalled();
+                expect(exploreSvc.createPagedResultsObject).not.toHaveBeenCalled();
+                expect(discoverStateSvc.explore.hasPermissionError).toEqual(true);
+                expect(discoverStateSvc.explore.instanceDetails.data).toEqual([]);
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('You don\'t have permission to read dataset');
+            });
         });
-        it('create should set the correct variables', function() {
+        it('create method should set the correct variables when user has have modify permission', function() {
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
             discoverStateSvc.explore.creating = false;
             discoverStateSvc.explore.instanceDetails.data = [{instanceIRI: 'instanceIRI'}];
             discoverStateSvc.explore.classId = 'classId';
             splitIRI.and.returnValue({begin: 'begin', then: '/', end: 'end'});
             this.controller.create();
+            scope.$digest();
             expect(discoverStateSvc.explore.creating).toBe(true);
             expect(splitIRI).toHaveBeenCalledWith('instanceIRI');
             expect(uuid.v4).toHaveBeenCalled();
@@ -122,6 +145,20 @@ describe('Instance Block component', function() {
             expect(discoverStateSvc.explore.instance.entity[0]['@type']).toEqual(['classId']);
             expect(_.last(discoverStateSvc.explore.breadcrumbs)).toBe('New Instance');
             expect(discoverStateSvc.explore.instance.metadata.instanceIRI).toEqual('begin/');
+        });
+        it('create method when user does not have modify permission', function() {
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
+            discoverStateSvc.explore.creating = false;
+            discoverStateSvc.explore.instanceDetails.data = [{instanceIRI: 'instanceIRI'}];
+            discoverStateSvc.explore.classId = 'classId';
+            splitIRI.and.returnValue({begin: 'begin', then: '/', end: 'end'});
+            this.controller.create();
+            scope.$digest();
+            expect(discoverStateSvc.explore.creating).toBe(false);
+            expect(splitIRI).not.toHaveBeenCalledWith('instanceIRI');
+            expect(uuid.v4).not.toHaveBeenCalled();
+            expect(utilSvc.createErrorToast).toHaveBeenCalled();
+            expect(discoverStateSvc.explore.instance.metadata.instanceIRI).not.toEqual('begin/');
         });
         it('getClassName should return the correct value', function() {
             discoverStateSvc.explore.breadcrumbs = ['not-this', 'class'];

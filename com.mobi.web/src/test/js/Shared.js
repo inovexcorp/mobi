@@ -545,7 +545,7 @@ export function mockSparqlManager() {
             this.query = jasmine.createSpy('query').and.returnValue($q.when({}));
             this.queryRdf = jasmine.createSpy('queryRdf');
             this.downloadResults = jasmine.createSpy('downloadResults');
-            this.downloadResultsPost = jasmine.createSpy('downloadResultsPost');
+            this.downloadResultsPost = jasmine.createSpy('downloadResultsPost').and.returnValue($q.when({}));
             this.setResults = jasmine.createSpy('setResults');
             this.pagedQuery = jasmine.createSpy('pagedQuery').and.returnValue($q.when({}));
         });
@@ -1415,6 +1415,7 @@ export function mockYasguiService() {
             this.reset = jasmine.createSpy('reset');
             this.initYasgui = jasmine.createSpy('initYasgui');
             this.getYasgui = jasmine.createSpy('getYasgui').and.returnValue({});
+            this.submitQuery = jasmine.createSpy('submitQuery');
         });
     });
 }

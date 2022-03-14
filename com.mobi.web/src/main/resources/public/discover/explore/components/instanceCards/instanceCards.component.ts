@@ -22,7 +22,7 @@ import { Chunk } from "antlr4ts/tree/pattern/Chunk";
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { chunk, orderBy, has, forEach, last } from 'lodash';
+import { initial, chunk, orderBy, has, forEach, last } from 'lodash';
 
 const template = require('./instanceCards.component.html');
 
@@ -50,14 +50,15 @@ const instanceCardsComponent = {
     controller: instanceCardsComponentCtrl
 };
 
-instanceCardsComponentCtrl.$inject = ['$q', 'discoverStateService', 'exploreService', 'exploreUtilsService', 'utilService', 'modalService']
+instanceCardsComponentCtrl.$inject = ['$q', 'discoverStateService', 'exploreService', 'exploreUtilsService', 'utilService', 'modalService', 'prefixes', 'policyEnforcementService']
 
-function instanceCardsComponentCtrl($q, discoverStateService, exploreService, exploreUtilsService, utilService, modalService) {
-    var dvm = this;
-    var ds = discoverStateService;
-    var es = exploreService;
-    var util = utilService;
-    var eu = exploreUtilsService;
+function instanceCardsComponentCtrl($q, discoverStateService, exploreService, exploreUtilsService, utilService, modalService, prefixes, policyEnforcementService) {
+    const dvm = this;
+    const ds = discoverStateService;
+    const es = exploreService;
+    const util = utilService;
+    const eu = exploreUtilsService;
+    const pep = policyEnforcementService;
     dvm.showDeleteOverlay = false;
     dvm.classTitle = '';
     dvm.chunks = [];
@@ -70,19 +71,37 @@ function instanceCardsComponentCtrl($q, discoverStateService, exploreService, ex
         dvm.chunks = getChunks(dvm.instanceData);
     }
     dvm.view = function(item) {
-        es.getInstance(ds.explore.recordId, item.instanceIRI)
+        const pepRequest = {
+            resourceId: ds.explore.recordId,
+            actionId: prefixes.policy + 'Read'
+        };
+        pep.evaluateRequest(pepRequest)
             .then(response => {
-                ds.explore.instance.entity = response;
-                ds.explore.instance.metadata = item;
-                ds.explore.breadcrumbs.push(item.title);
-                return eu.getReferencedTitles(item.instanceIRI, ds.explore.recordId);
-            }, $q.reject)
-            .then(response => {
-                ds.explore.instance.objectMap = {};
-                if (has(response, 'results')) {
-                    forEach(response.results.bindings, binding => ds.explore.instance.objectMap[binding.object.value] = binding.title.value);
+                const canRead = response !== pep.deny;
+                if (canRead) {
+                    es.getInstance(ds.explore.recordId, item.instanceIRI)
+                        .then(response => {
+                            ds.explore.instance.entity = response;
+                            ds.explore.instance.metadata = item;
+                            ds.explore.breadcrumbs.push(item.title);
+                            ds.explore.hasPermissionError = false;
+                            return eu.getReferencedTitles(item.instanceIRI, ds.explore.recordId);
+                        }, $q.reject)
+                        .then(response => {
+                            ds.explore.instance.objectMap = {};
+                            if (has(response, 'results')) {
+                                forEach(response.results.bindings, binding => ds.explore.instance.objectMap[binding.object.value] = binding.title.value);
+                            }
+                        }, util.createErrorToast);
+                } else {
+                    util.createErrorToast('You don\'t have permission to read dataset');
+                    ds.explore.breadcrumbs = initial(ds.explore.breadcrumbs);
+                    ds.resetPagedInstanceDetails();
+                    ds.explore.hasPermissionError = true;
                 }
-            }, util.createErrorToast);
+            }, () => {
+                util.createWarningToast('Could not retrieve record permissions');
+            });
     }
     dvm.delete = function(item) {
         es.deleteInstance(ds.explore.recordId, item.instanceIRI)

@@ -26,11 +26,12 @@ import {
     mockExplore,
     mockUtil,
     mockExploreUtils,
-    mockPrefixes
+    mockPrefixes,
+    mockPolicyEnforcement
 } from '../../../../../../../test/js/Shared';
 
 describe('Instance Creator component', function() {
-    var $compile, scope, discoverStateSvc, exploreSvc, $q, util, exploreUtilsSvc, prefixes;
+    var $compile, scope, discoverStateSvc, exploreSvc, $q, util, exploreUtilsSvc, prefixes, policyEnforcementSvc;
 
     beforeEach(function() {
         angular.mock.module('explore');
@@ -40,8 +41,9 @@ describe('Instance Creator component', function() {
         mockExplore();
         mockExploreUtils();
         mockPrefixes();
+        mockPolicyEnforcement();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _discoverStateService_, _exploreService_, _utilService_, _exploreUtilsService_, _prefixes_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _discoverStateService_, _exploreService_, _utilService_, _exploreUtilsService_, _prefixes_, _policyEnforcementService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -50,6 +52,7 @@ describe('Instance Creator component', function() {
             util = _utilService_;
             exploreUtilsSvc = _exploreUtilsService_;
             prefixes = _prefixes_;
+            policyEnforcementSvc = _policyEnforcementService_;
         });
 
         this.element = $compile(angular.element('<instance-creator></instance-creator>'))(scope);
@@ -66,6 +69,7 @@ describe('Instance Creator component', function() {
         util = null;
         exploreUtilsSvc = null;
         prefixes = null;
+        policyEnforcementSvc = null;
         this.element.remove();
     });
 

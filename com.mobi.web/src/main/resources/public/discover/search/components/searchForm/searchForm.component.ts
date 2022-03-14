@@ -34,6 +34,8 @@ const template = require('./searchForm.component.html');
  * @requires discover.service:exploreService
  * @requires shared.service:utilService
  * @requires shared.service:modalService
+ * @requires shared.service:prefixes
+ * @requires shared.service:policyEnforcementService
  *
  * @description
  * `searchForm` is a component that creates a form for creating keyword searches combined with property value searches
@@ -47,12 +49,13 @@ const searchFormComponent = {
     controller: searchFormComponentCtrl
 };
 
-searchFormComponentCtrl.$inject = ['searchService', 'discoverStateService', 'exploreService', 'utilService', 'modalService'];
+searchFormComponentCtrl.$inject = ['searchService', 'discoverStateService', 'exploreService', 'utilService', 'modalService', 'prefixes', 'policyEnforcementService'];
 
-function searchFormComponentCtrl(searchService, discoverStateService, exploreService, utilService, modalService) {
-    var dvm = this;
-    var s = searchService;
-    var es = exploreService;
+function searchFormComponentCtrl(searchService, discoverStateService, exploreService, utilService, modalService, prefixes, policyEnforcementService) {
+    const dvm = this;
+    const s = searchService;
+    const es = exploreService;
+    const pep = policyEnforcementService;
     dvm.ds = discoverStateService;
     dvm.util = utilService;
     dvm.typeSearch = '';
@@ -62,25 +65,57 @@ function searchFormComponentCtrl(searchService, discoverStateService, exploreSer
         modalService.openModal('propertyFilterOverlay');
     }
     dvm.submit = function() {
-        s.submitSearch(dvm.ds.search.datasetRecordId, dvm.ds.search.queryConfig)
-            .then(data => {
-                dvm.ds.search.results = data;
-                dvm.errorMessage = '';
-            }, errorMessage => {
-                dvm.ds.search.results = undefined;
-                dvm.errorMessage = errorMessage;
+        const pepRequest = {
+            resourceId: dvm.ds.search.datasetRecordId,
+            actionId: prefixes.policy + 'Read'
+        };
+        pep.evaluateRequest(pepRequest)
+            .then(response => {
+                const canRead = response !== pep.deny;
+                if (canRead) {
+                    s.submitSearch(dvm.ds.search.datasetRecordId, dvm.ds.search.queryConfig)
+                        .then(data => {
+                            dvm.ds.search.results = data;
+                            dvm.errorMessage = '';
+                        }, errorMessage => {
+                            dvm.ds.search.results = undefined;
+                            dvm.errorMessage = errorMessage;
+                        });
+                } else {
+                    dvm.util.createErrorToast('You don\'t have permission to read dataset');
+                    dvm.ds.search.datasetRecordId = '';
+                    dvm.ds.resetSearchQueryConfig();
+                }
+            }, () => {
+                dvm.util.createWarningToast('Could not retrieve record permissions');
             });
     }
     dvm.getTypes = function() {
-        dvm.ds.resetSearchQueryConfig();
-        dvm.ds.search.properties = undefined;
-        es.getClassDetails(dvm.ds.search.datasetRecordId)
-            .then(details => {
-                dvm.ds.search.typeObject = groupBy(details, 'ontologyRecordTitle');
-                dvm.errorMessage = '';
-            }, errorMessage => {
-                dvm.ds.search.typeObject = {};
-                dvm.errorMessage = errorMessage;
+        const pepRequest = {
+            resourceId: dvm.ds.search.datasetRecordId,
+            actionId: prefixes.policy + 'Read'
+        };
+        pep.evaluateRequest(pepRequest)
+            .then(response => {
+                const canRead = response !== pep.deny;
+                if (canRead) {
+                    dvm.ds.resetSearchQueryConfig();
+                    dvm.ds.search.properties = undefined;
+                    es.getClassDetails(dvm.ds.search.datasetRecordId)
+                        .then(details => {
+                            dvm.ds.search.typeObject = groupBy(details, 'ontologyRecordTitle');
+                            dvm.errorMessage = '';
+                        }, errorMessage => {
+                            dvm.ds.search.typeObject = {};
+                            dvm.errorMessage = errorMessage;
+                        });
+                } else {
+                    dvm.util.createErrorToast('You don\'t have permission to read dataset');
+                    dvm.ds.search.datasetRecordId = '';
+                    dvm.ds.resetSearchQueryConfig();
+                }
+            }, () => {
+                dvm.util.createWarningToast('Could not retrieve record permissions');
             });
     }
     dvm.getSelectedText = function() {

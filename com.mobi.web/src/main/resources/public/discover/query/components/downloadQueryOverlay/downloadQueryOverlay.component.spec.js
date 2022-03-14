@@ -23,15 +23,17 @@
 import { mockSparqlManager } from '../../../../../../../test/js/Shared';
 
 describe('Download Query Overlay component', function() {
-    var $compile, scope, sparqlManagerSvc;
+    var $compile, scope, $q, sparqlManagerSvc;
 
     beforeEach(function() {
         angular.mock.module('query');
         mockSparqlManager();
 
-        inject(function(_$compile_, _$rootScope_, _sparqlManagerService_) {
+        
+        inject(function(_$compile_, _$rootScope_, _$q_, _sparqlManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             sparqlManagerSvc = _sparqlManagerService_;
         });
 
@@ -46,6 +48,7 @@ describe('Download Query Overlay component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        $q = null;
         sparqlManagerSvc = null;
         this.element.remove();
     });
@@ -63,8 +66,16 @@ describe('Download Query Overlay component', function() {
     describe('controller methods', function() {
         it('should download the results of a query', function() {
             this.controller.download();
+            scope.$digest();
             expect(sparqlManagerSvc.downloadResultsPost).toHaveBeenCalledWith(this.controller.fileType, this.controller.fileName);
             expect(scope.close).toHaveBeenCalled();
+        });
+        it('should download the results of a query error', function() {
+            sparqlManagerSvc.downloadResultsPost.and.returnValue($q.reject('Error Message'));
+            this.controller.download();
+            scope.$digest();
+            expect(sparqlManagerSvc.downloadResultsPost).toHaveBeenCalledWith(this.controller.fileType, this.controller.fileName);
+            expect(scope.close).toHaveBeenCalled(); // TODO: Why callWith does not work
         });
         it('should set the correct state for canceling', function() {
             this.controller.cancel();

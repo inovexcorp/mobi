@@ -27,9 +27,11 @@ const template = require('./queryTab.component.html');
 /**
  * @ngdoc component
  * @name query.component:queryTab
- * @requires shared.service:sparqlManagerService
- * @requires shared.service:prefixes
+ * @requires shared.service:yasguiService
  * @requires shared.service:discoverStateService
+ * @requires shared.service:prefixes
+ * @requires shared.service:utilService
+ * @requires shared.service:policyEnforcementService
  *
  * @description
  * `queryTab` is a component that provides a form for submitting and viewing the results of SPARQL queries against the
@@ -43,14 +45,16 @@ const queryTabComponent = {
     controller: queryTabComponentCtrl
 };
 
-queryTabComponentCtrl.$inject = ['$element', 'sparqlManagerService', 'yasguiService', 'discoverStateService'];
+queryTabComponentCtrl.$inject = ['$element', 'yasguiService', 'discoverStateService', 'sparqlManagerService', 'utilService', 'prefixes', 'policyEnforcementService'];
 
-function queryTabComponentCtrl($element, sparqlManagerService, yasguiService, discoverStateService) {
-    var dvm = this;
-    var tab:any = {};
-    dvm.sparql = sparqlManagerService;
+function queryTabComponentCtrl($element, yasguiService, discoverStateService, sparqlManagerService, utilService, prefixes, policyEnforcementService) {
+    const dvm = this;
     dvm.yasgui = yasguiService;
     dvm.ds = discoverStateService;
+    dvm.sparql = sparqlManagerService;
+    dvm.util = utilService;
+    dvm.pep = policyEnforcementService;
+    let tab:any = {};
 
     dvm.$onInit = function() {
         let wrapper_element = $element.querySelectorAll('.discover-query')[0];
@@ -61,9 +65,59 @@ function queryTabComponentCtrl($element, sparqlManagerService, yasguiService, di
             tab = yasgui.getTab();
             initEventListener();
             setValues();
-            dvm.error = null;
+            dvm.error = '';
         } else {
-            dvm.error = `Something went wrong, try again in a few seconds or refresh the page"`;
+            dvm.error = 'Something went wrong, try again in a few seconds or refresh the page';
+        }
+    }
+    dvm.onSelect = function(value) {
+        dvm.ds.query.submitDisabled = false;
+        dvm.ds.query.datasetRecordId = value;
+        dvm.sparql.datasetRecordIRI = value; // needed because downloadResults, downloadResultsPost, queryRdf
+        dvm.permissionCheck(value);
+    }
+    dvm.submitQuery = function(){
+        if (dvm.ds.query.datasetRecordId) {
+            const pepRequest = createPepReadRequest(dvm.ds.query.datasetRecordId);
+
+            dvm.pep.evaluateRequest(pepRequest)
+                .then(response => {
+                    const canRead = response !== dvm.pep.deny;
+                    if (canRead) { 
+                        dvm.yasgui.submitQuery();
+                    } else {
+                        dvm.util.createErrorToast('You don\'t have permission to read dataset');
+                        dvm.ds.query.submitDisabled = true;
+                    }
+                }, () => {
+                    dvm.util.createWarningToast('Could not retrieve record permissions');
+                    dvm.ds.query.submitDisabled = true;
+                });
+        } else {
+            dvm.yasgui.submitQuery();
+        }
+    }
+    dvm.permissionCheck = function(datasetRecordIRI){
+        if (datasetRecordIRI) {
+            const pepRequest = createPepReadRequest(datasetRecordIRI);
+            dvm.pep.evaluateRequest(pepRequest)
+                .then(response => {
+                    const canRead = response !== dvm.pep.deny;
+                    if (!canRead) {
+                        dvm.util.createErrorToast('You don\'t have permission to read dataset');
+                        dvm.ds.query.submitDisabled = true;
+                    }
+                }, () => {
+                    dvm.util.createWarningToast('Could not retrieve record permissions');
+                    dvm.ds.query.submitDisabled = true;
+                });
+        }
+    }
+    
+    const createPepReadRequest = (datasetRecordIRI) => {
+        return {
+            resourceId: datasetRecordIRI,
+            actionId: prefixes.policy + 'Read'
         }
     }
 
@@ -75,13 +129,12 @@ function queryTabComponentCtrl($element, sparqlManagerService, yasguiService, di
         if (!isYasguiElementDrawn() ) {
             return;
         }
-        // get YASGUI instance
-        // cache Yasgui object
-        tab.yasqe.on("blur", () => {
+        // get YASGUI instance and cache Yasgui object
+        tab.yasqe.on('blur', () => {
             dvm.ds.query.queryString = tab.yasqe.getValue();
         });
 
-        tab.yasr.on("drawn", (yasr) => {
+        tab.yasr.on('drawn', (yasr) => {
             dvm.ds.query.selectedPlugin = yasr.drawnPlugin;
         });
 
@@ -99,11 +152,10 @@ function queryTabComponentCtrl($element, sparqlManagerService, yasguiService, di
         
         let isResponseEmpty = Object.keys(dvm.ds.query.response).length === 0;
         if (!isResponseEmpty) {
-            tab.yasr.setResponse(dvm.ds.query.response, dvm.ds.query.executionTime) ;
+            tab.yasr.setResponse(dvm.ds.query.response, dvm.ds.query.executionTime);
             yasguiService.handleYasrContainer();
         }
     }
-
 }
 
 export default queryTabComponent;

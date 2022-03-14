@@ -29,7 +29,7 @@ import {
  } from '../../../../../../test/js/Shared';
 
 describe('Dataset Select component', function() {
-    var $compile, scope, datasetManagerSvc;
+    var $compile, scope,  $q, datasetManagerSvc;
 
     beforeEach(function() {
         angular.mock.module('discover');
@@ -39,13 +39,16 @@ describe('Dataset Select component', function() {
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _datasetManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _datasetManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             datasetManagerSvc = _datasetManagerService_;
         });
 
+        
         datasetManagerSvc.datasetRecords = [[]];
+        datasetManagerSvc.getDatasetRecords.and.returnValue($q.when({ data: [[]]}));
         datasetManagerSvc.splitDatasetArray.and.returnValue({});
         scope.bindModel = '';
         scope.changeEvent = jasmine.createSpy('changeEvent');
@@ -57,10 +60,12 @@ describe('Dataset Select component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        $q = null;
         this.element.remove();
     });
 
     it('initializes with the correct value for datasetRecords', function() {
+        scope.$digest();
         expect(this.controller.datasetRecords).toEqual([{}]);
     });
     describe('controller bound variable', function() {

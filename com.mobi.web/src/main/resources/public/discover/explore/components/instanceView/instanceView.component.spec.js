@@ -24,11 +24,12 @@ import {
     mockDiscoverState,
     mockUtil,
     mockExploreUtils,
-    mockPrefixes
+    mockPrefixes,
+    mockPolicyEnforcement
 } from '../../../../../../../test/js/Shared';
 
 describe('Instance View component', function() {
-    var $compile, scope, discoverStateSvc, exploreUtilsSvc, prefixes;
+    var $compile, scope, $q, discoverStateSvc, utilSvc, exploreUtilsSvc, prefixes, policyEnforcementSvc;
 
     beforeEach(function() {
         angular.mock.module('explore');
@@ -36,13 +37,17 @@ describe('Instance View component', function() {
         mockUtil();
         mockExploreUtils();
         mockPrefixes();
+        mockPolicyEnforcement();
 
-        inject(function(_$compile_, _$rootScope_, _discoverStateService_, _exploreUtilsService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _discoverStateService_, _utilService_, _exploreUtilsService_, _prefixes_, _policyEnforcementService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             discoverStateSvc = _discoverStateService_;
+            utilSvc = _utilService_;
             exploreUtilsSvc = _exploreUtilsService_;
             prefixes = _prefixes_;
+            policyEnforcementSvc = _policyEnforcementService_;
         });
 
         discoverStateSvc.getInstance.and.returnValue({
@@ -72,9 +77,11 @@ describe('Instance View component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        $q = null;
         discoverStateSvc = null;
         exploreUtilsSvc = null;
         prefixes = null;
+        policyEnforcementSvc = null;
         this.element.remove();
     });
 
@@ -180,12 +187,23 @@ describe('Instance View component', function() {
             expect(this.controller.getReification('', {})).toBeUndefined();
             expect(exploreUtilsSvc.getReification).toHaveBeenCalledWith(discoverStateSvc.explore.instance.entity, discoverStateSvc.explore.instance.metadata.instanceIRI, '', {});
         });
-        it('edit sets the correct state', function() {
+        it('edit sets the correct state and have modify permission', function() {
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
             discoverStateSvc.explore.editing = false;
             discoverStateSvc.explore.instance.original = [];
             this.controller.edit();
+            scope.$digest();
             expect(discoverStateSvc.explore.editing).toBe(true);
             expect(discoverStateSvc.explore.instance.original).toEqual(discoverStateSvc.explore.instance.entity);
+        });
+        it('edit and does not have modify permission', function() {
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
+            discoverStateSvc.explore.editing = false;
+            discoverStateSvc.explore.instance.original = [];
+            this.controller.edit();
+            scope.$digest();
+            expect(discoverStateSvc.explore.editing).toBe(false);
+            expect(utilSvc.createErrorToast).toHaveBeenCalled();
         });
     });
     it('should call edit when the edit button is clicked', function() {

@@ -32,6 +32,8 @@ const template = require('./classBlockHeader.component.html');
  * @requires explore.service:exploreUtilsService
  * @requires shared.service:utilService
  * @requires shared.service:modalService
+ * @requires shared.service:prefixes
+ * @requires shared.service:policyEnforcementService
  *
  * @description
  * `classBlockHeader` is a component that creates a {@link discover.component:datasetSelect} to select a dataset to explore.
@@ -44,20 +46,35 @@ const classBlockHeaderComponent = {
     controller: classBlockHeaderComponentCtrl
 };
 
-classBlockHeaderComponentCtrl.$inject = ['discoverStateService', 'exploreService', 'exploreUtilsService', 'utilService', 'modalService'];
+classBlockHeaderComponentCtrl.$inject = ['discoverStateService', 'exploreService', 'exploreUtilsService', 'utilService', 'modalService', 'prefixes', 'policyEnforcementService'];
 
-function classBlockHeaderComponentCtrl(discoverStateService, exploreService, exploreUtilsService, utilService, modalService) {
-    var dvm = this;
-    var es = exploreService;
-    var util = utilService;
+function classBlockHeaderComponentCtrl(discoverStateService, exploreService, exploreUtilsService, utilService, modalService, prefixes, policyEnforcementService) {
+    const dvm = this;
+    const es = exploreService;
+    const util = utilService;
+    const pep = policyEnforcementService;
     dvm.ds = discoverStateService;
     dvm.eu = exploreUtilsService;
-
+    
     dvm.showCreate = function() {
-        dvm.eu.getClasses(dvm.ds.explore.recordId)
-            .then(classes => {
-                modalService.openModal('newInstanceClassOverlay', {classes});
-            }, util.createErrorToast);
+        const pepRequest = {
+            resourceId: dvm.ds.explore.recordId,
+            actionId: prefixes.catalog + 'Modify'
+        };
+        pep.evaluateRequest(pepRequest)
+            .then(response => {
+                const canEdit = response !== pep.deny;
+                if (canEdit) {
+                    dvm.eu.getClasses(dvm.ds.explore.recordId)
+                        .then(classes => {
+                            modalService.openModal('newInstanceClassOverlay', {classes});
+                        }, util.createErrorToast);
+                } else {
+                    util.createErrorToast('You don\'t have permission to modify dataset');
+                }
+            }, () => {
+                util.createWarningToast('Could not retrieve record permissions');
+            });
     }
     dvm.onSelect = function(value) {
         dvm.ds.explore.recordId = value;
@@ -66,12 +83,30 @@ function classBlockHeaderComponentCtrl(discoverStateService, exploreService, exp
         }
     }
     dvm.refresh = function() {
-        es.getClassDetails(dvm.ds.explore.recordId)
-            .then(details => {
-                dvm.ds.explore.classDetails = details;
-            }, errorMessage => {
-                dvm.ds.explore.classDetails = [];
-                util.createErrorToast(errorMessage);
+        const pepRequest = {
+            resourceId: dvm.ds.explore.recordId,
+            actionId: prefixes.policy + 'Read'
+        };
+        pep.evaluateRequest(pepRequest)
+            .then(response => {
+                const canRead = response !== pep.deny;
+                if (canRead) {
+                    dvm.ds.explore.hasPermissionError = false;
+                    es.getClassDetails(dvm.ds.explore.recordId)
+                        .then(details => {
+                            dvm.ds.explore.classDetails = details;
+                        }, errorMessage => {
+                            dvm.ds.explore.classDetails = [];
+                            util.createErrorToast(errorMessage);
+                        });
+                } else {
+                    util.createErrorToast('You don\'t have permission to read dataset');
+                    dvm.ds.explore.recordId = '';
+                    dvm.ds.explore.breadcrumbs = ['Classes'];
+                    dvm.ds.explore.hasPermissionError = true;
+                }
+            }, () => {
+                util.createWarningToast('Could not retrieve record permissions');
             });
     }
 }

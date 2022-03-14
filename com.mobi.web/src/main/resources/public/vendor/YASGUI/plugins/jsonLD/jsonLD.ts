@@ -95,7 +95,6 @@ export default class JsonLD implements Plugin<PlugingConfig> {
 
         codemirrorOpts['mode'] = contentType,
         this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);``
-       
     }
 
     download() {
