@@ -36,6 +36,8 @@ module.exports = {
     'quotes': ['warn', 'single'],
     // enforces spacing between keys and values in object literal properties
     'key-spacing': ['warn', { beforeColon: false, afterColon: true }],
+    // reports comments that include TO-DO or FIX-ME
+    'no-warning-comments': [1, { 'terms': ['todo', 'fixme'], 'location': 'anywhere' }],
     // enforce consistent spacing before and after keywords (keyword-spacing)
     'keyword-spacing': ['warn', {
       before: true,
