@@ -3662,6 +3662,129 @@ public class OntologyRest {
     }
 
     /**
+     * Retrieves the results of the provided SPARQL query, which targets a specific ontology, and its import closures.
+     * Accepts SELECT and CONSTRUCT queries.
+     *
+     * @param context     Context of the request.
+     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
+     *      if the query is a CONSTRUCT
+     */
+    @GET
+    @Path("{recordId}/group-query")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "ontologies",
+            summary = "Retrieves the SPARQL query results of an ontology, "
+                    + "and its import closures in the requested format",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "SPARQL 1.1 results in JSON format if the query is a "
+                                    + "SELECT or the JSONLD serialization of the results if the query is a CONSTRUCT"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response groupQueryOntology(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "SPARQL Query to perform against ontology", required = true)
+            @QueryParam("query") String queryString,
+            @Parameter(description = "The limit of results that is set within the query", required = false)
+            @DefaultValue("500") @QueryParam("limit") String queryLimit,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
+        checkStringParam(queryString, "Parameter 'query' must be set.");
+
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+
+            ObjectNode results = mapper.createObjectNode();
+            int queryLimitNum = Integer.parseInt(queryLimit);
+            int currentNodes = 0;
+
+            Optional<ObjectNode> baseResults = handleGroupedQuery(ontology, queryString.concat(" limit " + queryLimit));
+            if (baseResults.isPresent()) {
+                currentNodes = currentNodes + baseResults.get().findValue("bindings").size();
+                results.putPOJO(ontology.getOntologyId().getOntologyIRI().get().toString(), baseResults.get());
+            }
+
+            if (currentNodes < queryLimitNum) {
+                Set<Ontology> onlyImports = OntologyUtils.getImportedOntologies(ontology);
+                for (Ontology importedOntology : onlyImports) {
+                    if (currentNodes < queryLimitNum) {
+                        Optional<ObjectNode> importedResults = handleGroupedQuery(importedOntology,
+                                queryString.concat("limit " + (queryLimitNum - currentNodes)));
+                        if (importedResults.isPresent()) {
+                            currentNodes = currentNodes + importedResults.get().findValue("bindings").size();
+                            results.putPOJO(importedOntology.getOntologyId().getOntologyIRI().get().toString(),
+                                    importedResults.get());
+                        }
+                    } else {
+                        break;
+                    }
+                }
+            }
+            if (results.size() > 0) {
+                return Response.ok(results.toString(), MediaType.APPLICATION_JSON_TYPE).build();
+            } else { return Response.noContent().build(); }
+        } catch (MalformedQueryException | NumberFormatException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private Optional<ObjectNode> handleGroupedQuery(Ontology ontology, String queryString) {
+        ParsedOperation parsedOperation = QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
+        if (parsedOperation instanceof ParsedQuery) {
+            if (parsedOperation instanceof ParsedTupleQuery) {
+                TupleQueryResult tupResults = ontology.getTupleQueryResults(queryString, false);
+                if (tupResults != null && tupResults.hasNext()) {
+                    Optional<ObjectNode> json = Optional.of(JSONQueryResults.getResponse(tupResults));
+                    return json;
+                } else {
+                    return Optional.empty();
+                }
+            } else if (parsedOperation instanceof ParsedGraphQuery) {
+                Model graphQueryResults = ontology.getGraphQueryResults(queryString, false, modelFactory);
+                if (graphQueryResults != null && !graphQueryResults.isEmpty()) {
+                    ObjectNode constructResults = mapper.createObjectNode();
+                    ArrayNode stringResults = mapper.createArrayNode();
+                    for (Object statement: graphQueryResults.toArray()) {
+                        stringResults.add(statement.toString());
+                    }
+                    constructResults.put("bindings", stringResults);
+                    return Optional.of(constructResults);
+                } else {
+                    return Optional.empty();
+                }
+            } else {
+                throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Retrieves the triples for a specified entity including all of is transitively attached Blank Nodes.
      *
      * @param context        Context of the request.

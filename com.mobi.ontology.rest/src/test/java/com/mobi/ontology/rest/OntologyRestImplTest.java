@@ -836,6 +836,31 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(queryResults.replaceAll("\\r\\n?", "\n"), constructJsonLd);
     }
 
+    private void assertGroupedSelectQuery(JSONObject queryResults) {
+        JSONObject ontologyResult = queryResults.optJSONObject("http://mobi.com/ontology-id");
+        assertNotNull(ontologyResult);
+        JSONObject head = ontologyResult.optJSONObject("head");
+        assertNotNull(head);
+        JSONArray vars = head.optJSONArray("vars");
+        assertNotNull(vars);
+        assertEquals(vars.size(), 1);
+        JSONObject results = ontologyResult.optJSONObject("results");
+        assertNotNull(results);
+        JSONArray bindings = results.optJSONArray("bindings");
+        assertNotNull(bindings);
+        assertEquals(bindings.size(), 1);
+    }
+
+    private void assertGroupedConstructQuery(JSONObject queryResults) {
+        String expectedResult = "[\"(urn:test, urn:prop, test)\"]";
+        JSONObject ontologyResult = queryResults.optJSONObject("http://mobi.com/ontology-id");
+        assertNotNull(ontologyResult);
+        JSONArray bindings = ontologyResult.optJSONArray("bindings");
+        assertNotNull(bindings);
+        assertEquals(bindings.size(), 1);
+        assertEquals(bindings.toString(), expectedResult);
+    }
+
     private void assertEntityNames(Response response, boolean fromNode, Set<String> keys) throws Exception {
         Map<String, EntityNames> expectedValues = objectMapper.readValue(
                 getResourceString("/getOntologyStuffData/entityNames-results.json"),
@@ -5989,6 +6014,164 @@ public class OntologyRestImplTest extends MobiRestTestNg {
             printModel("Actual Results", results);
             fail(e.getMessage(), e);
         }
+    }
+
+    // Test grouped query
+
+    @Test
+    public void testGroupedQueryOntologyWithSelect() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/group-query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query + " limit 500", false);
+        assertGroupedSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testGroupedQueryOntologyWithEmptySelect() {
+        // Setup:
+        String query = "select * { ?s ?p ?o }";
+        when(ontology.getTupleQueryResults(query, true)).thenAnswer(i -> new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/group-query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 204);
+        verify(ontology).getTupleQueryResults(query + " limit 500", false);
+    }
+
+    @Test
+    public void testGroupedQueryOntologyWithConstruct() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/group-query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResults(query + " limit 500", false, mf);
+        assertGroupedConstructQuery(getResponse(response));
+    }
+
+    @Test
+    public void testGroupedQueryOntologyWithEmptyConstruct() {
+        mockGraphQueryResultStream(constructJsonLd);
+        // Setup:
+        String query = "construct where { ?s <urn:test> ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/group-query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getGraphQueryResults(query + " limit 500", false, mf);
+        assertGroupedConstructQuery(getResponse(response));
+    }
+
+    @Test
+    public void testGroupedQueryOntologyMissingQuery() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/group-query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testGroupedQueryOntologyWithUnsupportedType() {
+        String query = "ask where { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/group-query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testGroupedQueryOntologyWithMalformedQuery() {
+        // Setup:
+        String query = "select 0-2q3u { ?s ?p ?o }";
+        doThrow(new MalformedQueryException()).when(ontology).getTupleQueryResults(query, true);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/group-query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testGroupedQueryOntologyMissingBranchId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/group-query")
+                .queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query + " limit 500", false);
+        assertGroupedSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testGroupedQueryOntologyMissingCommitId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/group-query")
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query + " limit 500", false);
+        assertGroupedSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testGroupedQueryOntologyMissingBranchIdAndCommitId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/group-query")
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getTupleQueryResults(query + " limit 500", false);
+        assertGroupedSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testGroupedQueryOntologyWhenRetrieveOntologyIsEmpty() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+        String query = "select * { ?s ?p ?o }";
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/group-query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().accept("application/json").get();
+
+        assertEquals(response.getStatus(), 400);
     }
 
     // Test getEntityNames

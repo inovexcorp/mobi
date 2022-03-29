@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -23,23 +23,10 @@
 /* Core variables */
 @import "../../../css/variables";
 
-.shapes-graph-details {
-    padding-bottom: 15px;
-
-    .entity-name {
-        font-size: 18px;
-        word-break: break-word;
-    }
-
-    .type-wrapper {
-        margin: 0;
-
-        .type-label {
-            padding-right: 3px;
-        }
-
-        .types {
-            font-size: .85em;
-        }
+.class-select {
+    md-progress-circular {
+      display: inline !important;
+      float: left;
+      margin-right: 0.5rem !important;
     }
 }

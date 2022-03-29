@@ -22,41 +22,68 @@
  */
 import {
     mockOntologyManager,
+    mockMapperState,
+    mockUtil,
+    mockPrefixes,
     injectHighlightFilter,
     injectTrustedFilter,
     injectSplitIRIFilter
 } from '../../../../../../test/js/Shared';
 
 describe('Class Select component', function() {
-    var $compile, scope, ontologyManagerSvc, splitIRI;
+    let $compile, scope, $q, ontologyManagerSvc, mapperStateSvc, utilSvc, prefixes, splitIRI;
+
+    const returnedClasses = [
+            {id: {value: 'class1'}, label: {value: 'class1'}, description: {value: 'description1'}, deprecated: {value: false}},
+            {id: {value: 'class2'}, label: {value: 'class2'}, description: {value: 'description2'}, deprecated: {value: false}},
+            {id: {value: 'class3'}, label: {value: 'class3'}, description: {value: 'description3'}, deprecated: {value: true}}
+        ]
 
     beforeEach(function() {
         angular.mock.module('mapper');
         mockOntologyManager();
+        mockMapperState();
+        mockUtil();
+        mockPrefixes();
         injectHighlightFilter();
         injectTrustedFilter();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mapperStateService_, _utilService_, _prefixes_, _splitIRIFilter_, _$q_) {
             $compile = _$compile_;
+            $q = _$q_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
+            mapperStateSvc = _mapperStateService_;
+            utilSvc = _utilService_;
+            prefixes = _prefixes_;
             splitIRI = _splitIRIFilter_;
         });
 
-        scope.classes = [];
+        let commitObj = {};
+        commitObj[prefixes.delim + 'sourceCommit'] = [{'@id': 'sourceCommit'}];
+        mapperStateSvc.mapping = {
+            name: '',
+            ontology: {'@id': 'https://www.example.com'},
+            jsonld: [commitObj]
+        };
+
         scope.selectedClass = undefined;
         scope.isDisabledWhen = false;
         scope.changeEvent = jasmine.createSpy('changeEvent');
-        this.element = $compile(angular.element('<class-select classes="classes" selected-class="selectedClass" change-event="changeEvent(value)" is-disabled-when="isDisabledWhen"></class-select>'))(scope);
+        this.element = $compile(angular.element('<class-select selected-class="selectedClass" change-event="changeEvent(value)" is-disabled-when="isDisabledWhen"></class-select>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('classSelect');
     });
 
     afterEach(function() {
         $compile = null;
+        $q = null;
         scope = null;
         ontologyManagerSvc = null;
+        mapperStateSvc = null;
+        utilSvc = null;
+        prefixes = null;
         splitIRI = null;
         this.element.remove();
     });
@@ -66,11 +93,6 @@ describe('Class Select component', function() {
             this.controller.selectedClass = {};
             scope.$digest();
             expect(scope.selectedClass).toBeUndefined();
-        });
-        it('classes should be one way bound', function() {
-            this.controller.classes = [{}];
-            scope.$digest();
-            expect(scope.classes).not.toEqual([{}]);
         });
         it('isDisabledWhen should be one way bound', function() {
             this.controller.isDisabledWhen = true;
@@ -93,78 +115,59 @@ describe('Class Select component', function() {
         });
         describe('should set the class list for the select', function() {
             beforeEach(function() {
-                this.ontologyId = 'ontologyId';
-                ontologyManagerSvc.isDeprecated.and.returnValue(false);
-                ontologyManagerSvc.getEntityName.and.callFake(obj => obj['@id']);
+                this.ontologyId = 'https://www.example.com';
+                ontologyManagerSvc.retrieveClasses.and.returnValue($q.when({'https://www.example.com': {'results': {'bindings': returnedClasses}}}));
                 spyOn(this.controller, 'getOntologyId').and.returnValue(this.ontologyId);
             });
-            describe('if search text is provided', function() {
-                it('if there are less than 100 classes', function() {
-                    this.controller.classes = [{classObj: {'@id': 'class3'}}, {classObj: {'@id': 'class1'}}, {classObj: {'@id': 'class20'}}, {classObj: {'@id': 'class2'}}];
-                    this.controller.setClasses('2');
-                    expect(this.controller.selectClasses).toEqual([
-                        {
-                            classObj: {'@id': 'class2'},
-                            name: 'class2',
-                            isDeprecated: false,
-                            groupHeader: this.ontologyId
-                        },
-                        {
-                            classObj: {'@id': 'class20'},
-                            name: 'class20',
-                            isDeprecated: false,
-                            groupHeader: this.ontologyId
-                        }
-                    ]);
-                });
-                it('if there are more than 100 classes', function() {
-                    this.controller.classes = _.reverse(_.map(_.range(1, 201), num => ({classObj: {'@id': 'class' + num}})));
-                    this.controller.setClasses('1');
-                    expect(this.controller.selectClasses.length).toEqual(100);
-                    expect(this.controller.selectClasses[0].name).toEqual('class1');
-                    _.forEach(this.controller.selectClasses, clazz => {
-                        expect(clazz.name).toEqual(clazz.classObj['@id']);
-                        expect(clazz.isDeprecated).toEqual(false);
-                        expect(clazz.groupHeader).toEqual(this.ontologyId);
-                    });
-                });
+            it('if search text is provided', function() {
+                this.controller.setClasses('test');
+                scope.$apply();
+                expect(ontologyManagerSvc.retrieveClasses).toHaveBeenCalledWith(this.ontologyId, '', 'sourceCommit', '100', 'test', 'class-dropdown');
+                expect(this.controller.selectClasses).toEqual([
+                    {
+                        classObj: {'@id': 'class1', '@type': 'http://www/w3/org/2002/07/owl#Class', 'description': 'description1', 'name': 'class1'},
+                        ontologyId: this.ontologyId,
+                        isDeprecated: false,
+                        groupHeader: this.ontologyId
+                    },
+                    {
+                        classObj: {'@id': 'class2', '@type': 'http://www/w3/org/2002/07/owl#Class', 'description': 'description2', 'name': 'class2'},
+                        ontologyId: this.ontologyId,
+                        isDeprecated: false,
+                        groupHeader: this.ontologyId
+                    },
+                    {
+                        classObj: {'@id': 'class3', '@type': 'http://www/w3/org/2002/07/owl#Class', 'description': 'description3', 'name': 'class3'},
+                        ontologyId: this.ontologyId,
+                        isDeprecated: true,
+                        groupHeader: this.ontologyId
+                    }
+                ]);
             });
-            describe('if no search text is provided', function() {
-                it('if there are less than 100 classes', function() {
-                    this.controller.classes = [{classObj: {'@id': 'class3'}}, {classObj: {'@id': 'class1'}}, {classObj: {'@id': 'class2'}}];
-                    this.controller.setClasses();
-                    expect(this.controller.selectClasses).toEqual([
-                        {
-                            classObj: {'@id': 'class1'},
-                            name: 'class1',
-                            isDeprecated: false,
-                            groupHeader: this.ontologyId
-                        },
-                        {
-                            classObj: {'@id': 'class2'},
-                            name: 'class2',
-                            isDeprecated: false,
-                            groupHeader: this.ontologyId
-                        },
-                        {
-                            classObj: {'@id': 'class3'},
-                            name: 'class3',
-                            isDeprecated: false,
-                            groupHeader: this.ontologyId
-                        }
-                    ]);
-                });
-                it('if there are more than 100 classes', function() {
-                    this.controller.classes = _.reverse(_.map(_.range(1, 151), num => ({classObj: {'@id': 'class' + num}})));
-                    this.controller.setClasses();
-                    expect(this.controller.selectClasses.length).toEqual(100);
-                    expect(this.controller.selectClasses[0].name).toEqual('class1');
-                    _.forEach(this.controller.selectClasses, clazz => {
-                        expect(clazz.name).toEqual(clazz.classObj['@id']);
-                        expect(clazz.isDeprecated).toEqual(false);
-                        expect(clazz.groupHeader).toEqual(this.ontologyId);
-                    });
-                });
+            it('if no search text is provided', function() {
+                this.controller.setClasses('');
+                scope.$apply();
+                expect(ontologyManagerSvc.retrieveClasses).toHaveBeenCalledWith(this.ontologyId, '', 'sourceCommit', '100', '', 'class-dropdown');
+                expect(this.controller.selectClasses).toEqual([
+                    {
+                        classObj: {'@id': 'class1', '@type': 'http://www/w3/org/2002/07/owl#Class', 'description': 'description1', 'name': 'class1'},
+                        ontologyId: this.ontologyId,
+                        isDeprecated: false,
+                        groupHeader: this.ontologyId
+                    },
+                    {
+                        classObj: {'@id': 'class2', '@type': 'http://www/w3/org/2002/07/owl#Class', 'description': 'description2', 'name': 'class2'},
+                        ontologyId: this.ontologyId,
+                        isDeprecated: false,
+                        groupHeader: this.ontologyId
+                    },
+                    {
+                        classObj: {'@id': 'class3', '@type': 'http://www/w3/org/2002/07/owl#Class', 'description': 'description3', 'name': 'class3'},
+                        ontologyId: this.ontologyId,
+                        isDeprecated: true,
+                        groupHeader: this.ontologyId
+                    }
+                ]);
             });
         });
     });

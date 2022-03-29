@@ -23,13 +23,19 @@
 <div class="class-select">
     <ui-select ng-model="dvm.selectedClass" on-select="dvm.changeEvent({value: dvm.selectedClass})" ng-disabled="dvm.isDisabledWhen" autofocus>
         <ui-select-match placeholder="Select a class">
-            <span ng-if="$select.selected" title="{{$select.selected.classObj['@id']}}">{{$select.selected.name}}</span>
+            <span ng-if="$select.selected"
+                  title="{{$select.selected.classObj['@id']}}">{{$select.selected.classObj.name}}</span>
         </ui-select-match>
-        <ui-select-choices refresh="dvm.setClasses($select.search)" refresh-delay="300" group-by="'groupHeader'" repeat="clazz in dvm.selectClasses track by clazz.classObj['@id']" ui-disable-choice="clazz.isDeprecated">
+        <ui-select-choices refresh="dvm.setClasses($select.search)" refresh-delay="500" group-by="'groupHeader'"
+                           repeat="clazz in dvm.selectClasses track by clazz.classObj['@id']" ui-disable-choice="clazz.isDeprecated">
             <div title="{{clazz.classObj['@id']}}">
-                <span ng-bind-html="clazz.name | highlight:$select.search | trusted"></span>
+                <span ng-bind-html="clazz.classObj.name | highlight:$select.search | trusted"></span>
                 <span class="text-muted" ng-if="clazz.isDeprecated">(Deprecated)</span>
             </div>
         </ui-select-choices>
     </ui-select>
+    <div ng-if="dvm.isPending" class="importing-indicator pt-2">
+        <md-progress-circular ng-if="dvm.isPending" md-diameter="20"></md-progress-circular>
+        <span class="text-muted">Retrieving Classes</span>
+    </div>
 </div>

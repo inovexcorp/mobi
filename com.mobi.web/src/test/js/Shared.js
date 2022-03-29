@@ -249,6 +249,7 @@ export function mockOntologyManager() {
             this.getClassPropertyIRIs = jasmine.createSpy('getClassPropertyIRIs').and.returnValue([]);
             this.getClassProperty = jasmine.createSpy('getClassProperty').and.returnValue({});
             this.getOntologyClasses = jasmine.createSpy('getOntologyClasses').and.returnValue($q.when([]));
+            this.retrieveClasses = jasmine.createSpy('retrieveClasses').and.returnValue({});
 
             this.getOntologyById = jasmine.createSpy('getOntologyById').and.returnValue([]);
             this.isObjectProperty = jasmine.createSpy('isObjectProperty');

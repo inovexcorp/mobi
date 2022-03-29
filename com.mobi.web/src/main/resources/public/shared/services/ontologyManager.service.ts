@@ -968,6 +968,49 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     self.getClasses = function(ontologies) {
         return collectThings(ontologies, entity => self.isClass(entity) && !self.isBlankNode(entity));
     };
+
+    /**
+     * @ngdoc method
+     * @name retrieveClasses
+     * @methodOf shared.service:ontologyManagerService
+     *
+     * @description
+     * GET /mobirest/ontologies/{recordId}/group-query endpoint to retrieve the first 100 class Entities of
+     * the ontology and the corresponding imports closure. Supports a search text to filter on entity labels.
+     *
+     * @param String recordId The identifier of the ontology you want to retrieve classes from
+     * @param String searchText User given search text to filter classes on
+     * @returns {Object[]} An array of the first 100 owl:Class entities within the ontologies that match the search
+     * text.
+     */
+    self.retrieveClasses = function(recordId:string, branchId:string, commitId:string, limit:String = '',
+                                    searchText:string = '', id:string = '') {
+
+        let query = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
+            "PREFIX dcterms: <http://purl.org/dc/terms/>\n" +
+            "PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>\n" +
+            "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n" +
+            "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
+            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+            "SELECT ?id ?label ?description ?deprecated WHERE {\n" +
+            "\t?id a owl:Class ;\n" +
+            "  \tOptional { ?id rdfs:label | dcterms:title | dc:title | skos:prefLabel | skos:altlabel | skosxl:literalForm ?label. }\n" +
+            "    Optional { ?id owl:deprecated ?deprecated. }\n" +
+            "    Optional { ?id dcterms:description | dc:description ?description. }\n" +
+            "  Filter (!isBlank(?id))\n" +
+            "  Filter (contains(lcase(str(?id)), lcase(\"searchText\")) || contains(lcase(str(?label)), lcase(\"searchText\")))\n" +
+            "} OrderBy(?label)"
+
+        if (searchText) { query = query.replace(/searchText/g, searchText) }
+        else { query = query.replace('  Filter (contains(lcase(str(?id)), lcase(\"searchText\")) || contains(lcase(str(?label)), lcase(\"searchText\")))\n', '') }
+
+        const config = { params: { query, branchId, commitId, limit } };
+        const url = prefix + '/' + encodeURIComponent(recordId) + '/group-query';
+        const promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        return promise.then(response => response.data, util.rejectError);
+    };
+
     /**
      * @ngdoc method
      * @name getClassIRIs

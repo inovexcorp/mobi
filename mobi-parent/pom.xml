@@ -599,6 +599,7 @@
                 <artifactId>license-maven-plugin</artifactId>
                 <version>1.20</version>
                 <configuration>
+                    <canUpdateCopyright>true</canUpdateCopyright>
                     <verbose>false</verbose>
                     <addSvnKeyWords>true</addSvnKeyWords>
                     <excludedGroups>com.mobi</excludedGroups>

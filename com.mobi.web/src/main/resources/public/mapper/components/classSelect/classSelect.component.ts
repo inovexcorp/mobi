@@ -20,9 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { filter, includes, map, forEach } from 'lodash';
 
+import './classSelect.component.scss';
 const template = require('./classSelect.component.html');
 
 /**
@@ -49,36 +48,72 @@ const classSelectComponent = {
     bindings: {
         selectedClass: '<',
         changeEvent: '&',
-        classes: '<',
         isDisabledWhen: '<',
     },
     controllerAs: 'dvm',
     controller: classSelectComponentCtrl
 };
 
-classSelectComponentCtrl.$inject = ['$filter', 'ontologyManagerService'];
+classSelectComponentCtrl.$inject = ['$filter', 'ontologyManagerService', 'mapperStateService', 'utilService', 'prefixes'];
 
-function classSelectComponentCtrl($filter, ontologyManagerService) {
-    var dvm = this;
-    var om = ontologyManagerService;
+function classSelectComponentCtrl($filter, ontologyManagerService, mapperStateService, utilService, prefixes) {
+    const dvm = this;
+    const om = ontologyManagerService;
+    const ms = mapperStateService;
+    dvm.recordId = '';
+    dvm.sourceCommit = '';
     dvm.selectClasses = [];
+    dvm.currentText = null;
+    dvm.isPending = false;
 
     dvm.getOntologyId = function(clazz) {
         return clazz.ontologyId || $filter('splitIRI')(clazz.classObj['@id']).begin;
     }
     dvm.setClasses = function(searchText) {
-        var tempClasses = angular.copy(dvm.classes);
-        forEach(tempClasses, clazz => {
-            clazz.name = om.getEntityName(clazz.classObj);
-        });
-        if (searchText) {
-            tempClasses = filter(tempClasses, clazz => includes(clazz.name.toLowerCase(), searchText.toLowerCase()));
+        dvm.recordId = ms.mapping.ontology['@id'];
+        dvm.sourceCommit = ms.mapping.jsonld[0][prefixes.delim + 'sourceCommit'][0]['@id'];
+
+        if (searchText !== dvm.currentText) {
+            dvm.isPending = true;
+            dvm.selectClasses = [];
+            dvm.currentText = searchText;
+
+            if (searchText) {
+                om.retrieveClasses(dvm.recordId, '', dvm.sourceCommit, '100', searchText, 'class-dropdown')
+                    .then(response => {
+                        for(const [key, value] of Object.entries(response)) {
+                            processClasses(key, value);
+                        }
+                        dvm.isPending = false;
+                    }, () => dvm.isPending = false);
+            } else {
+                om.retrieveClasses(dvm.recordId, '', dvm.sourceCommit, '100', '', 'class-dropdown')
+                    .then(response => {
+                        for(const [key, value] of Object.entries(response)) {
+                            processClasses(key, value);
+                        }
+                        dvm.isPending = false;
+                    }, () => dvm.isPending = false);
+            }
         }
-        tempClasses.sort((clazz1, clazz2) => clazz1.name.localeCompare(clazz2.name));
-        dvm.selectClasses = map(tempClasses.slice(0, 100), clazz => {
-            clazz.isDeprecated = om.isDeprecated(clazz.classObj);
-            clazz.groupHeader = dvm.getOntologyId(clazz);
-            return clazz;
+    }
+
+    function processClasses(ontology, classList) {
+        const classObjects = classList.results?.bindings
+        classObjects.forEach(classItem => {
+            let proposedClass = {
+                ontologyId: ontology,
+                classObj: {}
+            }
+
+            proposedClass['groupHeader'] = dvm.getOntologyId(proposedClass);
+            proposedClass['isDeprecated'] = classItem.deprecated ? classItem.deprecated.value : false;
+            proposedClass.classObj['@id'] = classItem.id.value;
+            proposedClass.classObj['@type'] = 'http://www/w3/org/2002/07/owl#Class';
+            proposedClass.classObj['name'] = classItem.label ? classItem.label.value : utilService.getBeautifulIRI(classItem.id.value);
+            proposedClass.classObj['description'] = classItem.description ? classItem.description.value : undefined;
+
+            dvm.selectClasses.push(proposedClass);
         });
     }
 }
