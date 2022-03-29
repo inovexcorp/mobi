@@ -28,7 +28,7 @@
     <form name="dvm.form">
         <div class="form-group">
             <custom-label>Class</custom-label>
-            <class-select classes="dvm.state.availableClasses" selected-class="dvm.selectedClass" change-event="dvm.selectedClass = value"></class-select>
+            <class-select selected-class="dvm.selectedClass" change-event="dvm.selectedClass = value"></class-select>
         </div>
         <class-preview ng-if="dvm.selectedClass" class-obj="dvm.selectedClass.classObj" ontologies="dvm.state.sourceOntologies"></class-preview>
     </form>

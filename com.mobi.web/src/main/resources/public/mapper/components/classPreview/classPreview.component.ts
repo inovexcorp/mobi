@@ -54,7 +54,7 @@ const classPreviewComponent = {
 classPreviewComponentCtrl.$inject = ['mapperStateService', 'ontologyManagerService'];
 
 function classPreviewComponentCtrl(mapperStateService, ontologyManagerService) {
-    var dvm = this;
+    const dvm = this;
     dvm.om = ontologyManagerService;
     dvm.state = mapperStateService;
     dvm.name = '';
@@ -64,9 +64,10 @@ function classPreviewComponentCtrl(mapperStateService, ontologyManagerService) {
 
     dvm.$onChanges = function(changesObj) {
         if (has(changesObj, 'classObj')) {
-            dvm.name = dvm.om.getEntityName(changesObj.classObj.currentValue);
-            dvm.description = dvm.om.getEntityDescription(changesObj.classObj.currentValue) || '(None Specified)';
-            var props = dvm.state.getClassProps(dvm.ontologies, changesObj.classObj.currentValue['@id']);
+            const obj = changesObj.classObj.currentValue;
+            dvm.name = obj.name ? obj.name : dvm.om.getEntityName(obj);
+            dvm.description = obj.description ? obj.description : dvm.om.getEntityDescription(obj) || '(None Specified)';
+            let props = dvm.state.getClassProps(dvm.ontologies, obj['@id']);
             if (!isEqual(changesObj.classObj.currentValue, changesObj.classObj.previousValue)) {
                 dvm.total = props.length;
                 dvm.props = map(props.slice(0, 10), originalProp => {

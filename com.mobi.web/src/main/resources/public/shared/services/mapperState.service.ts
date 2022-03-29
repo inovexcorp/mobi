@@ -59,8 +59,8 @@ mapperStateService.$inject = ['$q', 'prefixes', 'mappingManagerService', 'ontolo
  * state of the mapping tool page and utility functions to update those variables.
  */
 function mapperStateService($q, prefixes, mappingManagerService, ontologyManagerService, catalogManagerService, delimitedManagerService, utilService) {
-    var self = this;
-    var mm = mappingManagerService,
+    const self = this;
+    const mm = mappingManagerService,
         cm = catalogManagerService,
         om = ontologyManagerService,
         dm = delimitedManagerService,
@@ -696,10 +696,10 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * @return {Object} The ClassMapping JSON-LD that was added
      */
     self.addClassMapping = function(classIdObj) {
-        var ontology = find(self.sourceOntologies, {id: classIdObj.ontologyId});
-        var originalClassMappings = mm.getClassMappingsByClassId(self.mapping.jsonld, classIdObj.classObj['@id']);
-        var classMapping = mm.addClass(self.mapping.jsonld, ontology.entities, classIdObj.classObj['@id']);
-        var className = om.getEntityName(classIdObj.classObj);
+        const ontology = find(self.sourceOntologies, {id: classIdObj.ontologyId});
+        const originalClassMappings = mm.getClassMappingsByClassId(self.mapping.jsonld, classIdObj.classObj['@id']);
+        let classMapping = mm.addClass(self.mapping.jsonld, ontology.entities, classIdObj.classObj['@id']);
+        const className = classIdObj.classObj.name ? classIdObj.classObj.name : om.getEntityName(classIdObj.classObj);
         if (!originalClassMappings.length) {
             util.setDctermsValue(classMapping, 'title', className);
         } else {
