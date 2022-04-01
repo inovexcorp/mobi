@@ -38,18 +38,28 @@ import com.mobi.rdf.orm.Thing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @Component(immediate = true)
 public class SimpleEngineManager implements EngineManager {
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
-
-    protected Map<String, Engine> engines = new HashMap<>();
+    protected Map<String, Engine> engines = new TreeMap<>((e1, e2) -> {
+        if (e1.equals(e2)) {
+            return 0;
+        }
+        if (e1.equals(RdfEngine.ENGINE_NAME)) {
+            return 1;
+        } else if (e2.equals(RdfEngine.ENGINE_NAME)) {
+            return -1;
+        } else {
+            return e1.compareTo(e2);
+        }
+    });
 
     @Reference(type = '*', dynamic = true)
     public void addEngine(Engine engine) {
