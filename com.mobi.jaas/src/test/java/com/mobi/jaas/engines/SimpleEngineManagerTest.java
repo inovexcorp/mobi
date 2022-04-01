@@ -64,6 +64,7 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
     private static final String ERROR = "error";
     private static final String ERROR_STR = "http://example.com/error";
     private static final IRI ERROR_IRI = VALUE_FACTORY.createIRI(ERROR_STR);
+    private static final String ENGINE_NAME = "TestEngine";
 
     @Mock
     Engine engine;
@@ -93,6 +94,7 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
+        when(engine.getEngineName()).thenReturn(ENGINE_NAME);
         when(engine.getRole(anyString())).thenReturn(Optional.of(role));
         when(engine.getRole(ERROR)).thenReturn(Optional.empty());
         when(engine.getUsers()).thenReturn(Collections.singleton(user));
@@ -436,7 +438,6 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
 
         boolean result = engineManager.checkPassword(USERNAME, "password");
         verify(engine).checkPassword(USERNAME, "password");
-        verify(secondEngine, times(0)).checkPassword(USERNAME, "password");
         assertTrue(result);
     }
 

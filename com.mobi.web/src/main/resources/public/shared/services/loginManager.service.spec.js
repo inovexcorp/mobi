@@ -36,6 +36,7 @@ import {
     mockStateManager,
     mockUserManager,
     mockUserState,
+    mockUtil,
     mockYasguiService,
     injectRestPathConstant,
     flushAndVerify,
@@ -45,7 +46,7 @@ import {
 describe('Login Manager service', function() {
     var loginManagerSvc, $httpBackend, state, scope, $q, catalogManagerSvc, catalogStateSvc, datasetManagerSvc,
         datasetStateSvc, delimitedManagerSvc, discoverStateSvc, mapperStateSvc, mergeRequestsStateSvc, ontologyManagerSvc,
-        ontologyStateSvc, shapesGraphStateSvc, sparqlManagerSvc, stateManagerSvc, userManagerSvc, userStateSvc, yasguiSvc;
+        ontologyStateSvc, shapesGraphStateSvc, sparqlManagerSvc, stateManagerSvc, userManagerSvc, userStateSvc, utilSvc, yasguiSvc;
 
 
     beforeEach(function() {
@@ -65,6 +66,7 @@ describe('Login Manager service', function() {
         mockStateManager();
         mockUserManager();
         mockUserState();
+        mockUtil();
         mockYasguiService();
         injectRestPathConstant();
         
@@ -78,7 +80,7 @@ describe('Login Manager service', function() {
                         _catalogStateService_, _datasetManagerService_, _datasetStateService_, _delimitedManagerService_,
                         _discoverStateService_, _mapperStateService_, _mergeRequestsStateService_, _ontologyManagerService_,
                         _ontologyStateService_, _sparqlManagerService_, _stateManagerService_, _userManagerService_, _shapesGraphStateService_,
-                         _userStateService_,_yasguiService_) {
+                         _userStateService_, _utilService_, _yasguiService_) {
             loginManagerSvc = loginManagerService;
             $httpBackend = _$httpBackend_;
             state = _$state_;
@@ -99,6 +101,7 @@ describe('Login Manager service', function() {
             stateManagerSvc = _stateManagerService_;
             userManagerSvc = _userManagerService_;
             userStateSvc = _userStateService_;
+            utilSvc = _utilService_;
             yasguiSvc = _yasguiService_;
         });
     });
@@ -124,6 +127,7 @@ describe('Login Manager service', function() {
         stateManagerSvc = null;
         userManagerSvc = null;
         userStateSvc = null;
+        utilSvc = null;
         yasguiSvc = null;
     });
 

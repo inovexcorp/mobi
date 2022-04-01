@@ -29,6 +29,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.principals.UserPrincipal;
 import com.mobi.jaas.api.token.TokenManager;
+import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.MobiWebException;
 import com.mobi.rest.util.RestUtils;
@@ -117,7 +118,7 @@ public class AuthRest {
         } else {
             log.debug("No username found in request headers. Generating unauthenticated token.");
             SignedJWT signedToken = tokenManager.generateUnauthToken();
-            return createResponse(signedToken, null);
+            return createResponse(signedToken, null, false);
         }
     }
 
@@ -158,6 +159,7 @@ public class AuthRest {
         }
 
         UserCredentials userCreds = userCredsOptional.get();
+        boolean localUserExists = engineManager.userExists(RdfEngine.ENGINE_NAME, userCreds.getUsername());
         log.debug("Attempting to login in as " + username);
         if (authenticated(userCreds.getUsername(), userCreds.getPassword())) {
             User user = engineManager.retrieveUser(userCreds.getUsername()).orElseThrow(() ->
@@ -165,7 +167,11 @@ public class AuthRest {
             SignedJWT token = tokenManager.generateAuthToken(user.getUsername()
                     .orElseThrow(() -> new IllegalStateException("User must have username")).stringValue());
             log.debug("Authentication successful.");
-            return createResponse(token, userCreds.getUsername());
+            boolean accountsMerged = false;
+            if (localUserExists) {
+                accountsMerged = !engineManager.userExists(RdfEngine.ENGINE_NAME, userCreds.getUsername());
+            }
+            return createResponse(token, userCreds.getUsername(), accountsMerged);
         }
         log.debug("Authentication failed.");
         return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -190,16 +196,16 @@ public class AuthRest {
     public Response logout() {
         log.debug("Requested logout. Generating unauthenticated token.");
         SignedJWT unauthToken = tokenManager.generateUnauthToken();
-        return createResponse(unauthToken, null);
+        return createResponse(unauthToken, null, false);
     }
 
-    private Response createResponse(SignedJWT token, String username) {
+    private Response createResponse(SignedJWT token, String username, boolean accountsMerged) {
         log.debug("Setting token in response.");
         Response.ResponseBuilder builder;
         if (username != null) {
-            builder = Response.ok(username);
+            builder = Response.ok(username).header("accounts-merged", accountsMerged);
         } else {
-            builder = Response.ok();
+            builder = Response.ok().header("accounts-merged", accountsMerged);
         }
         return builder.cookie(tokenManager.createSecureTokenNewCookie(token)).build();
     }

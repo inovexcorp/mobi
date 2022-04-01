@@ -1,3 +1,5 @@
+import { get } from "lodash";
+
 /*-
  * #%L
  * com.mobi.web
@@ -37,6 +39,7 @@ loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
     'stateManagerService',
     'userManagerService',
     'userStateService',
+    'utilService',
     'yasguiService'
 ];
 
@@ -66,7 +69,7 @@ loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
  * `loginManagerService` is a service that provides access to the Mobi login REST
  * endpoints so users can log into and out of Mobi.
  */
-function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, shapesGraphStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService, yasguiService) {
+function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, shapesGraphStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService, utilService, yasguiService) {
     var self = this,
         prefix = REST_PREFIX + 'session';
     
@@ -114,6 +117,9 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
             .then(response => {
                 if (response.status === 200 && response.data) {
                     self.currentUser = response.data;
+                    if (get(response.headers(), 'accounts-merged', false) === 'true') {
+                        utilService.createWarningToast('Local User Account found. Accounts have been merged.');
+                    }
                     return userManagerService.getUser(self.currentUser)
                         .then(user => {
                             self.currentUserIRI = user.iri;
