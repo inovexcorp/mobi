@@ -905,6 +905,7 @@ export function mockLoginManager() {
             this.logout = jasmine.createSpy('logout');
             this.isAuthenticated = jasmine.createSpy('isAuthenticated').and.returnValue($q.when());
             this.getCurrentLogin = jasmine.createSpy('getCurrentLogin').and.returnValue($q.when());
+            this.checkMergedAccounts = jasmine.createSpy('getCurrentLogin').and.returnValue(false);
         });
     });
 }

@@ -218,6 +218,10 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
                     datasetManagerService.initialize()
                 ]);
             }
+            if (self.checkMergedAccounts()) {
+                utilService.createWarningToast('Local User Account found. Accounts have been merged.');
+            }
+
             return $q.all(promises);
         }, $q.reject)
         .then(() => {
@@ -250,6 +254,31 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
 
         return deferred.promise;
     };
+
+    /**
+     * @ngdoc method
+     * @name loginManager.loginManagerService#checkMergedAccount
+     * @methodOf shared.service:loginManagerService
+     *
+     * @description
+     * Takes the current url of the window and parses the string for path params that are preceded by a question mark.
+     * If a path param for the merged-account flag is present it returns the value of the flag. If the flag is not
+     * present, it returns false.
+     *
+     * @return {boolean} A boolean value repesenting whether a local account and a remote account were merged or not.
+     */
+    self.checkMergedAccounts = function() {
+        const url = window.location.href;
+        let merged = false;
+        let queryParams = url.split('?');
+        queryParams.forEach(param => {
+            if (param && param.includes('merged-accounts')) {
+                merged = param.split('=')[1] === 'true' ? true : false;
+                return;
+            }
+        });
+        return merged;
+    }
 }
 
 export default loginManagerService;
