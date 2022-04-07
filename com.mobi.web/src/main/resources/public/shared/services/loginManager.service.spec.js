@@ -260,6 +260,7 @@ describe('Login Manager service', function() {
     describe('should correctly test authentication', function() {
         it('unless an error happened', function() {
             spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.reject(""));
+            spyOn(loginManagerSvc, 'checkMergedAccounts').and.returnValue(false);
             loginManagerSvc.isAuthenticated()
                 .then(response => {
                     expect(response).toBeUndefined();
@@ -270,9 +271,11 @@ describe('Login Manager service', function() {
             expect(loginManagerSvc.currentUser).toBe('');
             expect(loginManagerSvc.currentUserIRI).toBe('');
             expect(state.go).toHaveBeenCalledWith('login');
+            expect(loginManagerSvc.checkMergedAccounts).not.toHaveBeenCalled();
         });
         it('unless no one is logged in', function() {
             spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.resolve(""));
+            spyOn(loginManagerSvc, 'checkMergedAccounts').and.returnValue(false);
             loginManagerSvc.isAuthenticated()
                 .then(() => {
                     expect(response).toBeUndefined();
@@ -283,6 +286,7 @@ describe('Login Manager service', function() {
             expect(loginManagerSvc.currentUser).toBe('');
             expect(loginManagerSvc.currentUserIRI).toBe('');
             expect(state.go).toHaveBeenCalledWith('login');
+            expect(loginManagerSvc.checkMergedAccounts).not.toHaveBeenCalled();
         });
         describe('if a user is logged in', function() {
             beforeEach(function() {
@@ -291,6 +295,7 @@ describe('Login Manager service', function() {
                     username: 'user'
                 };
                 spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.resolve('user'));
+                spyOn(loginManagerSvc, 'checkMergedAccounts').and.returnValue(false);
                 userManagerSvc.getUser.and.returnValue($q.when(this.user));
             });
             it('and this is the first time the method is called', function() {
@@ -312,6 +317,7 @@ describe('Login Manager service', function() {
                 expect(stateManagerSvc.initialize).toHaveBeenCalled();
                 expect(datasetManagerSvc.initialize).toHaveBeenCalled();
                 expect(state.go).not.toHaveBeenCalled();
+                expect(loginManagerSvc.checkMergedAccounts).toHaveBeenCalled();
             });
             it('and this is not the first time the method is called', function() {
                 loginManagerSvc.weGood = true;
@@ -332,6 +338,7 @@ describe('Login Manager service', function() {
                 expect(stateManagerSvc.initialize).toHaveBeenCalled();
                 expect(datasetManagerSvc.initialize).not.toHaveBeenCalled();
                 expect(state.go).not.toHaveBeenCalled();
+                expect(loginManagerSvc.checkMergedAccounts).toHaveBeenCalled();
             });
         });
     });
