@@ -240,7 +240,7 @@ This can be any valid RDF format, such a Turtle.
                                     <ontologyName>Setting</ontologyName>
                                 </ontology>
                             </references>
-                            <outputLocation>${project.basedir}/src/main/java</outputLocation>
+                            <outputLocation>${project.basedir}/target/generated-sources</outputLocation>
                         </configuration>
                     </execution>
                 </executions>

@@ -132,7 +132,7 @@
                                     <ontologyName>Documents</ontologyName>
                                 </ontology>
                             </generates>
-                            <outputLocation>${project.basedir}/src/main/java</outputLocation>
+                            <outputLocation>${project.basedir}/target/generated-sources</outputLocation>
                         </configuration>
                     </execution>
                 </executions>
