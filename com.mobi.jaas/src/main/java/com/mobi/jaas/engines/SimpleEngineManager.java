@@ -88,9 +88,13 @@ public class SimpleEngineManager implements EngineManager {
     public Optional<Role> getRole(String roleName) {
         for (Engine engine : engines.values()) {
             log.debug("Getting roles with " + engine.getEngineName());
-            Optional<Role> optional = engine.getRole(roleName);
-            if (optional.isPresent()) {
-                return optional;
+            try {
+                Optional<Role> optional = engine.getRole(roleName);
+                if (optional.isPresent()) {
+                    return optional;
+                }
+            } catch(Exception e) {
+                log.debug("Error getting roles for engine " + engine.getEngineName(), e);
             }
         }
         return Optional.empty();
@@ -109,8 +113,12 @@ public class SimpleEngineManager implements EngineManager {
     public Set<User> getUsers() {
         Set<User> users = new HashSet<>();
         for (Engine engine : engines.values()) {
-            log.debug("Getting users with " + engine.getEngineName());
-            users.addAll(engine.getUsers());
+            try {
+                log.debug("Getting users with " + engine.getEngineName());
+                users.addAll(engine.getUsers());
+            } catch(Exception e) {
+                log.debug("Error getting users for engine " + engine.getEngineName(), e);
+            }
         }
         return users;
     }
@@ -145,9 +153,13 @@ public class SimpleEngineManager implements EngineManager {
     public Optional<User> retrieveUser(String username) {
         for (Engine engine : engines.values()) {
             log.debug("Retrieving user with " + engine.getEngineName());
-            Optional<User> optional = engine.retrieveUser(username);
-            if (optional.isPresent()) {
-                return optional;
+            try{
+                Optional<User> optional = engine.retrieveUser(username);
+                if (optional.isPresent()) {
+                    return optional;
+                }
+            } catch(Exception e) {
+                log.debug("Error retrieving user for engine " + engine.getEngineName(), e);
             }
         }
         return Optional.empty();
@@ -173,8 +185,12 @@ public class SimpleEngineManager implements EngineManager {
     public void updateUser(User newUser) {
         Engine foundEngine = null;
         for (Engine engine : engines.values()) {
-            if (engine.userExists(newUser.getResource())) {
-                foundEngine = engine;
+            try {
+                if (engine.userExists(newUser.getResource())) {
+                    foundEngine = engine;
+                }
+            } catch(Exception e) {
+                log.debug("Error updating user for engine " + engine.getEngineName(), e);
             }
         }
         if (foundEngine != null) {
@@ -193,8 +209,12 @@ public class SimpleEngineManager implements EngineManager {
     public boolean userExists(String username) {
         for (Engine engine : engines.values()) {
             log.debug("Checking user exists with " + engine.getEngineName());
-            if (engine.userExists(username)) {
-                return true;
+            try {
+                if (engine.userExists(username)) {
+                    return true;
+                }
+            } catch(Exception e) {
+                log.debug("Error checking if user exists for engine " + engine.getEngineName(), e);
             }
         }
         return false;
@@ -214,7 +234,11 @@ public class SimpleEngineManager implements EngineManager {
         Set<Group> groups = new HashSet<>();
         for (Engine engine : engines.values()) {
             log.debug("Getting groups with " + engine.getEngineName());
-            groups.addAll(engine.getGroups());
+            try {
+                groups.addAll(engine.getGroups());
+            } catch(Exception e) {
+                log.debug("Error getting groups for engine " + engine.getEngineName(), e);
+            }
         }
         return groups;
     }
@@ -249,9 +273,13 @@ public class SimpleEngineManager implements EngineManager {
     public Optional<Group> retrieveGroup(String groupTitle) {
         for (Engine engine : engines.values()) {
             log.debug("Retrieving group with " + engine.getEngineName());
-            Optional<Group> optional = engine.retrieveGroup(groupTitle);
-            if (optional.isPresent()) {
-                return optional;
+            try {
+                Optional<Group> optional = engine.retrieveGroup(groupTitle);
+                if (optional.isPresent()) {
+                    return optional;
+                }
+            } catch(Exception e) {
+                log.debug("Error retrieving group for engine " + engine.getEngineName(), e);
             }
         }
         return Optional.empty();
@@ -277,8 +305,12 @@ public class SimpleEngineManager implements EngineManager {
     public void updateGroup(Group newGroup) {
         Engine foundEngine = null;
         for (Engine engine : engines.values()) {
-            if (engine.groupExists(newGroup.getResource())) {
-                foundEngine = engine;
+            try {
+                if (engine.groupExists(newGroup.getResource())) {
+                    foundEngine = engine;
+                }
+            } catch(Exception e) {
+                log.debug("Error for engine " + engine.getEngineName(), e);
             }
         }
         if (foundEngine != null) {
@@ -297,8 +329,12 @@ public class SimpleEngineManager implements EngineManager {
     public boolean groupExists(String groupTitle) {
         for (Engine engine : engines.values()) {
             log.debug("Checking group exists with " + engine.getEngineName());
-            if (engine.groupExists(groupTitle)) {
-                return true;
+            try {
+                if (engine.groupExists(groupTitle)) {
+                    return true;
+                }
+            } catch(Exception e) {
+                log.debug("Error checking if group exist for engine " + engine.getEngineName(), e);
             }
         }
         return false;
@@ -318,12 +354,16 @@ public class SimpleEngineManager implements EngineManager {
         Set<Role> roles = new HashSet<>();
         for (Engine engine : engines.values()) {
             log.debug("Checking user roles with " + engine.getEngineName());
-            if (engine.userExists(username)) {
-                engine.getUserRoles(username).stream()
-                        .filter(role -> !roles.stream()
-                                .map(Thing::getResource)
-                                .collect(Collectors.toSet()).contains(role.getResource()))
-                        .forEach(roles::add);
+            try {
+                if (engine.userExists(username)) {
+                    engine.getUserRoles(username).stream()
+                            .filter(role -> !roles.stream()
+                                    .map(Thing::getResource)
+                                    .collect(Collectors.toSet()).contains(role.getResource()))
+                            .forEach(roles::add);
+                }
+            } catch(Exception e) {
+                log.debug("Error getting User Roles for engine " + engine.getEngineName(), e);
             }
         }
         return roles;
@@ -339,8 +379,12 @@ public class SimpleEngineManager implements EngineManager {
     public boolean checkPassword(String username, String password) {
         for (Engine engine : engines.values()) {
             log.debug("Checking password with " + engine.getEngineName());
-            if (engine.checkPassword(username, password)) {
-                return true;
+            try {
+                if (engine.checkPassword(username, password)) {
+                    return true;
+                }
+            } catch(Exception e) {
+                log.debug("Error checking password for engine " + engine.getEngineName(), e);
             }
         }
         return false;
