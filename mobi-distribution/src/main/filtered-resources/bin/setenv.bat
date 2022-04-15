@@ -44,11 +44,12 @@ rem Minimum memory for the JVM
 SET JAVA_MIN_MEM=512M
 rem Maximum memory for the JVM
 SET JAVA_MAX_MEM=1024M
-rem Minimum perm memory for the JVM
-rem SET JAVA_PERM_MEM
-rem Maximum perm memory for the JVM
-rem SET JAVA_MAX_PERM_MEM
+rem Generic JVM options (for instance, where you can provide memory configuration)
+rem SET JAVA_OPTS
+SET JAVA_OPTS=-Xms%JAVA_MIN_MEM% -Xmx%JAVA_MAX_MEM%
 rem Additional JVM options
+rem SET JAVA_NON_DEBUG_OPTS
+rem Additional non-debug JVM options
 rem SET EXTRA_JAVA_OPTS
 SET EXTRA_JAVA_OPTS=-Xss4m -Dfile.encoding=UTF-8
 rem Karaf home folder
@@ -59,8 +60,9 @@ rem Karaf base folder
 rem SET KARAF_BASE
 rem Karaf etc folder
 rem SET KARAF_ETC
+rem First citizen Karaf options
+rem SET KARAF_SYSTEM_OPTS
 rem Additional available Karaf options
 rem SET KARAF_OPTS
 rem Enable debug mode
 rem SET KARAF_DEBUG
-
