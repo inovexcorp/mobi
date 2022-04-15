@@ -38,15 +38,17 @@
 # export JAVA_HOME # Location of Java installation
 export JAVA_MIN_MEM=512M # Minimum memory for the JVM
 export JAVA_MAX_MEM=1024M # Maximum memory for the JVM
-# export JAVA_PERM_MEM # Minimum perm memory for the JVM
-# export JAVA_MAX_PERM_MEM # Maximum perm memory for the JVM
-# export EXTRA_JAVA_OPTS # Additional JVM options
+export JAVA_OPTS="-Xms${JAVA_MIN_MEM} -Xmx${JAVA_MAX_MEM}" # Generic JVM options, for instance, where you can pass the memory configuration
+# export JAVA_NON_DEBUG_OPTS # Additional non-debug JVM options
 export EXTRA_JAVA_OPTS="-Xss4m -Dfile.encoding=UTF-8"
 # export KARAF_HOME # Karaf home folder
 # export KARAF_DATA # Karaf data folder
 # export KARAF_BASE # Karaf base folder
 # export KARAF_ETC  # Karaf etc  folder
+# export KARAF_LOG  # Karaf log  folder
+# export KARAF_SYSTEM_OPTS # First citizen Karaf options
 # export KARAF_OPTS # Additional available Karaf options
 # export KARAF_DEBUG # Enable debug mode
 # export KARAF_REDIRECT # Enable/set the std/err redirection when using bin/start
+# export KARAF_NOROOT # Prevent execution as root if set to true
 
