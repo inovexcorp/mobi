@@ -111,6 +111,19 @@ function queryTabComponentCtrl($element, yasguiService, discoverStateService, sp
                     dvm.util.createWarningToast('Could not retrieve record permissions');
                     dvm.ds.query.submitDisabled = true;
                 });
+        } else {
+            const pepRequest = createPepReadRequest('http://mobi.com/system-repo');
+            dvm.pep.evaluateRequest(pepRequest)
+                .then(response => {
+                    const canRead = response !== dvm.pep.deny;
+                    if (!canRead) {
+                        dvm.util.createErrorToast('You don\'t have access to system repo');
+                        dvm.ds.query.submitDisabled = true;
+                    }
+                }, () => {
+                    dvm.util.createWarningToast('Could not retrieve system repo permissions');
+                    dvm.ds.query.submitDisabled = true;
+                });
         }
     }
     

@@ -137,5 +137,19 @@ describe('Query Tab component', function() {
             expect(discoverStateService.query.submitDisabled).toEqual(false);
             expect(this.controller.util.createErrorToast).not.toHaveBeenCalled();
         });
+        it('permissionCheck is called with system-repo url false', function() {
+            discoverStateService.query.submitDisabled = false;
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
+            this.controller.permissionCheck('http://mobi.com/system-repo');
+            scope.$digest();
+            expect(discoverStateService.query.submitDisabled).toEqual(false);
+        });
+        it('permissionCheck is called with system-repo url true', function() {
+            discoverStateService.query.submitDisabled = false;
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
+            this.controller.permissionCheck('http://mobi.com/system-repo');
+            scope.$digest();
+            expect(discoverStateService.query.submitDisabled).toEqual(true);
+        });
     });
 });
