@@ -23,10 +23,12 @@ package com.mobi.jaas.api.engines;
  * #L%
  */
 
+import com.mobi.jaas.api.ontologies.usermanagement.ExternalUser;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.orm.OrmFactory;
 
 import java.util.Optional;
 import java.util.Set;
@@ -309,4 +311,20 @@ public interface EngineManager {
      *      {@link Optional#empty()} otherwise
      */
     Optional<String> getUsername(Resource userIri);
+
+    /**
+     * Merge an existing {@link User} into a new user of type T where T extends {@link ExternalUser}
+     * @param externalUser The new external user that will get merged into
+     * @param existingUser The existing user that will be merged into the external user
+     * @return The resulting merged user
+     */
+    <T extends ExternalUser> T mergeUser(T externalUser, User existingUser);
+
+    /**
+     * Find the factory associated with the passed in User type.
+     *
+     * @param user The user to find the factory for
+     * @return The factory associated with the passed in User type.
+     */
+    OrmFactory<? extends ExternalUser> getSpecificExternalUserFactory(User user);
 }

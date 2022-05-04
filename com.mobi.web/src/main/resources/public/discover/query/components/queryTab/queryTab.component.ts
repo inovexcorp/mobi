@@ -117,7 +117,7 @@ function queryTabComponentCtrl($element, yasguiService, discoverStateService, sp
                 .then(response => {
                     const canRead = response !== dvm.pep.deny;
                     if (!canRead) {
-                        dvm.util.createErrorToast('You don\'t have access to system repo');
+                        dvm.util.createErrorToast('You don\'t have access to query system repo');
                         dvm.ds.query.submitDisabled = true;
                     }
                 }, () => {
