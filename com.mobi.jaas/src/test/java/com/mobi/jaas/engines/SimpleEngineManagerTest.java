@@ -32,6 +32,8 @@ import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,18 +41,29 @@ import static org.mockito.Mockito.when;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.GroupConfig;
 import com.mobi.jaas.api.engines.UserConfig;
+import com.mobi.jaas.api.ontologies.usermanagement.ExternalUser;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
+import com.mobi.jaas.api.ontologies.usermanagement.RoleFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.orm.AbstractOrmFactory;
+import com.mobi.rdf.orm.OrmException;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -90,6 +103,50 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
     @Mock
     GroupConfig groupConfig;
 
+    @Mock
+    Repository repository;
+
+    @Mock
+    RepositoryConnection repositoryConnection;
+
+    @Mock
+    RoleFactory roleFactory;
+
+    OrmFactory<ExternalUser> externalUserOrmFactory = getRequiredOrmFactory(ExternalUser.class);
+
+    @Mock
+    OrmFactoryRegistry factoryRegistry;
+
+    private interface AUser extends ExternalUser {
+        String TYPE = "http://example.com/A";
+    }
+
+    static abstract class AUserImpl implements AUser {}
+
+    private abstract class AUserFactory extends AbstractOrmFactory<AUser> {
+
+        /**
+         * Construct a new instance of an {@link AbstractOrmFactory}.
+         * Implementations will call this constructor.
+         *
+         * @param type The type we're building
+         * @param impl The implementation under the covers
+         * @throws OrmException If there is an issue constructing our {@link OrmFactory}
+         *                      instance
+         */
+        public AUserFactory(Class<AUser> type, Class<? extends AUser> impl) throws OrmException {
+            super(type, impl);
+        }
+    }
+
+    @Mock
+    private OrmFactory<AUser> aUserFactory;
+
+
+
+    @Mock
+    private AUser aUser;
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -114,9 +171,20 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
         when(engine.getUserRoles(anyString())).thenReturn(Collections.singleton(role));
         when(engine.checkPassword(anyString(), anyString())).thenReturn(true);
         when(engine.checkPassword(eq(ERROR), anyString())).thenReturn(false);
+        when(repository.getConnection()).thenReturn(repositoryConnection);
 
         when(user.getResource()).thenReturn(USER_IRI);
         when(user.getUsername()).thenReturn(Optional.of(VALUE_FACTORY.createLiteral(USERNAME)));
+        Model model = MODEL_FACTORY.createModel();
+        model.add(user.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(User.TYPE));
+        when(user.getModel()).thenReturn(model);
+
+        when(aUserFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(AUser.TYPE));
+        when(aUserFactory.getType()).thenReturn(AUser.class);
+        doReturn(AUserImpl.class).when(aUserFactory).getImpl();
+        when(aUserFactory.getParentTypeIRIs()).thenReturn(Collections.emptySet());
+
+        when(factoryRegistry.getSortedFactoriesOfType(ExternalUser.class)).thenReturn(Arrays.asList(aUserFactory));
 
         when(errorUser.getResource()).thenReturn(ERROR_IRI);
 
@@ -124,6 +192,12 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
 
         engineManager = new SimpleEngineManager();
         engineManager.addEngine(engine);
+        engineManager.setModelFactory(MODEL_FACTORY);
+        engineManager.setValueFactory(VALUE_FACTORY);
+        engineManager.setRepository(repository);
+        engineManager.setRoleFactory(roleFactory);
+        engineManager.setOrmFactoryRegistry(factoryRegistry);
+        engineManager.start();
     }
 
     @Test
@@ -449,5 +523,29 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
 
         result = engineManager.getUsername(ERROR_IRI);
         assertFalse(result.isPresent());
+    }
+
+    @Test
+    public void testGetSpecificExternalUserFactory() {
+        user.getModel().add(user.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
+                VALUE_FACTORY.createIRI(AUser.TYPE));
+        assertEquals(aUserFactory, engineManager.getSpecificExternalUserFactory(user));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetSpecificExternalUserFactoryIllegalUser() {
+        engineManager.getSpecificExternalUserFactory(user);
+    }
+
+    @Test
+    public void testMergeUser() {
+        ExternalUser externalUser = externalUserOrmFactory.createNew(VALUE_FACTORY.createIRI("urn:newIRI"));
+        externalUser.getModel().add(user.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
+                VALUE_FACTORY.createIRI(AUser.TYPE));
+        SimpleEngineManager spyManager = spy(engineManager);
+        doReturn(externalUserOrmFactory).when(spyManager).getSpecificExternalUserFactory(externalUser);
+        User resultingUser = spyManager.mergeUser(externalUser, user);
+        assertEquals(user.getResource(), resultingUser.getResource());
+        verify(repositoryConnection).remove(eq(user.getResource()), eq(null), eq(null), eq(VALUE_FACTORY.createIRI("http://mobi.com/usermanagement")));
     }
 }

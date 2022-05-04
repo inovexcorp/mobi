@@ -23,22 +23,35 @@ package com.mobi.jaas.engines;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.engines.GroupConfig;
 import com.mobi.jaas.api.engines.UserConfig;
+import com.mobi.jaas.api.ontologies.usermanagement.ExternalUser;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
+import com.mobi.jaas.api.ontologies.usermanagement.RoleFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.persistence.utils.Statements;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -48,6 +61,12 @@ import java.util.stream.Collectors;
 @Component(immediate = true)
 public class SimpleEngineManager implements EngineManager {
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
+    private OrmFactoryRegistry factoryRegistry;
+    private ValueFactory valueFactory;
+    private Repository repository;
+    private RoleFactory roleFactory;
+    private ModelFactory modelFactory;
+    private Resource context;
     protected Map<String, Engine> engines = new TreeMap<>((e1, e2) -> {
         if (e1.equals(e2)) {
             return 0;
@@ -73,6 +92,26 @@ public class SimpleEngineManager implements EngineManager {
     @Override
     public boolean containsEngine(String engine) {
         return engines.containsKey(engine);
+    }
+
+    @Reference
+    public void setOrmFactoryRegistry(OrmFactoryRegistry factoryRegistry) { this.factoryRegistry = factoryRegistry; }
+
+    @Reference
+    public void setValueFactory(ValueFactory valueFactory) { this.valueFactory = valueFactory; }
+
+    @Reference
+    public void setModelFactory(ModelFactory modelFactory) { this.modelFactory = modelFactory; }
+
+    @Reference
+    public void setRoleFactory(RoleFactory roleFactory) { this.roleFactory = roleFactory; }
+
+    @Reference(target = "(id=system)")
+    public void setRepository(Repository repository) { this.repository = repository; }
+
+    @Activate
+    void start() {
+        context = valueFactory.createIRI("http://mobi.com/usermanagement");
     }
 
     @Override
@@ -398,5 +437,62 @@ public class SimpleEngineManager implements EngineManager {
             }
         }
         return Optional.empty();
+    }
+
+    @Override
+    public <T extends ExternalUser> T mergeUser(T externalUser, User existingUser) {
+        OrmFactory<? extends ExternalUser> factory = getSpecificExternalUserFactory(externalUser);
+        Model newUserWithExistingIRI = modelFactory.createModel();
+        for (Statement statement : externalUser.getModel()) {
+            newUserWithExistingIRI.add(existingUser.getResource(), statement.getPredicate(), statement.getObject());
+        }
+
+        Optional<? extends ExternalUser> newUserOpt = factory.getExisting(existingUser.getResource(), newUserWithExistingIRI);
+        T newExternalUser = (T) newUserOpt.get();
+        // Combine Roles
+        for(Resource role: existingUser.getHasUserRole_resource()){
+            Role currentRole = roleFactory.createNew(role);
+            newExternalUser.addHasUserRole(currentRole);
+        }
+
+        try (RepositoryConnection conn = repository.getConnection()) {
+            // Remove existingUser since it will be replaced with newExternalUser
+            conn.remove(existingUser.getResource(), null, null, context);
+            conn.add(newExternalUser.getModel(), context);
+        }
+        return newExternalUser;
+    }
+
+    /** TODO: Make a more generic method and move it to the OrmFactoryRegistry **/
+    @Override
+    public OrmFactory<? extends ExternalUser> getSpecificExternalUserFactory(User user) {
+        List<Resource> types = user.getModel().filter(user.getResource(),
+                        valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null)
+                .stream()
+                .map(Statements::objectResource)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
+        List<OrmFactory<? extends ExternalUser>> orderedFactories = factoryRegistry.getSortedFactoriesOfType(ExternalUser.class)
+                .stream()
+                .filter(ormFactory -> {
+                    try {
+                        return !ormFactory.getTypeIRI().stringValue().equals(ExternalUser.class.getDeclaredField("TYPE")
+                                .get(null).toString());
+                    } catch (Exception e) {
+                        throw new IllegalStateException("Cannot retrieve type from " + ExternalUser.class.getName());
+                    }
+                })
+                .filter(ormFactory -> {
+                    return types.contains(ormFactory.getTypeIRI());
+                })
+                .collect(Collectors.toList());
+
+        if (orderedFactories.size() == 0) {
+            throw new IllegalArgumentException("User type is not a subclass of ExternalUser");
+        }
+
+        return orderedFactories.get(0);
     }
 }
