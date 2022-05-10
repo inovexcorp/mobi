@@ -103,7 +103,8 @@ public class DatasetRestIT extends KarafTestSupport {
                     KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port.secure", httpsPort),
                     KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
                             Paths.get(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg").toURI()).toFile()),
-                    KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false")
+                    KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false"),
+                    CoreOptions.vmOptions("-Dcom.sun.xml.bind.v2.runtime.reflect.opt.OptimizedAccessorFactory.noOptimization=true")
             ));
             return OptionUtils.combine(super.config(), options.toArray(new Option[0]));
         } catch (Exception e) {
