@@ -30,6 +30,7 @@ var Onto1TrigZip = process.cwd()+ '/src/test/resources/rdf_files/test-local-impo
 var Onto2 = process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-2.ttl'
 var Onto3 = process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-3.ttl'
 var Onto4 = process.cwd()+ '/src/test/resources/rdf_files/unresolvableImport.owl' // OWL Files Processed Differently
+var Onto5 = process.cwd()+ '/src/test/resources/rdf_files/test-class-empty-label.ttl' // Class has empty string for label
 
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
@@ -39,7 +40,7 @@ module.exports = {
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
-        browser.globals.upload_ontologies(browser, Onto1, Onto2, Onto3, Onto4)
+        browser.globals.upload_ontologies(browser, Onto1, Onto2, Onto3, Onto4, Onto5)
     },
 
     'Step 3: Upload Corrupt Ontologies' : function (browser) {
@@ -86,7 +87,7 @@ module.exports = {
            .keys(browser.Keys.ENTER)
    },
 
-    'Step 6: Open an Ontology called “test-local-imports-1.ttl' : function (browser) {
+    'Step 6: Open an Ontology called test-local-imports-1.ttl' : function (browser) {
         browser.globals.open_ontology(browser, Onto1)
     },
 
@@ -106,5 +107,26 @@ module.exports = {
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
             .assert.attributeContains('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]//ancestor::tree-item', 'data-path-to', 'test-local-imports-2#Class2.http://mobi.com/ontology/test-local-imports-1#Class1')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3")]]'})
+    },
+
+    'Step 9: Return to ontology search page' : function (browser) {
+        browser.globals.return_to_ontology_editor_search(browser)
+    },
+
+    'Step 10: Open an Ontology called test-class-empty-label.ttl' : function (browser) {
+        browser.globals.open_ontology(browser, Onto5)
+    },
+
+    'Step 11: Click classes tab' : function (browser) {
+        browser
+            .waitForElementVisible('div.material-tabset li.nav-item')
+            .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Classes")]]')
+    },
+
+    'Step 12: Check for Ontology classes' : function (browser) {
+        browser
+            .waitForElementVisible('div.tree')
+            .useXpath()
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
     }
 }
