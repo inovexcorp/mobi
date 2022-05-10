@@ -58,6 +58,13 @@ module.exports = {
           .waitForElementVisible('div.btn-container button')
     },
 
+    'return_to_ontology_editor_search': function (browser) {
+        browser
+            .click('xpath', '//div[contains(@class, \'ontology-sidebar\')]//button[@class=\'btn btn-primary\']')
+            .waitForElementNotPresent('div.spinner')
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, \'open-ontology-tab\')]//div[contains(@class, \'search-bar\')]/input'})
+    },
+
     // TODO: Add a check to see if the ontology already exists, and if it does, either skip upload or delete and re-upload.
     'upload_ontologies': function (browser, ...args) {
       browser
@@ -94,9 +101,9 @@ module.exports = {
 
     'open_ontology': function (browser, ontology) {
       browser
-          .setValue('open-ontology-tab search-bar input', ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
+          .setValue({locateStrategy: 'xpath', selector: '//div[contains(@class, \'open-ontology-tab\')]//div[contains(@class, \'search-bar\')]/input'}, ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
           .keys(browser.Keys.ENTER)
-          .waitForElementVisible('open-ontology-tab search-bar')
+          .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, \'open-ontology-tab\')]//div[contains(@class, \'search-bar\')]'})
           .useXpath()
           .waitForElementVisible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
           .click('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')

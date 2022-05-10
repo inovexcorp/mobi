@@ -1,0 +1,9 @@
+@prefix : <http://mobi.com/ontology/test-local-imports-1#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://mobi.com/ontology/test-local-imports-1> .
+
+<http://mobi.com/ontology/test-class-empty-label> a owl:Ontology .
+
+:Class1 a owl:Class ;
+    rdfs:label "" .

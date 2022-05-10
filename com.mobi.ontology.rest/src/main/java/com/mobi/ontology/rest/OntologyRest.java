@@ -4083,15 +4083,17 @@ public class OntologyRest {
             if (bindings.getBinding(entityBinding).isPresent()) {
                 String entity = Bindings.requiredResource(bindings, entityBinding).stringValue();
                 String namesString = Bindings.requiredLiteral(bindings, namesBinding).stringValue();
-                EntityNames entityNames = new EntityNames();
+                if (!namesString.isEmpty()) {
+                    EntityNames entityNames = new EntityNames();
 
-                String[] names = StringUtils.split(namesString, NAME_SPLITTER);
-                entityNames.label = names[0];
+                    String[] names = StringUtils.split(namesString, NAME_SPLITTER);
+                    entityNames.label = names[0];
 
-                Set<String> namesSet = new HashSet<>();
-                CollectionUtils.addAll(namesSet, names);
-                entityNames.setNames(namesSet);
-                entityNamesMap.putIfAbsent(entity, entityNames);
+                    Set<String> namesSet = new HashSet<>();
+                    CollectionUtils.addAll(namesSet, names);
+                    entityNames.setNames(namesSet);
+                    entityNamesMap.putIfAbsent(entity, entityNames);
+                }
             }
         });
 

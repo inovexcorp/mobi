@@ -38,6 +38,9 @@ ont1:prop5 a owl:DatatypeProperty ;
     dcterms:title "property 5" ;
     skos-xl:prefLabel ont1:prop5Label .
 
+ont1:prop6 a owl:DatatypeProperty ;
+    rdfs:label "" .
+
 ont1:prop5Label a skos-xl:Label ;
     skos-xl:literalForm "property 5 literal form" .
 
