@@ -681,10 +681,10 @@ public class UserRest {
         try {
             User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-            Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
+            Group savedGroup = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
                     ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
             savedGroup.addMember(savedUser);
-            engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
+            engineManager.updateGroup(savedGroup);
             logger.info("Added user " + username + " to group " + groupTitle);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {

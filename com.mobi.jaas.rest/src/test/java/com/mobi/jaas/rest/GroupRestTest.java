@@ -482,10 +482,10 @@ public class GroupRestTest extends MobiRestTestNg {
         Response response = target().path("groups/testGroup/users").queryParam("user", "tester")
                 .request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
+        verify(engineManager).retrieveGroup("testGroup");
         verify(engineManager).retrieveUser("tester");
         ArgumentCaptor<Group> captor = ArgumentCaptor.forClass(Group.class);
-        verify(engineManager).updateGroup(eq(ENGINE_NAME), captor.capture());
+        verify(engineManager).updateGroup(captor.capture());
         Group updatedGroup = captor.getValue();
         assertEquals(group.getResource(), updatedGroup.getResource());
         assertEquals(0, updatedGroup.getMember_resource().size());

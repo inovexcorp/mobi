@@ -662,15 +662,15 @@ public class UserRestTest extends MobiRestTestNg {
     public void addUserGroupTest() {
         // Setup:
         Group newGroup = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/anothergroup"));
-        when(engineManager.retrieveGroup(ENGINE_NAME, "anothergroup")).thenReturn(Optional.of(newGroup));
+        when(engineManager.retrieveGroup("anothergroup")).thenReturn(Optional.of(newGroup));
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "anothergroup")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
-        verify(engineManager).retrieveGroup(ENGINE_NAME, "anothergroup");
+        verify(engineManager).retrieveGroup("anothergroup");
         ArgumentCaptor<Group> captor = ArgumentCaptor.forClass(Group.class);
-        verify(engineManager).updateGroup(eq(ENGINE_NAME), captor.capture());
+        verify(engineManager).updateGroup(captor.capture());
         Group updatedGroup = captor.getValue();
         assertEquals(newGroup.getResource(), updatedGroup.getResource());
         Set<Resource> updatedMembers = updatedGroup.getMember_resource();
