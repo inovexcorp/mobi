@@ -110,6 +110,7 @@ describe('Merge Block component', function() {
             expect(button.attr('disabled')).toBeTruthy();
 
             ontologyStateSvc.listItem.merge.target = {};
+            this.controller.commits = ['1'];
             scope.$digest();
             expect(this.element.find('commit-difference-tabset').length).toEqual(1);
             expect(button.attr('disabled')).toBeFalsy();

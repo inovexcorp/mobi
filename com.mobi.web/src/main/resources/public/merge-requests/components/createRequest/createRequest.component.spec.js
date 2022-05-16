@@ -24,11 +24,12 @@ import {
     mockComponent,
     mockMergeRequestsState,
     mockMergeRequestManager,
-    mockUtil
+    mockUtil,
+    mockPrefixes
 } from '../../../../../../test/js/Shared';
 
 describe('Create Request component', function() {
-    var $compile, scope, $q, mergeRequestsStateSvc, mergeRequestManagerSvc, utilSvc;
+    var $compile, scope, $q, mergeRequestsStateSvc, mergeRequestManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         angular.mock.module('merge-requests');
@@ -38,14 +39,16 @@ describe('Create Request component', function() {
         mockMergeRequestsState();
         mockMergeRequestManager();
         mockUtil();
+        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestsStateService_, _mergeRequestManagerService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestsStateService_, _mergeRequestManagerService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             mergeRequestsStateSvc = _mergeRequestsStateService_;
             mergeRequestManagerSvc = _mergeRequestManagerService_;
             utilSvc = _utilService_;
+            prefixes = _prefixes_;
         });
 
         this.element = $compile(angular.element('<create-request></create-request>'))(scope);
@@ -169,6 +172,7 @@ describe('Create Request component', function() {
                     mergeRequestsStateSvc.requestConfig.sourceBranchId = 'branch';
                     expect(this.controller.isDisabled()).toEqual(true);
                     mergeRequestsStateSvc.requestConfig.targetBranchId = 'branch';
+                    this.controller.updateCommits(['1']);
                     expect(this.controller.isDisabled()).toEqual(false);
                 })
             });
@@ -176,6 +180,7 @@ describe('Create Request component', function() {
                 mergeRequestsStateSvc.createRequestStep = 2;
                 expect(this.controller.isDisabled()).toEqual(true);
                 mergeRequestsStateSvc.requestConfig.title = 'title';
+                this.controller.updateCommits(['1']);
                 expect(this.controller.isDisabled()).toEqual(false);
             });
         });

@@ -44,7 +44,9 @@ const template = require('./requestBranchSelect.component.html');
  */
 const requestBranchSelectComponent = {
     template,
-    bindings: {},
+    bindings: {
+        updateCommits: '&'
+    },
     controllerAs: 'dvm',
     controller: requestBranchSelectComponentCtrl
 };
@@ -61,6 +63,7 @@ function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalog
 
     dvm.state.requestConfig.difference = undefined;
     dvm.branches = [];
+    dvm.commits = [];
 
     dvm.$onInit = function() {
         dvm.state.requestConfig.entityNames = {};
@@ -124,6 +127,10 @@ function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalog
         } else {
             dvm.state.requestConfig.difference = undefined;
         }
+    }
+    dvm.receiveCommits = function(value) {
+        dvm.commits = value;
+        dvm.updateCommits({commits: dvm.commits});
     }
 }
 
