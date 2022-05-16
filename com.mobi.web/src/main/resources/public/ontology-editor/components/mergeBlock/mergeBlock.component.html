@@ -38,10 +38,11 @@
                                   [entity-name-func]="dvm.os.getEntityNameByListItem"
                                   [show-more-results-func]="dvm.retrieveMoreResults"
                                   [start-index]="dvm.os.listItem.merge.startIndex"
-                                  [record-id]="dvm.os.listItem.ontologyRecord.recordId"></commit-difference-tabset>
+                                  [record-id]="dvm.os.listItem.ontologyRecord.recordId"
+                                  (receive-commits)="dvm.commits = $event"></commit-difference-tabset>
     </div>
     <div class="btn-container pt-2">
-        <button class="btn btn-primary float-right" ng-click="dvm.submit()" ng-disabled="!dvm.os.listItem.merge.target || !dvm.os.listItem.upToDate">Submit</button>
+        <button class="btn btn-primary float-right" ng-click="dvm.submit()" ng-disabled="dvm.isDisabled() || !dvm.os.listItem.merge.target || !dvm.os.listItem.upToDate">Submit</button>
         <button class="btn float-right mr-2" ng-click="dvm.os.cancelMerge()">Cancel</button>
     </div>
 </div>

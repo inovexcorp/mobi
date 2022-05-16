@@ -252,14 +252,19 @@ module.exports = {
     'Step 24: Explore dataset mapping' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/discover"]')
+            .useXpath()
+            .waitForElementVisible('//div//ul//a[@class="nav-link"][@href="#/discover"]')
+            .click('//div//ul//a[@class="nav-link"][@href="#/discover"]')
+            .useCss()
+            .waitForElementVisible('div.ui-select-match')
             .click('div.ui-select-match')
-            .click('xpath' ,'//ul[contains(@class, "ui-select-choices")]//div[text()[contains(., "UHTC")]]')
+            .useXpath()
+            .waitForElementVisible('//ul[contains(@class, "ui-select-choices")]//div[text()[contains(., "UHTC")]]')
+            .click('//ul[contains(@class, "ui-select-choices")]//div[text()[contains(., "UHTC")]]')
     },
 
     'Step 25: Check for Material and Crystal structure cards' : function (browser) {
         browser
-            .useXpath()
             .assert.visible('//md-card//md-card-title//span[text()[contains(., "Crystal Structure")]]')
             .assert.visible('//md-card//md-card-title//span[text()[contains(., "UHTC Material")]]')
     }

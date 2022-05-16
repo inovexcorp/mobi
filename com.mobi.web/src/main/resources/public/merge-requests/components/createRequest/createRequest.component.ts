@@ -38,18 +38,21 @@ const template = require('./createRequest.component.html');
  */
 const createRequestComponent = {
     template,
-    bindings: {},
+    bindings: {
+        commits: '<'
+    },
     controllerAs: 'dvm',
     controller: createRequestComponentCtrl
 };
 
-createRequestComponentCtrl.$inject = ['mergeRequestManagerService', 'mergeRequestsStateService', 'utilService'];
+createRequestComponentCtrl.$inject = ['mergeRequestManagerService', 'mergeRequestsStateService', 'utilService', 'prefixes'];
 
-function createRequestComponentCtrl(mergeRequestManagerService, mergeRequestsStateService, utilService) {
+function createRequestComponentCtrl(mergeRequestManagerService, mergeRequestsStateService, utilService, prefixes) {
     var dvm = this;
     var util = utilService;
     var mm = mergeRequestManagerService;
     dvm.state = mergeRequestsStateService;
+    dvm.commits = [];
 
     dvm.next = function() {
         if (dvm.state.createRequestStep < 2) {
@@ -84,6 +87,10 @@ function createRequestComponentCtrl(mergeRequestManagerService, mergeRequestsSta
         }
     }
     dvm.isDisabled = function() {
+        if (dvm.state.createRequestStep > 0 && !(dvm.commits?.length > 0)) {
+            return true
+        }
+
         if (dvm.state.createRequestStep === 0) {
             return !dvm.state.requestConfig.recordId;
         } else if (dvm.state.createRequestStep === 1) {
@@ -92,6 +99,9 @@ function createRequestComponentCtrl(mergeRequestManagerService, mergeRequestsSta
         } else {
             return !dvm.state.requestConfig.title;
         }
+    }
+    dvm.updateCommits = function(commits) {
+        dvm.commits = commits;
     }
 }
 

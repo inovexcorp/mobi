@@ -98,7 +98,6 @@ function editRequestOverlayComponentCtrl(mergeRequestsStateService, mergeRequest
     dvm.cancel = function() {
         dvm.dismiss();
     }
-
     function initRequestConfig() {
         dvm.request.recordId = dvm.state.selected.recordIri;
         dvm.request.title = dvm.state.selected.title;

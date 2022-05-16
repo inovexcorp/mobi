@@ -24,7 +24,7 @@
     <block>
         <block-content>
             <request-record-select ng-if="dvm.state.createRequestStep === 0"></request-record-select>
-            <request-branch-select ng-if="dvm.state.createRequestStep === 1"></request-branch-select>
+            <request-branch-select ng-if="dvm.state.createRequestStep === 1" update-commits="dvm.updateCommits(commits)"></request-branch-select>
             <request-details-form ng-if="dvm.state.createRequestStep === 2"></request-details-form>
         </block-content>
         <block-footer>

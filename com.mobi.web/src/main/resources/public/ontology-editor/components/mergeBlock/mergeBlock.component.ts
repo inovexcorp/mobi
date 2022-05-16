@@ -62,7 +62,8 @@ function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManag
     dvm.error = '';
     dvm.branches = [];
     dvm.branchTile = '';
-    dvm.targetHeadCommitId = undefined;        
+    dvm.targetHeadCommitId = undefined;   
+    dvm.commits = [];     
 
     dvm.$onInit = function() {
         catalogId = get(cm.localCatalog, '@id', '');
@@ -107,6 +108,12 @@ function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManag
                 dvm.util.createSuccessToast('Your merge was successful.');
                 dvm.os.cancelMerge();
             }, error => dvm.error = error);
+    }
+    dvm.isDisabled = function() {
+        return !(dvm.commits.length > 0);
+    }
+    dvm.setCommits = function(value) {
+        dvm.commits = value;
     }
 }
 

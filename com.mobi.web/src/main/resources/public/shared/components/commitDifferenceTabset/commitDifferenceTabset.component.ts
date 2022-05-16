@@ -21,9 +21,10 @@
  * #L%
  */
 
-import { Component, Input } from '@angular/core';
+import { Component, Input, EventEmitter, Output } from '@angular/core';
 import { Difference } from '../../models/difference.class';
 import './commitDifferenceTabset.component.scss';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
 /**
  * @ngdoc component
@@ -57,4 +58,10 @@ export class CommitDifferenceTabsetComponent {
     @Input() entityNameFunc?: (args: any) => string;
     @Input() startIndex?: number;
     @Input() recordId?: string;
+
+    @Output() receiveCommits = new EventEmitter<JSONLDObject[]>();
+
+    emitCommits(value: JSONLDObject[]): void {
+        this.receiveCommits.emit(value);
+    }
 }

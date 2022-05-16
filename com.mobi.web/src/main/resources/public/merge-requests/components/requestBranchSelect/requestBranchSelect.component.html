@@ -47,5 +47,6 @@
                               [entity-name-func]="dvm.state.getEntityNameLabel"
                               [show-more-results-func]="dvm.state.retrieveMoreResults"
                               [start-index]="dvm.state.requestConfig.startIndex"
-                              [record-id]="dvm.state.requestConfig.recordId"></commit-difference-tabset>
+                              [record-id]="dvm.state.requestConfig.recordId"
+                              (receive-commits)="dvm.receiveCommits($event)"></commit-difference-tabset>
 </div>
