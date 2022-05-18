@@ -95,27 +95,6 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
         return record;
     }
 
-    @Override
-    protected Resource writeRecordPolicy(Resource user, Resource recordId, Resource masterBranchId) {
-        try {
-            // Record Policy
-            InputStream recordPolicyStream = AbstractShapesGraphRecordService.class
-                    .getResourceAsStream("/shapesGraphRecordPolicy.xml");
-            String encodedRecordIRI = ResourceUtils.encode(recordId);
-
-            String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING,
-                    MASTER_BRANCH_IRI_BINDING};
-            String[] replace = {user.stringValue(), recordId.stringValue(), encodedRecordIRI,
-                    masterBranchId.stringValue()};
-            String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, StandardCharsets.UTF_8),
-                    search, replace);
-
-            return addPolicy(recordPolicy);
-        } catch (IOException e) {
-            throw new MobiException("Error writing record policy.", e);
-        }
-    }
-
     /**
      * Validates and sets the shapes graph IRI to the ShaclRecord.
      *
