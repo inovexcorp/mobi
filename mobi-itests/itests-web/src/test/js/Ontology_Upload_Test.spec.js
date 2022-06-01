@@ -45,16 +45,16 @@ module.exports = {
 
     'Step 3: Upload Corrupt Ontologies' : function (browser) {
         browser
-            .setValue('input[type=file]', Onto1e)
+            .uploadFile('input[type=file]', Onto1e)
             .click('upload-ontology-overlay div.modal-footer button.btn')
             .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', Onto1s)
+            .uploadFile('input[type=file]', Onto1s)
             .click('upload-ontology-overlay div.modal-footer button.btn')
             .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', Onto1TrigZip)
+            .uploadFile('input[type=file]', Onto1TrigZip)
             .click('upload-ontology-overlay div.modal-footer button.btn')
             .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', Onto1Trig)
+            .uploadFile('input[type=file]', Onto1Trig)
     },
 
     'Step 4: Submit all ontology files' : function (browser) {

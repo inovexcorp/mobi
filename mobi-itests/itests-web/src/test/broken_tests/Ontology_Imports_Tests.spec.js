@@ -58,13 +58,13 @@ module.exports = {
 
     'Step 5: Upload an Ontology' : function (browser) {
         browser
-            .setValue('input[type=file]', Onto1)
+            .uploadFile('input[type=file]', Onto1)
             .click('upload-ontology-overlay div.modal-footer button.btn')
             .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', Onto2)
+            .uploadFile('input[type=file]', Onto2)
             .click('upload-ontology-overlay div.modal-footer button.btn')
             .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', Onto3)
+            .uploadFile('input[type=file]', Onto3)
     },
 
     'Step 6: Submit all ontology files' : function (browser) {

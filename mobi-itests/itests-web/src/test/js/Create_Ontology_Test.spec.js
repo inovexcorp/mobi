@@ -101,7 +101,7 @@ module.exports = {
         browser
             .useCss()  
             .waitForElementVisible('commit-overlay')
-            .assert.containsText('commit-overlay .modal-header h3', 'Commit')
+            .assert.textContains('commit-overlay .modal-header h3', 'Commit')
             .setValue('commit-overlay textarea[name=comment]', 'Changed IRI')
             .useXpath()
             .click('//commit-overlay//button[text()="Submit"]')
@@ -134,9 +134,11 @@ module.exports = {
     'Step 10: Ensure IRI changes are successful' : function(browser) {
         browser
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
+            .setValue('open-ontology-tab search-bar input', 'myTitle')
+            .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
             .useXpath()
-            .assert.containsText('//open-ontology-tab//small', 'MyTitlemyOntology')
-            .click('//open-ontology-tab//small[text()[contains(.,"MyTitlemyOntology")]]')
+            .assert.textContains('//open-ontology-tab//small', 'myOntology')
+            .click('//open-ontology-tab//small[text()[contains(.,"myOntology")]]')
         // wait for loading to finish
         browser
             .useCss()
@@ -151,7 +153,7 @@ module.exports = {
             .waitForElementVisible('circle-button-stack .fa-code-fork')
             .click('circle-button-stack .fa-code-fork')
             .waitForElementVisible('create-branch-overlay .modal-title')
-            .assert.containsText('create-branch-overlay .modal-title', 'Create New Branch')
+            .assert.textContains('create-branch-overlay .modal-title', 'Create New Branch')
             .waitForElementVisible('create-branch-overlay text-input[display-text="\'Title\'"] input')
             .setValue('create-branch-overlay text-input[display-text="\'Title\'"] input', "newBranchTitle")
             .waitForElementVisible('create-branch-overlay text-area[display-text="\'Description\'"] textarea')
@@ -175,11 +177,11 @@ module.exports = {
             .waitForElementVisible('circle-button-stack .fa-code-fork')
             .click('circle-button-stack .hidden-buttons .fa-plus')
             .waitForElementVisible('create-entity-modal .modal-header h3')
-            .assert.containsText('create-entity-modal .modal-header h3', 'Create Entity')
+            .assert.textContains('create-entity-modal .modal-header h3', 'Create Entity')
             .click('create-entity-modal .create-class')
             .waitForElementNotPresent('create-entity-modal .create-class')
             .waitForElementVisible('create-class-overlay .modal-header h3')
-            .assert.containsText('create-class-overlay .modal-header h3', 'Create New OWL Class')
+            .assert.textContains('create-class-overlay .modal-header h3', 'Create New OWL Class')
             .useXpath()
             .waitForElementVisible('//create-class-overlay//parent::label[text()="Name"]/parent::custom-label/following-sibling::input')
             .setValue('//create-class-overlay//parent::label[text()="Name"]/parent::custom-label/following-sibling::input', 'firstClass')
@@ -208,18 +210,18 @@ module.exports = {
             .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Changes")]]')
             .useCss()
             .waitForElementVisible('saved-changes-tab .expansion-panel p[title*="FirstClass"]')
-            .assert.containsText('saved-changes-tab .expansion-panel p[title*="FirstClass"]', 'firstClass') // Verify Title
-            .assert.containsText('saved-changes-tab .expansion-panel p[title*="FirstClass"] ~ small a', 'FirstClass') // Verify IRI
+            .assert.textContains('saved-changes-tab .expansion-panel p[title*="FirstClass"]', 'firstClass') // Verify Title
+            .assert.textContains('saved-changes-tab .expansion-panel p[title*="FirstClass"] ~ small a', 'FirstClass') // Verify IRI
             .assert.hidden('saved-changes-tab .additions')
             .click('saved-changes-tab .expansion-panel p[title*="FirstClass"]')
             .waitForElementVisible('saved-changes-tab .additions')
-            .assert.containsText('saved-changes-tab .additions', 'Added Statements')
-            .assert.containsText('saved-changes-tab .additions .statement-display div[title*="terms/description"]', "description")
-            .assert.containsText('saved-changes-tab .additions .statement-display div[title*="terms/description"] ~ div[title=firstClassDescription]', 'firstClassDescription')
-            .assert.containsText('saved-changes-tab .additions .statement-display div[title*="terms/title"]', "title")
-            .assert.containsText('saved-changes-tab .additions .statement-display div[title*="terms/title"] ~ div[title=firstClass]', 'firstClass')
-            .assert.containsText('saved-changes-tab .additions .statement-display div[title*="ns#type"]', "type")
-            .assert.containsText('saved-changes-tab .additions .statement-display div[title*="ns#type"] ~ div[title*="owl#Class"]', 'owl#Class')
+            .assert.textContains('saved-changes-tab .additions', 'Added Statements')
+            .assert.textContains('saved-changes-tab .additions .statement-display div[title*="terms/description"]', "description")
+            .assert.textContains('saved-changes-tab .additions .statement-display div[title*="terms/description"] ~ div[title=firstClassDescription]', 'firstClassDescription')
+            .assert.textContains('saved-changes-tab .additions .statement-display div[title*="terms/title"]', "title")
+            .assert.textContains('saved-changes-tab .additions .statement-display div[title*="terms/title"] ~ div[title=firstClass]', 'firstClass')
+            .assert.textContains('saved-changes-tab .additions .statement-display div[title*="ns#type"]', "type")
+            .assert.textContains('saved-changes-tab .additions .statement-display div[title*="ns#type"] ~ div[title*="owl#Class"]', 'owl#Class')
     },
 
     'Step 16: Commit Changes': function(browser) {
@@ -228,7 +230,7 @@ module.exports = {
             .waitForElementVisible('circle-button-stack .fa-git')
             .click('circle-button-stack .fa-git')
             .waitForElementVisible('commit-overlay .modal-header h3')
-            .assert.containsText('commit-overlay .modal-header h3', 'Commit')
+            .assert.textContains('commit-overlay .modal-header h3', 'Commit')
             .setValue('commit-overlay textarea[name=comment]', 'commit123')
             .useXpath()
             .click('//commit-overlay//button[text()="Submit"]')
@@ -238,9 +240,9 @@ module.exports = {
 
     'Step 17: Verify no changes are shown': function(browser) {
         browser
-            .assert.containsText('.nav-link.active span', 'Changes')
+            .assert.textContains('.nav-link.active span', 'Changes')
             .waitForElementVisible('info-message p')
-            .assert.containsText('info-message p', 'You don\'t have any uncommitted changes.')
+            .assert.textContains('info-message p', 'You don\'t have any uncommitted changes.')
             .assert.not.elementPresent('saved-changes-tab .expansion-panel')
     },
 
@@ -250,7 +252,7 @@ module.exports = {
                     .waitForElementVisible('circle-button-stack .fa-code-fork')
                     .click('circle-button-stack .hidden-buttons .fa-plus')
                     .waitForElementVisible('create-entity-modal .modal-header h3')
-                    .assert.containsText('create-entity-modal .modal-header h3', 'Create Entity')
+                    .assert.textContains('create-entity-modal .modal-header h3', 'Create Entity')
                     .click('create-entity-modal .create-data-property')
                     .waitForElementNotPresent('create-entity-modal .create-data-property')
                     .waitForElementVisible('create-data-property-overlay .modal-header h3')
@@ -267,7 +269,7 @@ module.exports = {
                     .waitForElementVisible('circle-button-stack .fa-code-fork')
                     .click('circle-button-stack .hidden-buttons .fa-plus')
                     .waitForElementVisible('create-entity-modal .modal-header h3')
-                    .assert.containsText('create-entity-modal .modal-header h3', 'Create Entity')
+                    .assert.textContains('create-entity-modal .modal-header h3', 'Create Entity')
                     .click('create-entity-modal .create-object-property')
                     .waitForElementNotPresent('create-entity-modal .create-object-property')
                     .waitForElementVisible('create-object-property-overlay .modal-header h3')
@@ -291,9 +293,9 @@ module.exports = {
             .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
             .useCss()
             .waitForElementVisible('commit-history-table .commit-message[title="The initial commit."]')
-            .assert.containsText('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
+            .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
             .waitForElementVisible('commit-history-table .commit-message[title="commit123"]')
-            .assert.containsText('commit-history-table .commit-message[title="commit123"] span', 'commit123')
+            .assert.textContains('commit-history-table .commit-message[title="commit123"] span', 'commit123')
     },
 
     'Step 21: Verify Master Branch only has initial commit': function(browser) {
@@ -309,7 +311,7 @@ module.exports = {
             .assert.visible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
             .useCss()
             .waitForElementNotPresent('commit-history-table .commit-message[title="commit123"]')
-            .assert.containsText('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
+            .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
     },
 
     'Step 22: Switch back to the other branch': function(browser) {
@@ -331,7 +333,7 @@ module.exports = {
             .waitForElementVisible('circle-button-stack .fa-random')
             .click('circle-button-stack .fa-random')
             .waitForElementVisible('.merge-message')
-            .assert.containsText('.merge-message', 'newBranchTitle')
+            .assert.textContains('.merge-message', 'newBranchTitle')
             .useXpath()
             .click('//branch-select//div[@class=\'branch-select\']//div[@class=\'mat-form-field-infix\']')
             .waitForElementVisible('//mat-option//span[text()[contains(.,"MASTER")]]')
@@ -344,16 +346,16 @@ module.exports = {
             })
             .useCss()
             .waitForElementVisible('merge-block commit-changes-display p[title*="FirstClass"]')
-            .assert.containsText('merge-block commit-changes-display p[title*="FirstClass"]', 'firstClass')
+            .assert.textContains('merge-block commit-changes-display p[title*="FirstClass"]', 'firstClass')
             .waitForElementVisible('merge-block commit-changes-display p[title*="FirstClass"] ~ small')
-            .assert.containsText('merge-block commit-changes-display p[title*="FirstClass"] ~ small', 'MyTitlemyOntology#FirstClass')
-            .assert.containsText('merge-block .additions h5', 'Added Statements')
-            .assert.containsText('merge-block .additions .statement-display div[title*="terms/description"]', "description")
-            .assert.containsText('merge-block .additions .statement-display div[title*="terms/description"] ~ div[title=firstClassDescription]', 'firstClassDescription')
-            .assert.containsText('merge-block .additions .statement-display div[title*="terms/title"]', "title")
-            .assert.containsText('merge-block .additions .statement-display div[title*="terms/title"] ~ div[title=firstClass]', 'firstClass')
-            .assert.containsText('merge-block .additions .statement-display div[title*="ns#type"]', "type")
-            .assert.containsText('merge-block .additions .statement-display div[title*="ns#type"] ~ div[title*="owl#Class"]', 'owl#Class')
+            .assert.textContains('merge-block commit-changes-display p[title*="FirstClass"] ~ small', 'myOntology#FirstClass')
+            .assert.textContains('merge-block .additions h5', 'Added Statements')
+            .assert.textContains('merge-block .additions .statement-display div[title*="terms/description"]', "description")
+            .assert.textContains('merge-block .additions .statement-display div[title*="terms/description"] ~ div[title=firstClassDescription]', 'firstClassDescription')
+            .assert.textContains('merge-block .additions .statement-display div[title*="terms/title"]', "title")
+            .assert.textContains('merge-block .additions .statement-display div[title*="terms/title"] ~ div[title=firstClass]', 'firstClass')
+            .assert.textContains('merge-block .additions .statement-display div[title*="ns#type"]', "type")
+            .assert.textContains('merge-block .additions .statement-display div[title*="ns#type"] ~ div[title*="owl#Class"]', 'owl#Class')
             .useXpath()
             .click('//button[text()="Submit"]')
             .useCss()
@@ -366,10 +368,10 @@ module.exports = {
             .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
             .useCss()
             .waitForElementVisible('commit-history-table .commit-message[title="The initial commit."]')
-            .assert.containsText('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
+            .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
             .waitForElementVisible('commit-history-table .commit-message[title="commit123"]')
-            .assert.containsText('commit-history-table .commit-message[title="commit123"] span', 'commit123')
+            .assert.textContains('commit-history-table .commit-message[title="commit123"] span', 'commit123')
             .waitForElementVisible('commit-history-table .commit-message[title="Merge of newBranchTitle into MASTER"]')
-            .assert.containsText('commit-history-table .commit-message[title="Merge of newBranchTitle into MASTER"] span', 'Merge of newBranchTitle into MASTER')
+            .assert.textContains('commit-history-table .commit-message[title="Merge of newBranchTitle into MASTER"] span', 'Merge of newBranchTitle into MASTER')
     }
 }

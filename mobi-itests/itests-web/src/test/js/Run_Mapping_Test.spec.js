@@ -95,7 +95,7 @@ module.exports = {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('div.file-input button')
-            .setValue('input[type=file]', OntoCSV)
+            .uploadFile('input[type=file]', OntoCSV)
             .waitForElementNotPresent('div.spinner')
             .click('div.block-footer button.continue-btn')
     },
@@ -179,7 +179,7 @@ module.exports = {
             .click('xpath', '//div[contains(@class, "prop-list")]//h4[text()="Chemical Formula"]/preceding-sibling::div[contains(@class, "prop-actions")]/a[contains(@class, "edit-prop")]')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "modal-header")]/h3[text()="Edit Property"]'})
             .useXpath()
-            .assert.containsText('//prop-mapping-overlay//prop-select//span[contains(@class, "ui-select-match-text")]', 'Chemical Formula')
+            .assert.textContains('//prop-mapping-overlay//prop-select//span[contains(@class, "ui-select-match-text")]', 'Chemical Formula')
             .useCss()
             .getAttribute('.prop-select .ui-select-container', 'disabled', function(result) {this.assert.equal(result.value, 'true');})
             .click('xpath', '//div[contains(@class, "modal-footer")]/button[text()="Cancel"]')

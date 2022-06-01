@@ -74,8 +74,7 @@ module.exports = {
             .waitForElementVisible('//upload-data-overlay')
             .waitForElementVisible('//upload-data-overlay//file-input')
             .waitForElementNotPresent('//div[contains(@class, "ng-animate")]')
-            .click('//upload-data-overlay//button[text()[contains(.,"Choose File")]]')
-            .setValue('//input[@type="file"]', Onto1)
+            .uploadFile('//upload-data-overlay//file-input//div//input[@type="file"]',Onto1)
             .assert.visible('//file-input//div[@class="file-input mt-2"]//span[text()[contains(.,"EventOntology.ttl")]]')
     },
     'Step 7: Submit data' : function (browser) {
