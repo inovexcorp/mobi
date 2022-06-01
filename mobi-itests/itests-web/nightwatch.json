@@ -19,7 +19,7 @@
       },
       "desiredCapabilities": {
         "browserName": "chrome",
-        "chromeOptions": {
+        "goog:chromeOptions": {
           "args": [
             "--headless",
             "window-size=1920,1080",
@@ -28,6 +28,7 @@
             "ignore-certificate-errors"
           ]
         },
+        "acceptInsecureCerts": true,
         "acceptSslCerts": true
       },
       "screenshots": {

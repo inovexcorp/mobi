@@ -86,11 +86,14 @@ module.exports = {
 
     'Step 6: Validate Search Function': function (browser) {
         browser
-            .click('xpath', '//div[contains(@class, "paging")]//li[1]//a')
-            .waitForElementNotPresent('css', 'div.spinner')
-            .click('xpath', '//search-bar')
-            .keys(browser.Keys.ENTER)
-            .waitForElementNotPresent('css', 'div.spinner')
+            .click('//div[contains(@class, "paging")]//li[1]//a')
+            .useCss()
+            .waitForElementNotPresent('div.spinner')
+            .waitForElementVisible('open-ontology-tab search-bar input')
+            .setValue('open-ontology-tab search-bar input', 'test')
+            .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
+            .waitForElementNotPresent('div.spinner')
+            .useXpath()
             .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-1")]')
             .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-2")]')
             .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-3")]')

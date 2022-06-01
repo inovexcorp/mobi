@@ -64,7 +64,7 @@ module.exports = {
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]//parent::a')
             .waitForElementNotPresent('.spinner')
             .waitForElementVisible('selected-details .entity-name')
-            .assert.containsText('selected-details .entity-name', 'Other Class')
+            .assert.textContains('selected-details .entity-name', 'Other Class')
     },
 
     'Step 7: Apply the Active Entity Filter' : function (browser) {
@@ -97,7 +97,7 @@ module.exports = {
 
     'Step 11: Ensure the selected entity view is still visible to the user, even if the entity is filtered out of the active list.': function(browser) {
         browser
-            .assert.containsText('selected-details .entity-name', 'Other Class')
+            .assert.textContains('selected-details .entity-name', 'Other Class')
     },
 
     'Step 12: Remove the Active Entity filter' : function(browser) {
@@ -133,6 +133,6 @@ module.exports = {
             .click('xpath', '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]')
             .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox')
             .waitForElementVisible('info-message p')
-            .assert.containsText('info-message p', 'No classes match your filter.')
+            .assert.textContains('info-message p', 'No classes match your filter.')
     }
 }
