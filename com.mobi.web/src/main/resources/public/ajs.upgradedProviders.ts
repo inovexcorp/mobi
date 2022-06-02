@@ -169,3 +169,13 @@ export const toastrProvider = {
     useFactory: toastrFactory,
     deps: ['$injector']
 };
+
+export function policyEnforcementServiceFactory(i: any) {
+    return i.get('policyEnforcementService');
+}
+
+export const policyEnforcementServiceProvider = {
+    provide: 'policyEnforcementService',
+    useFactory: policyEnforcementServiceFactory,
+    deps: ['$injector']
+};
