@@ -77,16 +77,19 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
     spinnerId = 'editor-record-select';
 
     filteredOptions: Observable<OptionGroup[]>
+    disabledFlag: boolean = false;
    
     constructor(private dialog: MatDialog, private state: ShapesGraphStateService,
                 @Inject('catalogManagerService') private cm, private sm: ShapesGraphManagerService,
                 @Inject('modalService') private modalService, @Inject('prefixes') private prefixes,
-                @Inject('utilService') private util) {}
+                @Inject('utilService') private util,
+                @Inject('policyEnforcementService') private policyEnforcementService) {}
 
     ngOnInit(): void {
         this.retrieveShapesGraphRecords();
         this.setFilteredOptions();
         this.resetSearch();
+        this.permissionCheck();
     }
     ngOnChanges(changes: SimpleChanges) {
         if (changes?.recordIri) {
@@ -191,6 +194,31 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
                 this.state.listItem = new ShapesGraphListItem();
             }
             this.resetSearch();
+        }
+    }
+    private permissionCheck(): void {
+        const pepRequest = this.createPepRequest();
+        this.policyEnforcementService.evaluateRequest(pepRequest)
+            .then(response => {
+                const canRead = response !== this.policyEnforcementService.deny;
+                if (!canRead) {
+                    this.disabledFlag = true;
+                }
+            }, () => {
+                this.util.createWarningToast('Could not retrieve shapes graph record creation permissions');
+                this.disabledFlag = true;
+            });
+    }
+    isDisabled() {
+        return this.disabledFlag;
+    }
+    private createPepRequest() {
+        return {
+            resourceId: 'http://mobi.com/catalog-local',
+            actionId: this.prefixes.policy + 'Create',
+            actionAttrs: {
+                         "http://www.w3.org/1999/02/22-rdf-syntax-ns#type":"http://mobi.com/ontologies/shapes-graph-editor#ShapesGraphRecord"
+            }
         }
     }
 }

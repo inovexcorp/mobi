@@ -39,6 +39,32 @@ var CatalogPage = function() {
         'Unversioned Record', 'Versioned RDF Record', 'Versioned Record']
 };
 
+CatalogPage.prototype.getAllElementsTextValues = function(browser, selector, target) {
+    var myPromiseAll = function (browser, result) {
+        var elementIdTextPromise = function (elementId) {
+            return new Promise(function (resolve, reject) {
+                browser.elementIdText(elementId, function (a) { resolve(a.value) });
+            });
+        };
+
+        return new Promise(function (resolve, reject) {
+            var elementIdTextPromises = result.value.map(function (webElement) {
+                return elementIdTextPromise(webElement.getId());
+            });
+            Promise.all(elementIdTextPromises)
+                .then(function (values) { resolve(values) });
+        });
+    };
+
+    return new Promise(function (resolve, reject) {
+        browser.findElements(selector, target, function (result) {
+            var api = this;
+            myPromiseAll(browser, result)
+                .then(function (values) { resolve(values) });
+        });
+    });
+}
+
 CatalogPage.prototype.createRecordFiltersXPathSelector = function(filterTypeHeader, filterType) {
     var selectors = ['//catalog-page',
         '//records-view', '//record-filters', '//div[contains(@class, "filter-container")]',
@@ -113,13 +139,13 @@ CatalogPage.prototype.verifyRecordFilters = function(browser, noKeywords) {
     browser.expect.element(this.recordFiltersCssSelector).to.be.present;
     browser.expect.elements(this.recordFiltersCssSelector + ' div.filter-container span.ng-binding').count.to.equal(2);
 
-    browser.globals.generalUtils.getAllElementsTextValues(browser, 'xpath', this.createRecordFiltersXPathSelector('Record Type'))
+    CatalogPage.prototype.getAllElementsTextValues(browser, 'xpath', this.createRecordFiltersXPathSelector('Record Type'))
         .then(function(values) {
             // order of record types can be different sometimes, so sort array of values
             browser.assert.equal(values.sort(), cp.recordTypeFilters.join(','))
         });
 
-    browser.globals.generalUtils.getAllElementsTextValues(browser, 'css selector', this.recordFiltersCssSelector + ' div.filter-container span.ng-binding')
+    CatalogPage.prototype.getAllElementsTextValues(browser, 'css selector', this.recordFiltersCssSelector + ' div.filter-container span.ng-binding')
         .then(function(values) {
             browser.assert.equal(values, 'Record Type,Keywords')
         });
@@ -155,7 +181,7 @@ CatalogPage.prototype.searchRecords = function(browser, searchObj) {
            .waitForElementVisible(this.recordsViewSearchBarCssSelector)
            .setValue(this.recordsViewSearchBarCssSelector, [searchObj.searchText, browser.Keys.ENTER])
            .waitForElementNotPresent('div.spinner');
-        browser.expect.element(this.recordsViewSearchBarCssSelector).value.to.contain(searchObj.searchText);
+        browser.assert.valueEquals(this.recordsViewSearchBarCssSelector, searchObj.searchText);
         browser.waitForElementNotPresent('div.spinner');
     } else {
         this.clearCatalogSearchBar(browser);
@@ -188,7 +214,7 @@ CatalogPage.prototype.searchRecords = function(browser, searchObj) {
 
 CatalogPage.prototype.assertRecordList = function(browser, recordList) {
     if (recordList) {
-      browser.globals.generalUtils.getAllElementsTextValues(browser, 'css selector', this.recordsViewCssSelector + ' record-card h5 span')
+      CatalogPage.prototype.getAllElementsTextValues(browser, 'css selector', this.recordsViewCssSelector + ' record-card h5 span')
             .then(function(values) {
                 browser.assert.equal(values, recordList)
             });
@@ -214,7 +240,7 @@ module.exports = {
     },
 
     'Step 3: Switch to catalog page' : function(browser) {
-        browser.globals.generalUtils.switchToPage(browser, 'catalog', this.recordsViewCssSelector);
+        browser.globals.switchToPage(browser, 'catalog', this.recordsViewCssSelector);
         catalogPage.verifyRecordFilters(browser, true);
         catalogPage.verifyRecordList(browser);
     },

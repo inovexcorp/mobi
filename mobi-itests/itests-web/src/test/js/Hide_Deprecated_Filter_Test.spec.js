@@ -63,7 +63,7 @@ module.exports = {
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3a")]]//parent::a')
             .waitForElementNotPresent('.spinner')
             .waitForElementVisible('selected-details .entity-name')
-            .assert.containsText('selected-details .entity-name', 'Class 3a')
+            .assert.textContains('selected-details .entity-name', 'Class 3a')
     },
 
     'Step 7: Apply the Deprecated Filter' : function (browser) {
@@ -120,6 +120,6 @@ module.exports = {
             .click('xpath', '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]')
             .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox')
             .waitForElementVisible('info-message p')
-            .assert.containsText('info-message p', 'No classes match your filter.')
+            .assert.textContains('info-message p', 'No classes match your filter.')
     }
 }

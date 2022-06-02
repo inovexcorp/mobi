@@ -80,7 +80,7 @@ module.exports = {
             .waitForElementVisible('circle-button-stack .fa-git')
             .click('circle-button-stack .fa-git')
             .waitForElementVisible('div.modal-dialog commit-overlay')
-            .assert.containsText('commit-overlay .modal-header h3', 'Commit')
+            .assert.textContains('commit-overlay .modal-header h3', 'Commit')
             .setValue('commit-overlay textarea[name=comment]', 'commit456')
             .useXpath()
             .click('//commit-overlay//button[text()="Submit"]')

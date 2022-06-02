@@ -88,7 +88,7 @@ module.exports = {
             .waitForElementVisible('upload-record-modal')
             .waitForElementVisible('upload-record-modal file-input')
             .waitForElementVisible('upload-record-modal button.mat-primary')
-            .setValue('upload-record-modal file-input input', shapes_graph_update)
+            .uploadFile('upload-record-modal file-input input', shapes_graph_update)
             .click('upload-record-modal button.mat-primary')
     },
 
@@ -114,11 +114,11 @@ module.exports = {
         browser
             .assert.not.elementPresent('mat-chip.uncommitted')
             .assert.not.elementPresent('shapes-graph-changes-page mat-expansion-panel')
-            .assert.containsText('shapes-graph-changes-page info-message p', 'No Changes to Display')
+            .assert.textContains('shapes-graph-changes-page info-message p', 'No Changes to Display')
             .expect.elements('commit-history-table tbody tr').count.to.equal(2)
         browser
             .useXpath()
-            .assert.containsText('//commit-history-table//tbody//tr[1]//td[@class="commit-message"]//span', 'The first manual commit message')
+            .assert.textContains('//commit-history-table//tbody//tr[1]//td[@class="commit-message"]//span', 'The first manual commit message')
             .useCss()
     },
 
@@ -134,7 +134,7 @@ module.exports = {
             .waitForElementVisible('upload-record-modal')
             .waitForElementVisible('upload-record-modal file-input')
             .waitForElementVisible('upload-record-modal button.mat-primary')
-            .setValue('upload-record-modal file-input input', shapes_graph_conflict)
+            .uploadFile('upload-record-modal file-input input', shapes_graph_conflict)
             .click('upload-record-modal button.mat-primary')
         browser.globals.wait_for_no_spinners(browser)
         browser
@@ -179,7 +179,7 @@ module.exports = {
             .waitForElementVisible('shapes-graph-properties-block')
             .waitForElementVisible('div.yate')
             .useXpath()
-            .assert.containsText('//shapes-graph-property-values//div//p[contains(text(), "Title")]/../..//value-display', 'UHTC Shapes Graph with some changes')
+            .assert.textContains('//shapes-graph-property-values//div//p[contains(text(), "Title")]/../..//value-display', 'UHTC Shapes Graph with some changes')
     },
 
     'Step 12: Delete created branch and verify successful deletion': function (browser) {

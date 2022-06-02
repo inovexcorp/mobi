@@ -100,7 +100,7 @@ module.exports = {
         browser
             .useCss()
             .waitForElementVisible('commit-overlay')
-            .assert.containsText('commit-overlay .modal-header h3', 'Commit')
+            .assert.textContains('commit-overlay .modal-header h3', 'Commit')
             .setValue('commit-overlay textarea[name=comment]', 'Changed IRI')
             .useXpath()
             .click('//commit-overlay//button[text()="Submit"]')
@@ -136,7 +136,7 @@ module.exports = {
         browser
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
             .useXpath()
-            .click('//open-ontology-tab//small[text()[contains(.,"MyTitle2myOntology2")]]')
+            .click('//open-ontology-tab//small[text()[contains(.,"myOntology2")]]')
         // wait for loading to finish
         browser
             .useCss()
@@ -150,7 +150,7 @@ module.exports = {
             .waitForElementVisible('circle-button-stack .fa-code-fork')
             .click('circle-button-stack .fa-code-fork')
             .waitForElementVisible('create-branch-overlay .modal-title')
-            .assert.containsText('create-branch-overlay .modal-title', 'Create New Branch')
+            .assert.textContains('create-branch-overlay .modal-title', 'Create New Branch')
             .waitForElementVisible('create-branch-overlay text-input[display-text="\'Title\'"] input')
             .setValue('create-branch-overlay text-input[display-text="\'Title\'"] input', "newBranchTitle2")
             .waitForElementVisible('create-branch-overlay text-area[display-text="\'Description\'"] textarea')
@@ -183,7 +183,7 @@ module.exports = {
         .waitForElementVisible('circle-button-stack .fa-random')
         .click('circle-button-stack .fa-random')
         .waitForElementVisible('.merge-message')
-        .assert.containsText('.merge-message', 'newBranchTitle2')
+        .assert.textContains('.merge-message', 'newBranchTitle2')
         .useXpath()
         .click('//branch-select//div[@class=\'branch-select\']//div[@class=\'mat-form-field-infix\']')
         .waitForElementVisible('//mat-option//span[text()[contains(.,"MASTER")]]')

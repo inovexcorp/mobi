@@ -36,9 +36,9 @@ var selectors = {
 
 var verifyProfileTab = function(browser, userObject){
     browser.useXpath().waitForElementVisible(selectors.profileTabFirstName)
-    browser.expect.element(selectors.profileTabFirstName).to.have.value.that.equals(userObject.firstName)
-    browser.expect.element(selectors.profileTabLastName).to.have.value.that.equals(userObject.lastName)
-    browser.expect.element(selectors.profileTabEmail).to.have.value.that.equals(userObject.email)
+    browser.assert.valueEquals(selectors.profileTabFirstName, userObject.firstName)
+    browser.assert.valueEquals(selectors.profileTabLastName, userObject.lastName)
+    browser.assert.valueEquals(selectors.profileTabEmail, userObject.email)
 };
 
 module.exports = {
@@ -74,11 +74,11 @@ module.exports = {
             .click("//button/span[text() [contains(., 'Create User')]]")
             .waitForElementVisible("//h1[text() [contains(., 'Create User')]]")
             .useCss()
-            .setValue('input[name=username]', newUser.username)
-            .setValue('input[name=unmaskPassword]', newUser.password)
-            .setValue('input[name=firstName]', newUser.firstName)
-            .setValue('input[name=lastName]', newUser.lastName)
-            .setValue('input[name=email]', newUser.email)
+            .setValue('create-user-overlay input[name=username]', newUser.username)
+            .setValue('create-user-overlay input[name=unmaskPassword]', newUser.password)
+            .setValue('create-user-overlay input[name=firstName]', newUser.firstName)
+            .setValue('create-user-overlay input[name=lastName]', newUser.lastName)
+            .setValue('create-user-overlay input[name=email]', newUser.email)
             .click('label.mat-slide-toggle-label')
             .useXpath()
             .click("//button/span[text() [contains(., 'Submit')]]")
@@ -118,7 +118,7 @@ module.exports = {
         browser
             .useCss()
             .assert.visible('a.current-user-box div.user-title')
-            .assert.containsText('a.current-user-box div.user-title', newUser.firstName)
+            .assert.textContains('a.current-user-box div.user-title', newUser.firstName)
     },
 
     'Step 10: Go to profile tab and verify user info' : function(browser) {
@@ -143,7 +143,7 @@ module.exports = {
             .waitForElementNotPresent('div.spinner')
             .useCss()
             .assert.visible('a.current-user-box div.user-title')
-            .assert.containsText('a.current-user-box div.user-title', newUserChanged.firstName)
+            .assert.textContains('a.current-user-box div.user-title', newUserChanged.firstName)
 
         verifyProfileTab(browser, newUserChanged)
     },

@@ -73,11 +73,11 @@ module.exports = {
             .waitForElementVisible('circle-button-stack .fa-code-fork')
             .click('circle-button-stack .hidden-buttons .fa-plus')
             .waitForElementVisible('create-entity-modal .modal-header h3')
-            .assert.containsText('create-entity-modal .modal-header h3', 'Create Entity')
+            .assert.textContains('create-entity-modal .modal-header h3', 'Create Entity')
             .click('create-entity-modal .create-class')
             .waitForElementNotPresent('create-entity-modal .create-class')
             .waitForElementVisible('create-class-overlay .modal-header h3')
-            .assert.containsText('create-class-overlay .modal-header h3', 'Create New OWL Class')
+            .assert.textContains('create-class-overlay .modal-header h3', 'Create New OWL Class')
             .useXpath()
             .waitForElementVisible('//create-class-overlay//label[text()="Name"]/parent::custom-label/following-sibling::input')
             .setValue('//create-class-overlay//label[text()="Name"]/parent::custom-label/following-sibling::input', 'class A')
@@ -102,7 +102,7 @@ module.exports = {
             .waitForElementVisible('circle-button-stack .fa-git')
             .click('circle-button-stack .fa-git')
             .waitForElementVisible('commit-overlay .modal-header h3')
-            .assert.containsText('commit-overlay .modal-header h3', 'Commit')
+            .assert.textContains('commit-overlay .modal-header h3', 'Commit')
             .setValue('commit-overlay textarea[name=comment]', 'commit123')
             .useXpath()
             .click('//commit-overlay//button[text()="Submit"]')
@@ -118,9 +118,9 @@ module.exports = {
             .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
             .useCss()
             .waitForElementVisible('commit-history-table .commit-message[title="The initial commit."]')
-            .assert.containsText('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
+            .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
             .waitForElementVisible('commit-history-table .commit-message[title="commit123"]')
-            .assert.containsText('commit-history-table .commit-message[title="commit123"] span', 'commit123')
+            .assert.textContains('commit-history-table .commit-message[title="commit123"] span', 'commit123')
     },
 
     'Step 9: Make Changes to Class': function(browser) {
@@ -162,7 +162,7 @@ module.exports = {
             .waitForElementVisible('circle-button-stack .fa-git')
             .click('circle-button-stack .fa-git')
             .waitForElementVisible('commit-overlay .modal-header h3')
-            .assert.containsText('commit-overlay .modal-header h3', 'Commit')
+            .assert.textContains('commit-overlay .modal-header h3', 'Commit')
             .setValue('commit-overlay textarea[name=comment]', 'commit456')
             .useXpath()
             .click('//commit-overlay//button[text()="Submit"]')
@@ -178,9 +178,9 @@ module.exports = {
             .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
             .useCss()
             .waitForElementVisible('commit-history-table .commit-message[title="The initial commit."]')
-            .assert.containsText('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
+            .assert.textContains('commit-history-table .commit-message[title="The initial commit."] span', 'The initial commit.')
             .waitForElementVisible('commit-history-table .commit-message[title="commit456"]')
-            .assert.containsText('commit-history-table .commit-message[title="commit456"] span', 'commit456')
+            .assert.textContains('commit-history-table .commit-message[title="commit456"] span', 'commit456')
     },
 
     'Step 13: Close & Re-open Ontology' : function(browser) {
@@ -194,8 +194,10 @@ module.exports = {
             .keys(browser.Keys.ENTER)
             .waitForElementNotPresent('.spinner')
             .waitForElementVisible('ontology-editor-page open-ontology-tab')
+            .setValue('open-ontology-tab search-bar input', 'Metadata')
+            .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
             .useXpath()
-            .assert.containsText('//open-ontology-tab//small', 'MetadataTestOntology')
+            .assert.textContains('//open-ontology-tab//small', 'MetadataTestOntology')
             .click('//open-ontology-tab//small[text()[contains(.,"MetadataTestOntology")]]')
             .useCss()
             .waitForElementNotPresent('.spinner')
@@ -212,6 +214,6 @@ module.exports = {
             .waitForElementVisible('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
             .click('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
             .assert.visible('//value-display//div//span[text() = "A Edited"]//ancestor::property-values//p[text()[contains(.,"Title")]]')
-            .assert.elementNotPresent('//value-display//div//span[text()[contains(.,"Class A")]]//ancestor::property-values//p[text()[contains(.,"Title")]]')
+            .assert.not.elementPresent('//value-display//div//span[text()[contains(.,"Class A")]]//ancestor::property-values//p[text()[contains(.,"Title")]]')
     }
 }
