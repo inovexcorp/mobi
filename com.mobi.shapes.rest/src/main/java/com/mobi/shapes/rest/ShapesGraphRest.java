@@ -58,6 +58,8 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
+import com.mobi.rest.security.annotations.ActionAttributes;
+import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
@@ -180,6 +182,8 @@ public class ShapesGraphRest {
             }
     )
     @RolesAllowed("user")
+    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = ShapesGraphRecord.TYPE))
+    @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(
             @Context ContainerRequestContext context,
             @Parameter(schema = @Schema(type = "string", format = "binary",

@@ -854,3 +854,10 @@ export class mockShapesGraphManager {
     getShapesGraphIRI = jasmine.createSpy('getShapesGraphIRI').and.returnValue(Promise.resolve());
     getShapesGraphContent = jasmine.createSpy('getShapesGraphContent').and.returnValue(Promise.resolve());
 }
+
+export class mockPolicyEnforcement {
+    permit = 'Permit';
+    deny = 'Deny';
+    indeterminate = 'Indeterminate';
+    evaluateRequest = jasmine.createSpy('evaulateRequest').and.returnValue(Promise.resolve());
+}

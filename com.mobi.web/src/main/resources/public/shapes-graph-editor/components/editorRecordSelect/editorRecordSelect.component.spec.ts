@@ -24,6 +24,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule, MatDialogModule } from '@angular/material';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
@@ -38,7 +39,7 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
-import { cleanStylesFromDOM, mockCatalogManager, mockPrefixes, mockUtil, mockModal } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM, mockCatalogManager, mockPrefixes, mockUtil, mockModal, mockPolicyEnforcement } from '../../../../../../test/ts/Shared';
 import { Difference } from '../../../shared/models/difference.class';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
@@ -91,7 +92,8 @@ describe('Editor Record Select component', function() {
                 MatButtonModule,
                 MatIconModule,
                 MatAutocompleteModule,
-                MatDividerModule
+                MatDividerModule,
+                MatTooltipModule
             ],
             declarations: [
                 EditorRecordSelectComponent
@@ -102,6 +104,7 @@ describe('Editor Record Select component', function() {
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: 'modalService', useClass: mockModal },
                 { provide: 'prefixes', useClass: mockPrefixes },
+                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
                 { provide: 'catalogManagerService', useClass: mockCatalogManager },
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}

@@ -153,7 +153,8 @@ import {
     stateManagerServiceProvider,
     toastrProvider,
     propertyManagerServiceProvider,
-    ontologyUtilsManagerServiceProvider
+    ontologyUtilsManagerServiceProvider,
+    policyEnforcementServiceProvider
 } from '../ajs.upgradedProviders';
 
 import { ConfirmModalComponent } from './components/confirmModal/confirmModal.component';
@@ -342,6 +343,7 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         ontologyManagerServiceProvider,
         stateManagerServiceProvider,
         toastrProvider,
+        policyEnforcementServiceProvider,
         HelperService,
         PolicyManagerService,
         UserManagerService,
