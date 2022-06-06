@@ -23,6 +23,7 @@ package com.mobi.jaas.api.engines;
  * #L%
  */
 
+import com.mobi.jaas.api.ontologies.usermanagement.ExternalGroup;
 import com.mobi.jaas.api.ontologies.usermanagement.ExternalUser;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
@@ -321,10 +322,34 @@ public interface EngineManager {
     <T extends ExternalUser> T mergeUser(T externalUser, User existingUser);
 
     /**
+     * Merge an existing {@link Group} into a new group of type T where T extends {@link ExternalGroup}
+     * @param externalGroup The new external group that will get merged into
+     * @param existingGroup The existing group that will be merged into the external group
+     * @return The resulting merged group
+     */
+    <T extends ExternalGroup> T mergeGroup(T externalGroup, Group existingGroup);
+
+    /**
      * Find the factory associated with the passed in User type.
      *
      * @param user The user to find the factory for
      * @return The factory associated with the passed in User type.
      */
     OrmFactory<? extends ExternalUser> getSpecificExternalUserFactory(User user);
+
+    /**
+     * Find the factory associated with the passed in {@link Group} type.
+     *
+     * @param group The group to find the factory for
+     * @return The factory associated with the passed in Group type.
+     */
+    OrmFactory<? extends ExternalGroup> getSpecificExternalGroupFactory(Group group);
+
+    /**
+     * Get the set of users that are members of the passed in {@link Group}
+     *
+     * @param group The group to find the members for
+     * @return The set of users that are members of the group
+     */
+    Set<User> getGroupMembers(Group group);
 }
