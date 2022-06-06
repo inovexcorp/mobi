@@ -41,6 +41,7 @@ import static org.mockito.Mockito.when;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.GroupConfig;
 import com.mobi.jaas.api.engines.UserConfig;
+import com.mobi.jaas.api.ontologies.usermanagement.ExternalGroup;
 import com.mobi.jaas.api.ontologies.usermanagement.ExternalUser;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
@@ -72,7 +73,9 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
     private SimpleEngineManager engineManager;
 
     private static final String USER_STR = "http://mobi.com/users/tester";
+    private static final String GROUP_STR = "http://mobi.com/groups/testGroup";
     private static final IRI USER_IRI = VALUE_FACTORY.createIRI(USER_STR);
+    private static final IRI GROUP_IRI = VALUE_FACTORY.createIRI(GROUP_STR);
     private static final String USERNAME = "tester";
     private static final String ERROR = "error";
     private static final String ERROR_STR = "http://example.com/error";
@@ -114,6 +117,8 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
 
     OrmFactory<ExternalUser> externalUserOrmFactory = getRequiredOrmFactory(ExternalUser.class);
 
+    OrmFactory<ExternalGroup> externalGroupFactory = getRequiredOrmFactory(ExternalGroup.class);
+
     @Mock
     OrmFactoryRegistry factoryRegistry;
 
@@ -124,16 +129,6 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
     static abstract class AUserImpl implements AUser {}
 
     private abstract class AUserFactory extends AbstractOrmFactory<AUser> {
-
-        /**
-         * Construct a new instance of an {@link AbstractOrmFactory}.
-         * Implementations will call this constructor.
-         *
-         * @param type The type we're building
-         * @param impl The implementation under the covers
-         * @throws OrmException If there is an issue constructing our {@link OrmFactory}
-         *                      instance
-         */
         public AUserFactory(Class<AUser> type, Class<? extends AUser> impl) throws OrmException {
             super(type, impl);
         }
@@ -142,10 +137,20 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
     @Mock
     private OrmFactory<AUser> aUserFactory;
 
+    private interface AGroup extends ExternalGroup {
+        String TYPE = "http://example.com/AGroupType";
+    }
 
+    static abstract class AGroupImpl implements AGroup {}
+
+    private abstract class AGroupFactory extends AbstractOrmFactory<AGroup> {
+        public AGroupFactory(Class<AGroup> type, Class<? extends AGroup> impl) throws OrmException {
+            super(type, impl);
+        }
+    }
 
     @Mock
-    private AUser aUser;
+    private OrmFactory<AGroup> aGroupFactory;
 
     @Before
     public void setUp() throws Exception {
@@ -185,6 +190,16 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
         when(aUserFactory.getParentTypeIRIs()).thenReturn(Collections.emptySet());
 
         when(factoryRegistry.getSortedFactoriesOfType(ExternalUser.class)).thenReturn(Arrays.asList(aUserFactory));
+
+        when(group.getResource()).thenReturn(GROUP_IRI);
+        Model groupModel = MODEL_FACTORY.createModel();
+        groupModel.add(group.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Group.TYPE));
+        when(group.getModel()).thenReturn(groupModel);
+        when(aGroupFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(AGroup.TYPE));
+        when(aGroupFactory.getType()).thenReturn(AGroup.class);
+        doReturn(AGroupImpl.class).when(aGroupFactory).getImpl();
+        when(aGroupFactory.getParentTypeIRIs()).thenReturn(Collections.emptySet());
+        when(factoryRegistry.getSortedFactoriesOfType(ExternalGroup.class)).thenReturn(Arrays.asList(aGroupFactory));
 
         when(errorUser.getResource()).thenReturn(ERROR_IRI);
 
@@ -538,6 +553,18 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testGetSpecificExternalGroupFactory() {
+        group.getModel().add(group.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
+                VALUE_FACTORY.createIRI(AGroup.TYPE));
+        assertEquals(aGroupFactory, engineManager.getSpecificExternalGroupFactory(group));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetSpecificExternalGroupFactoryIllegalGroup() {
+        assertEquals(aGroupFactory, engineManager.getSpecificExternalGroupFactory(group));
+    }
+
+    @Test
     public void testMergeUser() {
         ExternalUser externalUser = externalUserOrmFactory.createNew(VALUE_FACTORY.createIRI("urn:newIRI"));
         externalUser.getModel().add(user.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
@@ -547,5 +574,17 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
         User resultingUser = spyManager.mergeUser(externalUser, user);
         assertEquals(user.getResource(), resultingUser.getResource());
         verify(repositoryConnection).remove(eq(user.getResource()), eq(null), eq(null), eq(VALUE_FACTORY.createIRI("http://mobi.com/usermanagement")));
+    }
+
+    @Test
+    public void testMergeGroup() {
+        ExternalGroup externalGroup = externalGroupFactory.createNew(VALUE_FACTORY.createIRI("urn:newIRI"));
+        externalGroup.getModel().add(group.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
+                VALUE_FACTORY.createIRI(AGroup.TYPE));
+        SimpleEngineManager spyManager = spy(engineManager);
+        doReturn(externalGroupFactory).when(spyManager).getSpecificExternalGroupFactory(externalGroup);
+        Group resultingGroup = spyManager.mergeGroup(externalGroup, group);
+        assertEquals(group.getResource(), resultingGroup.getResource());
+        verify(repositoryConnection).remove(eq(group.getResource()), eq(null), eq(null), eq(VALUE_FACTORY.createIRI("http://mobi.com/usermanagement")));
     }
 }

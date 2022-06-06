@@ -30,6 +30,7 @@ import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.engines.GroupConfig;
 import com.mobi.jaas.api.engines.UserConfig;
+import com.mobi.jaas.api.ontologies.usermanagement.ExternalGroup;
 import com.mobi.jaas.api.ontologies.usermanagement.ExternalUser;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
@@ -132,7 +133,7 @@ public class SimpleEngineManager implements EngineManager {
                 if (optional.isPresent()) {
                     return optional;
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 log.debug("Error getting roles for engine " + engine.getEngineName(), e);
             }
         }
@@ -155,7 +156,7 @@ public class SimpleEngineManager implements EngineManager {
             try {
                 log.debug("Getting users with " + engine.getEngineName());
                 users.addAll(engine.getUsers());
-            } catch(Exception e) {
+            } catch (Exception e) {
                 log.debug("Error getting users for engine " + engine.getEngineName(), e);
             }
         }
@@ -192,12 +193,12 @@ public class SimpleEngineManager implements EngineManager {
     public Optional<User> retrieveUser(String username) {
         for (Engine engine : engines.values()) {
             log.debug("Retrieving user with " + engine.getEngineName());
-            try{
+            try {
                 Optional<User> optional = engine.retrieveUser(username);
                 if (optional.isPresent()) {
                     return optional;
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 log.debug("Error retrieving user for engine " + engine.getEngineName(), e);
             }
         }
@@ -228,7 +229,7 @@ public class SimpleEngineManager implements EngineManager {
                 if (engine.userExists(newUser.getResource())) {
                     foundEngine = engine;
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 log.debug("Error updating user for engine " + engine.getEngineName(), e);
             }
         }
@@ -252,7 +253,7 @@ public class SimpleEngineManager implements EngineManager {
                 if (engine.userExists(username)) {
                     return true;
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 log.debug("Error checking if user exists for engine " + engine.getEngineName(), e);
             }
         }
@@ -275,7 +276,7 @@ public class SimpleEngineManager implements EngineManager {
             log.debug("Getting groups with " + engine.getEngineName());
             try {
                 groups.addAll(engine.getGroups());
-            } catch(Exception e) {
+            } catch (Exception e) {
                 log.debug("Error getting groups for engine " + engine.getEngineName(), e);
             }
         }
@@ -317,7 +318,7 @@ public class SimpleEngineManager implements EngineManager {
                 if (optional.isPresent()) {
                     return optional;
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 log.debug("Error retrieving group for engine " + engine.getEngineName(), e);
             }
         }
@@ -348,7 +349,7 @@ public class SimpleEngineManager implements EngineManager {
                 if (engine.groupExists(newGroup.getResource())) {
                     foundEngine = engine;
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 log.debug("Error for engine " + engine.getEngineName(), e);
             }
         }
@@ -372,7 +373,7 @@ public class SimpleEngineManager implements EngineManager {
                 if (engine.groupExists(groupTitle)) {
                     return true;
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 log.debug("Error checking if group exist for engine " + engine.getEngineName(), e);
             }
         }
@@ -401,7 +402,7 @@ public class SimpleEngineManager implements EngineManager {
                                     .collect(Collectors.toSet()).contains(role.getResource()))
                             .forEach(roles::add);
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 log.debug("Error getting User Roles for engine " + engine.getEngineName(), e);
             }
         }
@@ -422,7 +423,7 @@ public class SimpleEngineManager implements EngineManager {
                 if (engine.checkPassword(username, password)) {
                     return true;
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 log.debug("Error checking password for engine " + engine.getEngineName(), e);
             }
         }
@@ -447,10 +448,11 @@ public class SimpleEngineManager implements EngineManager {
             newUserWithExistingIRI.add(existingUser.getResource(), statement.getPredicate(), statement.getObject());
         }
 
-        Optional<? extends ExternalUser> newUserOpt = factory.getExisting(existingUser.getResource(), newUserWithExistingIRI);
+        Optional<? extends ExternalUser> newUserOpt = factory.getExisting(existingUser.getResource(),
+                newUserWithExistingIRI);
         T newExternalUser = (T) newUserOpt.get();
         // Combine Roles
-        for(Resource role: existingUser.getHasUserRole_resource()){
+        for (Resource role: existingUser.getHasUserRole_resource()) {
             Role currentRole = roleFactory.createNew(role);
             newExternalUser.addHasUserRole(currentRole);
         }
@@ -461,6 +463,36 @@ public class SimpleEngineManager implements EngineManager {
             conn.add(newExternalUser.getModel(), context);
         }
         return newExternalUser;
+    }
+
+    @Override
+    public <T extends ExternalGroup> T mergeGroup(T externalGroup, Group existingGroup) {
+        OrmFactory<? extends ExternalGroup> factory = getSpecificExternalGroupFactory(externalGroup);
+        Model newGroupWithExistingIRI = modelFactory.createModel();
+        for (Statement statement : externalGroup.getModel()) {
+            newGroupWithExistingIRI.add(existingGroup.getResource(), statement.getPredicate(), statement.getObject());
+        }
+
+        Optional<? extends ExternalGroup> newGroupOpt = factory.getExisting(existingGroup.getResource(),
+                newGroupWithExistingIRI);
+        T newExternalGroup = (T) newGroupOpt.get();
+        // Combine Roles
+        for (Resource role: existingGroup.getHasGroupRole_resource()) {
+            Role currentRole = roleFactory.createNew(role);
+            newExternalGroup.addHasGroupRole(currentRole);
+        }
+
+        // Add previous members of group
+        for (User member : getGroupMembers(existingGroup)) {
+            newExternalGroup.addMember(member);
+        }
+
+        try (RepositoryConnection conn = repository.getConnection()) {
+            // Remove existingGroup since it will be replaced with newExternalGroup
+            conn.remove(existingGroup.getResource(), null, null, context);
+            conn.add(newExternalGroup.getModel(), context);
+        }
+        return newExternalGroup;
     }
 
     /** TODO: Make a more generic method and move it to the OrmFactoryRegistry **/
@@ -474,7 +506,8 @@ public class SimpleEngineManager implements EngineManager {
                 .map(Optional::get)
                 .collect(Collectors.toList());
 
-        List<OrmFactory<? extends ExternalUser>> orderedFactories = factoryRegistry.getSortedFactoriesOfType(ExternalUser.class)
+        List<OrmFactory<? extends ExternalUser>> orderedFactories = factoryRegistry
+                .getSortedFactoriesOfType(ExternalUser.class)
                 .stream()
                 .filter(ormFactory -> {
                     try {
@@ -484,9 +517,7 @@ public class SimpleEngineManager implements EngineManager {
                         throw new IllegalStateException("Cannot retrieve type from " + ExternalUser.class.getName());
                     }
                 })
-                .filter(ormFactory -> {
-                    return types.contains(ormFactory.getTypeIRI());
-                })
+                .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
                 .collect(Collectors.toList());
 
         if (orderedFactories.size() == 0) {
@@ -494,5 +525,47 @@ public class SimpleEngineManager implements EngineManager {
         }
 
         return orderedFactories.get(0);
+    }
+
+    /** TODO: Make a more generic method and move it to the OrmFactoryRegistry. **/
+    @Override
+    public OrmFactory<? extends ExternalGroup> getSpecificExternalGroupFactory(Group group) {
+        List<Resource> types = group.getModel().filter(group.getResource(),
+                        valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null)
+                .stream()
+                .map(Statements::objectResource)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
+        List<OrmFactory<? extends ExternalGroup>> orderedFactories = factoryRegistry
+                .getSortedFactoriesOfType(ExternalGroup.class)
+                .stream()
+                .filter(ormFactory -> {
+                    try {
+                        return !ormFactory.getTypeIRI().stringValue().equals(ExternalGroup.class
+                                .getDeclaredField("TYPE").get(null).toString());
+                    } catch (Exception e) {
+                        throw new IllegalStateException("Cannot retrieve type from " + ExternalGroup.class.getName());
+                    }
+                })
+                .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
+                .collect(Collectors.toList());
+
+        if (orderedFactories.size() == 0) {
+            throw new IllegalArgumentException("Group type is not a subclass of ExternalGroup");
+        }
+
+        return orderedFactories.get(0);
+    }
+
+    @Override
+    public Set<User> getGroupMembers(Group group) {
+        return group.getMember_resource().stream()
+                .map(iri -> getUsername(iri).orElseThrow(() ->
+                        new IllegalArgumentException("Cannot find user for iri: " + iri)))
+                .map(username -> retrieveUser(username).orElseThrow(() ->
+                        new IllegalArgumentException("Cannot find user for username: " + username)))
+                .collect(Collectors.toSet());
     }
 }
