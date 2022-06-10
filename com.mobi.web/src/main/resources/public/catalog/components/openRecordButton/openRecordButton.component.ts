@@ -60,14 +60,15 @@ const openRecordButtonComponent = {
 openRecordButtonComponentCtrl.$inject = ['$state', 'catalogStateService', 'mapperStateService', 'ontologyStateService', 'policyEnforcementService', 'policyManagerService', 'utilService', 'prefixes', 'shapesGraphStateService'];
 
 function openRecordButtonComponentCtrl($state, catalogStateService, mapperStateService, ontologyStateService, policyEnforcementService, policyManagerService, utilService, prefixes, shapesGraphStateService) {
-    let dvm = this;
-    let cs = catalogStateService;
-    let ms = mapperStateService;
-    let os = ontologyStateService;
-    let pe = policyEnforcementService;
-    let pm = policyManagerService;
-    let util = utilService;
-    let sgs = shapesGraphStateService;
+    const dvm = this;
+    const cs = catalogStateService;
+    const ms = mapperStateService;
+    const os = ontologyStateService;
+    const pe = policyEnforcementService;
+    const pm = policyManagerService;
+    const util = utilService;
+    const sgs = shapesGraphStateService;
+
     dvm.record = undefined;
     dvm.stopPropagation = false;
     dvm.recordType = '';
@@ -142,17 +143,34 @@ function openRecordButtonComponentCtrl($state, catalogStateService, mapperStateS
         dvm.isFlat = dvm.flat !== undefined;
         dvm.stopPropagation = dvm.stopProp !== undefined;
         dvm.recordType = cs.getRecordType(dvm.record);
-
-        if (dvm.recordType === prefixes.ontologyEditor + 'OntologyRecord') {
-            var request = {
+        if (dvm.record !== undefined){
+            const request = {
                 resourceId: dvm.record['@id'],
                 actionId: pm.actionRead
             };
-            pe.evaluateRequest(request).then(decision => {
-                dvm.showButton = decision !== pe.deny;
-            });
+            // As mobi adds more support for permissions, each record type can be checked for permissions
+            switch (dvm.recordType) {
+                case prefixes.ontologyEditor + 'OntologyRecord':
+                    pe.evaluateRequest(request).then(decision => {
+                        dvm.showButton = decision !== pe.deny;
+                    });
+
+                    dvm.showButton = true;
+                    break;
+                case prefixes.delim + 'MappingRecord':
+                    dvm.showButton = true;
+                    break;
+                case prefixes.dataset + 'DatasetRecord':
+                    dvm.showButton = true;
+                    break;
+                case prefixes.shapesGraphEditor + 'ShapesGraphRecord':
+                    dvm.showButton = true;
+                    break;
+                default:
+                    dvm.showButton = true;
+            }
         } else {
-            dvm.showButton = true;
+            dvm.showButton = false;
         }
     }
 }

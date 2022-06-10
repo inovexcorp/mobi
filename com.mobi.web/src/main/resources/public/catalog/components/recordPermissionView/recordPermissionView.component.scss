@@ -23,31 +23,15 @@
 /* Core variables */
 @import "../../../css/variables";
 
-record-view {
-    .record-sidebar {
-        width: 500px;
+.record-permissions-page {
+    .policy {
+        margin: 0;
     }
-    record-view-tabset .material-tabset {
-        height: auto !important;
-    }
-
-    .button-container{
-        button {
-            margin-left: 10px;
-        }
-    }
-    
-    dt {
-        float: left;
-        clear: left;
-        width: 100px;
-    }
-    dd {
-        margin: 0 0 0 110px;
-        padding: 0 0 0.5em 0.5em;
-
-        .keyword-description {
-            padding: 0;
-        }
+    .save-container {
+        height: auto;
+        bottom: 25px;
+        position: fixed;
+        right: 25px;
+        z-index: 5001;
     }
 }

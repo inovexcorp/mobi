@@ -55,15 +55,11 @@ const openOntologyTabComponent = {
     controller: openOntologyTabComponentCtrl
 };
 
-openOntologyTabComponentCtrl.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'mapperStateService', 'catalogManagerService', 'modalService', 'settingManagerService', 'policyEnforcementService', 'policyManagerService'];
+openOntologyTabComponentCtrl.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'mapperStateService', 'catalogManagerService', 'modalService', 'settingManagerService'];
 
-function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontologyStateService, prefixes, utilService, mapperStateService, catalogManagerService, modalService, settingManagerService, policyEnforcementService, policyManagerService) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    var pe = policyEnforcementService;
-    var pm = policyManagerService;
-    var sm = settingManagerService;
-    var ontologyRecords = [];
+function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontologyStateService, prefixes, utilService, mapperStateService, catalogManagerService, modalService, settingManagerService) {
+    const dvm = this;
+    let ontologyRecords = [];
 
     dvm.prefixes = prefixes;
     dvm.om = ontologyManagerService;
@@ -80,8 +76,7 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
         dvm.getPageOntologyRecords(1, '');
     }
     dvm.clickUpload = function(id) {
-        var upload = <HTMLInputElement> document.getElementById(id);
-
+        const upload = <HTMLInputElement> document.getElementById(id);
         upload.value = null;
         upload.click();
     }
@@ -106,7 +101,7 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
         return some(dvm.os.list, {ontologyRecord: {recordId: record['@id']}});
     }
     dvm.open = function(record) {
-        var listItem = find(dvm.os.list, {ontologyRecord: {recordId: record['@id']}});
+        const listItem = find(dvm.os.list, {ontologyRecord: {recordId: record['@id']}});
         if (listItem) {
             dvm.os.listItem = listItem;
             dvm.os.listItem.active = true;
@@ -116,7 +111,7 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
         }
     }
     dvm.newOntology = function() {
-        sm.getDefaultNamespace()
+        settingManagerService.getDefaultNamespace()
             .then(defaultNamespace => {
                 dvm.os.newOntology = {
                     '@id': defaultNamespace,
@@ -136,7 +131,7 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
     dvm.showDeleteConfirmationOverlay = function(record) {
         dvm.recordId = get(record, '@id', '');
 
-        var msg = '';
+        let msg = '';
         if (find(dvm.ms.sourceOntologies, {recordId: dvm.recordId})) {
             msg += '<error-display>Warning: The ontology you\'re about to delete is currently open in the mapping tool.</error-display>';
         }
@@ -147,7 +142,7 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
             .then(response => {
                 remove(ontologyRecords, record => get(record, '@id', '') === dvm.recordId);
                 dvm.os.closeOntology(dvm.recordId);
-                var state = dvm.os.getOntologyStateByRecordId(dvm.recordId);
+                const state = dvm.os.getOntologyStateByRecordId(dvm.recordId);
                 if (!isEmpty(state)) {
                     dvm.os.deleteOntologyState(dvm.recordId);
                 }
@@ -156,40 +151,24 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
     }
     dvm.getPageOntologyRecords = function(page, inputFilterText) {
         dvm.currentPage = page;
-        var catalogId = get(cm.localCatalog, '@id', '');
-        var paginatedConfig = {
+        const catalogId = get(catalogManagerService.localCatalog, '@id', '');
+        const paginatedConfig = {
             pageIndex: dvm.currentPage - 1,
             limit: dvm.limit,
             recordType: prefixes.ontologyEditor + 'OntologyRecord',
-            sortOption: find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
+            sortOption: find(catalogManagerService.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
             searchText: inputFilterText
         };
         httpService.cancel(dvm.id);
-        cm.getRecords(catalogId, paginatedConfig, dvm.id).then(response => {
+        catalogManagerService.getRecords(catalogId, paginatedConfig, dvm.id).then(response => {
             dvm.filteredList = response.data;
             if (response.headers() !== undefined) {
                 dvm.totalSize = get(response.headers(), 'x-total-count');
             }
-            dvm.manageRecords();
         });
     }
     dvm.search = function(event) {
         dvm.getPageOntologyRecords(1, dvm.filterText);
-    }
-    dvm.manageRecords = function() {
-        forEach(dvm.filteredList, record => {
-            var request = {
-                resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(record['@id']),
-                actionId: pm.actionUpdate
-            }
-            pe.evaluateRequest(request).then(decision => {
-                record.userCanManage = decision == pe.permit;
-                record.showAccessControls = false;
-            });
-        })
-    }
-    dvm.showAccessOverlay = function(record, ruleId) {
-        modalService.openModal('recordAccessOverlay', {ruleId, resource: record['@id']});
     }
 }
 

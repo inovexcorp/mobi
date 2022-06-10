@@ -41,6 +41,7 @@ describe('Record View component', function() {
         mockComponent('catalog', 'catalogRecordKeywords');
         mockComponent('catalog', 'limitDescription');
         mockComponent('catalog', 'openRecordButton');
+        mockComponent('catalog', 'manageRecordButton');
         mockCatalogManager();
         mockCatalogState();
         mockOntologyState();
@@ -223,6 +224,7 @@ describe('Record View component', function() {
                 expect(utilSvc.createWarningToast).toHaveBeenCalled();
             });
         });
+        // TODO add test for manageEvent
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {

@@ -20,8 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="catalog-page h-100 container-fluid">
-    <records-view ng-if="!dvm.state.selectedRecord"></records-view>
-    <record-view ng-if="dvm.state.selectedRecord && !dvm.state.editPermissionSelectedRecord"></record-view>
-    <record-permission-view ng-if="dvm.state.selectedRecord && dvm.state.editPermissionSelectedRecord"></record-permission-view>
+<div class="manage-record-button">
+    <button ng-if="dvm.showButton" class="btn" ng-class="{'btn-primary': !dvm.isFlat, 'btn-flat-primary': dvm.isFlat}" ng-click="dvm.manageRecord($event)">Manage</button>
 </div>

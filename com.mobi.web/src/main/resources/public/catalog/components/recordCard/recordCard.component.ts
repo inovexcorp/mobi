@@ -37,7 +37,7 @@ const template = require('./recordCard.component.html');
  * {@link catalog.component:entityPublisher publisher}. An optional function can be passed in that will be called
  * when the whole card is clicked.
  * 
- * @param {Object} record A JSON-LD object for a catalog Record
+ * @param {Object} object A object with JSON-LD object for a catalog Record and permissions
  * @param {Function} [clickCard=undefined] An optional function that will be called when the whole card is clicked
  */
 const recordCardComponent = {
@@ -53,8 +53,9 @@ const recordCardComponent = {
 recordCardComponentCtrl.$inject = ['utilService'];
 
 function recordCardComponentCtrl(utilService) {
-    var dvm = this;
-    var util = utilService;
+    const dvm = this;
+    const util = utilService;
+
     dvm.descriptionLimit = 200;
     dvm.title = '';
     dvm.description = '';

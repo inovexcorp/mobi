@@ -57,12 +57,10 @@ const recordViewComponent = {
 recordViewComponentCtrl.$inject = ['$q', 'catalogStateService', 'catalogManagerService', 'ontologyStateService', 'policyEnforcementService', 'utilService', 'prefixes'];
 
 function recordViewComponentCtrl($q, catalogStateService, catalogManagerService, ontologyStateService, policyEnforcementService, utilService, prefixes) {
-    var dvm = this;
-    var state = catalogStateService;
-    var cm = catalogManagerService;
-    var pep = policyEnforcementService;
-    var os = ontologyStateService;
-    var util = utilService;
+    const dvm = this;
+    const state = catalogStateService;
+    const pep = policyEnforcementService;
+
     dvm.record = undefined;
     dvm.completeRecord = undefined;
     dvm.title = '';
@@ -70,14 +68,15 @@ function recordViewComponentCtrl($q, catalogStateService, catalogManagerService,
     dvm.modified = '';
     dvm.issued = '';
     dvm.canEdit = false;
-
+    
     dvm.$onInit = function() {
-        cm.getRecord(state.selectedRecord['@id'], util.getPropertyId(state.selectedRecord, prefixes.catalog + 'catalog'))
-            .then(response => {
-                setInfo(response);
+        const recordCatalogId = utilService.getPropertyId(state.selectedRecord, prefixes.catalog + 'catalog');
+        catalogManagerService.getRecord(state.selectedRecord['@id'], recordCatalogId)
+            .then(responseRecord => {
+                setInfo(responseRecord);
                 dvm.setCanEdit();
             }, (errorMessage) => {
-                util.createErrorToast(errorMessage);
+                utilService.createErrorToast(errorMessage);
                 state.selectedRecord = undefined;
             });
     }
@@ -85,37 +84,38 @@ function recordViewComponentCtrl($q, catalogStateService, catalogManagerService,
         state.selectedRecord = undefined;
     }
     dvm.updateRecord = function(newRecord) {
-        var indexToUpdate = dvm.completeRecord.findIndex(oldRecord => oldRecord['@id'] === newRecord['@id']);
+        const indexToUpdate = dvm.completeRecord.findIndex(oldRecord => oldRecord['@id'] === newRecord['@id']);
         if (indexToUpdate !== -1) {
             dvm.completeRecord[indexToUpdate] = newRecord;
         } else {
-            util.createErrorToast("Could not find record: " + newRecord['@id']);
+            utilService.createErrorToast("Could not find record: " + newRecord['@id']);
         }
         
-        return cm.updateRecord(newRecord['@id'], util.getPropertyId(newRecord, prefixes.catalog + 'catalog'), dvm.completeRecord)
+        const recordCatalogId = utilService.getPropertyId(newRecord, prefixes.catalog + 'catalog');
+        return catalogManagerService.updateRecord(newRecord['@id'], recordCatalogId, dvm.completeRecord)
             .then((response) => {
                 setInfo(response);
-                util.createSuccessToast('Successfully updated the record');
+                utilService.createSuccessToast('Successfully updated the record');
                 state.selectedRecord = newRecord;
             }, errorMessage => {
-                util.createErrorToast(errorMessage);
+                utilService.createErrorToast(errorMessage);
                 return $q.reject();
             });
     }
     dvm.updateTitle = function(newTitle) {
-        var openRecord = find(os.list, item => item.ontologyRecord.title === dvm.title);
+        const openRecord = find(ontologyStateService.list, item => item.ontologyRecord.title === dvm.title);
         if (openRecord) {
             openRecord.ontologyRecord.title = newTitle;
         }
-        util.updateDctermsValue(dvm.record, 'title', newTitle);
+        utilService.updateDctermsValue(dvm.record, 'title', newTitle);
         return dvm.updateRecord(dvm.record);
     }
     dvm.updateDescription = function(newDescription) {
-        util.updateDctermsValue(dvm.record, 'description', newDescription);
+        utilService.updateDctermsValue(dvm.record, 'description', newDescription);
         return dvm.updateRecord(dvm.record);
     }
     dvm.setCanEdit = function() {
-        var request = {
+        const request = {
             resourceId: dvm.record['@id'],
             actionId: prefixes.policy + 'Update'
         };
@@ -123,21 +123,23 @@ function recordViewComponentCtrl($q, catalogStateService, catalogManagerService,
             .then(response => {
                 dvm.canEdit = response !== pep.deny;
             }, () => {
-                util.createWarningToast('Could not retrieve record permissions');
+                utilService.createWarningToast('Could not retrieve record permissions');
                 dvm.canEdit = false;
             });
+    }
+    dvm.manageEvent = function(){
+        state.editPermissionSelectedRecord = true;
     }
 
     function setInfo(record) {
         dvm.completeRecord = angular.copy(record);
-        var matchingRecord = find(record, ['@id', state.selectedRecord['@id']]);
-
-        dvm.record = matchingRecord;
-        dvm.title = util.getDctermsValue(dvm.record, 'title');
-        dvm.description = util.getDctermsValue(dvm.record, 'description');
-        dvm.modified = util.getDate(util.getDctermsValue(dvm.record, 'modified'), 'short');
-        dvm.issued = util.getDate(util.getDctermsValue(dvm.record, 'issued'), 'short');
+        dvm.record = find(record, ['@id', state.selectedRecord['@id']]);;
+        dvm.title = utilService.getDctermsValue(dvm.record, 'title');
+        dvm.description = utilService.getDctermsValue(dvm.record, 'description');
+        dvm.modified = utilService.getDate(utilService.getDctermsValue(dvm.record, 'modified'), 'short');
+        dvm.issued = utilService.getDate(utilService.getDctermsValue(dvm.record, 'issued'), 'short');
     }
+
 }
 
 export default recordViewComponent;

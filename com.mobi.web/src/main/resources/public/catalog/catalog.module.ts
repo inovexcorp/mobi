@@ -28,6 +28,8 @@ import catalogRecordKeywordsComponent from './components/catalogRecordKeywords/c
 import entityPublisherComponent from './components/entityPublisher/entityPublisher.component';
 import limitDescriptionComponent from './components/limitDescription/limitDescription.component';
 import openRecordButtonComponent from './components/openRecordButton/openRecordButton.component';
+import manageRecordButtonComponent from './components/manageRecordButton/manageRecordButton.component';
+import recordPermissionView from './components/recordPermissionView/recordPermissionView.component';
 import recordCardComponent from './components/recordCard/recordCard.component';
 import recordFiltersComponent from './components/recordFilters/recordFilters.component';
 import recordIconComponent from './components/recordIcon/recordIcon.component';
@@ -52,6 +54,8 @@ angular.module('catalog', [])
     .component('entityPublisher', entityPublisherComponent)
     .component('limitDescription', limitDescriptionComponent)
     .component('openRecordButton', openRecordButtonComponent)
+    .component('manageRecordButton', manageRecordButtonComponent)
+    .component('recordPermissionView', recordPermissionView)
     .component('recordCard', recordCardComponent)
     .component('recordFilters', recordFiltersComponent)
     .component('recordIcon', recordIconComponent)

@@ -97,11 +97,6 @@ describe('Records View component', function() {
             expect(catalogStateSvc.currentRecordPage).toEqual(1);
             expect(this.controller.setRecords).toHaveBeenCalledWith(catalogStateSvc.recordSearchText, 'test', ["keyword1"], catalogStateSvc.recordSortOption);
         });
-        it('should search for records', function() {
-            spyOn(this.controller, 'search');
-            this.controller.searchRecords();
-            expect(this.controller.search).toHaveBeenCalledWith(catalogStateSvc.recordSearchText);
-        });
         it('should search for records with a provided search text', function() {
             spyOn(this.controller, 'setRecords');
             this.controller.search('test');
@@ -169,6 +164,7 @@ describe('Records View component', function() {
             });
         });
         it('depending on how many records match the current query', function() {
+            expect(this.records.length).toEqual(1);
             expect(this.element.find('record-card').length).toEqual(this.records.length);
             expect(this.element.find('info-message').length).toEqual(0);
 
