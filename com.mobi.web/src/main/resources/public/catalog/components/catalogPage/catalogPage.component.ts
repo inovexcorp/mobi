@@ -43,7 +43,7 @@ const catalogPageComponent = {
 catalogPageComponentCtrl.$inject = ['catalogStateService'];
 
 function catalogPageComponentCtrl(catalogStateService) {
-    var dvm = this;
+    const dvm = this;
     dvm.state = catalogStateService;
 }
 

@@ -156,11 +156,6 @@ describe('Open Ontology Tab component', function() {
             scope.$digest();
             expect(ontology.querySelectorAll('.text-muted').length).toEqual(1);
         });
-        it('depending if a user has access to manage a record', function() {
-            this.controller.filteredList = [{userCanManage: true}];
-            scope.$digest();
-            expect(this.element.querySelectorAll('.ontologies .list-group-item action-menu a').length).toEqual(2);
-        });
         it('with a hidden file input', function() {
             expect(this.element.querySelectorAll('input[type="file"].hide').length).toEqual(1);
         });
@@ -293,10 +288,6 @@ describe('Open Ontology Tab component', function() {
             this.controller.filterText = "searchText"
             this.controller.search();
             expect(this.controller.getPageOntologyRecords).toHaveBeenCalledWith(1 , "searchText");
-        });
-        it('should show a record access overlay', function() {
-            this.controller.showAccessOverlay({'@id': 'recordId'}, 'rule');
-            expect(modalSvc.openModal).toHaveBeenCalledWith('recordAccessOverlay', {ruleId: 'rule', resource: 'recordId'});
         });
         it('should show the uploadOntologyOverlay', function() {
             this.controller.showUploadOntologyOverlay();

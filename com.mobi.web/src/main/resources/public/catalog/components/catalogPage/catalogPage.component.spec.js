@@ -30,8 +30,10 @@ describe('Catalog Page component', function() {
 
     beforeEach(function() {
         angular.mock.module('catalog');
-        mockComponent('catalog', 'recordView');
+        
         mockComponent('catalog', 'recordsView');
+        mockComponent('catalog', 'recordView');
+        mockComponent('catalog', 'recordPermissionView');
         mockCatalogState();
 
         inject(function(_$compile_, _$rootScope_, _catalogStateService_) {
@@ -58,11 +60,19 @@ describe('Catalog Page component', function() {
         it('depending on whether a record is selected', function() {
             expect(this.element.find('records-view').length).toBe(1);
             expect(this.element.find('record-view').length).toBe(0);
-
+            expect(this.element.find('record-permission-view').length).toBe(0);
+            
             catalogStateSvc.selectedRecord = {};
             scope.$digest();
             expect(this.element.find('records-view').length).toBe(0);
             expect(this.element.find('record-view').length).toBe(1);
+            expect(this.element.find('record-permission-view').length).toBe(0);
+
+            catalogStateSvc.editPermissionSelectedRecord = true;
+            scope.$digest();
+            expect(this.element.find('records-view').length).toBe(0);
+            expect(this.element.find('record-view').length).toBe(0);
+            expect(this.element.find('record-permission-view').length).toBe(1);
         });
     });
 });

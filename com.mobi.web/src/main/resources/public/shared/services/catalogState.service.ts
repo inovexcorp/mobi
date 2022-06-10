@@ -141,6 +141,19 @@ function catalogStateService(catalogManagerService, prefixes) {
      * {@link catalog.component:catalogPage}.
      */
     self.selectedRecord = undefined;
+
+    /**
+     * @ngdoc property
+     * @name editPermissionSelectedRecord
+     * @propertyOf shared.service:catalogStateService
+     * @type {boolean}
+     *
+     * @description
+     * `editPermissionSelectedRecord` holds the currently selected catalog Record object that is being viewed in the
+     * {@link catalog.component:catalogPage} for permission page.
+     */
+    self.editPermissionSelectedRecord = false;
+
     /**
      * @ngdoc property
      * @name recordIcons
@@ -215,6 +228,7 @@ function catalogStateService(catalogManagerService, prefixes) {
         self.recordSearchText = '';
         self.initializeRecordSortOption();
         self.selectedRecord = undefined;
+        self.editPermissionSelectedRecord = false;
     }
     /**
      * @ngdoc method

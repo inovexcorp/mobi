@@ -1040,6 +1040,7 @@ export function mockCatalogState() {
     angular.mock.module(function($provide) {
         $provide.service('catalogStateService', function() {
             this.selectedRecord = undefined;
+            this.editPermissionSelectedRecord = false;
             this.totalRecordSize = 0;
             this.currentRecordPage = 1;
             this.recordLimit = 10;

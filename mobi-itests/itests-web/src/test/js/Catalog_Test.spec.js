@@ -125,7 +125,7 @@ CatalogPage.prototype.changeRecordFields = function(browser, titleOfRecord, chan
     }
 }
 
-CatalogPage.prototype.leaveCatalogRecord = function(browser, titleOfRecord, changeObj) {
+CatalogPage.prototype.leaveCatalogRecord = function(browser) {
     browser
         .click('css selector', 'catalog-page record-view div button', function(result) { this.assert.strictEqual(result.status, 0) })
         .waitForElementNotPresent('div.spinner')
@@ -226,6 +226,9 @@ CatalogPage.prototype.assertRecordList = function(browser, recordList) {
 
 var catalogPage = new CatalogPage();
 
+var newUser = { 'username': 'newUser1', 'password': 'test',
+    'firstName': 'firstTester', 'lastName': 'lastTester', 'email': 'test@gmail.com', 'role': 'admin' };
+
 var keywordsList = ['1', '1,1', '1\'1', '1"1', 'keyword2', '\\/', '/\\' ];
 
 module.exports = {
@@ -253,16 +256,19 @@ module.exports = {
     'Step 5: Search catalog page ASC' : function(browser) {
         catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (asc)'});
         catalogPage.assertRecordList(browser, 'z-catalog-ontology-1.ttl,z-catalog-ontology-2.ttl,z-catalog-ontology-3.ttl,z-catalog-ontology-4.ttl,z-catalog-ontology-9p.ttl');
+        
     },
 
     'Step 6: Search catalog page DESC' : function(browser) {
         catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (desc)'});
         catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl,z-catalog-ontology-4.ttl,z-catalog-ontology-3.ttl,z-catalog-ontology-2.ttl,z-catalog-ontology-1.ttl');
+        
     },
 
     'Step 7: Search catalog page one item ASC' : function(browser) {
         catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-1', order: 'Title (asc)'});
         catalogPage.assertRecordList(browser, 'z-catalog-ontology-1.ttl');
+        
     },
 
     'Step 8: Check metadata of z-catalog-ontology-9p.ttl' : function(browser) {
@@ -282,6 +288,10 @@ module.exports = {
         catalogPage.openRecordItem(browser, 'z-catalog-ontology-1.ttl');
 
         browser
+            .useCss()
+            .expect.element('catalog-page record-view div.record-sidebar manage-record-button button').to.be.present;
+
+        browser
             .useXpath()
             .click('//material-tabset//li//a//span[text()[contains(.,"Branches")]]')
             .useCss()
@@ -297,5 +307,62 @@ module.exports = {
         catalogPage.searchRecords(browser, { searchText : 'z-catalog-ontology-', order: 'Title (asc)', keywords: ['1,1', '1\'1', '\\/', '/\\']});
         catalogPage.assertRecordList(browser, 'z-catalog-ontology-9p.ttl');
     },
+
+    'Step 11: The user clicks on the Administration sidebar link' : function(browser) {
+        browser
+            .useXpath()
+            .waitForElementVisible("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
+            .click("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
+    },
+
+    'Step 12: A new user is created' : function(browser) {
+        browser
+            .waitForElementVisible("//button/span[text() [contains(., 'Create User')]]")
+            .click("//button/span[text() [contains(., 'Create User')]]")
+            .waitForElementVisible("//h1[text() [contains(., 'Create User')]]")
+            .useCss()
+            .setValue('create-user-overlay input[name=username]', newUser.username)
+            .setValue('create-user-overlay input[name=unmaskPassword]', newUser.password)
+            .setValue('create-user-overlay input[name=firstName]', newUser.firstName)
+            .setValue('create-user-overlay input[name=lastName]', newUser.lastName)
+            .setValue('create-user-overlay input[name=email]', newUser.email)
+            .click('label.mat-slide-toggle-label')
+            .useXpath()
+            .click("//button/span[text() [contains(., 'Submit')]]")
+            .assert.not.elementPresent("//button/span[text() [contains(., 'Submit')]]")
+    },
+
+    'Step 13: The user successfully logs out' : function(browser) {
+        browser
+            .useXpath()
+            .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
+            .assert.visible('//div[@class="form-group"]//input[@id="username"]')
+            .assert.visible('//div[@class="form-group"]//input[@id="password"]')
+    },
+
+    'Step 14: Test logins as the newly created user' : function(browser) {
+        browser
+            .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
+            .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
+            .setValue('//div[@class="form-group"]//input[@id="username"]', newUser.username )
+            .setValue('//div[@class="form-group"]//input[@id="password"]', newUser.password )
+            .click('//button[@type="submit"]')
+    },
+
+    'Step 15: check for visibility of home elements' : function(browser) {
+        browser
+            .useCss()
+            .waitForElementVisible('.home-page')
+    },
+
+    'Step 16: Switch to catalog page' : function(browser) {
+        browser
+            .click('sidebar div ul a[class=nav-link][href="#/catalog"]')
+            .waitForElementNotPresent('div.spinner');
+
+        catalogPage.openRecordItem(browser, 'z-catalog-ontology-1.ttl');
+
+        browser.assert.not.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button');
+    }
 
 }
