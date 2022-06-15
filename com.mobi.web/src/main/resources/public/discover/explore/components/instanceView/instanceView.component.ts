@@ -57,7 +57,7 @@ instanceViewComponentCtrl.$inject = ['discoverStateService', 'utilService', 'exp
 function instanceViewComponentCtrl(discoverStateService, utilService, exploreUtilsService, prefixes, policyEnforcementService) {
     const dvm = this;
     const pep = policyEnforcementService;
-    const util = utilService;
+    dvm.util = utilService;
     dvm.ds = discoverStateService;
     dvm.eu = exploreUtilsService;
     dvm.entity = {};
@@ -91,10 +91,10 @@ function instanceViewComponentCtrl(discoverStateService, utilService, exploreUti
                     dvm.ds.explore.editing = true;
                     dvm.ds.explore.instance.original = angular.copy(dvm.ds.explore.instance.entity);
                 } else {
-                    util.createErrorToast('You don\'t have permission to modify dataset');
+                    dvm.util.createErrorToast('You don\'t have permission to modify dataset');
                 }
             }, () => {
-                util.createWarningToast('Could not retrieve record permissions');
+                dvm.util.createWarningToast('Could not retrieve record permissions');
             });
     }
 
