@@ -31,6 +31,7 @@ import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.jasypt.iv.RandomIvGenerator;
 import org.jasypt.properties.PropertyValueEncryptionUtils;
+import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.cm.Configuration;
@@ -49,16 +50,18 @@ import java.util.stream.Collectors;
 @Designate(ocd = EncryptionServiceConfig.class)
 public class SimpleEncryptionService implements EncryptionService {
 
-    static final String COMPONENT_NAME = "com.mobi.security.api.EncryptionService";
+    public static final String COMPONENT_NAME = "com.mobi.security.api.EncryptionService";
 
     private static final String AES_128 = "PBEWithHmacSHA512AndAES_128";
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleEncryptionService.class);
     private StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
     private boolean isEnabled;
+    private ComponentContext context;
 
     @Activate
     @Modified
-    protected void start(final EncryptionServiceConfig encryptionServiceConfig) {
+    protected void start(final EncryptionServiceConfig encryptionServiceConfig, ComponentContext context) {
+        this.context = context;
         if (encryptor.isInitialized()) {
             encryptor = new StandardPBEStringEncryptor();
         }
@@ -85,6 +88,14 @@ public class SimpleEncryptionService implements EncryptionService {
             encryptor.setIvGenerator(new RandomIvGenerator());
             encryptor.setAlgorithm(AES_128);
         }
+    }
+
+    public void enable() {
+        this.context.enableComponent(COMPONENT_NAME);
+    }
+
+    public void disable() {
+        this.context.disableComponent(COMPONENT_NAME);
     }
 
     @Override

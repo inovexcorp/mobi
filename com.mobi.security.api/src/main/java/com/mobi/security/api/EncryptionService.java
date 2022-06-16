@@ -58,4 +58,14 @@ public interface EncryptionService {
      * @return A boolean reflecting the value of the isEnabled property of the encryption config.
      */
     boolean isEnabled();
+
+    /**
+     * Enables the Encryption Service.
+     */
+    void enable();
+
+    /**
+     * Disables the Encryption Service.
+     */
+    void disable();
 }

@@ -37,7 +37,9 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.*;
+import org.osgi.framework.BundleContext;
 import org.osgi.service.cm.Configuration;
+import org.osgi.service.component.ComponentContext;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -64,6 +66,9 @@ public class SimpleEncryptionServiceTest {
     @Mock
     private Configuration configuration;
 
+    @Mock
+    private ComponentContext componentContext;
+
     @Rule
     public ExpectedException expectedEx = ExpectedException.none();
 
@@ -81,13 +86,13 @@ public class SimpleEncryptionServiceTest {
     public void startNoPasswordTest() throws Exception {
         expectedEx.expect(MobiException.class);
         expectedEx.expectMessage("Password or variable must be set if encryption is enabled.");
-        es.start(encryptionServiceConfig);
+        es.start(encryptionServiceConfig, componentContext);
     }
 
     @Test
     public void startUsePasswordTest() throws Exception {
         when(encryptionServiceConfig.password()).thenReturn("TEST_MASTER_PASS");
-        es.start(encryptionServiceConfig);
+        es.start(encryptionServiceConfig, componentContext);
     }
 
     @Test
@@ -95,13 +100,13 @@ public class SimpleEncryptionServiceTest {
         expectedEx.expect(MobiException.class);
         expectedEx.expectMessage("Could not set encryption master password.");
         when(encryptionServiceConfig.variable()).thenReturn("MASTER_PASS");
-        es.start(encryptionServiceConfig);
+        es.start(encryptionServiceConfig, componentContext);
     }
 
     @Test
     public void startUseEnvVarTest() throws Exception {
         when(encryptionServiceConfig.variable()).thenReturn("TEST_MASTER_PASS_TEST"); // This environment variable is configured in the Maven Surefire Plugin
-        es.start(encryptionServiceConfig);
+        es.start(encryptionServiceConfig, componentContext);
     }
 
     @Test
@@ -118,7 +123,7 @@ public class SimpleEncryptionServiceTest {
 
         // Initialize first encryptor with master password
         when(encryptionServiceConfig.password()).thenReturn(testMasterPass);
-        es.start(encryptionServiceConfig);
+        es.start(encryptionServiceConfig, componentContext);
 
         when(configuration.getPid()).thenReturn("testEncryptionPid");
 
@@ -128,7 +133,7 @@ public class SimpleEncryptionServiceTest {
 
         String newMasterPass = "NEW_MASTER_PASS";
         when(encryptionServiceConfig.password()).thenReturn(newMasterPass);
-        es.start(encryptionServiceConfig);
+        es.start(encryptionServiceConfig, componentContext);
 
         when(configuration.getPid()).thenReturn("testEncryptionPid");
         expectedEx.expect(MobiException.class);
@@ -157,7 +162,7 @@ public class SimpleEncryptionServiceTest {
         when(configuration.getProperties()).thenReturn(configProperties);
         when(configuration.getPid()).thenReturn("testEncryptionPid");
 
-        es.start(encryptionServiceConfig);
+        es.start(encryptionServiceConfig, componentContext);
 
         mockStatic(ConfigUtils.class);
         String encrypted = es.encrypt(testPassword, "password", configuration);
@@ -173,7 +178,7 @@ public class SimpleEncryptionServiceTest {
         String testPassword = "ENC(ABCDEFG)";
         when(encryptionServiceConfig.password()).thenReturn("TEST_MASTER_PASS");
 
-        es.start(encryptionServiceConfig);
+        es.start(encryptionServiceConfig, componentContext);
 
         String encrypted = es.encrypt(testPassword, "password", configuration);
         assertEquals(encrypted, testPassword);
@@ -182,7 +187,7 @@ public class SimpleEncryptionServiceTest {
     @Test
     public void encryptNullTest() throws Exception {
         when(encryptionServiceConfig.password()).thenReturn("TEST_MASTER_PASS");
-        es.start(encryptionServiceConfig);
+        es.start(encryptionServiceConfig, componentContext);
 
         String encrypted = es.encrypt(null, "password", configuration);
         assertNull(encrypted);
@@ -202,7 +207,7 @@ public class SimpleEncryptionServiceTest {
         when(configuration.getProperties()).thenReturn(configProperties);
         when(configuration.getPid()).thenReturn("testEncryptionPid");
 
-        es.start(encryptionServiceConfig);
+        es.start(encryptionServiceConfig, componentContext);
 
         mockStatic(PropertyValueEncryptionUtils.class);
         when(PropertyValueEncryptionUtils.encrypt(anyString(), any(StringEncryptor.class))).thenThrow(EncryptionOperationNotPossibleException.class);
@@ -224,7 +229,7 @@ public class SimpleEncryptionServiceTest {
         assertEquals(true, PropertyValueEncryptionUtils.isEncryptedValue(toDecrypt));
 
         when(encryptionServiceConfig.password()).thenReturn(testMasterPass);
-        es.start(encryptionServiceConfig);
+        es.start(encryptionServiceConfig, componentContext);
 
         when(configuration.getPid()).thenReturn("testEncryptionPid");
         String decrypted = es.decrypt(toDecrypt, "password", configuration);
@@ -236,7 +241,7 @@ public class SimpleEncryptionServiceTest {
         String testPlaintextPass = "TEST_PLAINTEXT_PASS";
         SimpleEncryptionService spyEncryptionService = spy(es);
         when(encryptionServiceConfig.password()).thenReturn("TEST_MASTER_PASS");
-        spyEncryptionService.start(encryptionServiceConfig);
+        spyEncryptionService.start(encryptionServiceConfig, componentContext);
 
         when(configuration.getPid()).thenReturn("testEncryptionPid");
         doReturn("ENC(ABCDEFG)").when(spyEncryptionService).encrypt(any(), any(), any());
@@ -248,7 +253,7 @@ public class SimpleEncryptionServiceTest {
     @Test
     public void decryptNullTest() throws Exception {
         when(encryptionServiceConfig.password()).thenReturn("TEST_MASTER_PASS");
-        es.start(encryptionServiceConfig);
+        es.start(encryptionServiceConfig, componentContext);
 
         String decrypted = es.decrypt(null, "password", configuration);
         assertNull(decrypted);
@@ -262,7 +267,7 @@ public class SimpleEncryptionServiceTest {
         String testMasterPass = "TEST_MASTER_PASS";
         String bogusEncrypedString = "ENC(ABCDEFG)";
         when(encryptionServiceConfig.password()).thenReturn(testMasterPass);
-        es.start(encryptionServiceConfig);
+        es.start(encryptionServiceConfig, componentContext);
 
         when(configuration.getPid()).thenReturn("testEncryptionPid");
         es.decrypt(bogusEncrypedString, "password", configuration);
