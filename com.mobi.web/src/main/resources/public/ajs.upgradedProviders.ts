@@ -150,6 +150,16 @@ export const catalogManagerServiceProvider = {
     deps: ['$injector']
 };
 
+export function policyEnforcementServiceFactory(i: any) {
+    return i.get('policyEnforcementService');
+}
+
+export const policyEnforcementServiceProvider = {
+    provide: 'policyEnforcementService',
+    useFactory: policyEnforcementServiceFactory,
+    deps: ['$injector']
+};
+
 export function stateManagerServiceFactory(i: any) {
     return i.get('stateManagerService');
 }
@@ -167,15 +177,5 @@ export function toastrFactory(i: any) {
 export const toastrProvider = {
     provide: 'toastr',
     useFactory: toastrFactory,
-    deps: ['$injector']
-};
-
-export function policyEnforcementServiceFactory(i: any) {
-    return i.get('policyEnforcementService');
-}
-
-export const policyEnforcementServiceProvider = {
-    provide: 'policyEnforcementService',
-    useFactory: policyEnforcementServiceFactory,
     deps: ['$injector']
 };

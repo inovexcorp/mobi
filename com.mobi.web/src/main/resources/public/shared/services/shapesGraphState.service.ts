@@ -32,6 +32,7 @@ import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { VersionedRdfState } from './versionedRdfState.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { OptionalJSONLD } from '../models/OptionalJSONLD.class';
+import { PolicyManagerService } from './policyManager.service';
 
 /**
  * @class shared.ShapesGraphStateService
@@ -45,7 +46,8 @@ export class ShapesGraphStateService extends VersionedRdfState {
 
     constructor(@Inject('stateManagerService') protected sm, @Inject('prefixes') protected prefixes,
                 @Inject('catalogManagerService') protected cm, @Inject('utilService') protected util,
-                private sgm: ShapesGraphManagerService) {
+                @Inject('policyEnforcementService') protected pep, 
+                private pm: PolicyManagerService, private sgm: ShapesGraphManagerService) {
         super(prefixes.shapesGraphState,
             'http://mobi.com/states/shapes-graph-editor/branch-id/',
             'http://mobi.com/states/shapes-graph-editor/tag-id/',
@@ -114,6 +116,8 @@ export class ShapesGraphStateService extends VersionedRdfState {
             })
             .then(content => {
                 this.listItem.content = content;
+                this.listItem.userCanModify = true;
+                this.listItem.userCanModifyMaster = true;
                 this.list.push(this.listItem);
                 const stateBase: VersionedRdfStateBase = {
                     recordId: response.recordId,
@@ -182,6 +186,29 @@ export class ShapesGraphStateService extends VersionedRdfState {
             })
             .then(content => {
                 this.listItem.content = content;
+                return this.cm.getRecordBranches(recordId, this.catalogId);
+            })
+            .then(branches => {
+                this.listItem.branches = branches.data;
+                const masterBranch = find(this.listItem.branches, {[this.prefixes.dcterms + 'title']: [{'@value': 'MASTER'}]});
+                this.listItem.masterBranchIri = masterBranch ? masterBranch['@id'] : '';
+                const modifyRequest: any = {
+                    resourceId: this.listItem.versionedRdfRecord.recordId,
+                    actionId: this.pm.actionModify
+                };
+                return this.pep.evaluateRequest(modifyRequest);
+            })
+            .then(decision => {
+                const modifyMasterRequest: any = {
+                    resourceId: this.listItem.versionedRdfRecord.recordId,
+                    actionId: this.pm.actionModify,
+                    actionAttrs: { [this.prefixes.catalog + 'branch']: this.listItem.masterBranchIri }
+                };
+                this.listItem.userCanModify = decision === this.pep.permit;
+                return this.pep.evaluateRequest(modifyMasterRequest);
+            })
+            .then(decision => {
+                this.listItem.userCanModifyMaster = decision === this.pep.permit;
                 this.list.push(this.listItem);
                 return Promise.resolve();
             })
@@ -283,5 +310,16 @@ export class ShapesGraphStateService extends VersionedRdfState {
             .then(() => {
                 return this.changeShapesGraphVersion(this.listItem.versionedRdfRecord.recordId, this.listItem.merge.target['@id'], commitId, undefined, this.util.getDctermsValue(this.listItem.merge.target, 'title'));
             }, error => Promise.reject(error));
+    }
+
+    canModify(): boolean {
+        if (!this.listItem.versionedRdfRecord.branchId) {
+            return false;
+        }
+        if (this.listItem.masterBranchIri === this.listItem.versionedRdfRecord.branchId) {
+            return this.listItem.userCanModifyMaster;
+        } else {
+            return this.listItem.userCanModify;
+        }
     }
 }

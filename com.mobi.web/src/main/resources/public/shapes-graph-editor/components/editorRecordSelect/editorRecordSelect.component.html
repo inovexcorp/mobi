@@ -58,6 +58,7 @@
                             class="delete-record"
                             mat-icon-button
                             color="primary"
+                            [disabled]="option.canNotDelete"
                             (click)="showDeleteConfirmationOverlay(option, $event)">
                         <mat-icon class="w-100">delete</mat-icon>
                     </button>

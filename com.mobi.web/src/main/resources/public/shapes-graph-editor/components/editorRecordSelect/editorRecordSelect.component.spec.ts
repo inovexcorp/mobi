@@ -47,6 +47,7 @@ import { RecordSelectFiltered } from '../../models/recordSelectFiltered.interfac
 import { NewShapesGraphRecordModalComponent } from '../newShapesGraphRecordModal/newShapesGraphRecordModal.component';
 import { EditorRecordSelectComponent } from './editorRecordSelect.component';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
+import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 
 describe('Editor Record Select component', function() {
     let component: EditorRecordSelectComponent;
@@ -57,11 +58,14 @@ describe('Editor Record Select component', function() {
     let prefixesStub;
     let catalogManagerStub;
     let modalStub;
+    let policyManagerStub;
     let shapesGraphManagerStub;
+    let policyEnforcementStub;
     let utilStub;
 
     let record1Item = new ShapesGraphListItem();
     let record2Item = new ShapesGraphListItem();
+    let record3Item = new ShapesGraphListItem();
 
     const record1: RecordSelectFiltered = {
         title: 'Record One',
@@ -101,6 +105,7 @@ describe('Editor Record Select component', function() {
             providers: [
                 MockProvider(ShapesGraphStateService),
                 MockProvider(ShapesGraphManagerService),
+                MockProvider(PolicyManagerService),
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: 'modalService', useClass: mockModal },
                 { provide: 'prefixes', useClass: mockPrefixes },
@@ -121,11 +126,22 @@ describe('Editor Record Select component', function() {
         matDialog = TestBed.get(MatDialog);
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
         shapesGraphStateStub.listItem = new ShapesGraphListItem();
+        policyEnforcementStub = TestBed.get('policyEnforcementService')
+        policyEnforcementStub.evaluateMultiDecisionRequest.and.returnValue([
+            {
+              "urn:oasis:names:tc:xacml:3.0:attribute-category:resource": "record3",
+              "urn:oasis:names:tc:xacml:1.0:subject-category:access-subject": "urn:testUser",
+              "urn:oasis:names:tc:xacml:3.0:attribute-category:action": "http://mobi.com/ontologies/policy#Delete",
+              "decision": "Permit"
+            }
+          ]);
 
         record1Item.versionedRdfRecord.recordId = record1.recordId;
         record1Item.versionedRdfRecord.title = record1.title;
         record2Item.versionedRdfRecord.recordId = record2.recordId;
         record2Item.versionedRdfRecord.title = record2.title;
+        record3Item.versionedRdfRecord.recordId = record3.recordId;
+        record3Item.versionedRdfRecord.title = record3.title;
         shapesGraphStateStub.list = [record1Item, record2Item];
         shapesGraphStateStub.openShapesGraph.and.returnValue(Promise.resolve());
         shapesGraphStateStub.closeShapesGraph.and.callFake(ShapesGraphStateService.prototype.closeShapesGraph);
@@ -133,6 +149,8 @@ describe('Editor Record Select component', function() {
         shapesGraphManagerStub = TestBed.get(ShapesGraphManagerService);
         prefixesStub = TestBed.get('prefixes');
         modalStub = TestBed.get('modalService');
+        policyManagerStub = TestBed.get(PolicyManagerService);
+        policyManagerStub.actionDelete = 'http://mobi.com/ontologies/policy#Delete';
         catalogManagerStub = TestBed.get('catalogManagerService');
         catalogManagerStub.localCatalog = {'@id': 'catalog'};
         catalogManagerStub.sortOptions = {field: prefixesStub.dcterms + 'title', asc: true};
@@ -143,6 +161,7 @@ describe('Editor Record Select component', function() {
                 {'@id': record3.recordId, 'title': record3.title}
             ]
         }));
+
 
         utilStub = TestBed.get('utilService');
         utilStub.getDctermsValue.and.callFake((obj, prop) => {
@@ -162,6 +181,8 @@ describe('Editor Record Select component', function() {
         fixture = null;
         matDialog = null;
         shapesGraphStateStub = null;
+        policyEnforcementStub = null;
+        policyManagerStub = null;
         prefixesStub = null;
         catalogManagerStub = null;
     });
@@ -259,14 +280,58 @@ describe('Editor Record Select component', function() {
 
             expect(component.recordSearchControl.value).toEqual('Test');
         });
-        it('should retrieve shapes graph records', async function() {
-            shapesGraphStateStub.list = [record1Item];
-            component.unopened = [];
-            await component.retrieveShapesGraphRecords();
+        describe('should retrieve shapes graph records', function() {
+            it('successfully', async function() {
+                shapesGraphStateStub.list = [record1Item];
+                component.unopened = [];
+                await component.retrieveShapesGraphRecords();
 
-            expect(catalogManagerStub.getRecords).toHaveBeenCalledWith('catalog', jasmine.anything(), component.spinnerId);
-            expect(shapesGraphStateStub.list).toContain(record1Item);
+                expect(catalogManagerStub.getRecords).toHaveBeenCalledWith('catalog', jasmine.anything(), component.spinnerId);
+                expect(shapesGraphStateStub.list).toContain(record1Item);
+            });
+            it('when an unopened record exists', async function() {
+                await component.retrieveShapesGraphRecords();
+    
+                expect(catalogManagerStub.getRecords).toHaveBeenCalledWith('catalog', jasmine.anything(), component.spinnerId);
+                expect(shapesGraphStateStub.list).toContain(record1Item, record2Item);
+                expect(policyEnforcementStub.evaluateMultiDecisionRequest).toHaveBeenCalledWith({
+                    "resourceId": [
+                      "record3"
+                    ],
+                    "actionId": [
+                      "http://mobi.com/ontologies/policy#Delete"
+                    ]
+                  }, jasmine.anything());
+            });
+            it('when user does not have permission to delete a record', async function() {
+                policyEnforcementStub.evaluateMultiDecisionRequest.and.returnValue([
+                    {
+                      "urn:oasis:names:tc:xacml:3.0:attribute-category:resource": "record3",
+                      "urn:oasis:names:tc:xacml:1.0:subject-category:access-subject": "urn:testUser",
+                      "urn:oasis:names:tc:xacml:3.0:attribute-category:action": "http://mobi.com/ontologies/policy#Delete",
+                      "decision": "Deny"
+                    }
+                  ]);
+
+                await component.retrieveShapesGraphRecords();
+                fixture.detectChanges();
+                await fixture.whenStable();
+    
+                expect(catalogManagerStub.getRecords).toHaveBeenCalledWith('catalog', jasmine.anything(), component.spinnerId);
+                expect(shapesGraphStateStub.list).toContain(record1Item, record2Item);
+                expect(policyEnforcementStub.evaluateMultiDecisionRequest).toHaveBeenCalledWith({
+                    "resourceId": [
+                      "record3"
+                    ],
+                    "actionId": [
+                      "http://mobi.com/ontologies/policy#Delete"
+                    ]
+                  }, jasmine.anything());
+                expect(component.unopened.length).toEqual(1);
+                expect(component.unopened[0]['canNotDelete']).toEqual(true);
+            });
         });
+        
         describe('should delete shapes graph record', function() {
             it('successfully', async function() {
                 shapesGraphStateStub.deleteShapesGraph.and.returnValue(Promise.resolve({}));

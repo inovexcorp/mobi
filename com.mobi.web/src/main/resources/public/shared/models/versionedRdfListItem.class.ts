@@ -30,6 +30,8 @@ export class VersionedRdfListItem {
     masterBranchIri: string;
     upToDate: boolean;
     userBranch: boolean;
+    userCanModify: boolean;
+    userCanModifyMaster: boolean;
     versionedRdfRecord: {
         title: string,
         recordId: string,
@@ -37,6 +39,7 @@ export class VersionedRdfListItem {
         commitId: string,
         tagId?: string
     };
+    branches: JSONLDObject[];
     additions: CommitChange[];
     deletions: CommitChange[];
     inProgressCommit: Difference;
@@ -55,12 +58,15 @@ export class VersionedRdfListItem {
         this.masterBranchIri = '';
         this.upToDate = true;
         this.userBranch = false;
+        this.userCanModify = false;
+        this.userCanModifyMaster = false;
         this.versionedRdfRecord = {
             title: '',
             recordId: '',
             branchId: '',
             commitId: ''
         };
+        this.branches = [];
         this.additions = [];
         this.deletions = [];
         this.inProgressCommit = new Difference();

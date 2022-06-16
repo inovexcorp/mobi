@@ -337,6 +337,7 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         modalServiceProvider,
         ontologyStateServiceProvider,
         propertyManagerServiceProvider,
+        policyEnforcementServiceProvider,
         ontologyUtilsManagerServiceProvider,
         discoverStateServiceProvider,
         catalogManagerServiceProvider,
