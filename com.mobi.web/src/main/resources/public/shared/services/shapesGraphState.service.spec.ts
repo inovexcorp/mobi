@@ -29,7 +29,9 @@ import {
     mockPrefixes,
     mockShapesGraphManager,
     mockStateManager,
-    mockUtil
+    mockUtil,
+    mockPolicyEnforcement,
+    mockPolicyManager
 } from '../../../../../test/ts/Shared';
 import { RecordSelectFiltered } from '../../shapes-graph-editor/models/recordSelectFiltered.interface';
 import { Difference } from '../models/difference.class';
@@ -39,6 +41,9 @@ import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { ShapesGraphStateService } from './shapesGraphState.service';
+import { MockProvider } from 'ng-mocks';
+import { PolicyManagerService } from './policyManager.service';
+import { OptionalJSONLD } from '../models/OptionalJSONLD.class';
 
 describe('Shapes Graph State service', function() {
     let service: ShapesGraphStateService;
@@ -46,17 +51,23 @@ describe('Shapes Graph State service', function() {
     let utilStub;
     let catalogManagerStub;
     let prefixesStub;
+    let policyEnforcementStub;
+    let policyManagerStub;
     let catalogId;
+    let branch;
+    let branches;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
             providers: [
                 ShapesGraphStateService,
+                MockProvider(PolicyManagerService),
                 { provide: 'shapesGraphManagerService', useClass: mockShapesGraphManager },
                 { provide: 'stateManagerService', useClass: mockStateManager },
                 { provide: 'prefixes', useClass: mockPrefixes },
                 { provide: 'catalogManagerService', useClass: mockCatalogManager },
                 { provide: 'utilService', useClass: mockUtil },
+                { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
                 { provide: ShapesGraphManagerService, useClass: mockShapesGraphManager },
             ]
         });
@@ -66,6 +77,13 @@ describe('Shapes Graph State service', function() {
         service = TestBed.get(ShapesGraphStateService);
         service.listItem = new ShapesGraphListItem();
         this.catalogId = 'catalog';
+        prefixesStub = TestBed.get('prefixes');
+        this.branch = {
+            '@id': 'branch123',
+            [prefixesStub.catalog + 'head']: [{'@id': 'commit123'}],
+            [prefixesStub.dcterms + 'title']: [{'@value': 'MASTER'}]
+        };
+        this.branches = [this.branch];
 
         utilStub = TestBed.get('utilService');
         utilStub.getDctermsValue.and.callFake((obj, prop) => {
@@ -73,9 +91,11 @@ describe('Shapes Graph State service', function() {
         });
 
         shapesGraphManagerStub = TestBed.get(ShapesGraphManagerService);
+        policyManagerStub = TestBed.get(PolicyManagerService);
+        policyEnforcementStub = TestBed.get('policyEnforcementService');
         catalogManagerStub = TestBed.get('catalogManagerService');
         catalogManagerStub.localCatalog = {'@id': this.catalogId};
-        prefixesStub = TestBed.get('prefixes');
+        catalogManagerStub.getRecordBranches.and.returnValue(Promise.resolve({data: this.branches}));
         service.initialize();
     });
 
@@ -293,9 +313,9 @@ describe('Shapes Graph State service', function() {
             it('successfully', async function() {
                 shapesGraphManagerStub.getShapesGraphIRI.and.returnValue(Promise.resolve('theId'));
                 shapesGraphManagerStub.getShapesGraphMetadata.and.returnValue(Promise.resolve([{'@id': 'theId'}]));
+                const updateShapesGraphMetadataSpy = spyOn(service, 'updateShapesGraphMetadata').and.returnValue(Promise.resolve());
                 await service.openShapesGraph(this.selectedRecord);
                 expect(this.catalogDetailsSpy).toHaveBeenCalledWith(this.selectedRecord.recordId);
-                expect(service.listItem.shapesGraphId).toEqual('theId');
                 expect(service.listItem.versionedRdfRecord).toEqual({
                     title: this.selectedRecord.title,
                     recordId: this.catalogDetailsResponse.recordId,
@@ -303,11 +323,10 @@ describe('Shapes Graph State service', function() {
                     commitId: this.catalogDetailsResponse.commitId,
                     tagId: undefined
                 });
+
                 expect(service.listItem.inProgressCommit).toEqual(new Difference());
                 expect(service.listItem).toBeDefined();
                 expect(service.listItem.upToDate).toBeTrue();
-                expect(service.list.length).toEqual(1);
-                expect(service.list).toContain(service.listItem);
             });
             it('unless an error occurs', async function() {
                 this.catalogDetailsSpy.and.returnValue(Promise.reject('Error'));
@@ -332,6 +351,35 @@ describe('Shapes Graph State service', function() {
         service.closeShapesGraph('recordId');
         expect(service.list.length).toEqual(0);
         expect(service.list).not.toContain(tempItem);
+    });
+    describe('should update shapes graph metadata', function() {
+        beforeEach(function() {
+            shapesGraphManagerStub.getShapesGraphIRI.and.returnValue(Promise.resolve('theId'));
+            shapesGraphManagerStub.getShapesGraphMetadata.and.returnValue(Promise.resolve([{'@id': 'theId'}]));
+            shapesGraphManagerStub.getShapesGraphContent.and.returnValue(Promise.resolve('<urn:testClass> a <http://www.w3.org/2002/07/owl#Class>;'));
+            policyEnforcementStub.evaluateRequest.and.returnValue(Promise.resolve('Permit'));
+        });
+        it('successfully', async function() {
+            await service.updateShapesGraphMetadata('recordId', 'branch123', 'commitId');
+            expect(service.listItem.shapesGraphId).toEqual('theId');
+            expect(service.listItem.metadata['@id']).toEqual('theId');
+            expect(service.listItem.masterBranchIri).toEqual('branch123');
+            expect(service.listItem.userCanModify).toEqual(true);
+            expect(service.listItem.userCanModifyMaster).toEqual(true);
+            expect(service.list.length).toEqual(1);
+            expect(service.list).toContain(service.listItem);
+        });
+        it('when the user does not have permission to modify', async function() {
+            policyEnforcementStub.evaluateRequest.and.returnValue(Promise.resolve('Deny'));
+            await service.updateShapesGraphMetadata('recordId', 'branch123', 'commitId');
+            expect(service.listItem.shapesGraphId).toEqual('theId');
+            expect(service.listItem.metadata['@id']).toEqual('theId');
+            expect(service.listItem.masterBranchIri).toEqual('branch123');
+            expect(service.listItem.userCanModify).toEqual(false);
+            expect(service.listItem.userCanModifyMaster).toEqual(false);
+            expect(service.list.length).toEqual(1);
+            expect(service.list).toContain(service.listItem);
+        });
     });
     describe('should delete shapes graph', function() {
         beforeEach(function() {

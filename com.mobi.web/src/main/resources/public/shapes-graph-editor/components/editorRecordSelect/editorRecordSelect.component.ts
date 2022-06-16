@@ -34,6 +34,8 @@ import { RecordSelectFiltered } from '../../models/recordSelectFiltered.interfac
 import { NewShapesGraphRecordModalComponent } from '../newShapesGraphRecordModal/newShapesGraphRecordModal.component';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { PolicyManagerService } from '../../../shared/services/policyManager.service';
+import _ = require('lodash');
 
 interface OptionGroup {
     title: string,
@@ -81,6 +83,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
    
     constructor(private dialog: MatDialog, private state: ShapesGraphStateService,
                 @Inject('catalogManagerService') private cm, private sm: ShapesGraphManagerService,
+                private pm: PolicyManagerService, @Inject('policyEnforcementService') protected pep,
                 @Inject('modalService') private modalService, @Inject('prefixes') private prefixes,
                 @Inject('utilService') private util,
                 @Inject('policyEnforcementService') private policyEnforcementService) {}
@@ -142,9 +145,26 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
                         unopenedTmp.push(this.getRecordSelectFiltered(recordJsonld));
                     }
                 });
-
+                
                 this.opened = openTmp;
                 this.unopened = unopenedTmp;
+                if (this.unopened.length !== 0) {
+                    const deleteRequest: any = {
+                        resourceId: _.map(this.unopened, 'recordId'),
+                        actionId: [this.pm.actionDelete]
+                    };
+                    return this.pep.evaluateMultiDecisionRequest(deleteRequest, this.spinnerId);
+                } else {
+                    return Promise.resolve();
+                }
+            }, errorMessage => this.util.createErrorToast(errorMessage))
+            .then(decisions => {
+                if (decisions !== undefined) {
+                    const recordsForbiddenToDelete = _.map(_.filter(decisions, {'decision': this.pep.deny}), 'urn:oasis:names:tc:xacml:3.0:attribute-category:resource');
+                    this.unopened.filter(item => recordsForbiddenToDelete.includes(item.recordId)).map((canNotDelete: RecordSelectFiltered) => {
+                        return canNotDelete.canNotDelete = true;
+                    });
+                }
                 this.checkRecordDeleted();
                 this.setFilteredOptions();
             }, errorMessage => this.util.createErrorToast(errorMessage));
@@ -198,7 +218,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
     }
     private permissionCheck(): void {
         const pepRequest = this.createPepRequest();
-        this.policyEnforcementService.evaluateRequest(pepRequest)
+        this.policyEnforcementService.evaluateRequest(pepRequest, this.spinnerId)
             .then(response => {
                 const canRead = response !== this.policyEnforcementService.deny;
                 if (!canRead) {

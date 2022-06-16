@@ -27,4 +27,5 @@ export interface RecordSelectFiltered {
     recordId: string,
     title: string,
     description?: string
+    canNotDelete?: boolean
 }

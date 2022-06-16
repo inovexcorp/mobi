@@ -682,6 +682,7 @@ describe('Editor Branch Select component', function() {
     });
     it('should call showDeleteBranchConfirmationOverlay when the branch delete button is clicked', async function() {
         spyOn(component, 'showDeleteBranchConfirmationOverlay');
+        shapesGraphStateStub.listItem.userCanModify = true;
         fixture.detectChanges();
         await fixture.whenStable();
 

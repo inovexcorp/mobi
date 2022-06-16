@@ -38,7 +38,7 @@
                     <span class="flex-1 text-truncate">{{option.title}}
                         <p class="description-text pl-3 small text-muted text-truncate">{{option.description}}</p>
                     </span>
-                    <button *ngIf="option.branchIri && !option.tagIri && option?.branchIri !== state.listItem.versionedRdfRecord?.branchId && option.title !== 'MASTER'"
+                    <button *ngIf="option.branchIri && !option.tagIri && option?.branchIri !== state.listItem.versionedRdfRecord?.branchId && option.title !== 'MASTER' && state.listItem.userCanModify"
                             class="delete-branch"
                             mat-icon-button
                             color="primary"

@@ -22,7 +22,7 @@
  */
 import { pick } from 'lodash';
 
-policyEnforcementService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService'];
+policyEnforcementService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'httpService'];
 
 /**
  * @ngdoc service
@@ -35,10 +35,10 @@ policyEnforcementService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService']
  * `policyEnforcementService` is a service that provides access to the Mobi policy enforcement REST
  * endpoint.
  */
-function policyEnforcementService($http, $q, REST_PREFIX, utilService) {
-    var self = this;
-    var prefix = REST_PREFIX + 'pep';
-    var util = utilService;
+function policyEnforcementService($http, $q, REST_PREFIX, utilService, httpService) {
+    const self = this;
+    const prefix = REST_PREFIX + 'pep';
+    const util = utilService;
 
     self.permit = 'Permit';
     self.deny = 'Deny';
@@ -64,11 +64,36 @@ function policyEnforcementService($http, $q, REST_PREFIX, utilService) {
      * @return {Promise} A Promise that resolves to a string of the decision of the request or is rejected with
      * an error message
      */
-    self.evaluateRequest = function(jsonRequest) {
-        var filteredRequest = pick(jsonRequest, ['resourceId', 'actionId', 'actionAttrs', 'resourceAttrs', 'subjectAttrs']);
-        return $http.post(prefix, filteredRequest)
-            .then(response => response.data, util.rejectError);
-    }
+    self.evaluateRequest = function(jsonRequest, id = '') {
+        const filteredRequest = pick(jsonRequest, ['resourceId', 'actionId', 'actionAttrs', 'resourceAttrs', 'subjectAttrs']);
+        const promise = id ? httpService.post(prefix, filteredRequest, id) : $http.post(prefix, filteredRequest);
+        return promise.then(response => response.data, util.rejectError);
+    };
+
+    /**
+     * @ngdoc method
+     * @name evaluateMultiDecisionRequest
+     * @methodOf shared.service:policyEnforcementService
+     *
+     * @description
+     * Calls the POST /mobirest/pep/multiDecisionRequest endpoint with the passed XACML parameters to be evaluated.
+     * Resource ID and Action ID must be passed as arrays of strings. May have multiple XACML response objects.
+     * The response data is returned as an array of objects.
+     * Example JSON object:
+     * {
+     *      "resourceId": ["https://mobi.com/records#111a111b-00ee-410a-832f-f67c5c10b33d"],
+     *      "actionId": ["http://mobi.com/ontologies/policy#Delete"]
+     * }
+     *
+     * @param {Object} [jsonRequest] An Object of ids and attributes to create a XACML request
+     * @return {Promise} A Promise that resolves to an array of xacml responses of the request or is rejected with
+     * an error message
+     */
+    self.evaluateMultiDecisionRequest = function(jsonRequest, id = '') {
+        const filteredRequest = pick(jsonRequest, ['resourceId', 'actionId', 'actionAttrs', 'resourceAttrs', 'subjectAttrs']);
+        const promise = id ? httpService.post(prefix + '/multiDecisionRequest', filteredRequest, id) : $http.post(prefix + '/multiDecisionRequest', filteredRequest);
+        return promise.then(response => response.data, util.rejectError);
+    };
 }
 
 export default policyEnforcementService;

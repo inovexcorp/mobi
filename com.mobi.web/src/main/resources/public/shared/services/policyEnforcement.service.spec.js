@@ -24,21 +24,24 @@ import {
     mockUtil,
     mockPrefixes,
     injectRestPathConstant,
-    flushAndVerify
+    flushAndVerify,
+    mockHttpService
 } from '../../../../../test/js/Shared';
 
 describe('Policy Enforcement service', function() {
-    var policyEnforcementSvc, $httpBackend, utilSvc, $q;
+    var policyEnforcementSvc, $httpBackend, utilSvc, httpSvc, $q;
 
     beforeEach(function() {
         angular.mock.module('shared');
         mockUtil();
+        mockHttpService();
         mockPrefixes();
         injectRestPathConstant();
 
-        inject(function(policyEnforcementService, _utilService_, _$httpBackend_, _$q_) {
+        inject(function(policyEnforcementService, _utilService_, _httpService_, _$httpBackend_, _$q_) {
             policyEnforcementSvc = policyEnforcementService;
             utilSvc = _utilService_;
+            httpSvc = _httpService_;
             $httpBackend = _$httpBackend_;
             $q = _$q_;
         });
@@ -57,12 +60,26 @@ describe('Policy Enforcement service', function() {
               'urn:test':'urn:test'
             }
         };
+        this.jsonMultiRequest = {
+            'resourceId':['urn:test'],
+            'actionId':['urn:test'],
+            'actionAttrs': {
+                'urn:test':'urn:test'
+            },
+            'resourceAttrs': {
+               'urn:test':'urn:test'
+            },
+            'subjectAttrs': {
+              'urn:test':'urn:test'
+            }
+        };
     });
 
     afterEach(function() {
         policyEnforcementSvc = null;
         $httpBackend = null;
         utilSvc = null;
+        httpSvc = null;
         $q = null;
     });
 
@@ -98,6 +115,41 @@ describe('Policy Enforcement service', function() {
                     fail('Promise should have resolved');
                 });
             expect(policyEnforcementSvc.evaluateRequest)
+            flushAndVerify($httpBackend);
+        });
+    });
+    describe('should evaluate a multi request', function() {
+        it('unless an error occurs', function() {
+            $httpBackend.whenPOST('/mobirest/pep/multiDecisionRequest').respond(400, null, null, 'Error Message');
+            policyEnforcementSvc.evaluateMultiDecisionRequest(this.jsonMultiRequest)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
+        });
+        it('when resolved', function() {
+            $httpBackend.expectPOST('/mobirest/pep/multiDecisionRequest', this.jsonMultiRequest).respond(200);
+            policyEnforcementSvc.evaluateMultiDecisionRequest(this.jsonMultiRequest)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('with additional fields when resolved', function() {
+            var copy = JSON.parse(JSON.stringify(this.jsonMultiRequest));
+            $httpBackend.expectPOST('/mobirest/pep/multiDecisionRequest', copy).respond(200);
+            this.jsonRequest.additionalField = 'urn:test';
+            policyEnforcementSvc.evaluateMultiDecisionRequest(this.jsonMultiRequest)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
+            expect(policyEnforcementSvc.evaluateMultiDecisionRequest)
             flushAndVerify($httpBackend);
         });
     });

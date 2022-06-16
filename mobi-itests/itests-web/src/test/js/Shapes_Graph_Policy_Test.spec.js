@@ -25,6 +25,7 @@ var adminUsername = 'admin'
 var adminPassword = 'admin'
 var newUser = { 'username': 'newUserB', 'password': 'testB',
     'firstName': 'firstTesterA', 'lastName': 'lastTesterA', 'email': 'testA@gmail.com' };
+var shapes_graph = process.cwd()+ '/src/test/resources/rdf_files/UHTC_shapes.ttl'
 
 module.exports = {
     '@tags': ['ontology-editor', 'sanity'],
@@ -33,93 +34,221 @@ module.exports = {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
-    'Step 2: The admin user clicks on the Administration sidebar link' : function(browser) {
+    'Step 2: Navigate to the Shapes Graph Editor': function(browser) {
+        browser.click('xpath', '//div//ul//a[@class="nav-link"][@href="#/shapes-graph-editor"]');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.waitForElementVisible('shapes-graph-editor-page');
+    },
+
+    'Step 3: Create a new shapes graph': function (browser) {
+        browser.globals.create_shapes_graph(browser, 'UHTC Test Graph', shapes_graph)
+    },
+
+    'Step 4: Verify shapes graph presentation': function (browser) {
+        browser.globals.wait_for_no_spinners(browser)
+        browser
+            .waitForElementVisible('shapes-graph-details')
+            .waitForElementVisible('shapes-graph-properties-block')
+            .waitForElementVisible('div.yate')
+            .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+            .assert.value('shapes-graph-editor-page editor-record-select input', 'UHTC Test Graph')
+            .assert.value('shapes-graph-editor-page editor-branch-select input', 'MASTER')
+            .expect.elements('shapes-graph-editor-page shapes-graph-property-values').count.to.equal(3)
+    },
+
+    'Step 5: Create a new branch': function (browser) {
+        browser.globals.create_shapes_graph_branch(browser, 'UHTC Test Branch');
+    },
+
+    'Step 6: Verify switching of branches': function (browser) {
+        browser
+            .waitForElementVisible('shapes-graph-details')
+            .waitForElementVisible('shapes-graph-properties-block')
+            .waitForElementVisible('div.yate')
+            .assert.value('shapes-graph-editor-page editor-record-select input', 'UHTC Test Graph')
+            .assert.value('shapes-graph-editor-page editor-branch-select input', 'UHTC Test Branch')
+            .expect.elements('shapes-graph-editor-page shapes-graph-property-values').count.to.equal(3)
+    },
+
+
+    'Step 7: The admin user clicks on the Administration sidebar link' : function(browser) {
         browser
             .useXpath()
             .waitForElementVisible("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
             .click("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
     },
 
-    'Step 3: A new user is created' : function(browser) {
-        browser
-            .waitForElementVisible("//button/span[text() [contains(., 'Create User')]]")
-            .click("//button/span[text() [contains(., 'Create User')]]")
-            .waitForElementVisible("//h1[text() [contains(., 'Create User')]]")
-            .useCss()
-            .setValue('input[name=username]', newUser.username)
-            .setValue('input[name=unmaskPassword]', newUser.password)
-            .setValue('input[name=firstName]', newUser.firstName)
-            .setValue('input[name=lastName]', newUser.lastName)
-            .setValue('input[name=email]', newUser.email)
-            .click('label.mat-slide-toggle-label')
-            .useXpath()
-            .click("//button/span[text() [contains(., 'Submit')]]")
-            .assert.not.elementPresent("//button/span[text() [contains(., 'Submit')]]")
+    'Step 8: A new user is created' : function(browser) {
+        browser.globals.add_new_user(browser, newUser)
     },
 
-    'Step 4: The new user is displayed in users list' : function(browser) {
-        browser
-            .useXpath()
-            .assert.visible("//div[@class= 'users-list tree scroll-without-buttons']//ul//li//a//span[text() " +
-                "[contains(., '" + newUser.firstName + "')]]", "new user is displayed")
-    },
-
-    'Step 5: The admin user clicks on the permissions tab' : function(browser) {
+    'Step 9: The admin user clicks on the permissions tab' : function(browser) {
         browser
             .click("//*[@id='mat-tab-label-0-2']/div")
     },
 
-    'Step 6: The admin user toggles off Create Shapes Graph permission' : function(browser) {
+    'Step 10: The admin user toggles off Create Shapes Graph permission' : function(browser) {
         browser
-            .waitForElementVisible('//mat-slide-toggle[1]')
+            .waitForElementVisible('//mat-slide-toggle[1]') // TODO: this is brittle we should change at some point
             .click('//mat-slide-toggle[1]')
             .useCss()
             .waitForElementVisible('.save-container')
-            .click('.save-container')
+            .click('.save-container');
+        browser.globals.wait_for_no_spinners(browser);
     },
     
-    'Step 7: The admin user clicks logout' : function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
-            .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
+    'Step 11: The admin user clicks logout' : function(browser) {
+        browser.globals.logout(browser)
     },
     
-    'Step 8: Test logins as the newly created user' : function(browser) {
-        browser
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-            .setValue('//div[@class="form-group"]//input[@id="username"]', newUser.username )
-            .setValue('//div[@class="form-group"]//input[@id="password"]', newUser.password )
-            .click('//button[@type="submit"]')
+    'Step 12: Test logins as the newly created user' : function(browser) {
+        browser.globals.login(browser, newUser.username, newUser.password)
     },
     
-    'Step 9: Wait for visibility of home elements' : function(browser) {
+    'Step 13: Wait for visibility of home elements' : function(browser) {
         browser
             .useCss()
             .waitForElementVisible('.home-page')
     },
     
-    'Step 10: New User name is displayed in sidebar on left' : function(browser) {
+    'Step 14: New User name is displayed in sidebar on left' : function(browser) {
         browser
             .useCss()
             .assert.visible('a.current-user-box div.user-title')
             .assert.containsText('a.current-user-box div.user-title', newUser.firstName)
     },
 
-    'Step 11: Navigate to shapes graph editor' : function(browser) {
+    'Step 15: Navigate to shapes graph editor' : function(browser) {
         browser
             .useXpath()
             .waitForElementVisible("//a[starts-with(@href, '#/shapes-graph-editor')][1]")
             .click("//a[starts-with(@href, '#/shapes-graph-editor')][1]")
     },
 
-    'Step 12: Assert button is disabled' : function(browser) {
+    'Step 16: Assert Create Shapes graph button is disabled' : function(browser) {
         browser
             .waitForElementVisible('//mat-form-field/div/div[1]/div[2]/mat-icon')
             .click('//mat-form-field/div/div[1]/div[2]/mat-icon')
-            .waitForElementVisible('//span[@class="mat-option-text"]/span/button')
-            .assert.not.enabled('//span[@class="mat-option-text"]/span/button')
-    }
+            .waitForElementVisible('//span[@class="mat-option-text"]/span/button[contains(@class,"create-record")]')
+            .assert.not.enabled('//span[@class="mat-option-text"]/span/button[contains(@class,"create-record")]')
+    },
 
+    'Step 17: Assert Delete Shapes graph button is disabled' : function(browser) {
+        browser
+            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/shapes-graph-editor"]'); // click off dropdown
+            browser.globals.wait_for_no_spinners(browser);
+        browser
+            .waitForElementVisible('shapes-graph-editor-page editor-record-select')
+            .click('shapes-graph-editor-page editor-record-select')
+        browser
+            .useXpath()
+            .pause(1000)
+            .waitForElementVisible('//mat-optgroup/label[text()[contains(., "Unopened")]]/following::span[@class="mat-option-text"]//span[text()[contains(., "UHTC Test Graph")]]/following::button[contains(@class,"delete-record")][@disabled]')
+            .click('//div//ul//a[@class="nav-link"][@href="#/shapes-graph-editor"]'); // click off dropdown
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useCss()
+            .waitForElementVisible('shapes-graph-editor-page');
+    },
+
+    'Step 18: Open Shapes Graph' : function(browser) {
+        browser.globals.open_shapes_graph(browser, 'UHTC Test Graph');
+    },
+
+    'Step 19: Verify the correct buttons are disabled' : function(browser) {
+        browser
+            .useCss()
+            .waitForElementVisible(browser.globals.create_shapes_graph_branch_button.css)
+            .assert.enabled(browser.globals.create_shapes_graph_branch_button.css)
+            .assert.not.enabled(browser.globals.merge_shapes_graph_button.css)
+            .assert.enabled(browser.globals.create_shapes_graph_tag_button.css)
+            .assert.enabled(browser.globals.download_shapes_graph_button.css)
+            .assert.not.enabled(browser.globals.upload_changes_shapes_graph_button.css)
+    },
+
+    'Step 20: The user clicks logout' : function(browser) {
+        browser.globals.logout(browser)
+    },
+
+    'Step 21: The admin user logs in' : function(browser) {
+        browser.globals.login(browser, 'admin', 'admin')
+    },
+
+    'Step 22: Wait for visibility of home elements' : function(browser) {
+        browser
+            .useCss()
+            .waitForElementVisible('.home-page')
+    },
+
+    'Step 23: The admin user navigates to the catalog page' : function(browser) {
+        browser.click('sidebar div ul a[class=nav-link][href="#/catalog"]');
+        browser.globals.wait_for_no_spinners(browser);
+    },
+
+    'Step 24: The admin user removes modify permission for the shapes graph record' : function (browser) {
+        browser
+            .useCss()
+            .setValue('catalog-page records-view div.d-flex search-bar.record-search input', 'UHTC Test Graph')
+            .sendKeys('catalog-page records-view div.d-flex search-bar.record-search input', browser.Keys.ENTER)
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .click('xpath', '//catalog-page//records-view//record-card' +
+                                   '//*[div[contains(@class, "card-body")]//h5[contains(@class, "card-title")]' +
+                                   '//span[contains(@class, "ng-binding")][text()[contains(., "UHTC Test Graph")]]]',
+                                   function(result) { this.assert.strictEqual(result.status, 0) })
+            .waitForElementVisible('catalog-page record-view div.record-body')
+            .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain('UHTC Test Graph');
+        browser
+            .assert.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button')
+            .click('catalog-page record-view div.record-sidebar manage-record-button button')
+            .useXpath()
+            .waitForElementVisible('//user-access-controls//*[h4="Modify Record"]//mat-slide-toggle')
+            .click('//user-access-controls//*[h4="Modify Record"]//mat-slide-toggle')
+            .useCss()
+            .click('div.save-container');
+        browser.globals.wait_for_no_spinners(browser);
+    },
+
+    'Step 25: The admin user clicks logout' : function(browser) {
+        browser.globals.logout(browser)
+    },
+
+    'Step 26: Test logins as the newly created user' : function(browser) {
+        browser.globals.login(browser, newUser.username, newUser.password)
+    },
+
+    'Step 27: Wait for visibility of home elements' : function(browser) {
+        browser
+            .useCss()
+            .waitForElementVisible('.home-page')
+    },
+
+    'Step 28: New User name is displayed in sidebar on left' : function(browser) {
+        browser
+            .useCss()
+            .assert.visible('a.current-user-box div.user-title')
+            .assert.containsText('a.current-user-box div.user-title', newUser.firstName)
+    },
+
+    'Step 29: Navigate to shapes graph editor' : function(browser) {
+        browser
+            .useXpath()
+            .waitForElementVisible("//a[starts-with(@href, '#/shapes-graph-editor')][1]")
+            .click("//a[starts-with(@href, '#/shapes-graph-editor')][1]")
+    },
+
+    'Step 30: Open Shapes Graph' : function(browser) {
+        browser.globals.open_shapes_graph(browser, 'UHTC Test Graph');
+    },
+
+    'Step 31: Verify the correct buttons are disabled' : function(browser) {
+        browser
+            .useCss()
+            .waitForElementVisible(browser.globals.create_shapes_graph_branch_button.css)
+            .assert.not.enabled(browser.globals.create_shapes_graph_branch_button.css)
+            .assert.not.enabled(browser.globals.merge_shapes_graph_button.css)
+            .assert.not.enabled(browser.globals.create_shapes_graph_tag_button.css)
+            .assert.enabled(browser.globals.download_shapes_graph_button.css)
+            .assert.not.enabled(browser.globals.upload_changes_shapes_graph_button.css)
+    }
 }

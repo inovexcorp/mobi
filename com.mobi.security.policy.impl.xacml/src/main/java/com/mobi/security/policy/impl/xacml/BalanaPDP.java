@@ -35,6 +35,9 @@ import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_UNLESS_DENY
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
@@ -75,6 +78,8 @@ import javax.xml.bind.JAXBContext;
 
 @Component(immediate = true, provide = {PDP.class, BalanaPDP.class})
 public class BalanaPDP implements PDP {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private Set<PIP> pips = new HashSet<>();
     private BalanaPRP balanaPRP;
@@ -168,6 +173,25 @@ public class BalanaPDP implements PDP {
     @Override
     public Response evaluate(Request request, IRI policyAlgorithm) {
         return new XACMLResponse(getPDP(policyAlgorithm, false).evaluate(getRequest(request).toString()), vf, jaxbContext);
+    }
+
+    @Override
+    public ArrayNode evaluateMultiResponse(Request request, IRI policyAlgorithm) {
+        ArrayNode jsonArrayResponse = mapper.createArrayNode();
+        ResponseCtx responseCtx = getPDP(policyAlgorithm, true).evaluateReturnResponseCtx(getRequest(request).toString());
+        for(AbstractResult result : responseCtx.getResults()) {
+            ObjectNode xacmlResponse = mapper.createObjectNode();
+            Set<Attributes> attributesSet = ((Result)result).getAttributes();
+            for(Attributes attributes : attributesSet) {
+                for (Attribute attribute : attributes.getAttributes()) {
+                    xacmlResponse.put(attributes.getCategory().toString(), attribute.getValue().encode());
+                }
+            }
+
+            xacmlResponse.put("decision", AbstractResult.DECISIONS[result.getDecision()]);
+            jsonArrayResponse.add(xacmlResponse);
+        }
+        return jsonArrayResponse;
     }
 
     private org.wso2.balana.PDP getPDP(IRI policyAlgorithm, boolean multipleRequestHandle) {

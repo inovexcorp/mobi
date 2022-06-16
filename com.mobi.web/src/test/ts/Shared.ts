@@ -709,6 +709,31 @@ export class mockOntologyManager {
     getObjProperties = jasmine.createSpy('getObjProperties').and.returnValue(Promise.resolve());
 }
 
+export class mockPolicyEnforcement {
+    permit = 'Permit';
+    deny = 'Deny';
+    indeterminate = 'Indeterminate';
+    evaluateRequest = jasmine.createSpy('evaulateRequest').and.returnValue(Promise.resolve());
+    evaluateMultiDecisionRequest = jasmine.createSpy('evaulateMultiDecisionRequest').and.returnValue(Promise.resolve());
+}
+
+export class mockPolicyManager {
+    actionCreate = 'create';
+    actionRead = 'read';
+    actionUpdate = 'update';
+    actionDelete = 'delete';
+    subjectId = 'subjectId';
+    resourceId = 'resourceId';
+    actionId = 'actionId';
+    subjectCategory = 'actionCategory';
+    resourceCategory = 'resourceCategory';
+    actionCategory = 'actionCategory';
+    stringEqual = 'stringEqual';
+    getPolicies = jasmine.createSpy('getPolicies').and.returnValue(Promise.resolve([]));
+    getPolicy = jasmine.createSpy('getPolicy').and.returnValue(Promise.resolve({}));
+    updatePolicy = jasmine.createSpy('updatePolicy').and.returnValue(Promise.resolve());
+}
+
 export class MockOntologyVisualizationService {
     ERROR_MESSAGE: "ERROR_MESSAGE_1";
     IN_PROGRESS_COMMIT_MESSAGE: "IN_PROGRESS_COMMIT_MESSAGE_2";
@@ -853,11 +878,4 @@ export class mockShapesGraphManager {
     getShapesGraphMetadata = jasmine.createSpy('getShapesGraphMetadata').and.returnValue(Promise.resolve());
     getShapesGraphIRI = jasmine.createSpy('getShapesGraphIRI').and.returnValue(Promise.resolve());
     getShapesGraphContent = jasmine.createSpy('getShapesGraphContent').and.returnValue(Promise.resolve());
-}
-
-export class mockPolicyEnforcement {
-    permit = 'Permit';
-    deny = 'Deny';
-    indeterminate = 'Indeterminate';
-    evaluateRequest = jasmine.createSpy('evaulateRequest').and.returnValue(Promise.resolve());
 }

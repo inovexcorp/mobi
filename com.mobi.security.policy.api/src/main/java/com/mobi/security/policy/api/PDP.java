@@ -23,6 +23,7 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 
@@ -75,4 +76,15 @@ public interface PDP {
      * @return A Response with the Decision of the Request
      */
     Response evaluate(Request request, IRI policyAlgorithm);
+
+    /**
+     * Evaluates an authorization {@link Request} against a collection of {@link Policy Policies} combined
+     * with the identified algorithm and returns an Array of XACML Responses which include the authorization
+     * {@link Decision}. Based on ABAC.
+     *
+     * @param request An authorization Request
+     * @param policyAlgorithm The IRI identifier for a Policy algorithm for combining results
+     * @return An array of XACML Responses that include the authorization decisions for each calculated request.
+     */
+    ArrayNode evaluateMultiResponse(Request request, IRI policyAlgorithm);
 }

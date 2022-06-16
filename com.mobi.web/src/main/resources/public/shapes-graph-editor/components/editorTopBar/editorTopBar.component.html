@@ -30,21 +30,23 @@
                                       [branchTitle]="state?.listItem?.currentVersionTitle"></editor-branch-select>
                 <button class="create-branch"
                         mat-icon-button color="primary"
-                        [disabled]="!state?.listItem?.versionedRdfRecord?.commitId"
+                        [disabled]="!state?.listItem?.versionedRdfRecord?.commitId || !state?.listItem.userCanModify"
                         (click)="createBranch()"
                         matTooltip="Create Branch">
                     <i class="fa fa-code-fork fa-lg"></i>
                 </button>
                 <button class="merge-branch"
                         mat-icon-button color="primary"
-                        [disabled]="state.isCommittable() || !state?.listItem?.versionedRdfRecord?.branchId"
+                        [disabled]="state.isCommittable() || !state?.listItem?.versionedRdfRecord?.branchId ||
+                        !state?.canModify()"
                         (click)="state.listItem.merge.active = true"
                         matTooltip="Merge Branch">
                     <mat-icon>call_merge</mat-icon>
                 </button>
                 <button class="create-tag"
                         mat-icon-button color="primary"
-                        [disabled]="state.isCommittable() || !this.state?.listItem?.versionedRdfRecord?.recordId"
+                        [disabled]="state.isCommittable() || !this.state?.listItem?.versionedRdfRecord?.recordId ||
+                        !state?.listItem.userCanModify"
                         (click)="createTag()"
                         matTooltip="Create Tag">
                     <mat-icon>local_offer</mat-icon>
@@ -59,7 +61,7 @@
                 <button class="upload-changes"
                         mat-icon-button color="primary"
                         (click)="upload()"
-                        [disabled]="state.isCommittable() || !this.state?.listItem?.versionedRdfRecord?.recordId || !state?.listItem?.versionedRdfRecord?.branchId"
+                        [disabled]="state.isCommittable() || !this.state?.listItem?.versionedRdfRecord?.recordId || !state?.listItem?.versionedRdfRecord?.branchId || !state?.canModify()"
                         matTooltip="Upload Changes">
                     <mat-icon>publish</mat-icon>
                 </button>
@@ -88,7 +90,7 @@
                         class="commit"
                         color="primary"
                         (click)="commit()"
-                        [disabled]="!state.isCommittable()">Commit</button>
+                        [disabled]="!state.isCommittable() || !state?.canModify()">Commit</button>
             </div>
         </div>
     </div>

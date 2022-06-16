@@ -29,6 +29,8 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.IRI;
@@ -47,6 +49,8 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
@@ -54,10 +58,13 @@ import javax.ws.rs.core.Response;
 
 public class PolicyEnforcementRestTest extends MobiRestTestNg {
     private static final String USER_IRI = "http://mobi.com/users/tester";
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private PolicyEnforcementRest rest;
     private ValueFactory vf;
     private JSONObject json;
+    private JSONObject multiRequestJson;
+    private String multiResponse;
 
     @Mock
     private EngineManager engineManager;
@@ -93,11 +100,22 @@ public class PolicyEnforcementRestTest extends MobiRestTestNg {
     }
 
     @BeforeMethod
-    public void setUpMocks() {
+    public void setUpMocks() throws IOException {
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(user.getResource()).thenReturn(vf.createIRI(USER_IRI));
         when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(request);
         when(pdp.evaluate(any(), any(IRI.class))).thenReturn(response);
+        multiResponse = "[\n" +
+                "                    {\n" +
+                "                      \"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\": \"record3\",\n" +
+                "                      \"urn:oasis:names:tc:xacml:1.0:subject-category:access-subject\": " +
+                "\"urn:testUser\",\n" +
+                "                      \"urn:oasis:names:tc:xacml:3.0:attribute-category:action\": \"http://mobi" +
+                ".com/ontologies/policy#Delete\",\n" +
+                "                      \"decision\": \"Deny\"" +
+                "                    }\n" +
+                "                  ]";
+        when(pdp.evaluateMultiResponse(any(), any(IRI.class))).thenReturn((ArrayNode) mapper.readTree(multiResponse));
         when(request.toString()).thenReturn("");
         when(response.toString()).thenReturn("");
         when(response.getDecision()).thenReturn(Decision.PERMIT);
@@ -110,6 +128,13 @@ public class PolicyEnforcementRestTest extends MobiRestTestNg {
         json.put("resourceAttrs", attrs);
         json.put("actionId", "urn:actionId");
         json.put("actionAttrs", attrs);
+
+        multiRequestJson = new JSONObject();
+        multiRequestJson.put("subjectAttrs", attrs);
+        multiRequestJson.put("resourceId", Arrays.asList("urn:resourceId"));
+        multiRequestJson.put("resourceAttrs", attrs);
+        multiRequestJson.put("actionId", Arrays.asList("urn:actionId"));
+        multiRequestJson.put("actionAttrs", attrs);
     }
 
     @Test
@@ -194,5 +219,12 @@ public class PolicyEnforcementRestTest extends MobiRestTestNg {
         Response response = target().path("pep").request().post(Entity.json(json));
         assertEquals(response.getStatus(), 200);
         assertEquals(response.readEntity(String.class), Decision.NOT_APPLICABLE.toString());
+    }
+
+    @Test
+    public void evaluateMultiRequestTest() throws IOException {
+        Response response = target().path("pep/multiDecisionRequest").request().post(Entity.json(multiRequestJson));
+        assertEquals(response.readEntity(String.class), ((ArrayNode) mapper.readTree(multiResponse)).toString());
+        assertEquals(response.getStatus(), 200);
     }
 }
