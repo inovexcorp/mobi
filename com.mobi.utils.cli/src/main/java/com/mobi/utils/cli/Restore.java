@@ -42,6 +42,7 @@ import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
 import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
+import com.mobi.security.api.EncryptionService;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
@@ -155,6 +156,9 @@ public class Restore implements Action {
     @Reference
     private StateManager stateManager;
 
+    @Reference(optional = true)
+    private EncryptionService encryptionService;
+
     @Reference
     private CatalogConfigProvider config;
 
@@ -252,80 +256,86 @@ public class Restore implements Action {
 
     private void copyConfigFiles(BundleContext bundleContext, String version) throws IOException, InterruptedException,
             InvalidSyntaxException {
-        // Copy config files to karaf.etc directory
-        List<String> repoServices = new ArrayList<>();
-        File configDir = new File(CONFIG_PATH);
+        try {
+            // Copy config files to karaf.etc directory
+            List<String> repoServices = new ArrayList<>();
+            File configDir = new File(CONFIG_PATH);
 
-        // Generate list of repoServices from the repository configuration filenames in the the backup
-        File[] repoFiles = configDir.listFiles((d, name) -> name.contains("com.mobi.service.repository"));
-        if (repoFiles != null && repoFiles.length != 0) {
-            for (File repoFile : repoFiles) {
-                String filename = repoFile.getName();
-                StringBuilder sb = new StringBuilder("(&(objectClass=com.mobi.repository.api.Repository)"
-                        + "(component.name=");
-                sb.append(filename, 0, filename.indexOf("-"));
-                sb.append(")(id=");
-                sb.append(filename, filename.indexOf("-") + 1, filename.indexOf(".cfg"));
-                sb.append("))");
-                repoServices.add(sb.toString());
-            }
-        }
-
-        Set<String> blacklistedFiles = new HashSet<>((IOUtils.readLines(getClass()
-                .getResourceAsStream("/configBlacklist.txt"), StandardCharsets.UTF_8)));
-        if (version.startsWith(mobiVersions.get(0))) {
-            LOGGER.trace("1.12 Mobi version detected. Blacklisting additional files from backup.");
-            // Blacklist 1.12 default Karaf config files that have changed with Karaf 4.2.x upgrade
-            // Blacklist also includes VFS config file with added directory property
-            // Blacklist also includes PolicyCacheConfiguration config file for change between size to number of entries
-            blacklistedFiles.addAll(IOUtils.readLines(getClass().getResourceAsStream("/configBlacklist-1.12.txt"),
-                    StandardCharsets.UTF_8));
-        }
-        if (mobiVersions.indexOf(version) < mobiVersions.indexOf("1.19")) {
-            LOGGER.trace("Version lower than 1.19 detected. Blacklisting additional files from backup.");
-            // Blacklist karaf jre.properties file due to javax.xml.bind version for Java 8 in > 1.19
-            blacklistedFiles.add("jre.properties");
-        }
-
-        // Merge directories, replacing any file that already exists
-        Path src = Paths.get(RESTORE_PATH + File.separator + "configurations" + File.separator);
-        Path dest = Paths.get(System.getProperty("karaf.etc") + File.separator);
-        Files.walk(src).forEach(backupConfig -> {
-            try {
-                Path newFileDest = dest.resolve(src.relativize(backupConfig));
-                if (Files.isDirectory(backupConfig)) {
-                    if (!Files.exists(newFileDest)) {
-                        Files.createDirectory(newFileDest);
-                        LOGGER.trace("Created directory: " + newFileDest.getFileName().toString());
-                    }
-                } else if (!blacklistedFiles.contains(newFileDest.getFileName().toString())) {
-                    Files.copy(backupConfig, newFileDest, StandardCopyOption.REPLACE_EXISTING);
-                } else {
-                    LOGGER.trace("Skipping restore of file: " + newFileDest.getFileName().toString());
+            // Generate list of repoServices from the repository configuration filenames in the the backup
+            File[] repoFiles = configDir.listFiles((d, name) -> name.contains("com.mobi.service.repository"));
+            if (repoFiles != null && repoFiles.length != 0) {
+                for (File repoFile : repoFiles) {
+                    String filename = repoFile.getName();
+                    StringBuilder sb = new StringBuilder("(&(objectClass=com.mobi.repository.api.Repository)"
+                            + "(component.name=");
+                    sb.append(filename, 0, filename.indexOf("-"));
+                    sb.append(")(id=");
+                    sb.append(filename, filename.indexOf("-") + 1, filename.indexOf(".cfg"));
+                    sb.append("))");
+                    repoServices.add(sb.toString());
                 }
-            } catch (IOException e) {
-                LOGGER.error("Could not copy file: " + backupConfig.getFileName());
             }
-        });
 
-        System.out.println("Waiting for services to restart after copying config files");
-        TimeUnit.SECONDS.sleep(20);
+            Set<String> blacklistedFiles = new HashSet<>((IOUtils.readLines(getClass()
+                    .getResourceAsStream("/configBlacklist.txt"), StandardCharsets.UTF_8)));
+            if (version.startsWith(mobiVersions.get(0))) {
+                LOGGER.trace("1.12 Mobi version detected. Blacklisting additional files from backup.");
+                // Blacklist 1.12 default Karaf config files that have changed with Karaf 4.2.x upgrade
+                // Blacklist also includes VFS config file with added directory property
+                // Blacklist also includes PolicyCacheConfiguration config file for change between size to number of entries
+                blacklistedFiles.addAll(IOUtils.readLines(getClass().getResourceAsStream("/configBlacklist-1.12.txt"),
+                        StandardCharsets.UTF_8));
+            }
+            if (mobiVersions.indexOf(version) < mobiVersions.indexOf("1.19")) {
+                LOGGER.trace("Version lower than 1.19 detected. Blacklisting additional files from backup.");
+                // Blacklist karaf jre.properties file due to javax.xml.bind version for Java 8 in > 1.19
+                blacklistedFiles.add("jre.properties");
+            }
 
-        // Verify services have started
-        List<String> services = IOUtils.readLines(getClass().getResourceAsStream("/registered-services.txt"),
-                StandardCharsets.UTF_8);
-        services.addAll(repoServices);
-        for (String service : services) {
-            ServiceReference<?>[] refs = bundleContext.getAllServiceReferences(null, service);
-            int count = 0;
-            while (refs == null && count < 2) {
-                TimeUnit.SECONDS.sleep(5);
-                refs = bundleContext.getAllServiceReferences(null, service);
-                count++;
+            // Merge directories, replacing any file that already exists
+            Path src = Paths.get(RESTORE_PATH + File.separator + "configurations" + File.separator);
+            Path dest = Paths.get(System.getProperty("karaf.etc") + File.separator);
+            encryptionService.disable();
+            Files.walk(src).forEach(backupConfig -> {
+                try {
+                    Path newFileDest = dest.resolve(src.relativize(backupConfig));
+                    if (Files.isDirectory(backupConfig)) {
+                        if (!Files.exists(newFileDest)) {
+                            Files.createDirectory(newFileDest);
+                            LOGGER.trace("Created directory: " + newFileDest.getFileName().toString());
+                        }
+                    } else if (!blacklistedFiles.contains(newFileDest.getFileName().toString())) {
+                        Files.copy(backupConfig, newFileDest, StandardCopyOption.REPLACE_EXISTING);
+                    } else {
+                        LOGGER.trace("Skipping restore of file: " + newFileDest.getFileName().toString());
+                    }
+                } catch (IOException e) {
+                    LOGGER.error("Could not copy file: " + backupConfig.getFileName());
+                }
+            });
+
+            System.out.println("Waiting for services to restart after copying config files");
+            TimeUnit.SECONDS.sleep(20);
+
+            // Verify services have started
+            List<String> services = IOUtils.readLines(getClass().getResourceAsStream("/registered-services.txt"),
+                    StandardCharsets.UTF_8);
+            services.addAll(repoServices);
+            for (String service : services) {
+                ServiceReference<?>[] refs = bundleContext.getAllServiceReferences(null, service);
+                int count = 0;
+                while (refs == null && count < 2) {
+                    TimeUnit.SECONDS.sleep(5);
+                    refs = bundleContext.getAllServiceReferences(null, service);
+                    count++;
+                }
+                if (refs == null) {
+                    System.out.println("Could not find service " + service);
+                }
             }
-            if (refs == null) {
-                System.out.println("Could not find service " + service);
-            }
+        } catch (Exception e) {
+            encryptionService.enable();
+            throw e;
         }
     }
 
