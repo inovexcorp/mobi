@@ -295,7 +295,9 @@ public class Restore implements Action {
             // Merge directories, replacing any file that already exists
             Path src = Paths.get(RESTORE_PATH + File.separator + "configurations" + File.separator);
             Path dest = Paths.get(System.getProperty("karaf.etc") + File.separator);
-            encryptionService.disable();
+            if (encryptionService != null) {
+                encryptionService.disable();
+            }
             Files.walk(src).forEach(backupConfig -> {
                 try {
                     Path newFileDest = dest.resolve(src.relativize(backupConfig));
@@ -334,7 +336,9 @@ public class Restore implements Action {
                 }
             }
         } catch (Exception e) {
-            encryptionService.enable();
+            if (encryptionService != null) {
+                encryptionService.enable();
+            }
             throw e;
         }
     }
