@@ -140,8 +140,14 @@ public class Restore implements Action {
     public static final String MANIFEST_FILE = RESTORE_PATH + File.separator + "manifest.json";
     private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15", "1.16", "1.17",
             "1.18", "1.19", "1.20", "1.21", "1.22");
-    private final List<String> POLICES_TO_REMOVE = Arrays.asList("http://mobi.com/policies/system-repo-access",
-            "http://mobi.com/policies/all-access-versioned-rdf-record");
+    private final List<String> POLICES_TO_REMOVE = Arrays.asList(
+            "http://mobi.com/policies/system-repo-access",
+            "http://mobi.com/policies/all-access-versioned-rdf-record",
+            "http://mobi.com/policies/dataset-creation",
+            "http://mobi.com/policies/ontology-creation",
+            "http://mobi.com/policies/shapes-graph-record-creation",
+            "http://mobi.com/policies/publish",
+            "http://mobi.com/policies/sync");
     
     // Service References
     @Reference
@@ -444,7 +450,7 @@ public class Restore implements Action {
     }
 
     private void cleanPolicies(RepositoryConnection conn, String backupVersion, BundleContext bundleContext) {
-        if (mobiVersions.indexOf(backupVersion) < 8) {
+        if (mobiVersions.indexOf(backupVersion) < 10) {
             LOGGER.trace("Remove old versions of admin policy and system repo query policy");
             // 1.20 changed admin policy and system repo query policy. Need to remove old versions so updated
             // policy takes effect.
