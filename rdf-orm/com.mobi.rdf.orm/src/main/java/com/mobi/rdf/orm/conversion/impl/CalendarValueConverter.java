@@ -23,26 +23,24 @@ package com.mobi.rdf.orm.conversion.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import com.mobi.rdf.orm.conversion.AbstractValueConverter;
-import com.mobi.rdf.orm.conversion.ValueConversionException;
-import com.mobi.rdf.api.Value;
+import org.osgi.service.component.annotations.Component;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.AbstractValueConverter;
 import com.mobi.rdf.orm.conversion.ValueConversionException;
 import com.mobi.rdf.orm.conversion.ValueConverter;
+import org.eclipse.rdf4j.model.Value;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 
 /**
  * {@link ValueConverter} for creating {@link Calendar} objects from statements.
  *
  * @author bdgould
  */
-@Component(provide = ValueConverter.class)
+@Component(service = ValueConverter.class)
 public class CalendarValueConverter extends AbstractValueConverter<Calendar> {
 
     private static final String XSD_DATETIME = XSD_PREFIX + "dateTime";

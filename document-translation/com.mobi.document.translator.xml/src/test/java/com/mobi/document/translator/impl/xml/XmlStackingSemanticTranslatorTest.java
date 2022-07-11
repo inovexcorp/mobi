@@ -36,22 +36,19 @@ import com.mobi.document.translator.ontology.ExtractedDatatypeProperty;
 import com.mobi.document.translator.ontology.ExtractedObjectProperty;
 import com.mobi.document.translator.ontology.ExtractedOntology;
 import com.mobi.document.translator.ontology.ExtractedProperty;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
-@RunWith(MockitoJUnitRunner.class)
 public class XmlStackingSemanticTranslatorTest extends OrmEnabledTestCase {
 
     private static final String ONT_URI = "urn://test.ontology";
@@ -64,11 +61,8 @@ public class XmlStackingSemanticTranslatorTest extends OrmEnabledTestCase {
     public void initTranslator() {
         xmlStackingSemanticTranslator = new XmlStackingSemanticTranslator();
         injectOrmFactoryReferencesIntoService(xmlStackingSemanticTranslator);
-        xmlStackingSemanticTranslator.setValueFactory(VALUE_FACTORY);
-        xmlStackingSemanticTranslator.setModelFactory(MODEL_FACTORY);
         xmlStackingSemanticTranslator.setOrmFactoryRegistry(ORM_FACTORY_REGISTRY);
         IriExpressionProcessor processor = new DefaultIriExpressionProcessor();
-        ((DefaultIriExpressionProcessor) processor).setValueFactory(VALUE_FACTORY);
         xmlStackingSemanticTranslator.setExpressionProcessor(processor);
     }
 

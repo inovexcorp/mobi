@@ -23,52 +23,43 @@ package com.mobi.sparql.rest.impl;
  * #L%
  */
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.ResourceUtils;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.persistence.utils.impl.SimpleBNodeService;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.rdf.core.utils.Values;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import com.mobi.repository.impl.sesame.query.utils.QueryResultsIOService;
-import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.sparql.rest.SparqlRest;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -78,23 +69,19 @@ import java.util.Map;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-public class SparqlRestTest extends MobiRestTestNg {
-    private SparqlRest rest;
-    private Repository repo;
-    private ValueFactory vf;
-    private ModelFactory mf;
-
+public class SparqlRestTest extends MobiRestTestCXF {
     private String ALL_QUERY;
     private String CONSTRUCT_QUERY;
     private String DATASET_ID;
     private Model testModel;
 
+    private AutoCloseable closeable;
+    private MemoryRepositoryWrapper repo;
     private RepositoryConnection conn;
     private RepositoryConnection connLarge;
     private Map<String, String[]> fileTypesMimes;
@@ -107,30 +94,42 @@ public class SparqlRestTest extends MobiRestTestNg {
     public static final String SPARQL_LIMITED_RESULTS_URL = "sparql/limited-results";
     public static final String SPARQL_URL = "sparql";
 
-    @Mock
-    private RepositoryManager repositoryManager;
-
-    @Mock
-    private DatasetManager datasetManager;
+    // Mock services used in server
+    private static SparqlRest rest;
+    private static ValueFactory vf;
+    private static ModelFactory mf;
+    private static RepositoryManager repositoryManager;
+    private static DatasetManager datasetManager;
 
     @Mock
     private DatasetConnection datasetConnection;
 
-    @Mock
-    private SesameTransformer sesameTransformer;
+    @BeforeClass
+    public static void startServer() {
+        vf = getValueFactory();
+        mf = getModelFactory();
 
-    @Override
-    protected Application configureApp() throws Exception {
-        vf = SimpleValueFactory.getInstance();
-        mf = LinkedHashModelFactory.getInstance();
+        repositoryManager = Mockito.mock(RepositoryManager.class);
+        datasetManager = Mockito.mock(DatasetManager.class);
+        
 
-        SimpleBNodeService bns = new SimpleBNodeService();
-        bns.setModelFactory(mf);
-        bns.setValueFactory(vf);
+        rest = new SparqlRest();
+        rest.setRepository(repositoryManager);
+        rest.setDatasetManager(datasetManager);
+        rest.setLimitResults(500);
 
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
-        testModel = mf.createModel();
+        rest = Mockito.spy(rest);
+        configureServer(rest);
+    }
+
+    @Before
+    public void setupMocks() throws Exception {
+        closeable = MockitoAnnotations.openMocks(this);
+        reset(repositoryManager, datasetConnection, datasetManager);
+
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
+        testModel = mf.createEmptyModel();
         testModel.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyA"), vf.createLiteral("true"));
         testModel.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyB"), vf.createLiteral("true"));
         testModel.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyC"), vf.createLiteral("true"));
@@ -138,18 +137,6 @@ public class SparqlRestTest extends MobiRestTestNg {
         testModel.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyE"), vf.createLiteral("true"));
         conn = repo.getConnection();
         conn.add(testModel);
-
-        MockitoAnnotations.initMocks(this);
-
-        rest = new SparqlRest();
-        rest.setRepository(repositoryManager);
-        rest.setDatasetManager(datasetManager);
-        rest.setSesameTransformer(sesameTransformer);
-        rest.setValueFactory(vf);
-        rest.setQueryResultsIO(new QueryResultsIOService());
-        rest.setLimitResults(500);
-
-        rest = Mockito.spy(rest);
 
         DATASET_ID = "http://example.com/datasets/0";
 
@@ -183,25 +170,6 @@ public class SparqlRestTest extends MobiRestTestNg {
 
         datasets = Arrays.asList(null, DATASET_ID);
         filenames = Arrays.asList(null, "test");
-        return new ResourceConfig()
-                .register(rest)
-                .register(MultiPartFeature.class);
-    }
-
-    @AfterClass
-    protected void cleanUp() {
-        conn.close();
-        assertFalse(conn.isActive());
-    }
-
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
-    }
-
-    @BeforeMethod
-    public void setupMocks() {
-        reset(repositoryManager, datasetConnection, datasetManager, sesameTransformer);
 
         // mock getRepository
         when(repositoryManager.getRepository(anyString()))
@@ -211,26 +179,22 @@ public class SparqlRestTest extends MobiRestTestNg {
                 .thenReturn(datasetConnection);
         // mock prepareTupleQuery
         when(datasetConnection.prepareTupleQuery(anyString()))
-                .thenAnswer(i -> conn.prepareTupleQuery(i.getArgumentAt(0, String.class)));
+                .thenAnswer(i -> conn.prepareTupleQuery(i.getArgument(0, String.class)));
         // mock prepareGraphQuery
         when(datasetConnection.prepareGraphQuery(anyString()))
-                .thenAnswer(i -> conn.prepareGraphQuery(i.getArgumentAt(0, String.class)));
+                .thenAnswer(i -> conn.prepareGraphQuery(i.getArgument(0, String.class)));
+    }
 
-        // mock sesameTransformer
-        when(sesameTransformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
-                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
-        when(sesameTransformer.mobiIRI(any(org.eclipse.rdf4j.model.IRI.class)))
-                .thenAnswer(i -> Values.mobiIRI(i.getArgumentAt(0, org.eclipse.rdf4j.model.IRI.class)));
-        when(sesameTransformer.sesameModel(any(Model.class)))
-                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(sesameTransformer.sesameStatement(any(Statement.class)))
-                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
+        reset(repositoryManager, datasetConnection, datasetManager);
     }
 
     private void setupLargeRepo() {
-        Repository repoLarge = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repoLarge.initialize();
-        Model testModelLarge = mf.createModel();
+        MemoryRepositoryWrapper repoLarge = new MemoryRepositoryWrapper();
+        repoLarge.setDelegate(new SailRepository(new MemoryStore()));
+        Model testModelLarge = mf.createEmptyModel();
 
         for (int i = 0; i <= 1000; i++) {
             testModelLarge.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/property" + i), vf.createLiteral("true"));
@@ -248,14 +212,14 @@ public class SparqlRestTest extends MobiRestTestNg {
                 .thenReturn(datasetConnection);
         // mock prepareTupleQuery
         when(datasetConnection.prepareTupleQuery(anyString()))
-                .thenAnswer(i -> connLarge.prepareTupleQuery(i.getArgumentAt(0, String.class)));
+                .thenAnswer(i -> connLarge.prepareTupleQuery(i.getArgument(0, String.class)));
         when(datasetConnection.prepareGraphQuery(anyString()))
-                .thenAnswer(i -> connLarge.prepareGraphQuery(i.getArgumentAt(0, String.class)));
+                .thenAnswer(i -> connLarge.prepareGraphQuery(i.getArgument(0, String.class)));
     }
 
     @Test
     public void queryRdfTest() {
-        Assert.assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
 
         for (String dataset : datasets) {
@@ -274,7 +238,7 @@ public class SparqlRestTest extends MobiRestTestNg {
 
                 assertEquals(response.getStatus(), 200);
 
-                verify(rest, atLeast(minNumberOfInvocations)).queryRdf(anyString(), anyString(), anyString());
+                verify(rest, atLeast(minNumberOfInvocations)).queryRdf(anyString(), any(), anyString());
 
                 if (dataset != null) {
                     verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
@@ -296,24 +260,24 @@ public class SparqlRestTest extends MobiRestTestNg {
                     type = "ttl";
                 }
 
-                Assert.assertEquals(null, response.getHeaderString("Content-Disposition"));
+                assertEquals(null, response.getHeaderString("Content-Disposition"));
 
                 if (type.equals("json")) {
                     JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-                    assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
-                    assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+                    assertTrue("Response JSON contains `head` key", result.containsKey("head"));
+                    assertTrue("Response JSON contains `results` key", result.containsKey("results"));
                 } else {
                     String responseString = response.readEntity(String.class);
-                    Assert.assertNotEquals(responseString, "");
+                    assertNotEquals(responseString, "");
                 }
             }
         }
-        Assert.assertEquals("Verify minNumberOfInvocations", 20, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 20, minNumberOfInvocations);
     }
 
     @Test
     public void postQueryRdfTest() {
-        Assert.assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
 
         for (String dataset : datasets) {
@@ -333,7 +297,7 @@ public class SparqlRestTest extends MobiRestTestNg {
 
                 assertEquals(response.getStatus(), 200);
 
-                verify(rest, atLeast(minNumberOfInvocations)).postQueryRdf(anyString(), anyString(), anyString());
+                verify(rest, atLeast(minNumberOfInvocations)).postQueryRdf(any(), anyString(), anyString());
 
                 if (dataset != null) {
                     verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
@@ -355,24 +319,24 @@ public class SparqlRestTest extends MobiRestTestNg {
                     type = "ttl";
                 }
 
-                Assert.assertEquals(null, response.getHeaderString("Content-Disposition"));
+                assertEquals(null, response.getHeaderString("Content-Disposition"));
 
                 if (type.equals("json")) {
                     JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-                    assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
-                    assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+                    assertTrue("Response JSON contains `head` key", result.containsKey("head"));
+                    assertTrue("Response JSON contains `results` key", result.containsKey("results"));
                 } else {
                     String responseString = response.readEntity(String.class);
-                    Assert.assertNotEquals(responseString, "");
+                    assertNotEquals(responseString, "");
                 }
             }
         }
-        Assert.assertEquals("Verify minNumberOfInvocations", 20, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 20, minNumberOfInvocations);
     }
 
     @Test
     public void postUrlEncodedQueryRdfTest() {
-        Assert.assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
 
         for (String dataset : datasets) {
@@ -394,7 +358,7 @@ public class SparqlRestTest extends MobiRestTestNg {
 
                 assertEquals(response.getStatus(), 200);
 
-                verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedQueryRdf(anyString(), anyString(),
+                verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedQueryRdf(anyString(), any(),
                         anyString());
 
                 if (dataset != null) {
@@ -417,24 +381,24 @@ public class SparqlRestTest extends MobiRestTestNg {
                     type = "ttl";
                 }
 
-                Assert.assertEquals(null, response.getHeaderString("Content-Disposition"));
+                assertEquals(null, response.getHeaderString("Content-Disposition"));
 
                 if (type.equals("json")) {
                     JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-                    assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
-                    assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+                    assertTrue(result.containsKey("head"));
+                    assertTrue(result.containsKey("results"));
                 } else {
                     String responseString = response.readEntity(String.class);
-                    Assert.assertNotEquals(responseString, "");
+                    assertNotEquals(responseString, "");
                 }
             }
         }
-        Assert.assertEquals("Verify minNumberOfInvocations", 20, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 20, minNumberOfInvocations);
     }
 
     @Test
     public void downloadQueryTest() {
-        Assert.assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
         for (String filename : filenames) {
             for (String dataset : datasets) {
@@ -454,10 +418,10 @@ public class SparqlRestTest extends MobiRestTestNg {
                     if (dataset != null) {
                         webTarget = webTarget.queryParam("dataset", DATASET_ID);
                     }
-                    Response response = webTarget.request().get();
+                    Response response = webTarget.request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
 
-                    verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(),
-                            anyString(), anyString(), anyString());
+                    verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), any(),
+                            any(), anyString(), anyString());
 
                     if (dataset != null) {
                         verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
@@ -491,21 +455,21 @@ public class SparqlRestTest extends MobiRestTestNg {
 
                     if (type.equals("json")) {
                         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-                        assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
-                        assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+                        assertTrue("Response JSON contains `head` key", result.containsKey("head"));
+                        assertTrue("Response JSON contains `results` key", result.containsKey("results"));
                     } else {
                         String responseString = response.readEntity(String.class);
-                        Assert.assertNotEquals(responseString, "");
+                        assertNotEquals(responseString, "");
                     }
                 }
             }
         }
-        Assert.assertEquals("Verify minNumberOfInvocations", 40, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 40, minNumberOfInvocations);
     }
 
     @Test
     public void downloadQueryPostTest() {
-        Assert.assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
         for (String filename : filenames) {
             for (String dataset : datasets) {
@@ -525,10 +489,11 @@ public class SparqlRestTest extends MobiRestTestNg {
                     if (dataset != null) {
                         webTarget = webTarget.queryParam("dataset", DATASET_ID);
                     }
-                    Response response = webTarget.request().post(Entity.entity(ResourceUtils.decode(dataArray[1]),
-                            "application/sparql-query"));
+                    Response response = webTarget.request()
+                            .header("accept", MediaType.APPLICATION_OCTET_STREAM)
+                            .post(Entity.entity(ResourceUtils.decode(dataArray[1]), "application/sparql-query"));
 
-                    verify(rest, atLeast(minNumberOfInvocations)).postDownloadRdfQuery(anyString(), anyString(),
+                    verify(rest, atLeast(minNumberOfInvocations)).postDownloadRdfQuery(any(), anyString(),
                             anyString(), anyString(), anyString());
 
                     if (dataset != null) {
@@ -563,21 +528,21 @@ public class SparqlRestTest extends MobiRestTestNg {
 
                     if (type.equals("json")) {
                         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-                        assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
-                        assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+                        assertTrue("Response JSON contains `head` key", result.containsKey("head"));
+                        assertTrue("Response JSON contains `results` key", result.containsKey("results"));
                     } else {
                         String responseString = response.readEntity(String.class);
-                        Assert.assertNotEquals(responseString, "");
+                        assertNotEquals(responseString, "");
                     }
                 }
             }
         }
-        Assert.assertEquals("Verify minNumberOfInvocations", 40, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 40, minNumberOfInvocations);
     }
 
     @Test
     public void downloadQueryPostUrlEncodedTest() {
-        Assert.assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
         for (String filename : filenames) {
             for (String dataset : datasets) {
@@ -600,10 +565,13 @@ public class SparqlRestTest extends MobiRestTestNg {
                         webTarget = webTarget.queryParam("fileName", filename);
                     }
 
-                    Response response = webTarget.request().post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+                    System.out.println(dataArray[0]);
+                    Response response = webTarget.request()
+                            .header("accept", MediaType.APPLICATION_OCTET_STREAM)
+                            .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
-                    verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedDownloadRdfQuery(anyString(), anyString(),
-                            anyString(), anyString(), anyString());
+                    verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedDownloadRdfQuery(anyString(), any(),
+                            any(), anyString(), anyString());
 
                     if (dataset != null) {
                         verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
@@ -637,16 +605,16 @@ public class SparqlRestTest extends MobiRestTestNg {
 
                     if (type.equals("json")) {
                         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-                        assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
-                        assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+                        assertTrue("Response JSON contains `head` key", result.containsKey("head"));
+                        assertTrue("Response JSON contains `results` key", result.containsKey("results"));
                     } else {
                         String responseString = response.readEntity(String.class);
-                        Assert.assertNotEquals(responseString, "");
+                        assertNotEquals(responseString, "");
                     }
                 }
             }
         }
-        Assert.assertEquals("Verify minNumberOfInvocations", 40, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 40, minNumberOfInvocations);
     }
 
     @Test
@@ -661,10 +629,10 @@ public class SparqlRestTest extends MobiRestTestNg {
                 webTarget = webTarget.queryParam("dataset", DATASET_ID);
             }
 
-            Response response = webTarget.request().get();
+            Response response = webTarget.request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(),
-                    anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), any(),
+                    any(), anyString(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -678,8 +646,8 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             String responseString = response.readEntity(String.class);
             JSONObject result = JSONObject.fromObject(responseString);
-            assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
-            assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+            assertTrue(result.containsKey("head"));
+            assertTrue(result.containsKey("results"));
         }
     }
 
@@ -695,9 +663,9 @@ public class SparqlRestTest extends MobiRestTestNg {
                 webTarget = webTarget.queryParam("dataset", DATASET_ID);
             }
 
-            Response response = webTarget.request().get();
+            Response response = webTarget.request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(),
+            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), any(), any(),
                     anyString(), anyString());
             assertEquals(response.getStatus(), 200);
 
@@ -712,7 +680,7 @@ public class SparqlRestTest extends MobiRestTestNg {
             assertEquals(response.getHeaderString("Content-Type"), "text/turtle");
 
             String responseString = response.readEntity(String.class);
-            Assert.assertNotEquals(responseString, "");
+            assertNotEquals(responseString, "");
         }
     }
 
@@ -896,8 +864,8 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             String responseString = response.readEntity(String.class);
             JSONObject result = JSONObject.fromObject(responseString);
-            assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
-            assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+            assertTrue("Response JSON contains `head` key", result.containsKey("head"));
+            assertTrue("Response JSON contains `results` key", result.containsKey("results"));
         }
     }
 
@@ -915,7 +883,7 @@ public class SparqlRestTest extends MobiRestTestNg {
             Response response = webTarget.request().post(Entity.entity(ResourceUtils.decode(ALL_QUERY),
                     "application/sparql-query"));
 
-            verify(rest, atLeast(minNumberOfInvocations)).postLimitedResults(anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).postLimitedResults(any(), anyString(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -929,8 +897,8 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             String responseString = response.readEntity(String.class);
             JSONObject result = JSONObject.fromObject(responseString);
-            assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
-            assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+            assertTrue("Response JSON contains `head` key", result.containsKey("head"));
+            assertTrue("Response JSON contains `results` key", result.containsKey("results"));
         }
     }
 
@@ -951,7 +919,7 @@ public class SparqlRestTest extends MobiRestTestNg {
             Response response = webTarget.request().post(Entity.entity(form,
                     MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
-            verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedLimitedResults(anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedLimitedResults(anyString(), any(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -965,8 +933,8 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             String responseString = response.readEntity(String.class);
             JSONObject result = JSONObject.fromObject(responseString);
-            assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
-            assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+            assertTrue("Response JSON contains `head` key", result.containsKey("head"));
+            assertTrue("Response JSON contains `results` key", result.containsKey("results"));
         }
     }
 
@@ -1000,8 +968,8 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             String responseString = response.readEntity(String.class);
             JSONObject result = JSONObject.fromObject(responseString);
-            assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
-            assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+            assertTrue(result.containsKey("head"));
+            assertTrue(result.containsKey("results"));
         }
     }
 
@@ -1019,7 +987,7 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             Response response = webTarget.request().get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), any(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -1032,7 +1000,7 @@ public class SparqlRestTest extends MobiRestTestNg {
             assertEquals(response.getHeaderString("X-LIMIT-EXCEEDED"), null);
 
             String responseString = response.readEntity(String.class);
-            Assert.assertNotEquals(responseString, "");
+            assertNotEquals(responseString, "");
         }
     }
 
@@ -1052,7 +1020,7 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             Response response = webTarget.request().get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), any(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -1065,14 +1033,14 @@ public class SparqlRestTest extends MobiRestTestNg {
             assertEquals(response.getHeaderString("X-LIMIT-EXCEEDED"), "500");
 
             String responseString = response.readEntity(String.class);
-            Assert.assertNotEquals(responseString, "");
+            assertNotEquals(responseString, "");
         }
     }
 
 
     @Test
     public void limitedResultsTest() {
-        Assert.assertEquals("Verify Mimes Types", 6, limitedFileTypesMimes.size());
+        assertEquals("Verify Mimes Types", 6, limitedFileTypesMimes.size());
 
         int minNumberOfInvocations = 0;
         for (String dataset : datasets) {
@@ -1091,7 +1059,7 @@ public class SparqlRestTest extends MobiRestTestNg {
 
                 assertEquals(response.getStatus(), 200);
 
-                verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString());
+                verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), any(), anyString());
 
                 if (dataset != null) {
                     verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
@@ -1115,15 +1083,15 @@ public class SparqlRestTest extends MobiRestTestNg {
 
                 if (type.equals("json")) {
                     JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-                    assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
-                    assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+                    assertTrue(result.containsKey("head"));
+                    assertTrue(result.containsKey("results"));
                 } else {
                     String responseString = response.readEntity(String.class);
-                    Assert.assertNotEquals(responseString, "");
+                    assertNotEquals(responseString, "");
                 }
             }
         }
-        Assert.assertEquals("Verify minNumberOfInvocations", 12, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 12, minNumberOfInvocations);
     }
 
 

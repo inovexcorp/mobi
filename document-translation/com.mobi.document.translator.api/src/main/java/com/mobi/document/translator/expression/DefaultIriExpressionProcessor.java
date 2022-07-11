@@ -23,35 +23,28 @@ package com.mobi.document.translator.expression;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.document.translator.SemanticTranslationException;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.document.translator.expression.context.IriExpressionContext;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.expression.Expression;
-import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.SpelEvaluationException;
 import org.springframework.expression.spel.SpelParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
-
 
 @Component(immediate = true)
 public class DefaultIriExpressionProcessor implements IriExpressionProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultIriExpressionProcessor.class);
 
-    private static final ExpressionParser PARSER = new SpelExpressionParser();
+    private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
-    private ValueFactory valueFactory;
-
-    @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
-    }
+    public final ValueFactory valueFactory = SimpleValueFactory.getInstance();
 
     @Override
     public IRI processExpression(String expression, IriExpressionContext context) throws SemanticTranslationException {

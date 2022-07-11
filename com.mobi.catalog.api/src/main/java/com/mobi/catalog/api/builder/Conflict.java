@@ -23,8 +23,7 @@ package com.mobi.catalog.api.builder;
  * #L%
  */
 
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
+import org.eclipse.rdf4j.model.IRI;
 
 public class Conflict {
     private IRI iri;

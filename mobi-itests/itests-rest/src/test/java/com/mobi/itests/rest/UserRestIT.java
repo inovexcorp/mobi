@@ -34,17 +34,19 @@ import static org.junit.Assert.fail;
 
 import com.mobi.itests.rest.utils.RestITUtils;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.persistence.utils.ConnectionUtils;
+import com.mobi.repository.api.OsgiRepository;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.karaf.itests.KarafTestSupport;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -115,7 +117,6 @@ public class UserRestIT extends KarafTestSupport {
         waitForService("(&(objectClass=com.mobi.jaas.rest.UserRest))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
-        waitForService("(&(objectClass=com.mobi.rdf.api.ValueFactory))", 10000L);
 
         executeCommand(String.format("mobi:import -r system %s", dataFile));
 
@@ -124,8 +125,8 @@ public class UserRestIT extends KarafTestSupport {
 
     @Test
     public void testDeleteUser() throws Exception {
-        Repository repo = getOsgiService(Repository.class, "id=system", 30000L);
-        ValueFactory vf = getOsgiService(ValueFactory.class);
+        OsgiRepository repo = getOsgiService(OsgiRepository.class, "id=system", 30000L);
+        ValueFactory vf = SimpleValueFactory.getInstance();
 
         IRI user = vf.createIRI("http://mobi.com/users/45c571a156ddcef41351a713bcddee5ba7e95460");
         IRI inProgressCommit = vf.createIRI("https://mobi.com/in-progress-commits#c152d7b8-98f4-4337-909d-7fc6c62589f5");
@@ -134,11 +135,11 @@ public class UserRestIT extends KarafTestSupport {
         IRI userState = vf.createIRI("http://mobi.com/states#e7eb17e0-4c26-4433-816e-2fb0a9608c42");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.contains(user, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(User.TYPE)));
-            assertTrue(conn.containsContext(inProgressCommit));
-            assertTrue(conn.containsContext(inProgressAdditions));
-            assertTrue(conn.containsContext(inProgressDeletions));
-            assertTrue(conn.contains(userState, null, null));
+            assertTrue(ConnectionUtils.contains(conn, user, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(User.TYPE)));
+            assertTrue(ConnectionUtils.containsContext(conn, inProgressCommit));
+            assertTrue(ConnectionUtils.containsContext(conn, inProgressAdditions));
+            assertTrue(ConnectionUtils.containsContext(conn, inProgressDeletions));
+            assertTrue(ConnectionUtils.contains(conn, userState, null, null));
         }
 
         try (CloseableHttpResponse response = deleteUser(createHttpClient(), "testuser")) {
@@ -149,11 +150,11 @@ public class UserRestIT extends KarafTestSupport {
         }
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertFalse(conn.contains(user, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(User.TYPE)));
-            assertFalse(conn.containsContext(inProgressCommit));
-            assertFalse(conn.containsContext(inProgressAdditions));
-            assertFalse(conn.containsContext(inProgressDeletions));
-            assertFalse(conn.contains(userState, null, null));
+            assertFalse(ConnectionUtils.contains(conn, user, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(User.TYPE)));
+            assertFalse(ConnectionUtils.containsContext(conn, inProgressCommit));
+            assertFalse(ConnectionUtils.containsContext(conn, inProgressAdditions));
+            assertFalse(ConnectionUtils.containsContext(conn, inProgressDeletions));
+            assertFalse(ConnectionUtils.contains(conn, userState, null, null));
         }
     }
 

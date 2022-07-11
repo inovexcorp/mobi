@@ -25,4 +25,4 @@ package com.mobi.etl.api.config.rdf;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

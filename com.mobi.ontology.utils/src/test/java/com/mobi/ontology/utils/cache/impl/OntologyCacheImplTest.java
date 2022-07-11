@@ -26,18 +26,19 @@ package com.mobi.ontology.utils.cache.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.cache.api.CacheManager;
 import com.mobi.ontology.core.api.Ontology;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -49,8 +50,9 @@ import java.util.Optional;
 import javax.cache.Cache;
 
 public class OntologyCacheImplTest {
+    private AutoCloseable closeable;
     private OntologyCacheImpl service;
-    private ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
 
     private Resource recordId = vf.createIRI("http://test.com/record");
     private IRI ontologyIRI = vf.createIRI("http://test.com/ontology");
@@ -73,12 +75,12 @@ public class OntologyCacheImplTest {
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         when(cacheManager.getCache(anyString(), eq(String.class), eq(Ontology.class))).thenReturn(Optional.of(cache));
         when(ontology.getImportedOntologyIRIs()).thenReturn(Collections.singleton(ontologyIRI));
 
         service = new OntologyCacheImpl();
-        service.setCacheManager(cacheManager);
+        service.cacheManager = cacheManager;
 
         key = service.generateKey(recordId.stringValue(), null);
         when(cache.iterator()).thenReturn(it);
@@ -86,6 +88,11 @@ public class OntologyCacheImplTest {
         when(it.next()).thenReturn(entry);
         when(entry.getKey()).thenReturn(key);
         when(entry.getValue()).thenReturn(ontology);
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -101,7 +108,7 @@ public class OntologyCacheImplTest {
         assertTrue(result.isPresent());
         assertEquals(cache, result.get());
 
-        service.setCacheManager(null);
+        service.cacheManager = null;
         result = service.getOntologyCache();
         assertFalse(result.isPresent());
     }

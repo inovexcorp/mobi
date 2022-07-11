@@ -23,8 +23,6 @@ package com.mobi.rdf.orm.test;
  * #L%
  */
 
-import jdk.nashorn.internal.ir.annotations.Reference;
-
 /**
  * This is simply an example of a service that we'll use in our test case that will <b>not</b>
  * have a OrmFactory registered for it.

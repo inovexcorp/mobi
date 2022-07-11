@@ -24,12 +24,10 @@ package com.mobi.ontology.core.api;
  */
 
 import com.mobi.ontology.core.utils.MobiOntologyException;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.OutputStream;
@@ -38,7 +36,7 @@ import java.util.Set;
 
 public interface Ontology {
 
-    Model asModel(ModelFactory factory) throws MobiOntologyException;
+    Model asModel() throws MobiOntologyException;
 
     /**
      * Returns the Ontology as TURTLE in an OutputStream.
@@ -307,11 +305,9 @@ public interface Ontology {
      * Gets the subClassOf relationships for classes in the Ontology. The parents will be OWL Classes and the
      * children will be all OWL Classes that are direct subclasses.
      *
-     * @param vf A {@link ValueFactory} for creating the hierarchy
-     * @param mf A {@link ModelFactory} for creating the hierarchy
      * @return a {@link Hierarchy} of Class {@link IRI IRIs} to Class {@link IRI IRIs}.
      */
-    Hierarchy getSubClassesOf(ValueFactory vf, ModelFactory mf);
+    Hierarchy getSubClassesOf();
 
     /**
      * Gets the subClassOf relationships for a particular {@link IRI} in the {@link Ontology}. It will provide
@@ -335,41 +331,33 @@ public interface Ontology {
      * Gets the subPropertyOf relationships for datatype properties in the Ontology. The parents will be OWL
      * DatatypeProperties and the children will be all OWL DatatypeProperties that are direct subproperties.
      *
-     * @param vf A {@link ValueFactory} for creating the hierarchy
-     * @param mf A {@link ModelFactory} for creating the hierarchy
      * @return a {@link Hierarchy} of DatatypeProperty {@link IRI IRIs} to DatatypeProperty {@link IRI IRIs}.
      */
-    Hierarchy getSubDatatypePropertiesOf(ValueFactory vf, ModelFactory mf);
+    Hierarchy getSubDatatypePropertiesOf();
 
     /**
      * Gets the subPropertyOf relationships for annotation properties in the Ontology. The parents will be OWL
      * AnnotationProperties and the children will be all OWL AnnotationProperties that are direct subproperties.
      *
-     * @param vf A {@link ValueFactory} for creating the hierarchy
-     * @param mf A {@link ModelFactory} for creating the hierarchy
      * @return a {@link Hierarchy} of AnnotationProperty {@link IRI IRIs} to AnnotationProperty {@link IRI IRIs}.
      */
-    Hierarchy getSubAnnotationPropertiesOf(ValueFactory vf, ModelFactory mf);
+    Hierarchy getSubAnnotationPropertiesOf();
 
     /**
      * Gets the subPropertyOf relationships for object properties in the Ontology. The parents will be OWL
      * ObjectProperties and the children will be all OWL ObjectProperties that are direct subproperties.
      *
-     * @param vf A {@link ValueFactory} for creating the hierarchy
-     * @param mf A {@link ModelFactory} for creating the hierarchy
      * @return a {@link Hierarchy} of ObjectProperty {@link IRI IRIs} to ObjectProperty {@link IRI IRIs}.
      */
-    Hierarchy getSubObjectPropertiesOf(ValueFactory vf, ModelFactory mf);
+    Hierarchy getSubObjectPropertiesOf();
 
     /**
      * Gets the classes with individuals in the Ontology. The parents will be OWL Classes and the children will be all
      * instances of the classes directly.
      *
-     * @param vf A {@link ValueFactory} for creating the hierarchy
-     * @param mf A {@link ModelFactory} for creating the hierarchy
      * @return a {@link Hierarchy} of Class {@link IRI IRIs} to individual {@link IRI IRIs}.
      */
-    Hierarchy getClassesWithIndividuals(ValueFactory vf, ModelFactory mf);
+    Hierarchy getClassesWithIndividuals();
 
     /**
      * Gets the entity usages for the provided Resource in the Ontology.
@@ -385,7 +373,7 @@ public interface Ontology {
      * @param entity the Resource for the entity you want to get the usages of.
      * @return a {@link Model} with the constructed statements.
      */
-    Model constructEntityUsages(Resource entity, ModelFactory modelFactory);
+    Model constructEntityUsages(Resource entity);
 
     /**
      * Gets the concept relationships in the Ontology. The parents will be instances of skos:Concept or a subclass and
@@ -393,22 +381,18 @@ public interface Ontology {
      * skos:broaderTransitive property or are the object of a skos:narrower, skos:narrowerMatch, or
      * skos:narrowerTransitive property.
      *
-     * @param vf A {@link ValueFactory} for creating the hierarchy
-     * @param mf A {@link ModelFactory} for creating the hierarchy
      * @return a {@link Hierarchy} of Concept {@link IRI IRIs} to Concept {@link IRI IRIs}.
      */
-    Hierarchy getConceptRelationships(ValueFactory vf, ModelFactory mf);
+    Hierarchy getConceptRelationships();
 
     /**
      * Gets the concept scheme relationships in the Ontology. The parents will be instances of skos:ConceptScheme or
      * a subclass and the children are instances of skos:Concept or a subclass that have a skos:inScheme or
      * skos:topConceptOf property or are the object of a skos:hasTopConcept property.
      *
-     * @param vf A {@link ValueFactory} for creating the hierarchy
-     * @param mf A {@link ModelFactory} for creating the hierarchy
      * @return a {@link Hierarchy} of Concept Scheme {@link IRI IRIs} to Concept {@link IRI IRIs}.
      */
-    Hierarchy getConceptSchemeRelationships(ValueFactory vf, ModelFactory mf);
+    Hierarchy getConceptSchemeRelationships();
 
     /**
      * Searches the Ontology using the provided searchText.
@@ -416,7 +400,7 @@ public interface Ontology {
      * @param searchText the String for the text you want to search for in the Ontology.
      * @return a Set with the query results.
      */
-    TupleQueryResult getSearchResults(String searchText, ValueFactory valueFactory);
+    TupleQueryResult getSearchResults(String searchText);
 
     /**
      * Searches the Ontology & its import closures using the provided Sparql query.
@@ -434,7 +418,7 @@ public interface Ontology {
      * @param includeImports include data from ontology imports when querying
      * @return a model with the query results.
      */
-    Model getGraphQueryResults(String queryString, boolean includeImports, ModelFactory modelFactory);
+    Model getGraphQueryResults(String queryString, boolean includeImports);
 
     /**
      * Searches the Ontology & its import closures using the provided SPARQL query.

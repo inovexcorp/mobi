@@ -23,72 +23,60 @@ package com.mobi.catalog.impl.config;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Reference;
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.config.CatalogConfig;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontologies.dcterms._Thing;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.persistence.utils.ConnectionUtils;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
-import java.util.Map;
 
 @Component(
-        configurationPolicy = ConfigurationPolicy.require,
-        designateFactory = CatalogConfig.class,
-        name = CatalogConfigProviderImpl.COMPONENT_NAME
+        name = CatalogConfigProviderImpl.COMPONENT_NAME,
+        configurationPolicy = ConfigurationPolicy.REQUIRE
 )
+@Designate(ocd = CatalogConfig.class)
 public class CatalogConfigProviderImpl implements CatalogConfigProvider {
     static final String COMPONENT_NAME = "com.mobi.catalog.config.CatalogConfigProvider";
     private static final Logger log = LoggerFactory.getLogger(CatalogConfigProviderImpl.class);
 
-    private Repository repository;
-    private ValueFactory vf;
-    private CatalogFactory catalogFactory;
-
     private Resource distributedCatalogIRI;
     private Resource localCatalogIRI;
+    final ValueFactory vf = SimpleValueFactory.getInstance();
 
-    @Reference(name = "repository")
-    void setRepository(Repository repository) {
-        this.repository = repository;
-    }
-
-    @Reference
-    void setValueFactory(ValueFactory valueFactory) {
-        vf = valueFactory;
-    }
+    @Reference(target = "(id=system)")
+    OsgiRepository repository;
 
     @Reference
-    void setCatalogFactory(CatalogFactory catalogFactory) {
-        this.catalogFactory = catalogFactory;
-    }
+    CatalogFactory catalogFactory;
 
     @Activate
-    protected void start(Map<String, Object> props) {
-        CatalogConfig config = Configurable.createConfigurable(CatalogConfig.class, props);
+    protected void start(final CatalogConfig config) {
         distributedCatalogIRI = vf.createIRI(config.iri() + "-distributed");
         localCatalogIRI = vf.createIRI(config.iri() + "-local");
 
         try (RepositoryConnection conn = repository.getConnection()) {
             IRI typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
-            if (!conn.contains(distributedCatalogIRI, typeIRI, vf.createIRI(Catalog.TYPE))) {
+            if (!ConnectionUtils.contains(conn, distributedCatalogIRI, typeIRI, vf.createIRI(Catalog.TYPE))) {
                 log.debug("Initializing the distributed Mobi Catalog.");
                 addCatalogToRepo(distributedCatalogIRI, config.title() + " (Distributed)", config.description(), conn);
             }
 
-            if (!conn.contains(localCatalogIRI, typeIRI, vf.createIRI(Catalog.TYPE))) {
+            if (!ConnectionUtils.contains(conn, localCatalogIRI, typeIRI, vf.createIRI(Catalog.TYPE))) {
                 log.debug("Initializing the local Mobi Catalog.");
                 addCatalogToRepo(localCatalogIRI, config.title() + " (Local)", config.description(), conn);
             }
@@ -97,11 +85,11 @@ public class CatalogConfigProviderImpl implements CatalogConfigProvider {
 
     @Override
     public String getRepositoryId() {
-        return repository.getConfig().id();
+        return repository.getRepositoryID();
     }
 
     @Override
-    public Repository getRepository() {
+    public OsgiRepository getRepository() {
         return repository;
     }
 

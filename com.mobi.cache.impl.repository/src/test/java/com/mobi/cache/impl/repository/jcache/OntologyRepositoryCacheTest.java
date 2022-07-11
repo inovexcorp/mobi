@@ -27,9 +27,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -43,26 +43,22 @@ import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.persistence.utils.Models;
-import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.ResourceUtils;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
-import com.mobi.repository.config.RepositoryConfig;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import com.mobi.repository.impl.sesame.query.SesameOperationDatasetFactory;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -83,13 +79,12 @@ import javax.cache.CacheManager;
 import javax.cache.configuration.Configuration;
 
 public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
-
+    private AutoCloseable closeable;
     private ModelFactory mf;
     private ValueFactory vf;
-    private Repository repo;
+    private MemoryRepositoryWrapper repo;
     private OntologyRepositoryCache cache;
     private OrmFactory<Dataset> datasetFactory = getRequiredOrmFactory(Dataset.class);
-    private SesameOperationDatasetFactory operationDatasetFactory = new SesameOperationDatasetFactory();
 
     private IRI timestampIRI;
     private Model ontNoImportsModel;
@@ -153,12 +148,6 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
     private OntologyId import3Id;
 
     @Mock
-    private RepositoryConfig repositoryConfig;
-
-    @Mock
-    private SesameTransformer sesameTransformer;
-
-    @Mock
     private OntologyManager ontologyManager;
 
     @Mock
@@ -172,7 +161,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         mf = getModelFactory();
         vf = getValueFactory();
@@ -196,54 +185,48 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         import2SdNgIRI = vf.createIRI("urn:import2" + SYSTEM_DEFAULT_NG_SUFFIX);
         import3SdNgIRI = vf.createIRI("urn:import3" + SYSTEM_DEFAULT_NG_SUFFIX);
 
-        repo = spy(new SesameRepositoryWrapper(new SailRepository(new MemoryStore())));
-        repo.initialize();
-        when(repo.getConfig()).thenReturn(repositoryConfig);
-        when(repositoryConfig.id()).thenReturn("repoCacheId");
+        repo = spy(new MemoryRepositoryWrapper());
+        repo.setDelegate(new SailRepository(new MemoryStore()));
+        when(repo.getRepositoryID()).thenReturn("repoCacheId");
+        
+        ontNoImportsModel = Models.createModel(getClass().getResourceAsStream("/OntologyNoImports.ttl"));
+        ontOneImportModel = Models.createModel(getClass().getResourceAsStream("/OntologyOneImport.ttl"));
+        ontMultipleImportsModel = Models.createModel(getClass().getResourceAsStream("/OntologyMultipleImports.ttl"));
+        import1Model = Models.createModel(getClass().getResourceAsStream("/Import1.ttl"));
+        import2Model = Models.createModel(getClass().getResourceAsStream("/Import2.ttl"));
+        import3Model = Models.createModel(getClass().getResourceAsStream("/Import3.ttl"));
 
-        when(sesameTransformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
-        when(sesameTransformer.mobiIRI(any(org.eclipse.rdf4j.model.IRI.class))).thenAnswer(i -> Values.mobiIRI(i.getArgumentAt(0, org.eclipse.rdf4j.model.IRI.class)));
-        when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(sesameTransformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-
-        ontNoImportsModel = Models.createModel(getClass().getResourceAsStream("/OntologyNoImports.ttl"), sesameTransformer);
-        ontOneImportModel = Models.createModel(getClass().getResourceAsStream("/OntologyOneImport.ttl"), sesameTransformer);
-        ontMultipleImportsModel = Models.createModel(getClass().getResourceAsStream("/OntologyMultipleImports.ttl"), sesameTransformer);
-        import1Model = Models.createModel(getClass().getResourceAsStream("/Import1.ttl"), sesameTransformer);
-        import2Model = Models.createModel(getClass().getResourceAsStream("/Import2.ttl"), sesameTransformer);
-        import3Model = Models.createModel(getClass().getResourceAsStream("/Import3.ttl"), sesameTransformer);
-
-        when(import1.asModel(any(ModelFactory.class))).thenReturn(import1Model);
+        when(import1.asModel()).thenReturn(import1Model);
         when(import1.getOntologyId()).thenReturn(import1Id);
         when(import1.getImportsClosure()).thenReturn(Collections.emptySet());
         when(import1Id.getOntologyIRI()).thenReturn(Optional.of(import1IRI));
         when(import1Id.getOntologyIdentifier()).thenReturn(import1IRI);
 
-        when(import2.asModel(any(ModelFactory.class))).thenReturn(import2Model);
+        when(import2.asModel()).thenReturn(import2Model);
         when(import2.getOntologyId()).thenReturn(import2Id);
         when(import2.getImportsClosure()).thenReturn(Collections.emptySet());
         when(import2Id.getOntologyIRI()).thenReturn(Optional.of(import2IRI));
         when(import2Id.getOntologyIdentifier()).thenReturn(import2IRI);
 
-        when(import3.asModel(any(ModelFactory.class))).thenReturn(import3Model);
+        when(import3.asModel()).thenReturn(import3Model);
         when(import3.getOntologyId()).thenReturn(import3Id);
         when(import3.getImportsClosure()).thenReturn(Collections.emptySet());
         when(import3Id.getOntologyIRI()).thenReturn(Optional.of(import3IRI));
         when(import3Id.getOntologyIdentifier()).thenReturn(import3IRI);
         
-        when(ontNoImports.asModel(any(ModelFactory.class))).thenReturn(ontNoImportsModel);
+        when(ontNoImports.asModel()).thenReturn(ontNoImportsModel);
         when(ontNoImports.getOntologyId()).thenReturn(ontIdNoImports);
         when(ontNoImports.getImportsClosure()).thenReturn(Collections.emptySet());
         when(ontIdNoImports.getOntologyIRI()).thenReturn(Optional.of(ontNoImportsIRI));
         when(ontIdNoImports.getOntologyIdentifier()).thenReturn(ontNoImportsIRI);
 
-        when(ontOneImport.asModel(any(ModelFactory.class))).thenReturn(ontOneImportModel);
+        when(ontOneImport.asModel()).thenReturn(ontOneImportModel);
         when(ontOneImport.getOntologyId()).thenReturn(ontIdOneImport);
         when(ontOneImport.getImportsClosure()).thenReturn(Collections.singleton(import1));
         when(ontIdOneImport.getOntologyIRI()).thenReturn(Optional.of(ontOneImportIRI));
         when(ontIdOneImport.getOntologyIdentifier()).thenReturn(ontOneImportIRI);
 
-        when(ontMultipleImports.asModel(any(ModelFactory.class))).thenReturn(ontMultipleImportsModel);
+        when(ontMultipleImports.asModel()).thenReturn(ontMultipleImportsModel);
         when(ontMultipleImports.getOntologyId()).thenReturn(ontIdMultipleImports);
         when(ontMultipleImports.getImportsClosure()).thenReturn(Stream.of(import1, import2, import3).collect(Collectors.toSet()));
         when(ontIdMultipleImports.getOntologyIRI()).thenReturn(Optional.of(ontMultipleImportsIRI));
@@ -254,7 +237,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         when(ontologyManager.retrieveOntologyByCommit(vf.createIRI("urn:record3"), vf.createIRI("urn:commit1"))).thenReturn(Optional.of(ontMultipleImports));
 
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
-        when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), repositoryConfig.id(), vf, operationDatasetFactory));
+        when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), repo.getRepositoryID(), vf));
         doNothing().when(datasetManager).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
         ArgumentCaptor<String> datasetIRIStr = ArgumentCaptor.forClass(String.class);
         when(datasetManager.createDataset(datasetIRIStr.capture(), anyString())).thenAnswer(invocation -> {
@@ -269,10 +252,13 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
 
         cache = new OntologyRepositoryCache("Ontology Repository Cache", repo, cacheManager, configuration);
         injectOrmFactoryReferencesIntoService(cache);
-        cache.setModelFactory(mf);
-        cache.setValueFactory(vf);
         cache.setOntologyManager(ontologyManager);
         cache.setDatasetManager(datasetManager);
+    }
+
+    @After
+    public void reset() throws Exception {
+        closeable.close();
     }
 
     /* get() */
@@ -288,17 +274,17 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key1, ontNoImports);
         OffsetDateTime timestamp;
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), false)) {
-            List<Resource> namedGraphs = RepositoryResults.asList(dc.getDefaultNamedGraphs());
+            List<Resource> namedGraphs = QueryResults.asList(dc.getDefaultNamedGraphs());
             assertEquals(1, namedGraphs.size());
             assertTrue(namedGraphs.contains(ontNoImportsSdNgIRI));
-            List<Statement> statements = RepositoryResults.asList(dc.getStatements(dc.getDataset(), timestampIRI, null, dc.getDataset()));
+            List<Statement> statements = QueryResults.asList(dc.getStatements(dc.getDataset(), timestampIRI, null, dc.getDataset()));
             timestamp = OffsetDateTime.parse(statements.get(0).getObject().stringValue());
         }
 
         Thread.sleep(1000);
         Ontology ontology = cache.get(key1);
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), false)) {
-            List<Statement> statements = RepositoryResults.asList(dc.getStatements(dc.getDataset(), timestampIRI, null, dc.getDataset()));
+            List<Statement> statements = QueryResults.asList(dc.getStatements(dc.getDataset(), timestampIRI, null, dc.getDataset()));
             assertEquals(1, statements.size());
             assertTrue(timestamp.isBefore(OffsetDateTime.parse(statements.get(0).getObject().stringValue())));
         }
@@ -311,18 +297,18 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key2, ontOneImport);
         OffsetDateTime timestamp;
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), false)) {
-            List<Resource> namedGraphs = RepositoryResults.asList(dc.getDefaultNamedGraphs());
+            List<Resource> namedGraphs = QueryResults.asList(dc.getDefaultNamedGraphs());
             assertEquals(2, namedGraphs.size());
             assertTrue(namedGraphs.contains(ontOneImportSdNgIRI));
             assertTrue(namedGraphs.contains(import1SdNgIRI));
-            List<Statement> statements = RepositoryResults.asList(dc.getStatements(dc.getDataset(), timestampIRI, null, dc.getDataset()));
+            List<Statement> statements = QueryResults.asList(dc.getStatements(dc.getDataset(), timestampIRI, null, dc.getDataset()));
             timestamp = OffsetDateTime.parse(statements.get(0).getObject().stringValue());
         }
 
         Thread.sleep(1000);
         Ontology ontology = cache.get(key2);
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), false)) {
-            List<Statement> statements = RepositoryResults.asList(dc.getStatements(dc.getDataset(), timestampIRI, null, dc.getDataset()));
+            List<Statement> statements = QueryResults.asList(dc.getStatements(dc.getDataset(), timestampIRI, null, dc.getDataset()));
             assertEquals(1, statements.size());
             assertTrue(timestamp.isBefore(OffsetDateTime.parse(statements.get(0).getObject().stringValue())));
         }
@@ -335,20 +321,20 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key3, ontMultipleImports);
         OffsetDateTime timestamp;
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), false)) {
-            List<Resource> namedGraphs = RepositoryResults.asList(dc.getDefaultNamedGraphs());
+            List<Resource> namedGraphs = QueryResults.asList(dc.getDefaultNamedGraphs());
             assertEquals(4, namedGraphs.size());
             assertTrue(namedGraphs.contains(ontMultipleImportsSdNgIRI));
             assertTrue(namedGraphs.contains(import1SdNgIRI));
             assertTrue(namedGraphs.contains(import2SdNgIRI));
             assertTrue(namedGraphs.contains(import3SdNgIRI));
-            List<Statement> statements = RepositoryResults.asList(dc.getStatements(dc.getDataset(), timestampIRI, null, dc.getDataset()));
+            List<Statement> statements = QueryResults.asList(dc.getStatements(dc.getDataset(), timestampIRI, null, dc.getDataset()));
             timestamp = OffsetDateTime.parse(statements.get(0).getObject().stringValue());
         }
 
         Thread.sleep(1000);
         Ontology ontology = cache.get(key3);
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), false)) {
-            List<Statement> statements = RepositoryResults.asList(dc.getStatements(dc.getDataset(), timestampIRI, null, dc.getDataset()));
+            List<Statement> statements = QueryResults.asList(dc.getStatements(dc.getDataset(), timestampIRI, null, dc.getDataset()));
             assertEquals(1, statements.size());
             assertTrue(timestamp.isBefore(OffsetDateTime.parse(statements.get(0).getObject().stringValue())));
         }
@@ -413,7 +399,9 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key1, ontNoImports);
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), false)) {
             RepositoryResult<Statement> statements = dc.getStatements(null, null, null, dc.getSystemDefaultNamedGraph());
-            Model ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
+            Model ontologyModel = mf.createEmptyModel();
+            statements.forEach(statement
+                    -> ontologyModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
             assertEquals(ontologyModel.size(), ontNoImportsModel.size());
             assertEquals(ontologyModel, ontNoImportsModel);
         }
@@ -424,12 +412,16 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key2, ontOneImport);
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), false)) {
             RepositoryResult<Statement> statements = dc.getStatements(null, null, null, dc.getSystemDefaultNamedGraph());
-            Model ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
+            Model ontologyModel = mf.createEmptyModel();
+            statements.forEach(statement
+                    -> ontologyModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
             assertEquals(ontologyModel.size(), ontOneImportModel.size());
             assertEquals(ontologyModel, ontOneImportModel);
 
             statements = dc.getStatements(null, null, null, import1SdNgIRI);
-            ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
+            ontologyModel.clear();
+            statements.forEach(statement
+                    -> ontologyModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
             assertEquals(ontologyModel.size(), import1Model.size());
             assertEquals(ontologyModel, import1Model);
         }
@@ -440,22 +432,30 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key3, ontMultipleImports);
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), false)) {
             RepositoryResult<Statement> statements = dc.getStatements(null, null, null, dc.getSystemDefaultNamedGraph());
-            Model ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
+            Model ontologyModel = mf.createEmptyModel();
+            statements.forEach(statement
+                    -> ontologyModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
             assertEquals(ontologyModel.size(), ontMultipleImportsModel.size());
             assertEquals(ontologyModel, ontMultipleImportsModel);
 
             statements = dc.getStatements(null, null, null, import1SdNgIRI);
-            ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
+            ontologyModel.clear();
+            statements.forEach(statement
+                    -> ontologyModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
             assertEquals(ontologyModel.size(), import1Model.size());
             assertEquals(ontologyModel, import1Model);
 
             statements = dc.getStatements(null, null, null, import2SdNgIRI);
-            ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
+            ontologyModel.clear();
+            statements.forEach(statement
+                    -> ontologyModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
             assertEquals(ontologyModel.size(), import2Model.size());
             assertEquals(ontologyModel, import2Model);
 
             statements = dc.getStatements(null, null, null, import3SdNgIRI);
-            ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
+            ontologyModel.clear();
+            statements.forEach(statement
+                    -> ontologyModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
             assertEquals(ontologyModel.size(), import3Model.size());
             assertEquals(ontologyModel, import3Model);
         }
@@ -466,7 +466,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key3, ontMultipleImports);
         cache.put(key2, ontOneImport);
         try (RepositoryConnection connection = repo.getConnection()) {
-            List<Resource> contexts = RepositoryResults.asList(connection.getContextIDs());
+            List<Resource> contexts = QueryResults.asList(connection.getContextIDs());
             assertEquals(7, contexts.size());
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3))));
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2))));
@@ -497,19 +497,25 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
 
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), false)) {
             RepositoryResult<Statement> statements = dc.getStatements(null, null, null, dc.getSystemDefaultNamedGraph());
-            Model ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
+            Model ontologyModel = mf.createEmptyModel();
+            statements.forEach(statement
+                    -> ontologyModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
             assertEquals(ontologyModel.size(), ontNoImportsModel.size());
             assertEquals(ontologyModel, ontNoImportsModel);
         }
 
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), false)) {
             RepositoryResult<Statement> statements = dc.getStatements(null, null, null, dc.getSystemDefaultNamedGraph());
-            Model ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
+            Model ontologyModel = mf.createEmptyModel();
+            statements.forEach(statement
+                    -> ontologyModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
             assertEquals(ontologyModel.size(), ontOneImportModel.size());
             assertEquals(ontologyModel, ontOneImportModel);
 
             statements = dc.getStatements(null, null, null, import1SdNgIRI);
-            ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
+            ontologyModel.clear();
+            statements.forEach(statement
+                    -> ontologyModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
             assertEquals(ontologyModel.size(), import1Model.size());
             assertEquals(ontologyModel, import1Model);
         }
@@ -534,28 +540,28 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
     @Test
     public void removeNoHitTest() {
         assertTrue(cache.remove(key1));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getConfig().id(), false);
+        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID(), false);
     }
 
     @Test
     public void removeNoImportsTest() {
         cache.put(key1, ontNoImports);
         try (RepositoryConnection connection = repo.getConnection()) {
-            List<Resource> contexts = RepositoryResults.asList(connection.getContextIDs());
+            List<Resource> contexts = QueryResults.asList(connection.getContextIDs());
             assertEquals(2, contexts.size());
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1))));
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1) + SYSTEM_DEFAULT_NG_SUFFIX)));
         }
 
         assertTrue(cache.remove(key1));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getConfig().id(), false);
+        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID(), false);
     }
 
     @Test
     public void removeOneImportsTest() {
         cache.put(key2, ontOneImport);
         try (RepositoryConnection connection = repo.getConnection()) {
-            List<Resource> contexts = RepositoryResults.asList(connection.getContextIDs());
+            List<Resource> contexts = QueryResults.asList(connection.getContextIDs());
             assertEquals(3, contexts.size());
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2))));
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2) + SYSTEM_DEFAULT_NG_SUFFIX)));
@@ -563,14 +569,14 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         }
 
         assertTrue(cache.remove(key2));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getConfig().id(), false);
+        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getRepositoryID(), false);
     }
 
     @Test
     public void removeMultipleImportsTest() {
         cache.put(key3, ontMultipleImports);
         try (RepositoryConnection connection = repo.getConnection()) {
-            List<Resource> contexts = RepositoryResults.asList(connection.getContextIDs());
+            List<Resource> contexts = QueryResults.asList(connection.getContextIDs());
             assertEquals(5, contexts.size());
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3))));
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3) + SYSTEM_DEFAULT_NG_SUFFIX)));
@@ -580,7 +586,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         }
 
         assertTrue(cache.remove(key3));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), repo.getConfig().id(), false);
+        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), repo.getRepositoryID(), false);
     }
 
     @Test
@@ -588,7 +594,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key3, ontMultipleImports);
         cache.put(key2, ontOneImport);
         try (RepositoryConnection connection = repo.getConnection()) {
-            List<Resource> contexts = RepositoryResults.asList(connection.getContextIDs());
+            List<Resource> contexts = QueryResults.asList(connection.getContextIDs());
             assertEquals(7, contexts.size());
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3))));
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2))));
@@ -600,7 +606,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         }
 
         assertTrue(cache.remove(key3));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), repo.getConfig().id(), false);
+        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), repo.getRepositoryID(), false);
     }
 
     @Test
@@ -628,7 +634,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
     public void replaceTest() {
         cache.put(key1, ontNoImports);
         assertTrue(cache.replace(key1, ontOneImport));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getConfig().id(), false);
+        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID(), false);
     }
 
     @Test
@@ -640,7 +646,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
     public void replaceMatchTest() {
         cache.put(key1, ontNoImports);
         assertTrue(cache.replace(key1, ontNoImports, ontOneImport));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getConfig().id(), false);
+        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID(), false);
     }
 
     @Test
@@ -649,7 +655,9 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         assertFalse(cache.replace(key1, ontMultipleImports, ontOneImport));
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), false)) {
             RepositoryResult<Statement> statements = dc.getStatements(null, null, null, dc.getSystemDefaultNamedGraph());
-            Model ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
+            Model ontologyModel = mf.createEmptyModel();
+            statements.forEach(statement
+                    -> ontologyModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
             assertEquals(ontologyModel.size(), ontNoImportsModel.size());
             assertEquals(ontologyModel, ontNoImportsModel);
         }
@@ -682,8 +690,8 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key1, ontNoImports);
         cache.put(key2, ontOneImport);
         cache.removeAll(Stream.of(key1, key2).collect(Collectors.toSet()));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getConfig().id(), false);
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getConfig().id(), false);
+        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID(), false);
+        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getRepositoryID(), false);
     }
 
     @Test
@@ -691,16 +699,16 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key2, ontOneImport);
         cache.put(key3, ontMultipleImports);
         cache.removeAll(Stream.of(key3, key2).collect(Collectors.toSet()));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getConfig().id(), false);
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), repo.getConfig().id(), false);
+        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getRepositoryID(), false);
+        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), repo.getRepositoryID(), false);
     }
 
     @Test
     public void removeAllWithSetOneNotInCacheTest() {
         cache.put(key1, ontNoImports);
         cache.removeAll(Stream.of(key1, key2).collect(Collectors.toSet()));
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getConfig().id(), false);
-        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getConfig().id(), false);
+        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getRepositoryID(), false);
+        verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), repo.getRepositoryID(), false);
     }
 
     @Test

@@ -23,11 +23,13 @@ package com.mobi.cache.impl.repository.jcache;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import com.mobi.repository.api.OsgiRepository;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import com.mobi.cache.api.repository.CacheFactory;
 import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
-import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.lang3.StringUtils;
 
@@ -53,7 +55,6 @@ public class RepositoryCacheManager implements CacheManager {
     private final Map<String, CacheFactory<?, ?>> cacheFactoryMap = new HashMap<>();
     private final Map<String, Cache<?, ?>> caches = new ConcurrentHashMap<>();
 
-    private RepositoryManager repositoryManager;
     private CachingProvider cachingProvider;
     private WeakReference<ClassLoader> classLoaderReference;
     private Properties properties;
@@ -61,7 +62,7 @@ public class RepositoryCacheManager implements CacheManager {
 
     private volatile boolean closed;
 
-    @Reference(optional = true)
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL)
     void setCachingProvider(CachingProvider cachingProvider) {
         if (cachingProvider == null) {
             throw new IllegalArgumentException("CachingProvider must not be null");
@@ -79,7 +80,7 @@ public class RepositoryCacheManager implements CacheManager {
         this.uri = cachingProvider.getDefaultURI();
     }
 
-    @Reference(multiple = true, dynamic = true)
+    @Reference(cardinality = ReferenceCardinality.AT_LEAST_ONE, policy = ReferencePolicy.DYNAMIC)
     void addCacheFactory(CacheFactory<?, ?> cacheFactory)  {
         cacheFactoryMap.put(cacheFactory.getValueType().getName(), cacheFactory);
     }
@@ -89,9 +90,7 @@ public class RepositoryCacheManager implements CacheManager {
     }
 
     @Reference
-    void setRepositoryManager(RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
-    }
+    RepositoryManager repositoryManager;
 
     @Override
     public CachingProvider getCachingProvider() {
@@ -136,7 +135,7 @@ public class RepositoryCacheManager implements CacheManager {
             if ((existing != null) && !existing.isClosed()) {
                 throw new CacheException("Cache " + cacheName + " already exists");
             }
-            Repository repo = repositoryManager.getRepository(repoConfig.getRepoId()).orElseThrow(
+            OsgiRepository repo = repositoryManager.getRepository(repoConfig.getRepoId()).orElseThrow(
                     () -> new CacheException("Repository " + repoConfig.getRepoId() + " must exist for " + cacheName));
             Optional<CacheFactory> cacheFactoryOpt = Optional.ofNullable(cacheFactoryMap.get(
                     repoConfig.getValueType().getName()));

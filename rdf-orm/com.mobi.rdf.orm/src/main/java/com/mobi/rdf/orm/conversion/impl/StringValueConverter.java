@@ -23,24 +23,19 @@ package com.mobi.rdf.orm.conversion.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import com.mobi.rdf.api.Value;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.AbstractValueConverter;
 import com.mobi.rdf.orm.conversion.ValueConversionException;
 import com.mobi.rdf.orm.conversion.ValueConverter;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.orm.conversion.AbstractValueConverter;
-import com.mobi.rdf.orm.conversion.ValueConversionException;
-import com.mobi.rdf.orm.conversion.ValueConverter;
+import org.eclipse.rdf4j.model.Value;
+import org.osgi.service.component.annotations.Component;
 
 /**
  * {@link ValueConverter} for {@link String}s.
  *
  * @author bdgould
  */
-@Component(provide = ValueConverter.class)
+@Component(service = ValueConverter.class)
 public class StringValueConverter extends AbstractValueConverter<String> {
 
     /**

@@ -44,11 +44,6 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.exception.RepositoryException;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
@@ -56,10 +51,13 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.CharsetUtils;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.RestUtils;
 import com.opencsv.CSVReader;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.FilenameUtils;
@@ -70,8 +68,11 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
@@ -98,36 +99,39 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-@Component(service = DelimitedRest.class, immediate = true)
+@Component(service = DelimitedRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @javax.ws.rs.Path("/delimited-files")
 public class DelimitedRest {
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
+
     private DelimitedConverter converter;
     private MappingManager mappingManager;
-    private ValueFactory vf;
     private EngineManager engineManager;
     private RDFImportService rdfImportService;
     private OntologyImportService ontologyImportService;
 
     private final Logger logger = LoggerFactory.getLogger(DelimitedRest.class);
-    private SesameTransformer transformer;
 
     private static final long NUM_LINE_PREVIEW = 10;
 
@@ -141,16 +145,6 @@ public class DelimitedRest {
     @Reference
     public void setMappingManager(MappingManager manager) {
         this.mappingManager = manager;
-    }
-
-    @Reference
-    public void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    @Reference
-    protected void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
     }
 
     @Reference
@@ -182,8 +176,7 @@ public class DelimitedRest {
     /**
      * Uploads a delimited document to the temp directory.
      *
-     * @param fileInputStream an InputStream of a delimited document passed as form data
-     * @param fileDetail information about the file being uploaded, including the name
+     * @param servletRequest The HttpServletRequest
      * @return Response with the name of the file created on the server
      */
     @POST
@@ -199,26 +192,31 @@ public class DelimitedRest {
                             description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403",
                             description = "Permission Denied"),
-            }
+            },
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
+                                    schema = @Schema(implementation = DelimitedRestFileUpload.class)
+                            )
+                    }
+            )
     )
-    public Response upload(
-            @Parameter(schema = @Schema(type = "string", format = "binary",
-                    description = "InputStream of a delimited document passed as form data", required = true))
-            @FormDataParam("delimitedFile") InputStream fileInputStream,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Information about the file being uploaded, including the name"), hidden = true)
-            @FormDataParam("delimitedFile") FormDataContentDisposition fileDetail) {
+    public Response upload(@Context HttpServletRequest servletRequest) {
+        Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
+        InputStream inputStream = (InputStream) formData.get("stream");
+        String filename = (String) formData.get("filename");
+
         ByteArrayOutputStream fileOutput;
         try {
-            fileOutput = toByteArrayOutputStream(fileInputStream);
+            fileOutput = toByteArrayOutputStream(inputStream);
         } catch (IOException e) {
             throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
         }
         getCharset(fileOutput.toByteArray());
 
-        String fileName = generateUuid();
-        String extension = FilenameUtils.getExtension(fileDetail.getFileName());
-        Path filePath = Paths.get(TEMP_DIR + "/" + fileName + "." + extension);
+        String uuid = generateUuid();
+        String extension = FilenameUtils.getExtension(filename);
+        Path filePath = Paths.get(TEMP_DIR + "/" + uuid + "." + extension);
 
         saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
         return Response.status(201).entity(filePath.getFileName().toString()).build();
@@ -228,7 +226,7 @@ public class DelimitedRest {
      * Replaces an uploaded delimited document in the temp directory with another
      * delimited file.
      *
-     * @param fileInputStream an InputStream of a delimited document passed as form data
+     * @param servletRequest The HttpServletRequest
      * @param fileName Name of the uploaded file on the server to replace
      * @return Response with the name of the file replaced on the server
      */
@@ -246,18 +244,25 @@ public class DelimitedRest {
                             description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403",
                             description = "Permission Denied"),
-            }
+            },
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
+                                    schema = @Schema(implementation = DelimitedRestFileUpload.class)
+                            )
+                    }
+            )
     )
-    public Response upload(
-            @Parameter(schema = @Schema(type = "string", format = "binary",
-                    description = "InputStream of a delimited document passed as form data", required = true))
-            @FormDataParam("delimitedFile") InputStream fileInputStream,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Name of the uploaded file on the server to replace", required = true))
-            @PathParam("documentName") String fileName) {
+    public Response upload(@Context HttpServletRequest servletRequest,
+                           @Parameter(schema = @Schema(type = "string",
+                                   description = "Name of the uploaded file on the server to replace", required = true))
+                           @PathParam("documentName") String fileName) {
+        Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
+        InputStream inputStream = (InputStream) formData.get("stream");
+
         ByteArrayOutputStream fileOutput;
         try {
-            fileOutput = toByteArrayOutputStream(fileInputStream);
+            fileOutput = toByteArrayOutputStream(inputStream);
         } catch (IOException e) {
             throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
         }
@@ -266,6 +271,14 @@ public class DelimitedRest {
         Path filePath = Paths.get(TEMP_DIR + "/" + fileName);
         saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
         return Response.ok(fileName).build();
+    }
+
+    /**
+     * Class used for OpenAPI documentation for upload endpoint.
+     */
+    private class DelimitedRestFileUpload {
+        @Schema(type = "string", format = "binary", description = "Delimited file to upload.")
+        public String delimitedFile;
     }
 
     /**
@@ -301,7 +314,7 @@ public class DelimitedRest {
             @PathParam("documentName") String fileName,
             @Parameter(schema = @Schema(type = "string",
                     description = "Mapping in JSON-LD", required = true))
-            @FormDataParam("jsonld") String jsonld,
+            @FormParam("jsonld") String jsonld,
             @Parameter(description = "RDF serialization to use if getting a preview")
             @DefaultValue("jsonld") @QueryParam("format") String format,
             @Parameter(description = "Whether the delimited file has headers")
@@ -311,9 +324,9 @@ public class DelimitedRest {
         checkStringParam(jsonld, "Must provide a JSON-LD string");
 
         // Convert the data
-        Model data = etlFile(fileName, () -> jsonldToModel(jsonld, transformer), containsHeaders, separator, true);
+        Model data = etlFile(fileName, () -> jsonldToModel(jsonld), containsHeaders, separator, true);
 
-        return Response.ok(groupedModelToString(data, format, transformer)).build();
+        return Response.ok(groupedModelToString(data, format)).build();
     }
 
     /**
@@ -362,7 +375,7 @@ public class DelimitedRest {
 
         // Convert the data
         Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders, separator, false);
-        String result = groupedModelToString(data, format, transformer);
+        String result = groupedModelToString(data, format);
 
         // Write data into a stream
         StreamingOutput stream = os -> {
@@ -447,6 +460,7 @@ public class DelimitedRest {
      * Maps the data in an uploaded delimited document into RDF using a MappingRecord's Mapping and
      * adds it as a commit onto the specified OntologyRecord. The file must be present in the data/tmp/ directory.
      *
+     * @param servletRequest The HttpServletRequest
      * @param fileName the name of the delimited document in the data/tmp/ directory
      * @param mappingRecordIRI ID of the MappingRecord
      * @param ontologyRecordIRI ID of the DatasetRecord
@@ -478,7 +492,7 @@ public class DelimitedRest {
     )
     @ResourceId(type = ValueType.QUERY, value = "ontologyRecordIRI")
     public Response etlFileOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "Name of the delimited document in the data/tmp/ directory", required = true)
             @PathParam("documentName") String fileName,
             @Parameter(description = "ID of  the MappingRecord", required = true)
@@ -504,7 +518,7 @@ public class DelimitedRest {
         // Commit converted data
         IRI branchId = vf.createIRI(branchIRI);
         IRI recordIRI = vf.createIRI(ontologyRecordIRI);
-        User user = getActiveUser(context, engineManager);
+        User user = getActiveUser(servletRequest, engineManager);
         String commitMsg = "Mapping data from " + mappingRecordIRI;
         Difference committedData = ontologyImportService.importOntology(recordIRI,
                 branchId, update, mappingData, user, commitMsg);

@@ -25,9 +25,9 @@ package com.mobi.etl.service.delimited;
 
 import com.mobi.etl.api.delimited.MappingId;
 import com.mobi.exception.MobiException;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 
 import java.util.Optional;
 

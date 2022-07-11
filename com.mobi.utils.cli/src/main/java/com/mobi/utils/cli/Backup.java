@@ -25,9 +25,8 @@ package com.mobi.utils.cli;
 
 import com.mobi.etl.api.config.rdf.export.RDFExportConfig;
 import com.mobi.etl.api.rdf.export.RDFExportService;
-import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
 import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
@@ -107,10 +106,11 @@ public class Backup implements Action {
         try (ZipOutputStream mainZip = new ZipOutputStream(new FileOutputStream(outputFile))) {
             // Repositories
             JSONObject repositories = new JSONObject();
-            Map<String, Repository> repos = repoManager.getAllRepositories();
+            Map<String, OsgiRepository> repos = repoManager.getAllRepositories();
             for (String repoId : repos.keySet()) {
-                RepositoryConfig repoConfig = repos.get(repoId).getConfig();
-                if (repoConfig instanceof NativeRepositoryConfig || repoConfig instanceof MemoryRepositoryConfig) {
+                Class<?> repoConfigType = repos.get(repoId).getConfigType();
+                if (repoConfigType.equals(NativeRepositoryConfig.class)
+                        || repoConfigType.equals(MemoryRepositoryConfig.class)) {
                     LOGGER.trace("Backing up the " + repoId + " repository");
                     ByteArrayOutputStream repoOut = new ByteArrayOutputStream();
                     try (ZipOutputStream repoZip = new ZipOutputStream(repoOut)) {

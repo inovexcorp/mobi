@@ -25,16 +25,17 @@ package com.mobi.setting.impl;
 
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.query.api.GraphQuery;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.setting.api.AbstractSettingService;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.ontologies.Preference;
 import com.mobi.setting.api.ontologies.PreferenceFactory;
 import com.mobi.setting.api.ontologies.PreferenceGroup;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -146,7 +147,7 @@ public class SimplePreferenceService extends AbstractSettingService<Preference> 
         checkUser(user);
         validateSetting(setting);
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            if (!conn.contains(setting.getResource(), vf.createIRI(setting.forUser_IRI), user[0].getResource(),
+            if (!ConnectionUtils.contains(conn, setting.getResource(), vf.createIRI(setting.forUser_IRI), user[0].getResource(),
                     context)) {
                 throw new IllegalArgumentException("Preference " + setting.getResource() + " does not belong to user "
                         + user[0].getResource());

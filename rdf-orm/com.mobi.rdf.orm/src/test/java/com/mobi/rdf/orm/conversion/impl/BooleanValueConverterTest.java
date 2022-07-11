@@ -24,12 +24,11 @@ package com.mobi.rdf.orm.conversion.impl;
  */
 
 import com.mobi.rdf.orm.conversion.ValueConversionException;
+import org.eclipse.rdf4j.model.Value;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.orm.conversion.ValueConversionException;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class BooleanValueConverterTest extends ValueConverterTestCase<Boolean> {

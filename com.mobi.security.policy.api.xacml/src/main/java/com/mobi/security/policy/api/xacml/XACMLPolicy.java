@@ -23,11 +23,11 @@ package com.mobi.security.policy.api.xacml;
  * #L%
  */
 
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.security.policy.api.Policy;
 import com.mobi.security.policy.api.xacml.jaxb.ObjectFactory;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.ValueFactory;
 
 import java.io.StringReader;
 import java.io.StringWriter;

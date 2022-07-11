@@ -26,18 +26,20 @@ package com.mobi.rest.security;
 import static com.mobi.web.security.util.AuthenticationProps.ANON_USER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.IRI;
+import org.eclipse.rdf4j.model.IRI;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.rest.security.annotations.DefaultResourceId;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
+import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.util.MobiWebException;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
@@ -45,8 +47,7 @@ import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.Response;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.web.security.util.AuthenticationProps;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.server.ContainerRequest;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -55,16 +56,23 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.MessageBodyReader;
+import javax.ws.rs.ext.Providers;
 
 public class XACMLRequestFilterTest extends OrmEnabledTestCase {
+    private AutoCloseable closeable;
     private static final String QUERY_PARAM_KEY = "testQueryParamKey";
     private static final String QUERY_PARAM_TWO_KEY = "testQueryParamTwoKey";
     private static final String QUERY_PARAM_VALUE = "http://mobi.com/queryParamKey#queryParamValue";
@@ -94,7 +102,7 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
     public ExpectedException exceptionRule = ExpectedException.none();
 
     @Mock
-    private ContainerRequest context;
+    private ContainerRequestContext context;
 
     @Mock
     private ResourceInfo resourceInfo;
@@ -114,21 +122,33 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
     @Mock
     private Request request;
 
+    @Mock
+    private Providers providers;
+
+    @Mock
+    private MessageBodyReader<Form> reader;
+
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         filter = new XACMLRequestFilter();
-        filter.setPdp(pdp);
-        filter.setVf(VALUE_FACTORY);
-        filter.setEngineManager(engineManager);
+        filter.pdp = pdp;
+        filter.engineManager = engineManager;
         filter.uriInfo = uriInfo;
         filter.resourceInfo = resourceInfo;
+        filter.providers = providers;
 
         when(context.getMethod()).thenReturn("GET");
         when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(request);
         when(pdp.evaluate(any(), any(IRI.class))).thenReturn(response);
         when(response.getDecision()).thenReturn(Decision.PERMIT);
+        when(providers.getMessageBodyReader(eq(Form.class), any(), any(), any())).thenReturn(reader);
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test(expected = MobiWebException.class)
@@ -368,11 +388,11 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
     @Test
     public void resourceIdFormExistsNoDefaultTest() throws Exception {
         Form form = new Form();
-        when(context.readEntity(Form.class)).thenReturn(form);
         form.param(URL_ENCODED_FORM_FIELD, URL_ENCODED_FORM_VALUE);
-        when(context.readEntity(Form.class)).thenReturn(form);
+        when(reader.readFrom(any(), any(), any(), any(), any(), any())).thenReturn(form);
         when(context.hasEntity()).thenReturn(true);
         when(context.getMediaType()).thenReturn(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        when(context.getEntityStream()).thenReturn(new ByteArrayInputStream(Entity.form(form).toString().getBytes()));
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdURLEncodedFormClass.class.getDeclaredMethod("formNoDefault"));
@@ -389,9 +409,10 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
     public void resourceIdFormExistsWithDefaultTest() throws Exception {
         Form form = new Form();
         form.param(URL_ENCODED_FORM_FIELD, URL_ENCODED_FORM_VALUE);
-        when(context.readEntity(Form.class)).thenReturn(form);
+        when(reader.readFrom(any(), any(), any(), any(), any(), any())).thenReturn(form);
         when(context.hasEntity()).thenReturn(true);
         when(context.getMediaType()).thenReturn(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        when(context.getEntityStream()).thenReturn(new ByteArrayInputStream(Entity.form(form).toString().getBytes()));
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdURLEncodedFormClass.class.getDeclaredMethod("formWithDefault"));
@@ -409,9 +430,10 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
         exceptionRule.expect(MobiWebException.class);
         exceptionRule.expectMessage("Form parameters do not contain testFormField");
         Form form = new Form();
-        when(context.readEntity(Form.class)).thenReturn(form);
+        when(reader.readFrom(any(), any(), any(), any(), any(), any())).thenReturn(form);
         when(context.hasEntity()).thenReturn(true);
         when(context.getMediaType()).thenReturn(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        when(context.getEntityStream()).thenReturn(new ByteArrayInputStream(Entity.form(form).toString().getBytes()));
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdURLEncodedFormClass.class.getDeclaredMethod("formNoDefault"));
@@ -422,9 +444,10 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
     @Test
     public void resourceIdEmptyFormWithDefaultTest() throws Exception {
         Form form = new Form();
-        when(context.readEntity(Form.class)).thenReturn(form);
+        when(reader.readFrom(any(), any(), any(), any(), any(), any())).thenReturn(form);
         when(context.hasEntity()).thenReturn(true);
         when(context.getMediaType()).thenReturn(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        when(context.getEntityStream()).thenReturn(new ByteArrayInputStream(Entity.form(form).toString().getBytes()));
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdURLEncodedFormClass.class.getDeclaredMethod("formWithDefault"));
@@ -444,9 +467,10 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
         exceptionRule.expectMessage("Form parameters do not contain testFormTwoField");
 
         Form form = new Form();
-        when(context.readEntity(Form.class)).thenReturn(form);
+        when(reader.readFrom(any(), any(), any(), any(), any(), any())).thenReturn(form);
         when(context.hasEntity()).thenReturn(true);
         when(context.getMediaType()).thenReturn(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        when(context.getEntityStream()).thenReturn(new ByteArrayInputStream(Entity.form(form).toString().getBytes()));
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdURLEncodedFormClass.class.getDeclaredMethod("formWithDefaultNotExists"));
@@ -460,9 +484,10 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
         exceptionRule.expectMessage("Expected Request to have form data");
 
         Form form = new Form();
-        when(context.readEntity(Form.class)).thenReturn(form);
+        when(reader.readFrom(any(), any(), any(), any(), any(), any())).thenReturn(form);
         when(context.hasEntity()).thenReturn(false);
         when(context.getMediaType()).thenReturn(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+        when(context.getEntityStream()).thenReturn(new ByteArrayInputStream(Entity.form(form).toString().getBytes()));
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdURLEncodedFormClass.class.getDeclaredMethod("formNoDefault"));
@@ -474,9 +499,9 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
     public void resourceIdFormDataExistsNoDefaultTest() throws Exception {
         FormDataMultiPart formPart = new FormDataMultiPart();
         formPart.field(FORM_DATA_FIELD, FORM_DATA_VALUE);
-        when(context.readEntity(FormDataMultiPart.class)).thenReturn(formPart);
+        when(context.getEntityStream()).thenReturn(new ByteArrayInputStream(formPart.toString().getBytes(StandardCharsets.UTF_8)));
         when(context.hasEntity()).thenReturn(true);
-        when(context.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
+        when(context.getMediaType()).thenReturn(new MediaType("multipart", "form-data", formPart.getContentTypeParamMap()));
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdFormDataClass.class.getDeclaredMethod("formDataNoDefault"));
@@ -493,9 +518,9 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
     public void resourceIdFormDataExistsWithDefaultTest() throws Exception {
         FormDataMultiPart formPart = new FormDataMultiPart();
         formPart.field(FORM_DATA_FIELD, FORM_DATA_VALUE);
-        when(context.readEntity(FormDataMultiPart.class)).thenReturn(formPart);
+        when(context.getEntityStream()).thenReturn(new ByteArrayInputStream(formPart.toString().getBytes(StandardCharsets.UTF_8)));
         when(context.hasEntity()).thenReturn(true);
-        when(context.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
+        when(context.getMediaType()).thenReturn(new MediaType("multipart", "form-data", formPart.getContentTypeParamMap()));
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdFormDataClass.class.getDeclaredMethod("formDataWithDefault"));
@@ -514,9 +539,9 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
         exceptionRule.expectMessage("Form parameters do not contain testFormDataField");
 
         FormDataMultiPart formPart = new FormDataMultiPart();
-        when(context.readEntity(FormDataMultiPart.class)).thenReturn(formPart);
+        when(context.getEntityStream()).thenReturn(new ByteArrayInputStream(formPart.toString().getBytes(StandardCharsets.UTF_8)));
         when(context.hasEntity()).thenReturn(true);
-        when(context.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
+        when(context.getMediaType()).thenReturn(new MediaType("multipart", "form-data", formPart.getContentTypeParamMap()));
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdFormDataClass.class.getDeclaredMethod("formDataNoDefault"));
@@ -527,9 +552,9 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
     @Test
     public void resourceIdEmptyFormDataWithDefaultTest() throws Exception {
         FormDataMultiPart formPart = new FormDataMultiPart();
-        when(context.readEntity(FormDataMultiPart.class)).thenReturn(formPart);
+        when(context.getEntityStream()).thenReturn(new ByteArrayInputStream(formPart.toString().getBytes(StandardCharsets.UTF_8)));
         when(context.hasEntity()).thenReturn(true);
-        when(context.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
+        when(context.getMediaType()).thenReturn(new MediaType("multipart", "form-data", formPart.getContentTypeParamMap()));
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdFormDataClass.class.getDeclaredMethod("formDataWithDefault"));
@@ -549,9 +574,9 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
         exceptionRule.expectMessage("Form parameters do not contain testFormDataTwoField");
 
         FormDataMultiPart formPart = new FormDataMultiPart();
-        when(context.readEntity(FormDataMultiPart.class)).thenReturn(formPart);
+        when(context.getEntityStream()).thenReturn(new ByteArrayInputStream(formPart.toString().getBytes(StandardCharsets.UTF_8)));
         when(context.hasEntity()).thenReturn(true);
-        when(context.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
+        when(context.getMediaType()).thenReturn(new MediaType("multipart", "form-data", formPart.getContentTypeParamMap()));
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdFormDataClass.class.getDeclaredMethod("formDataWithDefaultNotExists"));
@@ -565,9 +590,8 @@ public class XACMLRequestFilterTest extends OrmEnabledTestCase {
         exceptionRule.expectMessage("Expected Request to have form data");
 
         FormDataMultiPart formPart = new FormDataMultiPart();
-        when(context.readEntity(FormDataMultiPart.class)).thenReturn(formPart);
         when(context.hasEntity()).thenReturn(false);
-        when(context.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
+        when(context.getMediaType()).thenReturn(new MediaType("multipart", "form-data", formPart.getContentTypeParamMap()));
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdFormDataClass.class.getDeclaredMethod("formDataNoDefault"));

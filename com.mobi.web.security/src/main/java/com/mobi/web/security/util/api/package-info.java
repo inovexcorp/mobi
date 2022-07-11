@@ -26,4 +26,4 @@ package com.mobi.web.security.util.api;
  */
 
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

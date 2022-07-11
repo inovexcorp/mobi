@@ -24,49 +24,47 @@ package com.mobi.security.policy.rest;
  */
 
 import static com.mobi.persistence.utils.ResourceUtils.encode;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
 
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
-import com.mobi.rest.util.MobiRestTestNg;
-import com.mobi.rest.util.UsernameTestFilter;
-import com.mobi.security.policy.api.ontologies.policy.Policy;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import com.mobi.rest.test.util.MobiRestTestCXF;
+import com.mobi.rest.test.util.UsernameTestFilter;
+import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.mockito.Mock;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 
-public class RecordPermissionsRestTest extends MobiRestTestNg {
-    private RecordPermissionsRest rest;
-    private ValueFactory vf;
-
+public class RecordPermissionsRestTest extends MobiRestTestCXF {
+    private AutoCloseable closeable;
     private String recordJson;
     private XACMLPolicy recordPolicy;
     private XACMLPolicy policyPolicy;
@@ -74,30 +72,32 @@ public class RecordPermissionsRestTest extends MobiRestTestNg {
     private IRI recordPolicyIRI;
     private IRI policyPolicyIRI;
     private IRI invalidIRI;
-    private Statement recordStatement;
-    private Statement policyStatement;
+    private final OrmFactory<PolicyFile> policyFileFactory = getRequiredOrmFactory(PolicyFile.class);
 
-    @Mock
-    private XACMLPolicyManager policyManager;
+    // Mock services used in server
+    private static RecordPermissionsRest rest;
+    private static ValueFactory vf;
+    private static XACMLPolicyManager policyManager;
+    private static MemoryRepositoryWrapper repo;
 
-    @Mock
-    private RepositoryConnection conn;
+    @BeforeClass
+    public static void startServer() {
+        vf = getValueFactory();
 
-    @Mock
-    private Repository repo;
+        policyManager = Mockito.mock(XACMLPolicyManager.class);
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
 
-    @Mock
-    private RepositoryResult recordRepoResult;
+        rest = new RecordPermissionsRest();
+        rest.setPolicyManager(policyManager);
+        rest.setRepo(repo);
 
-    @Mock
-    private RepositoryResult policyRepoResult;
+        configureServer(rest, new UsernameTestFilter());
+    }
 
-    @Mock
-    private RepositoryResult emptyRepoResult;
-
-    @Override
-    protected Application configureApp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+    @Before
+    public void setUpMocks() throws Exception {
+        closeable = MockitoAnnotations.openMocks(this);
         vf = getValueFactory();
 
         recordJson = IOUtils.toString(getClass().getResourceAsStream("/recordPolicy.json"),
@@ -107,49 +107,31 @@ public class RecordPermissionsRestTest extends MobiRestTestNg {
         policyPolicyIRI = vf.createIRI("http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%2FtestRecord1");
         invalidIRI = vf.createIRI("urn:invalidRecordId");
 
-        IRI type = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
-        IRI policyType = vf.createIRI(Policy.TYPE);
-        recordStatement = vf.createStatement(recordPolicyIRI, type, policyType);
-        policyStatement = vf.createStatement(policyPolicyIRI, type, policyType);
-
-        rest = new RecordPermissionsRest();
-        rest.setVf(vf);
-        rest.setPolicyManager(policyManager);
-        rest.setRepo(repo);
-
-        return new ResourceConfig()
-                .register(rest)
-                .register(UsernameTestFilter.class)
-                .register(MultiPartFeature.class);
-    }
-
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
-    }
-
-    @BeforeMethod
-    public void setUpMocks() throws Exception {
         recordPolicy = new XACMLPolicy(IOUtils.toString(getClass().getResourceAsStream("/recordPolicy.xml"),
                 StandardCharsets.UTF_8), vf);
         policyPolicy = new XACMLPolicy(IOUtils.toString(getClass().getResourceAsStream("/policyPolicy.xml"),
                 StandardCharsets.UTF_8), vf);
 
+        try (RepositoryConnection conn = repo.getConnection()) {
+            PolicyFile policyFile = policyFileFactory.createNew(recordPolicyIRI);
+            policyFile.setRelatedResource(Collections.singleton(recordIRI));
+            conn.add(policyFile.getModel());
+
+            PolicyFile policyPolicyFile = policyFileFactory.createNew(policyPolicyIRI);
+            policyPolicyFile.setRelatedResource(Collections.singleton(
+                    vf.createIRI("http://mobi.com/policies/record/https%3A%2F%2Fmobi.com%2Frecords%2FtestRecord1")));
+            conn.add(policyPolicyFile.getModel());
+        }
+
         reset(policyManager);
-        when(repo.getConnection()).thenReturn(conn);
-        when(conn.getStatements(eq(null), eq(vf.createIRI(Policy.relatedResource_IRI)), eq(recordIRI)))
-                .thenReturn(recordRepoResult);
-        when(conn.getStatements(eq(null), eq(vf.createIRI(Policy.relatedResource_IRI)), eq(recordPolicyIRI)))
-                .thenReturn(policyRepoResult);
-        when(conn.getStatements(eq(null), eq(vf.createIRI(Policy.relatedResource_IRI)), eq(invalidIRI)))
-                .thenReturn(emptyRepoResult);
-        when(recordRepoResult.next()).thenReturn(recordStatement);
-        when(policyRepoResult.next()).thenReturn(policyStatement);
-        when(recordRepoResult.hasNext()).thenReturn(true);
-        when(policyRepoResult.hasNext()).thenReturn(true);
-        when(emptyRepoResult.hasNext()).thenReturn(false);
         when(policyManager.getPolicy(recordPolicyIRI)).thenReturn(Optional.of(recordPolicy));
         when(policyManager.getPolicy(policyPolicyIRI)).thenReturn(Optional.of(policyPolicy));
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
+        reset(policyManager);
     }
 
     /* GET /policies/record-permissions/{policyId} */
@@ -181,7 +163,7 @@ public class RecordPermissionsRestTest extends MobiRestTestNg {
     public void updateRecordPolicyTest() {
         // Setup
         when(policyManager.createPolicy(any(PolicyType.class))).thenAnswer(invocation -> {
-            PolicyType pt = invocation.getArgumentAt(0, PolicyType.class);
+            PolicyType pt = invocation.getArgument(0, PolicyType.class);
             if (pt.getPolicyId().equals(recordPolicyIRI.stringValue())) {
                 return recordPolicy;
             } else {

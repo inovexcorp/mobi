@@ -28,18 +28,18 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.engines.GroupConfig;
@@ -49,26 +49,22 @@ import com.mobi.jaas.api.ontologies.usermanagement.GroupFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.engines.RdfEngine;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.rest.test.util.FormDataMultiPart;
+import com.mobi.rest.test.util.MobiRestTestCXF;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -78,13 +74,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-public class GroupRestTest extends MobiRestTestNg {
-    private GroupRest rest;
-    private ValueFactory vf;
+public class GroupRestTest extends MobiRestTestCXF {
+    private AutoCloseable closeable;
     private OrmFactory<User> userFactory;
     private OrmFactory<Group> groupFactory;
     private OrmFactory<Role> roleFactory;
@@ -96,21 +90,35 @@ public class GroupRestTest extends MobiRestTestNg {
     private Set<Role> roles;
     private static final String ENGINE_NAME = "com.mobi.jaas.engines.RdfEngine";
 
-    @Mock
-    private EngineManager engineManager;
+    // Mock services used in server
+    private static GroupRest rest;
+    private static ValueFactory vf;
+    private static EngineManager engineManager;
+    private static RdfEngine rdfEngine;
+    private static GroupFactory groupFactoryMock;
 
-    @Mock
-    private RdfEngine rdfEngine;
-
-    @Mock
-    private SesameTransformer transformer;
-
-    @Mock
-    private GroupFactory groupFactoryMock;
-
-    @Override
-    protected Application configureApp() throws Exception {
+    @BeforeClass
+    public static void startServer() {
         vf = getValueFactory();
+
+        rdfEngine = Mockito.mock(RdfEngine.class);
+        engineManager = Mockito.mock(EngineManager.class);
+        
+        groupFactoryMock = Mockito.mock(GroupFactory.class);
+
+        rest = spy(new GroupRest());
+        injectOrmFactoryReferencesIntoService(rest);
+        rest.setEngineManager(engineManager);
+        rest.setRdfEngine(rdfEngine);
+        rest.setGroupFactory(groupFactoryMock);
+
+        configureServer(rest);
+    }
+
+    @Before
+    public void setupMocks() throws Exception {
+        closeable = MockitoAnnotations.openMocks(this);
+        reset(engineManager);
         userFactory = getRequiredOrmFactory(User.class);
         groupFactory = getRequiredOrmFactory(Group.class);
         roleFactory = getRequiredOrmFactory(Role.class);
@@ -130,40 +138,9 @@ public class GroupRestTest extends MobiRestTestNg {
         group.setMember(Collections.singleton(user));
         groups = Collections.singleton(group);
 
-        // Setup rest
-        MockitoAnnotations.initMocks(this);
-        when(transformer.sesameModel(any(Model.class)))
-                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(transformer.sesameStatement(any(Statement.class)))
-                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
-                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
-
         when(groupFactoryMock.createNew(any(Resource.class), any(Model.class))).thenReturn(group);
-
         when(rdfEngine.getEngineName()).thenReturn(ENGINE_NAME);
 
-        rest = spy(new GroupRest());
-        injectOrmFactoryReferencesIntoService(rest);
-        rest.setEngineManager(engineManager);
-        rest.setRdfEngine(rdfEngine);
-        rest.setValueFactory(vf);
-        rest.setGroupFactory(groupFactoryMock);
-        rest.setTransformer(transformer);
-
-        return new ResourceConfig()
-                .register(rest)
-                .register(MultiPartFeature.class);
-    }
-
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
-    }
-
-    @BeforeMethod
-    public void setupMocks() {
-        reset(engineManager);
         when(engineManager.getUsers()).thenReturn(users);
         when(engineManager.userExists(anyString())).thenReturn(true);
         when(engineManager.userExists("error")).thenReturn(false);
@@ -183,6 +160,11 @@ public class GroupRestTest extends MobiRestTestNg {
         when(engineManager.getRole(eq(ENGINE_NAME), anyString())).thenReturn(Optional.of(role));
         when(engineManager.getRole(anyString())).thenReturn(Optional.of(role));
         when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.of("user"));
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -210,7 +192,7 @@ public class GroupRestTest extends MobiRestTestNg {
         fd.field("members", "Jane Doe");
         fd.field("roles", "admin");
         Response response = target().path("groups")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         verify(engineManager).storeGroup(eq(ENGINE_NAME), any(Group.class));
     }
@@ -225,7 +207,7 @@ public class GroupRestTest extends MobiRestTestNg {
         fd.field("members", "Jane Doe");
         fd.field("roles", "admin");
         Response response = target().path("groups")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -236,7 +218,7 @@ public class GroupRestTest extends MobiRestTestNg {
         fd.field("title", "testGroup");
         fd.field("description", "This is a description");
         Response response = target().path("groups")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -261,7 +243,7 @@ public class GroupRestTest extends MobiRestTestNg {
     public void updateGroupTest() {
         Response response = target().path("groups/testGroup")
                 .request()
-                .put(Entity.entity(groupedModelToString(group.getModel(), getRDFFormat("jsonld"), transformer),
+                .put(Entity.entity(groupedModelToString(group.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
@@ -275,7 +257,7 @@ public class GroupRestTest extends MobiRestTestNg {
         newGroup.setTitle(Collections.singleton(vf.createLiteral("group2")));
 
         Response response = target().path("groups/group2")
-                .request().put(Entity.entity(groupedModelToString(group.getModel(), getRDFFormat("jsonld"), transformer),
+                .request().put(Entity.entity(groupedModelToString(group.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
     }
@@ -286,7 +268,7 @@ public class GroupRestTest extends MobiRestTestNg {
         when(engineManager.retrieveGroup(eq(ENGINE_NAME), anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("groups/testGroup")
-                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld"), transformer),
+                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
         verify(engineManager, atLeastOnce()).retrieveGroup(ENGINE_NAME, "testGroup");
@@ -331,7 +313,7 @@ public class GroupRestTest extends MobiRestTestNg {
                 .collect(Collectors.toMap(s -> s, s -> roleFactory.createNew(vf.createIRI("http://mobi.com/roles/" + s))));
         Group newGroup = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/testGroup"));
         newGroup.setHasGroupRole(Collections.singleton(role));
-        when(engineManager.getRole(anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgumentAt(0, String.class))));
+        when(engineManager.getRole(anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgument(0, String.class))));
         when(engineManager.retrieveGroup(anyString())).thenReturn(Optional.of(newGroup));
 
         Response response = target().path("groups/testGroup/roles").queryParam("roles", roles.keySet().toArray())
@@ -443,7 +425,7 @@ public class GroupRestTest extends MobiRestTestNg {
                 .forEach(s -> users.put(s, userFactory.createNew(vf.createIRI("http://mobi.com/users/" + s))));
         Group newGroup = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/testGroup"));
         newGroup.setMember(Collections.singleton(user));
-        when(engineManager.retrieveUser(anyString())).thenAnswer(i -> Optional.of(users.get(i.getArgumentAt(0, String.class))));
+        when(engineManager.retrieveUser(anyString())).thenAnswer(i -> Optional.of(users.get(i.getArgument(0, String.class))));
         when(engineManager.retrieveGroup(eq(ENGINE_NAME), anyString())).thenReturn(Optional.of(newGroup));
 
         Response response = target().path("groups/testGroup/users").queryParam("users", users.keySet().toArray())

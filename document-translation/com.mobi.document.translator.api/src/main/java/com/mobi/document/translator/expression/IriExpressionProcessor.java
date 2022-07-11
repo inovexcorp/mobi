@@ -24,13 +24,13 @@ package com.mobi.document.translator.expression;
  */
 
 import com.mobi.document.translator.SemanticTranslationException;
-import com.mobi.rdf.api.IRI;
 import com.mobi.document.translator.expression.context.IriExpressionContext;
+import org.eclipse.rdf4j.model.IRI;
 
 /**
  * This interface describes an class that will process the expressions that represent what amount to templates for
  * the {@link IRI}s that are generated for both ontological structures in your translation, as well as instances in the
- * resulting {@link com.mobi.rdf.api.Model} containing the individuals represented in your incoming data.
+ * resulting {@link org.eclipse.rdf4j.model.Model>} containing the individuals represented in your incoming data.
  */
 public interface IriExpressionProcessor {
 

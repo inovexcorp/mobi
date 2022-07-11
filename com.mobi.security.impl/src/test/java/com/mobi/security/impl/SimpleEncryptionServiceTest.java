@@ -23,6 +23,17 @@ package com.mobi.security.impl;
  * #L%
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.mobi.exception.MobiException;
 import com.mobi.security.api.EncryptionServiceConfig;
 import com.mobi.service.config.ConfigUtils;
@@ -31,33 +42,26 @@ import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.jasypt.iv.RandomIvGenerator;
 import org.jasypt.properties.PropertyValueEncryptionUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.mockito.*;
-import org.osgi.framework.BundleContext;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.component.ComponentContext;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.*;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ConfigUtils.class, PropertyValueEncryptionUtils.class})
-@PowerMockIgnore("javax.crypto.*")
 public class SimpleEncryptionServiceTest {
+    private AutoCloseable closeable;
     private SimpleEncryptionService es;
 
     @Mock
@@ -77,9 +81,15 @@ public class SimpleEncryptionServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         es = new SimpleEncryptionService();
         when(encryptionServiceConfig.enabled()).thenReturn(true);
+    }
+
+    @After
+    public void reset() throws Exception {
+        closeable.close();
+        Mockito.reset(encryptionServiceConfig, configuration);
     }
 
     @Test
@@ -164,13 +174,13 @@ public class SimpleEncryptionServiceTest {
 
         es.start(encryptionServiceConfig, componentContext);
 
-        mockStatic(ConfigUtils.class);
-        String encrypted = es.encrypt(testPassword, "password", configuration);
-        verifyStatic();
-        ConfigUtils.updateServiceConfig(configPropertiesCaptor.capture(), eq(configuration));
+        try (MockedStatic<ConfigUtils> configUtils = Mockito.mockStatic(ConfigUtils.class)) {
+            String encrypted = es.encrypt(testPassword, "password", configuration);
+            configUtils.verify(() -> ConfigUtils.updateServiceConfig(configPropertiesCaptor.capture(), eq(configuration)));
 
-        assertEquals(true, PropertyValueEncryptionUtils.isEncryptedValue(encrypted));
-        assertEquals(encrypted, configPropertiesCaptor.getValue().get("password").toString());
+            assertEquals(true, PropertyValueEncryptionUtils.isEncryptedValue(encrypted));
+            assertEquals(encrypted, configPropertiesCaptor.getValue().get("password").toString());
+        }
     }
 
     @Test
@@ -209,11 +219,12 @@ public class SimpleEncryptionServiceTest {
 
         es.start(encryptionServiceConfig, componentContext);
 
-        mockStatic(PropertyValueEncryptionUtils.class);
-        when(PropertyValueEncryptionUtils.encrypt(anyString(), any(StringEncryptor.class))).thenThrow(EncryptionOperationNotPossibleException.class);
-        es.encrypt(testPassword, "password", configuration);
-        verifyStatic();
-        PropertyValueEncryptionUtils.encrypt(anyString(), any(StringEncryptor.class));
+        try (MockedStatic<PropertyValueEncryptionUtils> encryptUtils = Mockito.mockStatic(PropertyValueEncryptionUtils.class)) {
+            encryptUtils.when(() -> PropertyValueEncryptionUtils.encrypt(anyString(), any(StringEncryptor.class))).thenThrow(EncryptionOperationNotPossibleException.class);
+
+            es.encrypt(testPassword, "password", configuration);
+            encryptUtils.verify(() -> PropertyValueEncryptionUtils.encrypt(anyString(), any(StringEncryptor.class)));
+        }
     }
 
     @Test

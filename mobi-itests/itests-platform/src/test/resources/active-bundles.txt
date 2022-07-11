@@ -12,7 +12,6 @@ com.mobi.ontology.utils
 com.mobi.persistence.api
 com.mobi.persistence.cli
 com.mobi.persistence.utils
-com.mobi.rdf.impl.sesame
 com.mobi.repository.impl.core
 com.mobi.repository.impl.sesame
 com.mobi.swagger.ui

@@ -23,8 +23,8 @@ package com.mobi.document.translator.expression.context;
  * #L%
  */
 
-import com.mobi.rdf.api.IRI;
 import com.mobi.document.translator.ontology.ExtractedOntology;
+import org.eclipse.rdf4j.model.IRI;
 
 /**
  * This interface describes the base information that is required for a {@link IRI} to be generated in general.

@@ -27,18 +27,17 @@ import static java.util.Arrays.asList;
 
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.owlapi.OWLManagerSilent;
-import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -274,14 +273,12 @@ public class Models {
      *
      * @param preferredExtension the preferred extension as a string
      * @param inputStream the InputStream to parse
-     * @param transformer the SesameTransformer to convert a SesameModel to a Mobi Model
      * @return {@link ParsedModel} with Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
     public static ParsedModel createModel(String preferredExtension,
-                                          InputStream inputStream,
-                                          SesameTransformer transformer) throws IOException {
-        return createModel(preferredExtension, inputStream, transformer, new StatementCollector());
+                                          InputStream inputStream) throws IOException {
+        return createModel(preferredExtension, inputStream, new StatementCollector());
     }
 
     /**
@@ -289,14 +286,11 @@ public class Models {
      *
      * @param preferredExtension the preferred extension as a string
      * @param inputStream the InputStream to parse
-     * @param transformer the SesameTransformer to convert a SesameModel to a Mobi Model
      * @param collector the StatementCollector used to aggregate statements
      * @return {@link ParsedModel} with Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
-    public static ParsedModel createModel(String preferredExtension,
-                                          InputStream inputStream,
-                                          SesameTransformer transformer,
+    public static ParsedModel createModel(String preferredExtension, InputStream inputStream,
                                           StatementCollector collector) throws IOException {
         ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
 
@@ -325,25 +319,25 @@ public class Models {
                 }
             }
         }
-        return buildModel(preferredExtension, rdfData, transformer, collector);
+        return buildModel(preferredExtension, rdfData, collector);
     }
 
     private static ParsedModel buildModel(String preferredExtension, ByteArrayInputStream rdfData,
-                                          SesameTransformer transformer, StatementCollector collector) {
+                                          StatementCollector collector) {
         assert preferredExtension != null;
         List<String> triedRDFFormats =  new ArrayList<>();
         ParsedModel parsedModel;
         try {
             rdfData.mark(0);
             if ("obo".equalsIgnoreCase(preferredExtension)) {
-                parsedModel = parseOBO(rdfData, triedRDFFormats, transformer);
+                parsedModel = parseOBO(rdfData, triedRDFFormats);
             } else if (preferredExtensionParsers.containsKey(preferredExtension.toLowerCase())) {
                 parsedModel = parseIteration(rdfData, collector, triedRDFFormats,
-                        preferredExtensionParsers.get(preferredExtension), transformer);
+                        preferredExtensionParsers.get(preferredExtension));
             } else {
-                parsedModel = parseOBO(rdfData, triedRDFFormats, transformer);
+                parsedModel = parseOBO(rdfData, triedRDFFormats);
                 if (parsedModel.getRdfFormatName() == null) {
-                    parsedModel = parseIteration(rdfData, collector, triedRDFFormats, rdfParsers, transformer);
+                    parsedModel = parseIteration(rdfData, collector, triedRDFFormats, rdfParsers);
                 }
             }
         } finally {
@@ -367,15 +361,14 @@ public class Models {
      * @return {@link ParsedModel} results of the model building
      */
     private static ParsedModel parseIteration(ByteArrayInputStream rdfData, StatementCollector collector,
-                                              List<String> triedRDFFormats, List<RDFParser> inputRDFParsers,
-                                              SesameTransformer transformer) {
+                                              List<String> triedRDFFormats, List<RDFParser> inputRDFParsers) {
         ParsedModel parsedModel = new ParsedModel();
 
         for (RDFParser parser : inputRDFParsers) {
             String parserName = parser.getRDFFormat().getName();
             try {
-                org.eclipse.rdf4j.model.Model rdf4jModel = parse(rdfData, parser, collector);
-                parsedModel = new ParsedModel(transformer.mobiModel(rdf4jModel), parserName);
+                Model model = parse(rdfData, parser, collector);
+                parsedModel = new ParsedModel(model, parserName);
                 break;
             } catch (RDFParseException e) {
                 triedRDFFormats.add(parserName);
@@ -389,7 +382,7 @@ public class Models {
         return parsedModel;
     }
 
-    private static org.eclipse.rdf4j.model.Model parse(ByteArrayInputStream rdfData, RDFParser parser,
+    private static Model parse(ByteArrayInputStream rdfData, RDFParser parser,
                                                        StatementCollector collector)
             throws RDFParseException, IOException {
         parser.setRDFHandler(collector);
@@ -403,15 +396,14 @@ public class Models {
      * Create a Mobi Model from an InputStream. Will attempt to parse the stream as different RDFFormats.
      *
      * @param inputStream the InputStream to parse
-     * @param transformer the SesameTransformer to convert a SesameModel to a Mobi Model
      * @param parsers the array of additional parsers to use when parsing the InputStream
      * @return a Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
-    public static Model createModel(InputStream inputStream, SesameTransformer transformer, RDFParser... parsers)
+    public static Model createModel(InputStream inputStream, RDFParser... parsers)
             throws IOException {
         StatementCollector stmtCollector = new StatementCollector();
-        return createModel(inputStream, transformer, stmtCollector, parsers).getModel();
+        return createModel(inputStream, stmtCollector, parsers).getModel();
     }
 
     /**
@@ -420,19 +412,17 @@ public class Models {
      *
      * @param inputStream the InputStream to parse
      * @param modelFactory the {@link ModelFactory} help build the {@link StatementCollector}
-     * @param transformer the {@link SesameTransformer} to convert a SesameModel to a Mobi Model
      * @param bNodeService the {@link BNodeService} used for skolemizing bnodes
      * @param skolemizedBNodes map of BNodes to their corresponding deterministically skolemized IRI.
      * @return {@link ParsedModel} with Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
     public static ParsedModel createSkolemizedModel(InputStream inputStream, ModelFactory modelFactory,
-                                              SesameTransformer transformer, BNodeService bNodeService,
-                                              Map<BNode, IRI> skolemizedBNodes,
-                                              RDFParser... parsers) throws IOException {
-        StatementCollector stmtCollector = new SkolemizedStatementCollector(modelFactory, transformer, bNodeService,
+                                                    BNodeService bNodeService, Map<BNode, IRI> skolemizedBNodes,
+                                                    RDFParser... parsers) throws IOException {
+        StatementCollector stmtCollector = new SkolemizedStatementCollector(modelFactory, bNodeService,
                 skolemizedBNodes);
-        return createModel(inputStream, transformer, stmtCollector, parsers);
+        return createModel(inputStream, stmtCollector, parsers);
     }
 
     /**
@@ -442,23 +432,22 @@ public class Models {
      * @param preferredExtension the extension that will be used to determine which {@link RDFParser} to use
      * @param inputStream the InputStream to parse
      * @param modelFactory the {@link ModelFactory} help build the {@link StatementCollector}
-     * @param transformer the {@link SesameTransformer} to convert a SesameModel to a Mobi Model
      * @param bNodeService the {@link BNodeService} used for skolemizing bnodes
      * @param skolemizedBNodes map of BNodes to their corresponding deterministically skolemized IRI.
      * @return {@link ParsedModel} with Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
     public static ParsedModel createSkolemizedModel(String preferredExtension, InputStream inputStream,
-                                              ModelFactory modelFactory, SesameTransformer transformer,
+                                              ModelFactory modelFactory,
                                               BNodeService bNodeService,
                                               Map<BNode, IRI> skolemizedBNodes) throws IOException {
-        StatementCollector stmtCollector = new SkolemizedStatementCollector(modelFactory, transformer, bNodeService,
+        StatementCollector stmtCollector = new SkolemizedStatementCollector(modelFactory, bNodeService,
                 skolemizedBNodes);
-        return createModel(preferredExtension, inputStream, transformer, stmtCollector);
+        return createModel(preferredExtension, inputStream, stmtCollector);
     }
 
-    private static ParsedModel createModel(InputStream inputStream, SesameTransformer transformer,
-                                     StatementCollector collector, RDFParser... parsers) throws IOException {
+    private static ParsedModel createModel(InputStream inputStream, StatementCollector collector,
+                                           RDFParser... parsers) throws IOException {
         List<String> triedRDFFormats = new ArrayList<>();
         List<RDFFormat> formats = asList(RDFFormat.JSONLD, RDFFormat.TURTLE,
                 RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS, RDFFormat.TRIG);
@@ -471,10 +460,10 @@ public class Models {
         ParsedModel parsedModel;
         try {
             rdfData.mark(0);
-            parsedModel = parseIteration(rdfData, collector, triedRDFFormats , rdfParsers, transformer);
+            parsedModel = parseIteration(rdfData, collector, triedRDFFormats , rdfParsers);
 
             if (parsedModel.getRdfFormatName() == null) {
-                parsedModel = parseOBO(rdfData, triedRDFFormats, transformer);
+                parsedModel = parseOBO(rdfData, triedRDFFormats);
             }
 
         } finally {
@@ -488,8 +477,7 @@ public class Models {
         return parsedModel;
     }
 
-    private static ParsedModel parseOBO(ByteArrayInputStream rdfData, List<String> triedRDFFormats,
-                                        SesameTransformer transformer) {
+    private static ParsedModel parseOBO(ByteArrayInputStream rdfData, List<String> triedRDFFormats) {
         ParsedModel parsedModel;
         try {
             OBOFormatParser parser = new OBOFormatParser();
@@ -512,13 +500,13 @@ public class Models {
                 throw new OWLRuntimeException(e);
             }
             // Render into an RDF4J Model
-            org.eclipse.rdf4j.model.Model sesameModel = new LinkedHashModel();
-            RDFHandler rdfHandler = new StatementCollector(sesameModel);
+            Model model = new LinkedHashModel();
+            RDFHandler rdfHandler = new StatementCollector(model);
             OWLDocumentFormat format = ontology.getFormat();
             format.setAddMissingTypes(false);
             RioRenderer renderer = new RioRenderer(ontology, rdfHandler, format);
             renderer.render();
-            parsedModel = new ParsedModel(transformer.mobiModel(sesameModel), "OBO");
+            parsedModel = new ParsedModel(model, "OBO");
         } catch (OBOFormatParserException | IOException e) {
             triedRDFFormats.add("OBO");
             parsedModel = new ParsedModel();
@@ -534,7 +522,11 @@ public class Models {
      * @param inputStream the InputStream to convert
      * @return a ByteArrayInputStream
      */
-    private static ByteArrayInputStream toByteArrayInputStream(InputStream inputStream) throws IOException {
+    public static ByteArrayInputStream toByteArrayInputStream(InputStream inputStream) throws IOException {
+        if (inputStream instanceof ByteArrayInputStream) {
+            return (ByteArrayInputStream) inputStream;
+        }
+
         byte[] buff = new byte[8000];
         int bytesRead = 0;
         ByteArrayOutputStream bao = new ByteArrayOutputStream();

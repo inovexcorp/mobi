@@ -25,14 +25,13 @@ package com.mobi.sparql.cli.rdf4j.queryrenderer;
 
 import static org.junit.Assert.assertNotNull;
 
-import com.mobi.query.api.GraphQuery;
-import com.mobi.query.exception.MalformedQueryException;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.MalformedQueryException;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
 import org.eclipse.rdf4j.queryrender.sparql.SPARQLQueryRenderer;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.Before;
@@ -40,12 +39,12 @@ import org.junit.Test;
 
 public class MobiSPARQLQueryRendererTest {
 
-    private Repository repo;
+    private MemoryRepositoryWrapper repo;
 
     @Before
     public void setUp() {
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
     }
 
     @Test(expected = MalformedQueryException.class)

@@ -25,7 +25,7 @@ package com.mobi.ontology.core.api.builder;
 
 import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.IRI;
+import org.eclipse.rdf4j.model.IRI;
 
 import java.util.Optional;
 import java.util.Set;

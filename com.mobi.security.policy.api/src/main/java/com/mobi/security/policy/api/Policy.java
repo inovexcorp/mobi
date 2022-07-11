@@ -23,7 +23,7 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-import com.mobi.rdf.api.IRI;
+import org.eclipse.rdf4j.model.IRI;
 
 import java.util.Optional;
 

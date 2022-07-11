@@ -23,13 +23,12 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.exception.RepositoryException;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 
 public class BatchGraphInserter extends BatchInserter {
@@ -43,12 +42,10 @@ public class BatchGraphInserter extends BatchInserter {
      * all the statements are added.
      *
      * @param conn The RepositoryConnection to use to add statements
-     * @param transformer A SesameTransformer for converting statements
      */
-    public BatchGraphInserter(RepositoryConnection conn, SesameTransformer transformer,
-                              com.mobi.rdf.api.Resource graph) {
-        super(conn, transformer);
-        this.graph = transformer.sesameResource(graph);
+    public BatchGraphInserter(RepositoryConnection conn, Resource graph) {
+        super(conn);
+        this.graph = graph;
         this.sesameVf = SimpleValueFactory.getInstance();
     }
 
@@ -58,13 +55,11 @@ public class BatchGraphInserter extends BatchInserter {
      * all the statements are added.
      *
      * @param conn The RepositoryConnection to use to add statements
-     * @param transformer A SesameTransformer for converting statements
      * @param batchSize How may statemtns should be added at a time
      */
-    public BatchGraphInserter(RepositoryConnection conn, SesameTransformer transformer, long batchSize,
-                              com.mobi.rdf.api.Resource graph) {
-        super(conn, transformer, batchSize);
-        this.graph = transformer.sesameResource(graph);
+    public BatchGraphInserter(RepositoryConnection conn,long batchSize, Resource graph) {
+        super(conn, batchSize);
+        this.graph = graph;
         this.sesameVf = SimpleValueFactory.getInstance();
     }
 
@@ -78,7 +73,7 @@ public class BatchGraphInserter extends BatchInserter {
 
     @Override
     public void handleStatement(Statement st) throws RDFHandlerException {
-        com.mobi.rdf.api.Statement statement = transformer.mobiStatement(sesameVf.createStatement(st.getSubject(), st.getPredicate(), st.getObject(), graph));
+        Statement statement = sesameVf.createStatement(st.getSubject(), st.getPredicate(), st.getObject(), graph);
         conn.add(statement);
         count++;
         if (count % batchSize == 0) {

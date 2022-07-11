@@ -23,15 +23,16 @@ package com.mobi.itests.orm;
  * #L%
  */
 
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.impl.ThingFactory;
 import org.apache.karaf.itests.KarafTestSupport;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -101,7 +102,7 @@ public class OrmIT extends KarafTestSupport {
     @Test
     public void testConversions() throws Exception {
         ValueConverterRegistry valueConverterRegistry = getOsgiService(ValueConverterRegistry.class);
-        ValueFactory vf = getOsgiService(ValueFactory.class);
+        ValueFactory vf = SimpleValueFactory.getInstance();
         Thing thing = getOsgiService(ThingFactory.class).createNew(vf.createIRI("urn://thing"));
         //boolean
         testConversion(true, thing, valueConverterRegistry, "Failed working with boolean converter");
@@ -149,7 +150,7 @@ public class OrmIT extends KarafTestSupport {
     @Test
     public void testThingFactory() throws Exception {
         ThingFactory factory = getOsgiService(ThingFactory.class);
-        ValueFactory vf = getOsgiService(ValueFactory.class);
+        ValueFactory vf = SimpleValueFactory.getInstance();
         IRI test = vf.createIRI("urn://thing");
         Thing thing = factory.createNew(test);
         Assert.assertEquals("IRI mismatch", test, thing.getResource());

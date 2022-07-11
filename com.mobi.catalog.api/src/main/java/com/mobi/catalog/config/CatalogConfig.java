@@ -23,15 +23,44 @@ package com.mobi.catalog.config;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
-import com.mobi.repository.config.RepositoryConsumerConfig;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-@Meta.OCD
-public interface CatalogConfig extends RepositoryConsumerConfig {
+/**
+ * Configuration for Catalog objects in the repository.
+ */
+@ObjectClassDefinition
+public @interface CatalogConfig {
 
+    /**
+     * The title of the Catalog. Used as the dct:title of the Catalog object.
+     *
+     * @return the display title of the Catalog
+     */
+    @AttributeDefinition
     String title();
 
+    /**
+     * The description of the Catalog. Used as the dct:description of the Catalog object.
+     *
+     * @return the description of the Catalog
+     */
+    @AttributeDefinition
     String description();
 
+    /**
+     * Used as the local name of the Catalog IRI.
+     *
+     * @return the local name of the Catalog IRI
+     */
+    @AttributeDefinition
     String iri();
+
+    /**
+     * The id of the repository for the Catalog.
+     *
+     * @return the id of the repository for the Catalog
+     */
+    @AttributeDefinition(name = "repository.target")
+    String repository_id();
 }

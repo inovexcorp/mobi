@@ -28,6 +28,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -48,7 +49,7 @@ import javax.cache.CacheManager;
 import javax.cache.configuration.OptionalFeature;
 
 public class RepositoryCachingProviderTest {
-
+    private AutoCloseable closeable;
     private RepositoryCachingProvider repositoryCachingProvider;
     private URI providerUri;
     private ClassLoader providerClassLoader;
@@ -64,8 +65,13 @@ public class RepositoryCachingProviderTest {
         providerClassLoader = RepositoryCachingProvider.class.getClassLoader();
         providerProperties = new Properties();
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         repositoryCachingProvider.setCacheManager(repositoryCacheManager);
+    }
+
+    @After
+    public void reset() throws Exception {
+        closeable.close();
     }
 
     @Test

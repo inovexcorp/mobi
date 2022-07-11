@@ -26,12 +26,12 @@ package com.mobi.catalog.api.record;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.ResourceUtils;
-import com.mobi.rdf.api.Resource;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
@@ -80,7 +80,7 @@ public abstract class AbstractUnversionedRecordService<T extends UnversionedReco
      * @param recordId The Resource of the Record to write out
      * @param recordPolicyResource The Resource of the Record policy
      */
-    protected void writeRecordPolicyPolicy(Resource user, Resource recordId,  Resource recordPolicyResource) {
+    protected void writeRecordPolicyPolicy(Resource user, Resource recordId, Resource recordPolicyResource) {
         try {
             String encodedRecordIRI = ResourceUtils.encode(recordId);
             String[] search = {USER_IRI_BINDING, POLICY_IRI_BINDING, ENCODED_POLICY_IRI_BINDING};

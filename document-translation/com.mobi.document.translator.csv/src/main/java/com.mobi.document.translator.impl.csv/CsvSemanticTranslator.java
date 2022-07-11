@@ -23,32 +23,35 @@ package com.mobi.document.translator.impl.csv;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.document.translator.AbstractSemanticTranslator;
+import com.mobi.document.translator.SemanticTranslationException;
+import com.mobi.document.translator.SemanticTranslator;
 import com.mobi.document.translator.expression.IriExpressionProcessor;
 import com.mobi.document.translator.expression.context.impl.DefaultClassIriExpressionContext;
 import com.mobi.document.translator.expression.context.impl.DefaultInstanceIriExpressionContext;
 import com.mobi.document.translator.expression.context.impl.DefaultPropertyIriExpressionContext;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.document.translator.SemanticTranslationException;
-import com.mobi.document.translator.SemanticTranslator;
 import com.mobi.document.translator.ontology.ExtractedClass;
 import com.mobi.document.translator.ontology.ExtractedDatatypeProperty;
 import com.mobi.document.translator.ontology.ExtractedOntology;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
+import org.apache.commons.io.FilenameUtils;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.commons.io.FilenameUtils;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -56,7 +59,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 
-@Component(immediate = true, provide = {SemanticTranslator.class})
+@Component(immediate = true, service = {SemanticTranslator.class})
 public class CsvSemanticTranslator extends AbstractSemanticTranslator {
 
     private static final Logger LOG = LoggerFactory.getLogger(CsvSemanticTranslator.class);
@@ -67,16 +70,6 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
     private static final String DEFAULT_CLASS_IRI_EXPRESSION = "getOntologyIri().concat('#').concat(getName())";
     private static final String DEFAULT_PROPERTY_IRI_EXPRESSION = "getOntologyIri().concat('#_').concat(getName())";
     private static final String DEFAULT_INSTANCE_IRI_EXPRESSION = "classIri().replace('#','/').concat('/').concat(uuid())";
-
-    @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        super.valueFactory = valueFactory;
-    }
-
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        super.modelFactory = modelFactory;
-    }
 
     @Reference
     public void setOrmFactoryRegistry(OrmFactoryRegistry ormFactoryRegistry) {
@@ -106,7 +99,7 @@ public class CsvSemanticTranslator extends AbstractSemanticTranslator {
 
     @Override
     public Model translate(Path rawFile, ExtractedOntology managedOntology) throws SemanticTranslationException {
-        final Model result = modelFactory.createModel();
+        final Model result = modelFactory.createEmptyModel();
         this.propertyIRIs = new ArrayList<>();
         this.result = result;
         int size = (int)rawFile.toFile().length();

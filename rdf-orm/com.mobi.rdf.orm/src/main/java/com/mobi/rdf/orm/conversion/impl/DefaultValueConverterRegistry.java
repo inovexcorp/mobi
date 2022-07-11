@@ -23,22 +23,23 @@ package com.mobi.rdf.orm.conversion.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
-import com.mobi.rdf.api.Value;
 import com.mobi.rdf.orm.OrmException;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConversionException;
 import com.mobi.rdf.orm.conversion.ValueConverter;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.orm.OrmException;
-import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.orm.conversion.ValueConversionException;
-import com.mobi.rdf.orm.conversion.ValueConverter;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
+import org.eclipse.rdf4j.model.Value;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
@@ -225,7 +226,7 @@ public class DefaultValueConverterRegistry implements ValueConverterRegistry {
      * {@inheritDoc}
      */
     @Override
-    @Reference(multiple = true, dynamic = true, unbind = "unregisterValueConverter")
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC, unbind = "unregisterValueConverter")
     public <T> void registerValueConverter(final ValueConverter<T> converter) {
         final Class<T> type = converter.getType();
         if (!registry.containsKey(type)) {

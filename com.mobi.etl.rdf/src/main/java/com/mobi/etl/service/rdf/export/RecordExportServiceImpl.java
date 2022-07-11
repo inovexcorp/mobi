@@ -23,8 +23,12 @@ package com.mobi.etl.service.rdf.export;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
@@ -38,9 +42,6 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.config.rdf.export.RecordExportConfig;
 import com.mobi.etl.api.rdf.export.RecordExportService;
 import com.mobi.persistence.utils.BatchExporter;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ValueFactory;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
@@ -56,59 +57,33 @@ public class RecordExportServiceImpl implements RecordExportService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RDFExportServiceImpl.class);
 
-    private CatalogConfigProvider configProvider;
-    private CatalogManager catalogManager;
-    private ValueFactory vf;
-    private RecordFactory recordFactory;
-    private VersionedRDFRecordFactory versionedRDFRecordFactory;
-    private BranchFactory branchFactory;
-    private SesameTransformer transformer;
+    final ValueFactory vf = SimpleValueFactory.getInstance();
 
     @Reference
-    void setConfigProvider(CatalogConfigProvider configProvider) {
-        this.configProvider = configProvider;
-    }
+    CatalogConfigProvider configProvider;
 
     @Reference
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
+    CatalogManager catalogManager;
 
     @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
+    RecordFactory recordFactory;
 
     @Reference
-    void setRecordFactory(RecordFactory recordFactory) {
-        this.recordFactory = recordFactory;
-    }
+    VersionedRDFRecordFactory versionedRDFRecordFactory;
 
     @Reference
-    void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
-        this.versionedRDFRecordFactory = versionedRDFRecordFactory;
-    }
-
-    @Reference
-    void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
-
-    @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
+    BranchFactory branchFactory;
 
     @Override
     public void export(RecordExportConfig config) throws IOException {
-        BatchExporter writer = new BatchExporter(transformer, new BufferedGroupingRDFHandler(
+        BatchExporter writer = new BatchExporter(new BufferedGroupingRDFHandler(
                 Rio.createWriter(config.getFormat(), config.getOutput())));
         writer.setLogger(LOG);
         writer.setPrintToSystem(true);
 
-        com.mobi.rdf.api.Resource localCatalog = configProvider.getLocalCatalogIRI();
+        Resource localCatalog = configProvider.getLocalCatalogIRI();
 
-        Set<com.mobi.rdf.api.Resource> records;
+        Set<Resource> records;
         if (config.getRecords() == null) {
             records = catalogManager.getRecordIds(localCatalog);
         } else {
@@ -134,8 +109,8 @@ public class RecordExportServiceImpl implements RecordExportService {
         writer.endRDF();
     }
 
-    private void exportVersionedRDFData(com.mobi.rdf.api.Resource resource, BatchExporter writer) {
-        com.mobi.rdf.api.Resource localCatalog = configProvider.getLocalCatalogIRI();
+    private void exportVersionedRDFData(Resource resource, BatchExporter writer) {
+        Resource localCatalog = configProvider.getLocalCatalogIRI();
 
         VersionedRDFRecord record = catalogManager.getRecord(localCatalog, resource, versionedRDFRecordFactory)
                 .orElseThrow(() -> new IllegalStateException("Could not retrieve record " + resource));
@@ -150,7 +125,7 @@ public class RecordExportServiceImpl implements RecordExportService {
 
             // Write Commits
             for (Commit commit : catalogManager.getCommitChain(localCatalog, resource, branch.getResource())) {
-                com.mobi.rdf.api.Resource commitResource = commit.getResource();
+                Resource commitResource = commit.getResource();
 
                 if (processedCommits.contains(commitResource.stringValue())) {
                     break;

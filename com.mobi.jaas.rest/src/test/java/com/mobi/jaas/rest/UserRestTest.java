@@ -28,18 +28,18 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
@@ -50,31 +50,28 @@ import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.jaas.engines.RdfEngine;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.platform.config.api.state.StateManager;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
-import com.mobi.rest.util.MobiRestTestNg;
-import com.mobi.rest.util.UsernameTestFilter;
+import com.mobi.rest.test.util.FormDataMultiPart;
+import com.mobi.rest.test.util.MobiRestTestCXF;
+import com.mobi.rest.test.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,14 +84,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-public class UserRestTest extends MobiRestTestNg {
-    private UserRest rest;
-    private ValueFactory vf;
-    private ModelFactory mf;
+public class UserRestTest extends MobiRestTestCXF {
+    private AutoCloseable closeable;
     private OrmFactory<User> userFactory;
     private OrmFactory<Group> groupFactory;
     private OrmFactory<Role> roleFactory;
@@ -112,23 +106,18 @@ public class UserRestTest extends MobiRestTestNg {
     private IRI stateIRI;
     private static final String ENGINE_NAME = "com.mobi.jaas.engines.RdfEngine";
 
-    @Mock
-    private EngineManager engineManager;
-
-    @Mock
-    private RdfEngine rdfEngine;
-
-    @Mock
-    private SesameTransformer transformer;
-
-    @Mock
-    private UserFactory userFactoryMock;
+    // Mock services used in server
+    private static UserRest rest;
+    private static ValueFactory vf;
+    private static ModelFactory mf;
+    private static EngineManager engineManager;
+    private static RdfEngine rdfEngine;
+    private static UserFactory userFactoryMock;
+    private static CatalogManager catalogManager;
+    private static StateManager stateManager;
 
     @Mock
     private User adminUserMock;
-
-    @Mock
-    private CatalogManager catalogManager;
 
     @Mock
     private InProgressCommit inProgressCommit1;
@@ -136,13 +125,34 @@ public class UserRestTest extends MobiRestTestNg {
     @Mock
     private InProgressCommit inProgressCommit2;
 
-    @Mock
-    private StateManager stateManager;
-
-    @Override
-    protected Application configureApp() throws Exception {
+    @BeforeClass
+    public static void startServer() {
         vf = getValueFactory();
         mf = getModelFactory();
+
+        engineManager = Mockito.mock(EngineManager.class);
+        rdfEngine = Mockito.mock(RdfEngine.class);
+        userFactoryMock = Mockito.mock(UserFactory.class);
+        engineManager = Mockito.mock(EngineManager.class);
+        
+        catalogManager = Mockito.mock(CatalogManager.class);
+        stateManager = Mockito.mock(StateManager.class);
+
+        rest = new UserRest();
+        rest.engineManager = engineManager;
+        rest.rdfEngine = rdfEngine;
+        rest.userFactory = userFactoryMock;
+        rest.catalogManager = catalogManager;
+        rest.stateManager = stateManager;
+
+        configureServer(rest, new UsernameTestFilter());
+    }
+
+    @Before
+    public void setupMocks() throws Exception {
+        closeable = MockitoAnnotations.openMocks(this);
+        reset(engineManager, catalogManager, stateManager);
+
         groupFactory = getRequiredOrmFactory(Group.class);
         userFactory = getRequiredOrmFactory(User.class);
         roleFactory = getRequiredOrmFactory(Role.class);
@@ -171,43 +181,10 @@ public class UserRestTest extends MobiRestTestNg {
         inProgressCommitIRI2 = vf.createIRI("urn:inProgressCommit2");
         stateIRI = vf.createIRI("urn:state1");
 
-        MockitoAnnotations.initMocks(this);
-        when(transformer.sesameModel(any(Model.class)))
-                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(transformer.sesameStatement(any(Statement.class)))
-                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
-                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
-
         when(userFactoryMock.createNew(any(Resource.class), any(Model.class))).thenReturn(user);
-
         when(rdfEngine.getEngineName()).thenReturn(ENGINE_NAME);
 
-        rest = new UserRest();
-        rest.engineManager = engineManager;
-        rest.rdfEngine = rdfEngine;
-        rest.vf = vf;
-        rest.transformer = transformer;
-        rest.userFactory = userFactoryMock;
-        rest.catalogManager = catalogManager;
-        rest.stateManager = stateManager;
-
-        return new ResourceConfig()
-                .register(rest)
-                .register(MultiPartFeature.class)
-                .register(UsernameTestFilter.class);
-    }
-
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
-    }
-
-    @BeforeMethod
-    public void setupMocks() {
         user.setPassword(vf.createLiteral("ABC"));
-
-        reset(engineManager, catalogManager, stateManager);
 
         when(engineManager.getUsers()).thenReturn(users);
         when(engineManager.userExists(anyString())).thenReturn(true);
@@ -238,8 +215,13 @@ public class UserRestTest extends MobiRestTestNg {
         when(catalogManager.getInProgressCommits(eq(user))).thenReturn(Arrays.asList(inProgressCommit1, inProgressCommit2));
 
         Map<Resource, Model> states = new HashMap<>();
-        states.put(stateIRI, mf.createModel());
+        states.put(stateIRI, mf.createEmptyModel());
         when(stateManager.getStates(eq(UsernameTestFilter.USERNAME), eq(null), any(Set.class))).thenReturn(states);
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -270,7 +252,7 @@ public class UserRestTest extends MobiRestTestNg {
         when(engineManager.userExists(anyString())).thenReturn(false);
 
         Response response = target().path("users")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         verify(engineManager).storeUser(eq(ENGINE_NAME), any(User.class));
     }
@@ -287,7 +269,7 @@ public class UserRestTest extends MobiRestTestNg {
         when(engineManager.userExists(anyString())).thenReturn(false);
 
         Response response = target().path("users")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -303,7 +285,7 @@ public class UserRestTest extends MobiRestTestNg {
         when(engineManager.userExists(anyString())).thenReturn(false);
 
         Response response = target().path("users")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -318,7 +300,7 @@ public class UserRestTest extends MobiRestTestNg {
         fd.field("password", "123");
 
         Response response = target().path("users")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -344,7 +326,7 @@ public class UserRestTest extends MobiRestTestNg {
     public void updateUserTest() {
         //Setup:
         Response response = target().path("users/" + UsernameTestFilter.USERNAME)
-                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld"), transformer),
+                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 200);
         verify(engineManager, atLeastOnce()).retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
@@ -358,7 +340,7 @@ public class UserRestTest extends MobiRestTestNg {
         newUser.setUsername(vf.createLiteral("user2"));
 
         Response response = target().path("users/user2")
-                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld"), transformer),
+                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
     }
@@ -369,7 +351,7 @@ public class UserRestTest extends MobiRestTestNg {
         when(engineManager.retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME)).thenReturn(Optional.empty());
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME)
-                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld"), transformer),
+                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
         verify(engineManager, atLeastOnce()).retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
@@ -557,7 +539,7 @@ public class UserRestTest extends MobiRestTestNg {
                 .collect(Collectors.toMap(s -> s, s -> roleFactory.createNew(vf.createIRI("http://mobi.com/roles/" + s))));
         User newUser = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME));
         newUser.setHasUserRole(Collections.singleton(role));
-        when(engineManager.getRole( anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgumentAt(0, String.class))));
+        when(engineManager.getRole( anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgument(0, String.class))));
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(newUser));
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("roles", roles.keySet().toArray())

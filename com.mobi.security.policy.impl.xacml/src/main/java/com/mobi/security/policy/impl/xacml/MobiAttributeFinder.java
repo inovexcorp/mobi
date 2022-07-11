@@ -23,12 +23,12 @@ package com.mobi.security.policy.impl.xacml;
  * #L%
  */
 
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.security.policy.api.BasicAttributeDesignator;
 import com.mobi.security.policy.api.PIP;
 import com.mobi.security.policy.api.xacml.XACML;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.wso2.balana.ProcessingException;
 import org.wso2.balana.attr.AnyURIAttribute;
 import org.wso2.balana.attr.AttributeValue;
@@ -45,6 +45,7 @@ import org.wso2.balana.finder.AttributeFinderModule;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -118,7 +119,7 @@ public class MobiAttributeFinder extends AttributeFinderModule {
                     throw new ProcessingException("Not a valid URI");
                 }
             case "https://www.w3.org/2001/XMLSchema#dateTime":
-                return new DateTimeAttribute(new Date(literal.dateTimeValue().toInstant().toEpochMilli()));
+                return new DateTimeAttribute(new Date(Instant.from(literal.temporalAccessorValue()).toEpochMilli()));
             default:
                 throw new ProcessingException("Datatype " + datatype + " is not supported");
         }

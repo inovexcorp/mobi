@@ -23,22 +23,23 @@ package com.mobi.etl.service.rdf.export;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import com.mobi.etl.api.config.rdf.export.RDFExportConfig;
 import com.mobi.etl.api.rdf.export.RDFExportService;
 import com.mobi.persistence.utils.StatementIterable;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.DelegatingRepository;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.Rio;
@@ -58,36 +59,25 @@ public class RDFExportServiceImpl implements RDFExportService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RDFExportServiceImpl.class);
 
-    private Map<String, Repository> initializedRepositories = new HashMap<>();
-
-    private ValueFactory vf;
-    private SesameTransformer transformer;
+    private Map<String, OsgiRepository> initializedRepositories = new HashMap<>();
 
     private List<RDFFormat> quadFormats = Arrays.asList(RDFFormat.JSONLD, RDFFormat.NQUADS, RDFFormat.TRIG,
             RDFFormat.TRIX);
 
-    @Reference(type = '*', dynamic = true)
-    public void addRepository(DelegatingRepository repository) {
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
+    public void addRepository(OsgiRepository repository) {
         initializedRepositories.put(repository.getRepositoryID(), repository);
     }
 
-    public void removeRepository(DelegatingRepository repository) {
+    public void removeRepository(OsgiRepository repository) {
         initializedRepositories.remove(repository.getRepositoryID());
     }
 
-    @Reference
-    public void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    @Reference
-    public void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
+    final ValueFactory vf = SimpleValueFactory.getInstance();
 
     @Override
     public void export(RDFExportConfig config, String repositoryID) throws IOException {
-        Repository repository = getRepo(repositoryID);
+        OsgiRepository repository = getRepo(repositoryID);
         try (RepositoryConnection conn = repository.getConnection()) {
             export(conn, config);
         }
@@ -121,11 +111,11 @@ public class RDFExportServiceImpl implements RDFExportService {
             LOGGER.warn("RDF format does not support quads.");
         }
         RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, output));
-        Rio.write(new StatementIterable(statements, transformer), rdfWriter);
+        Rio.write(new StatementIterable(statements), rdfWriter);
     }
 
-    private Repository getRepo(String repositoryID) {
-        Repository repository = initializedRepositories.get(repositoryID);
+    private OsgiRepository getRepo(String repositoryID) {
+        OsgiRepository repository = initializedRepositories.get(repositoryID);
         if (repository == null) {
             throw new IllegalArgumentException("Repository does not exist");
         }

@@ -27,22 +27,22 @@ import com.mobi.document.translator.SemanticTranslator;
 import com.mobi.document.translator.impl.csv.CsvSemanticTranslator;
 import com.mobi.document.translator.ontology.ExtractedOntology;
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.io.FilenameUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -60,22 +60,27 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 @Path("/translate")
-@Component(service = DocumentTranslatorRest.class, immediate = true)
+@Component(service = DocumentTranslatorRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 public class DocumentTranslatorRest {
 
     /**
@@ -83,34 +88,19 @@ public class DocumentTranslatorRest {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentTranslatorRest.class);
 
+    private final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    private final ModelFactory modelFactory = new DynamicModelFactory();
+    
     @Reference
     private volatile List<SemanticTranslator> translators = new ArrayList<>();
 
     @Reference
     private OrmFactoryRegistry ormFactoryRegistry;
 
-    @Reference
-    private ValueFactory valueFactory;
-
-    @Reference
-    private ModelFactory modelFactory;
-
-    @Reference
-    private SesameTransformer sesameTransformer;
-
     /**
      * Ingests an uploaded data file in the form of json, csv, or xml/xsd and converts it into an ontology and instance
      * data based on the structure and contents of the file. Once transformed a zip file is created and downloaded to
      * the user's system for exporting/importing.
-     *
-     * @param file              Data file to transform.
-     * @param type              Optional type to determine needed translator.
-     * @param ontologyIriString Optional namespace to use for the created ontology and instance data.
-     * @param desiredRows       Optional number of rows to parse to determine property ranges if file is tabular.
-     * @param filename          Optional filename given to the output file.
-     * @return SUCCESS code and a zip file containing the newly created ontology and instance data, BAD REQUEST if
-     *      file can't be found or a translator for the file cannot be found, INTERNAL SERVER ERROR if there is a
-     *      problem transforming the uploaded file.
      */
     @POST
     @RolesAllowed("user")
@@ -125,44 +115,47 @@ public class DocumentTranslatorRest {
                     @ApiResponse(responseCode = "400", description = "Invalid File or BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            },
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
+                                    schema = @Schema(implementation = TranslateUpload.class)
+                            )
+                    }
+            )
     )
-    public Response translateDocument(
-            @Parameter(schema = @Schema(type = "string", format = "binary",
-                    description = "Data file to transform.", required = true))
-            @FormDataParam("file") InputStream file,
-            @Parameter(description = "file metadata", hidden = true)
-            @FormDataParam("file") FormDataContentDisposition fileDetail,
-            @Parameter(schema = @Schema(type = "string", description = "Optional type to determine needed translator."))
-            @FormDataParam("type") String type,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Optional namespace to use for the created ontology and instance data."))
-            @FormDataParam("ontologyIRI") String ontologyIriString,
-            @Parameter(schema = @Schema(type = "string", description = "Optional filename given to the output file. "
-                    + "Requires zip extension."))
-            @FormDataParam("outputName") String filename,
-            @Parameter(schema = @Schema(type = "integer",
-                    description = "Optional number of rows to parse to determine property ranges if file is tabular."))
-            @FormDataParam("desiredRows") @DefaultValue("10") int desiredRows ) {
-
-        if (file == null) {
-            throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
-        }
-
-        if (filename == null) {
-            filename = FilenameUtils.removeExtension(fileDetail.getFileName())
-                    + new SimpleDateFormat("-yyyyMMddhhmmss").format(new Date()) + ".zip";
-        }
-
+    public Response translateDocument(@Context HttpServletRequest servletRequest) {
         java.nio.file.Path tempFolder = null;
-
         try {
-            String ext = FilenameUtils.getExtension(fileDetail.getFileName());
+            Map<String, List<Class>> fields = new HashMap<>();
+            fields.put("type", Stream.of(String.class).collect(Collectors.toList()));
+            fields.put("ontologyIriString", Stream.of(String.class).collect(Collectors.toList()));
+            fields.put("outputName", Stream.of(String.class).collect(Collectors.toList()));
+            fields.put("desiredRows", Stream.of(Integer.class).collect(Collectors.toList()));
+
+            Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);
+            String type = (String) formData.get("type");
+            String ontologyIriString = (String) formData.get("ontologyIriString");
+            String outputName = (String) formData.get("outputName");
+            int desiredRows = (Integer) formData.getOrDefault("desiredRows", 10);
+            InputStream inputStream = (InputStream) formData.get("stream");
+            String filename = (String) formData.get("filename");
+
+            if (inputStream == null) {
+                throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
+            }
+
+            if (outputName == null) {
+                outputName = FilenameUtils.removeExtension(filename)
+                        + new SimpleDateFormat("-yyyyMMddhhmmss").format(new Date()) + ".zip";
+            }
+
+            String ext = FilenameUtils.getExtension(filename);
 
             tempFolder = Files.createTempDirectory(String.valueOf(UUID.randomUUID()));
-            java.nio.file.Path documentFile = Files.createFile(tempFolder.resolve(Paths.get(fileDetail.getFileName())));
+            java.nio.file.Path documentFile = Files.createFile(tempFolder.resolve(Paths.get(filename)));
 
-            Files.copy(file, documentFile, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(inputStream, documentFile, StandardCopyOption.REPLACE_EXISTING);
 
             final SemanticTranslator translator = getTranslatorForType(type != null ? type : ext, desiredRows);
             ontologyIriString = ontologyIriString != null ? ontologyIriString
@@ -170,7 +163,7 @@ public class DocumentTranslatorRest {
 
             final IRI ontologyIri = valueFactory.createIRI(ontologyIriString);
             final ExtractedOntology ontology = ormFactoryRegistry.createNew(ontologyIri,
-                    modelFactory.createModel(), ExtractedOntology.class);
+                    modelFactory.createEmptyModel(), ExtractedOntology.class);
 
             final Model results = translator.translate(documentFile, ontology);
 
@@ -178,15 +171,15 @@ public class DocumentTranslatorRest {
                 try (ZipOutputStream os = new ZipOutputStream(new BufferedOutputStream(outputStream))) {
                     final ZipEntry ontologyEntry = new ZipEntry("ontology.ttl");
                     os.putNextEntry(ontologyEntry);
-                    RestUtils.groupedModelToOutputStream(ontology.getModel(), RDFFormat.TURTLE, sesameTransformer, os);
+                    RestUtils.groupedModelToOutputStream(ontology.getModel(), RDFFormat.TURTLE, os);
                     ZipEntry dataEntry = new ZipEntry("data.ttl");
                     os.putNextEntry(dataEntry);
-                    RestUtils.groupedModelToOutputStream(results, RDFFormat.TURTLE, sesameTransformer, os);
+                    RestUtils.groupedModelToOutputStream(results, RDFFormat.TURTLE, os);
                 }
             };
 
             return Response.ok(stream)
-                    .header("Content-Disposition", "attachment;filename=" + filename)
+                    .header("Content-Disposition", "attachment;filename=" + outputName)
                     .header("Content-Type", "application/zip")
                     .build();
 
@@ -195,8 +188,32 @@ public class DocumentTranslatorRest {
         } catch (IOException | UnsupportedOperationException | IllegalArgumentException userError) {
             throw ErrorUtils.sendError(userError, userError.getMessage(), Response.Status.BAD_REQUEST);
         } finally {
-            cleanupFiles(tempFolder);
+            if (tempFolder != null) {
+                cleanupFiles(tempFolder);
+            }
         }
+    }
+
+    /**
+     * Class used for OpenAPI documentation for file upload endpoint.
+     */
+    private class TranslateUpload {
+        @Schema(type = "string", format = "binary", description = "Data file to transform.")
+        public String file;
+
+        @Schema(type = "string", description = "Optional type to determine needed translator.")
+        public String type;
+
+        @Schema(type = "string",
+                description = "Optional namespace to use for the created ontology and instance data.")
+        public String ontologyIriString;
+
+        @Schema(type = "string", description = "Optional filename given to the output file. Requires zip extension.")
+        public String outputName;
+
+        @Schema(type = "integer",
+                description = "Optional number of rows to parse to determine property ranges if file is tabular.")
+        public int desiredRows;
     }
 
     private SemanticTranslator getTranslatorForType(String type, int rowCount) {

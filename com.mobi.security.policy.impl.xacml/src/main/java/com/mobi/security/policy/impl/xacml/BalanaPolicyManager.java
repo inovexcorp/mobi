@@ -23,21 +23,9 @@ package com.mobi.security.policy.impl.xacml;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.component.Reference;
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.persistence.utils.ConnectionUtils;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.security.policy.api.Policy;
 import com.mobi.security.policy.api.cache.PolicyCache;
 import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
@@ -55,8 +43,23 @@ import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.api.VirtualFilesystemException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +74,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -79,20 +81,13 @@ import javax.cache.Cache;
 import javax.xml.bind.JAXB;
 
 @Component(
-        configurationPolicy = ConfigurationPolicy.require,
-        designateFactory = PolicyManagerConfig.class,
+        configurationPolicy = ConfigurationPolicy.REQUIRE,
         name = BalanaPolicyManager.COMPONENT_NAME
 )
+@Designate(ocd = PolicyManagerConfig.class)
 public class BalanaPolicyManager implements XACMLPolicyManager {
     static final String COMPONENT_NAME = "com.mobi.security.policy.api.xacml.XACMLPolicyManager";
     private static final Logger LOG = LoggerFactory.getLogger(BalanaPolicyManager.class);
-
-    private ValueFactory vf;
-    private ModelFactory mf;
-    private PolicyCache policyCache;
-    private VirtualFilesystem vfs;
-    private Repository repository;
-    private PolicyFileFactory policyFileFactory;
 
     private String fileLocation;
     private IRI typeIRI;
@@ -100,41 +95,26 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     private Set<Resource> systemPolicies = new HashSet<>();
 
 
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
+    final ValueFactory vf = SimpleValueFactory.getInstance();
+    final ModelFactory mf = new DynamicModelFactory();
 
     @Reference
-    void setMf(ModelFactory mf) {
-        this.mf = mf;
-    }
+    PolicyCache policyCache;
 
     @Reference
-    void setPolicyCache(PolicyCache policyCache) {
-        this.policyCache = policyCache;
-    }
+    VirtualFilesystem vfs;
+
+    @Reference(target = "(id=system)")
+    OsgiRepository repository;
 
     @Reference
-    void setVfs(VirtualFilesystem vfs) {
-        this.vfs = vfs;
-    }
-
-    @Reference(name = "repository")
-    void setRepository(Repository repository) {
-        this.repository = repository;
-    }
-
-    @Reference
-    void setPolicyFileFactory(PolicyFileFactory policyFileFactory) {
-        this.policyFileFactory = policyFileFactory;
-    }
+    PolicyFileFactory policyFileFactory;
 
     @Activate
-    protected void start(BundleContext context, Map<String, Object> props) {
+    @Modified
+    protected void start(BundleContext context, final PolicyManagerConfig config) {
         typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
         policyFileTypeIRI = vf.createIRI(PolicyFile.TYPE);
-        PolicyManagerConfig config = Configurable.createConfigurable(PolicyManagerConfig.class, props);
 
         try {
             LOG.debug("Setting up policy file directory");
@@ -155,11 +135,6 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         }
 
         loadPolicies(context);
-    }
-
-    @Modified
-    protected void modified(BundleContext context, Map<String, Object> props) {
-        start(context, props);
     }
 
     @Override
@@ -310,7 +285,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     }
 
     @Override
-    public Repository getRepository() {
+    public OsgiRepository getRepository() {
         return this.repository;
     }
 
@@ -324,7 +299,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
 
     private void validateUniqueId(XACMLPolicy policy) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            if (conn.contains(policy.getId(), null, null)) {
+            if (ConnectionUtils.contains(conn, policy.getId(), null, null)) {
                 throw new IllegalArgumentException(policy.getId() + " already exists in the repository");
             }
         }
@@ -337,16 +312,16 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     }
 
     private PolicyFile validatePolicy(Resource policyId, RepositoryConnection conn) {
-        if (!conn.contains(policyId, typeIRI, policyFileTypeIRI)) {
+        if (!ConnectionUtils.contains(conn, policyId, typeIRI, policyFileTypeIRI)) {
             throw new IllegalArgumentException("Policy " + policyId + " does not exist");
         }
-        Model policyModel = RepositoryResults.asModel(conn.getStatements(null, null, null, policyId), mf);
+        Model policyModel = QueryResults.asModel(conn.getStatements(null, null, null, policyId), mf);
         return policyFileFactory.getExisting(policyId, policyModel).orElseThrow(() ->
                 new IllegalStateException("PolicyFile not present in named graph"));
     }
 
     private Optional<PolicyFile> optPolicy(Resource policyId, RepositoryConnection conn) {
-        Model policyModel = RepositoryResults.asModel(conn.getStatements(null, null, null, policyId), mf);
+        Model policyModel = QueryResults.asModel(conn.getStatements(null, null, null, policyId), mf);
         return policyFileFactory.getExisting(policyId, policyModel);
     }
 
@@ -415,7 +390,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 String fileName = URLDecoder.decode(FilenameUtils.getName(url.getPath()), "UTF-8");
                 String fileId = FilenameUtils.removeExtension(URLDecoder.decode(fileName, "UTF-8"));
                 Resource fileIRI = vf.createIRI(fileId);
-                if (!conn.contains(fileIRI, null, null)) {
+                if (!ConnectionUtils.contains(conn, fileIRI, null, null)) {
                     VirtualFile file = vfs.resolveVirtualFile(url.openStream(), fileLocation);
                     addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
                 } else {

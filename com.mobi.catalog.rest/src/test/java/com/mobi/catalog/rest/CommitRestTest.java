@@ -28,16 +28,18 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
-import static org.mockito.Matchers.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.PaginatedSearchResults;
@@ -50,28 +52,25 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rest.util.MobiRestTestNg;
-import com.mobi.rest.util.UsernameTestFilter;
+import com.mobi.rest.test.util.MobiRestTestCXF;
+import com.mobi.rest.test.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,12 +79,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-public class CommitRestTest extends MobiRestTestNg {
+public class CommitRestTest extends MobiRestTestCXF {
+    private AutoCloseable closeable;
     private static final String USER_IRI = "http://mobi.com/users/tester";
     private static final String RECORD_IRI = "http://mobi.com/records/test";
     private static final String ERROR_IRI = "http://mobi.com/error";
@@ -101,9 +100,9 @@ public class CommitRestTest extends MobiRestTestNg {
             "http://mobi.com/MyTestClass"
     };
 
-    private CommitRest rest;
-    private ValueFactory vf;
-    private ModelFactory mf;
+    private static CommitRest rest;
+    private static ValueFactory vf;
+    private static ModelFactory mf;
     private OrmFactory<Record> recordFactory;
     private Record testRecord;
     private List<Commit> entityCommits;
@@ -111,14 +110,10 @@ public class CommitRestTest extends MobiRestTestNg {
     private User user;
     private IRI typeIRI;
 
-    @Mock
-    private CatalogManager catalogManager;
-
-    @Mock
-    private EngineManager engineManager;
-
-    @Mock
-    private SesameTransformer transformer;
+    // Mock services used in server
+    private static CatalogManager catalogManager;
+    private static EngineManager engineManager;
+    private static BNodeService bNodeService;
 
     @Mock
     private PaginatedSearchResults<Record> results;
@@ -129,16 +124,28 @@ public class CommitRestTest extends MobiRestTestNg {
     @Mock
     private Difference difference;
 
-    @Mock
-    private BNodeService bNodeService;
-
-    @Override
-    protected Application configureApp() throws Exception {
+    @BeforeClass
+    public static void startServer() {
         vf = getValueFactory();
         mf = getModelFactory();
 
-        typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
+        catalogManager = Mockito.mock(CatalogManager.class);
+        engineManager = Mockito.mock(EngineManager.class);
+        
+        bNodeService = Mockito.mock(BNodeService.class);
 
+        rest = new CommitRest();
+        injectOrmFactoryReferencesIntoService(rest);
+        rest.setEngineManager(engineManager);
+        rest.setCatalogManager(catalogManager);
+        rest.setbNodeService(bNodeService);
+
+        configureServer(rest, new UsernameTestFilter());
+    }
+
+    @Before
+    public void setupMocks() throws Exception {
+        typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
         recordFactory = getRequiredOrmFactory(Record.class);
         OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
@@ -146,7 +153,6 @@ public class CommitRestTest extends MobiRestTestNg {
         testCommits = Arrays.stream(COMMIT_IRIS)
                 .map(s -> commitFactory.createNew(vf.createIRI(s)))
                 .collect(Collectors.toList());
-
         entityCommits = Arrays.stream(ENTITY_IRI)
                 .map(s -> commitFactory.createNew(vf.createIRI(s)))
                 .collect(Collectors.toList());
@@ -156,39 +162,10 @@ public class CommitRestTest extends MobiRestTestNg {
 
         user = userFactory.createNew(vf.createIRI(USER_IRI));
 
-        MockitoAnnotations.initMocks(this);
-        when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
-
-        rest = new CommitRest();
-        injectOrmFactoryReferencesIntoService(rest);
-        rest.setVf(vf);
-        rest.setEngineManager(engineManager);
-        rest.setTransformer(transformer);
-        rest.setCatalogManager(catalogManager);
-        rest.setbNodeService(bNodeService);
-
-        return new ResourceConfig()
-                .register(rest)
-                .register(UsernameTestFilter.class)
-                .register(MultiPartFeature.class);
-    }
-
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
-    }
-
-    @BeforeMethod
-    public void setupMocks() {
-        when(transformer.sesameModel(any(Model.class)))
-                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(transformer.sesameStatement(any(Statement.class)))
-                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
-                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
-
-        when(bNodeService.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
-        when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
+        closeable = MockitoAnnotations.openMocks(this);
+        when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgument(0, Model.class));
+        when(bNodeService.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgument(0, Statement.class));
+        when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgument(0, Model.class));
 
         when(results.getPage()).thenReturn(Collections.singletonList(testRecord));
         when(results.getPageNumber()).thenReturn(0);
@@ -205,16 +182,17 @@ public class CommitRestTest extends MobiRestTestNg {
         when(catalogManager.getDifference(any(Resource.class), any(Resource.class))).thenReturn(difference);
         when(catalogManager.getDifferencePaged(any(Resource.class), any(Resource.class), anyInt(), anyInt())).thenReturn(new PagedDifference(difference, false));
 
-        when(difference.getAdditions()).thenReturn(mf.createModel());
-        when(difference.getDeletions()).thenReturn(mf.createModel());
+        when(difference.getAdditions()).thenReturn(mf.createEmptyModel());
+        when(difference.getDeletions()).thenReturn(mf.createEmptyModel());
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.of(user.getResource().stringValue()));
     }
 
-    @AfterMethod
-    public void resetMocks() {
-        reset(catalogManager, engineManager, transformer, conflict, difference, results, bNodeService);
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
+        reset(catalogManager, engineManager, conflict, difference, results, bNodeService);
     }
 
     // GET commits/{commitId}
@@ -362,7 +340,7 @@ public class CommitRestTest extends MobiRestTestNg {
     // GET commits/{commitId}/resource
     @Test
     public void getCompiledResourceNoEntityTest() {
-        Model expected = mf.createModel();
+        Model expected = mf.createEmptyModel();
         expected.add(vf.createIRI(COMMIT_IRIS[0]), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
         expected.add(vf.createIRI(COMMIT_IRIS[1]), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
         expected.add(vf.createIRI(COMMIT_IRIS[2]), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
@@ -384,7 +362,7 @@ public class CommitRestTest extends MobiRestTestNg {
 
     @Test
     public void getCompiledResourceWithEntityTest() {
-        Model expected = mf.createModel();
+        Model expected = mf.createEmptyModel();
         expected.add(vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"), typeIRI, vf.createIRI(COMMIT_IRIS[1]));
         when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(entityCommits);
         when(catalogManager.getCompiledResource(any(List.class), any(Resource.class))).thenReturn(expected);
@@ -405,7 +383,7 @@ public class CommitRestTest extends MobiRestTestNg {
     @Test
     public void getCompiledResourceEmptyModelTest() {
         List<Commit> emptyList = new ArrayList<>();
-        Model expected = mf.createModel();
+        Model expected = mf.createEmptyModel();
         when(catalogManager.getCompiledResource(any(List.class), any(Resource.class))).thenReturn(expected);
         when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(emptyList);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")

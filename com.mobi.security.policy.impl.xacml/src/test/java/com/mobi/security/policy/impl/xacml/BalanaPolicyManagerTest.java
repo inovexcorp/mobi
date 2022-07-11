@@ -26,10 +26,10 @@ package com.mobi.security.policy.impl.xacml;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -40,25 +40,27 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.security.policy.api.Policy;
 import com.mobi.security.policy.api.cache.PolicyCache;
 import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
 import com.mobi.security.policy.api.xacml.PolicyQueryParams;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
+import com.mobi.security.policy.api.xacml.config.PolicyManagerConfig;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.impl.commons.SimpleVirtualFilesystem;
+import com.mobi.vfs.impl.commons.SimpleVirtualFilesystemConfig;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
@@ -88,10 +90,17 @@ import javax.cache.Cache;
 import javax.xml.bind.JAXB;
 
 public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
+    private AutoCloseable closeable;
     private BalanaPolicyManager manager;
-    private Repository repo;
+    private MemoryRepositoryWrapper repo;
     private VirtualFilesystem vfs;
     private OrmFactory<PolicyFile> policyFileFactory = getRequiredOrmFactory(PolicyFile.class);
+
+    @Mock
+    private PolicyManagerConfig policyManagerConfig;
+
+    @Mock
+    private SimpleVirtualFilesystemConfig config;
 
     @Mock
     private PolicyCache policyCache;
@@ -100,10 +109,10 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     private Cache<String, Policy> cache;
 
     @Mock
-    private BundleContext context;
+    private Bundle bundle;
 
     @Mock
-    private Bundle bundle;
+    private BundleContext context;
 
     private static String fileLocation;
     static {
@@ -125,19 +134,19 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     private PolicyType policyType;
     private PolicyType newPolicyType;
     private PolicyType missingPolicyType;
-    private PolicyType defaultPolicyType;
     private String filePath;
-    private Map<String, Object> props;
+    private PolicyType defaultPolicyType;
 
     @Before
     public void setUp() throws Exception {
+        closeable = MockitoAnnotations.openMocks(this);
+
         // Setup VirtualFileSystem
         vfs = new SimpleVirtualFilesystem();
-        Map<String, Object> config = new HashMap<>();
-        config.put("maxNumberOfTempFiles", 10000);
-        config.put("secondsBetweenTempCleanup", 60000);
-        config.put("defaultRootDirectory", fileLocation);
-        Method m = vfs.getClass().getDeclaredMethod("activate", Map.class);
+        when(config.maxNumberOfTempFiles()).thenReturn(10000);
+        when(config.secondsBetweenTempCleanup()).thenReturn((long) 60000);
+        when(config.defaultRootDirectory()).thenReturn(fileLocation);
+        Method m = vfs.getClass().getDeclaredMethod("activate", SimpleVirtualFilesystemConfig.class);
         m.setAccessible(true);
         m.invoke(vfs, config);
         VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
@@ -146,8 +155,8 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         }
 
         // Setup Repository
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
 
         // Setup example policies
         policyType = JAXB.unmarshal(getClass().getResourceAsStream("/policy1.xml"), PolicyType.class);
@@ -156,11 +165,11 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         defaultPolicyType = JAXB.unmarshal(getClass().getResourceAsStream("/http%3A%2F%2Fmobi.com%2Fpolicies%2Fontology-creation.xml"), PolicyType.class);
 
         // Setup PolicyCache
-        MockitoAnnotations.initMocks(this);
+        when(context.getBundle()).thenReturn(bundle);
         entries = new HashMap<>();
         when(policyCache.getPolicyCache()).thenReturn(Optional.of(cache));
         doAnswer((Answer<Void>) i -> {
-            entries.put(i.getArgumentAt(0, String.class), i.getArgumentAt(1, Policy.class));
+            entries.put(i.getArgument(0, String.class), i.getArgument(1, Policy.class));
             return null;
         }).when(cache).put(anyString(), any(Policy.class));
         when(cache.spliterator()).thenAnswer(i -> entries.keySet().stream()
@@ -170,27 +179,22 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
                     when(entry.getValue()).thenReturn(entries.get(key));
                     return entry;
                 }).collect(Collectors.toList()).spliterator());
-        when(cache.get(anyString())).thenAnswer(i -> entries.get(i.getArgumentAt(0, String.class)));
-        when(cache.containsKey(anyString())).thenAnswer(i -> entries.containsKey(i.getArgumentAt(0, String.class)));
+        when(cache.get(anyString())).thenAnswer(i -> entries.get(i.getArgument(0, String.class)));
+        when(cache.containsKey(anyString())).thenAnswer(i -> entries.containsKey(i.getArgument(0, String.class)));
         when(cache.remove(anyString())).thenAnswer(i -> {
-            Policy policy = entries.remove(i.getArgumentAt(0, String.class));
+            Policy policy = entries.remove(i.getArgument(0, String.class));
             return policy != null;
         });
 
-        when(context.getBundle()).thenReturn(bundle);
         when(bundle.findEntries(anyString(), anyString(), anyBoolean())).thenReturn(Collections.enumeration(Collections.emptyList()));
 
-        // Setup configuration props
-        props = new HashMap<>();
-        props.put("policyFileLocation", fileLocation);
+        when(policyManagerConfig.policyFileLocation()).thenReturn(fileLocation);
 
         manager = new BalanaPolicyManager();
         injectOrmFactoryReferencesIntoService(manager);
-        manager.setMf(MODEL_FACTORY);
-        manager.setVf(VALUE_FACTORY);
-        manager.setPolicyCache(policyCache);
-        manager.setVfs(vfs);
-        manager.setRepository(repo);
+        manager.policyCache = policyCache;
+        manager.vfs = vfs;
+        manager.repository = repo;
     }
 
     @After
@@ -199,6 +203,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         for (VirtualFile child : directory.getChildren()) {
             child.deleteAll();
         }
+        closeable.close();
     }
 
     @Test
@@ -206,9 +211,8 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         initializeRepo();
 
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
         assertEquals(0, manager.getSystemPolicyIds().size());
-
         verify(policyCache, atLeastOnce()).getPolicyCache();
         verify(cache).clear();
         assertTrue(entries.containsKey(policyId.stringValue()));
@@ -223,7 +227,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
         initializeRepo();
 
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
         assertEquals(0, manager.getSystemPolicyIds().size());
         verify(policyCache, atLeastOnce()).getPolicyCache();
         verify(cache, times(0)).clear();
@@ -233,9 +237,9 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     @Test(expected = MobiException.class)
     public void startIncorrectConfigTest() {
         // Setup:
-        props.put("policyFileLocation", "");
+        when(policyManagerConfig.policyFileLocation()).thenReturn("");
 
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -243,17 +247,17 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         setUpMissingFileTest();
 
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
     }
 
     @Test
     public void startWithBundleNoDefaultsTest() throws Exception {
         // Setup:
         setUpBundleTest();
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
         assertEquals(1, manager.getSystemPolicyIds().size());
         try (RepositoryConnection conn = repo.getConnection()) {
-            Model model = RepositoryResults.asModel(conn.getStatements(null, null, null, defaultPolicyId), MODEL_FACTORY);
+            Model model = QueryResults.asModel(conn.getStatements(null, null, null, defaultPolicyId), MODEL_FACTORY);
             assertFalse(model.isEmpty());
             Optional<PolicyFile> optPolicyFile = policyFileFactory.getExisting(defaultPolicyId, model);
             assertTrue(optPolicyFile.isPresent());
@@ -283,11 +287,10 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(defaultPolicyFile.getModel(), defaultPolicyId);
         }
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
         assertEquals(1, manager.getSystemPolicyIds().size());
-
         try (RepositoryConnection conn = repo.getConnection()) {
-            Model model = RepositoryResults.asModel(conn.getStatements(null, null, null, defaultPolicyId), MODEL_FACTORY);
+            Model model = QueryResults.asModel(conn.getStatements(null, null, null, defaultPolicyId), MODEL_FACTORY);
             assertFalse(model.isEmpty());
             Optional<PolicyFile> optPolicyFile = policyFileFactory.getExisting(defaultPolicyId, model);
             assertTrue(optPolicyFile.isPresent());
@@ -318,7 +321,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     @Test
     public void addPolicyWithCacheTest() throws Exception {
         // Setup:
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
 
         Resource newPolicyId = manager.addPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
         verifyAddPolicyWithCache(newPolicyId);
@@ -328,7 +331,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void addPolicyWithoutCacheTest() throws Exception {
         // Setup:
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
 
         Resource newPolicyId = manager.addPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
         verifyAddPolicyWithoutCache(newPolicyId);
@@ -337,7 +340,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     @Test
     public void addSystemPolicyWithCacheTest() throws Exception {
         // Setup:
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
         assertEquals(0, manager.getSystemPolicyIds().size());
 
         Resource newPolicyId = manager.addSystemPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
@@ -349,7 +352,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void addSystemPolicyWithoutCacheTest() throws Exception {
         // Setup:
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
         assertEquals(0, manager.getSystemPolicyIds().size());
 
         Resource newPolicyId = manager.addSystemPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
@@ -366,7 +369,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         assertTrue(policy instanceof BalanaPolicy);
         assertEquals(policyId, policy.getId());
         try (RepositoryConnection conn = repo.getConnection()) {
-            Model model = RepositoryResults.asModel(conn.getStatements(null, null, null, newPolicyId), MODEL_FACTORY);
+            Model model = QueryResults.asModel(conn.getStatements(null, null, null, newPolicyId), MODEL_FACTORY);
             assertFalse(model.isEmpty());
             Optional<PolicyFile> optPolicyFile = policyFileFactory.getExisting(newPolicyId, model);
             assertTrue(optPolicyFile.isPresent());
@@ -393,7 +396,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         assertEquals(policyId, newPolicyId);
         assertFalse(entries.containsKey(newPolicyId.stringValue()));
         try (RepositoryConnection conn = repo.getConnection()) {
-            Model model = RepositoryResults.asModel(conn.getStatements(null, null, null, newPolicyId), MODEL_FACTORY);
+            Model model = QueryResults.asModel(conn.getStatements(null, null, null, newPolicyId), MODEL_FACTORY);
             assertFalse(model.isEmpty());
             Optional<PolicyFile> optPolicyFile = policyFileFactory.getExisting(newPolicyId, model);
             assertTrue(optPolicyFile.isPresent());
@@ -418,7 +421,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void getPoliciesWithCacheTest() throws Exception {
         // Setup:
         initializeRepo();
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
 
         List<XACMLPolicy> policies = manager.getPolicies(new PolicyQueryParams.Builder().build());
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -434,7 +437,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         initializeRepo();
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
 
         List<XACMLPolicy> policies = manager.getPolicies(new PolicyQueryParams.Builder().build());
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -449,7 +452,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void getPolicyWithCacheTest() throws Exception {
         // Setup:
         initializeRepo();
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
 
         Optional<XACMLPolicy> result = manager.getPolicy(policyId);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -464,7 +467,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     @Test
     public void getPolicyThatDoesNotExistWithCacheTest() {
         // Setup:
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
 
         Optional<XACMLPolicy> result = manager.getPolicy(missingPolicyId);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -476,7 +479,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     @Test(expected = IllegalStateException.class)
     public void getMissingPolicyWithCacheTest() {
         // Setup:
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
         setUpMissingFileTest();
 
         manager.getPolicy(missingPolicyFile.getResource());
@@ -487,7 +490,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
         initializeRepo();
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
 
         Optional<XACMLPolicy> result = manager.getPolicy(policyId);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -503,7 +506,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void getPolicyThatDoesNotExistWithoutCacheTest() {
         // Setup:
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
 
         Optional<XACMLPolicy> result = manager.getPolicy(missingPolicyId);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -516,7 +519,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void getMissingPolicyWithoutCacheTest() {
         // Setup:
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
         setUpMissingFileTest();
 
         manager.getPolicy(missingPolicyFile.getResource());
@@ -527,7 +530,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         BalanaPolicy policy = new BalanaPolicy(newPolicyType, VALUE_FACTORY);
         initializeRepo();
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
 
         manager.updatePolicy(policy);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -536,7 +539,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         assertTrue(cachedPolicy instanceof BalanaPolicy);
         assertEquals(policyId, cachedPolicy.getId());
         try (RepositoryConnection conn = repo.getConnection()) {
-            Optional<PolicyFile> optPolicyFile = policyFileFactory.getExisting(policyId, RepositoryResults.asModel(conn.getStatements(null, null, null, policyId), MODEL_FACTORY));
+            Optional<PolicyFile> optPolicyFile = policyFileFactory.getExisting(policyId, QueryResults.asModel(conn.getStatements(null, null, null, policyId), MODEL_FACTORY));
             assertTrue(optPolicyFile.isPresent());
             PolicyFile newPolicyFile = optPolicyFile.get();
             Optional<IRI> filePathOld = policyFile.getRetrievalURL();
@@ -559,14 +562,14 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         BalanaPolicy policy = new BalanaPolicy(newPolicyType, VALUE_FACTORY);
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
         initializeRepo();
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
 
         manager.updatePolicy(policy);
         verify(policyCache, atLeastOnce()).getPolicyCache();
         verify(cache, times(0)).put(anyString(), any(Policy.class));
         try (RepositoryConnection conn = repo.getConnection()) {
             Optional<PolicyFile> optPolicyFile = policyFileFactory.getExisting(policyFile.getResource(),
-                    RepositoryResults.asModel(conn.getStatements(null, null, null, policyFile.getResource()), MODEL_FACTORY));
+                    QueryResults.asModel(conn.getStatements(null, null, null, policyFile.getResource()), MODEL_FACTORY));
             assertTrue(optPolicyFile.isPresent());
             PolicyFile newPolicyFile = optPolicyFile.get();
             Optional<IRI> filePathOld = policyFile.getRetrievalURL();
@@ -587,7 +590,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void updatePolicyThatDoesNotExistTest() {
         // Setup:
         BalanaPolicy policy = new BalanaPolicy(missingPolicyType, VALUE_FACTORY);
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
 
         manager.updatePolicy(policy);
     }
@@ -596,7 +599,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void updateMissingPolicyTest() {
         // Setup:
         BalanaPolicy policy = new BalanaPolicy(missingPolicyType, VALUE_FACTORY);
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
         setUpMissingFileTest();
 
         manager.updatePolicy(policy);
@@ -606,7 +609,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void deletePolicyWithCacheTest() throws Exception {
         // Setup:
         initializeRepo();
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
 
         manager.deletePolicy(policyId);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -615,7 +618,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         VirtualFile virtualFile = vfs.resolveVirtualFile(filePath);
         assertFalse(virtualFile.exists());
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertFalse(conn.contains(null, null, null, policyId));
+            assertFalse(ConnectionUtils.contains(conn, null, null, null, policyId));
         }
     }
 
@@ -624,7 +627,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
         initializeRepo();
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
 
         manager.deletePolicy(policyId);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -632,14 +635,14 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         VirtualFile virtualFile = vfs.resolveVirtualFile(filePath);
         assertFalse(virtualFile.exists());
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertFalse(conn.contains(null, null, null, policyId));
+            assertFalse(ConnectionUtils.contains(conn, null, null, null, policyId));
         }
     }
 
     @Test
     public void deleteSystemPolicyTest() throws Exception {
         // Setup:
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
         assertEquals(0, manager.getSystemPolicyIds().size());
 
         Resource newPolicyId = manager.addSystemPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
@@ -651,7 +654,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         verify(cache).remove(newPolicyId.stringValue());
         assertFalse(entries.containsKey(newPolicyId.stringValue()));
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertFalse(conn.contains(null, null, null, newPolicyId));
+            assertFalse(ConnectionUtils.contains(conn, null, null, null, newPolicyId));
         }
         assertEquals(0, manager.getSystemPolicyIds().size());
     }
@@ -660,7 +663,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void deletePolicyThatDoesNotExistTest() {
         // Setup:
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
 
         manager.deletePolicy(missingPolicyId);
     }
@@ -668,7 +671,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     @Test
     public void deleteMissingPolicyTest() {
         // Setup:
-        manager.start(context, props);
+        manager.start(context, policyManagerConfig);
         setUpMissingFileTest();
 
         manager.deletePolicy(missingPolicyId);

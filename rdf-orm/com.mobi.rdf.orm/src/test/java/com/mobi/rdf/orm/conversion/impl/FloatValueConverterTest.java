@@ -23,11 +23,11 @@ package com.mobi.rdf.orm.conversion.impl;
  * #L%
  */
 
-import com.mobi.rdf.api.Value;
+import org.eclipse.rdf4j.model.Value;
 import com.mobi.rdf.orm.conversion.ValueConversionException;
 import junit.framework.TestCase;
 import org.junit.Test;
-import com.mobi.rdf.api.Value;
+import org.eclipse.rdf4j.model.Value;
 import com.mobi.rdf.orm.conversion.ValueConversionException;
 
 public class FloatValueConverterTest extends ValueConverterTestCase<Float> {

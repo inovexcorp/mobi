@@ -29,13 +29,13 @@ import static com.mobi.security.policy.api.xacml.XACML.RESOURCE_CATEGORY;
 import static com.mobi.security.policy.api.xacml.XACML.SUBJECT_CATEGORY;
 
 import com.mobi.exception.MobiException;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.security.policy.api.xacml.XACML;
 import com.mobi.security.policy.api.xacml.XACMLRequest;
 import com.mobi.security.policy.api.xacml.jaxb.ObjectFactory;
 import com.mobi.security.policy.api.xacml.jaxb.RequestType;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.wso2.balana.attr.AttributeValue;
 import org.wso2.balana.ctx.AbstractRequestCtx;
 import org.wso2.balana.ctx.Attribute;

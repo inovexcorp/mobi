@@ -23,14 +23,16 @@ package com.mobi.repository.impl.core;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
-import com.mobi.repository.api.DelegatingRepository;
-import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.base.OsgiRepositoryWrapper;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,19 +41,19 @@ import java.util.Optional;
 @Component(immediate = true)
 public class SimpleRepositoryManager implements RepositoryManager {
 
-    protected Map<String, Repository> initializedRepositories = new HashMap<>();
+    protected Map<String, OsgiRepository> initializedRepositories = new HashMap<>();
 
-    @Reference(type = '*', dynamic = true)
-    public void addRepository(DelegatingRepository repository) {
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
+    public void addRepository(OsgiRepository repository) {
         initializedRepositories.put(repository.getRepositoryID(), repository);
     }
 
-    public void removeRepository(DelegatingRepository repository) {
+    public void removeRepository(OsgiRepository repository) {
         initializedRepositories.remove(repository.getRepositoryID());
     }
 
     @Override
-    public Optional<Repository> getRepository(String id) {
+    public Optional<OsgiRepository> getRepository(String id) {
         if (initializedRepositories.containsKey(id)) {
             return Optional.of(initializedRepositories.get(id));
         } else {
@@ -60,13 +62,15 @@ public class SimpleRepositoryManager implements RepositoryManager {
     }
 
     @Override
-    public Map<String, Repository> getAllRepositories() {
+    public Map<String, OsgiRepository> getAllRepositories() {
         return new HashMap<>(initializedRepositories);
     }
 
     @Override
-    public Repository createMemoryRepository() {
+    public OsgiRepository createMemoryRepository() {
         // TODO: Should we create and return a service here? A service reference?
-        return new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        OsgiRepositoryWrapper repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
+        return repo;
     }
 }

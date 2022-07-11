@@ -30,20 +30,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.rio.Rio;
-import com.mobi.query.GraphQueryResult;
-import com.mobi.query.QueryResultsIO;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.Binding;
-import com.mobi.query.api.BindingSet;
-import com.mobi.query.api.GraphQuery;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.query.exception.MalformedQueryException;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.DefaultResourceId;
@@ -66,13 +54,25 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.Binding;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.GraphQueryResult;
+import org.eclipse.rdf4j.query.MalformedQueryException;
 import org.eclipse.rdf4j.query.QueryLanguage;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.query.parser.ParsedGraphQuery;
 import org.eclipse.rdf4j.query.parser.ParsedOperation;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.QueryParserUtil;
+import org.eclipse.rdf4j.query.resultio.QueryResultIO;
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.osgi.service.component.annotations.Activate;
@@ -103,7 +103,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-@Component(service = SparqlRest.class, immediate = true, configurationPolicy = ConfigurationPolicy.OPTIONAL)
+@Component(service = SparqlRest.class, immediate = true, configurationPolicy = ConfigurationPolicy.OPTIONAL,
+        property = { "osgi.jaxrs.resource=true" })
 @Designate(ocd = SparqlRestConfig.class)
 @Path("/sparql")
 public class SparqlRest {
@@ -121,19 +122,12 @@ public class SparqlRest {
 
     public static final String X_LIMIT_EXCEEDED = "X-LIMIT-EXCEEDED";
 
-    private SesameTransformer sesameTransformer;
     private RepositoryManager repositoryManager;
     private DatasetManager datasetManager;
-    private ValueFactory valueFactory;
-    private QueryResultsIO queryResultsIO;
+    private final ValueFactory valueFactory = SimpleValueFactory.getInstance();
 
     private final Logger log = LoggerFactory.getLogger(SparqlRest.class);
     private final ObjectMapper mapper = new ObjectMapper();
-
-    @Reference
-    public void setSesameTransformer(SesameTransformer sesameTransformer) {
-        this.sesameTransformer = sesameTransformer;
-    }
 
     @Reference
     public void setRepository(RepositoryManager repositoryManager) {
@@ -143,16 +137,6 @@ public class SparqlRest {
     @Reference
     public void setDatasetManager(DatasetManager datasetManager) {
         this.datasetManager = datasetManager;
-    }
-
-    @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
-    }
-
-    @Reference
-    public void setQueryResultsIO(QueryResultsIO queryResultsIO) {
-        this.queryResultsIO = queryResultsIO;
     }
 
     @Activate
@@ -797,7 +781,7 @@ public class SparqlRest {
             }
 
         } else {
-            Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+            OsgiRepository repository = repositoryManager.getRepository("system").orElseThrow(() ->
                     ErrorUtils.sendError("Repository is not available.",
                             Response.Status.INTERNAL_SERVER_ERROR));
             try (RepositoryConnection conn = repository.getConnection()) {
@@ -875,7 +859,7 @@ public class SparqlRest {
                 limitExceeded = executeGraphQuery(queryString, format, byteArrayOutputStream, conn, limit);
             }
         } else {
-            Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+            OsgiRepository repository = repositoryManager.getRepository("system").orElseThrow(() ->
                     ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
             try (RepositoryConnection conn = repository.getConnection()) {
                 limitExceeded = executeGraphQuery(queryString, format, byteArrayOutputStream, conn, limit);
@@ -955,7 +939,7 @@ public class SparqlRest {
             };
         } else {
             return os -> {
-                Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+                OsgiRepository repository = repositoryManager.getRepository("system").orElseThrow(() ->
                         ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
                 try (RepositoryConnection conn = repository.getConnection()) {
                     executeGraphQuery(queryString, format, os, conn, null);
@@ -974,11 +958,12 @@ public class SparqlRest {
         GraphQueryResult graphQueryResult = graphQuery.evaluate();
         RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, os);
         if (limit != null) {
-            limitExceeded = Rio.write(graphQueryResult, writer, sesameTransformer, limit);
+            limitExceeded = Rio.write(graphQueryResult, writer, limit);
         } else {
-            Rio.write(graphQueryResult, writer, sesameTransformer);
+            Rio.write(graphQueryResult, writer);
         }
 
+        graphQueryResult.close();
         os.flush();
         os.close();
         return limitExceeded;
@@ -996,7 +981,7 @@ public class SparqlRest {
             };
         } else {
             return os -> {
-                Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+                OsgiRepository repository = repositoryManager.getRepository("system").orElseThrow(() ->
                         ErrorUtils.sendError("Repository is not available.",
                                 Response.Status.INTERNAL_SERVER_ERROR));
                 try (RepositoryConnection conn = repository.getConnection()) {
@@ -1014,11 +999,12 @@ public class SparqlRest {
         TupleQuery query = conn.prepareTupleQuery(queryString);
         TupleQueryResult queryResults = query.evaluate();
         if (limit != null) {
-            limitExceeded = queryResultsIO.writeTuple(queryResults, format, limit, os);
+            limitExceeded = QueryResultIOLimited.writeTuple(queryResults, format, os, limit);
         } else {
-            queryResultsIO.writeTuple(queryResults, format, os);
+            QueryResultIO.writeTuple(queryResults, format, os);
         }
 
+        queryResults.close();
         os.flush();
         os.close();
         return limitExceeded;
@@ -1038,14 +1024,14 @@ public class SparqlRest {
 
             try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
                 TupleQuery query = conn.prepareTupleQuery(queryString);
-                queryResults = query.evaluateAndReturn();
+                queryResults = query.evaluate(); // TODO: NOT SURE evaluateAndReturn
             }
         } else {
-            Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+            OsgiRepository repository = repositoryManager.getRepository("system").orElseThrow(() ->
                     ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
             try (RepositoryConnection conn = repository.getConnection()) {
                 TupleQuery query = conn.prepareTupleQuery(queryString);
-                queryResults = query.evaluateAndReturn();
+                queryResults = query.evaluate(); // TODO: NOT SURE evaluateAndReturn
             }
         }
 
@@ -1110,7 +1096,7 @@ public class SparqlRest {
             row = sheet.createRow(rowIt);
             for (String bindingName : bindings) {
                 cell = row.createCell(cellIt);
-                Optional<Binding> bindingOpt = bindingSet.getBinding(bindingName);
+                Optional<Binding> bindingOpt = Optional.ofNullable(bindingSet.getBinding(bindingName));
                 if (bindingOpt.isPresent()) {
                     cell.setCellValue(bindingOpt.get().getValue().stringValue());
                 }

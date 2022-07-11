@@ -22,17 +22,15 @@
  */
 package com.mobi.etl.service.rdf.export
 
-import org.apache.commons.io.output.NullOutputStream
 import com.mobi.dataset.api.DatasetConnection
 import com.mobi.dataset.api.DatasetManager
 import com.mobi.etl.api.config.rdf.export.RDFExportConfig
-import com.mobi.persistence.utils.api.SesameTransformer
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
-import com.mobi.rdf.core.utils.Values
-import com.mobi.repository.api.DelegatingRepository
-import com.mobi.repository.api.RepositoryConnection
-import com.mobi.repository.base.RepositoryResult
+import com.mobi.repository.api.OsgiRepository
+import org.apache.commons.io.output.NullOutputStream
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.repository.RepositoryConnection
+import org.eclipse.rdf4j.repository.RepositoryResult
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
@@ -40,7 +38,7 @@ import spock.lang.Specification
 class RDFExportSpec extends Specification {
     def service = new RDFExportServiceImpl()
     def vf = SimpleValueFactory.getInstance()
-    def mf = LinkedHashModelFactory.getInstance()
+    def mf = new DynamicModelFactory();
 
     def repoId = "test"
     def datasetId = vf.createIRI("http://test.com/dataset-record")
@@ -52,9 +50,8 @@ class RDFExportSpec extends Specification {
     def testFileWithoutQuads = new ClassPathResource("exporter/testFile.ttl").getFile()
     def invalidFile = new ClassPathResource("exporter/testFile.txt").getFile()
 
-    def transformer = Mock(SesameTransformer)
     def datasetManager = Mock(DatasetManager)
-    def repo = Mock(DelegatingRepository)
+    def repo = Mock(OsgiRepository)
     def conn = Mock(RepositoryConnection)
     def result = Mock(RepositoryResult)
     def datasetConn = Mock(DatasetConnection)
@@ -64,11 +61,10 @@ class RDFExportSpec extends Specification {
         testFileWithoutQuads.setWritable(true)
         invalidFile.setWritable(true)
 
-        transformer.sesameStatement(_) >> { args -> Values.sesameStatement(args[0])}
         repo.getRepositoryID() >> repoId
         repo.getConnection() >> conn
         conn.getStatements(*_) >> result
-        result.iterator() >> mf.createModel().iterator()
+        result.iterator() >> mf.createEmptyModel().iterator()
         datasetManager.getConnection(datasetId) >> datasetConn
         datasetManager.getConnection(!datasetId) >> {throw new IllegalArgumentException()}
         datasetConn.getStatements(*_) >> result
@@ -76,8 +72,6 @@ class RDFExportSpec extends Specification {
         datasetConn.getNamedGraphs() >> result
         datasetConn.getSystemDefaultNamedGraph() >> vf.createIRI("http://test.com/system-default")
 
-        service.setTransformer(transformer)
-        service.setVf(vf)
         service.addRepository(repo)
     }
 

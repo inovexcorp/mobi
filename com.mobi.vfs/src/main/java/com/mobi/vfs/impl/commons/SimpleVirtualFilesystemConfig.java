@@ -23,24 +23,43 @@ package com.mobi.vfs.impl.commons;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-@Meta.OCD
-public interface SimpleVirtualFilesystemConfig {
+/**
+ * Configuration for the Virtual File System.
+ */
+@ObjectClassDefinition
+public @interface SimpleVirtualFilesystemConfig {
 
-    @Meta.AD(deflt = "60000")
-    long secondsBetweenTempCleanup();
+    /**
+     * The threshold for how often to clean up temporary files in the VFS.
+     *
+     * @return the number of seconds between when temporary files are cleaned up in the VFS.
+     */
+    @AttributeDefinition(defaultValue = "60000")
+    long secondsBetweenTempCleanup() default 60000;
 
-    @Meta.AD(deflt = "10000")
-    int maxNumberOfTempFiles();
+    /**
+     * The maximum number of temporary files in the VFS.
+     *
+     * @return the maximum number of temporary files in the VFS
+     */
+    @AttributeDefinition(defaultValue = "10000")
+    int maxNumberOfTempFiles() default 10000;
 
-    @Meta.AD(required = false)
+    /**
+     * The default directory for temporary files.
+     *
+     * @return the default directory for temporary files.
+     */
+    @AttributeDefinition(required = false)
     String defaultTemporaryDirectory();
 
     /**
      * The absolute path to the root directory
      */
-    @Meta.AD(deflt = "${karaf.data}/vfs")
-    String defaultRootDirectory();
+    @AttributeDefinition(defaultValue = "${karaf.data}/vfs")
+    String defaultRootDirectory() default "${karaf.data}/vfs";
 
 }

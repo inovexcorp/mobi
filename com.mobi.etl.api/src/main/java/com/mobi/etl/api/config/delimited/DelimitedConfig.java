@@ -25,7 +25,7 @@ package com.mobi.etl.api.config.delimited;
 
 
 import com.mobi.ontology.core.api.Ontology;
-import com.mobi.rdf.api.Model;
+import org.eclipse.rdf4j.model.Model;
 
 import java.io.InputStream;
 import java.util.Collections;

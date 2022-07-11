@@ -23,21 +23,21 @@ package com.mobi.platform.config.api.application;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
-import com.mobi.repository.config.RepositoryConsumerConfig;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 /**
  * Configuration for Application objects in the repository.
  */
-@Meta.OCD
-public interface ApplicationConfig extends RepositoryConsumerConfig {
+@ObjectClassDefinition
+public @interface ApplicationConfig {
 
     /**
      * The ID of the Application service. Used as the local name of the Application IRI.
      *
      * @return the id of the Application
      */
-    @Meta.AD
+    @AttributeDefinition
     String id();
 
     /**
@@ -45,7 +45,7 @@ public interface ApplicationConfig extends RepositoryConsumerConfig {
      *
      * @return the display title of the Application
      */
-    @Meta.AD(required = false)
+    @AttributeDefinition(required = false)
     String title();
 
     /**
@@ -53,6 +53,9 @@ public interface ApplicationConfig extends RepositoryConsumerConfig {
      *
      * @return the description of the Application
      */
-    @Meta.AD(required = false)
+    @AttributeDefinition(required = false)
     String description();
+
+    @AttributeDefinition(name = "repository.target")
+    String repository_id();
 }

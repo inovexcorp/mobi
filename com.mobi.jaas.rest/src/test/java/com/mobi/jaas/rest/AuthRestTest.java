@@ -24,57 +24,44 @@ package com.mobi.jaas.rest;
  */
 
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.principals.UserPrincipal;
 import com.mobi.jaas.api.token.TokenManager;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.web.security.util.AuthenticationProps;
-import com.mobi.web.security.util.RestSecurityUtils;
 import com.nimbusds.jwt.SignedJWT;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.oauth1.signature.Base64;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.testng.IObjectFactory;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.ObjectFactory;
-import org.testng.annotations.Test;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mockito.Mockito;
 
+import java.util.Base64;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import javax.security.auth.Subject;
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
-@PowerMockIgnore({"javax.ws.*", "org.glassfish.*"})
-@PrepareForTest({RestSecurityUtils.class})
-public class AuthRestTest extends MobiRestTestNg {
+public class AuthRestTest extends MobiRestTestCXF {
 
     private NewCookie authCookie;
     private NewCookie unauthCookie;
@@ -84,58 +71,41 @@ public class AuthRestTest extends MobiRestTestNg {
     private static final String ANON = "anon";
     private static final String USERNAME = "username";
     private static final String PASSWORD = "password";
-    private static final String VALID_USER = "{\"sub\": \"" + USERNAME + "\"}";
-    private static final String ANON_USER = "{\"sub\": \"" + ANON + "\"}";
     private static final String TOKEN_NAME = "mobi_web_token";
 
-    private boolean error = false;
-    private EngineManager engineManager;
-    private MobiConfiguration mobiConfiguration;
-    private TokenManager tokenManager;
+    private static boolean error = false;
     private SignedJWT signedJWT;
     private SignedJWT unauthSignedJWT;
     private Role requiredRole;
     private Role otherRole;
     private User user;
     private Literal usernameLit;
+    private Map<String, Object> configMap;
 
-    @ObjectFactory
-    public IObjectFactory getObjectFactory() {
-        return new org.powermock.modules.testng.PowerMockObjectFactory();
-    }
+    // Mock services used in server
+    private static EngineManager engineManager;
+    private static MobiConfiguration mobiConfiguration;
+    private static TokenManager tokenManager;
+    private static ValueFactory vf;
 
-    @BeforeMethod
-    private void setupStaticMocks() throws Exception {
-        reset(engineManager, tokenManager);
-
-        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
-        when(engineManager.getUserRoles(anyString())).thenReturn(Collections.emptySet());
-        when(engineManager.getUserRoles(USERNAME)).thenReturn(Collections.singleton(requiredRole));
-
-        when(tokenManager.getTokenString(any(ContainerRequestContext.class))).thenReturn(TOKEN_STRING);
-        when(tokenManager.verifyToken(anyString())).thenReturn(Optional.empty());
-        when(tokenManager.verifyToken(TOKEN_STRING)).thenReturn(Optional.of(signedJWT));
-        when(tokenManager.generateAuthToken(anyString())).thenReturn(signedJWT);
-        when(tokenManager.generateUnauthToken()).thenReturn(unauthSignedJWT);
-        when(tokenManager.createSecureTokenNewCookie(signedJWT)).thenReturn(authCookie);
-        when(tokenManager.createSecureTokenNewCookie(unauthSignedJWT)).thenReturn(unauthCookie);
-
-        mockStatic(RestSecurityUtils.class);
-        when(RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), anyString(), anyString(), eq(mobiConfiguration))).thenReturn(false);
-        when(RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration))).thenAnswer(i -> {
-            Subject subject = i.getArgumentAt(1, Subject.class);
-            subject.getPrincipals().add(new UserPrincipal(USERNAME));
-            return true;
-        });
-    }
-
-    @Override
-    protected Application configureApp() throws Exception {
-        ValueFactory vf = getValueFactory();
+    @BeforeClass
+    public static void startServer() {
+        vf = getValueFactory();
 
         engineManager = mock(EngineManager.class);
         mobiConfiguration = mock(MobiConfiguration.class);
         tokenManager = mock(TokenManager.class);
+
+        AuthRest rest = new AuthRest();
+        rest.setConfiguration(mobiConfiguration);
+        rest.setEngineManager(engineManager);
+        rest.setTokenManager(tokenManager);
+
+        configureServer(rest, requestContext -> requestContext.setProperty(AuthenticationProps.USERNAME, getUsername()));
+    }
+
+    @Before
+    public void setupStaticMocks() throws Exception {
         signedJWT = mock(SignedJWT.class);
         unauthSignedJWT = mock(SignedJWT.class);
         requiredRole = mock(Role.class);
@@ -151,28 +121,36 @@ public class AuthRestTest extends MobiRestTestNg {
         when(requiredRole.getResource()).thenReturn(vf.createIRI("http://test.com/" + AuthRest.REQUIRED_ROLE));
         when(otherRole.getResource()).thenReturn(vf.createIRI("http://test.com/other"));
 
-        AuthRest rest = new AuthRest();
-        rest.setConfiguration(mobiConfiguration);
-        rest.setEngineManager(engineManager);
-        rest.setTokenManager(tokenManager);
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
+        when(engineManager.getUserRoles(anyString())).thenReturn(Collections.emptySet());
+        when(engineManager.getUserRoles(USERNAME)).thenReturn(Collections.singleton(requiredRole));
 
-        return new ResourceConfig()
-                .register(rest)
-                .register(MultiPartFeature.class)
-                .register((ContainerRequestFilter) requestContext -> requestContext.setProperty(AuthenticationProps.USERNAME, getUsername()));
+        when(tokenManager.getTokenString(any(HttpServletRequest.class))).thenReturn(TOKEN_STRING);
+        when(tokenManager.verifyToken(anyString())).thenReturn(Optional.empty());
+        when(tokenManager.verifyToken(TOKEN_STRING)).thenReturn(Optional.of(signedJWT));
+        when(tokenManager.generateAuthToken(anyString())).thenReturn(signedJWT);
+        when(tokenManager.generateUnauthToken()).thenReturn(unauthSignedJWT);
+        when(tokenManager.createSecureTokenNewCookie(signedJWT)).thenReturn(authCookie);
+        when(tokenManager.createSecureTokenNewCookie(unauthSignedJWT)).thenReturn(unauthCookie);
+
+        configMap = new HashMap<>();
+        configMap.put("module", LoginTestModule.class.getName());
+        configMap.put("principals", true);
+        AppConfigurationEntry entry = new AppConfigurationEntry(LoginTestModule.class.getName(), AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL, configMap);
+        when(mobiConfiguration.getAppConfigurationEntry(anyString())).thenReturn(new AppConfigurationEntry[]{entry});
     }
 
-    private String getUsername() {
+    @After
+    public void reset() {
+        Mockito.reset(mobiConfiguration, engineManager, tokenManager);
+    }
+
+    private static String getUsername() {
         if (error) {
             return null;
         } else {
             return USERNAME;
         }
-    }
-
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
     }
 
     @Test
@@ -216,7 +194,7 @@ public class AuthRestTest extends MobiRestTestNg {
         String authorization = ":" + PASSWORD;
 
         Response response = target().path("session").request()
-                .header("Authorization", "Basic " + Base64.encode(authorization.getBytes())).post(Entity.json(""));
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.json(""));
         assertEquals(response.getStatus(), 401);
         verify(tokenManager, never()).generateAuthToken(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
@@ -229,7 +207,7 @@ public class AuthRestTest extends MobiRestTestNg {
         String authorization = USERNAME + ":";
 
         Response response = target().path("session").request()
-                .header("Authorization", "Basic " + Base64.encode(authorization.getBytes())).post(Entity.json(""));
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.json(""));
         assertEquals(response.getStatus(), 401);
         verify(tokenManager, never()).generateAuthToken(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
@@ -242,12 +220,10 @@ public class AuthRestTest extends MobiRestTestNg {
         String authorization = ANON + ":" + ERROR;
 
         Response response = target().path("session").request()
-                .header("Authorization", "Basic " + Base64.encode(authorization.getBytes())).post(Entity.json(""));
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.json(""));
         assertEquals(response.getStatus(), 401);
-        verifyStatic();
-        RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(ANON), eq(ERROR), eq(mobiConfiguration));
         verify(tokenManager, never()).generateAuthToken(anyString());
-        verify(engineManager, times(0)).getUserRoles(anyString());
+        verify(engineManager).getUserRoles(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
     }
@@ -256,13 +232,11 @@ public class AuthRestTest extends MobiRestTestNg {
     public void loginAuthValidNoPrincipalsTest() throws Exception {
         // Setup:
         String authorization = USERNAME + ":" + PASSWORD;
-        when(RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration))).thenReturn(true);
+        configMap.put("principals", false);
 
         Response response = target().path("session").request()
-                .header("Authorization", "Basic " + Base64.encode(authorization.getBytes())).post(Entity.json(""));
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.json(""));
         assertEquals(response.getStatus(), 401);
-        verifyStatic();
-        RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration));
         verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager, times(0)).getUserRoles(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
@@ -276,10 +250,8 @@ public class AuthRestTest extends MobiRestTestNg {
         when(engineManager.getUserRoles(USERNAME)).thenReturn(Collections.singleton(otherRole));
 
         Response response = target().path("session").request()
-                .header("Authorization", "Basic " + Base64.encode(authorization.getBytes())).post(Entity.json(""));
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.json(""));
         assertEquals(response.getStatus(), 401);
-        verifyStatic();
-        RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration));
         verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager).getUserRoles(USERNAME);
         Map<String, NewCookie> cookies = response.getCookies();
@@ -292,10 +264,8 @@ public class AuthRestTest extends MobiRestTestNg {
         String authorization = USERNAME + ":" + PASSWORD;
 
         Response response = target().path("session").request()
-                .header("Authorization", "Basic " + Base64.encode(authorization.getBytes())).post(Entity.json(""));
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.json(""));
         assertEquals(response.getStatus(), 200);
-        verifyStatic();
-        RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration));
         verify(tokenManager).generateAuthToken(USERNAME);
         verify(engineManager).getUserRoles(USERNAME);
         Map<String, NewCookie> cookies = response.getCookies();
@@ -329,10 +299,8 @@ public class AuthRestTest extends MobiRestTestNg {
     public void loginCredInvalidTest() throws Exception {
         Response response = target().path("session").queryParam("username", ANON).queryParam("password", ERROR).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 401);
-        verifyStatic();
-        RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(ANON), eq(ERROR), eq(mobiConfiguration));
         verify(tokenManager, never()).generateAuthToken(anyString());
-        verify(engineManager, times(0)).getUserRoles(anyString());
+        verify(engineManager).getUserRoles(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
     }
@@ -340,12 +308,10 @@ public class AuthRestTest extends MobiRestTestNg {
     @Test
     public void loginCredValidNoPrincipalsTest() throws Exception {
         // Setup:
-        when(RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration))).thenReturn(true);
+        configMap.put("principals", false);
 
         Response response = target().path("session").queryParam("username", USERNAME).queryParam("password", PASSWORD).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 401);
-        verifyStatic();
-        RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration));
         verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager, times(0)).getUserRoles(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
@@ -359,8 +325,6 @@ public class AuthRestTest extends MobiRestTestNg {
 
         Response response = target().path("session").queryParam("username", USERNAME).queryParam("password", PASSWORD).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 401);
-        verifyStatic();
-        RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration));
         verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager).getUserRoles(USERNAME);
         Map<String, NewCookie> cookies = response.getCookies();
@@ -371,8 +335,6 @@ public class AuthRestTest extends MobiRestTestNg {
     public void loginCredValidTest() throws Exception {
         Response response = target().path("session").queryParam("username", USERNAME).queryParam("password", PASSWORD).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 200);
-        verifyStatic();
-        RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration));
         verify(tokenManager).generateAuthToken(USERNAME);
         verify(engineManager).getUserRoles(USERNAME);
         Map<String, NewCookie> cookies = response.getCookies();
@@ -390,9 +352,5 @@ public class AuthRestTest extends MobiRestTestNg {
         assertTrue(cookies.containsKey(TOKEN_NAME));
         assertEquals(ANON, cookies.get(TOKEN_NAME).getValue());
         assertTrue(response.readEntity(String.class).isEmpty());
-    }
-
-    private String removeWhitespace(String s) {
-        return s.replaceAll("\\s+", "");
     }
 }

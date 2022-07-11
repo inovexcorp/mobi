@@ -24,9 +24,9 @@ package com.mobi.ontology.utils.cache.repository;
  */
 
 import com.mobi.persistence.utils.ResourceUtils;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 
 public class OntologyDatasets {
 

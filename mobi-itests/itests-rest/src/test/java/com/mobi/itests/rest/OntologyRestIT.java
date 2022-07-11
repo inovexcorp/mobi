@@ -35,13 +35,8 @@ import static org.junit.Assert.fail;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.itests.rest.utils.RestITUtils;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
+import com.mobi.persistence.utils.ConnectionUtils;
+import com.mobi.repository.api.OsgiRepository;
 import net.sf.json.JSONObject;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
@@ -54,6 +49,13 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.karaf.itests.KarafTestSupport;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -129,7 +131,6 @@ public class OntologyRestIT extends KarafTestSupport {
         waitForService("(&(objectClass=com.mobi.ontology.rest.OntologyRest))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
-        waitForService("(&(objectClass=com.mobi.rdf.api.ValueFactory))", 10000L);
 
         setupComplete = true;
     }
@@ -138,7 +139,7 @@ public class OntologyRestIT extends KarafTestSupport {
     public void testDeleteOntology() throws Exception {
         Resource additionsGraphIRI;
         String recordId, branchId, commitId;
-        ValueFactory vf = getOsgiService(ValueFactory.class);
+        ValueFactory vf = SimpleValueFactory.getInstance();
         HttpEntity entity = createFormData("/test-ontology.ttl", "Test Ontology");
 
         try (CloseableHttpResponse response = uploadFile(createHttpClient(), entity)) {
@@ -163,7 +164,7 @@ public class OntologyRestIT extends KarafTestSupport {
     public void testDeleteVocabulary() throws Exception {
         Resource additionsGraphIRI;
         String recordId, branchId, commitId;
-        ValueFactory vf = getOsgiService(ValueFactory.class);
+        ValueFactory vf = SimpleValueFactory.getInstance();
         HttpEntity entity = createFormData("/test-vocabulary.ttl", "Test Vocabulary");
 
         try (CloseableHttpResponse response = uploadFile(createHttpClient(), entity)) {
@@ -224,8 +225,8 @@ public class OntologyRestIT extends KarafTestSupport {
 
     private Resource validateOntologyCreated(Resource recordId, Resource branchId, Resource commitId) {
         IRI additionsGraphIRI;
-        Repository repo = getOsgiService(Repository.class, "id=system", 30000L);
-        ValueFactory vf = getOsgiService(ValueFactory.class);
+        OsgiRepository repo = getOsgiService(OsgiRepository.class, "id=system", 30000L);
+        ValueFactory vf = SimpleValueFactory.getInstance();
         IRI branchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
         IRI headIRI = vf.createIRI(Branch.head_IRI);
         IRI additionsIRI = vf.createIRI("http://mobi.com/ontologies/catalog#additions");
@@ -237,30 +238,30 @@ public class OntologyRestIT extends KarafTestSupport {
             additionsGraphIRI = (IRI) stmts.next().getObject();
             assertTrue(conn.size(additionsGraphIRI) > 0);
 
-            assertTrue(conn.contains(null, null, null, recordId));
-            assertTrue(conn.contains(recordId, null, null));
-            assertTrue(conn.contains(recordId, branchIRI, branchId, recordId));
-            assertTrue(conn.contains(null, null, null, branchId));
-            assertTrue(conn.contains(branchId, null, null));
-            assertTrue(conn.contains(branchId, headIRI, commitId, branchId));
-            assertTrue(conn.contains(null, null, null, commitId));
-            assertTrue(conn.contains(commitId, null, null));
+            assertTrue(ConnectionUtils.contains(conn, null, null, null, recordId));
+            assertTrue(ConnectionUtils.contains(conn, recordId, null, null));
+            assertTrue(ConnectionUtils.contains(conn, recordId, branchIRI, branchId, recordId));
+            assertTrue(ConnectionUtils.contains(conn, null, null, null, branchId));
+            assertTrue(ConnectionUtils.contains(conn, branchId, null, null));
+            assertTrue(ConnectionUtils.contains(conn, branchId, headIRI, commitId, branchId));
+            assertTrue(ConnectionUtils.contains(conn, null, null, null, commitId));
+            assertTrue(ConnectionUtils.contains(conn, commitId, null, null));
             stmts.close();
         }
         return additionsGraphIRI;
     }
 
     private void validateOntologyDeleted(Resource recordId, Resource branchId, Resource commitId, Resource additionsGraphIRI) {
-        Repository repo = getOsgiService(Repository.class, "id=system", 30000L);
+        OsgiRepository repo = getOsgiService(OsgiRepository.class, "id=system", 30000L);
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertFalse(conn.contains(null, null, null, branchId));
-            assertFalse(conn.contains(branchId, null, null));
-            assertFalse(conn.contains(null, null, null, recordId));
-            assertFalse(conn.contains(recordId, null, null));
-            assertFalse(conn.contains(null, null, null, commitId));
-            assertFalse(conn.contains(commitId, null, null));
-            assertFalse(conn.contains(null, null, null, additionsGraphIRI));
+            assertFalse(ConnectionUtils.contains(conn, null, null, null, branchId));
+            assertFalse(ConnectionUtils.contains(conn, branchId, null, null));
+            assertFalse(ConnectionUtils.contains(conn, null, null, null, recordId));
+            assertFalse(ConnectionUtils.contains(conn, recordId, null, null));
+            assertFalse(ConnectionUtils.contains(conn, null, null, null, commitId));
+            assertFalse(ConnectionUtils.contains(conn, commitId, null, null));
+            assertFalse(ConnectionUtils.contains(conn, null, null, null, additionsGraphIRI));
         }
     }
 }

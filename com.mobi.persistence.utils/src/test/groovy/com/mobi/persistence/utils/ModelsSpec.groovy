@@ -23,8 +23,7 @@
 package com.mobi.persistence.utils
 
 import com.mobi.exception.MobiException
-import com.mobi.persistence.utils.api.SesameTransformer
-import com.mobi.rdf.api.*
+import org.eclipse.rdf4j.model.*
 import org.eclipse.rdf4j.rio.RDFParseException
 import spock.lang.Specification
 
@@ -238,137 +237,105 @@ class ModelsSpec extends Specification{
     def "createModel for OBO format returns correct data"() {
         setup:
         def input = getClass().getResourceAsStream("/bfo.obo")
-        def transformer = Mock(SesameTransformer)
+            when:
         when:
-        Models.createModel(input, transformer)
+        def parsedModel = Models.createModel(input)
 
         then:
-        1 * transformer.mobiModel(_) >> { args ->
-            assert args[0].size() > 1
-        }
+        assert parsedModel.size() == 1213;
     }
 
     def "createModel with preferredExtension for OBO format returns correct data"() {
         setup:
         def input = getClass().getResourceAsStream("/bfo.obo")
-        def transformer = Mock(SesameTransformer)
-        when:
-        def parsedModel = Models.createModel("obo", input, transformer)
+            when:
+        def parsedModel = Models.createModel("obo", input)
 
         then:
-        1 * transformer.mobiModel(_) >> { args ->
-            assert args[0].size() > 1
-        }
         assert parsedModel.getRdfFormatName() == "OBO"
     }
 
     def "createModel with invalid extension for OBO format returns correct data"() {
         setup:
         def input = getClass().getResourceAsStream("/bfo.obo")
-        def transformer = Mock(SesameTransformer)
 
         when:
-        def parsedModel = Models.createModel('invalid', input, transformer)
+        def parsedModel = Models.createModel('invalid', input)
 
         then:
-        1 * transformer.mobiModel(_) >> { args ->
-            assert args[0].size() > 1
-        }
         assert parsedModel.getRdfFormatName() == "OBO"
     }
 
     def "createModel for Trig format returns correct data"() {
         setup:
         def input = getClass().getResourceAsStream("/testData.trig")
-        def transformer = Mock(SesameTransformer)
+
         when:
-        Models.createModel(input, transformer)
+        def parsedModel = Models.createModel(input)
 
         then:
-        1 * transformer.mobiModel(_) >> { args ->
-            assert args[0].size() > 1
-        }
+        assert parsedModel.size() == 7;
     }
 
     def "createModel with preferredExtension for Trig format returns correct data"() {
         setup:
         def input = getClass().getResourceAsStream("/testData.trig")
-        def transformer = Mock(SesameTransformer)
-        when:
-        def parsedModel = Models.createModel("trig", input, transformer)
+            when:
+        def parsedModel = Models.createModel("trig", input)
 
         then:
-        1 * transformer.mobiModel(_) >> { args ->
-            assert args[0].size() > 1
-        }
         assert parsedModel.getRdfFormatName() == "TriG"
     }
 
     def "createModel with preferredExtension for Trig format Zipped returns correct data"() {
         setup:
         def input = getClass().getResourceAsStream("/testData.trig.zip")
-        def transformer = Mock(SesameTransformer)
-        when:
-        def parsedModel = Models.createModel("zip", input, transformer)
+            when:
+        def parsedModel = Models.createModel("zip", input)
 
         then:
-        1 * transformer.mobiModel(_) >> { args ->
-            assert args[0].size() > 1
-        }
         assert parsedModel.getRdfFormatName() == "TriG"
     }
 
     def "createModel with invalid extension for Trig format returns correct data"() {
         setup:
         def input = getClass().getResourceAsStream("/testData.trig")
-        def transformer = Mock(SesameTransformer)
 
         when:
-        def parsedModel = Models.createModel('invalid', input, transformer)
+        def parsedModel = Models.createModel('invalid', input)
 
         then:
-        1 * transformer.mobiModel(_) >> { args ->
-            assert args[0].size() > 1
-        }
         assert parsedModel.getRdfFormatName() == "TriG"
     }
 
     def "createModel for OWL format returns correct data"() {
         setup:
         def input = getClass().getResourceAsStream("/bfo.owl")
-        def transformer = Mock(SesameTransformer)
 
         when:
-        Models.createModel(input, transformer)
+        def parsedModel = Models.createModel(input)
 
         then:
-        1 * transformer.mobiModel(_) >> { args ->
-            assert args[0].size() > 1
-        }
+        assert parsedModel.size() == 1221;
     }
 
     def "createModel with preferredExtension for OWL format returns correct data"() {
         setup:
         def input = getClass().getResourceAsStream("/bfo.owl")
-        def transformer = Mock(SesameTransformer)
 
         when:
-        def parsedModel = Models.createModel("owl", input, transformer)
+        def parsedModel = Models.createModel("owl", input)
 
         then:
-        1 * transformer.mobiModel(_) >> { args ->
-            assert args[0].size() > 1
-        }
         assert parsedModel.getRdfFormatName() == "RDF/XML"
     }
 
     def "createModel for invalid format throws an Exception"() {
         setup:
         def input = getClass().getResourceAsStream("/invalid.owl")
-        def transformer = Mock(SesameTransformer)
 
         when:
-        Models.createModel(input, transformer)
+        Models.createModel(input)
 
         then:
         thrown(IllegalArgumentException.class)
@@ -377,55 +344,42 @@ class ModelsSpec extends Specification{
     def "createModel with invalid extension for OWL format returns correct data"() {
         setup:
         def input = getClass().getResourceAsStream("/bfo.owl")
-        def transformer = Mock(SesameTransformer)
 
         when:
-        def parsedModel = Models.createModel('invalid', input, transformer)
+        def parsedModel = Models.createModel('invalid', input)
 
         then:
-        1 * transformer.mobiModel(_) >> { args ->
-            assert args[0].size() > 1
-        }
         assert parsedModel.getRdfFormatName() == "RDF/XML"
     }
 
     def "createModel with a valid compressed (.zip) file format returns correct data"() {
         setup:
         def input = getClass().getResourceAsStream("/bfo.owl.zip")
-        def transformer = Mock(SesameTransformer)
 
         when:
-        def parsedModel = Models.createModel('zip', input, transformer)
+        def parsedModel = Models.createModel('zip', input)
 
         then:
-        1 * transformer.mobiModel(_) >> { args ->
-            assert args[0].size() > 1
-        }
         assert parsedModel.getRdfFormatName() == "RDF/XML"
     }
 
     def "createModel with a valid compressed (ext.gzip) file format returns correct data"() {
         setup:
         def input = getClass().getResourceAsStream("/bfo.owl.gz")
-        def transformer = Mock(SesameTransformer)
 
         when:
-        def parsedModel = Models.createModel('owl.gz', input, transformer)
+        def parsedModel = Models.createModel('owl.gz', input)
 
         then:
-        1 * transformer.mobiModel(_) >> { args ->
-            assert args[0].size() > 1
-        }
         assert parsedModel.getRdfFormatName() == "RDF/XML"
     }
 
     def "createModel with extension for invalid format throws an Exception"() {
         setup:
         def input = getClass().getResourceAsStream("/invalid.owl")
-        def transformer = Mock(SesameTransformer)
-
+    
         when:
-        Models.createModel('owl', input, transformer)
+        Models.createModel('owl', input)
 
         then:
         thrown(RDFParseException.class)
@@ -434,10 +388,9 @@ class ModelsSpec extends Specification{
     def "createModel with invalid extension for invalid format throws an Exception"() {
         setup:
         def input = getClass().getResourceAsStream("/invalid.owl")
-        def transformer = Mock(SesameTransformer)
-
+    
         when:
-        Models.createModel('invalid', input, transformer)
+        Models.createModel('invalid', input)
 
         then:
         thrown(RDFParseException.class)
@@ -446,10 +399,9 @@ class ModelsSpec extends Specification{
     def "createModel with an invalid compressed (.zip) file format throws an Exception"() {
         setup:
         def input = getClass().getResourceAsStream("/invalid.txt.zip")
-        def transformer = Mock(SesameTransformer)
-
+    
         when:
-        Models.createModel('zip', input, transformer)
+        Models.createModel('zip', input)
 
         then:
         thrown(RDFParseException.class)
@@ -458,10 +410,9 @@ class ModelsSpec extends Specification{
     def "createModel with multiple compressed file (.zip) throws an Exception"() {
         setup:
         def input = getClass().getResourceAsStream("/Archive.zip")
-        def transformer = Mock(SesameTransformer)
-
+    
         when:
-        Models.createModel('.zip', input, transformer)
+        Models.createModel('.zip', input)
 
         then:
         thrown(MobiException)
@@ -470,10 +421,9 @@ class ModelsSpec extends Specification{
     def "createModel with an invalid compressed (.gzip) file format throws an Exception"() {
         setup:
         def input = getClass().getResourceAsStream("/invalid.owl.gz")
-        def transformer = Mock(SesameTransformer)
-
+    
         when:
-        Models.createModel('gz', input, transformer)
+        Models.createModel('gz', input)
 
         then:
         thrown(RDFParseException.class)

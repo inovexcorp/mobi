@@ -33,10 +33,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.setting.api.SettingService;
@@ -45,6 +41,10 @@ import com.mobi.setting.api.ontologies.Setting;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -56,6 +56,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -64,15 +65,16 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Component(service = SettingRest.class, immediate = true)
+@Component(service = SettingRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/settings")
 public class SettingRest {
     private static final ObjectMapper mapper = new ObjectMapper();
+
+    final ValueFactory vf = SimpleValueFactory.getInstance();
 
     /**
      * A map of the available SettingServices. The string is get typeIRI for the individual SettingService.
@@ -98,13 +100,7 @@ public class SettingRest {
     }
 
     @Reference
-    SesameTransformer transformer;
-
-    @Reference
     EngineManager engineManager;
-
-    @Reference
-    ValueFactory vf;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -118,13 +114,13 @@ public class SettingRest {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    public Response getAllSettings(@Context ContainerRequestContext context,
+    public Response getAllSettings(@Context HttpServletRequest servletRequest,
                                    @Parameter(description = "The type of Setting to retrieve. For example "
                                            + "`http://mobi.com/ontologies/setting#Preference` or"
                                            + "`http://mobi.com/ontologies/setting#ApplicationSetting`", required = true)
                                    @QueryParam("type") String type) {
         checkStringParam(type, "'type' must be provided");
-        User user = getActiveUser(context, engineManager);
+        User user = getActiveUser(servletRequest, engineManager);
         try {
             SettingService<? extends Setting> service = getSettingService(type);
             Set<? extends Setting> settings = service.getSettings(user);
@@ -149,8 +145,7 @@ public class SettingRest {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    public Response getSetting(@Context ContainerRequestContext context,
-                               @Parameter(description = "The resource identifying the Setting to retrieve",
+    public Response getSetting(@Parameter(description = "The resource identifying the Setting to retrieve",
                                        required = true)
                                @PathParam("settingId") String settingId,
                                @Parameter(description = "The type of Setting to retrieve. For example "
@@ -180,7 +175,7 @@ public class SettingRest {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    public Response createSetting(@Context ContainerRequestContext context,
+    public Response createSetting(@Context HttpServletRequest servletRequest,
                                   @Parameter(description = "The specific type of setting being updated",
                                           required = true)
                                   @QueryParam("subType") String subType,
@@ -194,11 +189,11 @@ public class SettingRest {
         checkStringParam(subType, "subType is required");
         checkStringParam(type, "type is required");
         checkStringParam(jsonld, "Setting JSON is required");
-        User user = getActiveUser(context, engineManager);
+        User user = getActiveUser(servletRequest, engineManager);
         checkAdmin(type, user);
         try {
             SettingService<? extends Setting> service = getSettingService(type);
-            Model model = jsonldToModel(jsonld, transformer);
+            Model model = jsonldToModel(jsonld);
             Resource resourceId = service.createSetting(model, vf.createIRI(subType), user);
             return Response.status(201).entity(resourceId.stringValue()).build();
         } catch (IllegalArgumentException ex) {
@@ -220,7 +215,7 @@ public class SettingRest {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    public Response updateSetting(@Context ContainerRequestContext context,
+    public Response updateSetting(@Context HttpServletRequest servletRequest,
                                   @Parameter(description = "The resource identifying the Setting to update",
                                           required = true)
                                   @PathParam("settingId") String settingId,
@@ -236,11 +231,11 @@ public class SettingRest {
         checkStringParam(subType, "subType is required");
         checkStringParam(type, "type is required");
         checkStringParam(jsonld, "Setting JSON-LD is required");
-        User user = getActiveUser(context, engineManager);
+        User user = getActiveUser(servletRequest, engineManager);
         checkAdmin(type, user);
         try {
             SettingService<? extends Setting> service = getSettingService(type);
-            Model model = jsonldToModel(jsonld, transformer);
+            Model model = jsonldToModel(jsonld);
             service.updateSetting(vf.createIRI(settingId), model, vf.createIRI(subType), user);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
@@ -263,7 +258,7 @@ public class SettingRest {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    public Response deleteSetting(@Context ContainerRequestContext context,
+    public Response deleteSetting(@Context HttpServletRequest servletRequest,
                                   @Parameter(description = "The resource identifying the Setting to delete",
                                           required = true)
                                   @PathParam("settingId") String settingId,
@@ -272,7 +267,7 @@ public class SettingRest {
                                           + "`http://mobi.com/ontologies/setting#ApplicationSetting`", required = true)
                                   @QueryParam("type") String type) {
         checkStringParam(type, "type is required");
-        User user = getActiveUser(context, engineManager);
+        User user = getActiveUser(servletRequest, engineManager);
         checkAdmin(type, user);
         try {
             SettingService<? extends Setting> service = getSettingService(type);
@@ -298,8 +293,7 @@ public class SettingRest {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    public Response getGroups(@Context ContainerRequestContext context,
-                              @Parameter(description = "The type of Setting to retrieve. For example "
+    public Response getGroups(@Parameter(description = "The type of Setting to retrieve. For example "
                                       + "`http://mobi.com/ontologies/setting#Preference` or"
                                       + "`http://mobi.com/ontologies/setting#ApplicationSetting`", required = true)
                               @QueryParam("type") String type) {
@@ -307,7 +301,7 @@ public class SettingRest {
         try {
             SettingService<? extends Setting> service = getSettingService(type);
             Model model = service.getSettingGroups();
-            return Response.ok(RestUtils.modelToJsonld(model, transformer)).build();
+            return Response.ok(RestUtils.modelToJsonld(model)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException | IllegalStateException ex) {
@@ -328,8 +322,7 @@ public class SettingRest {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    public Response getSettingDefinitions(@Context ContainerRequestContext context,
-                                          @Parameter(description = "The resource id of the group to "
+    public Response getSettingDefinitions(@Parameter(description = "The resource id of the group to "
                                                      + "retrieve setting definitions for", required = true)
                                           @PathParam("groupId") String groupId,
                                           @Parameter(description = "The type of Setting to retrieve. For example "
@@ -341,7 +334,7 @@ public class SettingRest {
         try {
             SettingService<? extends Setting> service = getSettingService(type);
             Model model = service.getSettingDefinitions(vf.createIRI(groupId));
-            return Response.ok(RestUtils.modelToJsonld(model, transformer)).build();
+            return Response.ok(RestUtils.modelToJsonld(model)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException | IllegalStateException ex) {
@@ -362,7 +355,7 @@ public class SettingRest {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    public Response getSettingByType(@Context ContainerRequestContext context,
+    public Response getSettingByType(@Context HttpServletRequest servletRequest,
                                      @Parameter(description = "The resource identifying the type of Setting to"
                                              + "retrieve", required = true)
                                      @PathParam("settingType") String settingType,
@@ -373,7 +366,7 @@ public class SettingRest {
                                      @QueryParam("type") String type) {
         checkStringParam(type, "type is required");
         try {
-            User user = getActiveUser(context, engineManager);
+            User user = getActiveUser(servletRequest, engineManager);
             SettingService<? extends Setting> service = getSettingService(type);
             Setting setting = service.getSettingByType(vf.createIRI(settingType), user)
                     .orElseThrow(() -> ErrorUtils.sendError("Setting with type " + settingType
@@ -400,7 +393,7 @@ public class SettingRest {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    public Response deleteSettingByType(@Context ContainerRequestContext context,
+    public Response deleteSettingByType(@Context HttpServletRequest servletRequest,
                                         @PathParam("settingType") String settingType,
                                         @Parameter(description = "The type of Setting to retrieve. For example "
                                                 + "`http://mobi.com/ontologies/setting#Preference` or"
@@ -408,7 +401,7 @@ public class SettingRest {
                                                 required = true)
                                         @QueryParam("type") String type) {
         checkStringParam(type, "type is required");
-        User user = getActiveUser(context, engineManager);
+        User user = getActiveUser(servletRequest, engineManager);
         checkAdmin(type, user);
         try {
             SettingService<? extends Setting> service = getSettingService(type);
@@ -440,7 +433,7 @@ public class SettingRest {
 
     private JsonNode getSettingAsJsonNode(Setting setting) {
         try {
-            return mapper.readTree(RestUtils.modelToString(setting.getModel(), RDFFormat.JSONLD, transformer));
+            return mapper.readTree(RestUtils.modelToString(setting.getModel(), RDFFormat.JSONLD));
         } catch (IOException e) {
             throw new MobiException(e);
         }

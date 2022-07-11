@@ -25,10 +25,29 @@ package com.mobi.catalog.impl;
 
 import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.component.Reference;
+import com.mobi.persistence.utils.Bindings;
+import com.mobi.persistence.utils.ConnectionUtils;
+import com.mobi.persistence.utils.Statements;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
@@ -74,22 +93,8 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
-import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.persistence.utils.Statements;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.BindingSet;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.xacml.XACML;
@@ -116,32 +121,12 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@Component(
-        name = SimpleCatalogManager.COMPONENT_NAME
-)
+@Component(name = SimpleCatalogManager.COMPONENT_NAME)
 public class SimpleCatalogManager implements CatalogManager {
 
     static final String COMPONENT_NAME = "com.mobi.catalog.api.CatalogManager";
     private static final Logger log = LoggerFactory.getLogger(SimpleCatalogManager.class);
-    private ValueFactory vf;
-    private ModelFactory mf;
-    private CatalogConfigProvider configProvider;
-    private CatalogUtilsService utils;
-    private MergeRequestManager mergeRequestManager;
-    private CatalogFactory catalogFactory;
-    private RecordFactory recordFactory;
-    private DistributionFactory distributionFactory;
-    private BranchFactory branchFactory;
-    private InProgressCommitFactory inProgressCommitFactory;
-    private CommitFactory commitFactory;
-    private OrmFactoryRegistry factoryRegistry;
-    private RevisionFactory revisionFactory;
-    private VersionedRDFRecordFactory versionedRDFRecordFactory;
-    private VersionedRecordFactory versionedRecordFactory;
-    private UnversionedRecordFactory unversionedRecordFactory;
-    private VersionFactory versionFactory;
-    private TagFactory tagFactory;
-    private Map<com.mobi.rdf.api.Resource, String> sortingOptions = new HashMap<>();
+    private Map<Resource, String> sortingOptions = new HashMap<>();
 
     /**
      * A map of the available RecordServices. The string is get typeIRI for the individual RecordService.
@@ -155,97 +140,58 @@ public class SimpleCatalogManager implements CatalogManager {
     public SimpleCatalogManager() {
     }
 
-    @Reference
-    void setValueFactory(ValueFactory valueFactory) {
-        vf = valueFactory;
-    }
+    final ValueFactory vf = SimpleValueFactory.getInstance();
+    final ModelFactory mf = new DynamicModelFactory();
 
     @Reference
-    void setModelFactory(ModelFactory modelFactory) {
-        mf = modelFactory;
-    }
+    CatalogConfigProvider configProvider;
 
     @Reference
-    void setConfigProvider(CatalogConfigProvider configProvider) {
-        this.configProvider = configProvider;
-    }
+    CatalogUtilsService utils;
 
     @Reference
-    void setUtils(CatalogUtilsService utils) {
-        this.utils = utils;
-    }
+    MergeRequestManager mergeRequestManager;
 
     @Reference
-    void setMergeRequestManager(MergeRequestManager mergeRequestManager) {
-        this.mergeRequestManager = mergeRequestManager;
-    }
+    CatalogFactory catalogFactory;
 
     @Reference
-    void setCatalogFactory(CatalogFactory catalogFactory) {
-        this.catalogFactory = catalogFactory;
-    }
+    RecordFactory recordFactory;
 
     @Reference
-    void setRecordFactory(RecordFactory recordFactory) {
-        this.recordFactory = recordFactory;
-    }
+    DistributionFactory distributionFactory;
 
     @Reference
-    void setDistributionFactory(DistributionFactory distributionFactory) {
-        this.distributionFactory = distributionFactory;
-    }
+    BranchFactory branchFactory;
 
     @Reference
-    void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
+    InProgressCommitFactory inProgressCommitFactory;
 
     @Reference
-    void setInProgressCommitFactory(InProgressCommitFactory inProgressCommitFactory) {
-        this.inProgressCommitFactory = inProgressCommitFactory;
-    }
+    CommitFactory commitFactory;
 
     @Reference
-    void setCommitFactory(CommitFactory commitFactory) {
-        this.commitFactory = commitFactory;
-    }
+    RevisionFactory revisionFactory;
 
     @Reference
-    void setRevisionFactory(RevisionFactory revisionFactory) {
-        this.revisionFactory = revisionFactory;
-    }
+    VersionedRDFRecordFactory versionedRDFRecordFactory;
 
     @Reference
-    void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
-        this.versionedRDFRecordFactory = versionedRDFRecordFactory;
-    }
+    VersionedRecordFactory versionedRecordFactory;
 
     @Reference
-    void setVersionedRecordFactory(VersionedRecordFactory versionedRecordFactory) {
-        this.versionedRecordFactory = versionedRecordFactory;
-    }
+    UnversionedRecordFactory unversionedRecordFactory;
 
     @Reference
-    void setUnversionedRecordFactory(UnversionedRecordFactory unversionedRecordFactory) {
-        this.unversionedRecordFactory = unversionedRecordFactory;
-    }
+    VersionFactory versionFactory;
 
     @Reference
-    void setVersionFactory(VersionFactory versionFactory) {
-        this.versionFactory = versionFactory;
-    }
+    TagFactory tagFactory;
 
     @Reference
-    void setTagFactory(TagFactory tagFactory) {
-        this.tagFactory = tagFactory;
-    }
+    OrmFactoryRegistry factoryRegistry;
 
-    @Reference
-    void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
-        this.factoryRegistry = factoryRegistry;
-    }
-
-    @Reference(type = '*', dynamic = true)
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     void addRecordService(RecordService<? extends Record> recordService) {
         recordServices.put(recordService.getType(), recordService);
     }
@@ -583,11 +529,12 @@ public class SimpleCatalogManager implements CatalogManager {
         searchParams.getSearchText().ifPresent(searchText ->
                 countQuery.setBinding(SEARCH_BINDING, vf.createLiteral(searchText)));
 
-        TupleQueryResult countResults = countQuery.evaluateAndReturn();
+        TupleQueryResult countResults = countQuery.evaluate();
         int totalCount = 0;
         if (countResults.getBindingNames().contains(KEYWORD_COUNT_BINDING) && countResults.hasNext()) {
             totalCount = Bindings.requiredLiteral(countResults.next(), KEYWORD_COUNT_BINDING).intValue();
         }
+        countResults.close();
         return totalCount;
     }
 
@@ -671,7 +618,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public <T extends Record> void addRecord(Resource catalogId, T record) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            if (conn.containsContext(record.getResource())) {
+            if (ConnectionUtils.containsContext(conn, record.getResource())) {
                 throw utils.throwAlreadyExists(record.getResource(), recordFactory);
             }
             record.setCatalog(utils.getObject(catalogId, catalogFactory, conn));
@@ -794,7 +741,7 @@ public class SimpleCatalogManager implements CatalogManager {
                                            Distribution distribution) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             UnversionedRecord record = utils.getRecord(catalogId, unversionedRecordId, unversionedRecordFactory, conn);
-            if (conn.containsContext(distribution.getResource())) {
+            if (ConnectionUtils.containsContext(conn, distribution.getResource())) {
                 throw utils.throwAlreadyExists(distribution.getResource(), distributionFactory);
             }
             Set<Distribution> distributions = record.getUnversionedDistribution_resource().stream()
@@ -874,7 +821,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public <T extends Version> void addVersion(Resource catalogId, Resource versionedRecordId, T version) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             VersionedRecord record = utils.getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
-            if (conn.containsContext(version.getResource())) {
+            if (ConnectionUtils.containsContext(conn, version.getResource())) {
                 throw utils.throwAlreadyExists(version.getResource(), versionFactory);
             }
             record.setLatestVersion(version);
@@ -959,7 +906,7 @@ public class SimpleCatalogManager implements CatalogManager {
                                          Distribution distribution) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Version version = utils.getVersion(catalogId, versionedRecordId, versionId, versionFactory, conn);
-            if (conn.containsContext(distribution.getResource())) {
+            if (ConnectionUtils.containsContext(conn, distribution.getResource())) {
                 throw utils.throwAlreadyExists(distribution.getResource(), distributionFactory);
             }
             Set<Distribution> distributions = version.getVersionedDistribution_resource().stream()
@@ -1042,7 +989,7 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
                     conn);
-            if (conn.containsContext(branch.getResource())) {
+            if (ConnectionUtils.containsContext(conn, branch.getResource())) {
                 throw utils.throwAlreadyExists(branch.getResource(), branchFactory);
             }
             Set<Branch> branches = record.getBranch_resource().stream()
@@ -1089,7 +1036,7 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
             utils.validateBranch(catalogId, versionedRDFRecordId, newBranch.getResource(), conn);
-            if (conn.contains(null, masterBranchIRI, newBranch.getResource())) {
+            if (ConnectionUtils.contains(conn, null, masterBranchIRI, newBranch.getResource())) {
                 throw new IllegalArgumentException("Branch " + newBranch.getResource()
                         + " is the master Branch and cannot be updated.");
             }
@@ -1119,7 +1066,7 @@ public class SimpleCatalogManager implements CatalogManager {
                     conn);
             Branch branch = utils.getBranch(record, branchId, branchFactory, conn);
             IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
-            if (conn.contains(versionedRDFRecordId, masterBranchIRI, branchId, versionedRDFRecordId)) {
+            if (ConnectionUtils.contains(conn, versionedRDFRecordId, masterBranchIRI, branchId, versionedRDFRecordId)) {
                 throw new IllegalStateException("Branch " + branchId + " is the master Branch and cannot be removed.");
             }
             conn.begin();
@@ -1193,7 +1140,8 @@ public class SimpleCatalogManager implements CatalogManager {
             commit.setAuxiliaryCommit(auxCommit);
         }
 
-        Model revisionModel = mf.createModel(inProgressCommit.getModel());
+        Model revisionModel = mf.createEmptyModel();
+        revisionModel.addAll(inProgressCommit.getModel());
         revisionModel.remove(inProgressCommit.getResource(), null, null);
         revisionFactory.getExisting(revisionIRI, revisionModel).ifPresent(revision -> {
             if (generatedParents.size() > 0) {
@@ -1270,7 +1218,7 @@ public class SimpleCatalogManager implements CatalogManager {
             }
             VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
                     conn);
-            if (conn.containsContext(inProgressCommit.getResource())) {
+            if (ConnectionUtils.containsContext(conn, inProgressCommit.getResource())) {
                 throw utils.throwAlreadyExists(inProgressCommit.getResource(), inProgressCommitFactory);
             }
             inProgressCommit.setOnVersionedRDFRecord(record);
@@ -1579,8 +1527,8 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Difference getDiff(Model original, Model changed) {
-        Model additions = mf.createModel();
-        Model deletions = mf.createModel();
+        Model additions = mf.createEmptyModel();
+        Model deletions = mf.createEmptyModel();
 
         original.forEach(statement -> {
             if (!changed.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())) {
@@ -1624,7 +1572,7 @@ public class SimpleCatalogManager implements CatalogManager {
      * @return the record factory of a given recordId
      */
     private OrmFactory<? extends Record> getFactory(Resource recordId, RepositoryConnection conn, boolean exactOnly) {
-        List<Resource> types = RepositoryResults.asList(
+        List<Resource> types = QueryResults.asList(
                 conn.getStatements(recordId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
                 .stream()
                 .map(Statements::objectResource)

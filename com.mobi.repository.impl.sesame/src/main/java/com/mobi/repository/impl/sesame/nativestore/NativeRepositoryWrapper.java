@@ -23,97 +23,83 @@ package com.mobi.repository.impl.sesame.nativestore;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Deactivate;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.metatype.Configurable;
-import com.mobi.repository.api.DelegatingRepository;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.base.RepositoryWrapper;
+import com.mobi.repository.api.OsgiRepository;
+import com.mobi.repository.base.OsgiRepositoryWrapper;
 import com.mobi.repository.exception.RepositoryConfigException;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.RepositoryConfigHelper;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.nativerdf.NativeStore;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.metatype.annotations.Designate;
 
 import java.io.File;
-import java.util.Map;
-import java.util.Set;
+import java.util.Arrays;
+import java.util.List;
 
 @Component(
         immediate = true,
-        provide = { Repository.class, DelegatingRepository.class },
+        service = { OsgiRepository.class },
         name = NativeRepositoryWrapper.NAME,
-        configurationPolicy = ConfigurationPolicy.require,
-        designateFactory = NativeRepositoryConfig.class,
-        properties = {
+        configurationPolicy = ConfigurationPolicy.REQUIRE,
+        property = {
                 "repositorytype=" + NativeRepositoryWrapper.REPOSITORY_TYPE
         }
 )
-public class NativeRepositoryWrapper extends RepositoryWrapper {
+@Designate(ocd = NativeRepositoryConfig.class)
+public class NativeRepositoryWrapper extends OsgiRepositoryWrapper {
 
     protected static final String REPOSITORY_TYPE = "native";
     protected static final String NAME = "com.mobi.service.repository." + REPOSITORY_TYPE;
 
     @Activate
-    protected void start(Map<String, Object> props) {
-        super.start(props);
+    protected void start(final NativeRepositoryConfig config) {
+        RepositoryConfigHelper.validateBaseParams(config.id(), config.title());
+        RepositoryConfigHelper.validateIndexes(config.tripleIndexes());
+
+        if (StringUtils.isEmpty(config.dataDir())) {
+            throw new RepositoryConfigException(
+                    new IllegalArgumentException("Repository property 'dataDir' cannot be empty.")
+            );
+        }
+
+        NativeStore nativeStore = new NativeStore();
+        File file = new File(config.dataDir());
+        nativeStore.setDataDir(file);
+
+        List<String> indexes = Arrays.asList(config.tripleIndexes());
+        String indexString = StringUtils.join(indexes, ",");
+        nativeStore.setTripleIndexes(indexString);
+
+        Repository repo = new SailRepository(nativeStore);
+        setDelegate(repo);
+        this.repositoryID = config.id();
+        this.repositoryTitle = config.title();
     }
 
     @Deactivate
     protected void stop() {
-        super.stop();
+        try {
+            getDelegate().shutDown();
+        } catch (RepositoryException e) {
+            throw new RepositoryException("Could not shutdown Repository \"" + repositoryID + "\".", e);
+        }
     }
 
     @Modified
-    protected void modified(Map<String, Object> props) {
-        super.modified(props);
+    protected void modified(final NativeRepositoryConfig config) {
+        stop();
+        start(config);
     }
 
     @Override
-    protected Repository getRepo(Map<String, Object> props) {
-        NativeRepositoryConfig config = Configurable.createConfigurable(NativeRepositoryConfig.class, props);
-        this.repositoryID = config.id();
-
-        NativeStore sesameNativeStore = new NativeStore();
-
-        if (props.containsKey("dataDir")) {
-            File file = new File(config.dataDir());
-            sesameNativeStore.setDataDir(file);
-        }
-
-        if (props.containsKey("tripleIndexes")) {
-            Set<String> indexes = config.tripleIndexes();
-            String indexString = StringUtils.join(indexes, ",");
-            sesameNativeStore.setTripleIndexes(indexString);
-        }
-
-        SesameRepositoryWrapper repo = new SesameRepositoryWrapper(new SailRepository(sesameNativeStore));
-        repo.setConfig(config);
-
-        return repo;
-    }
-
-    @Override
-    public void validateConfig(Map<String, Object> props) {
-        super.validateConfig(props);
-        NativeRepositoryConfig config = Configurable.createConfigurable(NativeRepositoryConfig.class, props);
-
-        if (props.containsKey("dataDir")) {
-            if (config.dataDir().equals(""))
-                throw new RepositoryConfigException(
-                        new IllegalArgumentException("Repository property 'dataDir' cannot be empty.")
-                );
-        }
-
-        if (props.containsKey("tripleIndexes")) {
-            config.tripleIndexes().forEach(index -> {
-                // Make sure String matches index regex
-                if (!index.matches("^(?!.*s.*s)(?!.*p.*p)(?!.*o.*o)(?!.*c.*c)[spoc]{4}$"))
-                    throw new RepositoryConfigException(new IllegalArgumentException("Invalid Triple Index"));
-            });
-        }
+    public Class<NativeRepositoryConfig> getConfigType() {
+        return NativeRepositoryConfig.class;
     }
 }

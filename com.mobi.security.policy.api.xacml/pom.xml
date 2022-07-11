@@ -28,7 +28,7 @@
     <parent>
         <artifactId>mobi-parent</artifactId>
         <groupId>com.mobi</groupId>
-        <version>1.23.0-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -38,6 +38,10 @@
     <packaging>bundle</packaging>
 
     <dependencies>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>security.policy.api</artifactId>
@@ -53,6 +57,10 @@
             <artifactId>persistence.utils</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation.versioning</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -60,7 +68,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>jaxb2-maven-plugin</artifactId>
-                <version>2.3</version>
+                <version>2.5.0</version>
                 <executions>
                     <execution>
                         <id>xjc</id>
@@ -77,7 +85,7 @@
                     <arguments>
                         <argument>-Xsimplify</argument>
                     </arguments>
-                    <catalog>${project.basedir}/src/main/resources/catalog.cat</catalog>
+                    <catalog>${project.basedir}/src/main/resources/catalog.xml</catalog>
                 </configuration>
                 <dependencies>
                     <dependency>
@@ -99,7 +107,6 @@
                         <Export-Package>
                             com.mobi.security.policy.api.xacml*
                         </Export-Package>
-                        <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>

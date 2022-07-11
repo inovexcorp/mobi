@@ -22,9 +22,9 @@ package com.mobi.utils.cli;
  * #L%
  */
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -37,29 +37,28 @@ import com.mobi.dataset.api.record.DatasetRecordService;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.platform.config.api.state.StateManager;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.BindingSet;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.rdf.core.utils.Values;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.config.RepositoryConfig;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import com.mobi.repository.impl.sesame.http.HTTPRepositoryConfig;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -83,9 +82,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RestoreTest {
-
+    private AutoCloseable closeable;
     private static final String POLICY_FILE_LOCATION = "testLocation";
-    private Repository repo;
+    private MemoryRepositoryWrapper repo;
     private ValueFactory vf;
     private Restore restore;
 
@@ -130,19 +129,17 @@ public class RestoreTest {
 
     @Before
     public void setupMocks() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         vf = SimpleValueFactory.getInstance();
 
         restore = new Restore();
-        restore.setVf(vf);
-        restore.setStateManager(stateManager);
-        restore.setRepositoryManager(repositoryManager);
-        restore.setImportService(importService);
-        restore.setConfig(catalogConfigProvider);
+        restore.stateManager = stateManager;
+        restore.repositoryManager = repositoryManager;
+        restore.importService = importService;
+        restore.config = catalogConfigProvider;
 
-        Mockito.reset(repositoryManager, stateManager);
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
         when(catalogConfigProvider.getRepository()).thenReturn(repo);
 
@@ -163,9 +160,15 @@ public class RestoreTest {
         when(xacmlServiceRef.getProperty(eq("policyFileLocation"))).thenReturn(POLICY_FILE_LOCATION);
     }
 
-    private Repository mockRepo(Class<? extends RepositoryConfig> configClassToMock) {
-        Repository nativeRepo = Mockito.mock(Repository.class);
-        when(nativeRepo.getConfig()).thenReturn(Mockito.mock(configClassToMock));
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
+        Mockito.reset(repositoryManager, stateManager);
+    }
+
+    private OsgiRepository mockRepo(Class configClassToMock) {
+        OsgiRepository nativeRepo = Mockito.mock(OsgiRepository.class);
+        when(nativeRepo.getConfigType()).thenReturn(configClassToMock);
         when(nativeRepo.getConnection()).thenReturn(Mockito.mock(RepositoryConnection.class));
         return nativeRepo;
     }
@@ -175,7 +178,7 @@ public class RestoreTest {
             conn.begin();
             for(String name : files){
                 InputStream testData = RestoreTest.class.getResourceAsStream(name);
-                conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+                conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
             }
             conn.commit();
         } catch (IOException e) {
@@ -195,9 +198,9 @@ public class RestoreTest {
                 bindingValues.clear();
                 BindingSet bindingSet = result.next();
 
-                for(String binding : bindings){
-                    if(bindingSet.getValue(binding).isPresent()){
-                        bindingValues.add(bindingSet.getValue(binding).get().toString());
+                for (String binding : bindings){
+                    if (bindingSet.getValue(binding) != null){
+                        bindingValues.add(bindingSet.getValue(binding).toString());
                     }else{
                         bindingValues.add("NULL");
                     }
@@ -213,11 +216,11 @@ public class RestoreTest {
     @Test
     public void clearAllReposTest() {
         // Setup:
-        Repository nativeRepo = mockRepo(NativeRepositoryConfig.class);
-        Repository memoryRepo = mockRepo(MemoryRepositoryConfig.class);
-        Repository httpRepo = mockRepo(HTTPRepositoryConfig.class);
+        OsgiRepository nativeRepo = mockRepo(NativeRepositoryConfig.class);
+        OsgiRepository memoryRepo = mockRepo(MemoryRepositoryConfig.class);
+        OsgiRepository httpRepo = mockRepo(HTTPRepositoryConfig.class);
 
-        Map<String, Repository> repos = new LinkedHashMap<>();
+        Map<String, OsgiRepository> repos = new LinkedHashMap<>();
         repos.put("nativeRepo", nativeRepo);
         repos.put("memoryRepo", memoryRepo);
         repos.put("httpRepo", httpRepo);
@@ -286,8 +289,8 @@ public class RestoreTest {
         }
         List<String> datasetResourcesExpect = Stream.of(
                 "https://mobi.com/records#89d40d76-8d49-4af7-8782-ada078b09aa7",
-                "https://mobi.com/records#25bb9187-0a21-4c95-8b36-90b9b0e985ba",
-                "https://mobi.com/records#a1341aca-0a3c-4048-9b8c-64821dacdf0e").collect(Collectors.toList());
+                "https://mobi.com/records#a1341aca-0a3c-4048-9b8c-64821dacdf0e",
+                "https://mobi.com/records#25bb9187-0a21-4c95-8b36-90b9b0e985ba").collect(Collectors.toList());
 
         List<String> datasetActual = datasetResources.stream().map(e -> e.stringValue()).collect(Collectors.toList());
         Assert.assertEquals(datasetResourcesExpect, datasetActual);

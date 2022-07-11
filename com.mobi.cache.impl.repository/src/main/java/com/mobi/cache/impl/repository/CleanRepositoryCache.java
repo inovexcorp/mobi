@@ -23,28 +23,29 @@ package com.mobi.cache.impl.repository;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.component.Reference;
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.ontology.utils.cache.repository.OntologyDatasets;
-import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
 import org.apache.karaf.scheduler.Job;
 import org.apache.karaf.scheduler.JobContext;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Map;
 
 /**
  * CleanRepositoryCache is a reoccurring Scheduler job that runs based on a Quartz Cron statement. A
@@ -56,68 +57,49 @@ import java.util.Map;
 @Component(
         immediate = true,
         name = CleanRepositoryCache.COMPONENT_NAME,
-        properties = {
+        property = {
                 "scheduler.name=CleanRepositoryCache",
                 "scheduler.concurrent:Boolean=false"
         },
-        configurationPolicy = ConfigurationPolicy.require
+        configurationPolicy = ConfigurationPolicy.REQUIRE
 )
+@Designate(ocd = CleanRepositoryCacheConfig.class)
 public class CleanRepositoryCache implements Job {
     private final Logger log = LoggerFactory.getLogger(CleanRepositoryCache.class);
     static final String COMPONENT_NAME = "com.mobi.cache.impl.repository.CleanRepositoryCache";
 
-    private DatasetManager datasetManager;
-    private RepositoryManager repositoryManager;
-    private ValueFactory vf;
     private String repoId;
     private long expirySeconds;
 
     @Reference
-    public void setDatasetManager(DatasetManager datasetManager) {
-        this.datasetManager = datasetManager;
-    }
+    DatasetManager datasetManager;
 
     @Reference
-    public void setRepositoryManager(RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
-    }
+    RepositoryManager repositoryManager;
 
-    @Reference
-    public void setValueFactory(ValueFactory vf) {
-        this.vf = vf;
-    }
 
     @Activate
-    public void start(Map<String, Object> props) {
-        CleanRepositoryCacheConfig config = Configurable.createConfigurable(CleanRepositoryCacheConfig.class, props);
-
-        if (props.containsKey("repoId")) {
+    @Modified
+    public void start(final CleanRepositoryCacheConfig config) {
+        if (config.repoId() != null) {
             this.repoId = config.repoId();
         } else {
             this.repoId = "ontologyCache";
         }
 
-        if (props.containsKey("expiry")) {
-            this.expirySeconds = config.expiry();
-        } else {
-            this.expirySeconds = 1800;
-        }
-    }
-
-    @Modified
-    protected void modified(Map<String, Object> props) {
-        start(props);
+        this.expirySeconds = config.expiry();
     }
 
     @Override
     public void execute(JobContext context) {
+        final ValueFactory vf = SimpleValueFactory.getInstance();
         log.trace("Starting CleanRepositoryCache Job");
         long startTime = System.currentTimeMillis();
-        Repository cacheRepo = repositoryManager.getRepository(repoId)
+        OsgiRepository cacheRepo = repositoryManager.getRepository(repoId)
                 .orElseThrow(() -> new IllegalStateException("Ontology Cache Repository" + repoId + " must exist"));
 
         try (RepositoryConnection conn = cacheRepo.getConnection()) {
-            List<Statement> statements = RepositoryResults.asList(
+            List<Statement> statements = QueryResults.asList(
                     conn.getStatements(null, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), null));
 
             OffsetDateTime now = OffsetDateTime.now();

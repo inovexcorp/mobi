@@ -25,7 +25,7 @@ package com.mobi.rdf.orm.conversion.impl;
 
 import junit.framework.TestCase;
 import org.junit.Test;
-import com.mobi.rdf.api.Literal;
+import org.eclipse.rdf4j.model.Literal;
 
 public class LiteralValueConverterTest extends ValueConverterTestCase<Literal> {
 

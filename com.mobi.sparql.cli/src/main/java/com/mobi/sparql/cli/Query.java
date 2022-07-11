@@ -25,22 +25,8 @@ package com.mobi.sparql.cli;
 
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.StatementIterable;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.query.GraphQueryResult;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.GraphQuery;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.query.api.Update;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.sparql.cli.rdf4j.queryrenderer.MobiSPARQLQueryRenderer;
 import org.apache.commons.lang3.StringUtils;
@@ -53,7 +39,21 @@ import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
 import org.apache.karaf.shell.support.table.ShellTable;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.GraphQueryResult;
 import org.eclipse.rdf4j.query.QueryLanguage;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.query.Update;
 import org.eclipse.rdf4j.query.algebra.Clear;
 import org.eclipse.rdf4j.query.algebra.DeleteData;
 import org.eclipse.rdf4j.query.algebra.InsertData;
@@ -67,6 +67,7 @@ import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.ParsedUpdate;
 import org.eclipse.rdf4j.query.parser.QueryParserUtil;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.Rio;
@@ -104,26 +105,16 @@ public class Query implements Action {
         formats.put("ntriples", RDFFormat.NTRIPLES);
     }
 
+    final ModelFactory mf = new DynamicModelFactory();
+    final ValueFactory vf = SimpleValueFactory.getInstance();
+
     // Service References
 
     @Reference
     private RepositoryManager repoManager;
 
-    @Reference
-    ModelFactory mf;
-
-    @Reference
-    private SesameTransformer transformer;
-
-    @Reference
-    ValueFactory vf;
-
     public void setRepoManager(RepositoryManager repoManager) {
         this.repoManager = repoManager;
-    }
-
-    public void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
     }
 
     // Command Parameters
@@ -168,7 +159,7 @@ public class Query implements Action {
             repositoryParam = "system";
         }
 
-        Optional<Repository> repoOpt = repoManager.getRepository(repositoryParam);
+        Optional<OsgiRepository> repoOpt = repoManager.getRepository(repositoryParam);
         if (!repoOpt.isPresent()) {
             System.out.println("ERROR: Repository not found.");
             return null;
@@ -201,16 +192,16 @@ public class Query implements Action {
         return null;
     }
 
-    void executeDryRunUpdate(ParsedUpdate parsedUpdate, Repository repository) throws Exception {
+    void executeDryRunUpdate(ParsedUpdate parsedUpdate, OsgiRepository repository) throws Exception {
         Difference updateStatements = getUpdateStatements(parsedUpdate, repository);
         printResultTables(updateStatements.getAdditions(), updateStatements.getDeletions());
     }
 
-    public Difference getUpdateStatements(ParsedUpdate parsedUpdate, Repository repository) throws Exception {
+    public Difference getUpdateStatements(ParsedUpdate parsedUpdate, OsgiRepository repository) throws Exception {
         List<UpdateExpr> updateExprs = parsedUpdate.getUpdateExprs();
 
-        Model statementsToInsert = mf.createModel();
-        Model statementsToDelete = mf.createModel();
+        Model statementsToInsert = mf.createEmptyModel();
+        Model statementsToDelete = mf.createEmptyModel();
         for (UpdateExpr queryAlgebra : updateExprs) {
             if (queryAlgebra instanceof Modify) {
                 Modify modify = (Modify) queryAlgebra;
@@ -238,7 +229,7 @@ public class Query implements Action {
         return new Difference.Builder().additions(statementsToInsert).deletions(statementsToDelete).build();
     }
 
-    private void populateUpdateStatements(RewriteUpdateVisitor visitor, Repository repository, Model statements,
+    private void populateUpdateStatements(RewriteUpdateVisitor visitor, OsgiRepository repository, Model statements,
                                               UpdateType updateType)
             throws Exception {
         MobiSPARQLQueryRenderer renderer = new MobiSPARQLQueryRenderer();
@@ -293,7 +284,7 @@ public class Query implements Action {
 
     // For Insert and Delete queries
     private void populateModifyStatements(TupleExpr modifyExpr, Model statements, RewriteUpdateVisitor visitor,
-                                          Repository repository) throws Exception {
+                                          OsgiRepository repository) throws Exception {
         if (modifyExpr != null) {
             visitor.reset(false);
             modifyExpr.visit(visitor);
@@ -301,7 +292,7 @@ public class Query implements Action {
         }
     }
 
-    private void executeTupleQuery(Repository repository, String queryString) {
+    private void executeTupleQuery(OsgiRepository repository, String queryString) {
         try (RepositoryConnection conn = repository.getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(queryString);
             TupleQueryResult result = query.evaluate();
@@ -316,7 +307,7 @@ public class Query implements Action {
 
             result.forEach(bindings -> {
                 IntStream.range(0, bindingNames.size()).forEach(index -> {
-                    Optional<Value> valueOpt = bindings.getValue(bindingNames.get(index));
+                    Optional<Value> valueOpt = Optional.ofNullable(bindings.getValue(bindingNames.get(index)));
                     String value = valueOpt.isPresent() ? valueOpt.get().stringValue() : "";
                     content[index] = value;
                 });
@@ -349,15 +340,15 @@ public class Query implements Action {
             addContent[0] = statement.getSubject().stringValue();
             addContent[1] = statement.getPredicate().stringValue();
             addContent[2] = statement.getObject().stringValue();
-            addContent[3] = statement.getContext().isPresent()
-                    ? statement.getContext().get().stringValue() : "";
+            addContent[3] = Optional.ofNullable(statement.getContext()).isPresent()
+                    ? statement.getContext().stringValue() : "";
             table.addRow().addContent(addContent);
         });
 
         table.print(System.out);
     }
 
-    private void executeUpdate(Repository repository, String queryString) {
+    private void executeUpdate(OsgiRepository repository, String queryString) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Update query = conn.prepareUpdate(queryString);
             long startTime = System.currentTimeMillis();
@@ -367,7 +358,7 @@ public class Query implements Action {
         }
     }
 
-    private void executeGraphQuery(Repository repository, String queryString) {
+    private void executeGraphQuery(OsgiRepository repository, String queryString) {
         try (RepositoryConnection conn = repository.getConnection()) {
             GraphQuery query = conn.prepareGraphQuery(queryString);
             GraphQueryResult result = query.evaluate();
@@ -376,7 +367,7 @@ public class Query implements Action {
             RDFFormat format = getFormat();
 
             RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, out));
-            Rio.write(new StatementIterable(result, transformer), rdfWriter);
+            Rio.write(new StatementIterable(result), rdfWriter);
         }
     }
 

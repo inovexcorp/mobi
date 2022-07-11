@@ -24,9 +24,9 @@ package com.mobi.etl.api.rdf;
  */
 
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.repository.exception.RepositoryException;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.rio.RDFParseException;
 
 import java.io.File;

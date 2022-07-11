@@ -23,16 +23,16 @@ package com.mobi.dataset.api;
  * #L%
  */
 
-import com.mobi.query.api.GraphQuery;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.query.exception.MalformedQueryException;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.repository.api.DelegatingRepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
-import com.mobi.repository.exception.RepositoryException;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.MalformedQueryException;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.repository.DelegatingRepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 
 /**
  * A special type of RepositoryConnection that limits operations to a single Dataset in a Repository.
@@ -191,6 +191,24 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      */
     @Override
     void remove(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException;
+
+    /**
+     * TODO:
+     * @param subject
+     * @param predicate
+     * @param object
+     * @param contexts
+     * @return
+     */
+    boolean contains(Resource subject, IRI predicate, Value object, Resource... contexts);
+
+    /**
+     * TODO:
+     * @param context
+     * @return
+     * @throws RepositoryException
+     */
+    boolean containsContext(Resource context) throws RepositoryException;
 
     /**
      * Removes all statements from this dataset, optionally from one or more named contexts. Ensures the removal

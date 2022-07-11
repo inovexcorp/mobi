@@ -23,17 +23,16 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
-import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
+import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -49,7 +48,7 @@ public class BNodeUtils {
      */
     public static Model restoreBNodes(Model model, Map<BNode, IRI> bNodeIRIMap, ModelFactory mf) {
         Set<IRI> iriSet = new HashSet<>(bNodeIRIMap.values());
-        Model result = mf.createModel();
+        Model result = mf.createEmptyModel();
 
         // Iterate over each statement
         for (Statement statement : model) {
@@ -121,12 +120,11 @@ public class BNodeUtils {
      * @param subject The {@link Resource} subject to add.
      * @param predicate The {@link IRI} predicate to add.
      * @param object The {@link Value} object to add.
-     * @param context An {@link Optional} of {@link Resource} of the context to add.
+     * @param context An nullable {@link Resource} of the context to add.
      */
-    private static void addStatement(Model model, Resource subject, IRI predicate, Value object,
-                                     Optional<Resource> context) {
-        if (context.isPresent()) {
-            model.add(subject, predicate, object, context.get());
+    private static void addStatement(Model model, Resource subject, IRI predicate, Value object, Resource context) {
+        if (context != null) {
+            model.add(subject, predicate, object, context);
         } else {
             model.add(subject, predicate, object);
         }

@@ -23,11 +23,11 @@ package com.mobi.security.policy.impl.xacml;
  * #L%
  */
 
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.security.policy.api.exception.PolicySyntaxException;
 import com.mobi.security.policy.api.exception.ProcessingException;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;

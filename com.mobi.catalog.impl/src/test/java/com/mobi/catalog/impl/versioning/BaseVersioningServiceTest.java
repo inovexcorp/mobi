@@ -24,9 +24,9 @@ package com.mobi.catalog.impl.versioning;
  */
 
 import static junit.framework.TestCase.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,17 +38,19 @@ import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.RepositoryConnection;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 public class BaseVersioningServiceTest extends OrmEnabledTestCase {
+    private AutoCloseable closeable;
     private SimpleVersioningService service;
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
@@ -81,18 +83,23 @@ public class BaseVersioningServiceTest extends OrmEnabledTestCase {
         branch.setHead(commit);
         inProgressCommit = inProgressCommitFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#in-progress-commit"));
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         when(catalogUtils.getBranch(any(VersionedRDFRecord.class), any(Resource.class), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(branch);
         when(catalogUtils.getInProgressCommit(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
         when(catalogUtils.getObject(any(Resource.class), eq(commitFactory), any(RepositoryConnection.class))).thenReturn(commit);
-        when(catalogManager.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
+        when(catalogManager.createCommit(any(InProgressCommit.class), anyString(), any(), any())).thenReturn(commit);
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
 
         service = new SimpleVersioningService();
         injectOrmFactoryReferencesIntoService(service);
         service.setCatalogManager(catalogManager);
         service.setCatalogUtils(catalogUtils);
+    }
+
+    @After
+    public void reset() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -145,8 +152,8 @@ public class BaseVersioningServiceTest extends OrmEnabledTestCase {
     @Test
     public void addCommitWithChangesTest() throws Exception {
         // Setup:
-        Model additions = MODEL_FACTORY.createModel();
-        Model deletions = MODEL_FACTORY.createModel();
+        Model additions = MODEL_FACTORY.createEmptyModel();
+        Model deletions = MODEL_FACTORY.createEmptyModel();
 
         assertEquals(commit.getResource(), service.addCommit(branch, user, "Message", additions, deletions, commit, null, conn));
         verify(catalogManager).createInProgressCommit(user);

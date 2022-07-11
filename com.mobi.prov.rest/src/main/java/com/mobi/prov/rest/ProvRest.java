@@ -31,19 +31,8 @@ import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import com.mobi.exception.MobiException;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.QueryResults;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ProvenanceService;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.BindingSet;
-import com.mobi.query.api.GraphQuery;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
@@ -57,11 +46,30 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -73,24 +81,16 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-@Component(service = ProvRest.class, immediate = true)
+@Component(service = ProvRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/provenance-data")
 public class ProvRest {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProvRest.class);
 
     private ProvenanceService provService;
-    private ValueFactory vf;
-    private ModelFactory mf;
-    private SesameTransformer transformer;
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ModelFactory mf = new DynamicModelFactory();
     private RepositoryManager repositoryManager;
 
     private static final String GET_ACTIVITIES_QUERY;
@@ -121,21 +121,6 @@ public class ProvRest {
     @Reference
     void setProvService(ProvenanceService provService) {
         this.provService = provService;
-    }
-
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    @Reference
-    void setMf(ModelFactory mf) {
-        this.mf = mf;
-    }
-
-    @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
     }
 
     @Reference
@@ -179,7 +164,7 @@ public class ProvRest {
             LOG.trace("Start collecting prov activities count");
             watch.start();
             TupleQuery countQuery = conn.prepareTupleQuery(GET_ACTIVITIES_COUNT_QUERY);
-            TupleQueryResult countResult = countQuery.evaluateAndReturn();
+            TupleQueryResult countResult = countQuery.evaluate();
             int totalCount;
             BindingSet bindingSet;
             if (!countResult.hasNext()
@@ -196,7 +181,7 @@ public class ProvRest {
             watch.start();
             String queryStr = GET_ACTIVITIES_QUERY + "\nLIMIT " + limit + "\nOFFSET " + offset;
             TupleQuery query = conn.prepareTupleQuery(queryStr);
-            TupleQueryResult result = query.evaluateAndReturn();
+            TupleQueryResult result = query.evaluate();
             result.forEach(bindings -> {
                 Resource resource = vf.createIRI(Bindings.requiredResource(bindings, ACTIVITY_BINDING).stringValue());
                 Activity fullActivity = provService.getActivity(resource).orElseThrow(() ->
@@ -215,6 +200,7 @@ public class ProvRest {
             if (links.getPrev() != null) {
                 response = response.link(links.getBase() + links.getPrev(), "prev");
             }
+            countResult.close();
             return response.build();
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -247,7 +233,7 @@ public class ProvRest {
         try {
             Activity provActivity = provService.getActivity(vf.createIRI(provenanceId)).orElseThrow(() ->
                     ErrorUtils.sendError("Provenance Activity not found", Response.Status.NOT_FOUND));
-            String json = groupedModelToString(provActivity.getModel(), getRDFFormat("jsonld"), transformer);
+            String json = groupedModelToString(provActivity.getModel(), getRDFFormat("jsonld"));
             return Response.ok(getObjectFromJsonld(json)).build();
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
@@ -258,10 +244,11 @@ public class ProvRest {
 
     private JSONObject createReturnObj(List<Activity> activities) {
         JSONArray activityArr = new JSONArray();
-        Model entitiesModel = mf.createModel();
+        Model entitiesModel = mf.createEmptyModel();
         Map<String, List<String>> repoToEntities = new HashMap<>();
         activities.forEach(activity -> {
-            Model entityModel = mf.createModel(activity.getModel());
+            Model entityModel = mf.createEmptyModel();
+            entityModel.addAll(activity.getModel());
             entityModel.remove(activity.getResource(), null, null);
             entitiesModel.addAll(entityModel);
             entityModel.filter(null, vf.createIRI("http://www.w3.org/ns/prov#atLocation"), null).forEach(statement -> {
@@ -273,14 +260,16 @@ public class ProvRest {
                     repoToEntities.put(repoId, new ArrayList<>(Collections.singletonList("<" + entityIRI + ">")));
                 }
             });
-            Model activityModel = mf.createModel(activity.getModel()).filter(activity.getResource(), null, null);
-            activityArr.add(RestUtils.getObjectFromJsonld(RestUtils.modelToJsonld(activityModel, transformer)));
+            Model tempModel = mf.createEmptyModel();
+            tempModel.addAll(activity.getModel());
+            Model activityModel = tempModel.filter(activity.getResource(), null, null);
+            activityArr.add(RestUtils.getObjectFromJsonld(RestUtils.modelToJsonld(activityModel)));
         });
         StopWatch watch = new StopWatch();
         repoToEntities.keySet().forEach(repoId -> {
             LOG.trace("Start collecting entities for prov activities in " + repoId);
             watch.start();
-            Repository repo = repositoryManager.getRepository(repoId).orElseThrow(() ->
+            OsgiRepository repo = repositoryManager.getRepository(repoId).orElseThrow(() ->
                     new IllegalStateException("Repository " + repoId + " could not be found"));
             try (RepositoryConnection entityConn = repo.getConnection()) {
                 String entityQueryStr = GET_ENTITIES_QUERY.replace("#ENTITIES#",
@@ -294,7 +283,7 @@ public class ProvRest {
         });
         JSONObject object = new JSONObject();
         object.element("activities", activityArr);
-        object.element("entities", RestUtils.modelToJsonld(entitiesModel, transformer));
+        object.element("entities", RestUtils.modelToJsonld(entitiesModel));
         return object;
     }
 }

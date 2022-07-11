@@ -23,10 +23,6 @@ package com.mobi.rdf.orm.test;
  * #L%
  */
 
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactoryService;
-import com.mobi.rdf.core.impl.sesame.ValueFactoryService;
 import com.mobi.rdf.orm.AbstractOrmFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
@@ -37,6 +33,10 @@ import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
 import com.mobi.rdf.orm.impl.OrmFactoryRegistryImpl;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,9 +67,9 @@ public abstract class OrmEnabledTestCase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OrmEnabledTestCase.class);
 
-    protected static final ModelFactory MODEL_FACTORY = new LinkedHashModelFactoryService();
+    protected static final ModelFactory MODEL_FACTORY = new DynamicModelFactory();
 
-    protected static final ValueFactory VALUE_FACTORY = new ValueFactoryService();
+    protected static final ValueFactory VALUE_FACTORY = SimpleValueFactory.getInstance();
 
     protected static final OrmFactoryRegistryImpl ORM_FACTORY_REGISTRY = new OrmFactoryRegistryImpl();
 
@@ -219,9 +219,7 @@ public abstract class OrmEnabledTestCase {
     private static void initOrmFactory(OrmFactory<?> factory) {
         // If the given factory is an AbstractOrmFactory, we know how to initialize it.
         if (AbstractOrmFactory.class.isAssignableFrom(factory.getClass())) {
-            ((AbstractOrmFactory<?>) factory).setModelFactory(MODEL_FACTORY);
-            ((AbstractOrmFactory<?>) factory).setValueConverterRegistry(VALUE_CONVERTER_REGISTRY);
-            ((AbstractOrmFactory<?>) factory).setValueFactory(VALUE_FACTORY);
+            ((AbstractOrmFactory<?>) factory).valueConverterRegistry = VALUE_CONVERTER_REGISTRY;
         } else {
             // Otherwise, it won't work in this framework.
             throw new OrmTestCaseException("OrmFactory '" + factory.getClass().getName()

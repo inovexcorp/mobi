@@ -28,7 +28,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.rdf.api.Resource;
+import org.eclipse.rdf4j.model.Resource;
 
 import javax.annotation.Nullable;
 

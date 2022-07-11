@@ -23,20 +23,22 @@ package com.mobi.cache.impl.repository;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 /**
  * Base configuration for CleanRepositoryCache service. Requires a "scheduler.expression" property to be set in the
  * configuration file.
  */
-@Meta.OCD
-public interface CleanRepositoryCacheConfig {
+@ObjectClassDefinition
+public @interface CleanRepositoryCacheConfig {
 
     /**
      * The Cache Repository ID to clean. If not present, defaults to "ontologyCache".
      *
      * @return String representing the Repository ID
      */
+    @AttributeDefinition
     String repoId();
 
     /**
@@ -45,6 +47,7 @@ public interface CleanRepositoryCacheConfig {
      *
      * @return The number of seconds a cache item can stay in the cache before being marked as expired
      */
-    long expiry();
+    @AttributeDefinition(defaultValue = "1800")
+    long expiry() default 1800;
 }
 

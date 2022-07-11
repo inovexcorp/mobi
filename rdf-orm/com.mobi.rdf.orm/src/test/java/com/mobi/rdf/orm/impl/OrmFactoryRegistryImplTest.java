@@ -29,11 +29,12 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -46,8 +47,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OrmFactoryRegistryImplTest {
+    private AutoCloseable closeable;
     private OrmFactoryRegistryImpl registry;
-    private ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
     private ThingFactory thingFactory = new ThingFactory();
 
     private IRI thingIRI;
@@ -90,16 +92,14 @@ public class OrmFactoryRegistryImplTest {
 
     @Before
     public void setUp() throws Exception {
-        thingFactory.setValueFactory(vf);
         thingIRI = vf.createIRI(Thing.TYPE);
         aIRI = vf.createIRI(A.TYPE);
         bIRI = vf.createIRI(B.TYPE);
         cIRI = vf.createIRI(C.TYPE);
         errorIRI = vf.createIRI(Error.TYPE);
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         registry = new OrmFactoryRegistryImpl();
-        registry.setValueFactory(vf);
         registry.addFactory(thingFactory);
         registry.addFactory(aFactory);
         registry.addFactory(cFactory);
@@ -125,6 +125,11 @@ public class OrmFactoryRegistryImplTest {
         doReturn(DImpl.class).when(dFactory).getImpl();
         when(dFactory.getType()).thenReturn(D.class);
         when(dFactory.getParentTypeIRIs()).thenReturn(Collections.singleton(aIRI));
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test

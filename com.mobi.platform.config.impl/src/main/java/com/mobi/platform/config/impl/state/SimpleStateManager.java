@@ -24,8 +24,20 @@ package com.mobi.platform.config.impl.state;
  */
 
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import com.mobi.persistence.utils.ConnectionUtils;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -37,16 +49,7 @@ import com.mobi.platform.config.api.ontologies.platformconfig.ApplicationStateFa
 import com.mobi.platform.config.api.ontologies.platformconfig.State;
 import com.mobi.platform.config.api.ontologies.platformconfig.StateFactory;
 import com.mobi.platform.config.api.state.StateManager;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.BindingSet;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -56,6 +59,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -64,14 +68,6 @@ import javax.annotation.Nullable;
 @Component(name = SimpleStateManager.COMPONENT_NAME)
 public class SimpleStateManager implements StateManager {
     protected static final String COMPONENT_NAME = "com.mobi.platform.config.state.StateManager";
-
-    private Repository repository;
-    private ValueFactory factory;
-    private ModelFactory modelFactory;
-    private StateFactory stateFactory;
-    private ApplicationStateFactory applicationStateFactory;
-    private EngineManager engineManager;
-    private ApplicationManager applicationManager;
 
     private static final String NAMESPACE = "http://mobi.com/states#";
 
@@ -94,40 +90,23 @@ public class SimpleStateManager implements StateManager {
         }
     }
 
-    @Reference(name = "repository")
-    protected void setRepository(Repository repository) {
-        this.repository = repository;
-    }
+    final ValueFactory factory = SimpleValueFactory.getInstance();
+    final ModelFactory modelFactory = new DynamicModelFactory();
+
+    @Reference(target = "(id=system)")
+    OsgiRepository repository;
 
     @Reference
-    protected void setValueFactory(final ValueFactory vf) {
-        factory = vf;
-    }
+    StateFactory stateFactory;
 
     @Reference
-    protected void setModelFactory(final ModelFactory mf) {
-        modelFactory = mf;
-    }
+    ApplicationStateFactory applicationStateFactory;
 
     @Reference
-    protected void setStateFactory(StateFactory stateFactory) {
-        this.stateFactory = stateFactory;
-    }
+    EngineManager engineManager;
 
     @Reference
-    protected void setApplicationStateFactory(ApplicationStateFactory applicationStateFactory) {
-        this.applicationStateFactory = applicationStateFactory;
-    }
-
-    @Reference
-    protected void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
-
-    @Reference
-    protected void setApplicationManager(ApplicationManager applicationManager) {
-        this.applicationManager = applicationManager;
-    }
+    ApplicationManager applicationManager;
 
     @Override
     public boolean stateExists(Resource stateId) {
@@ -144,7 +123,7 @@ public class SimpleStateManager implements StateManager {
             if (!stateExists(stateId, conn)) {
                 throw new IllegalArgumentException("State not found");
             }
-            return conn.contains(stateId, factory.createIRI(State.forUser_IRI), user.getResource());
+            return ConnectionUtils.contains(conn, stateId, factory.createIRI(State.forUser_IRI), user.getResource());
         }
     }
 
@@ -172,19 +151,20 @@ public class SimpleStateManager implements StateManager {
             BindingSet bindings;
             while (results.hasNext() && (bindings = results.next()).getBindingNames().contains(STATE_ID_BINDING)) {
                 Resource stateId = Bindings.requiredResource(bindings, STATE_ID_BINDING);
-                bindings.getBinding(RESOURCES_BINDING).ifPresent(binding -> {
+                Optional.ofNullable(bindings.getBinding(RESOURCES_BINDING)).ifPresent(binding -> {
                     Set<Resource> resources = Arrays.stream(StringUtils.split(binding.getValue().stringValue(), ","))
                             .map(factory::createIRI)
                             .collect(Collectors.toSet());
 
                     if (subjects.isEmpty() || resources.containsAll(subjects)) {
-                        Model stateModel = modelFactory.createModel();
+                        Model stateModel = modelFactory.createEmptyModel();
                         resources.forEach(resource -> conn.getStatements(resource, null, null)
                                 .forEach(stateModel::add));
                         states.put(stateId, stateModel);
                     }
                 });
             }
+            results.close();
             return states;
         }
     }
@@ -215,8 +195,8 @@ public class SimpleStateManager implements StateManager {
         if (!stateExists(stateId)) {
             throw new IllegalArgumentException("State not found");
         }
-        Model result = modelFactory.createModel();
-        Model stateModel = modelFactory.createModel();
+        Model result = modelFactory.createEmptyModel();
+        Model stateModel = modelFactory.createEmptyModel();
         try (RepositoryConnection conn = repository.getConnection()) {
             conn.getStatements(stateId, null, null).forEach(stateModel::add);
             stateModel.filter(stateId, factory.createIRI(State.stateResource_IRI), null).objects().forEach(value ->
@@ -231,7 +211,8 @@ public class SimpleStateManager implements StateManager {
             throw new IllegalArgumentException("State not found");
         }
         try (RepositoryConnection conn = repository.getConnection()) {
-            Model stateModel = modelFactory.createModel(newState);
+            Model stateModel = modelFactory.createEmptyModel();
+            stateModel.addAll(newState);
             conn.getStatements(stateId, null, null).forEach(stateModel::add);
             stateFactory.getExisting(stateId, stateModel).ifPresent(state -> {
                 removeState(state, conn);
@@ -247,7 +228,7 @@ public class SimpleStateManager implements StateManager {
             throw new IllegalArgumentException("State not found");
         }
         try (RepositoryConnection conn = repository.getConnection()) {
-            Model stateModel = modelFactory.createModel();
+            Model stateModel = modelFactory.createEmptyModel();
             conn.getStatements(stateId, null, null).forEach(stateModel::add);
             stateFactory.getExisting(stateId, stateModel).ifPresent(state -> removeState(state, conn));
         }
@@ -257,7 +238,7 @@ public class SimpleStateManager implements StateManager {
         conn.remove(state.getResource(), null, null);
         state.getStateResource().stream()
                 .filter(resource ->
-                        !conn.contains(null, factory.createIRI(State.stateResource_IRI), resource))
+                        !ConnectionUtils.contains(conn, null, factory.createIRI(State.stateResource_IRI), resource))
                 .forEach(resource -> conn.remove(resource, null, null));
     }
 
@@ -272,7 +253,7 @@ public class SimpleStateManager implements StateManager {
     }
 
     private boolean stateExists(Resource stateId, RepositoryConnection conn) {
-        return conn.contains(stateId, factory.createIRI(RDF.TYPE.stringValue()),
+        return ConnectionUtils.contains(conn, stateId, factory.createIRI(RDF.TYPE.stringValue()),
                 factory.createIRI(State.TYPE));
     }
 }

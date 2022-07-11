@@ -33,17 +33,18 @@ import com.mobi.dataset.ontology.dataset.DatasetFactory;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.ResourceUtils;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.exception.RepositoryException;
 import org.apache.commons.io.IOUtils;
-import org.osgi.service.component.annotations.Reference;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -90,13 +91,13 @@ public abstract class DatasetRecordService<T extends DatasetRecord>
             IRI datasetIRI = valueFactory.createIRI(datasetConfig);
             IRI sdgIRI = valueFactory.createIRI(datasetConfig + SYSTEM_DEFAULT_NG_SUFFIX);
 
-            if (conn.contains(datasetIRI, null, null)) {
+            if (ConnectionUtils.contains(conn, datasetIRI, null, null)) {
                 throw new IllegalArgumentException("The datasetIRI already exists in the specified repository.");
             }
 
             conn.begin();
 
-            Repository dsRepo = repoManager.getRepository(repositoryId).orElseThrow(() ->
+            OsgiRepository dsRepo = repoManager.getRepository(repositoryId).orElseThrow(() ->
                     new IllegalArgumentException("Dataset target repository does not exist."));
 
             Dataset dataset = dsFactory.createNew(datasetIRI);
@@ -113,7 +114,7 @@ public abstract class DatasetRecordService<T extends DatasetRecord>
 
             try (RepositoryConnection dsRepoConn = dsRepo.getConnection()) {
                 dsRepoConn.add(dataset.getModel(), datasetIRI);
-            } catch (RepositoryException e){
+            } catch (RepositoryException e) {
                 throw new IllegalArgumentException(e.getMessage());
             }
             utilsService.addObject(datasetRecord, conn);

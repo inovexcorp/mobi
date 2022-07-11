@@ -23,16 +23,17 @@ package com.mobi.ontology.utils.imports;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-@Meta.OCD
-public interface ImportsResolverConfig {
+@ObjectClassDefinition
+public @interface ImportsResolverConfig {
 
     /**
      * The user agent used to make requests to resolve imports.
      *
      * @return The user agent string
      */
-    @Meta.AD(required = false)
+    @AttributeDefinition(required = false)
     String userAgent();
 }

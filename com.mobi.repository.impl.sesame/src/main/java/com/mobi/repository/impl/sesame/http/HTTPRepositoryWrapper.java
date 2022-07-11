@@ -23,76 +23,61 @@ package com.mobi.repository.impl.sesame.http;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Deactivate;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.metatype.Configurable;
-import com.mobi.repository.api.DelegatingRepository;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.base.RepositoryWrapper;
-import com.mobi.repository.exception.RepositoryConfigException;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import org.apache.commons.validator.routines.UrlValidator;
+import com.mobi.repository.api.OsgiRepository;
+import com.mobi.repository.base.OsgiRepositoryWrapper;
+import com.mobi.repository.impl.sesame.RepositoryConfigHelper;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.http.HTTPRepository;
-
-import java.util.Map;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.metatype.annotations.Designate;
 
 @Component(
         immediate = true,
-        provide = { Repository.class, DelegatingRepository.class },
+        service = { OsgiRepository.class },
         name = HTTPRepositoryWrapper.NAME,
-        configurationPolicy = ConfigurationPolicy.require,
-        designateFactory = HTTPRepositoryConfig.class,
-        properties = {
+        configurationPolicy = ConfigurationPolicy.REQUIRE,
+        property = {
                 "repositorytype=" + HTTPRepositoryWrapper.REPOSITORY_TYPE
         }
 )
-public class HTTPRepositoryWrapper extends RepositoryWrapper {
+@Designate(ocd = HTTPRepositoryConfig.class)
+public class HTTPRepositoryWrapper extends OsgiRepositoryWrapper {
 
     protected static final String REPOSITORY_TYPE = "http";
     protected static final String NAME = "com.mobi.service.repository." + REPOSITORY_TYPE;
 
     @Activate
-    protected void start(Map<String, Object> props) {
-        super.start(props);
+    protected void start(final HTTPRepositoryConfig config) {
+        RepositoryConfigHelper.validateBaseParams(config.id(), config.title());
+        RepositoryConfigHelper.validateUrl(config.serverUrl(), "serverUrl");
+
+        HTTPRepository httpRepository = new HTTPRepository(config.serverUrl(), this.repositoryID);
+        setDelegate(httpRepository);
+        this.repositoryID = config.id();
+        this.repositoryTitle = config.title();
     }
 
     @Deactivate
     protected void stop() {
-        super.stop();
+        try {
+            getDelegate().shutDown();
+        } catch (RepositoryException e) {
+            throw new RepositoryException("Could not shutdown Repository \"" + repositoryID + "\".", e);
+        }
     }
 
     @Modified
-    protected void modified(Map<String, Object> props) {
-        super.modified(props);
+    protected void modified(final HTTPRepositoryConfig config) {
+        stop();
+        start(config);
     }
 
     @Override
-    protected Repository getRepo(Map<String, Object> props) {
-        HTTPRepositoryConfig config = Configurable.createConfigurable(HTTPRepositoryConfig.class, props);
-        this.repositoryID = config.id();
-
-        HTTPRepository sesameHttpStore = new HTTPRepository(config.serverUrl(), this.repositoryID);
-
-        SesameRepositoryWrapper repo = new SesameRepositoryWrapper(sesameHttpStore);
-        repo.setConfig(config);
-
-        return repo;
-    }
-
-    @Override
-    public void validateConfig(Map<String, Object> props) {
-        super.validateConfig(props);
-        HTTPRepositoryConfig config = Configurable.createConfigurable(HTTPRepositoryConfig.class, props);
-
-        String[] schemes = {"http","https"};
-        UrlValidator urlValidator = new UrlValidator(schemes, UrlValidator.ALLOW_LOCAL_URLS);
-        if (!urlValidator.isValid(config.serverUrl())) {
-            throw new RepositoryConfigException(
-                    new IllegalArgumentException("Repository serverUrl is not a valid URL: " + config.serverUrl())
-            );
-        }
+    public Class<HTTPRepositoryConfig> getConfigType() {
+        return HTTPRepositoryConfig.class;
     }
 }

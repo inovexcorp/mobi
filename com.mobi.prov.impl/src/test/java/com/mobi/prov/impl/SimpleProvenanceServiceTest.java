@@ -32,18 +32,19 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.ReadOnlyRepositoryConnection;
 import com.mobi.prov.api.builder.ActivityConfig;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import junit.framework.TestCase;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -53,8 +54,8 @@ import java.util.Collections;
 import java.util.Optional;
 
 public class SimpleProvenanceServiceTest extends OrmEnabledTestCase {
-
-    private Repository repo;
+    private AutoCloseable closeable;
+    private MemoryRepositoryWrapper repo;
     private SimpleProvenanceService service;
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private OrmFactory<Activity> activityFactory = getRequiredOrmFactory(Activity.class);
@@ -67,20 +68,23 @@ public class SimpleProvenanceServiceTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
 
         activityIRI = VALUE_FACTORY.createIRI("http://test.com/activity");
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         when(registry.getFactoriesOfType(Activity.class)).thenReturn(Collections.singletonList(activityFactory));
 
         service = new SimpleProvenanceService();
         injectOrmFactoryReferencesIntoService(service);
-        service.setRepo(repo);
-        service.setVf(VALUE_FACTORY);
-        service.setMf(MODEL_FACTORY);
-        service.setFactoryRegistry(registry);
+        service.repo = repo;
+        service.factoryRegistry = registry;
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -120,7 +124,7 @@ public class SimpleProvenanceServiceTest extends OrmEnabledTestCase {
 
         service.addActivity(activity);
         try (RepositoryConnection conn = repo.getConnection()) {
-            activity.getModel().forEach(statement -> conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+            activity.getModel().forEach(statement -> ConnectionUtils.contains(conn, statement.getSubject(), statement.getPredicate(), statement.getObject()));
         }
     }
 
@@ -181,7 +185,7 @@ public class SimpleProvenanceServiceTest extends OrmEnabledTestCase {
 
         service.updateActivity(activity);
         try (RepositoryConnection conn = repo.getConnection()) {
-            activity.getModel().forEach(statement -> conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+            activity.getModel().forEach(statement -> ConnectionUtils.contains(conn, statement.getSubject(), statement.getPredicate(), statement.getObject()));
         }
     }
 
@@ -233,14 +237,14 @@ public class SimpleProvenanceServiceTest extends OrmEnabledTestCase {
 
         service.deleteActivity(activityIRI);
         try (RepositoryConnection conn = repo.getConnection()) {
-            toRemove.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
-            generated1.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
-            invalidated1.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
-            used1.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
-            generated2.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
-            invalidated2.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
-            used2.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
-            other.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            toRemove.getModel().forEach(statement -> assertFalse(ConnectionUtils.contains(conn, statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            generated1.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            invalidated1.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            used1.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            generated2.getModel().forEach(statement -> assertFalse(ConnectionUtils.contains(conn, statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            invalidated2.getModel().forEach(statement -> assertFalse(ConnectionUtils.contains(conn, statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            used2.getModel().forEach(statement -> assertFalse(ConnectionUtils.contains(conn, statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            other.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(), statement.getPredicate(), statement.getObject())));
         }
     }
 }

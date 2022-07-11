@@ -25,8 +25,8 @@ package com.mobi.rdf.orm.conversion.impl;
 
 import junit.framework.TestCase;
 import org.junit.Test;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import com.mobi.rdf.orm.conversion.AbstractValueConverter;
 import com.mobi.rdf.orm.conversion.ValueConverter;
 
@@ -41,9 +41,6 @@ public abstract class ValueConverterTestCase<X> {
     }
 
     public ValueConverterTestCase(ValueConverter<X> converter, Class<X> type, ValueFactory valueFactory) {
-        if (converter instanceof AbstractValueConverter<?>) {
-            ((AbstractValueConverter<?>) converter).setValueFactory(valueFactory);
-        }
         this.valueConverter = converter;
         this.type = type;
     }

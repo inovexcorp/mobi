@@ -1,0 +1,11 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?ontologyIRI WHERE {
+  ?revision mcat:additions ?additionsGraph .
+
+  GRAPH ?additionsGraph {
+    ?ontologyIRI a owl:Ontology .
+  }
+}

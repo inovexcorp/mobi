@@ -23,17 +23,39 @@ package com.mobi.security.policy.api.cache.config;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
-import com.mobi.cache.config.CacheServiceConfig;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-@Meta.OCD
-public interface PolicyCacheServiceConfig extends CacheServiceConfig {
+@ObjectClassDefinition
+public @interface PolicyCacheServiceConfig {
+
+    /**
+     * The Cache ID.
+     *
+     * @return String representing the Cache ID.
+     */
+    String id();
+
+    /**
+     * The Repository ID.
+     *
+     * @return String representing the Repository ID.
+     */
+    String repoId();
+
+    /**
+     * The number of entries to track in the cache. NOTE: This is an optional property.
+     *
+     * @return String representing the number of entries to track in the cache.
+     */
+    @AttributeDefinition(required = false, defaultValue = "250")
+    int numEntries() default 250;
 
     /**
      * The maximum heap size in MB.
      *
      * @return The maximum heap size
      */
-    @Meta.AD(deflt = "100")
-    int maxHeapSize();
+    @AttributeDefinition(defaultValue = "100")
+    int maxHeapSize() default 100;
 }

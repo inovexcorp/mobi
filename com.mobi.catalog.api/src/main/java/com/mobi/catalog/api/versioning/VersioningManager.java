@@ -29,9 +29,9 @@ import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.repository.api.RepositoryConnection;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 
 public interface VersioningManager {
     /**
@@ -51,7 +51,7 @@ public interface VersioningManager {
      *      Record does not belong to the Catalog, or the Branch could not be found.
      */
     Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user,
-                                                   String message, Model additions, Model deletions);
+                    String message, Model additions, Model deletions);
 
     /**
      * Commits the provided addition and deletion {@link Model Models} for the provided {@link User} to

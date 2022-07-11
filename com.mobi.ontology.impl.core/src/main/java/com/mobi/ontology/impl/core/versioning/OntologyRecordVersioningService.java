@@ -34,20 +34,25 @@ import com.mobi.catalog.api.versioning.BaseVersioningService;
 import com.mobi.catalog.api.versioning.VersioningService;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.owl.Ontology;
+import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -56,7 +61,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @Component(
         immediate = true,
@@ -66,17 +70,24 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
     private OntologyRecordFactory ontologyRecordFactory;
     private OntologyManager ontologyManager;
     private OntologyCache ontologyCache;
-    private ValueFactory vf;
-    private ModelFactory mf;
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ModelFactory mf = new DynamicModelFactory();
 
     private static final String ONTOLOGY_IRI_QUERY;
+    private static final String ADDITION_ONTOLOGY_IRI_QUERY;
     private static final String BRANCH_BINDING = "branch";
     private static final String RECORD_BINDING = "record";
+    private static final String REVISION_BINDING = "revision";
+    private static final String ONTOLOGY_IRI_BINDING = "ontologyIRI";
 
     static {
         try {
             ONTOLOGY_IRI_QUERY = IOUtils.toString(
                     OntologyRecordVersioningService.class.getResourceAsStream("/record-with-master.rq"),
+                    StandardCharsets.UTF_8
+            );
+            ADDITION_ONTOLOGY_IRI_QUERY = IOUtils.toString(
+                    OntologyRecordVersioningService.class.getResourceAsStream("/get-ontology-iri-addition.rq"),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -119,16 +130,6 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
         this.catalogUtils = catalogUtils;
     }
 
-    @Reference
-    protected void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    @Reference
-    protected void setMf(ModelFactory mf) {
-        this.mf = mf;
-    }
-
     @Override
     public String getTypeIRI() {
         return OntologyRecord.TYPE;
@@ -136,34 +137,34 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
 
     @Override
     public void addCommit(Branch branch, Commit commit, RepositoryConnection conn) {
-        Optional<com.mobi.rdf.api.Resource> recordOpt = getRecordIriIfMaster(branch, conn);
+        Optional<Resource> recordOpt = getRecordIriIfMaster(branch, conn);
         recordOpt.ifPresent(recordId -> commit.getBaseCommit_resource().ifPresent(baseCommit ->
                 updateOntologyIRI(recordId, commit, conn)));
         catalogUtils.addCommit(branch, commit, conn);
     }
 
     @Override
-    public com.mobi.rdf.api.Resource addCommit(Branch branch, User user, String message, Model additions, Model deletions,
-                                               Commit baseCommit, Commit auxCommit, RepositoryConnection conn) {
+    public Resource addCommit(Branch branch, User user, String message, Model additions, Model deletions,
+                              Commit baseCommit, Commit auxCommit, RepositoryConnection conn) {
         Commit newCommit = createCommit(catalogManager.createInProgressCommit(user), message, baseCommit, auxCommit);
         // Determine if branch is the master branch of a record
-        Optional<com.mobi.rdf.api.Resource> recordOpt = getRecordIriIfMaster(branch, conn);
+        Optional<Resource> recordOpt = getRecordIriIfMaster(branch, conn);
         recordOpt.ifPresent(recordId -> {
             if (baseCommit != null) {
                 // If this is not the initial commit
                 Model model;
-                Difference diff = new Difference.Builder().additions(additions == null ? mf.createModel() : additions)
-                        .deletions(deletions == null ? mf.createModel() : deletions).build();
+                Difference diff = new Difference.Builder().additions(additions == null ? mf.createEmptyModel() : additions)
+                        .deletions(deletions == null ? mf.createEmptyModel() : deletions).build();
                 if (auxCommit != null) {
                     // If this is a merge, collect all the additions from the aux branch and provided models
-                    List<com.mobi.rdf.api.Resource> sourceChain = catalogUtils.getCommitChain(auxCommit.getResource(), false, conn);
+                    List<Resource> sourceChain = catalogUtils.getCommitChain(auxCommit.getResource(), false, conn);
                     sourceChain.removeAll(catalogUtils.getCommitChain(baseCommit.getResource(), false, conn));
                     model = catalogUtils.applyDifference(catalogUtils.getCompiledResource(sourceChain, conn), diff);
                 } else {
                     // Else, this is a regular commit. Make sure we remove duplicated add/del statements
-                    model = catalogUtils.applyDifference(mf.createModel(), diff);
+                    model = catalogUtils.applyDifference(mf.createEmptyModel(), diff);
                 }
-                updateOntologyIRI(recordId, model.stream(), conn);
+                updateOntologyIRI(recordId, model, conn);
             }
         });
         catalogUtils.addCommit(branch, newCommit, conn);
@@ -171,45 +172,63 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
         return newCommit.getResource();
     }
 
-    private void updateOntologyIRI(com.mobi.rdf.api.Resource recordId, Commit commit, RepositoryConnection conn) {
-        updateOntologyIRI(recordId, catalogUtils.getAdditions(commit, conn), conn);
-    }
-
-    private void updateOntologyIRI(com.mobi.rdf.api.Resource recordId, Stream<Statement> additions, RepositoryConnection conn) {
+    private void updateOntologyIRI(Resource recordId, Commit commit, RepositoryConnection conn) {
         OntologyRecord record = catalogUtils.getObject(recordId, ontologyRecordFactory, conn);
-        Optional<com.mobi.rdf.api.Resource> iri = record.getOntologyIRI();
+        Optional<Resource> iri = record.getOntologyIRI();
         iri.ifPresent(resource -> ontologyCache.clearCacheImports(resource));
-        getNewOntologyIRI(additions).ifPresent(newIRI -> {
+        IRI generatedIRI = vf.createIRI(Activity.generated_IRI);
+        Resource revisionIRI = (Resource) commit.getProperty(generatedIRI)
+                .orElseThrow(() -> new IllegalStateException("Commit is missing revision."));
+        TupleQuery query = conn.prepareTupleQuery(ADDITION_ONTOLOGY_IRI_QUERY);
+        query.setBinding(REVISION_BINDING, revisionIRI);
+        TupleQueryResult result = query.evaluate();
+        if (result.hasNext()) {
+            Resource newIRI = Bindings.requiredResource(result.next(), ONTOLOGY_IRI_BINDING);
             if (!iri.isPresent() || !newIRI.equals(iri.get())) {
                 testOntologyIRIUniqueness(newIRI);
                 record.setOntologyIRI(newIRI);
                 catalogUtils.updateObject(record, conn);
                 ontologyCache.clearCacheImports(newIRI);
             }
-        });
+        }
     }
 
-    private Optional<com.mobi.rdf.api.Resource> getNewOntologyIRI(Stream<Statement> additions) {
-        return additions.filter(statement ->
-                statement.getPredicate().equals(vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI)) &&
-                        statement.getObject().equals(vf.createIRI(OWL.ONTOLOGY.stringValue())))
-                .findFirst()
-                .flatMap(statement -> Optional.of(statement.getSubject()));
+    private void updateOntologyIRI(Resource recordId, Model additions, RepositoryConnection conn) {
+        OntologyRecord record = catalogUtils.getObject(recordId, ontologyRecordFactory, conn);
+        Optional<Resource> iri = record.getOntologyIRI();
+        iri.ifPresent(resource -> ontologyCache.clearCacheImports(resource));
+
+        Optional<Statement> ontStmt = additions
+                .filter(null, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Ontology.TYPE))
+                .stream()
+                .findFirst();
+        if (ontStmt.isPresent()) {
+            Resource newIRI = ontStmt.get().getSubject();
+            if (!iri.isPresent() || !newIRI.equals(iri.get())) {
+                testOntologyIRIUniqueness(newIRI);
+                record.setOntologyIRI(newIRI);
+                catalogUtils.updateObject(record, conn);
+                ontologyCache.clearCacheImports(newIRI);
+            }
+        }
     }
 
-    private void testOntologyIRIUniqueness(com.mobi.rdf.api.Resource ontologyIRI) {
+    private void testOntologyIRIUniqueness(Resource ontologyIRI) {
         if (ontologyManager.ontologyIriExists(ontologyIRI)) {
             throw new IllegalArgumentException("Ontology already exists with IRI " + ontologyIRI);
         }
     }
 
-    private Optional<com.mobi.rdf.api.Resource> getRecordIriIfMaster(Branch branch, RepositoryConnection conn) {
+    private Optional<Resource> getRecordIriIfMaster(Branch branch, RepositoryConnection conn) {
         TupleQuery query = conn.prepareTupleQuery(ONTOLOGY_IRI_QUERY);
         query.setBinding(BRANCH_BINDING, branch.getResource());
-        TupleQueryResult result = query.evaluateAndReturn();
+        TupleQueryResult result = query.evaluate();
         if (!result.hasNext()) {
+            result.close();
             return Optional.empty();
         }
-        return Optional.of(Bindings.requiredResource(result.next(), RECORD_BINDING));
+        Optional<Resource> recordIriOpt = Optional.of(Bindings.requiredResource(result.next(), RECORD_BINDING));
+        result.close();
+        return recordIriOpt;
     }
 }

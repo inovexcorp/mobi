@@ -23,19 +23,20 @@ package com.mobi.etl.service.rdf;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.persistence.utils.BatchGraphInserter;
 import com.mobi.persistence.utils.BatchInserter;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.repository.api.DelegatingRepository;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
 import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParser;
@@ -57,29 +58,19 @@ import javax.annotation.Nonnull;
 public class RDFImportServiceImpl implements RDFImportService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RDFImportServiceImpl.class);
-    private Map<String, Repository> initializedRepositories = new HashMap<>();
+    private Map<String, OsgiRepository> initializedRepositories = new HashMap<>();
 
-    private SesameTransformer transformer;
-    private DatasetManager datasetManager;
-
-    @Reference(type = '*', dynamic = true)
-    public void addRepository(DelegatingRepository repository) {
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
+    public void addRepository(OsgiRepository repository) {
         initializedRepositories.put(repository.getRepositoryID(), repository);
     }
 
-    public void removeRepository(DelegatingRepository repository) {
+    public void removeRepository(OsgiRepository repository) {
         initializedRepositories.remove(repository.getRepositoryID());
     }
 
     @Reference
-    public void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
-
-    @Reference
-    public void setDatasetManager(DatasetManager datasetManager) {
-        this.datasetManager = datasetManager;
-    }
+    DatasetManager datasetManager;
 
     @Override
     public void importFile(ImportServiceConfig config, @Nonnull File file) throws IOException {
@@ -186,14 +177,14 @@ public class RDFImportServiceImpl implements RDFImportService {
         parserConfig.addNonFatalError(BasicParserSettings.VERIFY_URI_SYNTAX);
         BatchInserter inserter;
         if (graph == null) {
-            inserter = new BatchInserter(conn, transformer, config.getBatchSize());
+            inserter = new BatchInserter(conn, config.getBatchSize());
         } else {
             parserConfig.set(BasicParserSettings.VERIFY_LANGUAGE_TAGS, false);
             parserConfig.set(BasicParserSettings.VERIFY_RELATIVE_URIS, false);
             parserConfig.set(BasicParserSettings.VERIFY_DATATYPE_VALUES, false);
             parserConfig.set(BasicParserSettings.VERIFY_URI_SYNTAX, false);
             parserConfig.set(BasicParserSettings.PRESERVE_BNODE_IDS, true);
-            inserter = new BatchGraphInserter(conn, transformer, config.getBatchSize(), graph);
+            inserter = new BatchGraphInserter(conn, config.getBatchSize(), graph);
         }
         if (config.getLogOutput()) {
             inserter.setLogger(LOGGER);

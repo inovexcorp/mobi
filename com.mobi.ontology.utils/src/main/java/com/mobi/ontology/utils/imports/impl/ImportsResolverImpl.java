@@ -23,11 +23,6 @@ package com.mobi.ontology.utils.imports.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Reference;
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontology.core.api.OntologyManager;
@@ -35,12 +30,17 @@ import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.ontology.utils.imports.ImportsResolverConfig;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.RDFFiles;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParser;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.Designate;
 import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
@@ -52,25 +52,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component(
-        configurationPolicy = ConfigurationPolicy.optional,
+        configurationPolicy = ConfigurationPolicy.OPTIONAL,
         immediate = true,
-        designateFactory = ImportsResolverConfig.class,
         name = ImportsResolverImpl.COMPONENT_NAME
 )
+@Designate(ocd = ImportsResolverConfig.class)
 public class ImportsResolverImpl implements ImportsResolver {
     private final Logger log = LoggerFactory.getLogger(ImportsResolverImpl.class);
 
-    private CatalogConfigProvider catalogConfigProvider;
-    private CatalogManager catalogManager;
-    private ModelFactory mf;
-    private SesameTransformer transformer;
     private String userAgent;
     private static final String ACCEPT_HEADERS = "application/rdf+xml, application/xml; q=0.7, text/xml; q=0.6,"
             + "text/turtle; q=0.5, application/ld+json; q=0.4, application/trig; q=0.3, application/n-triples; q=0.2,"
@@ -80,28 +75,15 @@ public class ImportsResolverImpl implements ImportsResolver {
     static final String COMPONENT_NAME = "com.mobi.ontology.utils.imports.ImportsResolver";
 
     @Reference
-    void setCatalogConfigProvider(CatalogConfigProvider catalogConfigProvider) {
-        this.catalogConfigProvider = catalogConfigProvider;
-    }
+    CatalogConfigProvider catalogConfigProvider;
 
     @Reference
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
+    CatalogManager catalogManager;
 
-    @Reference
-    void setModelFactory(ModelFactory mf) {
-        this.mf = mf;
-    }
-
-    @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
+    final ModelFactory mf = new DynamicModelFactory();
 
     @Activate
-    protected void activate(Map<String, Object> props) {
-        ImportsResolverConfig config = Configurable.createConfigurable(ImportsResolverConfig.class, props);
+    protected void activate(final ImportsResolverConfig config) {
         if (config.userAgent() == null) {
             userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0";
         } else {
@@ -115,7 +97,7 @@ public class ImportsResolverImpl implements ImportsResolver {
         RDFParser[] parsers = {new RioFunctionalSyntaxParserFactory().getParser(),
                 new RioManchesterSyntaxParserFactory().getParser(),
                 new RioOWLXMLParserFactory().getParser()};
-        Model model = mf.createModel();
+        Model model = mf.createEmptyModel();
         String urlStr = resource.stringValue();
         Optional<Model> modelOpt = getModel(urlStr, parsers);
         if (modelOpt.isPresent()) {
@@ -169,10 +151,9 @@ public class ImportsResolverImpl implements ImportsResolver {
      * @return An {@link Optional} of the {@link Model} if resolved and parsed. Otherwise, an empty {@link Optional}.
      */
     private Optional<Model> getModel(String urlStr, RDFParser... parsers) {
-        Model model = mf.createModel();
+        Model model = mf.createEmptyModel();
         try {
-            model = Models.createModel(getWebInputStream(urlStr), transformer,
-                    parsers);
+            model = Models.createModel(getWebInputStream(urlStr), parsers);
         } catch (IOException | IllegalArgumentException e) {
             log.debug("Could not parse InputStream to model from URL: " + urlStr);
         }
@@ -202,7 +183,7 @@ public class ImportsResolverImpl implements ImportsResolver {
     @Override
     public Optional<Model> retrieveOntologyLocal(Resource ontologyIRI, OntologyManager ontologyManager) {
         Long startTime = getStartTime();
-        Model model = mf.createModel();
+        Model model = mf.createEmptyModel();
         Optional<Resource> recordIRIOpt = ontologyManager.getOntologyRecordResource(ontologyIRI);
         if (recordIRIOpt.isPresent()) {
             Resource recordIRI = recordIRIOpt.get();

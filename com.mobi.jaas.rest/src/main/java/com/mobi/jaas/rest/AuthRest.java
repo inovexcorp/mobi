@@ -55,18 +55,18 @@ import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 import javax.security.auth.Subject;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Component(service = AuthRest.class, immediate = true)
+@Component(service = AuthRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/session")
 public class AuthRest {
 
@@ -110,8 +110,8 @@ public class AuthRest {
             }
     )
     public Response getCurrentUser(
-            @Context ContainerRequestContext context) {
-        Optional<String> optUsername = RestUtils.optActiveUsername(context);
+            @Context HttpServletRequest servletRequest) {
+        Optional<String> optUsername = RestUtils.optActiveUsername(servletRequest);
         if (optUsername.isPresent()) {
             log.debug("Found username in request headers");
             return Response.ok(optUsername.get()).build();
@@ -140,7 +140,7 @@ public class AuthRest {
             }
     )
     public Response login(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "Username of user", required = true)
             @QueryParam("username") String username,
             @Parameter(description = "Password of user",
@@ -151,7 +151,7 @@ public class AuthRest {
         if (!userCredsOptional.isPresent()) {
             log.debug("Could not find creds from Form Auth. Trying BASIC Auth...");
 
-            userCredsOptional = processBasicAuth(context);
+            userCredsOptional = processBasicAuth(servletRequest);
             if (!userCredsOptional.isPresent()) {
                 log.debug("Could not find creds from BASIC Auth.");
                 return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -214,8 +214,8 @@ public class AuthRest {
         return doAuthenticate(username, password).isPresent();
     }
 
-    private Optional<UserCredentials> processBasicAuth(ContainerRequestContext context) {
-        String authzHeader = context.getHeaderString("Authorization");
+    private Optional<UserCredentials> processBasicAuth(HttpServletRequest servletRequest) {
+        String authzHeader = servletRequest.getHeader("Authorization");
 
         if (authzHeader == null) {
             log.debug("No authorization header.");

@@ -23,8 +23,61 @@ package com.mobi.jaas.engines;
  * #L%
  */
 
-import com.mobi.jaas.api.engines.EngineConfig;
-import com.mobi.repository.config.RepositoryConsumerConfig;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-public interface RdfEngineConfig extends EngineConfig, RepositoryConsumerConfig {
+@ObjectClassDefinition
+public @interface RdfEngineConfig {
+
+    /**
+     * The list of roles for this engine.
+     */
+    @AttributeDefinition(name = "roles")
+    String roles();
+
+    /**
+     * Boolean enabling / disabling encrypted passwords.
+     */
+    @AttributeDefinition(name = "encryption.enabled", defaultValue = "false")
+    boolean encryption_enabled() default false;
+
+    /**
+     * Encryption Service name. The default one is 'basic'. A more powerful one named 'jasypt' is available
+     * when installing the encryption feature.
+     */
+    @AttributeDefinition(name = "encryption.name", defaultValue = "basic")
+    String encryption_name() default "basic";
+
+    @AttributeDefinition(name = "encryption.prefix", defaultValue = "{CRYPT}")
+    String encryption_prefix() default "{CRYPT}";
+
+    @AttributeDefinition(name = "encryption.suffix", defaultValue = "{CRYPT}")
+    String encryption_suffix() default "{CRYPT}";
+
+    /**
+     * Set the encryption algorithm to use in engine. Supported encryption algorithms follow:
+     * <ul>
+     *     <li>MD2</li>
+     *     <li>MD5</li>
+     *     <li>SHA-1</li>
+     *     <li>SHA-256</li>
+     *     <li>SHA-384</li>
+     *     <li>SHA-512</li>
+     * </ul>
+     */
+    @AttributeDefinition(name = "encryption.algorithm", defaultValue = "MD5")
+    String encryption_algorithm() default "MD5";
+
+    /**
+     * Encoding of the encrypted password.
+     * <ul>
+     *     <li>hexadecimal</li>
+     *     <li>base64</li>
+     * </ul>
+     */
+    @AttributeDefinition(name = "encryption.encoding", defaultValue = "hexadecimal")
+    String encryption_encoding() default "hexadecimal";
+
+    @AttributeDefinition(name = "repository.target")
+    String repository_id();
 }

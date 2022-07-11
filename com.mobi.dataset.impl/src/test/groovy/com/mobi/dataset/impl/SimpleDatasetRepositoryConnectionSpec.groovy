@@ -23,18 +23,16 @@
 package com.mobi.dataset.impl
 
 import com.mobi.dataset.ontology.dataset.Dataset
-import com.mobi.persistence.utils.QueryResults
-import com.mobi.persistence.utils.RepositoryResults
-import com.mobi.query.api.OperationDatasetFactory
-import com.mobi.rdf.api.Resource
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
-import com.mobi.rdf.core.utils.Values
-import com.mobi.repository.api.Repository
-import com.mobi.repository.api.RepositoryConnection
+import com.mobi.repository.api.OsgiRepository
 import com.mobi.repository.api.RepositoryManager
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper
-import com.mobi.repository.impl.sesame.query.SesameOperationDataset
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper
+import org.eclipse.rdf4j.model.IRI
+import org.eclipse.rdf4j.model.Resource
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.query.QueryLanguage
+import org.eclipse.rdf4j.query.QueryResults
+import org.eclipse.rdf4j.repository.RepositoryConnection
 import org.eclipse.rdf4j.repository.sail.SailRepository
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
@@ -50,12 +48,11 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     vf = SimpleValueFactory.getInstance()
 
     // Mocks
-    def operationDatasetFactory = Mock(OperationDatasetFactory)
     def repoManager = Mock(RepositoryManager)
 
     // Objects
-    Repository systemRepo
-    Repository testRepo
+    OsgiRepository systemRepo
+    OsgiRepository testRepo
     RepositoryConnection systemConn
     RepositoryConnection testConn
     def repos = [ : ]
@@ -78,24 +75,23 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
     def setup() {
         // Setup repos
-        systemRepo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()))
-        systemRepo.initialize()
+        systemRepo = new MemoryRepositoryWrapper()
+        systemRepo.setDelegate(new SailRepository(new MemoryStore()))
         systemConn = systemRepo.getConnection()
-        testRepo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()))
-        testRepo.initialize()
+        testRepo = new MemoryRepositoryWrapper()
+        testRepo.setDelegate(new SailRepository(new MemoryStore()))
         testConn = testRepo.getConnection()
 
         repos << [ "system": systemRepo ]
         repos << [ "test": testRepo ]
 
         // Load test data
-        systemConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
-        testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        systemConn.add(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
+        testConn.add(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG))
 
         // Setup mocks
         repoManager.getRepository("system") >> systemRepo
         repoManager.getRepository("test") >> testRepo
-        operationDatasetFactory.createOperationDataset() >>> [new SesameOperationDataset(), new SesameOperationDataset()]
     }
 
     def cleanup() {
@@ -109,7 +105,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         setup:
         def datasetIRI = datasetsInFile[1]
         def repo = "system"
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetIRI, repo, vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetIRI, repo, vf)
 
         expect:
         conn.getDataset() == datasetIRI
@@ -119,7 +115,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         setup:
         def datasetIRI = datasetsInFile[1]
         def repo = "system"
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetIRI, repo, vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetIRI, repo, vf)
 
         expect:
         conn.getRepositoryId() == repo
@@ -133,7 +129,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def stmt = vf.createStatement(s, p, o)
         def dataset = datasetsInFile[1]
         def sdng = vf.createIRI("http://mobi.com/dataset/test1_system_dng")
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.add(stmt)
@@ -154,7 +150,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def stmt = vf.createStatement(s, p, o, c)
         def dataset = datasetsInFile[1]
         def sdng = vf.createIRI("http://mobi.com/dataset/test1_system_dng")
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.add(stmt)
@@ -175,7 +171,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def c = vf.createIRI("http://mobi.com/dataset/test2/graph2")
         def stmt = vf.createStatement(s, p, o, c)
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.add(stmt)
@@ -193,7 +189,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def dataset = datasetsInFile[1]
         def stmt = vf.createStatement(s, p, o, dataset)
         def sdng = vf.createIRI("http://mobi.com/dataset/test1_system_dng")
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def originalSize = systemConn.size(dataset)
 
         when:
@@ -216,7 +212,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def stmt = vf.createStatement(s, p, o, c)
         def graph = vf.createIRI("urn:c")
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.add(stmt, graph)
@@ -235,7 +231,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def c = vf.createIRI("http://mobi.com/dataset/test2/graph2")
         def stmt = vf.createStatement(s, p, o, c)
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def originalSize = systemConn.size(dataset)
 
         when:
@@ -258,7 +254,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def stmt = vf.createStatement(s, p, o, c)
         def graphs = [ vf.createIRI("urn:c"), vf.createIRI("urn:c2") ] as Resource[]
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.add(stmt, graphs)
@@ -277,7 +273,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def p = vf.createIRI("urn:p")
         def o = vf.createLiteral("object")
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def originalSize = systemConn.size(dataset)
 
         when:
@@ -297,7 +293,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def o = vf.createLiteral("object")
         def graphs = [ vf.createIRI("urn:c"), vf.createIRI("urn:c2") ] as Resource[]
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.add(s, p, o, graphs)
@@ -317,13 +313,13 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def s2 = vf.createIRI("urn:s2")
         def p2 = vf.createIRI("urn:p2")
         def o2 = vf.createLiteral("object2")
-        def model1 = LinkedHashModelFactory.getInstance().createModel()
+        def model1 = new DynamicModelFactory().createEmptyModel()
         def sdng = vf.createIRI("http://mobi.com/dataset/test1_system_dng")
         model1.add(s, p, o)
         model1.add(s2, p2, o2)
 
         def dataset = datasetsInFile[1]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def originalSize = systemConn.size(dataset)
 
         when:
@@ -353,8 +349,8 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def s3 = vf.createIRI("urn:s3")
         def p3 = vf.createIRI("urn:p3")
         def o3 = vf.createLiteral("object3")
-        def model1 = LinkedHashModelFactory.getInstance().createModel()
-        def model2 = LinkedHashModelFactory.getInstance().createModel()
+        def model1 = new DynamicModelFactory().createEmptyModel()
+        def model2 = new DynamicModelFactory().createEmptyModel()
         model1.add(s, p, o)
         model1.add(s2, p2, o2, c2)
         model2.add(s3, p3, o3)
@@ -363,7 +359,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def sdng = vf.createIRI("http://mobi.com/dataset/test1_system_dng")
         def graphs = [ vf.createIRI("urn:graph1"), vf.createIRI("urn:graph2") ] as Resource[]
         def dataset = datasetsInFile[1]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.add(model1)
@@ -398,7 +394,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def p = vf.createIRI("urn:p")
         def o = vf.createLiteral("object")
         def stmt = vf.createStatement(s, p, o)
-        def conn = Spy(SimpleDatasetRepositoryConnection, constructorArgs: [systemConn, datasetsInFile[1], "system", vf, operationDatasetFactory])
+        def conn = Spy(SimpleDatasetRepositoryConnection, constructorArgs: [systemConn, datasetsInFile[1], "system", vf])
         conn.begin()
 
         when:
@@ -417,9 +413,9 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def p = vf.createIRI("urn:p")
         def o = vf.createLiteral("object")
         def stmt = vf.createStatement(s, p, o)
-        def model = LinkedHashModelFactory.getInstance().createModel()
+        def model = new DynamicModelFactory().createEmptyModel()
         model.add(stmt)
-        def conn = Spy(SimpleDatasetRepositoryConnection, constructorArgs: [systemConn, datasetsInFile[1], "system", vf, operationDatasetFactory])
+        def conn = Spy(SimpleDatasetRepositoryConnection, constructorArgs: [systemConn, datasetsInFile[1], "system", vf])
         conn.begin()
 
         when:
@@ -438,7 +434,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def p = vf.createIRI("urn:p")
         def o = vf.createLiteral("object")
         def stmt = vf.createStatement(s, p, o)
-        def conn = Spy(SimpleDatasetRepositoryConnection, constructorArgs: [systemConn, datasetsInFile[1], "system", vf, operationDatasetFactory])
+        def conn = Spy(SimpleDatasetRepositoryConnection, constructorArgs: [systemConn, datasetsInFile[1], "system", vf])
 
         when:
         conn.add(stmt)
@@ -455,9 +451,9 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def p = vf.createIRI("urn:p")
         def o = vf.createLiteral("object")
         def stmt = vf.createStatement(s, p, o)
-        def model = LinkedHashModelFactory.getInstance().createModel()
+        def model = new DynamicModelFactory().createEmptyModel()
         model.add(stmt)
-        def conn = Spy(SimpleDatasetRepositoryConnection, constructorArgs: [systemConn, datasetsInFile[1], "system", vf, operationDatasetFactory])
+        def conn = Spy(SimpleDatasetRepositoryConnection, constructorArgs: [systemConn, datasetsInFile[1], "system", vf])
 
         when:
         conn.add(model)
@@ -476,7 +472,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def stmt = vf.createStatement(s, p, o)
         def dataset = datasetsInFile[1]
         def sdng = vf.createIRI("http://mobi.com/dataset/test1_system_dng")
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.addDefault(stmt)
@@ -497,7 +493,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def stmt = vf.createStatement(s, p, o, c)
         def dataset = datasetsInFile[1]
         def sdng = vf.createIRI("http://mobi.com/dataset/test1_system_dng")
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.addDefault(stmt)
@@ -517,7 +513,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def o = vf.createLiteral("object")
         def graphs = [ vf.createIRI("urn:c"), vf.createIRI("urn:c2") ] as Resource[]
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.addDefault(s, p, o, graphs)
@@ -541,8 +537,8 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def s3 = vf.createIRI("urn:s3")
         def p3 = vf.createIRI("urn:p3")
         def o3 = vf.createLiteral("object3")
-        def model1 = LinkedHashModelFactory.getInstance().createModel()
-        def model2 = LinkedHashModelFactory.getInstance().createModel()
+        def model1 = new DynamicModelFactory().createEmptyModel()
+        def model2 = new DynamicModelFactory().createEmptyModel()
         model1.add(s, p, o)
         model1.add(s2, p2, o2, c2)
         model2.add(s3, p3, o3)
@@ -551,7 +547,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def sdng = vf.createIRI("http://mobi.com/dataset/test1_system_dng")
         def graphs = [ vf.createIRI("urn:graph1"), vf.createIRI("urn:graph2") ] as Resource[]
         def dataset = datasetsInFile[1]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.addDefault(model1)
@@ -588,7 +584,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def stmt = vf.createStatement(s, p, o)
         def dataset = datasetsInFile[2]
         def sdng = vf.createIRI("http://mobi.com/dataset/test2_system_dng")
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.remove(stmt)
@@ -606,7 +602,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def c = vf.createIRI("http://mobi.com/dataset/test2/graph1")
         def stmt = vf.createStatement(s, p, o, c)
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.remove(stmt)
@@ -623,7 +619,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def o = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
         def c = vf.createIRI("http://mobi.com/dataset/test3/graph1")
         def stmt = vf.createStatement(s, p, o, c)
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[2], "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[2], "system", vf)
 
         when:
         conn.remove(stmt)
@@ -637,10 +633,10 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         setup:
         def graphs = [ vf.createIRI("http://mobi.com/dataset/test2/graph1"), vf.createIRI("urn:c2"), vf.createIRI("http://mobi.com/dataset/test3/graph1") ] as Resource[]
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
-        conn.remove(s, p, o, graphs)
+        conn.remove(s, p as IRI, o, graphs)
 
         then:
         systemConn.size(graphs[0]) == 0
@@ -663,10 +659,10 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     def "remove(s, p, o) will remove the necessary graph data"() {
         setup:
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
-        conn.remove(s, p, o)
+        conn.remove(s, p as IRI, o)
 
         then:
         systemConn.size(vf.createIRI("http://mobi.com/dataset/test2_system_dng")) == 0
@@ -705,8 +701,8 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def c3 = vf.createIRI("http://mobi.com/dataset/test2/graph3")
         def sdng = vf.createIRI("http://mobi.com/dataset/test2_system_dng")
 
-        def model1 = LinkedHashModelFactory.getInstance().createModel()
-        def model2 = LinkedHashModelFactory.getInstance().createModel()
+        def model1 = new DynamicModelFactory().createEmptyModel()
+        def model2 = new DynamicModelFactory().createEmptyModel()
         model1.add(s1, p1, o1)
         model1.add(s2, p2, o2, c2)
         model2.add(s3, p3, o3)
@@ -714,7 +710,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
         def graphs = [ c3, vf.createIRI("urn:graph2") ] as Resource[]
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.remove(model1)
@@ -733,7 +729,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     }
 
     def "begin starts a transaction"() {
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[1], "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[1], "system", vf)
         conn.begin()
 
         expect:
@@ -745,7 +741,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     }
 
     def "commit ends a transaction"() {
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[1], "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[1], "system", vf)
         conn.begin()
         conn.commit()
 
@@ -755,7 +751,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
     def "size() returns #message"() {
         setup:
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[dataset], "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[dataset], "system", vf)
 
         expect:
         conn.size() == size
@@ -769,7 +765,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
     def "size() returns the correct size when the dataset is not in the system repo"() {
         setup:
-        def conn = new SimpleDatasetRepositoryConnection(testConn, datasetsInFile[5], "test", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(testConn, datasetsInFile[5], "test", vf)
 
         expect:
         conn.size() == 3
@@ -777,7 +773,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
     def "#message"() {
         setup:
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[dataset], "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[dataset], "system", vf)
 
         expect:
         conn.size(graphs as Resource[]) == size
@@ -801,7 +797,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
     def "getSystemDefaultNamedGraph returns the correct resource"() {
         setup:
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[1], "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[1], "system", vf)
 
         expect:
         conn.getSystemDefaultNamedGraph() == vf.createIRI("http://mobi.com/dataset/test1_system_dng")
@@ -809,31 +805,31 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
     def "getNamedGraphs returns the correct set of resources"() {
         setup:
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[2], "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[2], "system", vf)
         def expectedGraphs = [
                 vf.createIRI("http://mobi.com/dataset/test2/graph2"),
                 vf.createIRI("http://mobi.com/dataset/test2/graph3")
         ]
 
         expect:
-        RepositoryResults.asList(conn.getNamedGraphs()).sort() == expectedGraphs.sort()
+        QueryResults.asList(conn.getNamedGraphs()).sort() == expectedGraphs.sort()
     }
 
     def "getDefaultNamedGraphs returns the correct set of resources"() {
         setup:
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[2], "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetsInFile[2], "system", vf)
         def expectedGraphs = [
                 vf.createIRI("http://mobi.com/dataset/test2/graph1")
         ]
 
         expect:
-        RepositoryResults.asList(conn.getDefaultNamedGraphs()) == expectedGraphs
+        QueryResults.asList(conn.getDefaultNamedGraphs()) == expectedGraphs
     }
 
     def "clear() removes all graphs and graph links"() {
         setup:
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.clear()
@@ -856,7 +852,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def graph3 = vf.createIRI("http://mobi.com/dataset/test2/graph3")
         def sdng = vf.createIRI("http://mobi.com/dataset/test2_system_dng")
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.clear(graph1)
@@ -880,7 +876,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def graph3 = vf.createIRI("http://mobi.com/dataset/test2/graph3")
         def sdng = vf.createIRI("http://mobi.com/dataset/test2_system_dng")
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.clear(graph1, graph2)
@@ -901,7 +897,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         setup:
         def graph = vf.createIRI("http://mobi.com/dataset/test3/graph1")
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.clear(graph)
@@ -915,7 +911,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         setup:
         def sdng = vf.createIRI("http://mobi.com/dataset/test2_system_dng")
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.clear(sdng)
@@ -929,7 +925,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         setup:
         def graph = vf.createIRI("http://mobi.com/dataset/test3/graph1")
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.addNamedGraph(graph)
@@ -943,7 +939,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         setup:
         def graph = vf.createIRI("urn:test")
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.addNamedGraph(graph)
@@ -957,7 +953,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         setup:
         def graph = vf.createIRI("http://mobi.com/dataset/test3/graph1")
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.addDefaultNamedGraph(graph)
@@ -971,7 +967,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         setup:
         def graph = vf.createIRI("urn:test")
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.addDefaultNamedGraph(graph)
@@ -985,7 +981,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         setup:
         def graph = vf.createIRI("http://mobi.com/dataset/test2/graph1")
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.removeGraph(graph)
@@ -999,7 +995,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         setup:
         def graph = vf.createIRI("urn:test")
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.removeGraph(graph)
@@ -1013,7 +1009,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         setup:
         def graph = vf.createIRI("http://mobi.com/dataset/test2_system_dng")
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
         when:
         conn.removeGraph(graph)
@@ -1026,7 +1022,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     def "getStatements(null, null, null) correctly returns all triples in the datset"() {
         setup:
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def graphs = [
                 vf.createIRI("http://mobi.com/dataset/test2/graph1"),
                 vf.createIRI("http://mobi.com/dataset/test2/graph2"),
@@ -1038,13 +1034,13 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def results = conn.getStatements(null, null, null)
 
         then:
-        RepositoryResults.asList(results) == RepositoryResults.asList(systemConn.getStatements(null, null, null, graphs))
+        QueryResults.asList(results) == QueryResults.asList(systemConn.getStatements(null, null, null, graphs))
     }
 
     def "getStatements(s, null, null) correctly returns that subject in the datset"() {
         setup:
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def filter = vf.createIRI("http://mobi.com/dataset/test2/graph1")
         def graphs = [
                 vf.createIRI("http://mobi.com/dataset/test2/graph1"),
@@ -1054,17 +1050,17 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         ] as Resource[]
 
         when:
-        def results = RepositoryResults.asList(conn.getStatements(filter, null, null))
+        def results = QueryResults.asList(conn.getStatements(filter, null, null))
 
         then:
         results.size() == 1
-        results == RepositoryResults.asList(systemConn.getStatements(filter, null, null, graphs))
+        results == QueryResults.asList(systemConn.getStatements(filter, null, null, graphs))
     }
 
     def "getStatements(null, p, null) correctly returns that predicate in the datset"() {
         setup:
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def filter = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI)
         def graphs = [
                 vf.createIRI("http://mobi.com/dataset/test2/graph1"),
@@ -1074,17 +1070,17 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         ] as Resource[]
 
         when:
-        def results = RepositoryResults.asList(conn.getStatements(null, filter, null))
+        def results = QueryResults.asList(conn.getStatements(null, filter, null))
 
         then:
         results.size() == 4
-        results == RepositoryResults.asList(systemConn.getStatements(null, filter, null, graphs))
+        results == QueryResults.asList(systemConn.getStatements(null, filter, null, graphs))
     }
 
     def "getStatements(null, null, o) correctly returns that object in the datset"() {
         setup:
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def filter = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
         def graphs = [
                 vf.createIRI("http://mobi.com/dataset/test2/graph1"),
@@ -1094,17 +1090,17 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         ] as Resource[]
 
         when:
-        def results = RepositoryResults.asList(conn.getStatements(null, null, filter))
+        def results = QueryResults.asList(conn.getStatements(null, null, filter))
 
         then:
         results.size() == 4
-        results == RepositoryResults.asList(systemConn.getStatements(null, null, filter, graphs))
+        results == QueryResults.asList(systemConn.getStatements(null, null, filter, graphs))
     }
 
     def "getStatements(null, null, null, graphs) correctly returns those graphs in the datset"() {
         setup:
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def graphs = [
                 vf.createIRI("http://mobi.com/dataset/test2/graph1"),
                 vf.createIRI("http://mobi.com/dataset/test2/graph2"),
@@ -1112,17 +1108,17 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         ] as Resource[]
 
         when:
-        def results = RepositoryResults.asList(conn.getStatements(null, null, null, graphs))
+        def results = QueryResults.asList(conn.getStatements(null, null, null, graphs))
 
         then:
         results.size() == 3
-        results == RepositoryResults.asList(systemConn.getStatements(null, null, null, graphs))
+        results == QueryResults.asList(systemConn.getStatements(null, null, null, graphs))
     }
 
     def "getContextIDs() correctly returns the graphs in the datset"() {
         setup:
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def graphs = [
                 vf.createIRI("http://mobi.com/dataset/test2/graph1"),
                 vf.createIRI("http://mobi.com/dataset/test2/graph2"),
@@ -1131,7 +1127,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         ]
 
         when:
-        def results = RepositoryResults.asList(conn.getContextIDs())
+        def results = QueryResults.asList(conn.getContextIDs())
 
         then:
         results.size() == 4
@@ -1141,7 +1137,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     def "prepareTupleQuery(query) #msg"() {
         setup:
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def queryString = query
         def tupleQuery = conn.prepareTupleQuery(queryString)
 
@@ -1164,7 +1160,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     def "prepareTupleQuery(query, contexts...) #msg"() {
         setup:
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def queryString = query
         def Resource[] contextArr = contexts as Resource[]
         def tupleQuery = conn.prepareTupleQuery(queryString, contextArr)
@@ -1192,9 +1188,9 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     def "prepareTupleQuery(query, baseUri) works"() {
         setup:
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def queryString = "SELECT * WHERE { ?s ?p ?o }"
-        def tupleQuery = conn.prepareTupleQuery(queryString, "urn:test")
+        def tupleQuery = conn.prepareTupleQuery(QueryLanguage.SPARQL, queryString, "urn:test")
 
         when:
         def results = tupleQuery.evaluate()
@@ -1206,7 +1202,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     def "prepareGraphQuery(query) #msg"() {
         setup:
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def queryString = query
         def graphQuery = conn.prepareGraphQuery(queryString)
 
@@ -1232,7 +1228,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     def "prepareGraphQuery(query, contexts...) #msg"() {
         setup:
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def queryString = query
         def contextArr = contexts as Resource[]
         def graphQuery = conn.prepareGraphQuery(queryString, contextArr)
@@ -1260,9 +1256,9 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
     def "prepareGraphQuery(query, baseUri) works"() {
         setup:
         def dataset = datasetsInFile[2]
-        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf, operationDatasetFactory)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def queryString = "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"
-        def graphQuery = conn.prepareGraphQuery(queryString, "urn:test")
+        def graphQuery = conn.prepareGraphQuery(QueryLanguage.SPARQL, queryString, "urn:test")
 
         when:
         def results = graphQuery.evaluate()

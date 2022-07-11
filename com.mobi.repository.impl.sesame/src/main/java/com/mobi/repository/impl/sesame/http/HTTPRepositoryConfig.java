@@ -23,20 +23,37 @@ package com.mobi.repository.impl.sesame.http;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
-import com.mobi.repository.config.RepositoryConfig;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 /**
  * Configuration for Repository objects accessed through an HTTP endpoint. The instance must be
  * initialized prior to using it.
  */
-public interface HTTPRepositoryConfig extends RepositoryConfig {
+@ObjectClassDefinition(name = "HTTPRepositoryConfig", description = "Configuration for an HTTP Repository")
+public @interface HTTPRepositoryConfig {
+
+    /**
+     * The Repository ID.
+     *
+     * @return String representing the Repository ID.
+     */
+    @AttributeDefinition(name = "id", description = "The ID of the Repository")
+    String id();
+
+    /**
+     * The Repository Title.
+     *
+     * @return String representing the Repository Title.
+     */
+    @AttributeDefinition(name = "title", description = "The Title of the Repository")
+    String title();
 
     /**
      * The HTTP server URL.
      *
      * @return String representing the HTTP server URL.
      */
-    @Meta.AD
+    @AttributeDefinition(name = "serverUrl", description = "The URL of the HTTP Server")
     String serverUrl();
 }

@@ -42,27 +42,27 @@ import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -72,11 +72,16 @@ import java.io.BufferedWriter;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -86,24 +91,23 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-@Component(service = MappingRest.class, immediate = true)
+@Component(service = MappingRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/mappings")
 public class MappingRest {
 
     private final Logger logger = LoggerFactory.getLogger(MappingRest.class);
 
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
+
     private MappingManager manager;
     private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
-    private ValueFactory vf;
     private EngineManager engineManager;
-    private SesameTransformer transformer;
 
     @Reference
     void setManager(MappingManager manager) {
@@ -121,32 +125,15 @@ public class MappingRest {
     }
 
     @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    @Reference
     void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
     }
-
-    @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
-
 
     /**
      * Uploads a mapping sent as form data or a JSON-LD string into a data store with a UUID local name and creates
      * a new MappingRecord in the catalog.
      *
-     * @param title Required title for the new MappingRecord
-     * @param description Optional description for the new MappingRecord
-     * @param markdown Optional markdown abstract for the new MappingRecord.
-     * @param keywords Optional list of keywords strings for the new MappingRecord
-     * @param fileInputStream InputStream of a mapping file passed as form data
-     * @param fileDetail Information about the file being uploaded, including the name
-     * @param jsonld Mapping serialized as JSON-LD
+     * @param servletRequest The HttpServletRequest
      * @return Response with the MappingRecord Resource ID
      */
     @POST
@@ -160,40 +147,39 @@ public class MappingRest {
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            },
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
+                                    schema = @Schema(implementation = MappingFileUpload.class)
+                            )
+                    }
+            )
     )
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = MappingRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
-    public Response upload(
-            @Context ContainerRequestContext context,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Required title for the new MappingRecord", required = true))
-            @FormDataParam("title") String title,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Optional description for the new MappingRecord"))
-            @FormDataParam("description") String description,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Optional markdown abstract for the new MappingRecord"))
-            @FormDataParam("markdown") String markdown,
-            @Parameter(array = @ArraySchema(
-                    arraySchema = @Schema(description =
-                            "Optional list of keywords strings for the new MappingRecord"),
-                    schema = @Schema(implementation = String.class, description = "keyword")))
-            @FormDataParam("keywords") List<FormDataBodyPart> keywords,
-            @Parameter(schema = @Schema(type = "string", format="binary",
-                    description = "InputStream of a mapping file passed as form data", required = true))
-            @FormDataParam("file") InputStream fileInputStream,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Information about the file being uploaded, including the name"), hidden = true)
-            @FormDataParam("file") FormDataContentDisposition fileDetail,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Mapping serialized as JSON-LD", required = true))
-            @FormDataParam("jsonld") String jsonld) {
-        if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
+    public Response upload(@Context HttpServletRequest servletRequest) {
+        Map<String, List<Class>> fields = new HashMap<>();
+        fields.put("title", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("description", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("jsonld", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("markdown", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("keywords", Stream.of(Set.class, String.class).collect(Collectors.toList()));
+
+        Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);
+        String title = (String) formData.get("title");
+        String description = (String) formData.get("description");
+        String jsonld = (String) formData.get("jsonld");
+        String markdown = (String) formData.get("markdown");
+        Set<String> keywords = (Set<String>) formData.get("keywords");
+        InputStream inputStream = (InputStream) formData.get("stream");
+        String filename = (String) formData.get("filename");
+
+        if ((inputStream == null && jsonld == null) || (inputStream != null && jsonld != null)) {
             throw ErrorUtils.sendError("Must provide either a file or a JSON-LD string", Response.Status.BAD_REQUEST);
         }
         checkStringParam(title, "Title is required");
-        User user = getActiveUser(context, engineManager);
+        User user = getActiveUser(servletRequest, engineManager);
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         RecordOperationConfig config = new OperationConfig();
@@ -208,19 +194,17 @@ public class MappingRest {
             config.set(RecordCreateSettings.RECORD_DESCRIPTION, description);
         }
         if (keywords != null && keywords.size() > 0) {
-            config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords.stream()
-                    .map(FormDataBodyPart::getValue)
-                    .collect(Collectors.toSet()));
+            config.set(RecordCreateSettings.RECORD_KEYWORDS, new HashSet<>(keywords));
         }
         MappingRecord record;
         try {
-            if (fileInputStream != null) {
-                RDFFormat format = Rio.getParserFormatForFileName(fileDetail.getFileName()).orElseThrow(() ->
+            if (inputStream != null) {
+                RDFFormat format = Rio.getParserFormatForFileName(filename).orElseThrow(() ->
                         new IllegalArgumentException("File is not in a valid RDF format"));
-                config.set(MappingRecordCreateSettings.INPUT_STREAM, fileInputStream);
+                config.set(MappingRecordCreateSettings.INPUT_STREAM, inputStream);
                 config.set(MappingRecordCreateSettings.RDF_FORMAT, format);
             } else {
-                config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonldToModel(jsonld, transformer));
+                config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonldToModel(jsonld));
             }
             record = catalogManager.createRecord(user, config, MappingRecord.class);
             return Response.status(201).entity(record.getResource().stringValue()).build();
@@ -229,6 +213,31 @@ public class MappingRest {
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Class used for OpenAPI documentation for file upload endpoint.
+     */
+    private class MappingFileUpload {
+        @Schema(type = "string", format = "binary", description = "Mapping file to upload.")
+        public String file;
+
+        @Schema(type = "string", description = "Mapping serialized as JSON-LD", required = true)
+        public String jsonld;
+
+        @Schema(type = "string", description = "Required title for the new MappingRecord", required = true)
+        public String title;
+
+        @Schema(type = "string", description = "Optional description for the new MappingRecord")
+        public String description;
+
+        @Schema(type = "string", description = "Optional markdown abstract for the new MappingRecord")
+        public String markdown;
+
+        @ArraySchema(arraySchema = @Schema(description = "Optional list of keywords strings for the new MappingRecord"),
+                schema = @Schema(implementation = String.class, description = "keyword")
+        )
+        public List<String> keywords;
     }
 
     /**
@@ -259,7 +268,7 @@ public class MappingRest {
             logger.info("Getting mapping " + recordId);
             MappingWrapper mapping = manager.retrieveMapping(vf.createIRI(recordId)).orElseThrow(() ->
                     ErrorUtils.sendError("Mapping not found", Response.Status.NOT_FOUND));
-            String mappingJsonld = groupedModelToString(mapping.getModel(), getRDFFormat("jsonld"), transformer);
+            String mappingJsonld = groupedModelToString(mapping.getModel(), getRDFFormat("jsonld"));
             return Response.ok(mappingJsonld).build();
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
@@ -300,7 +309,7 @@ public class MappingRest {
             MappingWrapper mapping = manager.retrieveMapping(vf.createIRI(recordId)).orElseThrow(() ->
                     ErrorUtils.sendError("Mapping not found", Response.Status.NOT_FOUND));
             RDFFormat rdfFormat = getRDFFormat(format);
-            String mappingJsonld = groupedModelToString(mapping.getModel(), rdfFormat, transformer);
+            String mappingJsonld = groupedModelToString(mapping.getModel(), rdfFormat);
             StreamingOutput stream = os -> {
                 Writer writer = new BufferedWriter(new OutputStreamWriter(os));
                 writer.write(mappingJsonld);
@@ -322,6 +331,7 @@ public class MappingRest {
     /**
      * Deletes an uploaded mapping from the data store.
      *
+     * @param servletRequest The HttpServletRequest
      * @param recordId the id of an uploaded mapping
      * @return Response indicating the success or failure of the request
      */
@@ -341,11 +351,11 @@ public class MappingRest {
     @ActionId(Delete.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteMapping(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "ID of an uploaded mapping", required = true)
             @PathParam("recordId") String recordId) {
         try {
-            catalogManager.deleteRecord(getActiveUser(context, engineManager), vf.createIRI(recordId),
+            catalogManager.deleteRecord(getActiveUser(servletRequest, engineManager), vf.createIRI(recordId),
                     MappingRecord.class);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);

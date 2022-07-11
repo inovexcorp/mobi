@@ -27,102 +27,107 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
+import com.mobi.persistence.utils.ConnectionUtils;
+import com.mobi.platform.config.api.application.ApplicationConfig;
 import com.mobi.platform.config.api.ontologies.platformconfig.Application;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 public class SimpleApplicationWrapperTest extends OrmEnabledTestCase {
+    private AutoCloseable closeable;
     private SimpleApplicationWrapper wrapper;
-    private Repository repo;
+    private MemoryRepositoryWrapper repo;
+
+    @Mock
+    private ApplicationConfig config;
 
     private String namespace = "http://mobi.com/applications#";
 
     @Before
     public void setUp() throws Exception {
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        closeable = MockitoAnnotations.openMocks(this);
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
 
         wrapper = new SimpleApplicationWrapper();
         injectOrmFactoryReferencesIntoService(wrapper);
-        wrapper.setRepository(repo);
-        wrapper.setFactory(VALUE_FACTORY);
-        wrapper.setModelFactory(MODEL_FACTORY);
+        wrapper.repository = repo;
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test
     public void validateConfigTest() throws Exception {
         // Setup:
-        Map<String, Object> props = new HashMap<>();
-        props.put("id", "id");
-        props.put("title", "Title");
+        when(config.id()).thenReturn("id");
+        when(config.title()).thenReturn("Title");
 
-        wrapper.validateConfig(props);
+        wrapper.validateConfig(config);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void validateConfigWithNoTitle() {
         // Setup:
-        Map<String, Object> props = new HashMap<>();
-        props.put("id", "id");
-        props.put("title", "");
+        when(config.id()).thenReturn("id");
+        when(config.title()).thenReturn("");
 
-        wrapper.validateConfig(props);
+        wrapper.validateConfig(config);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void validateConfigWithInvalidId() {
         // Setup:
-        Map<String, Object> props = new HashMap<>();
-        props.put("id", "$@ ^");
-        props.put("title", "Title");
+        when(config.id()).thenReturn("$@ ^");
+        when(config.title()).thenReturn("Title");
 
-        wrapper.validateConfig(props);
+        wrapper.validateConfig(config);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void validateConfigWithNoId() {
         // Setup:
-        Map<String, Object> props = new HashMap<>();
-        props.put("id", "");
-        props.put("title", "Title");
+        when(config.id()).thenReturn("");
+        when(config.title()).thenReturn("Title");
 
-        wrapper.validateConfig(props);
+        wrapper.validateConfig(config);
     }
 
     @Test
     public void startTest() throws Exception {
         // Setup:
-        Map<String, Object> props = new HashMap<>();
-        props.put("id", "id");
-        props.put("title", "Title");
-        props.put("description", "Description");
+        when(config.id()).thenReturn("id");
+        when(config.title()).thenReturn("Title");
+        when(config.description()).thenReturn("Description");
 
-        wrapper.start(props);
-        assertEquals(props.get("id").toString(), wrapper.applicationId);
+        wrapper.start(config);
+        assertEquals(config.id(), wrapper.applicationId);
         RepositoryConnection conn = repo.getConnection();
-        Model appModel = MODEL_FACTORY.createModel();
-        Resource appIri = VALUE_FACTORY.createIRI(namespace + props.get("id"));
+        Model appModel = MODEL_FACTORY.createEmptyModel();
+        Resource appIri = VALUE_FACTORY.createIRI(namespace + config.id());
         conn.getStatements(appIri, null, null).forEach(appModel::add);
         assertFalse(appModel.isEmpty());
         assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE)));
         assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()),
-                VALUE_FACTORY.createLiteral(props.get("title").toString())));
+                VALUE_FACTORY.createLiteral(config.title())));
         assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(DCTERMS.DESCRIPTION.stringValue()),
-                VALUE_FACTORY.createLiteral(props.get("description").toString())));
+                VALUE_FACTORY.createLiteral(config.description())));
         conn.close();
     }
 
@@ -134,7 +139,7 @@ public class SimpleApplicationWrapperTest extends OrmEnabledTestCase {
         conn.add(VALUE_FACTORY.createIRI(namespace + "id"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE));
 
         wrapper.stop();
-        assertFalse(conn.contains(VALUE_FACTORY.createIRI(namespace + "id"), null, null));
+        assertFalse(ConnectionUtils.contains(conn, VALUE_FACTORY.createIRI(namespace + "id"), null, null));
         conn.close();
     }
 
@@ -144,23 +149,22 @@ public class SimpleApplicationWrapperTest extends OrmEnabledTestCase {
         wrapper.applicationId = "id";
         RepositoryConnection conn = repo.getConnection();
         conn.add(VALUE_FACTORY.createIRI(namespace + "id"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE));
-        Map<String, Object> props = new HashMap<>();
-        props.put("id", "new");
-        props.put("title", "Title");
-        props.put("description", "Description");
+        when(config.id()).thenReturn("new");
+        when(config.title()).thenReturn("Title");
+        when(config.description()).thenReturn("Description");
 
-        wrapper.modified(props);
-        assertFalse(conn.contains(VALUE_FACTORY.createIRI(namespace + "id"), null, null));
-        assertEquals(props.get("id").toString(), wrapper.applicationId);
-        Resource appIri = VALUE_FACTORY.createIRI(namespace + props.get("id"));
-        Model appModel = MODEL_FACTORY.createModel();
+        wrapper.modified(config);
+        assertFalse(ConnectionUtils.contains(conn, VALUE_FACTORY.createIRI(namespace + "id"), null, null));
+        assertEquals(config.id(), wrapper.applicationId);
+        Resource appIri = VALUE_FACTORY.createIRI(namespace + config.id());
+        Model appModel = MODEL_FACTORY.createEmptyModel();
         conn.getStatements(appIri, null, null).forEach(appModel::add);
         assertFalse(appModel.isEmpty());
         assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE)));
         assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()),
-                VALUE_FACTORY.createLiteral(props.get("title").toString())));
+                VALUE_FACTORY.createLiteral(config.title().toString())));
         assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(DCTERMS.DESCRIPTION.stringValue()),
-                VALUE_FACTORY.createLiteral(props.get("description").toString())));
+                VALUE_FACTORY.createLiteral(config.description())));
         conn.close();
     }
 

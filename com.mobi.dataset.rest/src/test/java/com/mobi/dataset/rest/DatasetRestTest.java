@@ -27,8 +27,11 @@ import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -36,9 +39,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
@@ -61,34 +61,29 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.repository.exception.RepositoryException;
-import com.mobi.rest.util.MobiRestTestNg;
-import com.mobi.rest.util.UsernameTestFilter;
+import com.mobi.rest.test.util.FormDataMultiPart;
+import com.mobi.rest.test.util.MobiRestTestCXF;
+import com.mobi.rest.test.util.UsernameTestFilter;
 import com.mobi.security.policy.api.PDP;
 import net.sf.json.JSONArray;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -98,16 +93,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-public class DatasetRestTest extends MobiRestTestNg {
-    private DatasetRest rest;
-    private ValueFactory vf;
-    private ModelFactory mf;
+public class DatasetRestTest extends MobiRestTestCXF {
+    private AutoCloseable closeable;
     private OrmFactory<Branch> branchFactory;
     private DatasetRecord record1;
     private DatasetRecord record2;
@@ -124,20 +116,17 @@ public class DatasetRestTest extends MobiRestTestNg {
     private IRI branchIRI;
     private IRI commitIRI;
 
-    @Mock
-    private SesameTransformer transformer;
-
-    @Mock
-    private DatasetManager datasetManager;
-
-    @Mock
-    private EngineManager engineManager;
-
-    @Mock
-    private CatalogManager catalogManager;
-
-    @Mock
-    private CatalogConfigProvider configProvider;
+    // Mock services used in server
+    private static DatasetRest rest;
+    private static ValueFactory vf;
+    private static ModelFactory mf;
+    private static DatasetManager datasetManager;
+    private static EngineManager engineManager;
+    private static CatalogManager catalogManager;
+    private static CatalogConfigProvider configProvider;
+    private static BNodeService service;
+    private static CatalogProvUtils provUtils;
+    private static RDFImportService importService;
 
     @Mock
     private PaginatedSearchResults<DatasetRecord> results;
@@ -145,19 +134,35 @@ public class DatasetRestTest extends MobiRestTestNg {
     @Mock
     private PaginatedSearchResults<Record> recordResults;
 
-    @Mock
-    private BNodeService service;
-
-    @Mock
-    private CatalogProvUtils provUtils;
-
-    @Mock
-    private RDFImportService importService;
-
-    @Override
-    protected Application configureApp() throws Exception {
+    @BeforeClass
+    public static void startServer() {
         vf = getValueFactory();
         mf = getModelFactory();
+
+        datasetManager = Mockito.mock(DatasetManager.class);
+        engineManager = Mockito.mock(EngineManager.class);
+        catalogManager = Mockito.mock(CatalogManager.class);
+        configProvider = Mockito.mock(CatalogConfigProvider.class);
+        service = Mockito.mock(BNodeService.class);
+        provUtils = Mockito.mock(CatalogProvUtils.class);
+        importService = Mockito.mock(RDFImportService.class);
+        PDP pdp = Mockito.mock(PDP.class);
+
+        rest = new DatasetRest();
+        rest.setManager(datasetManager);
+        rest.setEngineManager(engineManager);
+        rest.setConfigProvider(configProvider);
+        rest.setCatalogManager(catalogManager);
+        rest.setBNodeService(service);
+        rest.setProvUtils(provUtils);
+        rest.setImportService(importService);
+        rest.setPdp(pdp);
+
+        configureServer(rest, new UsernameTestFilter());
+    }
+
+    @Before
+    public void setupMocks() throws Exception {
         errorIRI = vf.createIRI("http://example.com/error");
         localIRI = vf.createIRI("http://example.com/catalogs/local");
         ontologyRecordIRI = vf.createIRI("http://example.com/ontologyRecord");
@@ -184,43 +189,11 @@ public class DatasetRestTest extends MobiRestTestNg {
         createActivity = createActivityFactory.createNew(vf.createIRI("http://example.com/activity/create"));
         deleteActivity = deleteActivityFactory.createNew(vf.createIRI("http://example.com/activity/delete"));
 
-        MockitoAnnotations.initMocks(this);
-
+        closeable = MockitoAnnotations.openMocks(this);
         when(configProvider.getLocalCatalogIRI()).thenReturn(localIRI);
+        reset(datasetManager, catalogManager, results, service, provUtils, importService);
 
-        rest = new DatasetRest();
-        rest.setManager(datasetManager);
-        rest.setVf(vf);
-        rest.setMf(mf);
-        rest.setTransformer(transformer);
-        rest.setEngineManager(engineManager);
-        rest.setConfigProvider(configProvider);
-        rest.setCatalogManager(catalogManager);
-        rest.setBNodeService(service);
-        rest.setProvUtils(provUtils);
-        rest.setImportService(importService);
-
-        return new ResourceConfig()
-                .register(rest)
-                .register(UsernameTestFilter.class)
-                .register(MultiPartFeature.class);
-    }
-
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
-    }
-
-    @BeforeMethod
-    public void setupMocks() {
-        reset(datasetManager, catalogManager, transformer, recordResults, results, service, provUtils, importService);
-
-        when(transformer.sesameModel(any(Model.class)))
-                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(transformer.sesameStatement(any(Statement.class)))
-                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-
-        when(service.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
+        when(service.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgument(0, Statement.class));
 
         when(datasetManager.getDatasetRecord(any(Resource.class))).thenReturn(Optional.of(record1));
         when(datasetManager.getDatasetRecords(any(DatasetPaginatedSearchParams.class))).thenReturn(results);
@@ -245,6 +218,11 @@ public class DatasetRestTest extends MobiRestTestNg {
 
         when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     /* GET datasets */
@@ -327,7 +305,7 @@ public class DatasetRestTest extends MobiRestTestNg {
                 .field("keywords", "demo")
                 .field("ontologies", ontologyRecordIRI.stringValue());
 
-        Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
         verify(catalogManager).createRecord(any(User.class), config.capture(), any());
@@ -349,7 +327,7 @@ public class DatasetRestTest extends MobiRestTestNg {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("repositoryId", "system");
 
-        Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(provUtils, times(0)).startCreateActivity(user);
     }
@@ -359,7 +337,7 @@ public class DatasetRestTest extends MobiRestTestNg {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title");
 
-        Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(provUtils, times(0)).startCreateActivity(user);
     }
@@ -371,7 +349,7 @@ public class DatasetRestTest extends MobiRestTestNg {
                 .field("repositoryId", "error");
         when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), any())).thenThrow(new IllegalArgumentException());
 
-        Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -383,7 +361,7 @@ public class DatasetRestTest extends MobiRestTestNg {
                 .field("repositoryId", "system")
                 .field("ontologies", errorIRI.stringValue());
 
-        Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -395,7 +373,7 @@ public class DatasetRestTest extends MobiRestTestNg {
                 .field("repositoryId", "system")
                 .field("ontologies", errorIRI.stringValue());
 
-        Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
 
@@ -408,7 +386,7 @@ public class DatasetRestTest extends MobiRestTestNg {
                 .field("repositoryId", "system")
                 .field("ontologies", ontologyRecordIRI.stringValue());
 
-        Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
 
@@ -419,7 +397,7 @@ public class DatasetRestTest extends MobiRestTestNg {
                 .field("repositoryId", "system");
         when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), any())).thenThrow(new MobiException());
 
-        Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
 
@@ -582,11 +560,10 @@ public class DatasetRestTest extends MobiRestTestNg {
     public void uploadDataTest() throws Exception {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("test.ttl").build(),
-                getClass().getResourceAsStream("/test.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+        fd.bodyPart("file", "test.ttl", getClass().getResourceAsStream("/test.ttl"));
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
     }
@@ -595,11 +572,10 @@ public class DatasetRestTest extends MobiRestTestNg {
     public void uploadDataWithUnsupportedExtensionTest() throws Exception {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("test.txt").build(),
-                getClass().getResourceAsStream("/test.txt"), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+        fd.bodyPart("file", "test.txt", getClass().getResourceAsStream("/test.txt"));
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(importService, times(0)).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
     }
@@ -609,11 +585,10 @@ public class DatasetRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("test.ttl").build(),
-                getClass().getResourceAsStream("/test.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+        fd.bodyPart("file", "test.ttl", getClass().getResourceAsStream("/test.ttl"));
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
     }
@@ -623,11 +598,10 @@ public class DatasetRestTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IOException()).when(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("test.ttl").build(),
-                getClass().getResourceAsStream("/test.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+        fd.bodyPart("file", "test.ttl", getClass().getResourceAsStream("/test.ttl"));
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
         verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
     }

@@ -1,14 +1,14 @@
 plugins {
     id 'java-gradle-plugin'
+    id 'maven-publish'
 }
 
 group 'com.mobi'
 version "${version}"
 apply plugin: 'java'
-apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
-sourceCompatibility = 1.8
+sourceCompatibility = 1.11
 
 repositories {
     mavenCentral()
@@ -22,8 +22,8 @@ repositories {
 }
 
 dependencies {
-    compile "com.mobi:rdf.orm.generate:${version}"
-    compile group: 'org.eclipse.rdf4j', name: 'rdf4j-runtime-osgi', version: '2.2.4'
+    implementation "com.mobi:rdf.orm.generate:${version}"
+    implementation group: 'org.eclipse.rdf4j', name: 'rdf4j-runtime-osgi', version: '3.7.6'
 }
 
 publishing {

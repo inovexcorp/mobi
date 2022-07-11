@@ -23,10 +23,8 @@ package com.mobi.repository.impl.sesame.nativestore;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
-import com.mobi.repository.config.RepositoryConfig;
-
-import java.util.Set;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 /**
  * Configuration for on-disk, indexed Repository objects. It uses B-Trees for indexing statements, where
@@ -41,13 +39,41 @@ import java.util.Set;
  * adjusted and upon the first refresh of the configuration the native store will change its indexing strategy,
  * without loss of data.
  */
-public interface NativeRepositoryConfig extends RepositoryConfig {
+@ObjectClassDefinition(name = "NativeRepositoryConfig", description = "Configuration for a Native Repository")
+public @interface NativeRepositoryConfig {
 
     /**
-     * The triple indexes for the native store. Default value is: "spoc,posc"
+     * The Repository ID.
+     *
+     * @return String representing the Repository ID.
+     */
+    @AttributeDefinition(name = "id", description = "The ID of the Repository")
+    String id();
+
+    /**
+     * The Repository Title.
+     *
+     * @return String representing the Repository Title.
+     */
+    @AttributeDefinition(name = "title", description = "The Title of the Repository")
+    String title();
+
+    /**
+     * The data directory where the repository data is stored. NOTE: This is an optional property as some repositories
+     * do not store data in a single directory.
+     *
+     * @return String representing the directory where the repository data is stored, if applicable.
+     */
+    @AttributeDefinition(name = "dataDir", description = "The directory of the Repository")
+    String dataDir();
+
+    /**
+     * The triple indexes for the native store. Default value is: "spoc,posc".
      *
      * @return The Set of String representing triple indexes.
      */
-    @Meta.AD(required = false)
-    Set<String> tripleIndexes();
+    @AttributeDefinition(required = false, name = "tripleIndexes",
+            description = "The list of indexes for the Repository")
+    String tripleIndexes() default "spoc,posc";
+
 }

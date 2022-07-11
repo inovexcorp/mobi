@@ -23,9 +23,9 @@ package com.mobi.cache.impl.repository;
  * #L%
  */
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -34,34 +34,35 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.ontology.utils.cache.repository.OntologyDatasets;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import org.apache.karaf.scheduler.JobContext;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
-
+    private AutoCloseable closeable;
     private CleanRepositoryCache cleanJob;
-    private Repository repo;
+    private MemoryRepositoryWrapper repo;
     private ValueFactory vf;
     private IRI dataset1;
     private IRI dataset2;
+
+    @Mock
+    private CleanRepositoryCacheConfig config;
 
     @Mock
     private DatasetManager datasetManager;
@@ -76,21 +77,26 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
     public void setUp() {
         vf = getValueFactory();
 
-        MockitoAnnotations.initMocks(this);
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        closeable = MockitoAnnotations.openMocks(this);
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
 
         dataset1 = vf.createIRI("urn:dataset1");
         dataset2 = vf.createIRI("urn:dataset2");
 
+        when(config.expiry()).thenReturn((long) 1800);
         when(repoManager.getRepository("ontologyCache")).thenReturn(Optional.of(repo));
         doNothing().when(datasetManager).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
 
         cleanJob = new CleanRepositoryCache();
-        cleanJob.setDatasetManager(datasetManager);
-        cleanJob.setRepositoryManager(repoManager);
-        cleanJob.setValueFactory(vf);
-        cleanJob.start(new HashMap<>());
+        cleanJob.datasetManager = datasetManager;
+        cleanJob.repositoryManager = repoManager;
+        cleanJob.start(config);
+    }
+
+    @After
+    public void reset() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -151,9 +157,8 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
         verify(datasetManager, never()).safeDeleteDataset(dataset1, "ontologyCache", false);
         verify(datasetManager, never()).safeDeleteDataset(dataset2, "ontologyCache", false);
 
-        Map<String, Object> config = new HashMap<>();
-        config.put("expiry", 1000000000);
-        cleanJob.modified(config);
+        when(config.expiry()).thenReturn((long) 1000000000);
+        cleanJob.start(config);
         cleanJob.execute(jobContext);
         verify(repoManager, times(2)).getRepository("ontologyCache");
         verify(datasetManager, never()).safeDeleteDataset(dataset1, "ontologyCache", false);
@@ -163,18 +168,16 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
     @Test (expected = IllegalStateException.class)
     public void executeRepoNotFoundTest() {
         when(repoManager.getRepository("otherRepo")).thenReturn(Optional.empty());
-        Map<String, Object> config = new HashMap<>();
-        config.put("repoId", "otherRepo");
-        cleanJob.modified(config);
+        when(config.repoId()).thenReturn("otherRepo");
+        cleanJob.start(config);
         cleanJob.execute(jobContext);
     }
 
     @Test
     public void executeNonDefaultRepoTest() {
         when(repoManager.getRepository("otherRepo")).thenReturn(Optional.of(repo));
-        Map<String, Object> config = new HashMap<>();
-        config.put("repoId", "otherRepo");
-        cleanJob.modified(config);
+        when(config.repoId()).thenReturn("otherRepo");
+        cleanJob.start(config);
         cleanJob.execute(jobContext);
         verify(repoManager).getRepository("otherRepo");
         verify(datasetManager, never()).safeDeleteDataset(dataset1, "otherRepo", false);

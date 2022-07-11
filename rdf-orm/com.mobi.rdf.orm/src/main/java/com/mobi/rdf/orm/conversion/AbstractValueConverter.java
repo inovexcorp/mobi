@@ -23,10 +23,9 @@ package com.mobi.rdf.orm.conversion;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Reference;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.Thing;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 
 /**
  * This is an {@link AbstractValueConverter} for implementations to extend.
@@ -45,7 +44,7 @@ public abstract class AbstractValueConverter<TYPE> implements ValueConverter<TYP
     /**
      * A {@link ValueFactory} instance to use by default for doing conversion.
      */
-    protected ValueFactory valueFactory;
+    public final ValueFactory valueFactory = SimpleValueFactory.getInstance();
 
     /**
      * Construct a new {@link AbstractValueConverter}.
@@ -75,16 +74,4 @@ public abstract class AbstractValueConverter<TYPE> implements ValueConverter<TYP
     public ValueFactory getValueFactory(final Thing thing) {
         return (thing != null && thing.getValueFactory() != null) ? thing.getValueFactory() : valueFactory;
     }
-
-    /**
-     * Inject the {@link ValueFactory} to use for the IRI creation into this
-     * service.
-     *
-     * @param valueFactory The {@link ValueFactory} to use to create {@link IRI}s
-     */
-    @Reference
-    public void setValueFactory(final ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
-    }
-
 }

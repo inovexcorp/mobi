@@ -39,17 +39,17 @@ import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -71,7 +71,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@Component(service = CommitRest.class, immediate = true)
+@Component(service = CommitRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/commits")
 public class CommitRest {
 
@@ -80,8 +80,7 @@ public class CommitRest {
 
     private BNodeService bNodeService;
     private CatalogManager catalogManager;
-    private SesameTransformer transformer;
-    private ValueFactory vf;
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
 
     protected EngineManager engineManager;
 
@@ -93,16 +92,6 @@ public class CommitRest {
     @Reference
     void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
-
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
     }
 
     @Reference
@@ -146,7 +135,7 @@ public class CommitRest {
             Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(commitId));
 
             if (optCommit.isPresent()) {
-                return createCommitResponse(optCommit.get(), transformer, bNodeService);
+                return createCommitResponse(optCommit.get(), bNodeService);
             } else {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
@@ -293,7 +282,7 @@ public class CommitRest {
                     model = catalogManager.getCompiledResource(commits);
                 }
 
-                return Response.ok(modelToSkolemizedString(model, RDFFormat.JSONLD, transformer, bNodeService))
+                return Response.ok(modelToSkolemizedString(model, RDFFormat.JSONLD, bNodeService))
                         .build();
             } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -372,13 +361,13 @@ public class CommitRest {
                     if (limit == -1) {
                         return createCommitResponse(optCommit.get(),
                                 catalogManager.getCommitDifference(optCommit.get().getResource()),
-                                rdfFormat, transformer, bNodeService);
+                                rdfFormat, bNodeService);
                     } else {
                         PagedDifference pagedDifference = catalogManager.getCommitDifferencePaged(
                                 optCommit.get().getResource(), limit, offset);
                         return Response.fromResponse(createCommitResponse(optCommit.get(),
                                 pagedDifference.getDifference(),
-                                rdfFormat, transformer, bNodeService)).header("Has-More-Results",
+                                rdfFormat, bNodeService)).header("Has-More-Results",
                                 pagedDifference.hasMoreResults()).build();
                     }
                 } else {
@@ -387,13 +376,13 @@ public class CommitRest {
             } else {
                 if (limit == -1) {
                     Difference diff = catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId));
-                    return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
+                    return Response.ok(getDifferenceJsonString(diff, rdfFormat, bNodeService),
                             MediaType.APPLICATION_JSON).build();
                 } else {
                     PagedDifference pagedDifference = catalogManager.getDifferencePaged(
                             vf.createIRI(sourceId), vf.createIRI(targetId), limit, offset);
                     return Response.ok(getDifferenceJsonString(pagedDifference.getDifference(),
-                            rdfFormat, transformer, bNodeService),
+                            rdfFormat, bNodeService),
                             MediaType.APPLICATION_JSON).header("Has-More-Results",
                             pagedDifference.hasMoreResults()).build();
                 }
@@ -443,7 +432,7 @@ public class CommitRest {
                 return createCommitResponse(optCommit.get(),
                         catalogManager.getCommitDifferenceForSubject(vf.createIRI(subjectId),
                                 optCommit.get().getResource()),
-                        rdfFormat, transformer, bNodeService);
+                        rdfFormat, bNodeService);
             } else {
                 throw ErrorUtils.sendError("Commit " + sourceId + " could not be found",
                         Response.Status.NOT_FOUND);

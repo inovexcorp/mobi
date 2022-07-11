@@ -23,17 +23,15 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
-import com.mobi.persistence.utils.api.RDFHandler;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Statement;
-import com.mobi.repository.exception.RepositoryException;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.slf4j.Logger;
 
 public class BatchExporter implements RDFHandler {
 
     private org.eclipse.rdf4j.rio.RDFHandler delegate;
-    private SesameTransformer transformer;
     private long count = 0;
     private long batchSize = 10000;
     private Logger logger = null;
@@ -45,10 +43,8 @@ public class BatchExporter implements RDFHandler {
      * from Mobi to Sesame Statements.
      *
      * @param delegate The Sesame RDFHandler to wrap
-     * @param transformer A SesameTransformer for converting statements
      */
-    public BatchExporter(SesameTransformer transformer, org.eclipse.rdf4j.rio.RDFHandler delegate) {
-        this.transformer = transformer;
+    public BatchExporter(org.eclipse.rdf4j.rio.RDFHandler delegate) {
         this.delegate = delegate;
     }
 
@@ -77,7 +73,7 @@ public class BatchExporter implements RDFHandler {
 
     @Override
     public void handleStatement(Statement statement) throws RDFHandlerException {
-        delegate.handleStatement(transformer.sesameStatement(statement));
+        delegate.handleStatement(statement);
         count++;
         if (count % batchSize == 0) {
             try {

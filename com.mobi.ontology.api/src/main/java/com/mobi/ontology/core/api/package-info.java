@@ -1,4 +1,4 @@
-@Version("7.5.4.${build}")
+@Version("8.0.0.${build}")
 
 package com.mobi.ontology.core.api;
 
@@ -25,4 +25,4 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

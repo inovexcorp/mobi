@@ -33,7 +33,6 @@ import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
 import com.mobi.rdf.orm.generate.GraphReadingUtility;
 import com.mobi.rdf.orm.generate.ReferenceOntology;
-import com.mobi.rdf.orm.generate.SourceGenerator;
 
 import java.io.File;
 import java.io.FileNotFoundException;

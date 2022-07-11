@@ -26,10 +26,10 @@ package com.mobi.ontology.utils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.ValueFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -61,7 +61,7 @@ public class OntologyModelsTest extends OrmEnabledTestCase {
 
     @Test
     public void findFirstOntologyIRIOneTest() {
-        Model model = mf.createModel();
+        Model model = mf.createEmptyModel();
         model.add(ontologyIRI, type, vf.createIRI(OWL.ONTOLOGY.stringValue()));
 
         Optional<IRI> ontologyIRIOpt = OntologyModels.findFirstOntologyIRI(model, vf);
@@ -71,7 +71,7 @@ public class OntologyModelsTest extends OrmEnabledTestCase {
 
     @Test
     public void findFirstOntologyIRIMultipleTest() {
-        Model model = mf.createModel();
+        Model model = mf.createEmptyModel();
         model.add(ontologyIRI, type, ontologyObj);
         model.add(vf.createIRI("urn:ontologyIRI2"), type, ontologyObj);
         model.add(vf.createIRI("urn:ontologyIRI3"), type, ontologyObj);
@@ -85,7 +85,7 @@ public class OntologyModelsTest extends OrmEnabledTestCase {
 
     @Test
     public void findFirstOntologyIRIEmptyModelTest() {
-        Model model = mf.createModel();
+        Model model = mf.createEmptyModel();
 
         Optional<IRI> ontologyIRIOpt = OntologyModels.findFirstOntologyIRI(model, vf);
         assertTrue(!ontologyIRIOpt.isPresent());
@@ -93,7 +93,7 @@ public class OntologyModelsTest extends OrmEnabledTestCase {
 
     @Test
     public void findFirstVersionIRIOneTest() {
-        Model model = mf.createModel();
+        Model model = mf.createEmptyModel();
         model.add(ontologyIRI, type, ontologyObj);
         model.add(ontologyIRI, versionType, versionIRI);
 
@@ -104,7 +104,7 @@ public class OntologyModelsTest extends OrmEnabledTestCase {
 
     @Test
     public void findFirstVersionIRIMultipleTest() {
-        Model model = mf.createModel();
+        Model model = mf.createEmptyModel();
         model.add(ontologyIRI, type, ontologyObj);
         model.add(ontologyIRI, versionType, versionIRI);
         model.add(ontologyIRI, versionType, vf.createIRI("urn:versionIRI2"));
@@ -119,7 +119,7 @@ public class OntologyModelsTest extends OrmEnabledTestCase {
 
     @Test
     public void findFirstVersionIRIEmptyModelTest() {
-        Model model = mf.createModel();
+        Model model = mf.createEmptyModel();
 
         Optional<IRI> versionIRIOpt = OntologyModels.findFirstVersionIRI(model, ontologyIRI, vf);
         assertTrue(!versionIRIOpt.isPresent());
@@ -127,7 +127,7 @@ public class OntologyModelsTest extends OrmEnabledTestCase {
 
     @Test
     public void findFirstVersionIRIOntologyIRINotInModelTest() {
-        Model model = mf.createModel();
+        Model model = mf.createEmptyModel();
         model.add(ontologyIRI, type, ontologyObj);
         model.add(ontologyIRI, versionType, versionIRI);
 

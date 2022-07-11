@@ -23,13 +23,12 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import org.apache.commons.lang3.time.StopWatch;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
@@ -70,7 +69,7 @@ public class Hierarchy {
      * @param mf A {@link ModelFactory} to use in initialization
      */
     public Hierarchy(ValueFactory vf, ModelFactory mf) {
-        model = mf.createModel();
+        model = mf.createEmptyModel();
         type = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
         nodeType = vf.createIRI("http://mobi.com/hierarchy#Node");
         childProp = vf.createIRI("http://mobi.com/hierarchy#child");
@@ -160,16 +159,15 @@ public class Hierarchy {
      * Writes the {@link Model} of hierarchy relationships as JSON-LD in a hierarchical view to the provided
      * {@link OutputStream}.
      *
-     * @param transformer A {@link SesameTransformer} to utilize when writing the JSON-LD
      * @param outputStream The {@link OutputStream} to write the hierarchy string to
      */
-    public void writeHierarchyString(SesameTransformer transformer, OutputStream outputStream) {
+    public void writeHierarchyString(OutputStream outputStream) {
         StopWatch watch = new StopWatch();
         LOG.trace("Start writing hierarchy JSON-LD");
         watch.start();
         RDFWriter writer = Rio.createWriter(RDFFormat.JSONLD, outputStream);
         writer.getWriterConfig().set(JSONLDSettings.HIERARCHICAL_VIEW, true);
-        Rio.write(transformer.sesameModel(getModel()), writer);
+        Rio.write(getModel(), writer);
         watch.stop();
         LOG.trace("End writing hierarchy JSON-LD: " + watch.getTime() + "ms");
     }

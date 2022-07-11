@@ -28,27 +28,28 @@ import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.Statements;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.Binding;
-import com.mobi.query.api.BooleanQuery;
-import com.mobi.query.api.GraphQuery;
-import com.mobi.query.api.Operation;
-import com.mobi.query.api.OperationDataset;
-import com.mobi.query.api.OperationDatasetFactory;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.query.api.Update;
-import com.mobi.query.exception.MalformedQueryException;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryConnectionWrapper;
-import com.mobi.repository.base.RepositoryResult;
-import com.mobi.repository.exception.RepositoryException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
+import org.eclipse.rdf4j.common.iteration.EmptyIteration;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.query.Binding;
+import org.eclipse.rdf4j.query.BooleanQuery;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.MalformedQueryException;
+import org.eclipse.rdf4j.query.Query;
+import org.eclipse.rdf4j.query.QueryLanguage;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.query.Update;
+import org.eclipse.rdf4j.query.impl.SimpleDataset;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.RepositoryResult;
+import org.eclipse.rdf4j.repository.base.RepositoryConnectionWrapper;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +68,6 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     private String repositoryId;
     private ValueFactory valueFactory;
     private Resource systemDefaultNG;
-    private OperationDatasetFactory operationDatasetFactory;
 
     private long batchSize = 10000;
 
@@ -78,10 +78,10 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     private boolean dirty = true;
 
     /**
-     * The {@link OperationDataset} to add to queries. Represents the namedGraphs/defaultGraphs to query from in this
-     * DatasetConnection.
+     * The {@link SimpleDataset} to add to queries. Represents the namedGraphs/defaultGraphs to query
+     * from in this DatasetConnection.
      */
-    private OperationDataset opDataset;
+    private SimpleDataset opDataset;
 
     private static final String GET_GRAPHS_QUERY;
     private static final String GET_NAMED_GRAPHS_QUERY;
@@ -116,24 +116,22 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     public SimpleDatasetRepositoryConnection(RepositoryConnection delegate, Resource dataset, String repositoryId,
-                                             ValueFactory valueFactory,
-                                             OperationDatasetFactory operationDatasetFactory) {
+                                             ValueFactory valueFactory) {
+        super(delegate.getRepository());
         setDelegate(delegate);
         this.datasetResource = dataset;
         this.repositoryId = repositoryId;
         this.valueFactory = valueFactory;
-        this.operationDatasetFactory = operationDatasetFactory;
         this.systemDefaultNG = getSystemDefaultNG();
     }
 
     public SimpleDatasetRepositoryConnection(RepositoryConnection delegate, Resource dataset, String repositoryId,
-                                             ValueFactory valueFactory, OperationDatasetFactory operationDatasetFactory,
-                                             long batchSize) {
+                                             ValueFactory valueFactory, long batchSize) {
+        super(delegate.getRepository());
         setDelegate(delegate);
         this.datasetResource = dataset;
         this.repositoryId = repositoryId;
         this.valueFactory = valueFactory;
-        this.operationDatasetFactory = operationDatasetFactory;
         this.systemDefaultNG = getSystemDefaultNG();
         this.batchSize = batchSize;
     }
@@ -337,12 +335,12 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public Operation prepareQuery(String query) throws RepositoryException, MalformedQueryException {
+    public Query prepareQuery(String query) throws RepositoryException, MalformedQueryException {
         throw new NotImplementedException("Not yet implemented.");
     }
 
     @Override
-    public Operation prepareQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
+    public Query prepareQuery(QueryLanguage language, String query, String baseURI) throws RepositoryException, MalformedQueryException {
         throw new NotImplementedException("Not yet implemented.");
     }
 
@@ -354,9 +352,9 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public TupleQuery prepareTupleQuery(String query, String baseURI) throws RepositoryException,
+    public TupleQuery prepareTupleQuery(QueryLanguage language, String query, String baseURI) throws RepositoryException,
             MalformedQueryException {
-        TupleQuery tupleQuery = getDelegate().prepareTupleQuery(query, baseURI);
+        TupleQuery tupleQuery = getDelegate().prepareTupleQuery(language, query, baseURI);
         tupleQuery.setDataset(getOperationDataset());
         return tupleQuery;
     }
@@ -377,9 +375,9 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public GraphQuery prepareGraphQuery(String query, String baseURI) throws RepositoryException,
+    public GraphQuery prepareGraphQuery(QueryLanguage language, String query, String baseURI) throws RepositoryException,
             MalformedQueryException {
-        GraphQuery graphQuery = getDelegate().prepareGraphQuery(query, baseURI);
+        GraphQuery graphQuery = getDelegate().prepareGraphQuery(language, query, baseURI);
         graphQuery.setDataset(getOperationDataset());
         return graphQuery;
     }
@@ -398,7 +396,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public BooleanQuery prepareBooleanQuery(String query, String baseURI) throws RepositoryException,
+    public BooleanQuery prepareBooleanQuery(QueryLanguage language, String query, String baseURI) throws RepositoryException,
             MalformedQueryException {
         throw new NotImplementedException("Not yet implemented.");
     }
@@ -409,7 +407,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public Update prepareUpdate(String update, String baseURI) throws RepositoryException, MalformedQueryException {
+    public Update prepareUpdate(QueryLanguage language, String update, String baseURI) throws RepositoryException, MalformedQueryException {
         throw new NotImplementedException("Not yet implemented.");
     }
 
@@ -423,15 +421,15 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         return repositoryId;
     }
 
-    private OperationDataset getOperationDataset() {
+    private SimpleDataset getOperationDataset() {
         if (dirty) {
-            OperationDataset operationDataset = operationDatasetFactory.createOperationDataset();
+            SimpleDataset operationDataset = new SimpleDataset();
             TupleQueryResult result = getGraphs();
             result.forEach(bindings -> {
-                Optional<Binding> namedGraphBinding = bindings.getBinding("namedGraph");
+                Optional<Binding> namedGraphBinding = Optional.ofNullable(bindings.getBinding("namedGraph"));
                 namedGraphBinding.ifPresent(binding -> operationDataset.addNamedGraph((IRI) binding.getValue()));
 
-                Optional<Binding> defaultGraphBinding = bindings.getBinding("defaultGraph");
+                Optional<Binding> defaultGraphBinding = Optional.ofNullable(bindings.getBinding("defaultGraph"));
                 defaultGraphBinding.ifPresent(binding -> operationDataset.addDefaultGraph((IRI) binding.getValue()));
             });
             opDataset = operationDataset;
@@ -442,10 +440,10 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         return opDataset;
     }
 
-    private OperationDataset getFilteredOperationDataset(Resource... contexts) {
+    private SimpleDataset getFilteredOperationDataset(Resource... contexts) {
         if (varargsPresent(contexts)) {
-            OperationDataset opDataset = getOperationDataset();
-            OperationDataset filteredOpDataset = operationDatasetFactory.createOperationDataset();
+            SimpleDataset opDataset = getOperationDataset();
+            SimpleDataset filteredOpDataset = new SimpleDataset();
 
             List<Resource> contextList = Arrays.asList(contexts);
             opDataset.getNamedGraphs()
@@ -471,7 +469,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     private Set<Resource> getGraphsSet() {
         Set<Resource> graphSet = new HashSet<>();
-        OperationDataset operationDataset = getOperationDataset();
+        SimpleDataset operationDataset = getOperationDataset();
         graphSet.addAll(operationDataset.getDefaultGraphs());
         graphSet.addAll(operationDataset.getNamedGraphs());
 
@@ -584,9 +582,9 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
      * @param predicate The String representing the predicate to use to add the graph if it has a context.
      */
     private void addSingleStatement(Statement statement, String predicate) {
-        if (statement.getContext().isPresent()) {
+        if (statement.getContext() != null) {
             getDelegate().add(statement);
-            addGraphStatements(predicate, statement.getContext().get());
+            addGraphStatements(predicate, statement.getContext());
         } else {
             getDelegate().add(statement, systemDefaultNG);
         }
@@ -601,7 +599,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
      * @param accessibleGraphs The set of Resources that represent graphs from which the data can be removed.
      */
     private void removeSingleStatement(Statement statement, Set<Resource> accessibleGraphs) {
-        if (statement.getContext().isPresent() && accessibleGraphs.contains(statement.getContext().get())) {
+        if (statement.getContext() != null && accessibleGraphs.contains(statement.getContext())) {
             getDelegate().remove(statement);
         } else {
             getDelegate().remove(statement, systemDefaultNG);
@@ -669,11 +667,12 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         private TupleQueryResult queryResult;
 
         DatasetGraphResultWrapper(TupleQueryResult queryResult) {
+            super(new RepositoryResult<>(new EmptyIteration<>())); // TODO:
             this.queryResult = queryResult;
         }
 
         @Override
-        public void close() {
+        public void handleClose() {
             queryResult.close();
         }
 

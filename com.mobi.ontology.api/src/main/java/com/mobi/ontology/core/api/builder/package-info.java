@@ -24,4 +24,4 @@ package com.mobi.ontology.core.api.builder;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

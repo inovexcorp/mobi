@@ -35,12 +35,11 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.InstantaneousEvent;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import net.minidev.json.JSONValue;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 
 import javax.ws.rs.core.MediaType;
@@ -98,13 +97,11 @@ public class CatalogRestUtils {
      * the value of the Commit's JSON-LD.
      *
      * @param commit       The Commit to create a response for
-     * @param transformer  The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return A Response containing a JSONObject with the Commit JSON-LD
      */
-    public static Response createCommitResponse(Commit commit, SesameTransformer transformer,
-                                                BNodeService bNodeService) {
-        String response = thingToSkolemizedObjectNode(commit, Commit.TYPE, transformer, bNodeService).toString();
+    public static Response createCommitResponse(Commit commit, BNodeService bNodeService) {
+        String response = thingToSkolemizedObjectNode(commit, Commit.TYPE, bNodeService).toString();
         return Response.ok(response, MediaType.APPLICATION_JSON).build();
     }
 
@@ -116,15 +113,14 @@ public class CatalogRestUtils {
      * @param commit       The Commit to create a response for
      * @param difference   The {@link Difference} for the specified commit.
      * @param format       The RDF format to return the addition and deletion statements in.
-     * @param transformer  The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return A Response containing a JSONObject with the Commit JSON-LD and its addition and deletion statements
      */
     public static Response createCommitResponse(Commit commit, Difference difference, String format,
-                                                SesameTransformer transformer, BNodeService bNodeService) {
-        String differences = getDifferenceJsonString(difference, format, transformer, bNodeService);
+                                                BNodeService bNodeService) {
+        String differences = getDifferenceJsonString(difference, format, bNodeService);
         String response = differences.subSequence(0, differences.length() - 1) + ", \"commit\": "
-                + thingToSkolemizedObjectNode(commit, Commit.TYPE, transformer, bNodeService).toString() + "}";
+                + thingToSkolemizedObjectNode(commit, Commit.TYPE, bNodeService).toString() + "}";
         return Response.ok(response, MediaType.APPLICATION_JSON).build();
     }
 
@@ -134,21 +130,22 @@ public class CatalogRestUtils {
      *
      * @param difference   The Difference to convert into a JSONObject.
      * @param format       String representing the RDF format to return the statements in.
-     * @param transformer  The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return A JSONObject with a key for the Difference's addition statements and a key for the Difference's deletion
      * statements.
      */
-    public static String getDifferenceJsonString(Difference difference, String format, SesameTransformer transformer,
+    public static String getDifferenceJsonString(Difference difference, String format,
                                                  BNodeService bNodeService) {
-        String additions = modelToSkolemizedString(difference.getAdditions(), format, transformer, bNodeService);
-        String deletions = modelToSkolemizedString(difference.getDeletions(), format, transformer, bNodeService);
+        String additions = modelToSkolemizedString(difference.getAdditions(), format, bNodeService);
+        String deletions = modelToSkolemizedString(difference.getDeletions(), format, bNodeService);
 
 
         return "{ \"additions\": "
-                + (format.toLowerCase().contains("json") ? additions : "\"" + JSONValue.escape(additions) + "\"")
+                + (format.toLowerCase().contains("json") ? additions : "\""
+                + StringEscapeUtils.escapeJson(additions) + "\"")
                 + ", \"deletions\": "
-                + (format.toLowerCase().contains("json") ? deletions : "\"" + JSONValue.escape(deletions) + "\"")
+                + (format.toLowerCase().contains("json") ? deletions : "\""
+                + StringEscapeUtils.escapeJson(deletions) + "\"")
                 + " }";
 
     }

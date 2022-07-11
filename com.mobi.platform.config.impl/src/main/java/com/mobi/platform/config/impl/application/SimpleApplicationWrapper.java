@@ -23,72 +23,55 @@ package com.mobi.platform.config.impl.application;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Deactivate;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.component.Reference;
-import aQute.bnd.annotation.metatype.Configurable;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.platform.config.api.application.ApplicationConfig;
 import com.mobi.platform.config.api.application.ApplicationWrapper;
 import com.mobi.platform.config.api.ontologies.platformconfig.Application;
 import com.mobi.platform.config.api.ontologies.platformconfig.ApplicationFactory;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 @Component(
         immediate = true,
         name = SimpleApplicationWrapper.NAME,
-        configurationPolicy = ConfigurationPolicy.require,
-        designateFactory = ApplicationConfig.class
+        configurationPolicy = ConfigurationPolicy.REQUIRE
 )
+@Designate(ocd = ApplicationConfig.class)
 public class SimpleApplicationWrapper implements ApplicationWrapper {
     private static final String NAMESPACE = "http://mobi.com/applications#";
     protected static final String NAME = "com.mobi.platform.config.application";
     private static final Logger LOG = LoggerFactory.getLogger(SimpleApplicationWrapper.class);
 
-    protected Repository repository;
-    protected ValueFactory factory;
-    protected ModelFactory modelFactory;
-    protected ApplicationFactory appFactory;
-
     protected String applicationId;
+    final ValueFactory factory = SimpleValueFactory.getInstance();
+    final ModelFactory modelFactory = new DynamicModelFactory();
 
-    @Reference(name = "repository")
-    protected void setRepository(Repository repository) {
-        this.repository = repository;
-    }
-
-    @Reference
-    protected void setFactory(ValueFactory factory) {
-        this.factory = factory;
-    }
+    @Reference(target = "(id=system)")
+    OsgiRepository repository;
 
     @Reference
-    protected void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
-    }
-
-    @Reference
-    protected void setAppFactory(ApplicationFactory appFactory) {
-        this.appFactory = appFactory;
-    }
+    ApplicationFactory appFactory;
 
     @Activate
-    protected void start(Map<String, Object> props) {
-        ApplicationConfig config = Configurable.createConfigurable(ApplicationConfig.class, props);
+    protected void start(final ApplicationConfig config) {
         LOG.trace("Starting \"" + config.id() + "\" application...");
 
-        validateConfig(props);
+        validateConfig(config);
         this.applicationId = config.id();
 
         Application application = appFactory.createNew(factory.createIRI(NAMESPACE + applicationId));
@@ -99,7 +82,7 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
         }
 
         try (RepositoryConnection conn = repository.getConnection()) {
-            if (conn.contains(application.getResource(), null, null)) {
+            if (ConnectionUtils.contains(conn, application.getResource(), null, null)) {
                 LOG.warn("Replacing existing application \"" + applicationId + "\".");
                 conn.remove(application.getResource(), null, null);
             }
@@ -109,9 +92,9 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
     }
 
     @Modified
-    protected void modified(Map<String, Object> props) {
+    protected void modified(final ApplicationConfig config) {
         stop();
-        start(props);
+        start(config);
     }
 
     @Deactivate
@@ -124,9 +107,7 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
     }
 
     @Override
-    public void validateConfig(Map<String, Object> props) {
-        ApplicationConfig config = Configurable.createConfigurable(ApplicationConfig.class, props);
-
+    public void validateConfig(ApplicationConfig config) {
         if (config.id().equals("")) {
             throw new IllegalArgumentException("Application property \"id\" cannot be empty");
         } else if (!config.id().matches("^[a-zA-Z0-9._\\-]+$")) {
@@ -145,7 +126,7 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
     @Override
     public Application getApplication() {
         try (RepositoryConnection conn = repository.getConnection()) {
-            Model appModel = modelFactory.createModel();
+            Model appModel = modelFactory.createEmptyModel();
             conn.getStatements(factory.createIRI(NAMESPACE + applicationId), null, null).forEach(appModel::add);
             return appFactory.getExisting(factory.createIRI(NAMESPACE + applicationId), appModel).orElseThrow(() ->
                     new IllegalStateException("Unable to retrieve application: " + NAMESPACE + applicationId));

@@ -25,24 +25,25 @@ package com.mobi.setting.impl;
 
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.Models;
-import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.SettingUtilsService;
 import com.mobi.setting.api.ontologies.ApplicationSetting;
+import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.SHACL;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -56,17 +57,11 @@ import java.util.UUID;
 @Component(immediate = true)
 public class SimpleSettingUtilsService implements SettingUtilsService {
 
+    final ValueFactory vf = SimpleValueFactory.getInstance();
+    final ModelFactory mf = new DynamicModelFactory();
+
     @Reference
     CatalogConfigProvider configProvider;
-
-    @Reference
-    ValueFactory vf;
-
-    @Reference
-    ModelFactory mf;
-
-    @Reference
-    SesameTransformer transformer;
 
     @Reference
     OrmFactoryRegistry factoryRegistry;
@@ -94,7 +89,7 @@ public class SimpleSettingUtilsService implements SettingUtilsService {
                 if (defaultValue.stringValue().isEmpty()) {
                     return;
                 }
-                if (conn.contains(settingIRI, null, null,
+                if (ConnectionUtils.contains(conn, settingIRI, null, null,
                         vf.createIRI(SettingService.GRAPH))) {
                     Optional<ApplicationSetting> applicationSettingOpt = applicationSettingService
                             .getSettingByType(settingIRI);
@@ -118,12 +113,14 @@ public class SimpleSettingUtilsService implements SettingUtilsService {
     public Model updateRepoWithSettingDefinitions(InputStream ontology, String ontologyName) {
         Model ontologyModel;
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            ontologyModel = Models.createModel("ttl", ontology, transformer).getModel();
+            ontologyModel = Models.createModel("ttl", ontology).getModel();
             removeSubjectFromModel(ontologyModel, vf.createIRI(ontologyName));
             ontologyModel.subjects().forEach(subject -> {
-                Model repoStatements = RepositoryResults.asModelNoContext(
-                        conn.getStatements(subject, null, null,
-                                vf.createIRI(SettingService.GRAPH)), mf);
+                Model repoStatements = mf.createEmptyModel();
+                conn.getStatements(subject, null, null, vf.createIRI(SettingService.GRAPH)).stream()
+                        .map(statement -> vf.createStatement(statement.getSubject(), statement.getPredicate(),
+                                statement.getObject()))
+                        .forEach(repoStatements::add);
                 Model modelStatements = ontologyModel.filter(subject, null, null);
                 boolean modelsEquivalent = true;
                 if (modelStatements.size() != repoStatements.size()) {

@@ -24,4 +24,4 @@ package com.mobi.cache.api.repository;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

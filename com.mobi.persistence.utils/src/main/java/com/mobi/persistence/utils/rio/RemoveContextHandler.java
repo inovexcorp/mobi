@@ -23,8 +23,8 @@ package com.mobi.persistence.utils.rio;
  * #L%
  */
 
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
 
 public class RemoveContextHandler implements StatementHandler {
 

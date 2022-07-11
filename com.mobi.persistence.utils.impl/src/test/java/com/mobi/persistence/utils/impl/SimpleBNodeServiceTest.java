@@ -28,12 +28,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
+import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -49,7 +49,6 @@ public class SimpleBNodeServiceTest extends OrmEnabledTestCase {
 
     private final BNode bnode1 = VALUE_FACTORY.createBNode("1234");
     private final BNode bnode2 = VALUE_FACTORY.createBNode("5678");
-    private final SimpleSesameTransformer transformer = new SimpleSesameTransformer();
 
     private IRI skolemizedBnode1;
     private IRI skolemizedBnode2;
@@ -73,12 +72,7 @@ public class SimpleBNodeServiceTest extends OrmEnabledTestCase {
         deskolemizedIRI1 = VALUE_FACTORY.createBNode(skolemizedIRI1.getLocalName());
         deskolemizedIRI2 = VALUE_FACTORY.createBNode(skolemizedIRI2.getLocalName());
 
-        transformer.setMobiMF(MODEL_FACTORY);
-        transformer.setMobiVF(VALUE_FACTORY);
-
         service = new SimpleBNodeService();
-        service.setModelFactory(MODEL_FACTORY);
-        service.setValueFactory(VALUE_FACTORY);
     }
 
     @Test
@@ -130,8 +124,8 @@ public class SimpleBNodeServiceTest extends OrmEnabledTestCase {
         assertEquals(subject, result.getSubject());
         assertEquals(predicate, result.getPredicate());
         assertEquals(object, result.getObject());
-        assertTrue(result.getContext().isPresent());
-        assertEquals(skolemizedBnode1.stringValue(), result.getContext().get().stringValue());
+        assertNotNull(result.getContext());
+        assertEquals(skolemizedBnode1.stringValue(), result.getContext().stringValue());
     }
 
     // TODO: How to test?
@@ -148,10 +142,10 @@ public class SimpleBNodeServiceTest extends OrmEnabledTestCase {
 //        when(modelMock.iterator()).thenReturn(itr);
 //
 ////        Model modelMock2 = mock(Model.class);
-////        when(mf.createModel()).thenReturn(modelMock2);
+////        when(mf.createEmptyModel()).thenReturn(modelMock2);
 ////        verify(modelMock2, times(2)).add(any(Statement.class));
 //        verify(mockModel, times(2)).add(any(Statement.class));
-////        Model model = mf.createModel();
+////        Model model = mf.createEmptyModel();
 ////        model.add(VALUE_FACTORY.createStatement(bnode1, predicate, bnode2));
 ////        model.add(VALUE_FACTORY.createStatement(subject, predicate, object));
 //        service.skolemize(modelMock);
@@ -201,14 +195,14 @@ public class SimpleBNodeServiceTest extends OrmEnabledTestCase {
         assertEquals(subject, result.getSubject());
         assertEquals(predicate, result.getPredicate());
         assertEquals(object, result.getObject());
-        assertTrue(result.getContext().isPresent());
-        assertEquals(deskolemizedIRI1.stringValue(), result.getContext().get().stringValue());
+        assertNotNull(result.getContext());
+        assertEquals(deskolemizedIRI1.stringValue(), result.getContext().stringValue());
     }
 
     // TODO: How to test?
 //    @Test
 //    public void testDeskolemizeModel() {
-//        Model model = mf.createModel();
+//        Model model = mf.createEmptyModel();
 //        model.add(VALUE_FACTORY.createStatement(skolemizedIRI1, predicate, skolemizedIRI2));
 //        model.add(VALUE_FACTORY.createStatement(subject, predicate, object));
 //        Model result = service.deskolemize(model);
@@ -276,13 +270,14 @@ public class SimpleBNodeServiceTest extends OrmEnabledTestCase {
     @Test
     public void skolemizeAircraftDesign() throws Exception {
         InputStream streamA = getClass().getResourceAsStream("/deterministicSkolemize/AircraftDesign.rdf");
-        Model modelA = transformer.mobiModel(Rio.parse(streamA, "", RDFFormat.RDFXML));
+        Model modelA = Rio.parse(streamA, "", RDFFormat.RDFXML);
         Model modelB = getModelFromFile("/deterministicSkolemize/AircraftDesign.ttl");
 
         modelA = service.deterministicSkolemize(modelA);
         modelB = service.deterministicSkolemize(modelB);
 
-        Model mA = MODEL_FACTORY.createModel(modelA);
+        Model mA = MODEL_FACTORY.createEmptyModel();
+        mA.addAll(modelA);
         mA.removeAll(modelB);
         modelB.removeAll(modelA);
 
@@ -306,7 +301,8 @@ public class SimpleBNodeServiceTest extends OrmEnabledTestCase {
         modelA = service.deterministicSkolemize(modelA);
         modelB = service.deterministicSkolemize(modelB);
 
-        Model mA = MODEL_FACTORY.createModel(modelA);
+        Model mA = MODEL_FACTORY.createEmptyModel();
+        mA.addAll(modelA);
         mA.removeAll(modelB);
         modelB.removeAll(modelA);
 
@@ -321,7 +317,8 @@ public class SimpleBNodeServiceTest extends OrmEnabledTestCase {
         modelA = service.deterministicSkolemize(modelA);
         modelB = service.deterministicSkolemize(modelB);
 
-        Model mA = MODEL_FACTORY.createModel(modelA);
+        Model mA = MODEL_FACTORY.createEmptyModel();
+        mA.addAll(modelA);
         mA.removeAll(modelB);
         modelB.removeAll(modelA);
 
@@ -339,6 +336,6 @@ public class SimpleBNodeServiceTest extends OrmEnabledTestCase {
 
     private Model getModelFromFile(String file) throws IOException {
         InputStream streamA = getClass().getResourceAsStream(file);
-        return transformer.mobiModel(Rio.parse(streamA, "", RDFFormat.TURTLE));
+        return Rio.parse(streamA, "", RDFFormat.TURTLE);
     }
 }

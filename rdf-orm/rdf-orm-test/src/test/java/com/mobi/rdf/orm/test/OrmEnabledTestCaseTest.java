@@ -1,7 +1,7 @@
 package com.mobi.rdf.orm.test;
 
-        /*-
-         * #%L
+/*-
+ * #%L
  * rdf-orm-test
  * $Id:$
  * $HeadURL:$
@@ -21,7 +21,7 @@ package com.mobi.rdf.orm.test;
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
-         */
+*/
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -29,13 +29,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.ValueFactory;
 import com.mobi.rdf.orm.AbstractOrmFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.impl.ThingFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -81,7 +82,7 @@ public class OrmEnabledTestCaseTest extends OrmEnabledTestCase {
         assertNotNull(valueFactory);
         assertEquals(VALUE_FACTORY, valueFactory);
         assertNotNull(modelFactory);
-        assertEquals(MODEL_FACTORY, modelFactory);
+        assertTrue(MODEL_FACTORY instanceof DynamicModelFactory);
         assertNotNull(valueConverterRegistry);
         assertEquals(OrmEnabledTestCase.VALUE_CONVERTER_REGISTRY, valueConverterRegistry);
         assertEquals(14, OrmEnabledTestCaseTest.VALUE_CONVERTERS.size());

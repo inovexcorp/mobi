@@ -26,15 +26,8 @@ package com.mobi.security.policy.impl.xacml;
 import static com.mobi.security.policy.api.xacml.XACML.PROCESSING_ERROR;
 import static com.mobi.security.policy.api.xacml.XACML.SYNTAX_ERROR;
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.exception.MobiException;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.security.policy.api.PRP;
 import com.mobi.security.policy.api.Policy;
 import com.mobi.security.policy.api.Request;
@@ -50,6 +43,14 @@ import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.ontologies.documents.BinaryFile;
 import com.mobi.vocabularies.xsd.XSD;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.wso2.balana.AbstractPolicy;
 import org.wso2.balana.MatchResult;
 import org.wso2.balana.PDPConfig;
@@ -79,16 +80,16 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.cache.Cache;
 
-@Component(immediate = true, provide = {PRP.class, BalanaPRP.class})
+@Component(immediate = true, service = {PRP.class, BalanaPRP.class})
 public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
     private PolicyCombiningAlgorithm combiningAlg;
     private PDPConfig config;
 
     private PolicyCache policyCache;
-    private Repository repository;
+    private OsgiRepository repository;
     private VirtualFilesystem vfs;
     private XACMLPolicyManager policyManager;
-    private ValueFactory vf;
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
 
     @Reference
     void setPolicyCache(PolicyCache policyCache) {
@@ -104,11 +105,6 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
     void setPolicyManager(XACMLPolicyManager policyManager) {
         this.policyManager = policyManager;
         this.repository = this.policyManager.getRepository();
-    }
-
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
     }
 
     @Override

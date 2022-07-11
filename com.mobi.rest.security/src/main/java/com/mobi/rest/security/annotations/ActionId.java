@@ -45,7 +45,7 @@ public @interface ActionId {
      * String representing the ID of the Action of a request. If the type is {@link ValueType#PATH}, this will be the
      * {@link javax.ws.rs.PathParam} id. If the type is {@link ValueType#QUERY}, this will be the
      * {@link javax.ws.rs.QueryParam} id. If the type is {@link ValueType#BODY}, this will be the
-     * {@link org.glassfish.jersey.media.multipart.FormDataParam} id. If the type is a {@link ValueType#PROP_PATH},
+     * {@link javax.ws.rs.FormParam} id. If the type is a {@link ValueType#PROP_PATH},
      * this will be the property path string.
      */
     String value();

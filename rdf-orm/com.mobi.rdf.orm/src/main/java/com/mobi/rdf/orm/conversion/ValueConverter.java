@@ -1,7 +1,7 @@
 package com.mobi.rdf.orm.conversion;
 
-import com.mobi.rdf.api.Value;
 import com.mobi.rdf.orm.Thing;
+import org.eclipse.rdf4j.model.Value;
 
 import javax.annotation.Nonnull;
 

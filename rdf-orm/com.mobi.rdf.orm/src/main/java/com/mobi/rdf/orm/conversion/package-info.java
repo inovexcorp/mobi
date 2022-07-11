@@ -25,4 +25,4 @@ package com.mobi.rdf.orm.conversion;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

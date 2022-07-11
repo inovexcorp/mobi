@@ -23,17 +23,18 @@ package com.mobi.persistence.utils.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.osgi.service.component.annotations.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,24 +45,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Component(provide = BNodeService.class)
+@Component(service = BNodeService.class)
 public class SimpleBNodeService implements BNodeService {
-
-    private ValueFactory vf;
-    private ModelFactory mf;
 
     private static final String PATH_COMPONENT = "/.well-known/genid/";
     public static final String SKOLEMIZED_NAMESPACE = "http://mobi.com" + PATH_COMPONENT;
 
-    @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        vf = valueFactory;
-    }
-
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        mf = modelFactory;
-    }
+    public final ValueFactory vf = SimpleValueFactory.getInstance();
+    public final ModelFactory mf = new DynamicModelFactory();
 
     @Override
     public IRI skolemize(BNode bnode) {
@@ -86,7 +77,7 @@ public class SimpleBNodeService implements BNodeService {
             object = skolemize((BNode) object);
             skolemized = true;
         }
-        Resource context = statement.getContext().orElse(null);
+        Resource context = statement.getContext();
         if (context instanceof BNode) {
             context = skolemize((BNode) context);
             skolemized = true;
@@ -96,7 +87,7 @@ public class SimpleBNodeService implements BNodeService {
 
     @Override
     public Model skolemize(Model model) {
-        Model result = mf.createModel();
+        Model result = mf.createEmptyModel();
         model.forEach(statement -> result.add(skolemize(statement)));
         return result;
     }
@@ -109,7 +100,7 @@ public class SimpleBNodeService implements BNodeService {
 
     @Override
     public Model deterministicSkolemize(Model model, Map<BNode, IRI> skolemizedBNodes) {
-        final Model result = mf.createModel();
+        final Model result = mf.createEmptyModel();
         final Map<Long, Integer> hashCount = new HashMap<>();
 
         // Process every blank node chain that begins with an IRI
@@ -125,11 +116,11 @@ public class SimpleBNodeService implements BNodeService {
                             // If object is a BNode
                             if (!skolemizedBNodes.containsKey(statement.getObject())) {
                                 Set<BNode> visited = new HashSet<>();
-                                Model cycleStmts = mf.createModel();
+                                Model cycleStmts = mf.createEmptyModel();
                                 result.addAll(deterministicSkolemize((BNode) statement.getObject(), model, skolemizedBNodes, hashCount, visited, cycleStmts));
                             }
-                            if (statement.getContext().isPresent()) {
-                                result.add(statement.getSubject(), statement.getPredicate(), skolemizedBNodes.get(statement.getObject()), statement.getContext().get());
+                            if (statement.getContext() != null) {
+                                result.add(statement.getSubject(), statement.getPredicate(), skolemizedBNodes.get(statement.getObject()), statement.getContext());
                             } else {
                                 result.add(statement.getSubject(), statement.getPredicate(), skolemizedBNodes.get(statement.getObject()));
                             }
@@ -145,7 +136,7 @@ public class SimpleBNodeService implements BNodeService {
                 .filter(resource -> resource instanceof BNode && !skolemizedBNodes.containsKey(resource))
                 .forEach(resource -> {
                     Set<BNode> visited = new HashSet<>();
-                    Model cycleStmts = mf.createModel();
+                    Model cycleStmts = mf.createEmptyModel();
                     result.addAll(deterministicSkolemize((BNode) resource, model, skolemizedBNodes, hashCount, visited, cycleStmts));
                 });
 
@@ -163,7 +154,7 @@ public class SimpleBNodeService implements BNodeService {
      */
     private Model deterministicSkolemize(BNode bNode, Model model, Map<BNode, IRI> skolemizedBNodes,
                                          Map<Long, Integer> hashCount, Set<BNode> visited, Model cycleStmts) {
-        Model result = mf.createModel();
+        Model result = mf.createEmptyModel();
         visited.add(bNode);
 
         List<String> valuesToHash = new ArrayList<>();
@@ -212,8 +203,8 @@ public class SimpleBNodeService implements BNodeService {
                 .filter(statement -> !cycleStmts.contains(statement))
                 .forEach(statement -> {
                     Value value = statement.getObject() instanceof BNode ? skolemizedBNodes.get(statement.getObject()) : statement.getObject();
-                    if (statement.getContext().isPresent()) {
-                        result.add(skolemizedIRI, statement.getPredicate(), value, statement.getContext().get());
+                    if (statement.getContext() != null) {
+                        result.add(skolemizedIRI, statement.getPredicate(), value, statement.getContext());
                     } else {
                         result.add(skolemizedIRI, statement.getPredicate(), value);
                     }
@@ -221,8 +212,8 @@ public class SimpleBNodeService implements BNodeService {
 
         // Add cycles targeting this node
         cycleStmts.filter(null, null, bNode, (Resource) null).forEach(statement -> {
-            if (statement.getContext().isPresent()) {
-                result.add(skolemizedBNodes.get(statement.getSubject()), statement.getPredicate(), skolemizedIRI, statement.getContext().get());
+            if (statement.getContext() != null) {
+                result.add(skolemizedBNodes.get(statement.getSubject()), statement.getPredicate(), skolemizedIRI, statement.getContext());
             } else {
                 result.add(skolemizedBNodes.get(statement.getSubject()), statement.getPredicate(), skolemizedIRI);
             }
@@ -255,7 +246,7 @@ public class SimpleBNodeService implements BNodeService {
             object = deskolemize((IRI) object);
             deskolemized = true;
         }
-        Resource context = statement.getContext().orElse(null);
+        Resource context = statement.getContext();
         if (isSkolemized(context)) {
             context = deskolemize((IRI) context);
             deskolemized = true;
@@ -265,7 +256,7 @@ public class SimpleBNodeService implements BNodeService {
 
     @Override
     public Model deskolemize(Model model) {
-        Model result = mf.createModel();
+        Model result = mf.createEmptyModel();
         model.forEach(statement -> result.add(deskolemize(statement)));
         return result;
     }

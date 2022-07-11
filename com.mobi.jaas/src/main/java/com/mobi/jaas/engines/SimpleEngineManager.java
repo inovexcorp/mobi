@@ -23,9 +23,20 @@ package com.mobi.jaas.engines;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import com.mobi.persistence.utils.Statements;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.engines.GroupConfig;
@@ -36,18 +47,11 @@ import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.RoleFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.Statements;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,10 +67,10 @@ import java.util.stream.Collectors;
 public class SimpleEngineManager implements EngineManager {
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
     private OrmFactoryRegistry factoryRegistry;
-    private ValueFactory valueFactory;
-    private Repository repository;
+    private ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    private ModelFactory modelFactory = new DynamicModelFactory();
+    private OsgiRepository repository;
     private RoleFactory roleFactory;
-    private ModelFactory modelFactory;
     private Resource context;
     protected Map<String, Engine> engines = new TreeMap<>((e1, e2) -> {
         if (e1.equals(e2)) {
@@ -81,7 +85,7 @@ public class SimpleEngineManager implements EngineManager {
         }
     });
 
-    @Reference(type = '*', dynamic = true)
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     public void addEngine(Engine engine) {
         engines.put(engine.getEngineName(), engine);
     }
@@ -99,16 +103,10 @@ public class SimpleEngineManager implements EngineManager {
     public void setOrmFactoryRegistry(OrmFactoryRegistry factoryRegistry) { this.factoryRegistry = factoryRegistry; }
 
     @Reference
-    public void setValueFactory(ValueFactory valueFactory) { this.valueFactory = valueFactory; }
-
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) { this.modelFactory = modelFactory; }
-
-    @Reference
     public void setRoleFactory(RoleFactory roleFactory) { this.roleFactory = roleFactory; }
 
     @Reference(target = "(id=system)")
-    public void setRepository(Repository repository) { this.repository = repository; }
+    public void setRepository(OsgiRepository repository) { this.repository = repository; }
 
     @Activate
     void start() {
@@ -443,7 +441,7 @@ public class SimpleEngineManager implements EngineManager {
     @Override
     public <T extends ExternalUser> T mergeUser(T externalUser, User existingUser) {
         OrmFactory<? extends ExternalUser> factory = getSpecificExternalUserFactory(externalUser);
-        Model newUserWithExistingIRI = modelFactory.createModel();
+        Model newUserWithExistingIRI = modelFactory.createEmptyModel();
         for (Statement statement : externalUser.getModel()) {
             newUserWithExistingIRI.add(existingUser.getResource(), statement.getPredicate(), statement.getObject());
         }
@@ -468,7 +466,7 @@ public class SimpleEngineManager implements EngineManager {
     @Override
     public <T extends ExternalGroup> T mergeGroup(T externalGroup, Group existingGroup) {
         OrmFactory<? extends ExternalGroup> factory = getSpecificExternalGroupFactory(externalGroup);
-        Model newGroupWithExistingIRI = modelFactory.createModel();
+        Model newGroupWithExistingIRI = modelFactory.createEmptyModel();
         for (Statement statement : externalGroup.getModel()) {
             newGroupWithExistingIRI.add(existingGroup.getResource(), statement.getPredicate(), statement.getObject());
         }

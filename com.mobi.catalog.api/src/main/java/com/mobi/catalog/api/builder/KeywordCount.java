@@ -23,7 +23,7 @@ package com.mobi.catalog.api.builder;
  * #L%
  */
 
-import com.mobi.rdf.api.Literal;
+import org.eclipse.rdf4j.model.Literal;
 
 import java.util.Objects;
 
@@ -46,7 +46,7 @@ public class KeywordCount {
 
     @Override
     public String toString() {
-        return "KC(" + keyword + ", " + keywordCount + ")";
+        return "KC(" + keyword.stringValue() + ", " + keywordCount + ")";
     }
 
     @Override

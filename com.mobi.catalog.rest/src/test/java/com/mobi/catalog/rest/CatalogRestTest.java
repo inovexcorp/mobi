@@ -29,19 +29,19 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getOrmFactoryRegistry;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,38 +74,34 @@ import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.rest.util.MobiRestTestNg;
-import com.mobi.rest.util.UsernameTestFilter;
+import com.mobi.rest.test.util.FormDataMultiPart;
+import com.mobi.rest.test.util.MobiRestTestCXF;
+import com.mobi.rest.test.util.UsernameTestFilter;
 import com.mobi.security.policy.api.PDP;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -116,16 +112,13 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-public class CatalogRestTest extends MobiRestTestNg {
-    private CatalogRest rest;
-    private ValueFactory vf;
-    private ModelFactory mf;
+public class CatalogRestTest extends MobiRestTestCXF {
+    private AutoCloseable closeable;
     private OrmFactory<Record> recordFactory;
     private OrmFactory<UnversionedRecord> unversionedRecordFactory;
     private OrmFactory<VersionedRecord> versionedRecordFactory;
@@ -175,20 +168,18 @@ public class CatalogRestTest extends MobiRestTestNg {
     private static final String CATALOG_URL_DISTRIBUTED = "catalogs/" + encode(DISTRIBUTED_IRI);
     private static final String RECORDS_URL_LOCAL = "catalogs/" + encode(LOCAL_IRI) + "/records";
 
-    @Mock
-    private CatalogManager catalogManager;
-
-    @Mock
-    private CatalogConfigProvider configProvider;
-
-    @Mock
-    private VersioningManager versioningManager;
-
-    @Mock
-    private EngineManager engineManager;
-
-    @Mock
-    private SesameTransformer transformer;
+    // Mock services used in server
+    private static CatalogRest rest;
+    private static ValueFactory vf;
+    private static ModelFactory mf;
+    private static CatalogManager catalogManager;
+    private static CatalogConfigProvider configProvider;
+    private static VersioningManager versioningManager;
+    private static EngineManager engineManager;
+    private static BNodeService bNodeService;
+    private static CatalogProvUtils provUtils;
+    private static CatalogUtilsService catalogUtils;
+    private static PDP pdp;
 
     @Mock
     private PaginatedSearchResults<Record> recordResults;
@@ -203,27 +194,43 @@ public class CatalogRestTest extends MobiRestTestNg {
     private Difference difference;
 
     @Mock
-    private BNodeService bNodeService;
-
-    @Mock
-    private CatalogProvUtils provUtils;
-
-    @Mock
-    private CatalogUtilsService catalogUtils;
-
-    @Mock
-    private Repository repo;
+    private OsgiRepository repo;
 
     @Mock
     private RepositoryConnection conn;
 
-    @Mock
-    private PDP pdp;
-
-    @Override
-    protected Application configureApp() throws Exception {
+    @BeforeClass
+    public static void startServer() {
         vf = getValueFactory();
         mf = getModelFactory();
+
+        catalogManager = Mockito.mock(CatalogManager.class);
+        configProvider = Mockito.mock(CatalogConfigProvider.class);
+        versioningManager = Mockito.mock(VersioningManager.class);
+        engineManager = Mockito.mock(EngineManager.class);
+        
+        bNodeService = Mockito.mock(BNodeService.class);
+        provUtils = Mockito.mock(CatalogProvUtils.class);
+        catalogUtils = Mockito.mock(CatalogUtilsService.class);
+        pdp = Mockito.mock(PDP.class);
+
+        rest = new CatalogRest();
+        injectOrmFactoryReferencesIntoService(rest);
+        rest.setEngineManager(engineManager);
+        rest.setConfigProvider(configProvider);
+        rest.setCatalogManager(catalogManager);
+        rest.setFactoryRegistry(getOrmFactoryRegistry());
+        rest.setVersioningManager(versioningManager);
+        rest.setbNodeService(bNodeService);
+        rest.setProvUtils(provUtils);
+        rest.setCatalogUtilsService(catalogUtils);
+        rest.setPdp(pdp);
+        configureServer(rest, new UsernameTestFilter());
+    }
+
+    @Before
+    public void setupMocks() throws Exception {
+        closeable = MockitoAnnotations.openMocks(this);
 
         OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
         recordFactory = getRequiredOrmFactory(Record.class);
@@ -276,55 +283,20 @@ public class CatalogRestTest extends MobiRestTestNg {
         user = userFactory.createNew(vf.createIRI(USER_IRI));
         createActivity = createActivityFactory.createNew(vf.createIRI(ACTIVITY_IRI + "/create"));
         deleteActivity = deleteActivityFactory.createNew(vf.createIRI(ACTIVITY_IRI + "/delete"));
-        compiledResource = mf.createModel();
-        compiledResourceWithChanges = mf.createModel(compiledResource);
+        compiledResource = mf.createEmptyModel();
+        compiledResourceWithChanges = mf.createEmptyModel();
+        compiledResourceWithChanges.addAll(compiledResource);
         compiledResourceWithChanges.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()),
                 vf.createLiteral("Title"));
 
-        MockitoAnnotations.initMocks(this);
-        when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
+        when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgument(0, Model.class));
         when(configProvider.getLocalCatalogIRI()).thenReturn(vf.createIRI(LOCAL_IRI));
         when(configProvider.getDistributedCatalogIRI()).thenReturn(vf.createIRI(DISTRIBUTED_IRI));
         when(repo.getConnection()).thenReturn(conn);
         when(configProvider.getRepository()).thenReturn(repo);
 
-        rest = new CatalogRest();
-        injectOrmFactoryReferencesIntoService(rest);
-        rest.setVf(vf);
-        rest.setMf(mf);
-        rest.setEngineManager(engineManager);
-        rest.setTransformer(transformer);
-        rest.setConfigProvider(configProvider);
-        rest.setCatalogManager(catalogManager);
-        rest.setFactoryRegistry(getOrmFactoryRegistry());
-        rest.setVersioningManager(versioningManager);
-        rest.setbNodeService(bNodeService);
-        rest.setProvUtils(provUtils);
-        rest.setCatalogUtilsService(catalogUtils);
-        rest.setPdp(pdp);
-
-        return new ResourceConfig()
-                .register(rest)
-                .register(UsernameTestFilter.class)
-                .register(MultiPartFeature.class);
-    }
-
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
-    }
-
-    @BeforeMethod
-    public void setupMocks() {
-        when(transformer.sesameModel(any(Model.class)))
-                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(transformer.sesameStatement(any(Statement.class)))
-                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
-                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
-
-        when(bNodeService.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
-        when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
+        when(bNodeService.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgument(0, Statement.class));
+        when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgument(0, Model.class));
 
         when(recordResults.getPage()).thenReturn(Collections.singletonList(testRecord));
         when(recordResults.getPageNumber()).thenReturn(0);
@@ -366,8 +338,8 @@ public class CatalogRestTest extends MobiRestTestNg {
         when(catalogManager.getVersion(any(Resource.class), any(Resource.class), any(Resource.class), eq(versionFactory))).thenReturn(Optional.of(testVersion));
         when(catalogManager.getVersion(any(Resource.class), any(Resource.class), any(Resource.class), eq(tagFactory))).thenReturn(Optional.of(testTag));
         when(catalogManager.getLatestVersion(any(Resource.class), any(Resource.class), eq(versionFactory))).thenReturn(Optional.of(testVersion));
-        when(catalogManager.createVersion(anyString(), anyString(), eq(versionFactory))).thenReturn(testVersion);
-        when(catalogManager.createVersion(anyString(), anyString(), eq(tagFactory))).thenReturn(testTag);
+        when(catalogManager.createVersion(anyString(), any(), eq(versionFactory))).thenReturn(testVersion);
+        when(catalogManager.createVersion(anyString(), any(), eq(tagFactory))).thenReturn(testTag);
         when(catalogManager.getTaggedCommit(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(testCommits.get(0));
         when(catalogManager.getVersionedDistributions(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Collections.singleton(testDistribution));
         when(catalogManager.getVersionedDistribution(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(testDistribution));
@@ -379,7 +351,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         when(catalogManager.createBranch(anyString(), anyString(), eq(branchFactory))).thenReturn(testBranch);
         when(catalogManager.createBranch(anyString(), anyString(), eq(userBranchFactory))).thenReturn(testUserBranch);
         when(catalogManager.getCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class))).thenAnswer(i -> {
-            Resource iri = i.getArgumentAt(3, Resource.class);
+            Resource iri = i.getArgument(3, Resource.class);
             Commit found = null;
             for (Commit commit : testCommits) {
                 if (iri.equals(commit.getResource())) {
@@ -389,7 +361,7 @@ public class CatalogRestTest extends MobiRestTestNg {
             return Optional.ofNullable(found);
         });
         when(catalogManager.getCommit(any(Resource.class))).thenAnswer(i -> {
-            Resource iri = i.getArgumentAt(0, Resource.class);
+            Resource iri = i.getArgument(0, Resource.class);
             Commit found = null;
             for (Commit commit : testCommits) {
                 if (iri.equals(commit.getResource())) {
@@ -415,14 +387,14 @@ public class CatalogRestTest extends MobiRestTestNg {
         when(catalogManager.removeRecord(any(Resource.class), eq(vf.createIRI(RECORD_IRI)), any(OrmFactory.class))).thenReturn(testRecord);
 
         when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString())).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
-        when(versioningManager.merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(Model.class), any(Model.class))).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
+        when(versioningManager.merge(any(), any(), any(), any(), any(), any(), any())).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
 
         when(conflict.getIRI()).thenReturn(vf.createIRI(CONFLICT_IRI));
         when(conflict.getLeftDifference()).thenReturn(difference);
         when(conflict.getRightDifference()).thenReturn(difference);
 
-        when(difference.getAdditions()).thenReturn(mf.createModel());
-        when(difference.getDeletions()).thenReturn(mf.createModel());
+        when(difference.getAdditions()).thenReturn(mf.createEmptyModel());
+        when(difference.getDeletions()).thenReturn(mf.createEmptyModel());
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.of(user.getResource().stringValue()));
@@ -431,9 +403,10 @@ public class CatalogRestTest extends MobiRestTestNg {
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
     }
 
-    @AfterMethod
-    public void resetMocks() {
-        reset(catalogManager, versioningManager, engineManager, transformer, conflict, difference, recordResults, bNodeService, provUtils);
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
+        reset(catalogManager, versioningManager, engineManager, conflict, difference, recordResults, bNodeService, provUtils);
     }
 
     // GET catalogs
@@ -703,7 +676,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title");
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(provUtils, times(0)).startCreateActivity(user);
     }
@@ -714,7 +687,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart().field("type", Record.TYPE);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(provUtils, times(0)).startCreateActivity(user);
     }
@@ -727,7 +700,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("title", "Title");
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(provUtils, times(0)).startCreateActivity(user);
     }
@@ -741,7 +714,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("title", "Title");
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
         verify(provUtils, times(0)).startCreateActivity(user);
     }
@@ -755,7 +728,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         doThrow(new IllegalArgumentException()).when(catalogManager).addRecord(eq(vf.createIRI(ERROR_IRI)), any(Record.class));
 
         Response response = target().path("catalogs/" + encode(ERROR_IRI) + "/records")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(provUtils).startCreateActivity(user);
         verify(provUtils).removeActivity(createActivity);
@@ -770,7 +743,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         doThrow(new MobiException()).when(catalogManager).addRecord(eq(vf.createIRI(LOCAL_IRI)), any(Record.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
         verify(provUtils).startCreateActivity(user);
         verify(provUtils).removeActivity(createActivity);
@@ -1038,7 +1011,7 @@ public class CatalogRestTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 400);
-        assertEquals(response.getStatusInfo().toString(), "Bad Request");
+        assertEquals(response.getStatusInfo().getReasonPhrase(), "Bad Request");
     }
 
     @Test
@@ -1049,7 +1022,7 @@ public class CatalogRestTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 400);
-        assertEquals(response.getStatusInfo().toString(), "Bad Request");
+        assertEquals(response.getStatusInfo().getReasonPhrase(), "Bad Request");
     }
 
     @Test
@@ -1063,7 +1036,7 @@ public class CatalogRestTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 400);
-        assertEquals(response.getStatusInfo().toString(), "Bad Request");
+        assertEquals(response.getStatusInfo().getReasonPhrase(), "Bad Request");
     }
 
     @Test
@@ -1077,7 +1050,7 @@ public class CatalogRestTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 500);
-        assertEquals(response.getStatusInfo().toString(), "Internal Server Error");
+        assertEquals(response.getStatusInfo().getReasonPhrase(), "Internal Server Error");
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/distributions
@@ -1187,7 +1160,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("downloadURL", "http://example.com/Example");
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), DISTRIBUTION_IRI);
         verify(catalogManager).createDistribution(any(DistributionConfig.class));
@@ -1200,7 +1173,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart().field("description", "Description");
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1211,7 +1184,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title");
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
     }
 
@@ -1222,7 +1195,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title");
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/distributions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1233,7 +1206,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         doThrow(new MobiException()).when(catalogManager).createDistribution(any(DistributionConfig.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/distributions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
 
@@ -1484,7 +1457,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart().field("type", Version.TYPE);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1496,7 +1469,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("title", "Title");
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1509,7 +1482,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("title", "Title");
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
     }
 
@@ -1522,7 +1495,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         doThrow(new IllegalArgumentException()).when(catalogManager).addVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(Version.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/versions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1535,7 +1508,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         doThrow(new MobiException()).when(catalogManager).addVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Version.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
 
@@ -1551,7 +1524,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("commit", COMMIT_IRIS[0]);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), "urn:test");
         verify(catalogManager).addVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Tag.class));
@@ -1563,7 +1536,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart().field("iri", "urn:test").field("commit", COMMIT_IRIS[0]);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1573,7 +1546,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title").field("commit", COMMIT_IRIS[0]);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1583,7 +1556,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title").field("iri", "urn:test");
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1596,7 +1569,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("commit", COMMIT_IRIS[1]);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1610,7 +1583,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("commit", COMMIT_IRIS[0]);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
     }
 
@@ -1624,7 +1597,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         doThrow(new MobiException()).when(catalogManager).addVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Tag.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/tags")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
 
@@ -1922,7 +1895,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), DISTRIBUTION_IRI);
         verify(catalogManager).createDistribution(any(DistributionConfig.class));
@@ -1936,7 +1909,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1948,7 +1921,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
     }
 
@@ -1960,7 +1933,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(ERROR_IRI) + "/distributions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -1972,7 +1945,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
 
@@ -2312,7 +2285,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart().field("type", Branch.TYPE);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -2325,7 +2298,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("commitId", COMMIT_IRIS[1]);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -2337,7 +2310,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("title", "Title");
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -2351,7 +2324,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("commitId", COMMIT_IRIS[0]);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
     }
 
@@ -2364,7 +2337,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         doThrow(new IllegalArgumentException()).when(catalogManager).addBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(Branch.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/branches")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -2378,7 +2351,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         doThrow(new MobiException()).when(catalogManager).addBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Branch.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
 
@@ -2974,7 +2947,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts/resolution")
-                .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         assertEquals(response.readEntity(String.class), COMMIT_IRIS[0]);
         verify(versioningManager).merge(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class));
@@ -2983,7 +2956,7 @@ public class CatalogRestTest extends MobiRestTestNg {
     @Test
     public void mergeWithIncorrectPathTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(versioningManager).merge(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(ERROR_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class));
+        doThrow(new IllegalArgumentException()).when(versioningManager).merge(any(), any(), any(), any(), any(), any(), any());
         JSONArray adds = new JSONArray();
         adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
@@ -2991,7 +2964,7 @@ public class CatalogRestTest extends MobiRestTestNg {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(ERROR_IRI) + "/conflicts/resolution")
-                .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -3006,14 +2979,14 @@ public class CatalogRestTest extends MobiRestTestNg {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts/resolution")
-                .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
     }
 
     @Test
     public void mergeWithErrorTest() {
         // Setup:
-        doThrow(new MobiException()).when(versioningManager).merge(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class));
+        doThrow(new MobiException()).when(versioningManager).merge(any(), any(), any(), any(), any(), any(), any());
         JSONArray adds = new JSONArray();
         adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
@@ -3021,13 +2994,13 @@ public class CatalogRestTest extends MobiRestTestNg {
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts/resolution")
-                .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
 
-        doThrow(new IllegalStateException()).when(versioningManager).merge(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class));
+        doThrow(new IllegalStateException()).when(versioningManager).merge(any(), any(), any(), any(), any(), any(), any());
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts/resolution")
-                .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
 
@@ -3439,7 +3412,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("deletions", deletes.toString());
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
-                .request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         verify(bNodeService, atLeastOnce()).deskolemize(any(Model.class));
         verify(catalogManager).updateInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class), any(Model.class), any(Model.class));
@@ -3452,10 +3425,10 @@ public class CatalogRestTest extends MobiRestTestNg {
         adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("additions", adds.toString());
-        doThrow(new IllegalArgumentException()).when(catalogManager).updateInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(User.class), any(Model.class), any(Model.class));
+        doThrow(new IllegalArgumentException()).when(catalogManager).updateInProgressCommit(any(), any(), (User) any(), any(), any());
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/in-progress-commit")
-                .request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -3469,7 +3442,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
-                .request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
     }
 
@@ -3480,15 +3453,15 @@ public class CatalogRestTest extends MobiRestTestNg {
         adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("additions", adds.toString());
-        doThrow(new MobiException()).when(catalogManager).updateInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class), any(Model.class), any(Model.class));
+        doThrow(new MobiException()).when(catalogManager).updateInProgressCommit(any(), any(), (User) any(), any(), any());
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
-                .request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
 
-        doThrow(new IllegalStateException()).when(catalogManager).updateInProgressCommit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class), any(Model.class), any(Model.class));
+        doThrow(new IllegalStateException()).when(catalogManager).updateInProgressCommit(any(), any(), (User) any(), any(), any());
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/in-progress-commit")
-                .request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
 
@@ -3538,7 +3511,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("keywords", "keyword");
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), RECORD_IRI);
         ArgumentCaptor<RecordConfig> config = ArgumentCaptor.forClass(RecordConfig.class);
@@ -3562,7 +3535,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("description", "Description");
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/versions")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), VERSION_IRI);
         verify(catalogManager).createVersion(anyString(), anyString(), eq(ormFactory));
@@ -3578,7 +3551,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         fd.field("commitId", COMMIT_IRIS[0]);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches")
-                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertTrue(response.readEntity(String.class).contains(BRANCH_IRI));
         verify(catalogManager).createBranch(anyString(), anyString(), eq(ormFactory));

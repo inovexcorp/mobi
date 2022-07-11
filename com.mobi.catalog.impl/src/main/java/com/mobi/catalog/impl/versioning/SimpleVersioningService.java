@@ -23,8 +23,8 @@ package com.mobi.catalog.impl.versioning;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
@@ -35,7 +35,7 @@ import com.mobi.catalog.api.versioning.VersioningService;
 
 @Component(
         immediate = true,
-        provide = { VersioningService.class, SimpleVersioningService.class }
+        service = { VersioningService.class, SimpleVersioningService.class }
 )
 public class SimpleVersioningService extends BaseVersioningService<VersionedRDFRecord> {
     @Reference

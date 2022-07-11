@@ -36,9 +36,6 @@ import com.mobi.etl.api.rdf.export.RDFExportService;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.engines.RdfEngine;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ValueFactory;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
@@ -49,6 +46,10 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.slf4j.Logger;
@@ -62,6 +63,8 @@ import java.io.OutputStream;
 @Command(scope = "mobi", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
 @Service
 public class CLITransform implements Action {
+
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
 
     // Service References
 
@@ -84,13 +87,6 @@ public class CLITransform implements Action {
 
     void setRdfExportService(RDFExportService rdfExportService) {
         this.rdfExportService = rdfExportService;
-    }
-
-    @Reference
-    private ValueFactory vf;
-
-    void setValueFactory(ValueFactory valueFactory) {
-        this.vf = valueFactory;
     }
 
     @Reference

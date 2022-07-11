@@ -23,11 +23,6 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
@@ -45,29 +40,33 @@ import com.mobi.ontology.impl.core.AbstractOntologyManager;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.ontologies.ApplicationSetting;
 import org.apache.commons.lang.NotImplementedException;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.cache.Cache;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.cache.Cache;
 
 @Component(
-        provide = { SimpleOntologyManager.class, OntologyManager.class },
+        service = { SimpleOntologyManager.class, OntologyManager.class },
         name = SimpleOntologyManager.COMPONENT_NAME,
-        configurationPolicy = ConfigurationPolicy.require
+        configurationPolicy = ConfigurationPolicy.REQUIRE
 )
 public class SimpleOntologyManager extends AbstractOntologyManager {
 
@@ -91,21 +90,6 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
     @Reference
     public void setNamespaceService(NamespaceService namespaceService) {
         this.namespaceService = namespaceService;
-    }
-
-    @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
-    }
-
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
-    }
-
-    @Reference
-    public void setSesameTransformer(SesameTransformer sesameTransformer) {
-        this.sesameTransformer = sesameTransformer;
     }
 
     @Reference
@@ -143,7 +127,7 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
         this.branchFactory = branchFactory;
     }
 
-    @Reference(type = '*', dynamic = true, optional = true)
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     public void addOntologyCache(OntologyCache ontologyCache) {
         this.ontologyCache = ontologyCache;
     }
@@ -266,12 +250,12 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
      * @return An Ontology loaded into the cache using the File.
      */
     private Ontology createOntology(File ontologyFile, Resource recordId, Resource commitId) {
-        Repository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
+        OsgiRepository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
         String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
         return new SimpleOntology(key, ontologyFile, repository, this, catalogManager, configProvider, datasetManager,
-                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, importService);
+                importsResolver, bNodeService, valueFactory, modelFactory, importService);
     }
 
     /**
@@ -282,11 +266,11 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
      * @return An Ontology that was previously loaded into the cache.
      */
     private Ontology createOntology(Resource recordId, Resource commitId) {
-        Repository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
+        OsgiRepository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
         String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
         return new SimpleOntology(key, repository, this, catalogManager, configProvider, datasetManager,
-                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory, importService);
+                importsResolver, bNodeService, valueFactory, modelFactory, importService);
     }
 }

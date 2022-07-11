@@ -39,7 +39,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 @Path("/imported-ontologies")
-@Component(service = ImportedOntologyRest.class, immediate = true)
+@Component(service = ImportedOntologyRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 public class ImportedOntologyRest {
 
     /**
@@ -71,7 +71,8 @@ public class ImportedOntologyRest {
         try {
             conn = (HttpURLConnection) new URL(url).openConnection();
             conn.setRequestMethod("HEAD");
-            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK ||
+                    conn.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
                 return Response.ok().build();
             } else {
                 throw ErrorUtils.sendError("The provided URL was unresolvable.", Response.Status.BAD_REQUEST);

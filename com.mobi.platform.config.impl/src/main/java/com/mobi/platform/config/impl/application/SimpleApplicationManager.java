@@ -23,8 +23,10 @@ package com.mobi.platform.config.impl.application;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import com.mobi.platform.config.api.application.ApplicationManager;
 import com.mobi.platform.config.api.application.ApplicationWrapper;
 import com.mobi.platform.config.api.ontologies.platformconfig.Application;
@@ -37,7 +39,7 @@ import java.util.Optional;
 public class SimpleApplicationManager implements ApplicationManager {
     private Map<String, ApplicationWrapper> applications = new HashMap<>();
 
-    @Reference(type = '*', dynamic = true)
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     public void addApplication(ApplicationWrapper applicationWrapper) {
         applications.put(applicationWrapper.getId(), applicationWrapper);
     }

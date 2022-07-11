@@ -26,8 +26,8 @@ package com.mobi.catalog.impl.record;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,21 +43,20 @@ import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
-import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.exception.RepositoryException;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -72,12 +71,11 @@ import java.util.Optional;
 import java.util.Set;
 
 public class SimpleRecordServiceTest extends OrmEnabledTestCase {
-
+    private AutoCloseable closeable;
     private final IRI testIRI = VALUE_FACTORY.createIRI("urn:test");
     private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
 
     private SimpleRecordService recordService;
-    private SimpleSesameTransformer transformer;
     private Record testRecord;
     private User user;
     private DeleteActivity deleteActivity;
@@ -99,10 +97,12 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     @Mock
     private CatalogProvUtils provUtils;
 
+    @Mock
+    private CreateActivity createActivity;
+
     @Before
     public void setUp() throws Exception {
         recordService = new SimpleRecordService();
-        transformer = new SimpleSesameTransformer();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
 
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));
@@ -111,17 +111,22 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
         when(utilsService.getObject(any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
-                i.getArgumentAt(1, OrmFactory.class).createNew(i.getArgumentAt(0, Resource.class)));
+                i.getArgument(1, OrmFactory.class).createNew(i.getArgument(0, Resource.class)));
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
+        when(provUtils.startCreateActivity(any())).thenReturn(createActivity);
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.utilsService = utilsService;
-        recordService.valueFactory = VALUE_FACTORY;
         recordService.provUtils = provUtils;
         recordService.start();
+    }
+
+    @After
+    public void reset() throws Exception {
+        closeable.close();
     }
 
     /* create() */
@@ -237,7 +242,7 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     @Test
     public void exportUsingBatchExporterTest() throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        BatchExporter exporter =  new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
+        BatchExporter exporter =  new BatchExporter(new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
         RecordOperationConfig config = new OperationConfig();
 
         config.set(RecordExportSettings.BATCH_EXPORTER, exporter);
@@ -249,7 +254,7 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         exporter.endRDF();
         assertFalse(exporter.isActive());
 
-        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString(), StandardCharsets.UTF_8)), "", RDFFormat.JSONLD));
+        Model outputModel = Rio.parse(IOUtils.toInputStream(os.toString(), StandardCharsets.UTF_8), "", RDFFormat.JSONLD);
         assertEquals(testRecord.getModel(), outputModel);
 
         verify(utilsService).optObject(eq(testIRI), any(OrmFactory.class), eq(connection));

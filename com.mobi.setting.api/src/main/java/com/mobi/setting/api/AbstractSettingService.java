@@ -26,20 +26,22 @@ package com.mobi.setting.api;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.QueryResults;
-import com.mobi.persistence.utils.RepositoryResults;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.Statements;
-import com.mobi.query.api.GraphQuery;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.setting.api.ontologies.Setting;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,11 +58,8 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSettingService.class);
 
-    @Reference
-    public ValueFactory vf;
-
-    @Reference
-    public ModelFactory mf;
+    public final ValueFactory vf = SimpleValueFactory.getInstance();
+    public final ModelFactory mf = new DynamicModelFactory();
 
     @Reference
     public OrmFactoryRegistry factoryRegistry;
@@ -94,8 +93,11 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
     public Optional<T> getSetting(Resource settingId) {
         LOGGER.debug("Retrieving setting " + settingId.stringValue());
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Model settingModel =
-                    RepositoryResults.asModelNoContext(conn.getStatements(settingId, null, null, context), mf);
+            Model settingModel = mf.createEmptyModel();
+            conn.getStatements(settingId, null, null, context).stream()
+                    .map(statement -> vf.createStatement(statement.getSubject(), statement.getPredicate(),
+                            statement.getObject()))
+                    .forEach(settingModel::add);
             Optional<T> settingOpt = settingFactory.getExisting(settingId, settingModel);
             settingOpt.ifPresent(setting ->
                     addEntitiesToModel(setting.getHasObjectValue_resource(), settingModel, conn));
@@ -135,7 +137,7 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
     public void deleteSetting(Resource settingId) {
         LOGGER.debug("Deleting setting " + settingId.stringValue());
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            if (!conn.contains(settingId, null, null, context)) {
+            if (!ConnectionUtils.contains(conn, settingId, null, null, context)) {
                 throw new IllegalArgumentException("Setting " + settingId + " does not exist");
             }
             conn.begin();
@@ -167,7 +169,7 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
     @Override
     public Resource getSettingType(Setting setting) {
         LOGGER.debug("Retrieving setting type for " + setting.getResource().stringValue());
-        List<Resource> types = mf.createModel(setting.getModel()).filter(setting.getResource(),
+        List<Resource> types = setting.getModel().filter(setting.getResource(),
                 vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null)
                 .stream()
                 .map(Statements::objectResource)
@@ -218,13 +220,13 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
     }
 
     protected void removeIfNotReferenced(Resource iri, RepositoryConnection conn) {
-        if (!conn.contains(null, null, iri)) {
+        if (!ConnectionUtils.contains(conn, null, null, iri)) {
             conn.remove(iri, null, null);
         }
     }
 
     protected List<Resource> getReferencedEntityIRIs(Resource settingIRI, String propIRI, RepositoryConnection conn) {
-        return RepositoryResults.asList(conn.getStatements(settingIRI, vf.createIRI(propIRI), null, vf.createIRI(SettingService.GRAPH)))
+        return QueryResults.asList(conn.getStatements(settingIRI, vf.createIRI(propIRI), null, vf.createIRI(SettingService.GRAPH)))
                 .stream()
                 .map(Statements::objectResource)
                 .filter(Optional::isPresent)
@@ -234,8 +236,11 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
 
     protected void addEntitiesToModel(Set<Resource> entityIRIs, Model model, RepositoryConnection conn) {
         entityIRIs.forEach(resource -> {
-            Model entityModel = RepositoryResults.asModelNoContext(conn.getStatements(resource, null, null, vf.createIRI(SettingService.GRAPH)),
-                    mf);
+            Model entityModel = mf.createEmptyModel();
+            conn.getStatements(resource, null, null, vf.createIRI(SettingService.GRAPH)).stream()
+                    .map(statement -> vf.createStatement(statement.getSubject(), statement.getPredicate(),
+                            statement.getObject()))
+                    .forEach(entityModel::add);
             model.addAll(entityModel);
         });
     }
@@ -288,7 +293,7 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
     }
 
     protected void checkExistsInRepo(RepositoryConnection conn, T setting, User... user) {
-        if (conn.contains(setting.getResource(), null, null, context)) {
+        if (ConnectionUtils.contains(conn, setting.getResource(), null, null, context)) {
             throw new IllegalArgumentException("Setting " + setting.getResource() + " of type " + getTypeIRI()
                     + " already exists");
         }
@@ -322,7 +327,7 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
     }
 
     private void checkRepoForSetting(Resource resource, RepositoryConnection conn) {
-        if (!conn.contains(resource, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
+        if (!ConnectionUtils.contains(conn, resource, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
                 vf.createIRI(Setting.TYPE), context)) {
             throw new IllegalArgumentException("Setting " + resource + " could not be found");
         }
@@ -330,7 +335,8 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
 
     private void validateNew(Resource resource, Resource type) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            if (conn.contains(resource, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), type, context)) {
+            if (ConnectionUtils.contains(conn, resource, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
+                    type, context)) {
                 throw new IllegalArgumentException(type.stringValue() + " " + resource + " already exists in repo.");
             }
         }

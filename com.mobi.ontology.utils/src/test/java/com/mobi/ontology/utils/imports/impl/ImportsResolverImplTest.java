@@ -25,10 +25,10 @@ package com.mobi.ontology.utils.imports.impl;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -38,19 +38,16 @@ import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.utils.imports.ImportsResolverConfig;
 import com.mobi.persistence.utils.Models;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.config.RepositoryConfig;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.base.OsgiRepositoryWrapper;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
@@ -68,17 +65,16 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 public class ImportsResolverImplTest extends OrmEnabledTestCase {
-
+    private AutoCloseable closeable;
     private ImportsResolverImpl resolver;
     private ModelFactory mf;
     private ValueFactory vf;
-    private Repository repo;
+    private OsgiRepositoryWrapper repo;
     private IRI headCommitIRI;
     private IRI recordIRI;
     private IRI catalogIRI;
@@ -88,15 +84,13 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
     private static HttpUrlStreamHandler httpUrlStreamHandler;
 
     @Mock
+    private ImportsResolverConfig importsResolverConfig;
+
+    @Mock
     private CatalogConfigProvider configProvider;
+
     @Mock
     private CatalogManager catalogManager;
-
-    @Mock
-    private RepositoryConfig repositoryConfig;
-
-    @Mock
-    private SesameTransformer transformer;
 
     @Mock
     private OntologyManager ontologyManager;
@@ -117,7 +111,7 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception{
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         mf = getModelFactory();
         vf = getValueFactory();
         resolver = new ImportsResolverImpl();
@@ -127,17 +121,11 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         recordIRI = vf.createIRI("urn:recordIRI");
         ontologyIRI = vf.createIRI("urn:ontologyIRI");
 
-        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
-        when(transformer.mobiIRI(any(org.eclipse.rdf4j.model.IRI.class))).thenAnswer(i -> Values.mobiIRI(i.getArgumentAt(0, org.eclipse.rdf4j.model.IRI.class)));
-        when(transformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(transformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
+        localModel = Models.createModel(getClass().getResourceAsStream("/Ontology.ttl"));
 
-        localModel = Models.createModel(getClass().getResourceAsStream("/Ontology.ttl"), transformer);
-
-        repo = spy(new SesameRepositoryWrapper(new SailRepository(new MemoryStore())));
-        repo.initialize();
-        when(repo.getConfig()).thenReturn(repositoryConfig);
-        when(repositoryConfig.id()).thenReturn("repoCacheId");
+        repo = spy(new MemoryRepositoryWrapper());
+        repo.setDelegate(new SailRepository(new MemoryStore()));
+        when(repo.getRepositoryID()).thenReturn("repoCacheId");
 
         when(masterBranch.getHead_resource()).thenReturn(Optional.of(headCommitIRI));
 
@@ -149,15 +137,15 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
 
         when(catalogManager.getCompiledResource(eq(headCommitIRI))).thenReturn(localModel);
 
-        resolver.setModelFactory(mf);
-        resolver.setTransformer(transformer);
-        resolver.setCatalogConfigProvider(configProvider);
-        resolver.setCatalogManager(catalogManager);
-        resolver.activate(Collections.singletonMap("userAgent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0"));
+        resolver.catalogConfigProvider = configProvider;
+        resolver.catalogManager = catalogManager;
+        when(importsResolverConfig.userAgent()).thenReturn("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0");
+        resolver.activate(importsResolverConfig);
     }
 
     @After
-    public void reset() {
+    public void reset() throws Exception {
+        closeable.close();
         httpUrlStreamHandler.resetConnections();
     }
 

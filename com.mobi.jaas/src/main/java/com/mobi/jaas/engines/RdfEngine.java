@@ -23,12 +23,6 @@ package com.mobi.jaas.engines;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.component.Reference;
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.GroupConfig;
@@ -43,53 +37,66 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.ontologies.foaf.Agent;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.QueryResults;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.GraphQuery;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.impl.ThingFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
-import com.mobi.repository.exception.RepositoryException;
+import com.mobi.repository.api.OsgiRepository;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.karaf.jaas.modules.Encryption;
 import org.apache.karaf.jaas.modules.encryption.EncryptionSupport;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.osgi.framework.BundleContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component(
-        designateFactory = RdfEngineConfig.class,
-        configurationPolicy = ConfigurationPolicy.require,
-        properties = {
+        configurationPolicy = ConfigurationPolicy.REQUIRE,
+        property = {
                 "engineName=RdfEngine"
         }
 )
+@Designate(ocd = RdfEngineConfig.class)
 public class RdfEngine implements Engine {
     public static final String ENGINE_NAME = "com.mobi.jaas.engines.RdfEngine";
     private static final Logger logger = LoggerFactory.getLogger(RdfEngine.class);
+
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ModelFactory mf = new DynamicModelFactory();
 
     private Resource context;
     private String userNamespace;
@@ -97,9 +104,7 @@ public class RdfEngine implements Engine {
     private String roleNamespace;
     private Set<String> roles;
     private EncryptionSupport encryptionSupport;
-    private Repository repository;
-    private ValueFactory vf;
-    private ModelFactory mf;
+    private OsgiRepository repository;
     private UserFactory userFactory;
     private GroupFactory groupFactory;
     private RoleFactory roleFactory;
@@ -143,11 +148,10 @@ public class RdfEngine implements Engine {
     }
 
     @Activate
-    void start(BundleContext bundleContext, Map<String, Object> props) {
+    void start(BundleContext bundleContext, RdfEngineConfig config) {
         logger.info("Activating " + getEngineName());
-        RdfEngineConfig config = Configurable.createConfigurable(RdfEngineConfig.class, props);
         setEncryption(config, bundleContext);
-        roles = Stream.of(config.roles()).collect(Collectors.toSet());
+        roles = new HashSet<>(Arrays.asList(config.roles().split(",")));
         initEngineResources();
 
         try (RepositoryConnection conn = repository.getConnection()) {
@@ -160,7 +164,7 @@ public class RdfEngine implements Engine {
                                 vf.createIRI(DCTERMS.TITLE.stringValue()));
                         conn.add(adminRole.getModel(), context);
                     });
-            if (!getUserId("admin").isPresent()) {
+            if (getUserId("admin").isEmpty()) {
                 Resource adminIRI = createUserIri("admin");
                 Set<Role> allRoles = roles.stream()
                         .map(role -> roleFactory.createNew(vf.createIRI(roleNamespace + role)))
@@ -178,26 +182,15 @@ public class RdfEngine implements Engine {
     }
 
     @Modified
-    void modified(BundleContext bundleContext, Map<String, Object> props) {
+    void modified(BundleContext bundleContext, RdfEngineConfig config) {
         logger.info("Modifying the " + getEngineName());
-        RdfEngineConfig config = Configurable.createConfigurable(RdfEngineConfig.class, props);
         setEncryption(config, bundleContext);
         initEngineResources();
     }
 
-    @Reference(name = "repository")
-    protected void setRepository(Repository repository) {
+    @Reference(target = "(id=system)")
+    protected void setOsgiRepository(OsgiRepository repository) {
         this.repository = repository;
-    }
-
-    @Reference
-    protected void setValueFactory(final ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    @Reference
-    protected void setModelFactory(final ModelFactory mf) {
-        this.mf = mf;
     }
 
     @Reference
@@ -226,7 +219,7 @@ public class RdfEngine implements Engine {
             return Optional.empty();
         }
 
-        Model roleModel = mf.createModel();
+        Model roleModel = mf.createEmptyModel();
         try (RepositoryConnection conn = repository.getConnection()) {
             RepositoryResult<Statement> statements = conn.getStatements(vf.createIRI(roleNamespace + roleName),
                     null, null, context);
@@ -312,7 +305,7 @@ public class RdfEngine implements Engine {
                 return Optional.empty();
             }
 
-            Model userModel = mf.createModel();
+            Model userModel = mf.createEmptyModel();
             RepositoryResult<Statement> statements = conn.getStatements(optId.get(), null, null, context);
             statements.forEach(userModel::add);
             roles.stream()
@@ -417,7 +410,7 @@ public class RdfEngine implements Engine {
                 return Optional.empty();
             }
 
-            Model groupModel = mf.createModel();
+            Model groupModel = mf.createEmptyModel();
             RepositoryResult<Statement> statements = conn.getStatements(optId.get(), null, null, context);
             statements.forEach(groupModel::add);
             roles.stream()
@@ -542,24 +535,24 @@ public class RdfEngine implements Engine {
     private void setEncryption(RdfEngineConfig config, BundleContext context) {
         Map<String, Object> options = new HashMap<>();
         options.put(BundleContext.class.getName(), context);
-        options.put("encryption.name", config.encryptionName());
-        options.put("encryption.enabled", config.encryptionEnabled());
-        options.put("encryption.prefix", config.encryptionPrefix());
-        options.put("encryption.suffix", config.encryptionSuffix());
-        options.put("encryption.algorithm", config.encryptionAlgorithm());
-        options.put("encryption.encoding", config.encryptionEncoding());
+        options.put("encryption.name", config.encryption_name());
+        options.put("encryption.enabled", config.encryption_enabled());
+        options.put("encryption.prefix", config.encryption_prefix());
+        options.put("encryption.suffix", config.encryption_suffix());
+        options.put("encryption.algorithm", config.encryption_algorithm());
+        options.put("encryption.encoding", config.encryption_encoding());
         this.encryptionSupport = new EncryptionSupport(options);
     }
 
     private boolean resourceExists(Resource resource) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            return conn.contains(resource, null, null, context);
+            return ConnectionUtils.contains(conn, resource, null, null, context);
         }
     }
 
     private boolean resourceExists(Resource resource, String typeString) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            return conn.contains(resource, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(typeString), context);
+            return ConnectionUtils.contains(conn, resource, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(typeString), context);
         }
     }
 
@@ -584,7 +577,9 @@ public class RdfEngine implements Engine {
         if (!result.hasNext()) {
             return Optional.empty();
         }
-        return Optional.of(Bindings.requiredResource(result.next(), USER_BINDING));
+        BindingSet bindingSet = result.next();
+        result.close();
+        return Optional.of(Bindings.requiredResource(bindingSet, USER_BINDING));
     }
 
     private Optional<Resource> getGroupId(String groupTitle) {
@@ -600,6 +595,8 @@ public class RdfEngine implements Engine {
         if (!result.hasNext()) {
             return Optional.empty();
         }
-        return Optional.of(Bindings.requiredResource(result.next(), GROUP_BINDING));
+        BindingSet bindingSet = result.next();
+        result.close();
+        return Optional.of(Bindings.requiredResource(bindingSet, GROUP_BINDING));
     }
 }

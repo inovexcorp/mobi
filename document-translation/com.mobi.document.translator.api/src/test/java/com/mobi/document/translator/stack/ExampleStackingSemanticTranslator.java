@@ -25,7 +25,7 @@ package com.mobi.document.translator.stack;
 
 import com.mobi.document.translator.SemanticTranslationException;
 import com.mobi.document.translator.ontology.ExtractedOntology;
-import com.mobi.rdf.api.Model;
+import org.eclipse.rdf4j.model.Model;
 
 import java.io.InputStream;
 import java.nio.file.Path;

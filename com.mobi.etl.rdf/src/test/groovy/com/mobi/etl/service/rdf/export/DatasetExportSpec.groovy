@@ -26,31 +26,30 @@ import org.apache.commons.io.output.NullOutputStream
 import com.mobi.dataset.api.DatasetConnection
 import com.mobi.dataset.api.DatasetManager
 import com.mobi.etl.api.config.rdf.export.BaseExportConfig
-import com.mobi.persistence.utils.api.SesameTransformer
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
-import com.mobi.rdf.core.utils.Values
-import com.mobi.repository.base.RepositoryResult
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.repository.RepositoryResult
 import org.eclipse.rdf4j.rio.RDFFormat
+import org.mockito.Mockito
 import spock.lang.Specification
 
 class DatasetExportSpec extends Specification {
     def service = new DatasetExportServiceImpl()
     def vf = SimpleValueFactory.getInstance()
-    def mf = LinkedHashModelFactory.getInstance()
+    def mf = new DynamicModelFactory()
 
-    def transformer = Mock(SesameTransformer)
     def datasetManager = Mock(DatasetManager)
     def datasetConn = Mock(DatasetConnection)
-    def result = Mock(RepositoryResult)
+    def result = Mockito.mock(RepositoryResult.class)
 
     def datasetId = "http://test.com/dataset-record"
 
     def setup() {
         def datasetIRI = vf.createIRI(datasetId)
 
-        transformer.sesameStatement(_) >> { args -> Values.sesameStatement(args[0])}
-        result.iterator() >> mf.createModel().iterator()
+        Mockito.doNothing().when(result).close()
+        Mockito.when(result.iterator()).thenReturn(mf.createEmptyModel().iterator())
+
         datasetManager.getConnection(datasetIRI) >> datasetConn
         datasetManager.getConnection(!datasetIRI) >> {throw new IllegalArgumentException()}
         datasetConn.getStatements(*_) >> result
@@ -58,9 +57,7 @@ class DatasetExportSpec extends Specification {
         datasetConn.getNamedGraphs() >> result
         datasetConn.getSystemDefaultNamedGraph() >> vf.createIRI("http://test.com/system-default")
 
-        service.setDatasetManager(datasetManager)
-        service.setTransformer(transformer)
-        service.setValueFactory(vf)
+        service.datasetManager = datasetManager
     }
 
     def "Export File from Dataset without restrictions without quads"() {

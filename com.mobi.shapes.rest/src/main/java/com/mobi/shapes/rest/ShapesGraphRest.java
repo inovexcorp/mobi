@@ -48,16 +48,6 @@ import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.ParsedModel;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
@@ -70,28 +60,37 @@ import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -102,7 +101,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -113,17 +114,19 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 @Path("/shapes-graphs")
-@Component(service = ShapesGraphRest.class, immediate = true)
+@Component(service = ShapesGraphRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 public class ShapesGraphRest {
 
     private static final ObjectMapper mapper = new ObjectMapper();
+
+    final ValueFactory vf = SimpleValueFactory.getInstance();
+    final ModelFactory mf = new DynamicModelFactory();
 
     @Reference
     CatalogConfigProvider configProvider;
@@ -133,15 +136,6 @@ public class ShapesGraphRest {
 
     @Reference
     EngineManager engineManager;
-
-    @Reference
-    SesameTransformer transformer;
-
-    @Reference
-    ValueFactory vf;
-
-    @Reference
-    ModelFactory mf;
 
     @Reference
     BNodeService bNodeService;
@@ -155,13 +149,7 @@ public class ShapesGraphRest {
      * created and stored with an initial Commit containing the data provided in the SHACL Shapes Graph file. Only
      * provide either a SHACL Shapes Graph file or SHACL Shapes Graph JSON-LD.
      *
-     * @param context         Context of the request.
-     * @param fileInputStream SHACL Shapes Graph file to upload.
-     * @param json            SHACL Shapes Graph JSON-LD to upload.
-     * @param title           Title for the ShapesGraphRecord.
-     * @param description     Optional description for the ShapesGraphRecord.
-     * @param markdown        Optional markdown abstract for the new ShapesGraphRecord.
-     * @param keywords        Optional list of keyword strings for the ShapesGraphRecord.
+     * @param servletRequest         Context of the request.
      * @return CREATED with record ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
      *      SERVER ERROR if there is a problem creating the ShapesGraphRecord.
      */
@@ -179,65 +167,86 @@ public class ShapesGraphRest {
                     @ApiResponse(responseCode = "400", description = "Resource can't be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "Problem creating ShapesGraphRecord")
-            }
+            },
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
+                                    schema = @Schema(implementation = ShapesGraphFileUpload.class)
+                            )
+                    }
+            )
     )
     @RolesAllowed("user")
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = ShapesGraphRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
-    public Response uploadFile(
-            @Context ContainerRequestContext context,
-            @Parameter(schema = @Schema(type = "string", format = "binary",
-                    description = "SHACL Shapes Graph file to upload.", required = true))
-            @FormDataParam("file") InputStream fileInputStream,
-            @Parameter(description = "File details", hidden = true)
-            @FormDataParam("file") FormDataContentDisposition fileDetail,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "SHACL Shapes Graph JSON-LD to upload"))
-            @FormDataParam("json") String json,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Title for the ShapesGraphRecord", required = true))
-            @FormDataParam("title") String title,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Optional description for the ShapesGraphRecord"))
-            @FormDataParam("description") String description,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Optional markdown abstract for the new ShapesGraphRecord"))
-            @FormDataParam("markdown") String markdown,
-            @Parameter(array = @ArraySchema(
-                    arraySchema = @Schema(description =
-                            "Optional list of keyword strings for the ShapesGraphRecord"),
-                    schema = @Schema(implementation = String.class, description = "Keyword")))
-            @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
+    public Response uploadFile(@Context HttpServletRequest servletRequest) {
+        Map<String, List<Class>> fields = new HashMap<>();
+        fields.put("title", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("description", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("json", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("markdown", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("keywords", Stream.of(Set.class, String.class).collect(Collectors.toList()));
+
+        Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);
+        String title = (String) formData.get("title");
+        String description = (String) formData.get("description");
+        String json = (String) formData.get("json");
+        String markdown = (String) formData.get("markdown");
+        Set<String> keywords = (Set<String>) formData.get("keywords");
+        InputStream inputStream = (InputStream) formData.get("stream");
+        String filename = (String) formData.get("filename");
         checkStringParam(title, "The title is missing.");
-        if (fileInputStream == null && json == null) {
+        if (inputStream == null && json == null) {
             throw ErrorUtils.sendError("The SHACL Shapes Graph data is missing.", Response.Status.BAD_REQUEST);
-        } else if (fileInputStream != null && json != null) {
+        } else if (inputStream != null && json != null) {
             throw ErrorUtils.sendError("Only provide either a SHACL Shapes Graph file or SHACL Shapes Graph json"
                             + "data.", Response.Status.BAD_REQUEST);
         }
 
-        Set<String> keywordSet = Collections.emptySet();
-        if (keywords != null) {
-            keywordSet = keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
-        }
-        if (fileInputStream != null) {
+        if (inputStream != null) {
             RecordOperationConfig config = new OperationConfig();
-            config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, fileInputStream);
-            config.set(VersionedRDFRecordCreateSettings.FILE_NAME, fileDetail.getFileName());
-            return createShapesGraphRecord(context, title, description, markdown, keywordSet, config);
+            config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, inputStream);
+            config.set(VersionedRDFRecordCreateSettings.FILE_NAME, filename);
+            return createShapesGraphRecord(servletRequest, title, description, markdown, keywords, config);
         } else {
             checkStringParam(json, "The json is missing.");
             RecordOperationConfig config = new OperationConfig();
-            Model jsonModel = RestUtils.jsonldToModel(json, transformer);
+            Model jsonModel = RestUtils.jsonldToModel(json);
             config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonModel);
-            return createShapesGraphRecord(context, title, description, markdown, keywordSet, config);
+            return createShapesGraphRecord(servletRequest, title, description, markdown, keywords, config);
         }
+    }
+
+    /**
+     * Class used for OpenAPI documentation for file upload endpoint.
+     */
+    private class ShapesGraphFileUpload {
+        @Schema(type = "string", format = "binary", description = "Ontology file to upload.")
+        public String file;
+
+        @Schema(type = "string", description = "ShapesGraph JSON-LD to upload")
+        public String json;
+
+        @Schema(type = "string", description = "Title for the OntologyRecord", required = true)
+        public String title;
+
+        @Schema(type = "string", description = "Optional description for the ShapesGraphRecord")
+        public String description;
+
+        @Schema(type = "string", description = "Optional markdown abstract for the new ShapesGraphRecord")
+        public String markdown;
+
+        @ArraySchema(
+                arraySchema = @Schema(description =
+                        "Optional list of keyword strings for the ShapesGraphRecord"),
+                schema = @Schema(implementation = String.class, description = "Keyword"))
+        public List<String> keywords;
     }
 
     /**
      * Creates the ShapesGraphRecord using CatalogManager.
      *
-     * @param context          Context of the request.
+     * @param servletRequest          Context of the request.
      * @param title            the title for the ShapesGraphRecord.
      * @param description      the description for the ShapesGraphRecord.
      * @param keywordSet       the comma separated list of keywords associated with the ShapesGraphRecord.
@@ -245,9 +254,9 @@ public class ShapesGraphRest {
      * @return a Response indicating the success of the creation with a JSON object containing the shapesGraphId,
      *     recordId, branchId, and commitId.
      */
-    private Response createShapesGraphRecord(ContainerRequestContext context, String title, String description,
+    private Response createShapesGraphRecord(HttpServletRequest servletRequest, String title, String description,
                                              String markdown, Set<String> keywordSet, RecordOperationConfig config) {
-        User user = getActiveUser(context, engineManager);
+        User user = getActiveUser(servletRequest, engineManager);
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         Resource catalogId = configProvider.getLocalCatalogIRI();
@@ -321,7 +330,7 @@ public class ShapesGraphRest {
     @RolesAllowed("user")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadShapesGraph(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID. "
                     + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"", required = true)
             @PathParam("recordId") String recordIdStr,
@@ -345,7 +354,7 @@ public class ShapesGraphRest {
         checkStringParam(recordIdStr, "The recordIdStr is missing.");
         try {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
-                    context);
+                    servletRequest);
             StreamingOutput output = outputStream ->
                     writeShapesGraphToStream(shapesGraph.getModel(), RestUtils.getRDFFormat(rdfFormat), outputStream);
             return Response.ok(output).header("Content-Disposition", "attachment;filename=" + fileName
@@ -379,12 +388,12 @@ public class ShapesGraphRest {
     )
     @RolesAllowed("user")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteShapesGraph(@Context ContainerRequestContext context,
+    public Response deleteShapesGraph(@Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID. "
                     + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"", required = true)
             @PathParam("recordId") String recordIdStr) {
         try {
-            catalogManager.deleteRecord(getActiveUser(context, engineManager), vf.createIRI(recordIdStr),
+            catalogManager.deleteRecord(getActiveUser(servletRequest, engineManager), vf.createIRI(recordIdStr),
                     ShapesGraphRecord.class);
             return Response.noContent().build();
         } catch (IllegalArgumentException ex) {
@@ -398,33 +407,42 @@ public class ShapesGraphRest {
     @Path("{recordId}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updateShapesGraph(@Context ContainerRequestContext context,
-                                      @Parameter(schema = @Schema(type = "string", format = "binary",
-                                              description = "SHACL Shapes Graph file to upload."))
-                                      @FormDataParam("file") InputStream fileInputStream,
-                                      @Parameter(description = "File details", hidden = true)
-                                      @FormDataParam("file") FormDataContentDisposition fileDetail,
-                                      @Parameter(schema = @Schema(type = "string",
-                                              description = "SHACL Shapes Graph JSON-LD to upload"))
-                                      @FormDataParam("json") String json,
+    @Operation(
+            tags = "shapes-graphs",
+            summary = "Updates the specified shapes graph branch and commit with the data provided",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "OK if successful or METHOD_NOT_ALLOWED if the changes "
+                                    + "can not be applied to the commit specified"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            },
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
+                                    schema = @Schema(implementation = ShapesGraphFileUploadChanges.class)
+                            )
+                    }
+            )
+    )
+    public Response updateShapesGraph(@Context HttpServletRequest servletRequest,
                                       @Parameter(description = "String representing the Record Resource ID. "
                                               + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"",
                                               required = true)
-                                      @PathParam("recordId") String recordIdStr,
-                                      @Parameter(description = "Optional String representing the Branch Resource id. "
-                                              + "NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
-                                              + "Defaults to Master branch if missing")
-                                      @FormDataParam("branchId") String branchIdStr,
-                                      @Parameter(description = "Optional String representing the Commit Resource id."
-                                              + " NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
-                                              + "Defaults to head commit if missing. The provided commitId must be on "
-                                              + "the Branch identified by the provided branchId; otherwise, nothing "
-                                              + "will be returned")
-                                      @FormDataParam("commitId") String commitIdStr,
-                                      @Parameter(description = "Boolean representing whether the in progress commit "
-                                              + "should be overwritten")
-                                      @FormDataParam("replaceInProgressCommit") boolean replaceInProgressCommit
-    ) {
+                                      @PathParam("recordId") String recordIdStr) {
+        Map<String, List<Class>> fields = new HashMap<>();
+        fields.put("branchId", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("commitId", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("replaceInProgressCommit", Stream.of(Boolean.class).collect(Collectors.toList()));
+
+        Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);
+        InputStream fileInputStream = (InputStream) formData.get("stream");
+        String filename = (String) formData.get("filename");
+        String branchIdStr = (String) formData.get("branchId");
+        String commitIdStr = (String) formData.get("commitId");
+        boolean replaceInProgressCommit = Optional.ofNullable((Boolean) formData.get("replaceInProgressCommit"))
+                .orElse(false);
         if (replaceInProgressCommit) {
             throw ErrorUtils.sendError("This functionality has not yet been implemented.",
                     Response.Status.INTERNAL_SERVER_ERROR);
@@ -436,7 +454,7 @@ public class ShapesGraphRest {
             Resource catalogIRI = configProvider.getLocalCatalogIRI();
             Resource recordId = vf.createIRI(recordIdStr);
 
-            User user = getActiveUser(context, engineManager);
+            User user = getActiveUser(servletRequest, engineManager);
             Optional<InProgressCommit> commit = catalogManager.getInProgressCommit(catalogIRI, recordId, user);
 
             if (commit.isPresent()) {
@@ -464,7 +482,7 @@ public class ShapesGraphRest {
             final CompletableFuture<Model> uploadedModelFuture = CompletableFuture.supplyAsync(() -> {
                 try {
                     return getUploadedModel(fileInputStream,
-                            RDFFiles.getFileExtension(fileDetail.getFileName()), uploadedBNodes);
+                            RDFFiles.getFileExtension(filename), uploadedBNodes);
                 } catch (IOException e) {
                     throw new CompletionException(e);
                 }
@@ -514,9 +532,38 @@ public class ShapesGraphRest {
     }
 
     /**
+     * Class used for OpenAPI documentation for upload changes endpoint.
+     */
+    private class ShapesGraphFileUploadChanges {
+        @Schema(type = "string", format = "binary", description = "ShapesGraph file to upload.")
+        public String file;
+
+        @Schema(description = "String representing the Record Resource ID. "
+                + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"",
+                required = true)
+        public String recordId;
+
+        @Schema(description = "Optional String representing the Branch Resource id. "
+                + "NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
+                + "Defaults to Master branch if missing")
+        public String branchId;
+
+        @Schema(description = "Optional String representing the Commit Resource id."
+                + " NOTE: Assumes id represents an IRI unless String begins with \"_:\". "
+                + "Defaults to head commit if missing. The provided commitId must be on "
+                + "the Branch identified by the provided branchId; otherwise, nothing "
+                + "will be returned")
+        public String commitId;
+
+        @Schema(description = "Boolean representing whether the in progress commit "
+                + "should be overwritten")
+        public boolean replaceInProgressCommit;
+    }
+
+    /**
      * Retrieves the triples for a specified entity.
      *
-     * @param context        Context of the request.
+     * @param servletRequest        Context of the request.
      * @param recordIdStr    String representing the Record Resource ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @param entityIdStr    String representing the entity Resource ID. NOTE: Assumes ID represents an IRI unless
@@ -550,7 +597,7 @@ public class ShapesGraphRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntity(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the entity Resource ID", required = true)
@@ -568,9 +615,9 @@ public class ShapesGraphRest {
     ) {
         try {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
-                    context);
-            return Response.ok(RestUtils.modelToString(shapesGraph.getEntity(vf.createIRI(entityIdStr)), format,
-                    transformer)).build();
+                    servletRequest);
+            return Response.ok(RestUtils.modelToString(shapesGraph.getEntity(vf.createIRI(entityIdStr)), format))
+                    .build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException | IllegalStateException ex) {
@@ -581,7 +628,7 @@ public class ShapesGraphRest {
     /**
      * Retrieves all triples in a Shapes Graph not directly attached to the Shapes Graph IRI subjectId.
      *
-     * @param context        Context of the request.
+     * @param servletRequest        Context of the request.
      * @param recordIdStr    String representing the Record Resource ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @param branchIdStr    String representing the Branch Resource ID. NOTE: Assumes ID represents an IRI unless
@@ -614,7 +661,7 @@ public class ShapesGraphRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getShapesGraphContent(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -630,8 +677,8 @@ public class ShapesGraphRest {
     ) {
         try {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
-                    context);
-            return Response.ok(shapesGraph.serializeShapesGraph(format, transformer)).build();
+                    servletRequest);
+            return Response.ok(shapesGraph.serializeShapesGraph(format)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException | IllegalStateException ex) {
@@ -672,7 +719,7 @@ public class ShapesGraphRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getShapesGraphId(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -685,7 +732,7 @@ public class ShapesGraphRest {
     ) {
         try {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr,
-                    applyInProgressCommit, context);
+                    applyInProgressCommit, servletRequest);
 
             IRI shapesGraphId = shapesGraph.getShapesGraphId().orElseThrow(() ->
                     ErrorUtils.sendError("Shapes Graph ID could not be found.", Response.Status.INTERNAL_SERVER_ERROR));
@@ -720,7 +767,7 @@ public class ShapesGraphRest {
     }
 
     private ShapesGraph getShapesGraph(String recordIdStr, String branchIdStr, String commitIdStr,
-                                       boolean applyInProgressCommit, ContainerRequestContext context) {
+                                       boolean applyInProgressCommit, HttpServletRequest servletRequest) {
         Optional<ShapesGraph> shapesGraphOpt;
         if (StringUtils.isNotBlank(commitIdStr) && StringUtils.isNotBlank(branchIdStr)) {
             checkStringParam(branchIdStr, "The branchIdStr is missing.");
@@ -739,7 +786,7 @@ public class ShapesGraphRest {
                 ErrorUtils.sendError("The shapes graph could not be found.", Response.Status.BAD_REQUEST));
 
         if (applyInProgressCommit) {
-            User user = getActiveUser(context, engineManager);
+            User user = getActiveUser(servletRequest, engineManager);
             Optional<InProgressCommit> inProgressCommitOpt = catalogManager.getInProgressCommit(
                     configProvider.getLocalCatalogIRI(), vf.createIRI(recordIdStr), user);
 
@@ -768,7 +815,7 @@ public class ShapesGraphRest {
     private void writeShapesGraphToStream(Model model, RDFFormat format, OutputStream outputStream) {
         try {
             RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, outputStream));
-            com.mobi.persistence.utils.rio.Rio.write(model, rdfWriter, transformer);
+            com.mobi.persistence.utils.rio.Rio.write(model, rdfWriter);
         } catch (RDFHandlerException e) {
             throw new MobiException("Error while writing SHACL Shapes Graph.");
         }
@@ -778,7 +825,7 @@ public class ShapesGraphRest {
             throws IOException {
         // Load uploaded ontology into a skolemized model
         ParsedModel parsedModel = Models.createSkolemizedModel(fileExtension, fileInputStream,
-                mf, transformer, bNodeService, bNodesMap);
+                mf, bNodeService, bNodesMap);
 
         if ("trig".equalsIgnoreCase(parsedModel.getRdfFormatName())) {
             throw new IllegalArgumentException("TriG data is not supported for shapes graph upload changes.");

@@ -25,18 +25,15 @@ package com.mobi.security.policy.impl.xacml;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.exception.MobiException;
 import com.mobi.ontologies.rdfs.Resource;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.security.policy.api.AttributeDesignator;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PIP;
@@ -47,8 +44,11 @@ import com.mobi.security.policy.api.Status;
 import com.mobi.security.policy.api.cache.PolicyCache;
 import com.mobi.security.policy.api.xacml.XACML;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -70,7 +70,8 @@ import javax.xml.bind.JAXBException;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 public class BalanaPDPTest extends OrmEnabledTestCase {
-    private Repository repo;
+    private AutoCloseable closeable;
+    private MemoryRepositoryWrapper repo;
     private BalanaPDP pdp;
     private BalanaPRP prp;
 
@@ -101,14 +102,14 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
         try {
             jaxbContext = JAXBContext.newInstance("com.mobi.security.policy.api.xacml.jaxb");
         } catch (JAXBException e) {
             throw new MobiException(e);
         }
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         when(pip.findAttribute(any(AttributeDesignator.class), any(Request.class))).thenReturn(Collections.emptyList());
         when(policyManager.getRepository()).thenReturn(repo);
 
@@ -116,14 +117,17 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         when(policyCache.getPolicyCache()).thenReturn(Optional.of(cache));
         when(cache.spliterator()).thenReturn(entries.spliterator());
         prp = new BalanaPRP();
-        prp.setVf(VALUE_FACTORY);
         prp.setPolicyCache(policyCache);
         prp.setPolicyManager(policyManager);
         pdp = new BalanaPDP();
         pdp.addPIP(pip);
-        pdp.setBalanaPRP(prp);
-        pdp.setVf(VALUE_FACTORY);
+        pdp.balanaPRP = prp;
         pdp.setUp();
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test

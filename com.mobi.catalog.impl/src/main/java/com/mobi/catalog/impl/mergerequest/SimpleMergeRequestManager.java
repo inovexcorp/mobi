@@ -23,8 +23,18 @@ package com.mobi.catalog.impl.mergerequest;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import com.mobi.persistence.utils.ConnectionUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
@@ -46,13 +56,6 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -75,17 +78,6 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     static final String COMMENT_NAMESPACE = "https://mobi.com/comments#";
     static final String COMPONENT_NAME = "com.mobi.catalog.api.mergerequest.MergeRequestManager";
 
-    private ValueFactory vf;
-    private CatalogConfigProvider configProvider;
-    private CatalogUtilsService catalogUtils;
-    private VersioningManager versioningManager;
-    private MergeRequestFactory mergeRequestFactory;
-    private CommentFactory commentFactory;
-    private AcceptedMergeRequestFactory acceptedMergeRequestFactory;
-    private VersionedRDFRecordFactory recordFactory;
-    private BranchFactory branchFactory;
-    private CommitFactory commitFactory;
-
     private static final String GET_COMMENT_CHAINS;
     private static final int MAX_COMMENT_STRING_LENGTH = 1000000;
 
@@ -99,55 +91,34 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         }
     }
 
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
+    final ValueFactory vf = SimpleValueFactory.getInstance();
 
     @Reference
-    void setConfigProvider(CatalogConfigProvider configProvider) {
-        this.configProvider = configProvider;
-    }
+    CatalogConfigProvider configProvider;
 
     @Reference
-    void setCatalogUtils(CatalogUtilsService catalogUtils) {
-        this.catalogUtils = catalogUtils;
-    }
+    CatalogUtilsService catalogUtils;
 
     @Reference
-    void setVersioningManager(VersioningManager versioningManager) {
-        this.versioningManager = versioningManager;
-    }
+    VersioningManager versioningManager;
 
     @Reference
-    void setMergeRequestFactory(MergeRequestFactory mergeRequestFactory) {
-        this.mergeRequestFactory = mergeRequestFactory;
-    }
+    MergeRequestFactory mergeRequestFactory;
 
     @Reference
-    void setCommentFactory(CommentFactory commentFactory) {
-        this.commentFactory = commentFactory;
-    }
+    CommentFactory commentFactory;
 
     @Reference
-    void setAcceptedMergeRequestFactory(AcceptedMergeRequestFactory acceptedMergeRequestFactory) {
-        this.acceptedMergeRequestFactory = acceptedMergeRequestFactory;
-    }
+    AcceptedMergeRequestFactory acceptedMergeRequestFactory;
 
     @Reference
-    void setRecordFactory(VersionedRDFRecordFactory recordFactory) {
-        this.recordFactory = recordFactory;
-    }
+    VersionedRDFRecordFactory recordFactory;
 
     @Reference
-    void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
+    BranchFactory branchFactory;
 
     @Reference
-    void setCommitFactory(CommitFactory commitFactory) {
-        this.commitFactory = commitFactory;
-    }
+    CommitFactory commitFactory;
 
     private static final String GET_MERGE_REQUESTS_QUERY;
     private static final String FILTERS = "%FILTERS%";
@@ -262,7 +233,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
 
     @Override
     public void addMergeRequest(MergeRequest request, RepositoryConnection conn) {
-        if (conn.containsContext(request.getResource())) {
+        if (ConnectionUtils.containsContext(conn, request.getResource())) {
             throw catalogUtils.throwAlreadyExists(request.getResource(), recordFactory);
         }
         conn.add(request.getModel(), request.getResource());
@@ -455,7 +426,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             TupleQuery query = conn.prepareTupleQuery(GET_COMMENT_CHAINS);
             query.setBinding("mergeRequest", requestId);
             query.evaluate().forEach(bindings -> {
-                bindings.getValue("parent").ifPresent(parent -> {
+                Optional.ofNullable(bindings.getValue("parent")).ifPresent(parent -> {
                     List<String> chain = new ArrayList<String>(Arrays.asList(
                             Bindings.requiredLiteral(bindings, "chain").stringValue().split(" ")));
                     chain.add(0, parent.stringValue());
@@ -485,7 +456,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     @Override
     public void updateComment(Resource commentId, Comment comment) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Optional<com.mobi.rdf.api.Value> description = comment.getProperty(vf.createIRI(_Thing.description_IRI));
+            Optional<Value> description = comment.getProperty(vf.createIRI(_Thing.description_IRI));
             if (description.isPresent() && description.get().stringValue().length() > MAX_COMMENT_STRING_LENGTH) {
                 throw new IllegalArgumentException("Comment string length must be less than " + MAX_COMMENT_STRING_LENGTH);
             }

@@ -23,13 +23,17 @@ package com.mobi.cache.impl.core;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Deactivate;
-import aQute.bnd.annotation.component.Reference;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+
 import com.mobi.cache.api.CacheManager;
 import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
 import com.mobi.cache.config.CacheConfiguration;
+import org.osgi.service.component.annotations.ReferencePolicy;
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,13 +48,12 @@ import javax.cache.spi.CachingProvider;
 public class SimpleCacheManager implements CacheManager {
 
     private CachingProvider provider;
-    private CachingProvider repoProvider;
     private javax.cache.CacheManager cacheManager;
     private javax.cache.CacheManager repoCacheManager;
     private Map<String, CacheConfiguration<?, ?>> cacheConfigurations = new HashMap<>();
     private final Semaphore mutex = new Semaphore(1);
 
-    @Reference(type = '*', dynamic = true, optional = true)
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     private <K, V> void addCache(CacheConfiguration<K, V> configuration) throws InterruptedException {
         cacheConfigurations.put(configuration.getCacheId(), configuration);
         if (cacheManager != null && repoCacheManager != null) {
@@ -73,9 +76,7 @@ public class SimpleCacheManager implements CacheManager {
     }
 
     @Reference(target = "(provider=RepositoryCachingProvider)")
-    public void setCachingProvider(CachingProvider cachingProvider)  {
-        repoProvider = cachingProvider;
-    }
+    CachingProvider repoProvider;
 
     @Activate
     public void start() throws InterruptedException {

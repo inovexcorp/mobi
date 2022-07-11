@@ -24,8 +24,8 @@ package com.mobi.security.policy.api;
  */
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
 
 import java.util.List;
 import java.util.Map;

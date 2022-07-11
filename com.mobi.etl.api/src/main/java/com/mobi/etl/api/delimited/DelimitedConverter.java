@@ -26,7 +26,7 @@ package com.mobi.etl.api.delimited;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
 import com.mobi.etl.api.config.delimited.SVConfig;
 import com.mobi.exception.MobiException;
-import com.mobi.rdf.api.Model;
+import org.eclipse.rdf4j.model.Model;
 
 import java.io.IOException;
 

@@ -25,12 +25,13 @@ package com.mobi.security.policy.impl.core.cache;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.mobi.cache.api.CacheManager;
 import com.mobi.security.policy.api.Policy;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -40,6 +41,7 @@ import java.util.Optional;
 import javax.cache.Cache;
 
 public class PolicyCacheImplTest {
+    private AutoCloseable closeable;
     private PolicyCacheImpl service;
 
     @Mock
@@ -50,11 +52,16 @@ public class PolicyCacheImplTest {
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         when(cacheManager.getCache(anyString(), eq(String.class), eq(Policy.class))).thenReturn(Optional.of(cache));
 
         service = new PolicyCacheImpl();
-        service.setCacheManager(cacheManager);
+        service.cacheManager = cacheManager;
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test

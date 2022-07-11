@@ -25,11 +25,9 @@ package com.mobi.etl.service.rdf
 import com.mobi.dataset.api.DatasetConnection
 import com.mobi.dataset.api.DatasetManager
 import com.mobi.etl.api.config.rdf.ImportServiceConfig
-import com.mobi.persistence.utils.api.SesameTransformer
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
-import com.mobi.rdf.core.utils.Values
-import com.mobi.repository.api.DelegatingRepository
-import com.mobi.repository.api.RepositoryConnection
+import com.mobi.repository.api.OsgiRepository
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.repository.RepositoryConnection
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
 import org.springframework.core.io.ClassPathResource
@@ -42,23 +40,20 @@ class RDFImportSpec extends Specification {
     def repoId = "test"
     def datasetId = vf.createIRI("http://test.com/dataset-record")
     def file = new ClassPathResource("importer/testFile.trig").getFile()
-    def model = Values.mobiModel(Rio.parse(new FileInputStream(file), "", RDFFormat.TRIG))
+    def model = Rio.parse(new FileInputStream(file), "", RDFFormat.TRIG)
 
-    def transformer = Mock(SesameTransformer)
     def datasetManager = Mock(DatasetManager)
-    def repo = Mock(DelegatingRepository)
+    def repo = Mock(OsgiRepository)
     def conn = Mock(RepositoryConnection)
     def datasetConn = Mock(DatasetConnection)
 
     def setup() {
-        transformer.mobiModel(_) >> { args -> Values.mobiModel(args[0])}
         repo.getRepositoryID() >> repoId
         repo.getConnection() >> conn
         datasetManager.getConnection(datasetId) >> datasetConn
         datasetManager.getConnection(!datasetId) >> {throw new IllegalArgumentException()}
 
-        service.setTransformer(transformer)
-        service.setDatasetManager(datasetManager)
+        service.datasetManager = datasetManager
         service.addRepository(repo)
     }
 

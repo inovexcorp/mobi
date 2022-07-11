@@ -34,8 +34,7 @@ import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
+import org.eclipse.rdf4j.model.Model;
 import org.apache.karaf.itests.KarafTestSupport;
 import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -72,7 +71,6 @@ public class EtlIT extends KarafTestSupport {
 
     private static Boolean setupComplete = false;
     private static File outputFile;
-    private static SesameTransformer transformer;
     private static CatalogManager catalogManager;
     private static EngineManager engineManager;
     private static Engine rdfEngine;
@@ -114,7 +112,6 @@ public class EtlIT extends KarafTestSupport {
         waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
 
-        transformer = getOsgiService(SesameTransformer.class);
         catalogManager = getOsgiService(CatalogManager.class);
         engineManager = getOsgiService(EngineManager.class);
         rdfEngine = getOsgiService(Engine.class, "(engineName=RdfEngine)", 10000L);
@@ -124,7 +121,7 @@ public class EtlIT extends KarafTestSupport {
         Set<User> users = new HashSet<>();
         users.add(user);
 
-        Model mappingModel = transformer.mobiModel(Rio.parse(new FileInputStream(mappingFile), "", RDFFormat.TURTLE));
+        Model mappingModel = Rio.parse(new FileInputStream(mappingFile), "", RDFFormat.TURTLE);
 
         RecordOperationConfig config = new OperationConfig()
                 .set(RecordCreateSettings.CATALOG_ID, catalogManager.getLocalCatalog().getResource().stringValue())

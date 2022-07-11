@@ -1,4 +1,4 @@
-image: gitlab.inovexcorp.com:4567/matonto/mobi-ci-container:master
+image: gitlab.inovexcorp.com:4567/matonto/mobi-ci-container:feature-java-17
 
 stages:
   - test
@@ -80,7 +80,7 @@ unit_test_web:
   stage: test
   script:
     # Build and run tests for dependencies for web bundle.
-    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS install -P release-build -pl ':api,:persistence.api,:persistence.utils,:rdf.impl.sesame,:rdf.orm,:rdf.orm.ontologies,:rdf.orm.generate,:rdf-orm-maven-plugin,:web.security,:jaas.api,:web'
+    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS install -P release-build -pl ':api,:persistence.api,:persistence.utils,:rdf.orm,:rdf.orm.ontologies,:rdf.orm.generate,:rdf-orm-maven-plugin,:web.security,:jaas.api,:web'
   only:
     - merge_requests
     - master # Any commit to master triggers this job
@@ -232,8 +232,8 @@ increment_minor_version:
     - git push origin HEAD:master
     # Push release to github
     - git remote -v | grep -w github || git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com/inovexcorp/mobi.git
-    - git push github HEAD:master
-    - git push github $CI_COMMIT_REF_NAME #pushing release tag
+    - git push -f github HEAD:master
+    - git push -f github $CI_COMMIT_REF_NAME #pushing release tag
 
 support_branch_increment_micro_version:
   # increments micro version
@@ -269,8 +269,8 @@ support_branch_increment_micro_version:
     - git push origin HEAD:$BRANCH
     # Push release to github
     - git remote -v | grep -w github || git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com/inovexcorp/mobi.git
-    - git push github
-    - git push github $CI_COMMIT_REF_NAME #pushing release tag
+    - git push -f github
+    - git push -f github $CI_COMMIT_REF_NAME #pushing release tag
 
 enterprise_tests:
   # Runs enterprise tests against current version of mobi (master branch). This is to give us warning if any changes to mobi community may impact master

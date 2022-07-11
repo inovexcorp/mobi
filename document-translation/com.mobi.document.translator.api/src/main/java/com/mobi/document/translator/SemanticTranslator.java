@@ -23,8 +23,8 @@ package com.mobi.document.translator;
  * #L%
  */
 
-import com.mobi.rdf.api.Model;
 import com.mobi.document.translator.ontology.ExtractedOntology;
+import org.eclipse.rdf4j.model.Model;
 
 import java.io.InputStream;
 import java.nio.file.Path;

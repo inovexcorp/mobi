@@ -23,9 +23,9 @@ package com.mobi.security.policy.api.xacml;
  * #L%
  */
 
-import com.mobi.rdf.api.Resource;
-import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
+import org.eclipse.rdf4j.model.Resource;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +38,7 @@ public interface XACMLPolicyManager {
      *
      * @return The policy Repository
      */
-    Repository getRepository();
+    OsgiRepository getRepository();
 
     /**
      * Creates an {@link XACMLPolicy} object using the provided {@link PolicyType} JAXB object.

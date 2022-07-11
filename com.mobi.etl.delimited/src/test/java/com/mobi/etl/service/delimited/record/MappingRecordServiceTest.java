@@ -24,10 +24,8 @@ package com.mobi.etl.service.delimited.record;
  */
 
 import static junit.framework.TestCase.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -59,29 +57,25 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.Binding;
-import com.mobi.query.api.BindingSet;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
-import com.mobi.repository.exception.RepositoryException;
-import com.mobi.security.policy.api.ontologies.policy.Policy;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -93,17 +87,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class MappingRecordServiceTest extends OrmEnabledTestCase {
+    private AutoCloseable closeable;
     private SimpleMappingRecordService recordService;
     private MappingRecord testRecord;
+    private MemoryRepositoryWrapper repository;
 
     private final IRI catalogIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
     private final IRI recordIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#record");
@@ -154,34 +148,7 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
     private EngineManager engineManager;
 
     @Mock
-    private Repository repository;
-
-    @Mock
-    private RepositoryConnection connection;
-
-    @Mock
-    private RepositoryResult<Statement> results;
-
-    @Mock
-    private Statement statement;
-
-    @Mock
-    private RepositoryResult<Statement> inProgressResults;
-
-    @Mock
     private InProgressCommit inProgressCommit;
-
-    @Mock
-    private TupleQuery tupleQuery;
-
-    @Mock
-    private TupleQueryResult tupleQueryResult;
-
-    @Mock
-    private BindingSet bindingSet;
-
-    @Mock
-    private Binding binding;
 
     @Mock
     private MappingWrapper mappingWrapper;
@@ -189,16 +156,22 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
     @Mock
     private MappingId mappingId;
 
+    @Mock
+    private CreateActivity createActivity;
+
     @Before
     public void setUp() throws Exception {
+        repository = new MemoryRepositoryWrapper();
+        repository.setDelegate(new SailRepository(new MemoryStore()));
+
         recordService = new SimpleMappingRecordService();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
         WriterConfig config = new WriterConfig();
         config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
         InputStream testMapping = getClass().getResourceAsStream("/newestMapping.ttl");
-        mappingModel = MODEL_FACTORY.createModel(Values.mobiModel(Rio.parse(testMapping, "", RDFFormat.TURTLE)));
+        mappingModel = Rio.parse(testMapping, "", RDFFormat.TURTLE);
         mappingJsonLd = new ByteArrayOutputStream();
-        Rio.write(Values.sesameModel(mappingModel), mappingJsonLd, RDFFormat.JSONLD, config);
+        Rio.write(mappingModel, mappingJsonLd, RDFFormat.JSONLD, config);
 
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));
         headCommit = commitFactory.createNew(commitIRI);
@@ -212,39 +185,19 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setBranch(Collections.singleton(branch));
         testRecord.setMasterBranch(branch);
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         when(configProvider.getRepository()).thenReturn(repository);
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
 
-        when(repository.getConnection()).thenReturn(connection);
-
-        when(connection.prepareTupleQuery(anyString())).thenReturn(tupleQuery);
-        when(connection.getStatements(eq(null), eq(VALUE_FACTORY.createIRI(Policy.relatedResource_IRI)), any(IRI.class))).thenReturn(results);
-
-        when(tupleQuery.evaluate()).thenReturn(tupleQueryResult);
-
-        when(tupleQueryResult.hasNext()).thenReturn(true, false);
-        when(tupleQueryResult.next()).thenReturn(bindingSet);
-
-        when(bindingSet.getBinding(anyString())).thenReturn(Optional.of(binding));
-
-        when(binding.getValue()).thenReturn(VALUE_FACTORY.createLiteral("urn:record"),
-                VALUE_FACTORY.createLiteral("urn:master"), VALUE_FACTORY.createLiteral("urn:user"));
-
-        when(results.hasNext()).thenReturn(true);
-        when(results.next()).thenReturn(statement);
-
-        when(statement.getSubject()).thenReturn(recordPolicyIRI);
-
         when(xacmlPolicyManager.addPolicy(any(XACMLPolicy.class))).thenReturn(recordPolicyIRI);
 
-        when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
-        when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection))).thenReturn(branch);
+        when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(testRecord));
+        when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(branch);
         when(utilsService.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
         doReturn(Stream.of(commitIRI).collect(Collectors.toList()))
                 .when(utilsService).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
-        when(utilsService.getExpectedObject(eq(commitIRI), any(OrmFactory.class), eq(connection))).thenReturn(headCommit);
+        when(utilsService.getExpectedObject(eq(commitIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(headCommit);
 
         when(mappingWrapper.getModel()).thenReturn(mappingModel);
         when(mappingWrapper.getId()).thenReturn(mappingId);
@@ -252,19 +205,15 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         when(manager.createMapping(any(Model.class))).thenReturn(mappingWrapper);
         when(manager.createMapping(any(InputStream.class), any(RDFFormat.class))).thenReturn(mappingWrapper);
 
-        // InProgressCommit deletion setup
-        when(connection.getStatements(eq(null), eq(VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI)), any(IRI.class))).thenReturn(inProgressResults);
-        Set<Statement> inProgressCommitIris = new HashSet<>();
-        inProgressCommitIris.add(VALUE_FACTORY.createStatement(inProgressCommitIRI, VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI), recordIRI));
-        when(inProgressResults.iterator()).thenReturn(inProgressCommitIris.iterator());
-        doCallRealMethod().when(inProgressResults).forEach(any(Consumer.class));
-        when(utilsService.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), eq(connection))).thenReturn(inProgressCommit);
-        doNothing().when(utilsService).removeInProgressCommit(any(InProgressCommit.class), eq(connection));
+        when(utilsService.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
+        doNothing().when(utilsService).removeInProgressCommit(any(InProgressCommit.class), any(RepositoryConnection.class));
+
+        when(provUtils.startDeleteActivity(any(), any())).thenReturn(deleteActivity);
+        when(provUtils.startCreateActivity(any())).thenReturn(createActivity);
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.manager = manager;
         recordService.utilsService = utilsService;
-        recordService.valueFactory = VALUE_FACTORY;
         recordService.provUtils = provUtils;
         recordService.versioningManager = versioningManager;
         recordService.mergeRequestManager = mergeRequestManager;
@@ -274,10 +223,23 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         recordService.recordFactory = recordService.mappingRecordFactory;
     }
 
+    @After
+    public void reset() throws Exception {
+        closeable.close();
+        try (RepositoryConnection connection = repository.getConnection()) {
+            connection.clear();
+        }
+    }
+
     /* activate() */
 
     @Test
     public void activateUserPresentTest() throws Exception {
+        try (RepositoryConnection connection = repository.getConnection()) {
+            connection.add(testRecord.getModel(), testRecord.getResource());
+            connection.add(testRecord.getResource(), DCTERMS.PUBLISHER, VALUE_FACTORY.createIRI("urn:user"));
+        }
+
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("urn:user"));
         when(engineManager.getUsername(any(IRI.class))).thenReturn(Optional.of("user"));
         when(engineManager.retrieveUser(eq("user"))).thenReturn(Optional.of(user));
@@ -288,6 +250,11 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void activateUserNotPresentTest() throws Exception {
+        try (RepositoryConnection connection = repository.getConnection()) {
+            connection.add(testRecord.getModel(), testRecord.getResource());
+            connection.add(testRecord.getResource(), DCTERMS.PUBLISHER, VALUE_FACTORY.createIRI("urn:user"));
+        }
+
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("urn:admin"));
         when(engineManager.getUsername(any(IRI.class))).thenReturn(Optional.empty());
         when(engineManager.retrieveUser(eq("admin"))).thenReturn(Optional.of(user));
@@ -312,12 +279,15 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        recordService.create(user, config, connection);
+        try (RepositoryConnection connection = repository.getConnection()){
+            MappingRecord record = recordService.create(user, config, connection);
+            record.getResource();
+        }
 
         verify(mappingWrapper).getModel();
         verify(manager).createMapping(any(InputStream.class), eq(RDFFormat.TURTLE));
-        verify(utilsService, times(2)).addObject(any(Record.class), eq(connection));
-        verify(versioningManager).commit(eq(catalogIRI), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), eq(mappingModel), eq(null), eq(connection));
+        verify(utilsService, times(2)).addObject(any(), any(RepositoryConnection.class));
+        verify(versioningManager).commit(eq(catalogIRI), any(IRI.class), any(IRI.class), eq(user), eq("The initial commit."), eq(mappingModel), eq(null),  any(RepositoryConnection.class));
         verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
         verify(provUtils).startCreateActivity(user);
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
@@ -335,11 +305,13 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, mappingModel);
 
-        recordService.create(user, config, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.create(user, config, connection);
+        }
 
         verify(mappingWrapper).getModel();
         verify(manager).createMapping(mappingModel);
-        verify(utilsService, times(2)).addObject(any(Record.class), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).addObject(any(), any(RepositoryConnection.class));
         verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
@@ -356,7 +328,9 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        recordService.create(user, config, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.create(user, config, connection);
+        }
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -369,7 +343,9 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        recordService.create(user, config, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.create(user, config, connection);
+        }
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -381,7 +357,9 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "Description");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
 
-        recordService.create(user, config, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.create(user, config, connection);
+        }
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -394,29 +372,36 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        recordService.create(user, config, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.create(user, config, connection);
+        }
     }
 
     @Test
     public void deleteTest() throws Exception {
-        MappingRecord deletedRecord = recordService.delete(recordIRI, user, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            connection.add(testRecord.getModel(), testRecord.getResource());
+            connection.add(inProgressCommitIRI, VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI), testRecord.getResource());
+            MappingRecord deletedRecord = recordService.delete(recordIRI, user, connection);
 
-        assertEquals(testRecord, deletedRecord);
-        verify(utilsService).optObject(recordIRI, recordFactory, connection);
+            assertEquals(testRecord, deletedRecord);
+        }
+        verify(utilsService).optObject(eq(recordIRI), eq(recordFactory), any(RepositoryConnection.class));
         verify(provUtils).startDeleteActivity(user, recordIRI);
-        verify(mergeRequestManager).deleteMergeRequestsWithRecordId(recordIRI, connection);
-        verify(utilsService).removeBranch(eq(recordIRI), eq(branchIRI), any(List.class), eq(connection));
-        verify(connection).getStatements(eq(null), eq(VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI)), eq(recordIRI));
-        verify(utilsService).getInProgressCommit(eq(catalogIRI), eq(recordIRI), eq(inProgressCommitIRI), eq(connection));
-        verify(utilsService).removeInProgressCommit(eq(inProgressCommit), eq(connection));
+        verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(recordIRI), any(RepositoryConnection.class));
+        verify(utilsService).removeBranch(eq(recordIRI), eq(branchIRI), any(List.class), any(RepositoryConnection.class));
+        verify(utilsService).getInProgressCommit(eq(catalogIRI), eq(recordIRI), eq(inProgressCommitIRI), any(RepositoryConnection.class));
+        verify(utilsService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
         verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void deleteRecordDoesNotExistTest() throws Exception {
-        when(utilsService.optObject(recordIRI, recordFactory, connection)).thenReturn(Optional.empty());
+        when(utilsService.optObject(eq(recordIRI), eq(recordFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
-        recordService.delete(recordIRI, user, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.delete(recordIRI, user, connection);
+        }
     }
 
     @Test
@@ -424,7 +409,9 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         doThrow(RepositoryException.class).when(utilsService).removeObject(any(MappingRecord.class), any(RepositoryConnection.class));
         thrown.expect(RepositoryException.class);
 
-        recordService.delete(recordIRI, user, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.delete(recordIRI, user, connection);
+        }
         verify(provUtils).removeActivity(any(DeleteActivity.class));
     }
 }

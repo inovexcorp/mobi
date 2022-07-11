@@ -40,12 +40,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.platform.config.api.state.StateManager;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,9 +50,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -69,9 +67,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -79,29 +79,23 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Component(service = UserRest.class, immediate = true)
+@Component(service = UserRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/users")
 public class UserRest {
     private final Logger logger = LoggerFactory.getLogger(UserRest.class);
     static final String ADMIN_USER_IRI = "http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997";
 
+    final ValueFactory vf = SimpleValueFactory.getInstance();
+    
     @Reference
     EngineManager engineManager;
 
     @Reference
-    ValueFactory vf;
-
-    @Reference
     UserFactory userFactory;
-
-    @Reference
-    SesameTransformer transformer;
-
     @Reference(target = "(engineName=RdfEngine)")
     Engine rdfEngine;
 
@@ -135,7 +129,7 @@ public class UserRest {
                         user.clearPassword();
                         return user.getModel().filter(user.getResource(), null, null);
                     })
-                    .map(userModel -> modelToJsonld(userModel, transformer))
+                    .map(RestUtils::modelToJsonld)
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
             return Response.ok(result).build();
@@ -173,23 +167,23 @@ public class UserRest {
     public Response createUser(
             @Parameter(schema = @Schema(type = "string",
                    description = "Required username of the User to create", required = true))
-            @FormDataParam("username") String username,
+            @FormParam("username") String username,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required password of the User to create", required = true))
-            @FormDataParam("password") String password,
+            @FormParam("password") String password,
             @Parameter(array = @ArraySchema(
                     arraySchema = @Schema(description = "List of roles of the User to create"),
                     schema = @Schema(implementation = String.class, description = "Role")))
-            @FormDataParam("roles") List<FormDataBodyPart> roles,
+            @FormParam("roles") List<String> roles,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional first name of the User to create"))
-            @FormDataParam("firstName") String firstName,
+            @FormParam("firstName") String firstName,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional last name of the User to create"))
-            @FormDataParam("lastName") String lastName,
+            @FormParam("lastName") String lastName,
             @Parameter(schema = @Schema(type = "string", format = "email",
                     description = "Optional email of the User to create"))
-            @FormDataParam("email") String email) {
+            @FormParam("email") String email) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
@@ -203,7 +197,7 @@ public class UserRest {
 
             Set<String> roleSet = new HashSet<>();
             if (roles != null && roles.size() > 0) {
-                roleSet = roles.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
+                roleSet = new HashSet<>(roles);
             }
 
             UserConfig.Builder builder = new UserConfig.Builder(username, password, roleSet);
@@ -258,7 +252,7 @@ public class UserRest {
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.NOT_FOUND));
             user.clearPassword();
             String json = groupedModelToString(user.getModel().filter(user.getResource(), null, null),
-                    getRDFFormat("jsonld"), transformer);
+                    getRDFFormat("jsonld"));
             return Response.ok(getObjectFromJsonld(json)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -269,7 +263,7 @@ public class UserRest {
      * Updates the information of the specified User in Mobi. Only the User being updated or an admin can make
      * this request.
      *
-     * @param context Context of the request
+     * @param servletRequest The HttpServletRequest
      * @param username the current username of the user to update
      * @param newUserStr a JSON-LD string representation of a User with the new information to update
      * @return a Response indicating the success or failure of the request
@@ -287,7 +281,7 @@ public class UserRest {
     )
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateUser(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "Current username of the user to update", required = true)
             @PathParam("username") String username,
             @Parameter(description = "JSON-LD string representation of a User with the new information to update", required = true)
@@ -295,10 +289,10 @@ public class UserRest {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
         }
-        isAuthorizedUser(context, username);
+        isAuthorizedUser(servletRequest, username);
 
         try {
-            Model userModel = jsonldToModel(newUserStr, transformer);
+            Model userModel = jsonldToModel(newUserStr);
             Set<Resource> subjects = userModel.filter(null, vf.createIRI(RDF.TYPE.stringValue()),
                     vf.createIRI(User.TYPE)).subjects();
             if (subjects.size() < 1) {
@@ -340,7 +334,7 @@ public class UserRest {
      * Changes the password of the specified user in Mobi. In order to change the User's password,
      * the current password must be provided.
      *
-     * @param context Context of the request
+     * @param servletRequest The HttpServletRequest
      * @param username the current username of the user to update
      * @param currentPassword the current password of the user to update
      * @param newPassword a new password for the user
@@ -358,7 +352,7 @@ public class UserRest {
             }
     )
     public Response changePassword(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "Current username of the user to update", required = true)
             @PathParam("username") String username,
             @Parameter(description = "Current password of the user to update", required = true)
@@ -368,7 +362,7 @@ public class UserRest {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
         }
-        checkCurrentUser(getActiveUsername(context), username);
+        checkCurrentUser(getActiveUsername(servletRequest), username);
         if (StringUtils.isEmpty(currentPassword)) {
             throw ErrorUtils.sendError("Current password must be provided", Response.Status.BAD_REQUEST);
         }
@@ -388,7 +382,7 @@ public class UserRest {
     /**
      * Resets the password of the specified User in Mobi. This action is only allowed by admin Users.
      *
-     * @param context Context of the request
+     * @param servletRequest The HttpServletRequest
      * @param username the current username of the User to update
      * @param newPassword a new password for the User
      * @return a Response indicating the success or failure of the request
@@ -405,7 +399,7 @@ public class UserRest {
             }
     )
     public Response resetPassword(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "Current username of the User to update", required = true)
             @PathParam("username") String username,
             @Parameter(description = "New password for the User", required = true)
@@ -427,7 +421,7 @@ public class UserRest {
      * Removes the specified User from Mobi. Only the User being deleted or an admin
      * can make this request.
      *
-     * @param context Context of the request
+     * @param servletRequest The HttpServletRequest
      * @param username the username of the User to remove
      * @return a Response indicating the success or failure of the request
      */
@@ -443,13 +437,13 @@ public class UserRest {
             }
     )
     public Response deleteUser(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "Username of the User to remove", required = true)
             @PathParam("username") String username) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
-        isAuthorizedUser(context, username);
+        isAuthorizedUser(servletRequest, username);
         try {
             Optional<User> user = engineManager.retrieveUser(username);
             if (!user.isPresent()) {
@@ -509,7 +503,7 @@ public class UserRest {
                     : user.getHasUserRole();
             JSONArray result = JSONArray.fromObject(roles.stream()
                     .map(role -> role.getModel().filter(role.getResource(), null, null))
-                    .map(roleModel -> modelToJsonld(roleModel, transformer))
+                    .map(roleModel -> modelToJsonld(roleModel))
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
             return Response.ok(result).build();
@@ -642,7 +636,7 @@ public class UserRest {
 
             JSONArray result = JSONArray.fromObject(groups.stream()
                     .map(group -> group.getModel().filter(group.getResource(), null, null))
-                    .map(roleModel -> modelToJsonld(roleModel, transformer))
+                    .map(roleModel -> modelToJsonld(roleModel))
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
             return Response.ok(result).build();
@@ -768,11 +762,11 @@ public class UserRest {
      * Checks if the user is authorized to make this request. The requesting user must be an admin or have a matching
      * username.
      *
-     * @param context The request context
+     * @param servletRequest The HttpServletRequest
      * @param username The required username if the user is not an admin
      */
-    private void isAuthorizedUser(ContainerRequestContext context, String username) {
-        String activeUsername = getActiveUsername(context);
+    private void isAuthorizedUser(HttpServletRequest servletRequest, String username) {
+        String activeUsername = getActiveUsername(servletRequest);
         if (!engineManager.userExists(activeUsername)) {
             throw ErrorUtils.sendError("User not found", Response.Status.UNAUTHORIZED);
         }

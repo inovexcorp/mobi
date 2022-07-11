@@ -23,9 +23,8 @@ package com.mobi.document.translator.stack;
  * #L%
  */
 
-
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Value;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Value;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 

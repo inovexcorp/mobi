@@ -25,8 +25,8 @@ package com.mobi.dataset.pagination;
 
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 
 public class DatasetPaginatedSearchParams {
     private PaginatedSearchParams.Builder builder;

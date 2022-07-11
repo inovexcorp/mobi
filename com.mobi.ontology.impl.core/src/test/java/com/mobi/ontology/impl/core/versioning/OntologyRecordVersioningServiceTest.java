@@ -26,10 +26,10 @@ package com.mobi.ontology.impl.core.versioning;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.anyListOf;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,25 +40,26 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.utils.cache.OntologyCache;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.base.OsgiRepositoryWrapper;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -67,15 +68,18 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
-    private Repository repo;
+    private AutoCloseable closeable;
+    private OsgiRepositoryWrapper repo;
     private OntologyRecordVersioningService service;
     private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+    private OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
 
     private final IRI originalIRI = VALUE_FACTORY.createIRI("http://test.com/ontology");
     private final IRI newIRI = VALUE_FACTORY.createIRI("http://test.com/ontology/new");
@@ -87,6 +91,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
     private OntologyRecord record;
     private Branch branch;
     private Commit commit;
+    private Revision revision;
     private InProgressCommit inProgressCommit;
     private Stream<Statement> additions;
     private Stream<Statement> additionsUsed;
@@ -109,12 +114,14 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        closeable = MockitoAnnotations.openMocks(this);
+
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
 
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream testData = getClass().getResourceAsStream("/testData.trig");
-            conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+            conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
         }
 
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
@@ -122,6 +129,9 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/users#user"));
         inProgressCommit = inProgressCommitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#in-progress-commit"));
         commit = commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commit"));
+        revision = revisionFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/revisions#revision"));
+        commit.setGenerated(Collections.singleton(revision));
+
         branch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch"));
         branch.setHead(commit);
         record = ontologyRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#ontology-record"));
@@ -130,19 +140,17 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         additionsUsed = Stream.of(VALUE_FACTORY.createStatement(usedIRI, typeIRI, ontologyIRI));
         additionsNoIRI = Stream.of(VALUE_FACTORY.createStatement(originalIRI, VALUE_FACTORY.createIRI(_Thing.title_IRI), VALUE_FACTORY.createLiteral("Title")));
 
-        MockitoAnnotations.initMocks(this);
-
-        when(catalogUtils.getBranch(any(OntologyRecord.class), any(com.mobi.rdf.api.Resource.class), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(branch);
-        when(catalogUtils.getInProgressCommit(any(com.mobi.rdf.api.Resource.class), any(com.mobi.rdf.api.Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
-        when(catalogUtils.getObject(any(com.mobi.rdf.api.Resource.class), eq(commitFactory), any(RepositoryConnection.class))).thenReturn(commit);
-        when(catalogUtils.getAdditions(eq(commit), any(RepositoryConnection.class))).thenReturn(additions);
-        when(catalogUtils.getObject(any(com.mobi.rdf.api.Resource.class), eq(ontologyRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
-        when(catalogUtils.applyDifference(any(Model.class), any(Difference.class))).thenAnswer(i -> i.getArgumentAt(1, Difference.class).getAdditions());
-        when(catalogUtils.getCompiledResource(any(com.mobi.rdf.api.Resource.class), any(RepositoryConnection.class))).thenReturn(MODEL_FACTORY.createModel());
+        when(catalogUtils.getBranch(any(OntologyRecord.class), any(org.eclipse.rdf4j.model.Resource.class), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(branch);
+        when(catalogUtils.getInProgressCommit(any(org.eclipse.rdf4j.model.Resource.class), any(org.eclipse.rdf4j.model.Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
+        when(catalogUtils.getObject(any(org.eclipse.rdf4j.model.Resource.class), eq(commitFactory), any(RepositoryConnection.class))).thenReturn(commit);
+        when(catalogUtils.getObject(any(org.eclipse.rdf4j.model.Resource.class), eq(ontologyRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
+        when(catalogUtils.applyDifference(any(), any())).thenAnswer(i -> i.getArgument(1, Difference.class).getAdditions());
+        when(catalogUtils.getCompiledResource(any(org.eclipse.rdf4j.model.Resource.class), any(RepositoryConnection.class))).thenReturn(MODEL_FACTORY.createEmptyModel());
+        when(catalogUtils.getCompiledResource(anyList(), any(RepositoryConnection.class))).thenReturn(MODEL_FACTORY.createEmptyModel());
 
         when(ontologyManager.ontologyIriExists(usedIRI)).thenReturn(true);
 
-        when(catalogManager.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
+        when(catalogManager.createCommit(any(InProgressCommit.class), anyString(), any(), any())).thenReturn(commit);
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
 
         service = new OntologyRecordVersioningService();
@@ -151,8 +159,11 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         service.setCatalogManager(catalogManager);
         service.setOntologyManager(ontologyManager);
         service.setOntologyCache(ontologyCache);
-        service.setMf(MODEL_FACTORY);
-        service.setVf(VALUE_FACTORY);
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -230,7 +241,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
-            verify(ontologyCache, times(0)).clearCacheImports(any(com.mobi.rdf.api.Resource.class));
+            verify(ontologyCache, times(0)).clearCacheImports(any(org.eclipse.rdf4j.model.Resource.class));
         }
     }
 
@@ -239,13 +250,12 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             service.addCommit(branch, commit, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils, times(0)).getAdditions(commit, conn);
             verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
-            verify(ontologyCache, times(0)).clearCacheImports(any(com.mobi.rdf.api.Resource.class));
+            verify(ontologyCache, times(0)).clearCacheImports(any(org.eclipse.rdf4j.model.Resource.class));
         }
     }
 
@@ -257,7 +267,6 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
 
             service.addCommit(branch, commit, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils).getAdditions(commit, conn);
             verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager).ontologyIriExists(newIRI);
             assertTrue(record.getOntologyIRI().isPresent());
@@ -274,12 +283,11 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             // Setup:
             commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
             OntologyRecord newRecord = ontologyRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#new"));
-            when(catalogUtils.getObject(any(com.mobi.rdf.api.Resource.class), eq(ontologyRecordFactory), eq(conn))).thenReturn(newRecord);
+            when(catalogUtils.getObject(any(org.eclipse.rdf4j.model.Resource.class), eq(ontologyRecordFactory), eq(conn))).thenReturn(newRecord);
 
             service.addCommit(branch, commit, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils).getAdditions(commit, conn);
-            verify(catalogUtils).getObject(any(com.mobi.rdf.api.Resource.class), eq(ontologyRecordFactory), eq(conn));
+            verify(catalogUtils).getObject(any(org.eclipse.rdf4j.model.Resource.class), eq(ontologyRecordFactory), eq(conn));
             verify(ontologyManager).ontologyIriExists(newIRI);
             assertTrue(newRecord.getOntologyIRI().isPresent());
             assertEquals(newIRI, newRecord.getOntologyIRI().get());
@@ -292,14 +300,14 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
     public void addCommitToMasterWithCommitWithBaseAndUsedOntologyIRITest() throws Exception {
         // Setup:
         commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
-        when(catalogUtils.getAdditions(eq(commit), any(RepositoryConnection.class))).thenReturn(additionsUsed);
+        Revision revisionUsed = revisionFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/revisions#revisionUsed"));
+        commit.setGenerated(Collections.singleton(revisionUsed));
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Ontology already exists with IRI " + usedIRI);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             service.addCommit(branch, commit, conn);
         } finally {
-            verify(catalogUtils).getAdditions(eq(commit), any(RepositoryConnection.class));
             verify(catalogUtils).getObject(eq(record.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
             verify(catalogUtils, times(0)).addCommit(eq(branch), eq(commit), any(RepositoryConnection.class));
             verify(ontologyManager).ontologyIriExists(usedIRI);
@@ -315,11 +323,11 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
-            when(catalogUtils.getAdditions(commit, conn)).thenReturn(additionsNoIRI);
+            Revision revisionNoChange = revisionFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/revisions#revision2"));
+            commit.setGenerated(Collections.singleton(revisionNoChange));
 
             service.addCommit(branch, commit, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils).getAdditions(commit, conn);
             verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager, times(0)).ontologyIriExists(any(IRI.class));
             assertTrue(record.getOntologyIRI().isPresent());
@@ -336,14 +344,14 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Branch newBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#new"));
-            Model additions = MODEL_FACTORY.createModel();
-            Model deletions = MODEL_FACTORY.createModel();
+            Model additions = MODEL_FACTORY.createEmptyModel();
+            Model deletions = MODEL_FACTORY.createEmptyModel();
 
             service.addCommit(newBranch, user, "Message", additions, deletions, commit, null, conn);
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(catalogUtils, times(0)).getCommitChain(any(com.mobi.rdf.api.Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
+            verify(catalogUtils, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(anyList(), eq(conn));
             verify(catalogUtils, times(0)).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
@@ -352,7 +360,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
-            verify(ontologyCache, times(0)).clearCacheImports(any(com.mobi.rdf.api.Resource.class));
+            verify(ontologyCache, times(0)).clearCacheImports(any(org.eclipse.rdf4j.model.Resource.class));
         }
     }
 
@@ -360,14 +368,14 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
     public void addCommitToMasterWithChangesAndNoBaseTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Model additions = MODEL_FACTORY.createModel();
-            Model deletions = MODEL_FACTORY.createModel();
+            Model additions = MODEL_FACTORY.createEmptyModel();
+            Model deletions = MODEL_FACTORY.createEmptyModel();
 
             service.addCommit(branch, user, "Message", additions, deletions, null, null, conn);
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", null, null);
-            verify(catalogUtils, times(0)).getCommitChain(any(com.mobi.rdf.api.Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
+            verify(catalogUtils, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(anyList(), eq(conn));
             verify(catalogUtils, times(0)).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
@@ -376,7 +384,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
-            verify(ontologyCache, times(0)).clearCacheImports(any(com.mobi.rdf.api.Resource.class));
+            verify(ontologyCache, times(0)).clearCacheImports(any(org.eclipse.rdf4j.model.Resource.class));
         }
     }
 
@@ -384,14 +392,15 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
     public void addCommitToMasterWithChangesAndBaseAndNoAuxTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Model additionsModel = MODEL_FACTORY.createModel(additions.collect(Collectors.toSet()));
-            Model deletions = MODEL_FACTORY.createModel();
+            Model additionsModel = MODEL_FACTORY.createEmptyModel();
+            additionsModel.addAll(additions.collect(Collectors.toSet()));
+            Model deletions = MODEL_FACTORY.createEmptyModel();
 
             service.addCommit(branch, user, "Message", additionsModel, deletions, commit, null, conn);
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(catalogUtils, times(0)).getCommitChain(any(com.mobi.rdf.api.Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
+            verify(catalogUtils, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(anyList(), eq(conn));
             verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager).ontologyIriExists(newIRI);
@@ -409,14 +418,15 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
     public void addCommitToMasterWithChangesAndBaseAndAuxTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Model additionsModel = MODEL_FACTORY.createModel(additions.collect(Collectors.toSet()));
-            Model deletions = MODEL_FACTORY.createModel();
+            Model additionsModel = MODEL_FACTORY.createEmptyModel();
+            additionsModel.addAll(additions.collect(Collectors.toSet()));
+            Model deletions = MODEL_FACTORY.createEmptyModel();
 
             service.addCommit(branch, user, "Message", additionsModel, deletions, commit, commit, conn);
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, commit);
             verify(catalogUtils, times(2)).getCommitChain(commit.getResource(), false, conn);
-            verify(catalogUtils).getCompiledResource(anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
+            verify(catalogUtils).getCompiledResource(anyList(), eq(conn));
             verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager).ontologyIriExists(newIRI);
@@ -435,17 +445,18 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             OntologyRecord newRecord = ontologyRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#new"));
-            when(catalogUtils.getObject(any(com.mobi.rdf.api.Resource.class), eq(ontologyRecordFactory), eq(conn))).thenReturn(newRecord);
-            Model additionsModel = MODEL_FACTORY.createModel(additions.collect(Collectors.toSet()));
-            Model deletions = MODEL_FACTORY.createModel();
+            when(catalogUtils.getObject(any(org.eclipse.rdf4j.model.Resource.class), eq(ontologyRecordFactory), eq(conn))).thenReturn(newRecord);
+            Model additionsModel = MODEL_FACTORY.createEmptyModel();
+            additionsModel.addAll(additions.collect(Collectors.toSet()));
+            Model deletions = MODEL_FACTORY.createEmptyModel();
 
             service.addCommit(branch, user, "Message", additionsModel, deletions, commit, null, conn);
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(catalogUtils, times(0)).getCommitChain(any(com.mobi.rdf.api.Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
+            verify(catalogUtils, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(anyList(), eq(conn));
             verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
-            verify(catalogUtils).getObject(any(com.mobi.rdf.api.Resource.class), eq(ontologyRecordFactory), eq(conn));
+            verify(catalogUtils).getObject(any(org.eclipse.rdf4j.model.Resource.class), eq(ontologyRecordFactory), eq(conn));
             verify(ontologyManager).ontologyIriExists(newIRI);
             verify(catalogUtils).updateCommit(commit, additionsModel, deletions, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
@@ -459,8 +470,9 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
     @Test
     public void addCommitToMasterWithChangesWithBaseAndUsedOntologyIRITest() throws Exception {
         // Setup:
-        Model additionsModel = MODEL_FACTORY.createModel(additionsUsed.collect(Collectors.toSet()));
-        Model deletions = MODEL_FACTORY.createModel();
+        Model additionsModel = MODEL_FACTORY.createEmptyModel();
+        additionsModel.addAll(additionsUsed.collect(Collectors.toSet()));
+        Model deletions = MODEL_FACTORY.createEmptyModel();
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Ontology already exists with IRI " + usedIRI);
 
@@ -469,8 +481,8 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         } finally {
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(catalogUtils, times(0)).getCommitChain(any(com.mobi.rdf.api.Resource.class), eq(false), any(RepositoryConnection.class));
-            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(com.mobi.rdf.api.Resource.class), any(RepositoryConnection.class));
+            verify(catalogUtils, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), any(RepositoryConnection.class));
+            verify(catalogUtils, times(0)).getCompiledResource(anyList(), any(RepositoryConnection.class));
             verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils).getObject(eq(record.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
             verify(ontologyManager).ontologyIriExists(usedIRI);
@@ -487,14 +499,15 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
     public void addCommitToMasterWithChangesWithBaseAndNoIRITest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Model additionsModel = MODEL_FACTORY.createModel(additionsNoIRI.collect(Collectors.toSet()));
-            Model deletions = MODEL_FACTORY.createModel();
+            Model additionsModel = MODEL_FACTORY.createEmptyModel();
+            additionsModel.addAll(additionsNoIRI.collect(Collectors.toSet()));
+            Model deletions = MODEL_FACTORY.createEmptyModel();
 
             service.addCommit(branch, user, "Message", additionsModel, deletions, commit, null, conn);
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(catalogUtils, times(0)).getCommitChain(any(com.mobi.rdf.api.Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
+            verify(catalogUtils, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(anyList(), eq(conn));
             verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager, times(0)).ontologyIriExists(newIRI);

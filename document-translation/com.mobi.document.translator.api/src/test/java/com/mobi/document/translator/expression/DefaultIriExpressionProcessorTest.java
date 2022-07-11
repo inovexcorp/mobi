@@ -28,16 +28,13 @@ import com.mobi.document.translator.expression.context.ClassIriExpressionContext
 import com.mobi.document.translator.expression.context.PropertyIriExpressionContext;
 import com.mobi.document.translator.expression.context.impl.DefaultClassIriExpressionContext;
 import com.mobi.document.translator.expression.context.impl.DefaultPropertyIriExpressionContext;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.document.translator.ontology.ExtractedOntology;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
+import org.eclipse.rdf4j.model.IRI;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class DefaultIriExpressionProcessorTest extends OrmEnabledTestCase {
 
     private static final String ONT_URI = "urn://mobi.com/ontologies/testExtraction";
@@ -47,7 +44,6 @@ public class DefaultIriExpressionProcessorTest extends OrmEnabledTestCase {
     @Before
     public void initProcessor() {
         this.processor = new DefaultIriExpressionProcessor();
-        this.processor.setValueFactory(VALUE_FACTORY);
     }
 
     @Test

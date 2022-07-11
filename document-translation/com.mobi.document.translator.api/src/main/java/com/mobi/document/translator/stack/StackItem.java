@@ -21,10 +21,10 @@ package com.mobi.document.translator.stack;
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
-         */
+*/
 
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Value;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Value;
 import org.springframework.util.MultiValueMap;
 
 /**
@@ -47,7 +47,7 @@ public interface StackItem {
 
     /**
      * @return A {@link MultiValueMap} that will populate the instance represented by this item with DatatypeProperties
-     * in the resulting {@link com.mobi.rdf.api.Model}
+     * in the resulting {@link org.eclipse.rdf4j.model.Model}
      */
     MultiValueMap<IRI, Value> getProperties();
 

@@ -25,4 +25,4 @@ package com.mobi.dataset.api.builder;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

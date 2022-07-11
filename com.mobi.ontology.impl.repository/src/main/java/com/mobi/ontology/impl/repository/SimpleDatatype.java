@@ -24,8 +24,8 @@ package com.mobi.ontology.impl.repository;
  */
 
 import com.mobi.ontology.core.api.Datatype;
-import com.mobi.rdf.api.IRI;
 import com.mobi.vocabularies.xsd.XSD;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
 
 import javax.annotation.Nonnull;

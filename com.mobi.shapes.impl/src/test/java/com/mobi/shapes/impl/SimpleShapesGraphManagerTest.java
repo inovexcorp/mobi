@@ -33,20 +33,19 @@ import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.shapes.api.ShapesGraph;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -57,12 +56,14 @@ import java.util.Optional;
 
 public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
     SimpleShapesGraphManager manager = new SimpleShapesGraphManager();
-    private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
-    private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-    Repository repo;
+    MemoryRepositoryWrapper repo;
     IRI catalogIri;
     IRI testShapeIri;
     IRI missingIRI;
+
+    private AutoCloseable closeable;
+    private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
     private IRI recordIRI;
     private IRI branchIRI;
     private IRI commitIRI;
@@ -76,21 +77,26 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         missingIRI = VALUE_FACTORY.createIRI("http://mobi.com/missing");
         recordIRI = VALUE_FACTORY.createIRI("http://mobi.com/record");
         branchIRI = VALUE_FACTORY.createIRI("http://mobi.com/branch");
         commitIRI = VALUE_FACTORY.createIRI("http://mobi.com/commit");
         vf = VALUE_FACTORY;
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
         catalogIri = vf.createIRI("http://mobi.com/catalog-local");
         testShapeIri = vf.createIRI("http://mobi.com/ontologies/shapes-graph/test-shape-record");
 
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream testData = getClass().getResourceAsStream("/test-shape-record.trig");
-            conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+            conn.add((Rio.parse(testData, "", RDFFormat.TRIG)));
         }
+
+        doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(catalogIri, missingIRI);
+        doThrow(new IllegalArgumentException()).when(catalogManager).getBranch(catalogIri, recordIRI, missingIRI, branchFactory);
+        doThrow(new IllegalArgumentException()).when(catalogManager).getCommit(catalogIri, recordIRI, branchIRI, missingIRI);
+        doThrow(new IllegalArgumentException()).when(catalogManager).getHeadCommit(catalogIri, recordIRI, missingIRI);
 
         doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(catalogIri, missingIRI);
         doThrow(new IllegalArgumentException()).when(catalogManager).getBranch(catalogIri, recordIRI, missingIRI, branchFactory);
@@ -101,6 +107,11 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
         when(configProvider.getRepository()).thenReturn(repo);
         manager.configProvider = configProvider;
         manager.catalogManager = catalogManager;
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -161,7 +172,7 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getMasterBranch(catalogIri, recordIRI)).thenReturn(branch);
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createEmptyModel());
 
         Optional<ShapesGraph> optionalShapesGraph = manager.retrieveShapesGraph(recordIRI);
         assertTrue(optionalShapesGraph.isPresent());
@@ -197,7 +208,7 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
         // Setup:
         Commit commit = commitFactory.createNew(commitIRI);
         when(catalogManager.getHeadCommit(catalogIri, recordIRI, branchIRI)).thenReturn(commit);
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createEmptyModel());
 
         Optional<ShapesGraph> optionalShapesGraph = manager.retrieveShapesGraph(recordIRI, branchIRI);
         assertTrue(optionalShapesGraph.isPresent());
@@ -214,7 +225,7 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
     @Test
     public void testRetrieveShapesGraphUsingACommitSuccess() {
         // Setup:
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createEmptyModel());
 
         Optional<ShapesGraph> optionalOntology = manager.retrieveShapesGraph(recordIRI, branchIRI, commitIRI);
         assertTrue(optionalOntology.isPresent());
@@ -225,7 +236,7 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
     @Test
     public void testRetrieveShapesGraphByCommit() {
         // Setup:
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createEmptyModel());
 
         Optional<ShapesGraph> optionalOntology = manager.retrieveShapesGraphByCommit(commitIRI);
         assertTrue(optionalOntology.isPresent());

@@ -33,13 +33,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.platform.config.api.ontologies.platformconfig.State;
 import com.mobi.platform.config.api.state.StateManager;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
 import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
 import com.mobi.security.api.EncryptionService;
@@ -61,6 +55,13 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.apache.karaf.system.SystemService;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -135,11 +136,13 @@ public class Restore implements Action {
         }
     }
 
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
+
     private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + File.separator + "restoreZip";
     public static final String CONFIG_PATH = RESTORE_PATH + File.separator + "configurations";
     public static final String MANIFEST_FILE = RESTORE_PATH + File.separator + "manifest.json";
     private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15", "1.16", "1.17",
-            "1.18", "1.19", "1.20", "1.21", "1.22");
+            "1.18", "1.19", "1.20", "1.21", "1.22", "2.0");
     private final List<String> POLICES_TO_REMOVE = Arrays.asList(
             "http://mobi.com/policies/system-repo-access",
             "http://mobi.com/policies/all-access-versioned-rdf-record",
@@ -151,45 +154,22 @@ public class Restore implements Action {
     
     // Service References
     @Reference
-    SystemService systemService;
+    protected SystemService systemService;
 
     @Reference
-    private RepositoryManager repositoryManager;
+    protected RepositoryManager repositoryManager;
 
     @Reference
-    private RDFImportService importService;
-    
+    protected RDFImportService importService;
+
     @Reference
-    private StateManager stateManager;
+    protected StateManager stateManager;
 
     @Reference(optional = true)
     private EncryptionService encryptionService;
 
     @Reference
-    private CatalogConfigProvider config;
-
-    @Reference
-    private ValueFactory vf;
-
-    public void setRepositoryManager(RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
-    }
-
-    void setImportService(RDFImportService importService) {
-        this.importService = importService;
-    }
-
-    void setStateManager(StateManager stateManager) {
-        this.stateManager = stateManager;
-    }
-
-    void setConfig(CatalogConfigProvider config) {
-        this.config = config;
-    }
-    
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
+    protected CatalogConfigProvider config;
 
     // Command Parameters
     @Argument(name = "BackupFile", description = "The Mobi backup to restore", required = true)
@@ -272,7 +252,7 @@ public class Restore implements Action {
             if (repoFiles != null && repoFiles.length != 0) {
                 for (File repoFile : repoFiles) {
                     String filename = repoFile.getName();
-                    StringBuilder sb = new StringBuilder("(&(objectClass=com.mobi.repository.api.Repository)"
+                    StringBuilder sb = new StringBuilder("(&(objectClass=com.mobi.repository.api.OsgiRepository)"
                             + "(component.name=");
                     sb.append(filename, 0, filename.indexOf("-"));
                     sb.append(")(id=");
@@ -377,8 +357,8 @@ public class Restore implements Action {
     protected Set<String> clearAllRepos(RepositoryManager repositoryManager) {
         Set<String> remoteRepos = new HashSet<>();
         repositoryManager.getAllRepositories().forEach((repoID, repo) -> {
-            if (repo.getConfig() instanceof NativeRepositoryConfig
-                    || repo.getConfig() instanceof MemoryRepositoryConfig) {
+            if (repo.getConfigType().equals(NativeRepositoryConfig.class)
+                    || repo.getConfigType().equals(MemoryRepositoryConfig.class)) {
                 try (RepositoryConnection connection = repo.getConnection()) {
                     connection.clear();
                 }

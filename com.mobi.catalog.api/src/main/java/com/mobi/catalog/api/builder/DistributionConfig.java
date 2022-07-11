@@ -23,7 +23,8 @@ package com.mobi.catalog.api.builder;
  * #L%
  */
 
-import com.mobi.rdf.api.IRI;
+
+import org.eclipse.rdf4j.model.IRI;
 
 public class DistributionConfig {
     private String title;

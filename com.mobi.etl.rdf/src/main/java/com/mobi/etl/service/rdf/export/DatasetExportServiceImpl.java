@@ -23,19 +23,19 @@ package com.mobi.etl.service.rdf.export;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.etl.api.config.rdf.export.BaseExportConfig;
 import com.mobi.etl.api.rdf.export.DatasetExportService;
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
@@ -56,24 +56,10 @@ public class DatasetExportServiceImpl implements DatasetExportService {
     private List<RDFFormat> quadFormats = Arrays.asList(RDFFormat.JSONLD, RDFFormat.NQUADS, RDFFormat.TRIG,
             RDFFormat.TRIX);
 
-    private ValueFactory vf;
-    private DatasetManager datasetManager;
-    private SesameTransformer transformer;
+    final ValueFactory vf = SimpleValueFactory.getInstance();
 
     @Reference
-    public void setValueFactory(ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    @Reference
-    public void setDatasetManager(DatasetManager datasetManager) {
-        this.datasetManager = datasetManager;
-    }
-
-    @Reference
-    public void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
+    DatasetManager datasetManager;
 
     @Override
     public void export(BaseExportConfig config, String datasetRecord) throws IOException {
@@ -89,20 +75,20 @@ public class DatasetExportServiceImpl implements DatasetExportService {
         rdfWriter.startRDF();
 
         try (DatasetConnection conn = datasetManager.getConnection(datasetRecordID)) {
-            List<Resource> defaultsList = RepositoryResults.asList(conn.getDefaultNamedGraphs());
+            List<Resource> defaultsList = QueryResults.asList(conn.getDefaultNamedGraphs());
             defaultsList.add(conn.getSystemDefaultNamedGraph());
             Resource[] defaults = defaultsList.toArray(new Resource[defaultsList.size()]);
             for (Statement st: conn.getStatements(null, null, null, defaults)) {
                 Statement noContext = vf.createStatement(st.getSubject(), st.getPredicate(), st.getObject());
-                rdfWriter.handleStatement(transformer.sesameStatement(noContext));
+                rdfWriter.handleStatement(noContext);
             }
 
             if (quadFormats.contains(format)) {
-                List<Resource> graphsList = RepositoryResults.asList(conn.getNamedGraphs());
+                List<Resource> graphsList = QueryResults.asList(conn.getNamedGraphs());
                 if (!graphsList.isEmpty()) {
                     Resource[] graphs = graphsList.toArray(new Resource[graphsList.size()]);
                     for (Statement st: conn.getStatements(null, null, null, graphs)) {
-                        rdfWriter.handleStatement(transformer.sesameStatement(st));
+                        rdfWriter.handleStatement(st);
                     }
                 }
             }

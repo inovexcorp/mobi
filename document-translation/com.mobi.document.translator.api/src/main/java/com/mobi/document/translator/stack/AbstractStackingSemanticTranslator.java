@@ -33,11 +33,11 @@ import com.mobi.document.translator.ontology.ExtractedClass;
 import com.mobi.document.translator.ontology.ExtractedObjectProperty;
 import com.mobi.document.translator.ontology.ExtractedOntology;
 import com.mobi.document.translator.ontology.ExtractedProperty;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.document.translator.ontology.ExtractedDatatypeProperty;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

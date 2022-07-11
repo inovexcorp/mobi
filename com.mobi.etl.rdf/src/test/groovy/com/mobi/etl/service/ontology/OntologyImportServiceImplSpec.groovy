@@ -31,9 +31,9 @@ import com.mobi.jaas.api.ontologies.usermanagement.User
 import com.mobi.ontologies.owl.Ontology
 import com.mobi.ontologies.rdfs.Resource
 import com.mobi.ontology.core.api.OntologyManager
-import com.mobi.rdf.api.IRI
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
+import org.eclipse.rdf4j.model.IRI
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import spock.lang.Specification
 
 class OntologyImportServiceImplSpec extends Specification {
@@ -41,7 +41,7 @@ class OntologyImportServiceImplSpec extends Specification {
     def service = new OntologyImportServiceImpl()
 
     def vf = SimpleValueFactory.getInstance()
-    def mf = LinkedHashModelFactory.getInstance()
+    def mf = new DynamicModelFactory()
     def versioningManager = Mock(VersioningManager)
     def catalogManager = Mock(CatalogManager)
     def ontologyManager = Mock(OntologyManager)
@@ -64,8 +64,6 @@ class OntologyImportServiceImplSpec extends Specification {
             vf.createIRI(Ontology.TYPE))
 
     def setup() {
-        service.setValueFactory(vf)
-        service.setModelFactory(mf)
         service.setVersioningManager(versioningManager)
         service.setCatalogManager(catalogManager)
         service.setOntologyManager(ontologyManager)
@@ -74,9 +72,13 @@ class OntologyImportServiceImplSpec extends Specification {
 
     def "Service commits addition data"() {
         setup:
-        def mappedData = mf.createModel([stmt1, stmt2])
-        def expectedCommit = mf.createModel([stmt2])
-        ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> mf.createModel([stmt1])
+        def mappedData = mf.createEmptyModel()
+        mappedData.addAll([stmt1, stmt2])
+        def expectedCommit = mf.createEmptyModel()
+        expectedCommit.addAll([stmt2])
+        def returnModel = mf.createEmptyModel()
+        returnModel.addAll([stmt1])
+        ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> returnModel
 
         when:
         def committedData = service.importOntology(ontologyIRI, branchIRI, false, mappedData, user, "")
@@ -89,9 +91,12 @@ class OntologyImportServiceImplSpec extends Specification {
 
     def "Service does not commit duplicate additions"() {
         setup:
-        def mappedData = mf.createModel([stmt1, stmt2])
-        def expectedCommit = mf.createModel()
-        ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> mf.createModel([stmt1, stmt2])
+        def mappedData = mf.createEmptyModel()
+        mappedData.addAll([stmt1, stmt2])
+        def expectedCommit = mf.createEmptyModel()
+        def returnModel = mf.createEmptyModel()
+        returnModel.addAll([stmt1, stmt2])
+        ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> returnModel
 
         when:
         def committedData = service.importOntology(ontologyIRI, branchIRI, false, mappedData, user, "")
@@ -104,11 +109,15 @@ class OntologyImportServiceImplSpec extends Specification {
 
     def "Service commits addition data to master branch"() {
         setup:
-        def mappedData = mf.createModel([stmt1, stmt2])
-        def expectedCommit = mf.createModel([stmt2])
+        def mappedData = mf.createEmptyModel()
+        mappedData.addAll([stmt1, stmt2])
+        def expectedCommit = mf.createEmptyModel()
+        expectedCommit.addAll([stmt2])
         catalogManager.getMasterBranch(_, ontologyIRI) >> branch
         branch.getResource() >> branchIRI
-        ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> mf.createModel([stmt1])
+        def returnModel = mf.createEmptyModel()
+        returnModel.addAll([stmt1])
+        ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> returnModel
 
         when:
         def committedData = service.importOntology(ontologyIRI, false, mappedData, user, "")
@@ -121,10 +130,13 @@ class OntologyImportServiceImplSpec extends Specification {
 
     def "Service commits update data"() {
         setup:
-        def mappedData = mf.createModel([stmt1, stmt2])
-        def existingData = mf.createModel([stmt1])
-        def additions = mf.createModel([stmt2])
-        def deletions = mf.createModel()
+        def mappedData = mf.createEmptyModel()
+        mappedData.addAll([stmt1, stmt2])
+        def existingData = mf.createEmptyModel()
+        existingData.addAll([stmt1])
+        def additions = mf.createEmptyModel()
+        additions.addAll([stmt2])
+        def deletions = mf.createEmptyModel()
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> existingData
         catalogManager.getDiff(existingData, mappedData) >> new Difference.Builder()
                 .additions(additions)
@@ -142,10 +154,12 @@ class OntologyImportServiceImplSpec extends Specification {
 
     def "Service does not commit duplicate updates"() {
         setup:
-        def mappedData = mf.createModel([stmt1, stmt2])
-        def existingData = mf.createModel([stmt1, stmt2])
-        def additions = mf.createModel()
-        def deletions = mf.createModel()
+        def mappedData = mf.createEmptyModel()
+        mappedData.addAll([stmt1, stmt2])
+        def existingData = mf.createEmptyModel()
+        existingData.addAll([stmt1, stmt2])
+        def additions = mf.createEmptyModel()
+        def deletions = mf.createEmptyModel()
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> existingData
         catalogManager.getDiff(existingData, mappedData) >> new Difference.Builder()
                 .additions(additions)
@@ -163,12 +177,17 @@ class OntologyImportServiceImplSpec extends Specification {
 
     def "Service commits update data with one ontology object"() {
         setup:
-        def mappedData = mf.createModel([stmt1, stmt2])
-        def existingData = mf.createModel([stmt1, ontStmt1])
-        def additions = mf.createModel([stmt2])
-        def deletions = mf.createModel()
+        def mappedData = mf.createEmptyModel()
+        mappedData.addAll([stmt1, stmt2])
+        def existingData = mf.createEmptyModel()
+        existingData.addAll([stmt1, ontStmt1])
+        def additions = mf.createEmptyModel()
+        additions.addAll([stmt2])
+        def deletions = mf.createEmptyModel()
+        def testModel = mf.createEmptyModel()
+        testModel.addAll([stmt1, stmt2, ontStmt1])
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> existingData
-        catalogManager.getDiff(existingData, mf.createModel([stmt1, stmt2, ontStmt1])) >> new Difference.Builder()
+        catalogManager.getDiff(existingData, testModel) >> new Difference.Builder()
                 .additions(additions)
                 .deletions(deletions)
                 .build()
@@ -184,12 +203,18 @@ class OntologyImportServiceImplSpec extends Specification {
 
     def "Service commits update data with two ontology objects"() {
         setup:
-        def mappedData = mf.createModel([stmt1, stmt2])
-        def existingData = mf.createModel([stmt1, ontStmt1, ontStmt2, stmt3])
-        def additions = mf.createModel([stmt2])
-        def deletions = mf.createModel([stmt3])
+        def mappedData = mf.createEmptyModel()
+        mappedData.addAll([stmt1, stmt2])
+        def existingData = mf.createEmptyModel()
+        existingData.addAll([stmt1, ontStmt1, ontStmt2, stmt3])
+        def additions = mf.createEmptyModel()
+        additions.addAll([stmt2])
+        def deletions = mf.createEmptyModel()
+        deletions.addAll([stmt3])
+        def testModel = mf.createEmptyModel()
+        testModel.addAll([stmt1, stmt2, ontStmt1, ontStmt2])
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> existingData
-        catalogManager.getDiff(existingData, mf.createModel([stmt1, stmt2, ontStmt1, ontStmt2])) >> new Difference.Builder()
+        catalogManager.getDiff(existingData, testModel) >> new Difference.Builder()
                 .additions(additions)
                 .deletions(deletions)
                 .build()

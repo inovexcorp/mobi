@@ -27,16 +27,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.cache.api.repository.CacheFactory;
 import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
-import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -54,6 +55,7 @@ import javax.cache.configuration.CompleteConfiguration;
 import javax.cache.spi.CachingProvider;
 
 public class RespositoryCacheManagerTest {
+    private AutoCloseable closeable;
     private static final String REPO_ID = "repoId";
     private static final String CACHE_NAME = "TestCache";
 
@@ -76,7 +78,7 @@ public class RespositoryCacheManagerTest {
     private RepositoryManager repositoryManager;
 
     @Mock
-    private Repository repository;
+    private OsgiRepository repository;
 
     @Before
     public void setUp() throws Exception {
@@ -86,18 +88,23 @@ public class RespositoryCacheManagerTest {
         providerProperties = new Properties();
         providerClassLoader = RepositoryCachingProvider.class.getClassLoader();
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         when(repositoryCachingProvider.getDefaultURI()).thenReturn(providerURI);
         when(repositoryCachingProvider.getDefaultProperties()).thenReturn(new Properties());
         when(repositoryCachingProvider.getDefaultClassLoader()).thenReturn(providerClassLoader);
         when(cacheFactory.getValueType()).thenReturn(String.class);
-        when(cacheFactory.createCache(any(RepositoryConfiguration.class), any(CacheManager.class), any(Repository.class))).thenReturn(repoCache);
+        when(cacheFactory.createCache(any(RepositoryConfiguration.class), any(CacheManager.class), any(OsgiRepository.class))).thenReturn(repoCache);
         when(repoCache.getConfiguration(eq(CompleteConfiguration.class))).thenReturn(repositoryConfiguration);
         when(repositoryManager.getRepository(eq(REPO_ID))).thenReturn(Optional.of(repository));
 
         repositoryCacheManager.setCachingProvider(repositoryCachingProvider);
-        repositoryCacheManager.setRepositoryManager(repositoryManager);
+        repositoryCacheManager.repositoryManager = repositoryManager;
         repositoryCacheManager.addCacheFactory(cacheFactory);
+    }
+
+    @After
+    public void reset() throws Exception {
+        closeable.close();
     }
 
     @Test

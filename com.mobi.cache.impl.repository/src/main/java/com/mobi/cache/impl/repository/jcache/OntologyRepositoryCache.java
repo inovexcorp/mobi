@@ -27,23 +27,20 @@ import com.google.common.collect.Maps;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.Dataset;
-import com.mobi.dataset.ontology.dataset.DatasetFactory;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.utils.OntologyUtils;
 import com.mobi.ontology.utils.cache.repository.OntologyDatasets;
-import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.ResourceUtils;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.OsgiRepository;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +68,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
 
     private volatile boolean closed;
 
-    public OntologyRepositoryCache(String name, Repository repository, CacheManager cacheManager,
+    public OntologyRepositoryCache(String name, OsgiRepository repository, CacheManager cacheManager,
                                    Configuration configuration) {
         this.name = name;
         this.repository = repository;
@@ -81,18 +78,6 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
 
     public void setOntologyManager(OntologyManager ontologyManager) {
         this.ontologyManager = ontologyManager;
-    }
-
-    public void setValueFactory(ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    public void setModelFactory(ModelFactory mf) {
-        this.mf = mf;
-    }
-
-    public void setDatasetFactory(DatasetFactory datasetFactory) {
-        this.datasetFactory = datasetFactory;
     }
 
     public void setDatasetManager(DatasetManager datasetManager) {
@@ -340,7 +325,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     @Override
     public Iterator<Cache.Entry<String, Ontology>> iterator() {
         try (RepositoryConnection conn = repository.getConnection()) {
-            Set<String> keys = RepositoryResults.asList(
+            Set<String> keys = QueryResults.asList(
                     conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(Dataset.TYPE)))
                     .stream()
                     .map(Statement::getSubject)
@@ -367,12 +352,12 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
 
     private void putValueInRepo(Ontology ontology, IRI ontNamedGraphIRI, DatasetConnection dsConn) {
         LOG.debug("Adding ontology to cache dataset " + ontNamedGraphIRI.stringValue());
-        Model ontologyModel = ontology.asModel(mf);
+        Model ontologyModel = ontology.asModel();
         dsConn.addDefault(ontologyModel, ontNamedGraphIRI);
         Set<Ontology> importedOntologies = OntologyUtils.getImportedOntologies(ontology);
 
         importedOntologies.forEach(importedOntology -> {
-            Model importedModel = importedOntology.asModel(mf);
+            Model importedModel = importedOntology.asModel();
             IRI ontSdNg = vf.createIRI(importedOntology.getOntologyId().getOntologyIRI()
                     .orElse((IRI)importedOntology.getOntologyId().getOntologyIdentifier()).stringValue()
                     + OntologyDatasets.SYSTEM_DEFAULT_NG_SUFFIX);
@@ -386,7 +371,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     private boolean removeValueFromRepo(IRI datasetIRI) {
         try {
             LOG.debug("Removing cache dataset " + datasetIRI.stringValue());
-            datasetManager.safeDeleteDataset(datasetIRI, repository.getConfig().id(), false);
+            datasetManager.safeDeleteDataset(datasetIRI, repository.getRepositoryID(), false);
             return true;
         } catch (Exception e) {
             return false;

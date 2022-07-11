@@ -23,9 +23,9 @@ package com.mobi.rdf.orm;
  * #L%
  */
 
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
 
 import java.util.Collection;
 import java.util.List;
@@ -38,7 +38,7 @@ public interface OrmFactoryRegistry {
      *
      * @param type The {@link Class} of the {@link Thing} whose factory you want to find.
      * @param <T> A {@link Class} that extends {@link Thing}.
-     * @return A registered {@link OrmFactory} for the passed type (or {@link Optional#EMPTY} if it doesn't exist).
+     * @return A registered {@link OrmFactory} for the passed type (or {@link Optional#empty()} if it doesn't exist).
      */
     <T extends Thing> Optional<OrmFactory<T>> getFactoryOfType(Class<T> type);
 
@@ -47,7 +47,7 @@ public interface OrmFactoryRegistry {
      *
      * @param typeIRI An IRI string of a class
      * @return A registered {@link OrmFactory} for the type identified by the passed IRI string (or
-     * {@link Optional#EMPTY} if it doesn't exist).
+     * {@link Optional#empty()} if it doesn't exist).
      */
     Optional<OrmFactory<? extends Thing>> getFactoryOfType(String typeIRI);
 
@@ -55,7 +55,7 @@ public interface OrmFactoryRegistry {
      * Attempts retrieve a registered {@link OrmFactory} of the type identified by the passed class IRI.
      *
      * @param typeIRI An {@link IRI} of a class
-     * @return A registered {@link OrmFactory} for the type identified by the passed IRI (or {@link Optional#EMPTY} if
+     * @return A registered {@link OrmFactory} for the type identified by the passed IRI (or {@link Optional#empty()} if
      *         it doesn't exist).
      */
     Optional<OrmFactory<? extends Thing>> getFactoryOfType(IRI typeIRI);
@@ -140,7 +140,7 @@ public interface OrmFactoryRegistry {
      * @param model    The {@link Model} to read your existing instance from
      * @param type The {@link Class} of the {@link Thing} you want to find
      * @param <T> A {@link Class} that extends {@link Thing}.
-     * @return The existing instance of your thing (or {@link Optional#EMPTY} if it doesn't exist)
+     * @return The existing instance of your thing (or {@link Optional#empty()} if it doesn't exist)
      * @throws OrmException If the factory for your thing isn't found, or there is an issue building it
      */
     <T extends Thing> Optional<T> getExisting(Resource resource, Model model, Class<T> type) throws OrmException;

@@ -23,13 +23,14 @@ package com.mobi.cache.config;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 /**
  * Base configuration for Repository Objects.
  */
-@Meta.OCD
-public interface CacheServiceConfig {
+@ObjectClassDefinition
+public @interface CacheServiceConfig {
 
     /**
      * The Cache ID.
@@ -50,6 +51,6 @@ public interface CacheServiceConfig {
      *
      * @return String representing the number of entries to track in the cache.
      */
-    @Meta.AD(required = false)
-    int numEntries();
+    @AttributeDefinition(required = false, defaultValue = "10")
+    int numEntries() default 10;
 }

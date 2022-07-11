@@ -23,11 +23,24 @@ package com.mobi.dataset.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Deactivate;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.component.Reference;
+import com.mobi.persistence.utils.ConnectionUtils;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.ontologies.mcat.Record;
@@ -43,19 +56,7 @@ import com.mobi.dataset.pagination.DatasetPaginatedSearchParams;
 import com.mobi.dataset.pagination.DatasetRecordSearchResults;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.OperationDatasetFactory;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -67,14 +68,6 @@ import java.util.Set;
 
 @Component(immediate = true)
 public class SimpleDatasetManager implements DatasetManager {
-
-    private CatalogConfigProvider configProvider;
-    private CatalogManager catalogManager;
-    private ValueFactory vf;
-    private OperationDatasetFactory operationDatasetFactory;
-    private DatasetRecordFactory dsRecFactory;
-    private DatasetFactory dsFactory;
-    private RepositoryManager repoManager;
 
     private static final String FIND_DATASETS_QUERY;
     private static final String CATALOG_BINDING = "catalog";
@@ -92,40 +85,22 @@ public class SimpleDatasetManager implements DatasetManager {
         }
     }
 
-    @Reference
-    void setConfigProvider(CatalogConfigProvider configProvider) {
-        this.configProvider = configProvider;
-    }
+    final ValueFactory vf = SimpleValueFactory.getInstance();
 
     @Reference
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
+    CatalogConfigProvider configProvider;
 
     @Reference
-    void setValueFactory(ValueFactory valueFactory) {
-        this.vf = valueFactory;
-    }
+    CatalogManager catalogManager;
 
     @Reference
-    void setOperationDatasetFactory(OperationDatasetFactory operationDatasetFactory) {
-        this.operationDatasetFactory = operationDatasetFactory;
-    }
+    DatasetRecordFactory dsRecFactory;
 
     @Reference
-    void setDatasetRecordFactory(DatasetRecordFactory factory) {
-        this.dsRecFactory = factory;
-    }
+    DatasetFactory dsFactory;
 
     @Reference
-    void setDatasetFactory(DatasetFactory datasetFactory) {
-        this.dsFactory = datasetFactory;
-    }
-
-    @Reference
-    void setRepoManager(RepositoryManager repoManager) {
-        this.repoManager = repoManager;
-    }
+    RepositoryManager repoManager;
 
     @Activate
     private void start(Map<String, Object> props) {
@@ -171,14 +146,14 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public DatasetRecord createDataset(DatasetRecordConfig config) {
-        Repository dsRepo = repoManager.getRepository(config.getRepositoryId()).orElseThrow(() ->
+        OsgiRepository dsRepo = repoManager.getRepository(config.getRepositoryId()).orElseThrow(() ->
                 new IllegalArgumentException("Dataset target repository does not exist."));
 
         IRI datasetIRI = vf.createIRI(config.getDataset());
         IRI sdgIRI = vf.createIRI(config.getDataset() + SYSTEM_DEFAULT_NG_SUFFIX);
 
         try (RepositoryConnection conn = dsRepo.getConnection()) {
-            if (conn.contains(datasetIRI, null, null)) {
+            if (ConnectionUtils.contains(conn, datasetIRI, null, null)) {
                 throw new IllegalArgumentException("The dataset already exists in the specified repository.");
             }
         }
@@ -206,14 +181,14 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public boolean createDataset(String dataset, String repositoryId) {
-        Repository dsRepo = repoManager.getRepository(repositoryId).orElseThrow(() ->
+        OsgiRepository dsRepo = repoManager.getRepository(repositoryId).orElseThrow(() ->
                 new IllegalArgumentException("Dataset target repository does not exist."));
 
         IRI datasetIRI = vf.createIRI(dataset);
         IRI sdgIRI = vf.createIRI(dataset + SYSTEM_DEFAULT_NG_SUFFIX);
 
         try (RepositoryConnection conn = dsRepo.getConnection()) {
-            if (conn.contains(null, null, null, datasetIRI)) {
+            if (ConnectionUtils.contains(conn, null, null, null, datasetIRI)) {
                 throw new IllegalArgumentException("The dataset already exists in the specified repository.");
             }
 
@@ -237,7 +212,7 @@ public class SimpleDatasetManager implements DatasetManager {
         DatasetRecord datasetRecord = catalogManager.removeRecord(configProvider.getLocalCatalogIRI(), record,
                 dsRecFactory);
 
-        Repository dsRepo = getDatasetRepo(datasetRecord);
+        OsgiRepository dsRepo = getDatasetRepo(datasetRecord);
         Resource dataset = datasetRecord.getDataset_resource().orElseThrow(()
                 -> new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
 
@@ -260,7 +235,7 @@ public class SimpleDatasetManager implements DatasetManager {
         if (datasetRecord) {
             safeDeleteDataset(dataset, repositoryId);
         }
-        Repository dsRepo = getDatasetRepo(repositoryId);
+        OsgiRepository dsRepo = getDatasetRepo(repositoryId);
         safeDeleteDataset(dataset, dsRepo);
     }
 
@@ -269,7 +244,7 @@ public class SimpleDatasetManager implements DatasetManager {
         DatasetRecord datasetRecord = catalogManager.removeRecord(configProvider.getLocalCatalogIRI(), record,
                 dsRecFactory);
 
-        Repository dsRepo = getDatasetRepo(datasetRecord);
+        OsgiRepository dsRepo = getDatasetRepo(datasetRecord);
         Resource dataset = datasetRecord.getDataset_resource().orElseThrow(()
                 -> new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
 
@@ -277,7 +252,7 @@ public class SimpleDatasetManager implements DatasetManager {
         return datasetRecord;
     }
 
-    private void safeDeleteDataset(Resource dataset, Repository dsRepo) {
+    private void safeDeleteDataset(Resource dataset, OsgiRepository dsRepo) {
         try (RepositoryConnection conn = dsRepo.getConnection()) {
             safeDeleteGraphs(conn, dataset);
             conn.remove(dataset, null, null);
@@ -298,7 +273,7 @@ public class SimpleDatasetManager implements DatasetManager {
         Resource dataset = datasetRecord.getDataset_resource().orElseThrow(() ->
                 new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
 
-        Repository dsRepo = getDatasetRepo(datasetRecord);
+        OsgiRepository dsRepo = getDatasetRepo(datasetRecord);
 
         try (RepositoryConnection conn = dsRepo.getConnection()) {
             deleteGraphs(conn, dataset);
@@ -320,7 +295,7 @@ public class SimpleDatasetManager implements DatasetManager {
         Resource dataset = datasetRecord.getDataset_resource().orElseThrow(() ->
                 new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
 
-        Repository dsRepo = getDatasetRepo(datasetRecord);
+        OsgiRepository dsRepo = getDatasetRepo(datasetRecord);
 
         try (RepositoryConnection conn = dsRepo.getConnection()) {
             safeDeleteGraphs(conn, dataset);
@@ -334,10 +309,9 @@ public class SimpleDatasetManager implements DatasetManager {
             throw new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog with this "
                     + "dataset/repository combination.");
         }
-        Repository dsRepo = getDatasetRepo(repositoryId);
+        OsgiRepository dsRepo = getDatasetRepo(repositoryId);
 
-        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf,
-                operationDatasetFactory);
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf);
     }
 
     @Override
@@ -345,7 +319,7 @@ public class SimpleDatasetManager implements DatasetManager {
         if (datasetRecord) {
             return getConnection(dataset, repositoryId);
         }
-        Repository dsRepo = getDatasetRepo(repositoryId);
+        OsgiRepository dsRepo = getDatasetRepo(repositoryId);
         return getConnection(dataset, repositoryId, dsRepo);
     }
 
@@ -358,13 +332,12 @@ public class SimpleDatasetManager implements DatasetManager {
         String repositoryId = datasetRecord.getRepository().orElseThrow(() ->
                 new IllegalStateException("Could not retrieve the Repository ID from the DatasetRecord."));
 
-        Repository dsRepo = getDatasetRepo(datasetRecord);
+        OsgiRepository dsRepo = getDatasetRepo(datasetRecord);
         return getConnection(dataset, repositoryId, dsRepo);
     }
 
-    private DatasetConnection getConnection(Resource dataset, String repoId, Repository dsRepo) {
-        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repoId, vf,
-                operationDatasetFactory);
+    private DatasetConnection getConnection(Resource dataset, String repoId, OsgiRepository dsRepo) {
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repoId, vf);
     }
 
     /**
@@ -382,24 +355,24 @@ public class SimpleDatasetManager implements DatasetManager {
 
             while (recordStmts.hasNext()) {
                 Resource record = recordStmts.next().getSubject();
-                if (conn.getStatements(record, vf.createIRI(DatasetRecord.repository_IRI),
-                        vf.createLiteral(repositoryId)).hasNext()) {
+                if (ConnectionUtils.contains(conn, record, vf.createIRI(DatasetRecord.repository_IRI),
+                        vf.createLiteral(repositoryId))) {
+                    recordStmts.close();
                     return Optional.of(record);
                 }
             }
-            recordStmts.close();
 
             return Optional.empty();
         }
     }
 
-    private Repository getDatasetRepo(DatasetRecord datasetRecord) {
+    private OsgiRepository getDatasetRepo(DatasetRecord datasetRecord) {
         String dsRepoID = datasetRecord.getRepository().orElseThrow(() ->
                 new IllegalStateException("DatasetRecord does not specify a dataset repository."));
         return getDatasetRepo(dsRepoID);
     }
 
-    private Repository getDatasetRepo(String repositoryId) {
+    private OsgiRepository getDatasetRepo(String repositoryId) {
         return repoManager.getRepository(repositoryId).orElseThrow(() ->
                 new MobiException("Dataset target repository does not exist."));
     }

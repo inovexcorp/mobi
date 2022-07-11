@@ -23,7 +23,7 @@ package com.mobi.etl.api.config.rdf;
  * #L%
  */
 
-import com.mobi.rdf.api.Resource;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.rio.RDFFormat;
 
 public class ImportServiceConfig {

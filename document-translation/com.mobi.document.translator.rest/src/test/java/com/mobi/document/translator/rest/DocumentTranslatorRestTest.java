@@ -27,39 +27,32 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getOrmFactoryRegistry;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 import com.mobi.document.translator.SemanticTranslator;
 import com.mobi.document.translator.expression.DefaultIriExpressionProcessor;
 import com.mobi.document.translator.impl.csv.CsvSemanticTranslator;
 import com.mobi.document.translator.impl.xml.XmlStackingSemanticTranslator;
 import com.mobi.document.translator.stack.impl.json.JsonStackingSemanticTranslator;
-import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rest.util.MobiRestTestNg;
-import com.mobi.rest.util.UsernameTestFilter;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.ValueFactory;
+import com.mobi.rest.test.util.FormDataMultiPart;
+import com.mobi.rest.test.util.MobiRestTestCXF;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-public class DocumentTranslatorRestTest extends MobiRestTestNg {
-    private DocumentTranslatorRest rest;
+public class DocumentTranslatorRestTest extends MobiRestTestCXF {
+    private static DocumentTranslatorRest rest;
 
-    @Override
-    public Application configureApp() throws Exception {
+    @BeforeClass
+    public static void startServer() throws Exception {
         rest = new DocumentTranslatorRest();
         injectOrmFactoryReferencesIntoService(rest);
 
@@ -68,27 +61,20 @@ public class DocumentTranslatorRestTest extends MobiRestTestNg {
 
         DefaultIriExpressionProcessor processor = new DefaultIriExpressionProcessor();
         injectOrmFactoryReferencesIntoService(processor);
-        processor.setValueFactory(vf);
 
         JsonStackingSemanticTranslator json = new JsonStackingSemanticTranslator();
         injectOrmFactoryReferencesIntoService(json);
         json.setExpressionProcessor(processor);
-        json.setModelFactory(mf);
-        json.setValueFactory(vf);
         json.setOrmFactoryRegistry(getOrmFactoryRegistry());
 
         XmlStackingSemanticTranslator xml = new XmlStackingSemanticTranslator();
         injectOrmFactoryReferencesIntoService(xml);
         xml.setExpressionProcessor(processor);
-        xml.setModelFactory(mf);
-        xml.setValueFactory(vf);
         xml.setOrmFactoryRegistry(getOrmFactoryRegistry());
 
         CsvSemanticTranslator csv = new CsvSemanticTranslator();
         injectOrmFactoryReferencesIntoService(csv);
         csv.setExpressionProcessor(processor);
-        csv.setModelFactory(mf);
-        csv.setValueFactory(vf);
         csv.setOrmFactoryRegistry(getOrmFactoryRegistry());
 
         Field f = rest.getClass().getDeclaredField("translators");
@@ -102,33 +88,15 @@ public class DocumentTranslatorRestTest extends MobiRestTestNg {
         getField(rest.getClass(), "valueFactory").set(rest, vf);
         getField(rest.getClass(), "modelFactory").set(rest, mf);
         getField(rest.getClass(), "ormFactoryRegistry").set(rest, getOrmFactoryRegistry());
-        getField(rest.getClass(), "sesameTransformer").set(rest, new SimpleSesameTransformer());
-        
-        return new ResourceConfig()
-                .register(rest)
-                .register(MultiPartFeature.class)
-                .register(UsernameTestFilter.class);
-    }
-
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
+        configureServer(rest, new com.mobi.rest.test.util.UsernameTestFilter());
     }
 
     @Test
     public void testSuccessJson() {
         FormDataMultiPart formData = new FormDataMultiPart();
-        FormDataContentDisposition disposition = FormDataContentDisposition
-                .name("file")
-                .fileName("test.json")
-                .build();
+        formData.bodyPart("file", "test.json", getClass().getResourceAsStream("/test.json"));
 
-        FormDataBodyPart bodyPart = new FormDataBodyPart(disposition, getClass().getResourceAsStream("/test.json"),
-                MediaType.APPLICATION_OCTET_STREAM_TYPE);
-
-        formData.bodyPart(bodyPart);
-
-        Response response = target().path("translate").request().post(Entity.entity(formData,
+        Response response = target().path("translate").request().post(Entity.entity(formData.body(),
                 MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 200);
@@ -137,17 +105,9 @@ public class DocumentTranslatorRestTest extends MobiRestTestNg {
     @Test
     public void testSuccessXml() {
         FormDataMultiPart formData = new FormDataMultiPart();
-        FormDataContentDisposition disposition = FormDataContentDisposition
-                .name("file")
-                .fileName("test.xml")
-                .build();
+        formData.bodyPart("file", "test.xml", getClass().getResourceAsStream("/test.xml"));
 
-        FormDataBodyPart bodyPart = new FormDataBodyPart(disposition, getClass().getResourceAsStream("/test.xml"),
-                MediaType.APPLICATION_OCTET_STREAM_TYPE);
-
-        formData.bodyPart(bodyPart);
-
-        Response response = target().path("translate").request().post(Entity.entity(formData,
+        Response response = target().path("translate").request().post(Entity.entity(formData.body(),
                 MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 200);
@@ -156,17 +116,9 @@ public class DocumentTranslatorRestTest extends MobiRestTestNg {
     @Test
     public void testSuccessCSV() {
         FormDataMultiPart formData = new FormDataMultiPart();
-        FormDataContentDisposition disposition = FormDataContentDisposition
-                .name("file")
-                .fileName("test.csv")
-                .build();
+        formData.bodyPart("file", "test.csv", getClass().getResourceAsStream("/test.csv"));
 
-        FormDataBodyPart bodyPart = new FormDataBodyPart(disposition, getClass().getResourceAsStream("/test.csv"),
-                MediaType.APPLICATION_OCTET_STREAM_TYPE);
-
-        formData.bodyPart(bodyPart);
-
-        Response response = target().path("translate").request().post(Entity.entity(formData,
+        Response response = target().path("translate").request().post(Entity.entity(formData.body(),
                 MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 200);
@@ -176,19 +128,10 @@ public class DocumentTranslatorRestTest extends MobiRestTestNg {
     public void testInvalidType() {
         FormDataMultiPart formData = new FormDataMultiPart();
         formData.field("type", "xml");
-
-        FormDataContentDisposition disposition = FormDataContentDisposition
-                .name("file")
-                .fileName("test.csv")
-                .build();
-
-        FormDataBodyPart bodyPart = new FormDataBodyPart(disposition, getClass().getResourceAsStream("/test.csv"),
-                MediaType.APPLICATION_OCTET_STREAM_TYPE);
-
-        formData.bodyPart(bodyPart);
+        formData.bodyPart("file", "test.csv", getClass().getResourceAsStream("/test.csv"));
 
         Response response = target().path("translate").request()
-                .post(Entity.entity(formData, MediaType.MULTIPART_FORM_DATA));
+                .post(Entity.entity(formData.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 500);
     }
@@ -197,18 +140,10 @@ public class DocumentTranslatorRestTest extends MobiRestTestNg {
     public void testInvalidDesiredRows() {
         FormDataMultiPart formData = new FormDataMultiPart();
         formData.field("desiredRows", "invalid");
-        FormDataContentDisposition disposition = FormDataContentDisposition
-                .name("file")
-                .fileName("test.csv")
-                .build();
-
-        FormDataBodyPart bodyPart = new FormDataBodyPart(disposition, getClass().getResourceAsStream("/test.csv"),
-                MediaType.APPLICATION_OCTET_STREAM_TYPE);
-
-        formData.bodyPart(bodyPart);
+        formData.bodyPart("file", "test.csv", getClass().getResourceAsStream("/test.csv"));
 
         Response response = target().path("translate").request()
-                .post(Entity.entity(formData, MediaType.MULTIPART_FORM_DATA));
+                .post(Entity.entity(formData.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 400);
     }
@@ -217,19 +152,10 @@ public class DocumentTranslatorRestTest extends MobiRestTestNg {
     public void testValidDesiredRows() {
         FormDataMultiPart formData = new FormDataMultiPart();
         formData.field("desiredRows", "8");
-
-        FormDataContentDisposition disposition = FormDataContentDisposition
-                .name("file")
-                .fileName("test.csv")
-                .build();
-
-        FormDataBodyPart bodyPart = new FormDataBodyPart(disposition, getClass().getResourceAsStream("/test.csv"),
-                MediaType.APPLICATION_OCTET_STREAM_TYPE);
-
-        formData.bodyPart(bodyPart);
+        formData.bodyPart("file", "test.csv", getClass().getResourceAsStream("/test.csv"));
 
         Response response = target().path("translate").request()
-                .post(Entity.entity(formData, MediaType.MULTIPART_FORM_DATA));
+                .post(Entity.entity(formData.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 200);
     }
@@ -237,17 +163,9 @@ public class DocumentTranslatorRestTest extends MobiRestTestNg {
     @Test
     public void testInvalidFile() {
         FormDataMultiPart formData = new FormDataMultiPart();
-        FormDataContentDisposition disposition = FormDataContentDisposition
-                .name("file")
-                .fileName("test.docx")
-                .build();
+        formData.bodyPart("file", "test.docx", getClass().getResourceAsStream("/test.docx"));
 
-        FormDataBodyPart bodyPart = new FormDataBodyPart(disposition, getClass().getResourceAsStream("/test.docx"),
-                MediaType.APPLICATION_OCTET_STREAM_TYPE);
-
-        formData.bodyPart(bodyPart);
-
-        Response response = target().path("translate").request().post(Entity.entity(formData,
+        Response response = target().path("translate").request().post(Entity.entity(formData.body(),
                 MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 400);

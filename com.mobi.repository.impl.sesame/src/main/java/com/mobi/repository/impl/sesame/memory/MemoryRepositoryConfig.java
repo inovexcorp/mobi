@@ -23,13 +23,49 @@ package com.mobi.repository.impl.sesame.memory;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
-import com.mobi.repository.config.RepositoryConfig;
+
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 /**
  * Configuration for in-memory Repository Objects
  */
-public interface MemoryRepositoryConfig extends RepositoryConfig {
+@ObjectClassDefinition(name = "MemoryRepositoryConfig", description = "Configuration for a Memory Repository")
+public @interface MemoryRepositoryConfig {
+
+    /**
+     * The Repository ID.
+     *
+     * @return String representing the Repository ID.
+     */
+    @AttributeDefinition(name = "id", description = "The ID of the Repository")
+    String id();
+
+    /**
+     * The Repository Title.
+     *
+     * @return String representing the Repository Title.
+     */
+    @AttributeDefinition(name = "title", description = "The Title of the Repository")
+    String title();
+
+    /**
+     * The data directory where the repository data is stored. NOTE: This is an optional property as some repositories
+     * do not store data in a single directory.
+     *
+     * @return String representing the directory where the repository data is stored, if applicable.
+     */
+    @AttributeDefinition(required = false, name = "dataDir", description = "The directory of the Repository")
+    String dataDir();
+
+    /**
+     * The triple indexes for the native store. Default value is: "spoc,posc".
+     *
+     * @return The Set of String representing triple indexes.
+     */
+    @AttributeDefinition(required = false, name = "tripleIndexes",
+            description = "The list of indexes for the Repository")
+    String tripleIndexes() default "spoc,posc";
 
     /**
      * The syncDelay for write-backs to disk. This is an optional property
@@ -37,6 +73,6 @@ public interface MemoryRepositoryConfig extends RepositoryConfig {
      *
      * @return The long representing the syncDelay
      */
-    @Meta.AD(required = false)
+    @AttributeDefinition(required = false, name = "syncDelay", description = "The syncDelay for write-backs to disk")
     long syncDelay();
 }

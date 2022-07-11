@@ -23,15 +23,22 @@ package com.mobi.vfs.impl.commons;
  * #L%
  */
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.when;
+
 import net.openhft.hashing.LongHashFunction;
 import org.apache.commons.io.IOUtils;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFileUtilities;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -41,39 +48,31 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
+public class DefaultVirtualFilesystemTest {
 
-@RunWith(BlockJUnit4ClassRunner.class)
-public class DefaultVirtualFilesystemTest extends TestCase {
+    @Mock
+    private SimpleVirtualFilesystemConfig config;
 
-    private static URI testFile;
+    private AutoCloseable closeable;
+    private URI testFile;
+    private URI testResources;
+    private URI writeFile;
+    private String testFileRelative;
+    private String testResourcesRelative;
+    private String writeFileRelative;
+    private String writeFileNestedRelative;
+    private InputStream testFileInputStream;
+    private String fileContents;
+    private SimpleVirtualFilesystem fs;
 
-    private static URI testResources;
-
-    private static URI writeFile;
-
-    private static String testFileRelative;
-
-    private static String testResourcesRelative;
-
-    private static String writeFileRelative;
-
-    private static String writeFileNestedRelative;
-
-    private static InputStream testFileInputStream;
-
-    private static String fileContents;
-
-    private static SimpleVirtualFilesystem fs;
-
-    @BeforeClass
-    public static void initializeUri() throws Exception {
+    @Before
+    public void initializeUri() throws Exception {
+        closeable = MockitoAnnotations.openMocks(this);
         testFile = DefaultVirtualFilesystemTest.class.getResource("/test.txt").toURI();
         testResources = DefaultVirtualFilesystemTest.class.getResource("/").toURI();
         writeFile = new URI(testResources.toString() + "testFile");
@@ -85,15 +84,19 @@ public class DefaultVirtualFilesystemTest extends TestCase {
         fileContents = IOUtils.toString(DefaultVirtualFilesystemTest.class.getResourceAsStream("/test.txt"), StandardCharsets.UTF_8);
         fs = new SimpleVirtualFilesystem();
 
-        Map<String, Object> config = new HashMap<>();
-        config.put("maxNumberOfTempFiles", 10000);
-        config.put("secondsBetweenTempCleanup", 60000);
-        config.put("defaultRootDirectory", testResources.getPath());
+        when(config.maxNumberOfTempFiles()).thenReturn(10000);
+        when(config.secondsBetweenTempCleanup()).thenReturn((long) 60000);
+        when(config.defaultRootDirectory()).thenReturn(testResources.getPath());
 
-        Method m = fs.getClass().getDeclaredMethod("activate", Map.class);
+        Method m = fs.getClass().getDeclaredMethod("activate", SimpleVirtualFilesystemConfig.class);
         m.setAccessible(true);
         m.invoke(fs, config);
         assertNotNull(fs);
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test
