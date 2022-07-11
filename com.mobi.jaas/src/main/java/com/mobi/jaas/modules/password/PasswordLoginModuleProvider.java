@@ -23,10 +23,10 @@ package com.mobi.jaas.modules.password;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.component.Reference;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.jaas.api.config.LoginModuleConfig;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.modules.password.PasswordLoginModule;
@@ -40,18 +40,13 @@ import java.util.Map;
 @Component
 public class PasswordLoginModuleProvider implements AppConfigEntryProvider {
 
-    private EngineManager engineManager;
     protected BundleContext context;
 
     @Reference
-    public void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
+    EngineManager engineManager;
 
     @Activate
-    protected void start(BundleContext context) {
-        this.context = context;
-    }
+    protected void start(BundleContext context) { this.context = context; }
 
     @Modified
     protected void modified(BundleContext context) {

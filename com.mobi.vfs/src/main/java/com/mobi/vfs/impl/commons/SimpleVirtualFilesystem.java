@@ -23,12 +23,6 @@ package com.mobi.vfs.impl.commons;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Deactivate;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.vfs.api.TemporaryVirtualFile;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
@@ -41,6 +35,12 @@ import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.VFS;
 import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +50,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.time.temporal.TemporalUnit;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -64,9 +63,9 @@ import java.util.concurrent.TimeUnit;
 @Component(
         name = SimpleVirtualFilesystem.SERVICE_NAME,
         immediate = true,
-        designateFactory = SimpleVirtualFilesystemConfig.class,
-        configurationPolicy = ConfigurationPolicy.require
+        configurationPolicy = ConfigurationPolicy.REQUIRE
 )
+@Designate(ocd = SimpleVirtualFilesystemConfig.class)
 public class SimpleVirtualFilesystem implements VirtualFilesystem {
 
     static final String SERVICE_NAME = "com.mobi.vfs.basic";
@@ -292,9 +291,7 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
     }
 
     @Activate
-    void activate(Map<String, Object> configuration) throws VirtualFilesystemException {
-        SimpleVirtualFilesystemConfig conf = Configurable.createConfigurable(SimpleVirtualFilesystemConfig.class,
-                configuration);
+    void activate(SimpleVirtualFilesystemConfig conf) throws VirtualFilesystemException {
         try {
             this.fsManager = VFS.getManager();
             File rootDirectory = new File(conf.defaultRootDirectory());
@@ -325,9 +322,9 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
     }
 
     @Modified
-    void modified(Map<String, Object> configuration) throws VirtualFilesystemException {
+    void modified(final SimpleVirtualFilesystemConfig conf) throws VirtualFilesystemException {
         deactivate();
-        activate(configuration);
+        activate(conf);
     }
 
     @Deactivate

@@ -23,7 +23,7 @@ package com.mobi.catalog.api.record.config;
  * #L%
  */
 
-import com.mobi.rdf.api.Model;
+import org.eclipse.rdf4j.model.Model;
 
 import java.io.InputStream;
 

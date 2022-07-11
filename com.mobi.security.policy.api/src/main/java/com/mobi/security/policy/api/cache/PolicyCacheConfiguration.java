@@ -23,11 +23,6 @@ package com.mobi.security.policy.api.cache;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.cache.config.CacheConfiguration;
 import com.mobi.security.policy.api.Policy;
 import com.mobi.security.policy.api.cache.config.PolicyCacheServiceConfig;
@@ -38,17 +33,21 @@ import org.ehcache.core.events.CacheEventListenerConfiguration;
 import org.ehcache.event.EventType;
 import org.ehcache.expiry.Expirations;
 import org.ehcache.jsr107.Eh107Configuration;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import javax.cache.configuration.Configuration;
 
 @Component(
         immediate = true,
-        configurationPolicy = ConfigurationPolicy.require,
-        designateFactory = PolicyCacheServiceConfig.class
+        configurationPolicy = ConfigurationPolicy.REQUIRE
 )
+@Designate(ocd = PolicyCacheServiceConfig.class)
 public class PolicyCacheConfiguration implements CacheConfiguration {
     private static final Logger LOG = LoggerFactory.getLogger(PolicyCacheConfiguration.class);
 
@@ -56,21 +55,14 @@ public class PolicyCacheConfiguration implements CacheConfiguration {
     private int numEntries;
 
     @Activate
-    public void start(Map<String, Object> props) {
-        PolicyCacheServiceConfig config = Configurable.createConfigurable(PolicyCacheServiceConfig.class, props);
-
+    public void start(PolicyCacheServiceConfig config) {
         this.cacheId = config.id();
-
-        if (props.containsKey("numEntries")) {
-            this.numEntries = config.numEntries();
-        } else {
-            this.numEntries = 250;
-        }
+        this.numEntries = config.numEntries();
     }
 
     @Modified
-    public void modified(Map<String, Object> props) {
-        start(props);
+    public void modified(PolicyCacheServiceConfig config) {
+        start(config);
     }
 
     @Override

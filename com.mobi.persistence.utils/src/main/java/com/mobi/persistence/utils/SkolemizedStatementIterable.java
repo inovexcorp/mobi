@@ -24,21 +24,17 @@ package com.mobi.persistence.utils;
  */
 
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import org.eclipse.rdf4j.model.Statement;
 
 import java.util.Iterator;
 
 public class SkolemizedStatementIterable extends StatementIterable {
-    private Iterator<com.mobi.rdf.api.Statement> it;
-    private SesameTransformer transformer;
+    private Iterator<Statement> it;
     private BNodeService service;
 
-    public SkolemizedStatementIterable(Iterable<com.mobi.rdf.api.Statement> it, SesameTransformer transformer,
-                                       BNodeService service) {
-        super(it, transformer);
+    public SkolemizedStatementIterable(Iterable<Statement> it, BNodeService service) {
+        super(it);
         this.it = it.iterator();
-        this.transformer = transformer;
         this.service = service;
     }
 
@@ -54,6 +50,6 @@ public class SkolemizedStatementIterable extends StatementIterable {
 
     @Override
     public Statement next() {
-        return transformer.sesameStatement(service.skolemize(it.next()));
+        return service.skolemize(it.next());
     }
 }

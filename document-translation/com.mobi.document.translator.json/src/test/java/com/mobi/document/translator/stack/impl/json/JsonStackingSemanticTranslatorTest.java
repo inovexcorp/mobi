@@ -23,21 +23,18 @@ package com.mobi.document.translator.stack.impl.json;
  * #L%
  */
 
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.document.translator.expression.DefaultIriExpressionProcessor;
 import com.mobi.document.translator.ontology.ExtractedDatatypeProperty;
 import com.mobi.document.translator.ontology.ExtractedObjectProperty;
 import com.mobi.document.translator.ontology.ExtractedOntology;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
+import org.eclipse.rdf4j.model.Model;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import java.nio.file.Paths;
 
-@RunWith(MockitoJUnitRunner.class)
 public class JsonStackingSemanticTranslatorTest extends OrmEnabledTestCase {
 
     private static final String ONT_URI = "urn://mobi.com/ontologies/testExtraction";
@@ -51,11 +48,8 @@ public class JsonStackingSemanticTranslatorTest extends OrmEnabledTestCase {
         this.extractor = new JsonStackingSemanticTranslator();
         injectOrmFactoryReferencesIntoService(this.extractor);
         DefaultIriExpressionProcessor proc = new DefaultIriExpressionProcessor();
-        proc.setValueFactory(VALUE_FACTORY);
         this.extractor.setExpressionProcessor(proc);
         this.extractor.setOrmFactoryRegistry(ORM_FACTORY_REGISTRY);
-        this.extractor.setValueFactory(VALUE_FACTORY);
-        this.extractor.setModelFactory(MODEL_FACTORY);
     }
 
     @Before

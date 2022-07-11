@@ -23,10 +23,9 @@ package com.mobi.persistence.utils.rio;
  * #L%
  */
 
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Namespace;
-import com.mobi.rdf.api.Statement;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Namespace;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.rio.RDFHandler;
 
 public class Rio {
@@ -37,8 +36,8 @@ public class Rio {
      *
      * @param iterable A collection of statements, such as a {@link Model}, to be written.
      */
-    public static void write(Iterable<? extends Statement> iterable, RDFHandler writer, SesameTransformer transformer,
-                                  StatementHandler... statementHandlers) {
+    public static void write(Iterable<? extends Statement> iterable, RDFHandler writer,
+                             StatementHandler... statementHandlers) {
         writer.startRDF();
 
         if (iterable instanceof Model) {
@@ -52,8 +51,7 @@ public class Rio {
             for (StatementHandler statementHandler : statementHandlers) {
                 handledStatement = statementHandler.handleStatement(handledStatement);
             }
-            org.eclipse.rdf4j.model.Statement sesameStatement = transformer.sesameStatement(handledStatement);
-            writer.handleStatement(sesameStatement);
+            writer.handleStatement(handledStatement);
         }
         writer.endRDF();
     }
@@ -64,16 +62,14 @@ public class Rio {
      *
      * @param statement The {@link Statement} to write to the RDFWriter.
      * @param writer The {@link org.eclipse.rdf4j.rio.RDFWriter} to handle writing statements.
-     * @param transformer The {@link SesameTransformer} to convert Mobi statements.
      * @param statementHandlers An optional array of {@link StatementHandler}s to apply to the Statement.
      */
-    public static void write(Statement statement, RDFHandler writer, SesameTransformer transformer,
+    public static void write(Statement statement, RDFHandler writer,
                              StatementHandler... statementHandlers) {
         for (StatementHandler statementHandler : statementHandlers) {
             statement = statementHandler.handleStatement(statement);
         }
-        org.eclipse.rdf4j.model.Statement sesameStatement = transformer.sesameStatement(statement);
-        writer.handleStatement(sesameStatement);
+        writer.handleStatement(statement);
     }
 
     /**
@@ -81,13 +77,12 @@ public class Rio {
      *
      * @param iterable A collection of statements, such as a {@link Model}, to be written.
      * @param writer RDFHandler
-     * @param transformer SesameTransformer
      * @param limit number of records to be written
      * @param statementHandlers StatementHandler
      * @return boolean if limit has been exceeded
      */
     public static boolean write(Iterable<? extends Statement> iterable, RDFHandler writer,
-                                SesameTransformer transformer, int limit, StatementHandler... statementHandlers) {
+                                int limit, StatementHandler... statementHandlers) {
         boolean limitExceeded = false;
         int limitExceededCounter = 0;
         writer.startRDF();
@@ -103,8 +98,7 @@ public class Rio {
                 handledStatement = statementHandler.handleStatement(handledStatement);
             }
 
-            org.eclipse.rdf4j.model.Statement sesameStatement = transformer.sesameStatement(handledStatement);
-            writer.handleStatement(sesameStatement);
+            writer.handleStatement(handledStatement);
 
             if (limitExceededCounter >= limit) {
                 limitExceeded = true;

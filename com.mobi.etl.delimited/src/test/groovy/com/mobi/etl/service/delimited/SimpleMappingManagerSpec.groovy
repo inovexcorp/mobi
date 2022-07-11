@@ -32,9 +32,7 @@ import com.mobi.etl.api.delimited.MappingId
 import com.mobi.etl.api.delimited.MappingWrapper
 import com.mobi.etl.api.ontologies.delimited.Mapping
 import com.mobi.exception.MobiException
-import com.mobi.persistence.utils.api.SesameTransformer
-import com.mobi.rdf.api.Model
-import com.mobi.rdf.core.utils.Values
+import org.eclipse.rdf4j.model.Model
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
 import spock.lang.Specification
@@ -52,16 +50,13 @@ class SimpleMappingManagerSpec extends Specification {
     def mappingWrapper = Mock(MappingWrapper)
     def mappingId = Mock(MappingId)
     def mapping = Mock(Mapping)
-    def transformer = Mock(SesameTransformer)
 
     def mappingIRI = vf.createIRI("http://test.com/mapping")
 
     def setup() {
         injectOrmFactoryReferencesIntoService(service)
-        service.setValueFactory(vf)
-        service.setConfigProvider(configProvider)
-        service.setCatalogManager(catalogManager)
-        service.setSesameTransformer(transformer)
+        service.configProvider = configProvider
+        service.catalogManager = catalogManager
 
         mappingWrapper.getId() >> mappingId
         mappingWrapper.getMapping() >> mapping
@@ -71,8 +66,6 @@ class SimpleMappingManagerSpec extends Specification {
         mapping.getModel() >> model
 
         mappingId.getMappingIdentifier() >> mappingIRI
-
-        transformer.mobiModel(_) >> { args -> Values.mobiModel(args[0])}
     }
 
     def "Create a Mapping using a valid File"() {
@@ -83,8 +76,8 @@ class SimpleMappingManagerSpec extends Specification {
         def versionedMappingFile = Paths.get(getClass().getClassLoader().getResource("newestVersionedMapping.jsonld")
                 .toURI()).toFile()
 
-        def expectedModel = Values.mobiModel(Rio.parse(mappingStream, "", RDFFormat.TURTLE))
-        def expectedVersionedModel = Values.mobiModel(Rio.parse(versionedMappingStream, "", RDFFormat.JSONLD))
+        def expectedModel = Rio.parse(mappingStream, "", RDFFormat.TURTLE)
+        def expectedVersionedModel = Rio.parse(versionedMappingStream, "", RDFFormat.JSONLD)
 
         when:
         def actualMapping = service.createMapping(mappingFile)
@@ -97,10 +90,10 @@ class SimpleMappingManagerSpec extends Specification {
 
     def "Create a Mapping using a valid InputStream"() {
         setup:
-        def model = Values.mobiModel(Rio.parse(getClass().getClassLoader()
-                .getResourceAsStream("newestMapping.ttl"), "", RDFFormat.TURTLE))
-        def versionedModel = Values.mobiModel(Rio.parse(getClass().getClassLoader()
-                .getResourceAsStream("newestVersionedMapping.jsonld"), "", RDFFormat.JSONLD))
+        def model = Rio.parse(getClass().getClassLoader()
+                .getResourceAsStream("newestMapping.ttl"), "", RDFFormat.TURTLE)
+        def versionedModel = Rio.parse(getClass().getClassLoader()
+                .getResourceAsStream("newestVersionedMapping.jsonld"), "", RDFFormat.JSONLD)
 
         when:
         def mapping = service.createMapping(getClass().getClassLoader()
@@ -121,8 +114,8 @@ class SimpleMappingManagerSpec extends Specification {
         def versionedMappingFile = Paths.get(getClass().getClassLoader().getResource("newestVersionedMapping.jsonld")
                 .toURI()).toFile()
 
-        def expectedModel = Values.mobiModel(Rio.parse(mappingStream, "", RDFFormat.JSONLD))
-        def expectedVersionedModel = Values.mobiModel(Rio.parse(versionedMappingStream, "", RDFFormat.JSONLD))
+        def expectedModel = Rio.parse(mappingStream, "", RDFFormat.JSONLD)
+        def expectedVersionedModel = Rio.parse(versionedMappingStream, "", RDFFormat.JSONLD)
 
         when:
         def actualMapping = service.createMapping(mappingFile.getText("UTF-8"))

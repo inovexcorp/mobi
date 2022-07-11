@@ -26,11 +26,6 @@ package com.mobi.document.translator.cli;
 import com.mobi.document.translator.SemanticTranslator;
 import com.mobi.document.translator.impl.csv.CsvSemanticTranslator;
 import com.mobi.document.translator.ontology.ExtractedOntology;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -38,6 +33,12 @@ import org.apache.karaf.shell.api.action.*;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
@@ -67,6 +68,9 @@ public class DocumentTranslationCLI implements Action {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentTranslationCLI.class);
 
+    private final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    private final ModelFactory modelFactory = new DynamicModelFactory();
+
     @Argument(name = "document", required = true, description = "The document file to translate")
     @Completion(FileCompleter.class)
     private File documentFile;
@@ -95,15 +99,6 @@ public class DocumentTranslationCLI implements Action {
     @Reference
     private OrmFactoryRegistry ormFactoryRegistry;
 
-    @Reference
-    private ValueFactory valueFactory;
-
-    @Reference
-    private ModelFactory modelFactory;
-
-    @Reference
-    private SesameTransformer sesameTransformer;
-
     @Override
     public Object execute() throws Exception {
         validateOutputLocation(outputDirectory);
@@ -113,7 +108,7 @@ public class DocumentTranslationCLI implements Action {
                         : String.format("urn://mobi.inovexcorp.com/extractedOntology/%s", UUID.randomUUID().toString());
         final IRI ontologyIri = valueFactory.createIRI(ontologyIriString);
         final ExtractedOntology ontology = ormFactoryRegistry.createNew(ontologyIri,
-                modelFactory.createModel(), ExtractedOntology.class);
+                modelFactory.createEmptyModel(), ExtractedOntology.class);
         final Model results = translator.translate(Paths.get(documentFile.toURI()), ontology);
         final File outputFile = File.createTempFile(ontologyIri.getLocalName(), ".zip", outputDirectory);
         try (ZipOutputStream os = new ZipOutputStream(new FileOutputStream(outputFile))) {
@@ -130,7 +125,7 @@ public class DocumentTranslationCLI implements Action {
     private void writeData(final Model model, OutputStream os) {
         org.eclipse.rdf4j.rio.RDFHandler handler1 =
                 new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.TURTLE, os));
-        Rio.write(sesameTransformer.sesameModel(model), handler1);
+        Rio.write(model, handler1);
     }
 
     private SemanticTranslator getTranslatorForType(String type) {

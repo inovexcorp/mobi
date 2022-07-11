@@ -24,44 +24,39 @@ package com.mobi.platform.config.rest;
  */
 
 import static com.mobi.persistence.utils.ResourceUtils.encode;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anySetOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.platform.config.api.state.StateManager;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.rdf.core.utils.Values;
-import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.rest.test.util.MobiRestTestCXF;
+import com.mobi.rest.test.util.UsernameTestFilter;
 import com.mobi.rest.util.RestUtils;
-import com.mobi.rest.util.UsernameTestFilter;
-import com.mobi.web.security.util.AuthenticationProps;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.mockito.Mock;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -70,74 +65,59 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 
-public class StateRestTest extends MobiRestTestNg {
-    private StateRest rest;
-    private ValueFactory vf;
-    private ModelFactory mf;
-
+public class StateRestTest extends MobiRestTestCXF {
+    private AutoCloseable closeable;
     private static Map<Resource, Model> results = new HashMap<>();
     private static Resource stateId;
     private static Model stateModel;
 
-    @Mock
-    StateManager stateManager;
+    // Mock services used in server
+    private static StateRest rest;
+    private static ValueFactory vf;
+    private static ModelFactory mf;
+    private static StateManager stateManager;
 
-    @Mock
-    SesameTransformer transformer;
+    @BeforeClass
+    public static void startServer() {
+        vf = getValueFactory();
+        mf = getModelFactory();
 
-    @Override
-    protected Application configureApp() throws Exception {
-        vf = SimpleValueFactory.getInstance();
-        mf = LinkedHashModelFactory.getInstance();
-
-        stateId = vf.createIRI("http://mobi.com/states/0");
-        stateModel = mf.createModel();
-        results.put(stateId, stateModel);
-
-        MockitoAnnotations.initMocks(this);
-
-        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
-                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
-        when(transformer.sesameModel(any(Model.class)))
-                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(transformer.sesameStatement(any(Statement.class)))
-                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
+        stateManager = Mockito.mock(StateManager.class);
 
         rest = new StateRest();
         rest.setStateManager(stateManager);
-        rest.setModelFactory(mf);
-        rest.setValueFactory(vf);
-        rest.setTransformer(transformer);
 
-        return new ResourceConfig().property(AuthenticationProps.USERNAME, "test")
-                .register(rest)
-                .register(UsernameTestFilter.class)
-                .register(MultiPartFeature.class);
+        configureServer(rest, new UsernameTestFilter());
     }
 
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(UsernameTestFilter.class).register(MultiPartFeature.class);
-    }
+    @Before
+    public void setupMocks() throws Exception {
+        closeable = MockitoAnnotations.openMocks(this);
 
-    @BeforeMethod
-    public void setupMocks() {
-        reset(stateManager);
-        when(stateManager.getStates(anyString(), anyString(), anySetOf(Resource.class))).thenReturn(results);
+        stateId = vf.createIRI("http://mobi.com/states/0");
+        stateModel = mf.createEmptyModel();
+        results.put(stateId, stateModel);
+
+        when(stateManager.getStates(anyString(), any(), anySet())).thenReturn(results);
         when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(true);
         when(stateManager.getState(any(Resource.class))).thenReturn(stateModel);
         when(stateManager.storeState(any(Model.class), anyString())).thenReturn(stateId);
         when(stateManager.storeState(any(Model.class), anyString(), anyString())).thenReturn(stateId);
     }
 
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
+        reset(stateManager);
+    }
+
     @Test
     public void getStatesWithoutFiltersTest() {
         Response response = target().path("states").request().get();
         assertEquals(response.getStatus(), 200);
-        verify(stateManager).getStates(anyString(), anyString(), anySetOf(Resource.class));
+        verify(stateManager).getStates(anyString(), any(), anySet());
         try {
             String str = response.readEntity(String.class);
             JSONArray arr = JSONArray.fromObject(str);
@@ -184,7 +164,7 @@ public class StateRestTest extends MobiRestTestNg {
     @Test
     public void createStateWithoutApplicationTest() {
         // Setup:
-        Model state = mf.createModel();
+        Model state = mf.createEmptyModel();
         state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
 
         Response response = target().path("states").request().post(Entity.json(modelToJsonld(state)));
@@ -201,7 +181,7 @@ public class StateRestTest extends MobiRestTestNg {
     @Test
     public void createStateWithApplicationTest() {
         // Setup:
-        Model state = mf.createModel();
+        Model state = mf.createEmptyModel();
         state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
 
         Response response = target().path("states").queryParam("application", "app")
@@ -271,7 +251,7 @@ public class StateRestTest extends MobiRestTestNg {
     @Test
     public void updateStateTest() {
         // Setup:
-        Model state = mf.createModel();
+        Model state = mf.createEmptyModel();
         state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
@@ -295,7 +275,7 @@ public class StateRestTest extends MobiRestTestNg {
     @Test
     public void updateStateThatDoesNotExistTest() {
         // Setup:
-        Model state = mf.createModel();
+        Model state = mf.createEmptyModel();
         state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         doThrow(new IllegalArgumentException()).when(stateManager).updateState(any(Resource.class), any(Model.class));
 
@@ -307,7 +287,7 @@ public class StateRestTest extends MobiRestTestNg {
     @Test
     public void updateStateThatIsNotYoursTest() {
         // Setup:
-        Model state = mf.createModel();
+        Model state = mf.createEmptyModel();
         state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(false);
 
@@ -319,7 +299,7 @@ public class StateRestTest extends MobiRestTestNg {
     @Test
     public void updateStateExceptionThrownTest() {
         // Setup:
-        Model state = mf.createModel();
+        Model state = mf.createEmptyModel();
         state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
         doThrow(new MobiException()).when(stateManager).updateState(any(Resource.class), any(Model.class));
 
@@ -367,6 +347,6 @@ public class StateRestTest extends MobiRestTestNg {
     }
 
     private String modelToJsonld(Model model) {
-        return RestUtils.modelToJsonld(model, transformer);
+        return RestUtils.modelToJsonld(model);
     }
 }

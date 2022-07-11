@@ -25,12 +25,7 @@ package com.mobi.security.policy.rest;
 
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
@@ -64,6 +59,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -85,20 +86,15 @@ import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
-@Component(service = RecordPermissionsRest.class, immediate = true)
+@Component(service = RecordPermissionsRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/record-permissions")
 public class RecordPermissionsRest {
     private final Logger LOGGER = LoggerFactory.getLogger(RecordPermissionsRest.class);
 
     private static final String ONTOLOGIES_CATALOG_MODIFY = "http://mobi.com/ontologies/catalog#Modify";
-    private ValueFactory vf;
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
     private XACMLPolicyManager policyManager;
-    private Repository repo;
-
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
+    private OsgiRepository repo;
 
     @Reference
     void setPolicyManager(XACMLPolicyManager policyManager) {
@@ -106,7 +102,7 @@ public class RecordPermissionsRest {
     }
 
     @Reference(target = "(id=system)")
-    public void setRepo(Repository repo) {
+    public void setRepo(OsgiRepository repo) {
         this.repo = repo;
     }
 

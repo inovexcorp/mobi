@@ -1,4 +1,4 @@
-@Version("3.9.0.${build}")
+@Version("4.0.0.${build}")
 
 package com.mobi.catalog.api;
 
@@ -25,4 +25,4 @@ package com.mobi.catalog.api;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

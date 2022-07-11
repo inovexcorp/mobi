@@ -23,7 +23,7 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import com.mobi.rdf.api.IRI;
+import org.eclipse.rdf4j.model.IRI;
 
 public interface OClass {
 

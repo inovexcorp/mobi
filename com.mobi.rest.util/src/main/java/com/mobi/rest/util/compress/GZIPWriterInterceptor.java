@@ -23,7 +23,7 @@ package com.mobi.rest.util.compress;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
+import org.osgi.service.component.annotations.Component;
 
 import java.io.IOException;
 import java.io.OutputStream;

@@ -23,8 +23,13 @@ package com.mobi.etl.service.delimited;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
@@ -43,11 +48,6 @@ import com.mobi.etl.api.ontologies.delimited.MappingRecordFactory;
 import com.mobi.etl.api.pagination.MappingPaginatedSearchParams;
 import com.mobi.etl.api.pagination.MappingRecordSearchResults;
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 
@@ -63,50 +63,25 @@ import javax.annotation.Nonnull;
 
 @Component
 public class SimpleMappingManager implements MappingManager {
-    private ValueFactory vf;
-    private CatalogConfigProvider configProvider;
-    private CatalogManager catalogManager;
-    private MappingRecordFactory mappingRecordFactory;
-    private MappingFactory mappingFactory;
-    private ClassMappingFactory classMappingFactory;
-    private SesameTransformer transformer;
 
     public SimpleMappingManager() {}
 
-    @Reference
-    protected void setValueFactory(final ValueFactory vf) {
-        this.vf = vf;
-    }
+    final ValueFactory vf = SimpleValueFactory.getInstance();
 
     @Reference
-    void setConfigProvider(CatalogConfigProvider configProvider) {
-        this.configProvider = configProvider;
-    }
+    CatalogConfigProvider configProvider;
 
     @Reference
-    protected void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
+    CatalogManager catalogManager;
 
     @Reference
-    protected void setMappingRecordFactory(MappingRecordFactory mappingRecordFactory) {
-        this.mappingRecordFactory = mappingRecordFactory;
-    }
+    MappingRecordFactory mappingRecordFactory;
 
     @Reference
-    protected void setMappingFactory(MappingFactory mappingFactory) {
-        this.mappingFactory = mappingFactory;
-    }
+    MappingFactory mappingFactory;
 
     @Reference
-    protected void setClassMappingFactory(ClassMappingFactory classMappingFactory) {
-        this.classMappingFactory = classMappingFactory;
-    }
-
-    @Reference
-    protected void setSesameTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
+    ClassMappingFactory classMappingFactory;
 
     @Override
     public MappingId createMappingId(Resource id) {
@@ -142,7 +117,7 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public MappingWrapper createMapping(InputStream in, RDFFormat format) throws IOException {
-        return createMapping(transformer.mobiModel(Rio.parse(in, "", format)));
+        return createMapping(Rio.parse(in, "", format));
     }
 
     @Override

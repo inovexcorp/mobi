@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.23.0-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -44,17 +44,25 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
+            <groupId>org.eclipse.rdf4j</groupId>
+            <artifactId>rdf4j-repository-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>edu.washington.cs.types.checker</groupId>
-            <artifactId>checker-framework</artifactId>
+            <groupId>org.eclipse.rdf4j</groupId>
+            <artifactId>rdf4j-model-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-queryresultio-api</artifactId>
-            <version>${rdf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
+
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation.versioning</artifactId>
         </dependency>
     </dependencies>
 
@@ -72,8 +80,7 @@
                         <Export-Package>
                             com.mobi.rdf.api,
                             com.mobi.rdf.base,
-                            com.mobi.repository*,
-                            com.mobi.query*
+                            com.mobi.repository.exception
                         </Export-Package>
                         <_metatype>*</_metatype>
                         <build>${maven.build.timestamp}</build>

@@ -31,6 +31,7 @@ import com.mobi.jaas.api.config.LoginModuleConfig;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.modules.password.PasswordLoginModule;
 import com.mobi.jaas.proxy.ProxyLoginModule;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -41,6 +42,7 @@ import org.osgi.framework.BundleContext;
 import java.util.Map;
 
 public class PasswordLoginModuleProviderTest {
+    private AutoCloseable closeable;
     private PasswordLoginModuleProvider provider;
 
     private long bundleId = 10L;
@@ -56,12 +58,17 @@ public class PasswordLoginModuleProviderTest {
 
     @Before
     public void before() {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         when(context.getBundle()).thenReturn(bundle);
         when(bundle.getBundleId()).thenReturn(bundleId);
 
         provider = new PasswordLoginModuleProvider();
-        provider.setEngineManager(engineManager);
+        provider.engineManager = engineManager;
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test

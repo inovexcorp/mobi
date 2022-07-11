@@ -23,25 +23,16 @@ package com.mobi.ontology.rest;
  * #L%
  */
 
-import com.mobi.rest.util.MobiRestTestNg;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
+import com.mobi.rest.test.util.MobiRestTestCXF;
+import org.junit.BeforeClass;
 
-import javax.ws.rs.core.Application;
+public class ImportedOntologyRestImplTest extends MobiRestTestCXF {
+    private static ImportedOntologyRest rest;
 
-public class ImportedOntologyRestImplTest extends MobiRestTestNg {
-    private ImportedOntologyRest rest;
-
-    @Override
-    protected Application configureApp() throws Exception {
+    @BeforeClass
+    public static void startServer() {
         rest = new ImportedOntologyRest();
-        return new ResourceConfig().register(rest);
-    }
-
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
+        configureServer(rest);
     }
 
 //    @Test

@@ -27,12 +27,9 @@ import com.mobi.cache.api.repository.CacheFactory;
 import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
 import com.mobi.cache.impl.repository.jcache.OntologyRepositoryCache;
 import com.mobi.dataset.api.DatasetManager;
-import com.mobi.dataset.ontology.dataset.DatasetFactory;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.OsgiRepository;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -44,29 +41,11 @@ import javax.cache.CacheManager;
 public class OntologyRepositoryCacheFactory implements CacheFactory<String, Ontology> {
 
     private OntologyManager ontologyManager;
-    private ModelFactory mf;
-    private ValueFactory vf;
-    private DatasetFactory datasetFactory;
     private DatasetManager datasetManager;
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     void setOntologyManager(OntologyManager ontologyManager) {
         this.ontologyManager = ontologyManager;
-    }
-
-    @Reference
-    void setModelFactory(ModelFactory modelFactory) {
-        this.mf = modelFactory;
-    }
-
-    @Reference
-    void setValueFactory(ValueFactory valueFactory) {
-        this.vf = valueFactory;
-    }
-
-    @Reference
-    void setDatasetFactory(DatasetFactory datasetFactory) {
-        this.datasetFactory = datasetFactory;
     }
 
     @Reference
@@ -81,13 +60,10 @@ public class OntologyRepositoryCacheFactory implements CacheFactory<String, Onto
 
     @Override
     public Cache<String, Ontology> createCache(RepositoryConfiguration<String, Ontology> configuration,
-                                               CacheManager cacheManager, Repository repository) {
+                                               CacheManager cacheManager, OsgiRepository repository) {
         OntologyRepositoryCache cache = new OntologyRepositoryCache(configuration.getRepoId(), repository, cacheManager,
                 configuration);
         cache.setOntologyManager(ontologyManager);
-        cache.setModelFactory(mf);
-        cache.setValueFactory(vf);
-        cache.setDatasetFactory(datasetFactory);
         cache.setDatasetManager(datasetManager);
         return cache;
     }

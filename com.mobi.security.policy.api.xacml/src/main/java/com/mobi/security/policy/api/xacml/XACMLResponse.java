@@ -24,8 +24,6 @@ package com.mobi.security.policy.api.xacml;
  */
 
 import com.mobi.exception.MobiException;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.Response;
 import com.mobi.security.policy.api.Status;
@@ -37,6 +35,8 @@ import com.mobi.security.policy.api.xacml.jaxb.ResponseType;
 import com.mobi.security.policy.api.xacml.jaxb.ResultType;
 import com.mobi.security.policy.api.xacml.jaxb.StatusCodeType;
 import com.mobi.security.policy.api.xacml.jaxb.StatusType;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.ValueFactory;
 
 import java.io.Reader;
 import java.io.StringReader;

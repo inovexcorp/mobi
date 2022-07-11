@@ -25,7 +25,7 @@ package com.mobi.ontology.impl.repository;
 
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.AnnotationProperty;
-import com.mobi.rdf.api.Value;
+import org.eclipse.rdf4j.model.Value;
 
 import javax.annotation.Nonnull;
 

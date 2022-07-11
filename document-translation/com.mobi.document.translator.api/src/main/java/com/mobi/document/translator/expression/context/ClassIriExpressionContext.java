@@ -26,7 +26,7 @@ package com.mobi.document.translator.expression.context;
 import com.mobi.document.translator.ontology.ExtractedClass;
 
 /**
- * This interface describes the context that is required for the generating the {@link com.mobi.rdf.api.IRI} of a
+ * This interface describes the context that is required for the generating the {@link org.eclipse.rdf4j.model.IRI} of a
  * {@link ExtractedClass} .
  */
 public interface ClassIriExpressionContext extends IriExpressionContext {

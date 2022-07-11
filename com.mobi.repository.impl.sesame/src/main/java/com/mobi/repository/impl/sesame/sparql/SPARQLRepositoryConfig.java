@@ -23,21 +23,38 @@ package com.mobi.repository.impl.sesame.sparql;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
-import com.mobi.repository.config.RepositoryConfig;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 /**
  * Configuration for Repository objects accessed through a SPARQL 1.1 compliant endpoint. The instance must be
  * initialized prior to using it.
  */
-public interface SPARQLRepositoryConfig extends RepositoryConfig {
+@ObjectClassDefinition(name = "SPARQLRepositoryConfig", description = "Configuration for a SPARQL Repository")
+public @interface SPARQLRepositoryConfig {
+
+    /**
+     * The Repository ID.
+     *
+     * @return String representing the Repository ID.
+     */
+    @AttributeDefinition(name = "id", description = "The ID of the Repository")
+    String id();
+
+    /**
+     * The Repository Title.
+     *
+     * @return String representing the Repository Title.
+     */
+    @AttributeDefinition(name = "title", description = "The Title of the Repository")
+    String title();
 
     /**
      * The SPARQL endpoint URL.
      *
      * @return String representing the SPARQL endpoint URL.
      */
-    @Meta.AD
+    @AttributeDefinition(name = "endpointUrl", description = "The SPARQL Endpoint URL")
     String endpointUrl();
 
     /**
@@ -45,6 +62,6 @@ public interface SPARQLRepositoryConfig extends RepositoryConfig {
      *
      * @return String representing the SPARQL update endpoint URL.
      */
-    @Meta.AD(required = false)
+    @AttributeDefinition(required = false, name = "updateEndpointUrl", description = "The SPARQL UPDATE Endpoint URL")
     String updateEndpointUrl();
 }

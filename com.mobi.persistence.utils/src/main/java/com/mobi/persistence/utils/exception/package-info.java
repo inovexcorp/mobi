@@ -25,4 +25,4 @@ package com.mobi.persistence.utils.exception;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

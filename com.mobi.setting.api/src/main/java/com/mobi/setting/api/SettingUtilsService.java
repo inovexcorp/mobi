@@ -24,9 +24,9 @@ package com.mobi.setting.api;
  */
 
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
 import com.mobi.setting.api.ontologies.Setting;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
 
 import java.io.InputStream;
 import java.util.Set;

@@ -23,26 +23,20 @@ package com.mobi.rdf.orm.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.AbstractOrmFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverter;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.api.*;
-import com.mobi.rdf.orm.AbstractOrmFactory;
-import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.orm.conversion.ValueConverter;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.osgi.service.component.annotations.Component;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * This is the core {@link OrmFactory} for {@link Thing} instances. It provides
@@ -52,7 +46,7 @@ import java.util.*;
  *
  * @author bdgould
  */
-@Component(provide = {OrmFactory.class, ValueConverter.class, ThingFactory.class}, immediate = true)
+@Component(service = {OrmFactory.class, ValueConverter.class, ThingFactory.class}, immediate = true)
 public class ThingFactory extends AbstractOrmFactory<Thing> {
 
     /**
@@ -69,24 +63,6 @@ public class ThingFactory extends AbstractOrmFactory<Thing> {
     public Optional<Thing> getExisting(Resource resource, Model model, ValueFactory valueFactory,
                                        ValueConverterRegistry valueConverterRegistry) {
         return model.subjects().contains(resource) ? Optional.of(new ThingImpl(resource, model, valueFactory, valueConverterRegistry)) : Optional.empty();
-    }
-
-    @Override
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
-    }
-
-    @Override
-    @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
-    }
-
-    @Override
-    @Reference
-    public void setValueConverterRegistry(ValueConverterRegistry valueConverterRegistry) {
-        this.valueConverterRegistry = valueConverterRegistry;
     }
 
     @Override

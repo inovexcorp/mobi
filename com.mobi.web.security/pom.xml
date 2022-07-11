@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.23.0-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -37,15 +37,19 @@
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
+    <properties>
+        <cxf.version>3.4.3</cxf.version>
+    </properties>
+
     <dependencies>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>jaas.api</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.ws.rs</groupId>
@@ -67,11 +71,9 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
-
         <dependency>
-            <groupId>com.eclipsesource.jaxrs</groupId>
-            <artifactId>provider-security</artifactId>
-            <version>2.2</version>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.karaf.jaas</groupId>
@@ -84,6 +86,21 @@
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-frontend-jaxrs</artifactId>
+            <version>${cxf.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -101,7 +118,6 @@
                             com.mobi.web.security.util,
                             com.mobi.web.security.util.api
                         </Export-Package>
-                        <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>

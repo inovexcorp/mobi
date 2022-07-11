@@ -23,7 +23,7 @@ package com.mobi.jaas.token;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
+import org.osgi.service.component.annotations.Component;
 import com.mobi.jaas.api.token.TokenVerifier;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -44,7 +44,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-@Component(immediate = true, provide = {MobiTokenVerifier.class, TokenVerifier.class})
+@Component(immediate = true, service = {MobiTokenVerifier.class, TokenVerifier.class})
 public class MobiTokenVerifier implements TokenVerifier {
 
     public static final String NAME = "MobiVerifier";

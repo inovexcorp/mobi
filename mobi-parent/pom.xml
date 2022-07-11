@@ -28,7 +28,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>mobi-parent</artifactId>
-    <version>1.23.0-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -51,38 +51,37 @@
         <skipSelenium>true</skipSelenium>
 
         <antlr.version>4.6</antlr.version>
-        <maven-bundle-plugin.version>3.5.0</maven-bundle-plugin.version>
-        <bndlib.version>3.1.0</bndlib.version>
-        <commons-lang3.version>3.8.1</commons-lang3.version>
-        <rdf4j.version>2.5.5</rdf4j.version>
-        <owlapi.version>5.1.9</owlapi.version>
-        <karaf.version>4.2.14</karaf.version>
-        <httpclient.version>4.5.2</httpclient.version>
-        <jaxrs.version>2.0.1</jaxrs.version>
-        <jaxb.version>2.3.2</jaxb.version>
-        <jersey.version>2.25.1</jersey.version>
-        <swagger.version>2.1.1</swagger.version>
-        <osgi.version>6.0.0</osgi.version>
-        <osgi-service.version>1.3.0</osgi-service.version>
-        <servlet.version>3.1.0</servlet.version>
-        <jackson.version>2.9.8</jackson.version>
-        <guice.version>4.1.0</guice.version>
-        <poi.version>3.14_1</poi.version>
-        <opencsv.version>4.3.2</opencsv.version>
-        <commons-io.version>2.5</commons-io.version>
-        <commons-codec.version>1.10</commons-codec.version>
-        <commons-lang.version>2.6</commons-lang.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
+        <commons-codec.version>1.10</commons-codec.version>
         <commons-collections.version>3.2.1</commons-collections.version>
-        <commons-validator.version>1.6</commons-validator.version>
-        <logback.version>1.1.2</logback.version>
+        <commons-io.version>2.5</commons-io.version>
+        <commons-lang.version>2.6</commons-lang.version>
+        <commons-lang3.version>3.8.1</commons-lang3.version>
         <commons-rdf-api.version>0.5.0</commons-rdf-api.version>
-        <powermock.version>1.6.5</powermock.version>
-        <hamcrest.version>1.3</hamcrest.version>
-        <ehcache.version>3.3.1</ehcache.version>
-        <javax.cache.version>1.0.0</javax.cache.version>
-        <eclipse.persistence.version>2.6.1</eclipse.persistence.version>
-        <jose-jwt.version>4.41.3</jose-jwt.version>
+        <commons-validator.version>1.6</commons-validator.version>
+        <cxf.version>3.4.3</cxf.version>
+        <ehcache.version>3.3.1</ehcache.version> <!-- 3.10.0 is out, but causes unsatisfied ehcache services -->
+        <httpclient.version>4.5.13</httpclient.version>
+        <httpcore.version>4.4.15</httpcore.version>
+        <jackson.version>2.13.2</jackson.version>
+        <javax.cache.version>1.1.1</javax.cache.version>
+        <jaxb.version>2.3.3</jaxb.version>
+        <jaxrs.version>2.0.1</jaxrs.version> <!-- Can update to 3.x Jakarta post Java 9 -->
+        <jose-jwt.version>9.22</jose-jwt.version>
+        <junit.version>4.13.2</junit.version>
+        <karaf.version>4.3.7</karaf.version>
+        <logback.version>1.2.11</logback.version>
+        <maven-bundle-plugin.version>5.1.4</maven-bundle-plugin.version>
+        <mockito.version>4.6.1</mockito.version>
+        <opencsv.version>4.6</opencsv.version> <!-- 5.6 doesn't allow custom delimiters -->
+        <osgi-service.version>1.3.0</osgi-service.version>
+        <osgi-versioning.version>1.1.2</osgi-versioning.version>
+        <osgi.version>7.0.0</osgi.version>
+        <owlapi.version>5.1.19-MOBI</owlapi.version>
+        <poi.version>3.14_1</poi.version>
+        <rdf4j.version>3.7.6</rdf4j.version>
+        <servlet.version>3.1.0</servlet.version>  <!-- 4.0.1 with later pax web -->
+        <swagger.version>2.2.0</swagger.version>
     </properties>
 
     <dependencyManagement>
@@ -92,36 +91,127 @@
                 <groupId>org.eclipse.rdf4j</groupId>
                 <artifactId>rdf4j-model</artifactId>
                 <version>${rdf4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.github.jsonld-java</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.rdf4j</groupId>
+                <artifactId>rdf4j-model-api</artifactId>
+                <version>${rdf4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.github.jsonld-java</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.rdf4j</groupId>
                 <artifactId>rdf4j-repository-api</artifactId>
                 <version>${rdf4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.github.jsonld-java</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.rdf4j</groupId>
                 <artifactId>rdf4j-repository-sail</artifactId>
                 <version>${rdf4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.github.jsonld-java</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.rdf4j</groupId>
                 <artifactId>rdf4j-sail-memory</artifactId>
                 <version>${rdf4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.github.jsonld-java</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.rdf4j</groupId>
                 <artifactId>rdf4j-sail-nativerdf</artifactId>
                 <version>${rdf4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.github.jsonld-java</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.rdf4j</groupId>
                 <artifactId>rdf4j-runtime-osgi</artifactId>
                 <version>${rdf4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.github.jsonld-java</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.rdf4j</groupId>
                 <artifactId>rdf4j-query</artifactId>
                 <version>${rdf4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.github.jsonld-java</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.rdf4j</groupId>
+                <artifactId>rdf4j-queryresultio-api</artifactId>
+                <version>${rdf4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.github.jsonld-java</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.github.jsonld-java</groupId>
+                <artifactId>jsonld-java</artifactId>
+                <version>0.13.5-MOBI</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.httpcomponents</groupId>
+                        <artifactId>fluent-hc</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.httpcomponents</groupId>
+                        <artifactId>httpcore-nio</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.httpcomponents</groupId>
+                        <artifactId>httpcore-osgi</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.httpcomponents</groupId>
+                        <artifactId>httpclient-osgi</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.httpcomponents</groupId>
+                        <artifactId>httpmime</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <!-- OWLAPI Dependencies -->
@@ -148,6 +238,10 @@
                     <exclusion>
                         <groupId>com.google.code.findbugs</groupId>
                         <artifactId>jsr305</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.github.jsonld-java</groupId>
+                        <artifactId>*</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -207,14 +301,8 @@
 
             <!-- OSGi Dependencies -->
             <dependency>
-                <groupId>biz.aQute.bnd</groupId>
-                <artifactId>biz.aQute.bndlib</artifactId>
-                <version>${bndlib.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.osgi</groupId>
-                <artifactId>org.osgi.core</artifactId>
+                <artifactId>osgi.core</artifactId>
                 <version>${osgi.version}</version>
             </dependency>
             <dependency>
@@ -224,7 +312,7 @@
             </dependency>
             <dependency>
                 <groupId>org.osgi</groupId>
-                <artifactId>org.osgi.annotation</artifactId>
+                <artifactId>osgi.annotation</artifactId>
                 <version>${osgi.version}</version>
             </dependency>
             <dependency>
@@ -236,6 +324,11 @@
                 <groupId>org.osgi</groupId>
                 <artifactId>org.osgi.service.component.annotations</artifactId>
                 <version>${osgi-service.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>org.osgi.annotation.versioning</artifactId>
+                <version>${osgi-versioning.version}</version>
             </dependency>
 
             <!-- Other Dependencies -->
@@ -305,16 +398,6 @@
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.glassfish.jersey.media</groupId>
-                <artifactId>jersey-media-multipart</artifactId>
-                <version>${jersey.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>jakarta.xml.bind</groupId>
-                <artifactId>jakarta.xml.bind-api</artifactId>
-                <version>${jaxb.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-jaxrs2</artifactId>
                 <version>${swagger.version}</version>
@@ -353,6 +436,12 @@
                 <groupId>org.ehcache</groupId>
                 <artifactId>ehcache</artifactId>
                 <version>${ehcache.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.glassfish.jaxb</groupId>
+                        <artifactId>jaxb-runtime</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>javax.cache</groupId>
@@ -365,38 +454,27 @@
                 <version>2.1</version>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.persistence</groupId>
-                <artifactId>org.eclipse.persistence.moxy</artifactId>
-                <version>${eclipse.persistence.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.jasypt</groupId>
                 <artifactId>jasypt</artifactId>
-                <version>1.9.0</version>
+                <version>1.9.3</version>
             </dependency>
             <dependency>
                 <groupId>org.lz4</groupId>
                 <artifactId>lz4-java</artifactId>
-                <version>1.4.1</version>
+                <version>1.8.0</version>
             </dependency>
 
             <!-- Test Dependencies -->
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>4.12</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.hamcrest</groupId>
-                <artifactId>hamcrest-all</artifactId>
-                <version>${hamcrest.version}</version>
+                <version>${junit.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.spockframework</groupId>
                 <artifactId>spock-core</artifactId>
-                <version>1.0-groovy-2.4</version>
+                <version>2.1-groovy-3.0</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -406,51 +484,15 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>org.codehaus.gpars</groupId>
-                <artifactId>gpars</artifactId>
-                <version>1.2.1</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-module-junit4</artifactId>
-                <version>${powermock.version}</version>
-                <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>junit</groupId>
-                        <artifactId>junit</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-module-testng</artifactId>
-                <version>${powermock.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-api-mockito</artifactId>
-                <version>${powermock.version}</version>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
-                <artifactId>mockito-core</artifactId>
-                <version>1.10.19</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.testng</groupId>
-                <artifactId>testng</artifactId>
-                <version>6.10</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.glassfish.jersey.test-framework.providers</groupId>
-                <artifactId>jersey-test-framework-provider-jdk-http</artifactId>
-                <version>${jersey.version}</version>
+                <artifactId>mockito-inline</artifactId>
+                <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -462,7 +504,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>zero-allocation-hashing</artifactId>
-                <version>0.8</version>
+                <version>0.15</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -533,10 +575,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
+                <version>3.8.0</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <release>11</release>
                 </configuration>
             </plugin>
             <plugin>
@@ -560,6 +601,7 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
                 <configuration>
@@ -574,6 +616,9 @@
                     <systemPropertyVariables>
                         <logback.configurationFile>../mobi-parent/src/test/resources/logback-test.xml</logback.configurationFile>
                     </systemPropertyVariables>
+                    <argLine>
+                        --illegal-access=permit
+                    </argLine>
                 </configuration>
             </plugin>
             <plugin>
@@ -583,6 +628,9 @@
                 <configuration>
                     <skipTests>${skipITs}</skipTests>
                     <trimStackTrace>false</trimStackTrace>
+                    <argLine>
+                        --illegal-access=permit
+                    </argLine>
                 </configuration>
                 <executions>
                     <execution>

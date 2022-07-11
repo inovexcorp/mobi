@@ -34,19 +34,19 @@ public interface RepositoryManager {
      * @param id - A repository ID.
      * @return An initialized Repository object, or Optional.empty if no repository was known for the specified ID.
      */
-    Optional<Repository> getRepository(String id);
+    Optional<OsgiRepository> getRepository(String id);
 
     /**
      * Returns all configured repositories.
      *
      * @return The Map of all initialized repository IDs mapped to their Repository objects.
      */
-    Map<String, Repository> getAllRepositories();
+    Map<String, OsgiRepository> getAllRepositories();
 
     /**
      * Creates and returns a new Repository backed by the default memory store implementation.
      *
-     * @return a new Repository backed by the default memory store implementation.
+     * @return a new OsgiRepository backed by the default memory store implementation.
      */
-    Repository createMemoryRepository();
+    OsgiRepository createMemoryRepository();
 }

@@ -23,11 +23,6 @@ package com.mobi.rdf.orm.generate;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Reference;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.AbstractOrmFactory;
 import com.mobi.rdf.orm.OrmException;
 import com.mobi.rdf.orm.OrmFactory;
@@ -55,14 +50,17 @@ import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
-import org.eclipse.rdf4j.model.vocabulary.XMLSchema;
+import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -249,8 +247,12 @@ public class SourceGenerator {
                                 + interfaze.name() + " objects.  It will be published as an OSGi service.  "
                                 + (id != null ? "See " + id.stringValue() + " for more information." : ""));
                 factory._extends(codeModel.ref(AbstractOrmFactory.class).narrow(interfaze));
-                factory.annotate(aQute.bnd.annotation.component.Component.class).paramArray("provide")
-                        .param(OrmFactory.class).param(ValueConverter.class).param(factory.dotclass());
+                factory.annotate(org.osgi.service.component.annotations.Component.class)
+                        .param("immediate", true)
+                        .paramArray("service")
+                        .param(OrmFactory.class)
+                        .param(ValueConverter.class)
+                        .param(factory.dotclass());
                 factory.constructor(JMod.PUBLIC).body().invoke("super").arg(JExpr.dotclass(interfaze))
                         .arg(JExpr.dotclass(clazz));
 
@@ -279,8 +281,8 @@ public class SourceGenerator {
                  */
                 final JInvocation realOptional = codeModel.ref(Optional.class).staticInvoke("of")
                         .arg(JExpr._new(clazz)
-                                .arg(getExisting.param(com.mobi.rdf.api.Resource.class, "resource"))
-                                .arg(getExisting.param(com.mobi.rdf.api.Model.class, "model"))
+                                .arg(getExisting.param(Resource.class, "resource"))
+                                .arg(getExisting.param(Model.class, "model"))
                                 .arg(getExisting.param(ValueFactory.class, "valueFactory"))
                                 .arg(getExisting.param(ValueConverterRegistry.class,
                                         "valueConverterRegistry")));
@@ -288,42 +290,20 @@ public class SourceGenerator {
                 getExisting.body()._return(JOp.cond(conditional, emptyOptional, realOptional));
 
 
-                final JMethod getTypeIri = factory.method(JMod.PUBLIC, com.mobi.rdf.api.IRI.class, "getTypeIRI");
+                final JMethod getTypeIri = factory.method(JMod.PUBLIC, IRI.class, "getTypeIRI");
                 getTypeIri.annotate(Override.class);
                 getTypeIri.body()
                         ._return(JExpr.ref("valueFactory").invoke("createIRI").arg(interfaze.staticRef("TYPE")));
 
                 // Get the parent type IRIs by adding a hash set of all the parent interface IRIs.
-                final JMethod getParentTypeIRIs = factory.method(JMod.PUBLIC, codeModel.ref(Set.class).narrow(com.mobi.rdf.api.IRI.class), "getParentTypeIRIs");
+                final JMethod getParentTypeIRIs = factory.method(JMod.PUBLIC, codeModel.ref(Set.class).narrow(IRI.class), "getParentTypeIRIs");
                 getParentTypeIRIs.annotate(Override.class);
                 JBlock body = getParentTypeIRIs.body();
-                JVar set = body.decl(JMod.FINAL, codeModel.ref(Set.class).narrow(com.mobi.rdf.api.IRI.class), "set", JExpr._new(codeModel.ref(HashSet.class).narrow(com.mobi.rdf.api.IRI.class)));
+                JVar set = body.decl(JMod.FINAL, codeModel.ref(Set.class).narrow(IRI.class), "set", JExpr._new(codeModel.ref(HashSet.class).narrow(IRI.class)));
                 Set<JClass> tracking = new HashSet<JClass>();
                 tracking.add(codeModel.ref(Thing.class));
                 recurseAddParentTypeIris(interfaze, body, set, tracking);
                 body._return(JExpr.ref("set"));
-
-
-                final JMethod setModelFactory = factory.method(JMod.PUBLIC, codeModel.VOID, "setModelFactory");
-                setModelFactory.annotate(Override.class);
-                setModelFactory.annotate(Reference.class);
-                JVar modelFactoryParam = setModelFactory.param(ModelFactory.class, "modelFactory");
-                setModelFactory.body().assign(JExpr._this().ref("modelFactory"), modelFactoryParam);
-
-                final JMethod setValueFactory = factory.method(JMod.PUBLIC, codeModel.VOID, "setValueFactory");
-                setValueFactory.annotate(Override.class);
-                setValueFactory.annotate(Reference.class);
-                JVar valueFactoryParam = setValueFactory.param(ValueFactory.class, "valueFactory");
-                setValueFactory.body().assign(JExpr._this().ref("valueFactory"), valueFactoryParam);
-
-                final JMethod setValueConverterRegistry = factory.method(JMod.PUBLIC, codeModel.VOID,
-                        "setValueConverterRegistry");
-                setValueConverterRegistry.annotate(Override.class);
-                setValueConverterRegistry.annotate(Reference.class);
-                JVar valueConverterRegistryParam = setValueConverterRegistry.param(ValueConverterRegistry.class,
-                        "valueConverterRegistry");
-                setValueConverterRegistry.body().assign(JExpr._this().ref("valueConverterRegistry"),
-                        valueConverterRegistryParam);
 
             } catch (final Exception e) {
                 LOG.error("Issue generating factory class: " + factoryName + ": " + e.getMessage(), e);
@@ -424,7 +404,7 @@ public class SourceGenerator {
                 // Else it's a property IRI getter.
                 else if (interfaceMethod.name().startsWith(PROPERTY_IRI_GETTER_PREFIX)) {
                     if (impl.methods().stream().noneMatch(method -> method.name().equals(interfaceMethod.name()))) {
-                        final JMethod method = impl.method(JMod.PUBLIC, codeModel._ref(com.mobi.rdf.api.IRI.class), interfaceMethod.name());
+                        final JMethod method = impl.method(JMod.PUBLIC, codeModel._ref(IRI.class), interfaceMethod.name());
                         method.annotate(Override.class);
                         method.body()._return(
                                 JExpr._this().ref("valueFactory").invoke("createIRI")
@@ -546,8 +526,8 @@ public class SourceGenerator {
     private void generateImplConstructors(final JDefinedClass impl, final JDefinedClass interfaceClazz) {
         final JMethod constructor = impl.constructor(JMod.PUBLIC);
         constructor.body().invoke("super")
-                .arg(constructor.param(JMod.FINAL, com.mobi.rdf.api.Resource.class, "subjectIri"))
-                .arg(constructor.param(JMod.FINAL, com.mobi.rdf.api.Model.class, "backingModel"))
+                .arg(constructor.param(JMod.FINAL, Resource.class, "subjectIri"))
+                .arg(constructor.param(JMod.FINAL, Model.class, "backingModel"))
                 .arg(constructor.param(JMod.FINAL, ValueFactory.class, "valueFactory"))
                 .arg(constructor.param(JMod.FINAL, ValueConverterRegistry.class, "valueConverterRegistry"));
         JDocComment basicDoc = constructor.javadoc();
@@ -560,7 +540,7 @@ public class SourceGenerator {
 
         final JMethod constructor2 = impl.constructor(JMod.PUBLIC);
         constructor2.body().invoke("super").arg(constructor2.param(JMod.FINAL, String.class, "subjectIriStr"))
-                .arg(constructor2.param(JMod.FINAL, com.mobi.rdf.api.Model.class, "backingModel"))
+                .arg(constructor2.param(JMod.FINAL, Model.class, "backingModel"))
                 .arg(constructor2.param(JMod.FINAL, ValueFactory.class, "valueFactory"))
                 .arg(constructor2.param(JMod.FINAL, ValueConverterRegistry.class, "valueConversionRegistry"));
         JDocComment basicDoc2 = constructor2.javadoc();
@@ -594,11 +574,11 @@ public class SourceGenerator {
                         if (isPropertyFunctional(propertyIri)) {
                             getterType = codeModel.ref(Optional.class).narrow(type);
                             setterType = type;
-                            resourceGetterType = codeModel.ref(Optional.class).narrow(com.mobi.rdf.api.Resource.class);
+                            resourceGetterType = codeModel.ref(Optional.class).narrow(Resource.class);
                         } else {
                             getterType = codeModel.ref(Set.class).narrow(type);
                             setterType = codeModel.ref(Set.class).narrow(type);
-                            resourceGetterType = codeModel.ref(Set.class).narrow(com.mobi.rdf.api.Resource.class);
+                            resourceGetterType = codeModel.ref(Set.class).narrow(Resource.class);
                             methodIriMap.put(generateAddMethodForInterface(clazz, iri, name, fieldName, propertyIri, type), clazz.fields().get(fieldName + "_IRI"));
                             methodIriMap.put(generateRemoveMethodForInterface(clazz, iri, name, fieldName, propertyIri, type), clazz.fields().get(fieldName + "_IRI"));
                         }
@@ -607,7 +587,7 @@ public class SourceGenerator {
                                 generateGetterMethodForInterface(clazz, iri, name, fieldName, propertyIri, getterType, false),
                                 clazz.fields().get(fieldName + "_IRI"));
                         // If it's a Object Property, then add a getResource additional method.
-                        if (!type.equals(codeModel.ref(com.mobi.rdf.api.Resource.class)) // Not already a resource.
+                        if (!type.equals(codeModel.ref(Resource.class)) // Not already a resource.
                                 && !type.equals(codeModel.ref(Value.class)) // Not a Value
                                 && this.metaModel.filter(propertyIri, RDF.TYPE, null).objects().contains(OWL.OBJECTPROPERTY)) {
                             methodIriMap.put(
@@ -703,27 +683,27 @@ public class SourceGenerator {
                 return codeModel.ref(optName.get());
             } else if (rangeIri.equals(RDFS.LITERAL)) {
                 return codeModel.ref(Literal.class);
-            } else if (rangeIri.equals(XMLSchema.ANYURI)) {
-                return codeModel.ref(com.mobi.rdf.api.IRI.class);
+            } else if (rangeIri.equals(XSD.ANYURI)) {
+                return codeModel.ref(IRI.class);
             } else if (rangeIri.equals(SimpleValueFactory.getInstance().createIRI(MOBI.IDENTIFIER))) {
-                return codeModel.ref(com.mobi.rdf.api.Resource.class);
+                return codeModel.ref(Resource.class);
             } else if (rangeIri.equals(RDFS.RESOURCE)) {
                 return codeModel.ref(Value.class);
-            } else if (rangeIri.equals(XMLSchema.STRING)) {
+            } else if (rangeIri.equals(XSD.STRING)) {
                 return codeModel.ref(String.class);
-            } else if (rangeIri.equals(XMLSchema.BOOLEAN)) {
+            } else if (rangeIri.equals(XSD.BOOLEAN)) {
                 return codeModel.ref(Boolean.class);
-            } else if (rangeIri.equals(XMLSchema.BYTE)) {
+            } else if (rangeIri.equals(XSD.BYTE)) {
                 return codeModel.ref(Byte.class);
-            } else if (rangeIri.equals(XMLSchema.DATE) || rangeIri.equals(XMLSchema.DATETIME)) {
+            } else if (rangeIri.equals(XSD.DATE) || rangeIri.equals(XSD.DATETIME)) {
                 return codeModel.ref(OffsetDateTime.class);
-            } else if (rangeIri.equals(XMLSchema.FLOAT)) {
+            } else if (rangeIri.equals(XSD.FLOAT)) {
                 return codeModel.ref(Float.class);
-            } else if (rangeIri.equals(XMLSchema.DOUBLE)) {
+            } else if (rangeIri.equals(XSD.DOUBLE)) {
                 return codeModel.ref(Double.class);
-            } else if (rangeIri.equals(XMLSchema.LONG)) {
+            } else if (rangeIri.equals(XSD.LONG)) {
                 return codeModel.ref(Long.class);
-            } else if (rangeIri.equals(XMLSchema.INTEGER)) {
+            } else if (rangeIri.equals(XSD.INTEGER)) {
                 return codeModel.ref(Integer.class);
             } else if (rangeIri.equals(OWL.THING)) {
                 return codeModel.ref(Thing.class);

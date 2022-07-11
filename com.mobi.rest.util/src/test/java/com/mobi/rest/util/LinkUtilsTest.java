@@ -26,22 +26,26 @@ package com.mobi.rest.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.when;
 
+import com.mobi.rest.util.jaxb.Links;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import com.mobi.rest.util.jaxb.Links;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.net.URI;
+import java.util.Collections;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.util.Collections;;
+
+;
 
 public class LinkUtilsTest {
+    private AutoCloseable closeable;
     private String base = "http://example.com";
     private String path = "/path";
     private String self = base + path;
@@ -55,11 +59,16 @@ public class LinkUtilsTest {
         params = new MultivaluedHashMap<>();
         params.put("test", Collections.singletonList("true"));
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         when(info.getAbsolutePath()).thenReturn(new URI(self));
         when(info.getBaseUri()).thenReturn(new URI(base));
         when(info.getPath(anyBoolean())).thenReturn(path);
         when(info.getQueryParameters()).thenReturn(params);
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test

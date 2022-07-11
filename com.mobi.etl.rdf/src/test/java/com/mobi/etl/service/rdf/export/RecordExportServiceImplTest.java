@@ -26,8 +26,8 @@ package com.mobi.etl.service.rdf.export;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.CatalogManager;
@@ -43,17 +43,15 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.config.rdf.export.RecordExportConfig;
 import com.mobi.persistence.utils.Models;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -71,6 +69,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RecordExportServiceImplTest extends OrmEnabledTestCase {
+    private AutoCloseable closeable;
     private ValueFactory vf;
     private ModelFactory mf;
 
@@ -109,8 +108,6 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
     @Mock
     private CatalogConfigProvider configProvider;
 
-    @Mock
-    private SesameTransformer transformer;
 
     @Mock
     private CatalogManager catalogManager;
@@ -126,7 +123,7 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
 
     @Before
     public void setup() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         service = new RecordExportServiceImpl();
         vf = VALUE_FACTORY;
@@ -157,8 +154,8 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
         versionedRDFRecord.setMasterBranch(masterBranch);
         versionedRDFRecord.setBranch(Collections.singleton(masterBranch));
         Difference difference = new Difference.Builder()
-                .additions(mf.createModel())
-                .deletions(mf.createModel())
+                .additions(mf.createEmptyModel())
+                .deletions(mf.createEmptyModel())
                 .build();
 
         when(catalogManager.getBranch(eq(catalogIRI), eq(versionedRDFRecordIRI), eq(masterBranchIRI), eq(branchFactory)))
@@ -199,18 +196,18 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
         when(catalogManager.getVersions(eq(catalogIRI), eq(versionedRDFRecordIRI))).thenReturn(Collections.emptySet());
 
         // General mock interactions
-        when(transformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
-                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
 
-        service.setVf(vf);
-        service.setCatalogManager(catalogManager);
-        service.setConfigProvider(configProvider);
-        service.setTransformer(transformer);
-        service.setBranchFactory(branchFactory);
-        service.setRecordFactory(recordFactory);
-        service.setVersionedRDFRecordFactory(versionedRDFRecordFactory);
+        service.catalogManager = catalogManager;
+        service.configProvider = configProvider;
+        service.branchFactory = branchFactory;
+        service.recordFactory = recordFactory;
+        service.versionedRDFRecordFactory = versionedRDFRecordFactory;
+    }
+
+    @After
+    public void reset() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -374,6 +371,6 @@ public class RecordExportServiceImplTest extends OrmEnabledTestCase {
             configBuilder.records(records);
         }
         service.export(configBuilder.build());
-        return Models.createModel("trig", Files.newInputStream(path), transformer).getModel();
+        return Models.createModel("trig", Files.newInputStream(path)).getModel();
     }
 }

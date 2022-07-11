@@ -32,27 +32,32 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.SkolemizedStatementIterable;
-import com.mobi.persistence.utils.StatementIterable;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rest.util.jaxb.Links;
 import com.mobi.web.security.util.AuthenticationProps;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.fileupload.FileItemIterator;
+import org.apache.commons.fileupload.FileItemStream;
+import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload.util.Streams;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -60,13 +65,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -164,14 +173,13 @@ public class RestUtils {
      *
      * @param model       A {@link Model} of RDF to convert.
      * @param format      The RDFFormat the RDF should be serialized into.
-     * @param transformer The SesameTransformer for model conversions.
      * @return A String of the serialized RDF from the Model.
      */
-    public static String modelToString(Model model, RDFFormat format, SesameTransformer transformer) {
+    public static String modelToString(Model model, RDFFormat format) {
         long start = System.currentTimeMillis();
         try {
             StringWriter sw = new StringWriter();
-            Rio.write(new StatementIterable(model, transformer), sw, format);
+            Rio.write(model, sw, format);
             return sw.toString();
         } finally {
             LOG.trace("modelToString took {}ms", System.currentTimeMillis() - start);
@@ -183,11 +191,10 @@ public class RestUtils {
      *
      * @param model       A {@link Model} of RDF to convert.
      * @param format      The abbreviated name of a RDFFormat.
-     * @param transformer The SesameTransformer for model conversions.
      * @return A String of the serialized RDF from the Model.
      */
-    public static String modelToString(Model model, String format, SesameTransformer transformer) {
-        return modelToString(model, getRDFFormat(format), transformer);
+    public static String modelToString(Model model, String format) {
+        return modelToString(model, getRDFFormat(format));
     }
 
     /**
@@ -195,16 +202,15 @@ public class RestUtils {
      *
      * @param model       A {@link Model} of RDF to convert.
      * @param format      The RDFFormat the RDF should be serialized into.
-     * @param transformer The SesameTransformer for model conversions.
      * @param service     The BNodeService for skolemization.
      * @return A skolemized String of the serialized RDF from the Model.
      */
-    public static String modelToSkolemizedString(Model model, RDFFormat format, SesameTransformer transformer,
-                                                 BNodeService service) {
+    public static String modelToSkolemizedString(Model model, RDFFormat format, BNodeService service) {
         long start = System.currentTimeMillis();
         try {
             StringWriter sw = new StringWriter();
-            Rio.write(new SkolemizedStatementIterable(model, transformer, service), sw, format);
+            WriterConfig config = new WriterConfig();
+            Rio.write(new SkolemizedStatementIterable(model, service), sw, format);
             return sw.toString();
         } finally {
             LOG.trace("modelToSkolemizedString took {}ms", System.currentTimeMillis() - start);
@@ -216,27 +222,23 @@ public class RestUtils {
      *
      * @param model       A {@link Model} of RDF to convert.
      * @param format      The abbreviated name of a RDFFormat.
-     * @param transformer The SesameTransformer for model conversions.
      * @param service     The BNodeService for skolemization.
      * @return A skolemized String of the serialized RDF from the Model.
      */
-    public static String modelToSkolemizedString(Model model, String format, SesameTransformer transformer,
-                                                 BNodeService service) {
-        return modelToSkolemizedString(model, getRDFFormat(format), transformer, service);
+    public static String modelToSkolemizedString(Model model, String format, BNodeService service) {
+        return modelToSkolemizedString(model, getRDFFormat(format), service);
     }
 
     /**
-     * Writes a {@link Model} to an output stream using the provided transformer.
+     * Writes a {@link Model} to an output stream.
      *
      * @param model       A {@link Model} of RDF to convert.
      * @param format      The RDFFormat the RDF should be serialized into
-     * @param transformer The SesameTransformer for model conversions.
      * @param os          The output stream the model should be written to.
      */
-    public static void groupedModelToOutputStream(Model model, RDFFormat format, SesameTransformer transformer,
-                                                  OutputStream os) {
+    public static void groupedModelToOutputStream(Model model, RDFFormat format, OutputStream os) {
         RDFHandler handler = new BufferedGroupingRDFHandler(Rio.createWriter(format, os));
-        Rio.write(new StatementIterable(model, transformer), handler);
+        Rio.write(model, handler);
     }
 
     /**
@@ -244,15 +246,14 @@ public class RestUtils {
      *
      * @param model       A {@link Model} of RDF to convert.
      * @param format      The RDFFormat the RDF should be serialized into.
-     * @param transformer The SesameTransformer for model conversions.
      * @return A String of the serialized grouped RDF from the Model.
      */
-    public static String groupedModelToString(Model model, RDFFormat format, SesameTransformer transformer) {
+    public static String groupedModelToString(Model model, RDFFormat format) {
         long start = System.currentTimeMillis();
         try {
             StringWriter sw = new StringWriter();
             RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, sw));
-            Rio.write(new StatementIterable(model, transformer), rdfWriter);
+            Rio.write(model, rdfWriter);
             return sw.toString();
         } finally {
             LOG.trace("groupedModelToString took {}ms", System.currentTimeMillis() - start);
@@ -264,11 +265,10 @@ public class RestUtils {
      *
      * @param model       A {@link Model} of RDF to convert.
      * @param format      The abbreviated name of a RDFFormat.
-     * @param transformer The SesameTransformer for model conversions.
      * @return A String of the serialized grouped RDF from the Model.
      */
-    public static String groupedModelToString(Model model, String format, SesameTransformer transformer) {
-        return groupedModelToString(model, getRDFFormat(format), transformer);
+    public static String groupedModelToString(Model model, String format) {
+        return groupedModelToString(model, getRDFFormat(format));
     }
 
     /**
@@ -276,17 +276,15 @@ public class RestUtils {
      *
      * @param model       A {@link Model} of RDF to convert.
      * @param format      The RDFFormat the RDF should be serialized into.
-     * @param transformer The SesameTransformer for model conversions.
      * @param service     The BNodeService for skolemization.
      * @return A skolemized String of the serialized grouped RDF from the Model.
      */
-    public static String groupedModelToSkolemizedString(Model model, RDFFormat format, SesameTransformer transformer,
-                                                        BNodeService service) {
+    public static String groupedModelToSkolemizedString(Model model, RDFFormat format, BNodeService service) {
         long start = System.currentTimeMillis();
         try {
             StringWriter sw = new StringWriter();
             RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, sw));
-            Rio.write(new SkolemizedStatementIterable(model, transformer, service), rdfWriter);
+            Rio.write(new SkolemizedStatementIterable(model, service), rdfWriter);
             return sw.toString();
         } finally {
             LOG.trace("groupedModelToSkolemizedString took {}ms", System.currentTimeMillis() - start);
@@ -299,27 +297,23 @@ public class RestUtils {
      *
      * @param model       A {@link Model} of RDF to convert.
      * @param format      The abbreviated name of a RDFFormat.
-     * @param transformer The SesameTransformer for model conversions.
      * @param service     The BNodeService for skolemization.
      * @return A skolemized String of the serialized grouped RDF from the Model.
      */
-    public static String groupedModelToSkolemizedString(Model model, String format, SesameTransformer transformer,
-                                                        BNodeService service) {
-        return groupedModelToSkolemizedString(model, getRDFFormat(format), transformer, service);
+    public static String groupedModelToSkolemizedString(Model model, String format, BNodeService service) {
+        return groupedModelToSkolemizedString(model, getRDFFormat(format), service);
     }
 
     /**
      * Converts a JSON-LD string into a {@link Model}.
      *
      * @param jsonld      A string of JSON-LD.
-     * @param transformer The SesameTransformer for model conversions.
      * @return A Model containing the RDF from the JSON-LD string.
      */
-    public static Model jsonldToModel(String jsonld, SesameTransformer transformer) {
+    public static Model jsonldToModel(String jsonld) {
         long start = System.currentTimeMillis();
         try {
-            return transformer.mobiModel(Rio.parse(IOUtils.toInputStream(jsonld, StandardCharsets.UTF_8), "",
-                    RDFFormat.JSONLD));
+            return Rio.parse(IOUtils.toInputStream(jsonld, StandardCharsets.UTF_8), "", RDFFormat.JSONLD);
         } catch (Exception e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } finally {
@@ -331,45 +325,41 @@ public class RestUtils {
      * Converts a JSON-LD string into a deskolemized {@link Model}.
      *
      * @param jsonld      A string of JSON-LD.
-     * @param transformer The SesameTransformer for model conversions.
      * @param service     The BNodeService for skolemization.
      * @return A deskolemized Model containing the RDF from the JSON-LD string.
      */
-    public static Model jsonldToDeskolemizedModel(String jsonld, SesameTransformer transformer, BNodeService service) {
-        return service.deskolemize(jsonldToModel(jsonld, transformer));
+    public static Model jsonldToDeskolemizedModel(String jsonld, BNodeService service) {
+        return service.deskolemize(jsonldToModel(jsonld));
     }
 
     /**
      * Converts a {@link Model} into a JSON-LD string.
      *
      * @param model       A {@link Model} containing RDF.
-     * @param transformer The SesameTransformer for model conversions.
      * @return A JSON-LD string containing the converted RDF from the Model.
      */
-    public static String modelToJsonld(Model model, SesameTransformer transformer) {
-        return modelToString(model, "jsonld", transformer);
+    public static String modelToJsonld(Model model) {
+        return modelToString(model, "jsonld");
     }
 
     /**
      * Converts a {@link Model} into a skolemized JSON-LD string.
      *
      * @param model       A {@link Model} containing RDF.
-     * @param transformer The SesameTransformer for model conversions.
      * @return A skolemized JSON-LD string containing the converted RDF from the Model.
      */
-    public static String modelToSkolemizedJsonld(Model model, SesameTransformer transformer, BNodeService service) {
-        return modelToSkolemizedString(model, "jsonld", transformer, service);
+    public static String modelToSkolemizedJsonld(Model model, BNodeService service) {
+        return modelToSkolemizedString(model, "jsonld", service);
     }
 
     /**
      * Converts a {@link Model} into a TRiG string.
      *
      * @param model       A {@link Model} containing RDF.
-     * @param transformer The SesameTransformer for model conversions.
      * @return A TRiG string containing the converted RDF from the Model.
      */
-    public static String modelToTrig(Model model, SesameTransformer transformer) {
-        return modelToString(model, "trig", transformer);
+    public static String modelToTrig(Model model) {
+        return modelToString(model, "trig");
     }
 
     /**
@@ -445,6 +435,46 @@ public class RestUtils {
     }
 
     /**
+     * Retrieves the User associated with a Request using the passed EngineManager. If the User cannot be found, throws
+     * a 401 Response.
+     *
+     * @param servletRequest The servletRequest of a Request.
+     * @param engineManager The EngineManager to use when attempting to retrieve the User.
+     * @return The User who made the Request if found; throws a 401 otherwise.
+     */
+    public static User getActiveUser(HttpServletRequest servletRequest, EngineManager engineManager) {
+        return engineManager.retrieveUser(getActiveUsername(servletRequest)).orElseThrow(() ->
+                ErrorUtils.sendError("User not found", Response.Status.UNAUTHORIZED));
+    }
+
+    /**
+     * Retrieves the username associated with a Request. If the username cannot be found, throws a 401 Response.
+     *
+     * @param servletRequest The servletRequest of a Request.
+     * @return The username of the User who made the Request if found; throws a 401 otherwise.
+     */
+    public static String getActiveUsername(HttpServletRequest servletRequest) {
+        Object result = servletRequest.getAttribute(AuthenticationProps.USERNAME);
+        if (result == null) {
+            throw ErrorUtils.sendError("Missing username", Response.Status.UNAUTHORIZED);
+        } else {
+            return result.toString();
+        }
+    }
+
+    /**
+     * Retrieves the User associated with a Request using the passed EngineManager. If the User cannot be found, returns
+     * an empty Optional.
+     *
+     * @param servletRequest The servletRequest of a Request.
+     * @param engineManager The EngineManager to use when attempting to retrieve the User.
+     * @return An Optional containing the User who made the Request if found; otherwise empty
+     */
+    public static Optional<User> optActiveUser(HttpServletRequest servletRequest, EngineManager engineManager) {
+        return optActiveUsername(servletRequest).flatMap(engineManager::retrieveUser);
+    }
+
+    /**
      * Retrieves the User associated with a Request using the passed EngineManager. If the User cannot be found, returns
      * an empty Optional.
      *
@@ -454,6 +484,16 @@ public class RestUtils {
      */
     public static Optional<User> optActiveUser(ContainerRequestContext context, EngineManager engineManager) {
         return optActiveUsername(context).flatMap(engineManager::retrieveUser);
+    }
+
+    /**
+     * Retrieves the username associated with a Request. If the username cannot be found, returns an empty Optional.
+     *
+     * @param servletRequest The servletRequest of a Request.
+     * @return An Optional with the username associated with the Request if found; otherwise empty
+     */
+    public static Optional<String> optActiveUsername(HttpServletRequest servletRequest) {
+        return Optional.ofNullable(servletRequest.getAttribute(AuthenticationProps.USERNAME)).map(Object::toString);
     }
 
     /**
@@ -593,15 +633,14 @@ public class RestUtils {
      *
      * @param thing       The Thing to convert into a JSONObject.
      * @param type        The type of the {@link Thing} passed in.
-     * @param transformer The {@link SesameTransformer} to use.
      * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
      */
-    public static JSONObject thingToJsonObject(Thing thing, String type, SesameTransformer transformer) {
-        return getTypedObjectFromJsonld(modelToString(thing.getModel(), RDFFormat.JSONLD, transformer), type);
+    public static JSONObject thingToJsonObject(Thing thing, String type) {
+        return getTypedObjectFromJsonld(modelToString(thing.getModel(), RDFFormat.JSONLD), type);
     }
 
-    public static JsonNode thingToObjectNode(Thing thing, String type, SesameTransformer transformer) {
-        return getTypedObjectNodeFromJsonld(modelToString(thing.getModel(), RDFFormat.JSONLD, transformer), type);
+    public static JsonNode thingToObjectNode(Thing thing, String type) {
+        return getTypedObjectNodeFromJsonld(modelToString(thing.getModel(), RDFFormat.JSONLD), type);
     }
 
     /**
@@ -610,25 +649,22 @@ public class RestUtils {
      *
      * @param thing        The Thing to convert into a JSONObject.
      * @param type         The type of the {@link Thing} passed in.
-     * @param transformer  The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
      */
-    public static JSONObject thingToSkolemizedJsonObject(Thing thing, String type, SesameTransformer transformer,
-                                                         BNodeService bNodeService) {
+    public static JSONObject thingToSkolemizedJsonObject(Thing thing, String type, BNodeService bNodeService) {
         return getTypedObjectFromJsonld(
-                modelToSkolemizedString(thing.getModel(), RDFFormat.JSONLD, transformer, bNodeService), type);
+                modelToSkolemizedString(thing.getModel(), RDFFormat.JSONLD, bNodeService), type);
     }
 
-    public static JsonNode thingToSkolemizedObjectNode(Thing thing, String type, SesameTransformer transformer,
-                                                         BNodeService bNodeService) {
+    public static JsonNode thingToSkolemizedObjectNode(Thing thing, String type, BNodeService bNodeService) {
         return getTypedObjectNodeFromJsonld(
-                modelToSkolemizedString(thing.getModel(), RDFFormat.JSONLD, transformer, bNodeService), type);
+                modelToSkolemizedString(thing.getModel(), RDFFormat.JSONLD, bNodeService), type);
     }
 
     /**
      * Creates a {@link Response} for a page of a sorted limited offset {@link Set} of {@link Thing}s based on the
-     * return type of the passed function using the passed full {@link Set} of {@link Resource}s.
+     * return type of the passed function using the passed full {@link Set} of {@link org.eclipse.rdf4j.model.Resource}s.
      *
      * @param <T>            A class that extends {@link Thing}.
      * @param uriInfo        The URI information of the request.
@@ -639,7 +675,6 @@ public class RestUtils {
      * @param asc            Whether the sorting should be ascending or descending.
      * @param filterFunction A {@link Function} to filter the {@link Set} of {@link Thing}s.
      * @param type           The type of the {@link Thing} to be returned
-     * @param transformer    The {@link SesameTransformer} to use.
      * @param bNodeService   The {@link BNodeService} to use.
      * @return A {@link Response} with a page of {@link Thing}s that has been filtered, sorted, and limited and headers
      * for the total size and links to the next and prev pages if present.
@@ -648,7 +683,7 @@ public class RestUtils {
                                                                           IRI sortIRI, int offset, int limit,
                                                                           boolean asc,
                                                                           Function<T, Boolean> filterFunction,
-                                                                          String type, SesameTransformer transformer,
+                                                                          String type,
                                                                           BNodeService bNodeService) {
         long start = System.currentTimeMillis();
         try {
@@ -674,8 +709,7 @@ public class RestUtils {
                     .limit(limit)
                     .collect(Collectors.toList());
 
-            return createPaginatedResponse(uriInfo, result, filteredThings.size(), limit, offset, type, transformer,
-                    bNodeService);
+            return createPaginatedResponse(uriInfo, result, filteredThings.size(), limit, offset, type, bNodeService);
         } finally {
             LOG.trace("createPaginatedThingResponse took {}ms", System.currentTimeMillis() - start);
         }
@@ -685,7 +719,7 @@ public class RestUtils {
                                                                           IRI sortIRI, int offset, int limit,
                                                                           boolean asc,
                                                                           Function<T, Boolean> filterFunction,
-                                                                          String type, SesameTransformer transformer,
+                                                                          String type,
                                                                           BNodeService bNodeService) {
         long start = System.currentTimeMillis();
         try {
@@ -711,8 +745,8 @@ public class RestUtils {
                     .limit(limit)
                     .collect(Collectors.toList());
 
-            return createPaginatedResponseJackson(uriInfo, result, filteredThings.size(),
-                    limit, offset, type, transformer, bNodeService);
+            return createPaginatedResponseJackson(uriInfo, result, filteredThings.size(), limit, offset, type,
+                    bNodeService);
         } finally {
             LOG.trace("createPaginatedThingResponse took {}ms", System.currentTimeMillis() - start);
         }
@@ -730,14 +764,13 @@ public class RestUtils {
      * @param limit       The limit for each page.
      * @param offset      The offset for the current page.
      * @param type        The type of the {@link Thing} to be returned
-     * @param transformer The {@link SesameTransformer} to use.
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
      * pages if present.
      */
     public static <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items,
-                                                                     int totalSize, int limit, int offset, String type,
-                                                                     SesameTransformer transformer) {
-        return createPaginatedResponse(uriInfo, items, totalSize, limit, offset, type, transformer, null);
+                                                                     int totalSize, int limit, int offset,
+                                                                     String type) {
+        return createPaginatedResponse(uriInfo, items, totalSize, limit, offset, type, null);
     }
 
     /**
@@ -752,26 +785,24 @@ public class RestUtils {
      * @param limit        The limit for each page.
      * @param offset       The offset for the current page.
      * @param type         The type of the {@link Thing} to be returned
-     * @param transformer  The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
      * pages if present.
      */
     public static <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items,
                                                                      int totalSize, int limit, int offset,
-                                                                     String type, SesameTransformer transformer,
-                                                                      BNodeService bNodeService) {
+                                                                     String type, BNodeService bNodeService) {
         JSONArray results;
         long start = System.currentTimeMillis();
 
         try {
             if (bNodeService == null) {
                 results = JSONArray.fromObject(items.stream()
-                        .map(thing -> thingToJsonObject(thing, type, transformer))
+                        .map(thing -> thingToJsonObject(thing, type))
                         .collect(Collectors.toList()));
             } else {
                 results = JSONArray.fromObject(items.stream()
-                        .map(thing -> thingToSkolemizedJsonObject(thing, type, transformer, bNodeService))
+                        .map(thing -> thingToSkolemizedJsonObject(thing, type, bNodeService))
                         .collect(Collectors.toList()));
             }
             return createPaginatedResponseWithJson(uriInfo, results, totalSize, limit, offset);
@@ -783,7 +814,6 @@ public class RestUtils {
     public static <T extends Thing> Response createPaginatedResponseJackson(UriInfo uriInfo, Collection<T> items,
                                                                             int totalSize, int limit,
                                                                             int offset, String type,
-                                                                            SesameTransformer transformer,
                                                                             BNodeService bNodeService) {
         ArrayNode results;
         long start = System.currentTimeMillis();
@@ -791,11 +821,11 @@ public class RestUtils {
         try {
             if (bNodeService == null) {
                 results = mapper.valueToTree(items.stream()
-                        .map(thing -> thingToObjectNode(thing, type, transformer))
+                        .map(thing -> thingToObjectNode(thing, type))
                         .collect(Collectors.toList()));
             } else {
                 results = mapper.valueToTree(items.stream()
-                        .map(thing -> thingToSkolemizedObjectNode(thing, type, transformer, bNodeService))
+                        .map(thing -> thingToSkolemizedObjectNode(thing, type, bNodeService))
                         .collect(Collectors.toList()));
             }
             return createPaginatedResponseWithJsonNode(uriInfo, results, totalSize, limit, offset);
@@ -940,6 +970,83 @@ public class RestUtils {
         Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(objectNode.toString())
                 .build();
         return ErrorUtils.sendError(throwable, throwable.getMessage(), response);
+    }
+
+    /**
+     * Retrieves the multipart/form-data containing file information from the provided {@link HttpServletRequest}.
+     * Uses the provided map to determine the form data fields. The key in the fields map represents the field name to
+     * populate in the return map. The value in the fields map is a list containing the Class of the field. If more than
+     * one class is present in the list, the first will be used as the Collection and the second as the parameterized
+     * type for the Collection.
+     *
+     * @param servletRequest The {@link HttpServletRequest} used to retrieve form data from.
+     * @param fields A {@link Map} of field name to the Class of the field.
+     * @return A map of the field name to the corresponding form data field Object.
+     */
+    public static Map<String, Object> getFormData(HttpServletRequest servletRequest, Map<String, List<Class>> fields) {
+        try {
+            Map<String, Object> parsedValues = new HashMap<>();
+            Set<String> fieldNames = fields.keySet();
+            ServletFileUpload upload = new ServletFileUpload();
+            FileItemIterator iter = upload.getItemIterator(servletRequest);
+            while (iter.hasNext()) {
+                FileItemStream item = iter.next();
+                String name = item.getFieldName();
+                InputStream stream = item.openStream();
+                if (item.isFormField()) {
+                    if (fieldNames.contains(name)) {
+                        List<Class> classes = fields.get(name);
+                        if (classes.size() > 1) {
+                            // Is a Collection of Type
+                            Class collectionClass = classes.get(0);
+                            Class typeClass = classes.get(1);
+                            if (!parsedValues.containsKey(name)) {
+                                if (collectionClass == Set.class) {
+                                    parsedValues.put(name, new HashSet<>());
+                                } else if (collectionClass == List.class) {
+                                    parsedValues.put(name, new ArrayList<>());
+                                } else {
+                                    throw new MobiException("Invalid parent class type. Must provide a collection.");
+                                }
+                            }
+                            Collection collection = (Collection) parsedValues.get(name);
+                            collection.add(getValue(typeClass, stream));
+                            parsedValues.put(name, collection);
+                        } else {
+                            // Is a single type
+                            Object value = getValue(classes.get(0), stream);
+                            parsedValues.put(name, value);
+                        }
+                    } else {
+                        LOG.debug("Non default field '" + name + "' provided.");
+                    }
+                } else {
+                    // Is the file stream
+                    parsedValues.put("filename", item.getName());
+                    parsedValues.put("stream", Models.toByteArrayInputStream(stream));
+                }
+            }
+            return parsedValues;
+        } catch (FileUploadException | IOException e) {
+            throw new IllegalStateException("Error parsing form data", e);
+        }
+    }
+
+    private static Object getValue(Class clazz, InputStream stream) throws IOException {
+        try {
+            if (clazz == String.class) {
+                return Streams.asString(stream);
+            }
+            if (clazz == Integer.class) {
+                return Integer.parseInt(Streams.asString(stream));
+            }
+            if (clazz == Boolean.class) {
+                return Boolean.parseBoolean(Streams.asString(stream));
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Could not parse field for type " + clazz, e);
+        }
+        throw new IllegalArgumentException("Field must be a String/Integer/Boolean");
     }
 
     /**

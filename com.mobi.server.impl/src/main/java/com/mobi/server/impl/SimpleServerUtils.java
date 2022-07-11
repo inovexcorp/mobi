@@ -23,13 +23,12 @@ package com.mobi.server.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
+import org.osgi.service.component.annotations.Component;
 import com.mobi.exception.MobiException;
 import com.mobi.server.api.ServerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;

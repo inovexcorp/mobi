@@ -23,10 +23,9 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.exception.RepositoryException;
 import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.helpers.AbstractRDFHandler;
 import org.slf4j.Logger;
@@ -37,7 +36,6 @@ import java.util.Map;
 public class BatchInserter extends AbstractRDFHandler {
 
     protected RepositoryConnection conn;
-    protected SesameTransformer transformer;
     protected long count = 0;
     protected long batchSize = 10000;
     protected final Map<String, String> namespaces = new HashMap<>();
@@ -50,11 +48,9 @@ public class BatchInserter extends AbstractRDFHandler {
      * are added.
      *
      * @param conn The RepositoryConnection to use to add statements
-     * @param transformer A SesameTransformer for converting statements
      */
-    public BatchInserter(RepositoryConnection conn, SesameTransformer transformer) {
+    public BatchInserter(RepositoryConnection conn) {
         this.conn = conn;
-        this.transformer = transformer;
     }
 
     /**
@@ -63,12 +59,10 @@ public class BatchInserter extends AbstractRDFHandler {
      * are added.
      *
      * @param conn The RepositoryConnection to use to add statements
-     * @param transformer A SesameTransformer for converting statements
      * @param batchSize How may statemtns should be added at a time
      */
-    public BatchInserter(RepositoryConnection conn, SesameTransformer transformer, long batchSize) {
+    public BatchInserter(RepositoryConnection conn, long batchSize) {
         this.conn = conn;
-        this.transformer = transformer;
         this.batchSize = batchSize;
     }
 
@@ -103,7 +97,7 @@ public class BatchInserter extends AbstractRDFHandler {
 
     @Override
     public void handleStatement(Statement st) throws RDFHandlerException {
-        conn.add(transformer.mobiStatement(st));
+        conn.add(st);
         count++;
         if (count % batchSize == 0) {
             try {

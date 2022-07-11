@@ -25,4 +25,4 @@ package com.mobi.shapes.api.record;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

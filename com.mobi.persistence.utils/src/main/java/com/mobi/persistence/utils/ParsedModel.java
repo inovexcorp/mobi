@@ -23,8 +23,8 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
-import com.mobi.rdf.api.Model;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.rio.RDFParseException;
 
 import java.util.ArrayList;

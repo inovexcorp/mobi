@@ -23,18 +23,20 @@ package com.mobi.jaas.token;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.component.Reference;
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.jaas.api.token.TokenVerifier;
 import com.mobi.jaas.config.SimpleTokenConfig;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,10 +50,10 @@ import javax.ws.rs.core.NewCookie;
 
 @Component(
         immediate = true,
-        configurationPolicy = ConfigurationPolicy.optional,
-        designateFactory = SimpleTokenConfig.class,
+        configurationPolicy = ConfigurationPolicy.OPTIONAL,
         name = SimpleTokenManager.COMPONENT_NAME
 )
+@Designate(ocd = SimpleTokenConfig.class)
 public class SimpleTokenManager implements TokenManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(SimpleTokenManager.class.getName());
@@ -74,7 +76,7 @@ public class SimpleTokenManager implements TokenManager {
         this.mobiTokenVerifier = mobiTokenVerifier;
     }
 
-    @Reference(type = '*', dynamic = true)
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     void addVerifier(TokenVerifier verifier) {
         verifiers.put(verifier.getName(), verifier);
     }
@@ -84,8 +86,8 @@ public class SimpleTokenManager implements TokenManager {
     }
 
     @Activate
-    public void start(Map<String, Object> props) {
-        SimpleTokenConfig config = Configurable.createConfigurable(SimpleTokenConfig.class, props);
+    @Modified
+    public void start(final SimpleTokenConfig config) {
         if (Long.valueOf(config.tokenDurationMins()) > 0) {
             LOG.debug("Token duration was set to: " + config.tokenDurationMins() + " mins");
             tokenDuration = config.tokenDurationMins() * 60 * 1000;
@@ -93,11 +95,6 @@ public class SimpleTokenManager implements TokenManager {
             LOG.debug("Token duration was invalid, setting token duration to default of 1 day");
             tokenDuration = ONE_DAY_MS;
         }
-    }
-
-    @Modified
-    public void modified(Map<String, Object> props) {
-        start(props);
     }
 
     @Override

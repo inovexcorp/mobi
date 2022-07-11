@@ -24,12 +24,19 @@ package com.mobi.catalog.rest;
  */
 
 import static com.mobi.persistence.utils.ResourceUtils.encode;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rest.util.RestUtils.createIRI;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -38,11 +45,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
@@ -58,15 +60,10 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.ontologies.dcterms._Thing;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.rdf.core.utils.Values;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
@@ -78,41 +75,31 @@ import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
 import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.rest.util.MobiRestTestNg;
-import com.mobi.rest.util.UsernameTestFilter;
+import com.mobi.rest.test.util.FormDataMultiPart;
+import com.mobi.rest.test.util.MobiRestTestCXF;
+import com.mobi.rest.test.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-public class MergeRequestRestTest extends MobiRestTestNg {
-    private MergeRequestRest rest;
-    private MergeRequestFactory mergeRequestFactory;
-    private CommentFactory commentFactory;
-    private UserFactory userFactory;
-    private BranchFactory branchFactory;
-    private ValueFactory vf;
-    private ModelFactory mf;
-    private ValueConverterRegistry vcr;
+public class MergeRequestRestTest extends MobiRestTestCXF {
+    private AutoCloseable closeable;
     private MergeRequest request1;
     private MergeRequest request2;
     private Comment comment1;
@@ -133,46 +120,40 @@ public class MergeRequestRestTest extends MobiRestTestNg {
     private final String updateCommentText = "updated comment";
     private final String largeComment = StringUtils.repeat("*", 2000000);
 
-    @Mock
-    private MergeRequestManager requestManager;
+    // Mock services used in server
+    private static MergeRequestRest rest;
+    private static ValueFactory vf;
+    private static ModelFactory mf;
+    private static MergeRequestManager requestManager;
+    private static EngineManager engineManager;
+    private static CatalogConfigProvider configProvider;
+    private static MergeRequestFactory mergeRequestFactory;
+    private static CommentFactory commentFactory;
+    private static BranchFactory branchFactory;
+    private static UserFactory userFactory;
+    private static ValueConverterRegistry vcr;
 
-    @Mock
-    private EngineManager engineManager;
+    @BeforeClass
+    public static void startServer() {
+        vf = getValueFactory();
+        mf = getModelFactory();
 
-    @Mock
-    private SesameTransformer transformer;
-
-    @Mock
-    private CatalogConfigProvider configProvider;
-
-    @Override
-    protected Application configureApp() throws Exception {
-        vf = SimpleValueFactory.getInstance();
-        mf = LinkedHashModelFactory.getInstance();
         vcr = new DefaultValueConverterRegistry();
 
         mergeRequestFactory = new MergeRequestFactory();
-        mergeRequestFactory.setModelFactory(mf);
-        mergeRequestFactory.setValueFactory(vf);
-        mergeRequestFactory.setValueConverterRegistry(vcr);
+        mergeRequestFactory.valueConverterRegistry = vcr;
         vcr.registerValueConverter(mergeRequestFactory);
 
         commentFactory = new CommentFactory();
-        commentFactory.setModelFactory(mf);
-        commentFactory.setValueFactory(vf);
-        commentFactory.setValueConverterRegistry(vcr);
+        commentFactory.valueConverterRegistry = vcr;
         vcr.registerValueConverter(commentFactory);
 
         userFactory = new UserFactory();
-        userFactory.setModelFactory(mf);
-        userFactory.setValueFactory(vf);
-        userFactory.setValueConverterRegistry(vcr);
+        userFactory.valueConverterRegistry = vcr;
         vcr.registerValueConverter(userFactory);
 
         branchFactory = new BranchFactory();
-        branchFactory.setModelFactory(mf);
-        branchFactory.setValueFactory(vf);
-        branchFactory.setValueConverterRegistry(vcr);
+        branchFactory.valueConverterRegistry = vcr;
         vcr.registerValueConverter(branchFactory);
 
         vcr.registerValueConverter(new ResourceValueConverter());
@@ -185,25 +166,35 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         vcr.registerValueConverter(new ValueValueConverter());
         vcr.registerValueConverter(new LiteralValueConverter());
 
-        MockitoAnnotations.initMocks(this);
+        requestManager = Mockito.mock(MergeRequestManager.class);
+        engineManager = Mockito.mock(EngineManager.class);
+
+        configProvider = Mockito.mock(CatalogConfigProvider.class);
+
+        rest = new MergeRequestRest();
+        rest.setManager(requestManager);
+        rest.setEngineManager(engineManager);
+        rest.setMergeRequestFactory(mergeRequestFactory);
+        rest.setCommentFactory(commentFactory);
+        rest.setConfigProvider(configProvider);
+
+        configureServer(rest, new UsernameTestFilter());
+    }
+
+    @Before
+    public void setUpMocks() throws Exception {
+        closeable = MockitoAnnotations.openMocks(this);
         when(configProvider.getLocalCatalogIRI()).thenReturn(vf.createIRI(CATALOG_IRI));
 
-        when(transformer.sesameModel(any(Model.class)))
-                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(transformer.sesameStatement(any(Statement.class)))
-                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
-                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
-
         request1 = mergeRequestFactory.createNew(vf.createIRI("http://mobi.com/merge-requests#1"));
-        Model contextModel1 = mf.createModel();
+        Model contextModel1 = mf.createEmptyModel();
         request1.getModel().forEach(statement -> contextModel1.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), request1.getResource()));
         request1 = mergeRequestFactory.getExisting(request1.getResource(), contextModel1).get();
         request1.setSourceBranch(branchFactory.createNew(createIRI(SOURCE_BRANCH_ID, vf)));
         request1.setTargetBranch(branchFactory.createNew(createIRI(TARGET_BRANCH_ID, vf)));
 
         request2 = mergeRequestFactory.createNew(vf.createIRI("http://mobi.com/merge-requests#2"));
-        Model contextModel2 = mf.createModel();
+        Model contextModel2 = mf.createEmptyModel();
         request2.getModel().forEach(statement -> contextModel2.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), request1.getResource()));
         request2 = mergeRequestFactory.getExisting(request2.getResource(), contextModel2).get();
         user = userFactory.createNew(vf.createIRI("http://test.org/" + UsernameTestFilter.USERNAME));
@@ -222,28 +213,6 @@ public class MergeRequestRestTest extends MobiRestTestNg {
 
         commentChains = Arrays.asList(Arrays.asList(comment1, comment2), Arrays.asList(comment3));
 
-        rest = new MergeRequestRest();
-        rest.setManager(requestManager);
-        rest.setEngineManager(engineManager);
-        rest.setTransformer(transformer);
-        rest.setVf(vf);
-        rest.setMergeRequestFactory(mergeRequestFactory);
-        rest.setCommentFactory(commentFactory);
-        rest.setConfigProvider(configProvider);
-
-        return new ResourceConfig()
-                .register(rest)
-                .register(UsernameTestFilter.class)
-                .register(MultiPartFeature.class);
-    }
-
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
-    }
-
-    @BeforeMethod
-    public void setUpMocks() throws Exception {
         when(requestManager.getMergeRequests(any(MergeRequestFilterParams.class))).thenReturn(Collections.singletonList(request1));
         when(requestManager.createMergeRequest(any(MergeRequestConfig.class), any(Resource.class))).thenReturn(request1);
         when(requestManager.getMergeRequest(any(Resource.class))).thenReturn(Optional.empty());
@@ -261,8 +230,9 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         when(engineManager.retrieveUser(UsernameTestFilter.USERNAME)).thenReturn(Optional.of(user));
     }
 
-    @AfterMethod
-    public void resetMocks() {
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
         reset(requestManager, engineManager);
     }
 
@@ -325,7 +295,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         fd.field("assignees", UsernameTestFilter.USERNAME);
         fd.field("removeSource", "true");
 
-        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
@@ -345,7 +315,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         fd.field("assignees", UsernameTestFilter.USERNAME);
         fd.field("removeSource", "true");
 
-        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
     }
@@ -360,7 +330,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         fd.field("targetBranchId", TARGET_BRANCH_ID);
         fd.field("assignees", "error");
 
-        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager, times(0)).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
@@ -375,7 +345,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         fd.field("sourceBranchId", SOURCE_BRANCH_ID);
         fd.field("targetBranchId", TARGET_BRANCH_ID);
 
-        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(engineManager, times(0)).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager, times(0)).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
@@ -390,7 +360,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         fd.field("sourceBranchId", SOURCE_BRANCH_ID);
         fd.field("targetBranchId", TARGET_BRANCH_ID);
 
-        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(engineManager, times(0)).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager, times(0)).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
@@ -405,7 +375,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         fd.field("recordId", RECORD_ID);
         fd.field("targetBranchId", TARGET_BRANCH_ID);
 
-        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(engineManager, times(0)).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager, times(0)).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
@@ -420,7 +390,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         fd.field("recordId", RECORD_ID);
         fd.field("sourceBranchId", SOURCE_BRANCH_ID);
 
-        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(engineManager, times(0)).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager, times(0)).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
@@ -437,7 +407,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         fd.field("targetBranchId", TARGET_BRANCH_ID);
         doThrow(new IllegalArgumentException()).when(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
 
-        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
@@ -453,7 +423,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         fd.field("sourceBranchId", invalidIRIString);
         fd.field("targetBranchId", TARGET_BRANCH_ID);
 
-        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -466,7 +436,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         fd.field("sourceBranchId", SOURCE_BRANCH_ID);
         fd.field("targetBranchId", invalidIRIString);
 
-        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -480,7 +450,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         fd.field("targetBranchId", TARGET_BRANCH_ID);
         doThrow(new IllegalStateException()).when(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
 
-        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
@@ -497,7 +467,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         fd.field("targetBranchId", TARGET_BRANCH_ID);
         doThrow(new MobiException()).when(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
 
-        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
@@ -560,7 +530,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
     public void updateMergeRequestTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
-                .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+                .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld")), MediaType.APPLICATION_JSON_TYPE));
         verify(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
         assertEquals(response.getStatus(), 200);
     }
@@ -587,7 +557,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
     public void updateMergeRequestThatDoesNotMatchTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
-                .put(Entity.entity(groupedModelToString(request2.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+                .put(Entity.entity(groupedModelToString(request2.getModel(), getRDFFormat("jsonld")), MediaType.APPLICATION_JSON_TYPE));
         verify(requestManager, never()).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
         assertEquals(response.getStatus(), 400);
     }
@@ -597,7 +567,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         doThrow(new MobiException()).when(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
-                .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+                .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld")), MediaType.APPLICATION_JSON_TYPE));
         verify(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
         assertEquals(response.getStatus(), 500);
     }
@@ -605,7 +575,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
     @Test
     public void updateMergeRequestWithInvalidIRITest() {
         Response response = target().path("merge-requests/" + encode(invalidIRIString)).request()
-                .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+                .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld")), MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
     }
 

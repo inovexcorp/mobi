@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.23.0-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -44,7 +44,7 @@
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.annotation</artifactId>
+            <artifactId>osgi.annotation</artifactId>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
@@ -94,10 +94,6 @@
             <artifactId>javax.ws.rs-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-multipart</artifactId>
-        </dependency>
-        <dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-jaxrs2</artifactId>
         </dependency>
@@ -122,12 +118,6 @@
         <!-- Test dependencies -->
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>rdf.impl.sesame</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
             <artifactId>ontology.impl.repository</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
@@ -137,14 +127,6 @@
             <artifactId>repository.impl.core</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.test-framework.providers</groupId>
-            <artifactId>jersey-test-framework-provider-jdk-http</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
@@ -160,6 +142,12 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>rest.test.util</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -167,7 +155,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <forkCount>1</forkCount>
+                    <runOrder>alphabetical</runOrder>
                 </configuration>
             </plugin>
             <plugin>
@@ -182,7 +170,6 @@
                         <Export-Package>
                             com.mobi.ontology.rest; provide:=true
                         </Export-Package>
-                        <Service-Component>*</Service-Component>
                         <Import-Package>
                             <!-- For some reason BND is not including these -->
                             com.mobi.ontology.core.api.classexpression,

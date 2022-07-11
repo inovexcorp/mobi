@@ -37,17 +37,18 @@ import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactor
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -57,9 +58,8 @@ import javax.annotation.Nonnull;
 
 public abstract class AbstractOntologyManager implements OntologyManager  {
     protected Logger log;
-    protected ValueFactory valueFactory;
-    protected ModelFactory modelFactory;
-    protected SesameTransformer sesameTransformer;
+    protected final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    protected final ModelFactory modelFactory = new DynamicModelFactory();
     protected OntologyRecordFactory ontologyRecordFactory;
     protected RepositoryManager repositoryManager;
     protected BranchFactory branchFactory;
@@ -121,7 +121,9 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
             query.setBinding(ONTOLOGY_IRI, ontologyIRI);
             query.setBinding(CATALOG, configProvider.getLocalCatalogIRI());
             TupleQueryResult result = query.evaluate();
-            return result.hasNext();
+            boolean exists = result.hasNext();
+            result.close();
+            return exists;
         }
     }
 
@@ -135,7 +137,9 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
             if (!result.hasNext()) {
                 return Optional.empty();
             }
-            return Optional.of(Bindings.requiredResource(result.next(), RECORD));
+            Optional<Resource> ontologyResourceOpt = Optional.of(Bindings.requiredResource(result.next(), RECORD));
+            result.close();
+            return ontologyResourceOpt;
         }
     }
 

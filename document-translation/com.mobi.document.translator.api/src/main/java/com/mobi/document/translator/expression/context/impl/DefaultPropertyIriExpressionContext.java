@@ -24,8 +24,8 @@ package com.mobi.document.translator.expression.context.impl;
  */
 
 import com.mobi.document.translator.expression.context.PropertyIriExpressionContext;
-import com.mobi.rdf.api.IRI;
 import com.mobi.document.translator.ontology.ExtractedOntology;
+import org.eclipse.rdf4j.model.IRI;
 
 import javax.validation.constraints.NotNull;
 
@@ -62,12 +62,12 @@ public class DefaultPropertyIriExpressionContext extends AbstractIriExpressionCo
     }
 
     @Override
-    public IRI getDomain() {
-        return this.domain;
+    public String getDomain() {
+        return this.domain.stringValue();
     }
 
     @Override
-    public IRI getRange() {
-        return this.range;
+    public String getRange() {
+        return this.range.stringValue();
     }
 }

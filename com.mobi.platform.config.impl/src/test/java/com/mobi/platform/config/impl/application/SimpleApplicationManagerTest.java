@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.platform.config.api.application.ApplicationWrapper;
 import com.mobi.platform.config.api.ontologies.platformconfig.Application;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -38,6 +39,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.Optional;
 
 public class SimpleApplicationManagerTest {
+    private AutoCloseable closeable;
     private SimpleApplicationManager manager;
 
     private static final String ID = "id";
@@ -50,13 +52,18 @@ public class SimpleApplicationManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         when(applicationWrapper.getId()).thenReturn(ID);
         when(applicationWrapper.getApplication()).thenReturn(application);
 
         manager = new SimpleApplicationManager();
         manager.addApplication(applicationWrapper);
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test

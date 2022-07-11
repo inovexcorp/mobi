@@ -23,10 +23,14 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
-import static com.mobi.persistence.utils.RepositoryResults.asModel;
-
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -42,9 +46,6 @@ import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivityFactory;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,58 +54,31 @@ import java.util.Collections;
 
 @Component
 public class CatalogProvUtilsImpl implements CatalogProvUtils {
-    private ValueFactory vf;
-    private CatalogConfigProvider config;
-    private ProvenanceService provenanceService;
-    private CreateActivityFactory createActivityFactory;
-    private DeleteActivityFactory deleteActivityFactory;
-    private EntityFactory entityFactory;
-    private ModelFactory modelFactory;
-    private Mobi mobi;
 
     private static final Logger LOG = LoggerFactory.getLogger(CatalogProvUtilsImpl.class);
 
     private final String atLocation = "http://www.w3.org/ns/prov#atLocation";
 
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
+    final ValueFactory vf = SimpleValueFactory.getInstance();
+    final ModelFactory modelFactory = new DynamicModelFactory();
 
     @Reference
-    void setConfig(CatalogConfigProvider config) {
-        this.config = config;
-    }
+    CatalogConfigProvider config;
 
     @Reference
-    void setProvenanceService(ProvenanceService provenanceService) {
-        this.provenanceService = provenanceService;
-    }
+    ProvenanceService provenanceService;
 
     @Reference
-    void setCreateActivityFactory(CreateActivityFactory createActivityFactory) {
-        this.createActivityFactory = createActivityFactory;
-    }
+    CreateActivityFactory createActivityFactory;
 
     @Reference
-    void setDeleteActivityFactory(DeleteActivityFactory deleteActivityFactory) {
-        this.deleteActivityFactory = deleteActivityFactory;
-    }
+    DeleteActivityFactory deleteActivityFactory;
 
     @Reference
-    void setEntityFactory(EntityFactory entityFactory) {
-        this.entityFactory = entityFactory;
-    }
+    EntityFactory entityFactory;
 
     @Reference
-    void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
-    }
-
-    @Reference
-    void setMobi(Mobi mobi) {
-        this.mobi = mobi;
-    }
+    Mobi mobi;
 
     @Override
     public CreateActivity startCreateActivity(User user) {
@@ -131,7 +105,7 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
 
     @Override
     public DeleteActivity startDeleteActivity(User user, Resource recordIri) {
-        Entity recordEntity = entityFactory.getExisting(recordIri, asModel(provenanceService.getConnection()
+        Entity recordEntity = entityFactory.getExisting(recordIri, QueryResults.asModel(provenanceService.getConnection()
                 .getStatements(recordIri, null, null), modelFactory))
                 .orElseGet(() -> {
                     LOG.warn("No Entity found for record " + recordIri + ".");

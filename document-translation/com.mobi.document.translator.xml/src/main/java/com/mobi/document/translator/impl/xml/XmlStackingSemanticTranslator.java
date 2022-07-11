@@ -23,8 +23,6 @@ package com.mobi.document.translator.impl.xml;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.document.translator.SemanticTranslationException;
 import com.mobi.document.translator.SemanticTranslator;
 import com.mobi.document.translator.expression.IriExpressionProcessor;
@@ -33,12 +31,12 @@ import com.mobi.document.translator.ontology.ExtractedDatatypeProperty;
 import com.mobi.document.translator.ontology.ExtractedOntology;
 import com.mobi.document.translator.stack.AbstractStackingSemanticTranslator;
 import com.mobi.document.translator.stack.StackingSemanticTranslator;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +49,7 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-@Component(immediate = true, provide = {SemanticTranslator.class, StackingSemanticTranslator.class})
+@Component(immediate = true, service = {SemanticTranslator.class, StackingSemanticTranslator.class})
 public class XmlStackingSemanticTranslator extends AbstractStackingSemanticTranslator<XmlStackItem>
         implements StackingSemanticTranslator<XmlStackItem>, SemanticTranslator {
 
@@ -68,16 +66,6 @@ public class XmlStackingSemanticTranslator extends AbstractStackingSemanticTrans
     }
 
     @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        super.valueFactory = valueFactory;
-    }
-
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        super.modelFactory = modelFactory;
-    }
-
-    @Reference
     public void setExpressionProcessor(IriExpressionProcessor expressionProcessor) {
         super.expressionProcessor = expressionProcessor;
     }
@@ -90,7 +78,7 @@ public class XmlStackingSemanticTranslator extends AbstractStackingSemanticTrans
     @Override
     public Model translate(InputStream dataStream, String entityIdentifier, ExtractedOntology managedOntology)
             throws SemanticTranslationException {
-        final Model resultsModel = modelFactory.createModel();
+        final Model resultsModel = modelFactory.createEmptyModel();
         final XMLStreamReader reader = initXmlStreamReader(dataStream);
         try {
             final StringBuilder stringBuffer = new StringBuilder();

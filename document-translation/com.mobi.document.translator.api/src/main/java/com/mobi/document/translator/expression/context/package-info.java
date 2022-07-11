@@ -26,4 +26,4 @@ package com.mobi.document.translator.expression.context;
  */
 
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

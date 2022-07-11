@@ -25,4 +25,4 @@ package com.mobi.etl.api.ontology;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

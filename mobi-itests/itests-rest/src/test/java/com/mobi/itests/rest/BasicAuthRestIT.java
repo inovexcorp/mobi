@@ -99,7 +99,6 @@ public class BasicAuthRestIT extends KarafTestSupport {
         waitForService("(&(objectClass=com.mobi.catalog.rest.CatalogRest))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
-        waitForService("(&(objectClass=com.mobi.rdf.api.ValueFactory))", 10000L);
 
         setupComplete = true;
     }

@@ -26,16 +26,16 @@ package com.mobi.etl.rest;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.dataset.ontology.dataset.Dataset;
@@ -51,16 +51,10 @@ import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rest.util.MobiRestTestNg;
-import com.mobi.rest.util.UsernameTestFilter;
+import com.mobi.rest.test.util.FormDataMultiPart;
+import com.mobi.rest.test.util.MobiRestTestCXF;
+import com.mobi.rest.test.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -71,18 +65,19 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -101,15 +96,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-public class DelimitedRestTest extends MobiRestTestNg {
-    private DelimitedRest rest;
-//    private Repository repo;
-    private ValueFactory vf;
-    private ModelFactory mf;
+public class DelimitedRestTest extends MobiRestTestCXF {
+    private AutoCloseable closeable;
     private User user;
     private static final String MAPPING_RECORD_IRI = "http://test.org/mapping-record";
     private static final String DATASET_RECORD_IRI = "http://test.org/dataset-record";
@@ -120,76 +111,58 @@ public class DelimitedRestTest extends MobiRestTestNg {
     private static final String REPOSITORY_ID = "test";
     private static final String ERROR_IRI = "http://error.org";
 
-    @Mock
-    private DelimitedConverter converter;
-
-    @Mock
-    private MappingManager mappingManager;
+    // Mock services used in server
+    private static DelimitedRest rest;
+    private static ValueFactory vf;
+    private static ModelFactory mf;
+    private static DelimitedConverter converter;
+    private static MappingManager mappingManager;
+    private static EngineManager engineManager;
+    private static RDFImportService rdfImportService;
+    private static OntologyImportService ontologyImportService;
 
     @Mock
     private MappingWrapper mappingWrapper;
 
     @Mock
-    private SesameTransformer transformer;
-
-    @Mock
     private OntologyRecord ontologyRecord;
-
-    @Mock
-    private EngineManager engineManager;
 
     @Mock
     private DatasetRecord datasetRecord;
 
     @Mock
-    private RDFImportService rdfImportService;
-
-    @Mock
-    private OntologyImportService ontologyImportService;
-
-    @Mock
     private Dataset dataset;
 
-    @Override
-    protected Application configureApp() throws Exception {
+    @BeforeClass
+    public static void startServer() throws Exception {
         vf = getValueFactory();
         mf = getModelFactory();
 
-        OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
-        user = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME));
+        converter = Mockito.mock(DelimitedConverter.class);
+        mappingManager = Mockito.mock(MappingManager.class);
+        engineManager = Mockito.mock(EngineManager.class);
+        
+        rdfImportService = Mockito.mock(RDFImportService.class);
+        ontologyImportService = Mockito.mock(OntologyImportService.class);
 
-        MockitoAnnotations.initMocks(this);
         rest = new DelimitedRest();
         rest.setDelimitedConverter(converter);
         rest.setMappingManager(mappingManager);
         rest.setEngineManager(engineManager);
-        rest.setVf(vf);
-        rest.setTransformer(transformer);
         rest.setRdfImportService(rdfImportService);
         rest.setOntologyImportService(ontologyImportService);
         rest.start();
 
-        return new ResourceConfig()
-                .register(rest)
-                .register(MultiPartFeature.class)
-                .register(UsernameTestFilter.class);
+        configureServer(rest, new UsernameTestFilter());
     }
 
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
-    }
-
-    @BeforeMethod
+    @Before
     public void setupMocks() throws Exception {
-        when(transformer.mobiModel(any(Model.class)))
-                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, Model.class)));
-        when(transformer.sesameModel(any(com.mobi.rdf.api.Model.class)))
-                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, com.mobi.rdf.api.Model.class)));
-        when(transformer.sesameStatement(any(Statement.class)))
-                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
+        closeable = MockitoAnnotations.openMocks(this);
+        OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+        user = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME));
 
-        when(mappingWrapper.getModel()).thenReturn(mf.createModel());
+        when(mappingWrapper.getModel()).thenReturn(mf.createEmptyModel());
 
         when(mappingManager.retrieveMapping(any(Resource.class))).thenReturn(Optional.empty());
         when(mappingManager.retrieveMapping(vf.createIRI(MAPPING_RECORD_IRI))).thenReturn(Optional.of(mappingWrapper));
@@ -214,16 +187,17 @@ public class DelimitedRestTest extends MobiRestTestNg {
         when(datasetRecord.getResource()).thenReturn(vf.createIRI(DATASET_RECORD_IRI));
         when(datasetRecord.getDataset_resource()).thenReturn(Optional.of(vf.createIRI(DATASET_IRI)));
         when(datasetRecord.getRepository()).thenReturn(Optional.of(REPOSITORY_ID));
-        when(converter.convert(any(SVConfig.class))).thenReturn(mf.createModel());
-        when(converter.convert(any(ExcelConfig.class))).thenReturn(mf.createModel());
+        when(converter.convert(any(SVConfig.class))).thenReturn(mf.createEmptyModel());
+        when(converter.convert(any(ExcelConfig.class))).thenReturn(mf.createEmptyModel());
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(ontologyRecord.getMasterBranch_resource()).thenReturn(Optional.of(vf.createIRI(MASTER_BRANCH_IRI)));
         when(ontologyRecord.getResource()).thenReturn(vf.createIRI(ONTOLOGY_RECORD_IRI));
     }
 
-    @AfterMethod
-    public void resetMocks() {
-        reset(converter, mappingManager, mappingWrapper, transformer, ontologyRecord, engineManager, datasetRecord,
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
+        reset(converter, mappingManager, mappingWrapper, ontologyRecord, engineManager, datasetRecord,
                 dataset, rdfImportService, ontologyImportService);
     }
 
@@ -236,8 +210,9 @@ public class DelimitedRestTest extends MobiRestTestNg {
         };
         for (String file : files) {
             fd = getFileFormData(file);
-            response = target().path("delimited-files").request().post(Entity.entity(fd,
-                    MediaType.MULTIPART_FORM_DATA));
+            Entity ent = Entity.entity(fd.body(),
+                    MediaType.MULTIPART_FORM_DATA);
+            response = target().path("delimited-files").request().post(ent);
             String filename = response.readEntity(String.class);
 
             assertEquals(response.getStatus(), 201);
@@ -249,7 +224,7 @@ public class DelimitedRestTest extends MobiRestTestNg {
     public void updateNonexistentDelimitedTest() throws Exception {
         String fileName = UUID.randomUUID().toString() + ".csv";
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
-        Response response = target().path("delimited-files/" + fileName).request().put(Entity.entity(fd,
+        Response response = target().path("delimited-files/" + fileName).request().put(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         assertTrue(Files.exists(Paths.get(DelimitedRest.TEMP_DIR + "/" + fileName)));
@@ -262,7 +237,7 @@ public class DelimitedRestTest extends MobiRestTestNg {
         List<String> expectedLines = getCsvResourceLines("test_updated.csv");
 
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
-        Response response = target().path("delimited-files/" + fileName).request().put(Entity.entity(fd,
+        Response response = target().path("delimited-files/" + fileName).request().put(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         assertEquals(response.readEntity(String.class), fileName);
@@ -461,12 +436,11 @@ public class DelimitedRestTest extends MobiRestTestNg {
         String mapping = "";
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("jsonld", mapping);
-        Response response = target().path("delimited-files/test.csv/map-preview").request().post(Entity.entity(fd,
+        Response response = target().path("delimited-files/test.csv/map-preview").request().post(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
 
-        response = target().path("delimited-files/test.csv/map-preview").request().post(Entity.entity(null,
-                MediaType.MULTIPART_FORM_DATA));
+        response = target().path("delimited-files/test.csv/map-preview").request().post(Entity.entity(FormDataMultiPart.emptyBody(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -516,7 +490,7 @@ public class DelimitedRestTest extends MobiRestTestNg {
     public void mapPreviewNonexistentDelimitedTest() throws Exception {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("jsonld", "[]");
-        Response response = target().path("delimited-files/error/map-preview").request().post(Entity.entity(fd,
+        Response response = target().path("delimited-files/error/map-preview").request().post(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -588,7 +562,8 @@ public class DelimitedRestTest extends MobiRestTestNg {
     public void mapCSVIntoDatasetTest() throws Exception {
         // Setup:
         Statement data = vf.createStatement(vf.createIRI("http://test.org/class"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
-        com.mobi.rdf.api.Model model = mf.createModel(Collections.singleton(data));
+        Model model = mf.createEmptyModel();
+        model.addAll(Collections.singleton(data));
         when(converter.convert(any(SVConfig.class))).thenReturn(model);
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
@@ -602,7 +577,8 @@ public class DelimitedRestTest extends MobiRestTestNg {
     public void mapExcelIntoDatasetTest() throws Exception {
         // Setup:
         Statement data = vf.createStatement(vf.createIRI("http://test.org/class"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
-        com.mobi.rdf.api.Model model = mf.createModel(Collections.singleton(data));
+        Model model = mf.createEmptyModel();
+        model.addAll(Collections.singleton(data));
         when(converter.convert(any(ExcelConfig.class))).thenReturn(model);
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
@@ -681,8 +657,10 @@ public class DelimitedRestTest extends MobiRestTestNg {
         Statement statement1 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-1"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
         Statement statement2 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-2"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
 
-        com.mobi.rdf.api.Model model = mf.createModel(Stream.of(statement1, statement2).collect(Collectors.toList()));
-        com.mobi.rdf.api.Model committedModel = mf.createModel(Collections.singleton(statement2));
+        Model model = mf.createEmptyModel();
+        model.addAll(Stream.of(statement1, statement2).collect(Collectors.toList()));
+        Model committedModel = mf.createEmptyModel();
+        committedModel.addAll(Collections.singleton(statement2));
         when(converter.convert(any(SVConfig.class))).thenReturn(model);
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
                 eq(vf.createIRI(ONTOLOGY_RECORD_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
@@ -702,13 +680,14 @@ public class DelimitedRestTest extends MobiRestTestNg {
         Statement statement1 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-1"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
         Statement statement2 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-2"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
 
-        com.mobi.rdf.api.Model model = mf.createModel(Stream.of(statement1, statement2).collect(Collectors.toList()));
+        Model model = mf.createEmptyModel();
+        model.addAll(Stream.of(statement1, statement2).collect(Collectors.toList()));
         when(converter.convert(any(SVConfig.class))).thenReturn(model);
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
                 eq(vf.createIRI(ONTOLOGY_RECORD_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
                 .thenReturn(new Difference.Builder()
-                        .additions(mf.createModel())
-                        .deletions(mf.createModel())
+                        .additions(mf.createEmptyModel())
+                        .deletions(mf.createEmptyModel())
                         .build());
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
@@ -725,8 +704,10 @@ public class DelimitedRestTest extends MobiRestTestNg {
         Statement statement1 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-1"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
         Statement statement2 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-2"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
 
-        com.mobi.rdf.api.Model model = mf.createModel(Stream.of(statement1, statement2).collect(Collectors.toList()));
-        com.mobi.rdf.api.Model committedModel = mf.createModel(Collections.singleton(statement2));
+        Model model = mf.createEmptyModel();
+        model.addAll(Stream.of(statement1, statement2).collect(Collectors.toList()));
+        Model committedModel = mf.createEmptyModel();
+        committedModel.addAll(Collections.singleton(statement2));
         when(converter.convert(any(ExcelConfig.class))).thenReturn(model);
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
                 eq(vf.createIRI(MASTER_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
@@ -766,7 +747,7 @@ public class DelimitedRestTest extends MobiRestTestNg {
                 wt = wt.queryParam(k, params.get(k));
             }
         }
-        Response response = wt.request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = wt.request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         return response;
     }
@@ -825,8 +806,7 @@ public class DelimitedRestTest extends MobiRestTestNg {
     private FormDataMultiPart getFileFormData(String resourceName) {
         FormDataMultiPart fd = new FormDataMultiPart();
         InputStream content = getClass().getResourceAsStream("/" + resourceName);
-        fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("delimitedFile").fileName(resourceName).build(),
-                content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
+        fd.bodyPart("delimitedFile", resourceName, content);
         return fd;
     }
 

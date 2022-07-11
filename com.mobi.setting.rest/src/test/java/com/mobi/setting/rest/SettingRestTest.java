@@ -27,10 +27,11 @@ import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -39,16 +40,10 @@ import static org.mockito.Mockito.when;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.util.UsernameTestFilter;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.ontologies.ApplicationSetting;
@@ -58,15 +53,14 @@ import com.mobi.setting.api.ontologies.PreferenceImpl;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -75,50 +69,37 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 
-public class SettingRestTest extends MobiRestTestNg {
-    private SettingRest rest;
-    private OrmFactory<User> userFactory;
-    private OrmFactory<Role> roleFactory;
-    private ValueFactory vf;
+public class SettingRestTest extends MobiRestTestCXF {
+    private static SettingRest rest;
+    private static OrmFactory<User> userFactory;
+    private static OrmFactory<Role> roleFactory;
+    private static ValueFactory vf;
+    private static EngineManager engineManager;
+    private static SettingService<Preference> preferenceService;
+    private static SettingService<ApplicationSetting> applicationSettingService;
+
     private User adminUser;
     private String simplePreferenceJson;
     private String simpleApplicationSettingJson;
 
-    @Mock
-    private EngineManager engineManager;
-
-    @Mock
-    private SesameTransformer transformer;
-
-    @Mock
-    private SettingService<Preference> preferenceService;
-
-    @Mock
-    private SettingService<ApplicationSetting> applicationSettingService;
-
-    @Override
-    protected Application configureApp() throws Exception {
+    @BeforeClass
+    public static void startServer() {
         rest = new SettingRest();
         userFactory = getRequiredOrmFactory(User.class);
         roleFactory = getRequiredOrmFactory(Role.class);
         vf = getValueFactory();
-        return new ResourceConfig()
-                .register(rest)
-                .register(UsernameTestFilter.class)
-                .register(MultiPartFeature.class);
+
+        engineManager = mock(EngineManager.class);
+        preferenceService = (SettingService<Preference>) mock(SettingService.class);
+        applicationSettingService = (SettingService<ApplicationSetting>) mock(SettingService.class);
+
+        configureServer(rest, new com.mobi.rest.test.util.UsernameTestFilter());
     }
 
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
-    }
-
-    @BeforeMethod
+    @Before
     public void setUpMocks() throws Exception {
-        MockitoAnnotations.initMocks(this);
         reset(engineManager, preferenceService, applicationSettingService);
 
         User user = userFactory.createNew(vf.createIRI("http://test.com/user"));
@@ -131,8 +112,8 @@ public class SettingRestTest extends MobiRestTestNg {
         InputStream firstInputStream = getClass().getResourceAsStream("/simplePreference.ttl");
         InputStream secondInputStream = getClass().getResourceAsStream("/complexPreference.ttl");
 
-        Model simplePrefModel = Values.mobiModel(Rio.parse(firstInputStream, "", RDFFormat.TURTLE));
-        Model complexPrefModel = Values.mobiModel(Rio.parse(secondInputStream, "", RDFFormat.TURTLE));
+        Model simplePrefModel = Rio.parse(firstInputStream, "", RDFFormat.TURTLE);
+        Model complexPrefModel = Rio.parse(secondInputStream, "", RDFFormat.TURTLE);
 
         TestSimplePreference simplePreference = new TestSimplePreferenceImpl(vf.createIRI("http://example.com/MySimplePreference"), simplePrefModel, vf, null);
         TestComplexPreference complexPreference = new TestComplexPreferenceImpl(vf.createIRI("http://example.com/MyComplexPreference"), complexPrefModel, vf, null);
@@ -160,18 +141,11 @@ public class SettingRestTest extends MobiRestTestNg {
         when(engineManager.getUserRoles(eq(UsernameTestFilter.USERNAME))).thenReturn(Collections.emptySet());
         when(engineManager.getUserRoles(eq(UsernameTestFilter.ADMIN_USER))).thenReturn(Collections.singleton(adminRole));
 
-        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
-                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
-        when(transformer.sesameModel(any(com.mobi.rdf.api.Model.class)))
-                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, com.mobi.rdf.api.Model.class)));
-        when(transformer.sesameStatement(any(Statement.class)))
-                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-
         InputStream thirdInputStream = getClass().getResourceAsStream("/simpleApplicationSetting.ttl");
         InputStream fourthInputStream = getClass().getResourceAsStream("/complexApplicationSetting.ttl");
 
-        Model simpleAppSettingModel = Values.mobiModel(Rio.parse(thirdInputStream, "", RDFFormat.TURTLE));
-        Model complexAppSettingModel = Values.mobiModel(Rio.parse(fourthInputStream, "", RDFFormat.TURTLE));
+        Model simpleAppSettingModel = Rio.parse(thirdInputStream, "", RDFFormat.TURTLE);
+        Model complexAppSettingModel = Rio.parse(fourthInputStream, "", RDFFormat.TURTLE);
 
         TestSimpleApplicationSetting simpleApplicationSetting = new TestSimpleApplicationSettingImpl(vf.createIRI("http://example.com/MySimpleApplicationSetting"), simpleAppSettingModel, vf, null);
         TestComplexApplicationSetting complexApplicationSetting = new TestComplexApplicationSettingImpl(vf.createIRI("http://example.com/MyComplexApplicationSetting"), complexAppSettingModel, vf, null);
@@ -193,10 +167,8 @@ public class SettingRestTest extends MobiRestTestNg {
         when(applicationSettingService.getSettingType(complexApplicationSetting)).thenReturn(vf.createIRI(complexApplicationSetting.TYPE));
 
         rest.engineManager = engineManager;
-        rest.transformer = transformer;
         rest.setSettingService(preferenceService);
         rest.setSettingService(applicationSettingService);
-        rest.vf = vf;
     }
 
     // GET /settings
@@ -340,7 +312,7 @@ public class SettingRestTest extends MobiRestTestNg {
         Response response = target().path("settings")
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
-                .request().post(Entity.json(entity));
+                .request().post(Entity.json(entity.toString()));
         assertEquals(201, response.getStatus());
         verify(engineManager, never()).getUserRoles(anyString());
     }
@@ -360,7 +332,7 @@ public class SettingRestTest extends MobiRestTestNg {
         JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
         Response response = target().path("settings")
                 .queryParam("subType", TestSimplePreference.TYPE)
-                .request().post(Entity.json(entity));
+                .request().post(Entity.json(entity.toString()));
         assertEquals(400, response.getStatus());
         verify(engineManager, never()).getUserRoles(anyString());
     }
@@ -370,7 +342,7 @@ public class SettingRestTest extends MobiRestTestNg {
         JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
         Response response = target().path("settings")
                 .queryParam("type", Preference.TYPE)
-                .request().post(Entity.json(entity));
+                .request().post(Entity.json(entity.toString()));
         assertEquals(400, response.getStatus());
         verify(engineManager, never()).getUserRoles(anyString());
     }
@@ -382,7 +354,7 @@ public class SettingRestTest extends MobiRestTestNg {
         Response response = target().path("settings")
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
-                .request().post(Entity.json(entity));
+                .request().post(Entity.json(entity.toString()));
         assertEquals(400, response.getStatus());
         verify(engineManager, never()).getUserRoles(anyString());
     }
@@ -394,7 +366,7 @@ public class SettingRestTest extends MobiRestTestNg {
         Response response = target().path("settings")
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
-                .request().post(Entity.json(entity));
+                .request().post(Entity.json(entity.toString()));
         assertEquals(500, response.getStatus());
         verify(engineManager, never()).getUserRoles(anyString());
     }
@@ -408,7 +380,7 @@ public class SettingRestTest extends MobiRestTestNg {
         Response response = target().path("settings")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
-                .request().post(Entity.json(entity));
+                .request().post(Entity.json(entity.toString()));
         assertEquals(401, response.getStatus());
         verify(engineManager).getUserRoles(UsernameTestFilter.USERNAME);
     }
@@ -420,7 +392,7 @@ public class SettingRestTest extends MobiRestTestNg {
         Response response = target().path("settings")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
-                .request().post(Entity.json(entity));
+                .request().post(Entity.json(entity.toString()));
         assertEquals(201, response.getStatus());
         verify(engineManager).getUserRoles(UsernameTestFilter.ADMIN_USER);
     }
@@ -442,7 +414,7 @@ public class SettingRestTest extends MobiRestTestNg {
         JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
         Response response = target().path("settings")
                 .queryParam("type", ApplicationSetting.TYPE)
-                .request().post(Entity.json(entity));
+                .request().post(Entity.json(entity.toString()));
         assertEquals(400, response.getStatus());
     }
 
@@ -452,7 +424,7 @@ public class SettingRestTest extends MobiRestTestNg {
         JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
         Response response = target().path("settings")
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
-                .request().post(Entity.json(entity));
+                .request().post(Entity.json(entity.toString()));
         assertEquals(400, response.getStatus());
     }
 
@@ -464,7 +436,7 @@ public class SettingRestTest extends MobiRestTestNg {
         Response response = target().path("settings")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
-                .request().post(Entity.json(entity));
+                .request().post(Entity.json(entity.toString()));
         assertEquals(400, response.getStatus());
         verify(engineManager).getUserRoles(UsernameTestFilter.ADMIN_USER);
     }
@@ -477,7 +449,7 @@ public class SettingRestTest extends MobiRestTestNg {
         Response response = target().path("settings")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
-                .request().post(Entity.json(entity));
+                .request().post(Entity.json(entity.toString()));
         assertEquals(500, response.getStatus());
         verify(engineManager).getUserRoles(UsernameTestFilter.ADMIN_USER);
     }
@@ -491,7 +463,7 @@ public class SettingRestTest extends MobiRestTestNg {
         Response response = target().path("settings/" + encode("http://example.com/MySimplePreference"))
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
-                .request().put(Entity.json(entity));
+                .request().put(Entity.json(entity.toString()));
         assertEquals(200, response.getStatus());
         verify(engineManager, never()).getUserRoles(anyString());
     }
@@ -511,7 +483,7 @@ public class SettingRestTest extends MobiRestTestNg {
         JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
         Response response = target().path("settings/" + encode("http://example.com/MySimplePreference"))
                 .queryParam("type", Preference.TYPE)
-                .request().put(Entity.json(entity));
+                .request().put(Entity.json(entity.toString()));
         assertEquals(400, response.getStatus());
         verify(engineManager, never()).getUserRoles(anyString());
     }
@@ -521,7 +493,7 @@ public class SettingRestTest extends MobiRestTestNg {
         JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
         Response response = target().path("settings/" + encode("http://example.com/MySimplePreference"))
                 .queryParam("subType", TestComplexPreference.TYPE)
-                .request().put(Entity.json(entity));
+                .request().put(Entity.json(entity.toString()));
         assertEquals(400, response.getStatus());
         verify(engineManager, never()).getUserRoles(anyString());
     }
@@ -533,7 +505,7 @@ public class SettingRestTest extends MobiRestTestNg {
         Response response = target().path("settings/" + encode("http://example.com/MySimplePreference"))
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
-                .request().put(Entity.json(entity));
+                .request().put(Entity.json(entity.toString()));
         assertEquals(400, response.getStatus());
         verify(engineManager, never()).getUserRoles(anyString());
     }
@@ -545,7 +517,7 @@ public class SettingRestTest extends MobiRestTestNg {
         Response response = target().path("settings/" + encode("http://example.com/MySimplePreference"))
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
-                .request().put(Entity.json(entity));
+                .request().put(Entity.json(entity.toString()));
         assertEquals(500, response.getStatus());
         verify(engineManager, never()).getUserRoles(anyString());
     }
@@ -559,7 +531,7 @@ public class SettingRestTest extends MobiRestTestNg {
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
-                .request().put(Entity.json(entity));
+                .request().put(Entity.json(entity.toString()));
         assertEquals(401, response.getStatus());
         verify(engineManager).getUserRoles(UsernameTestFilter.USERNAME);
     }
@@ -571,7 +543,7 @@ public class SettingRestTest extends MobiRestTestNg {
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
-                .request().put(Entity.json(entity));
+                .request().put(Entity.json(entity.toString()));
         assertEquals(200, response.getStatus());
         verify(engineManager).getUserRoles(UsernameTestFilter.ADMIN_USER);
     }
@@ -593,7 +565,7 @@ public class SettingRestTest extends MobiRestTestNg {
         JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", TestSimpleApplicationSetting.TYPE)
-                .request().put(Entity.json(entity));
+                .request().put(Entity.json(entity.toString()));
         assertEquals(400, response.getStatus());
     }
 
@@ -603,7 +575,7 @@ public class SettingRestTest extends MobiRestTestNg {
         JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
-                .request().put(Entity.json(entity));
+                .request().put(Entity.json(entity.toString()));
         assertEquals(400, response.getStatus());
     }
 
@@ -615,7 +587,7 @@ public class SettingRestTest extends MobiRestTestNg {
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
-                .request().put(Entity.json(entity));
+                .request().put(Entity.json(entity.toString()));
         assertEquals(400, response.getStatus());
         verify(engineManager).getUserRoles(UsernameTestFilter.ADMIN_USER);
     }
@@ -628,7 +600,7 @@ public class SettingRestTest extends MobiRestTestNg {
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
-                .request().put(Entity.json(entity));
+                .request().put(Entity.json(entity.toString()));
         assertEquals(500, response.getStatus());
         verify(engineManager).getUserRoles(UsernameTestFilter.ADMIN_USER);
     }
@@ -915,7 +887,7 @@ public class SettingRestTest extends MobiRestTestNg {
     @Test
     public void getPreferenceGroupsTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/preferenceGroups.ttl");
-        Model model = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model model = Rio.parse(inputStream, "", RDFFormat.TURTLE);
 
         when(preferenceService.getSettingGroups()).thenReturn(model);
         Response response = target().path("settings/groups/")
@@ -957,7 +929,7 @@ public class SettingRestTest extends MobiRestTestNg {
     @Test
     public void getApplicationSettingGroupsTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/applicationSettingGroups.ttl");
-        Model model = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model model = Rio.parse(inputStream, "", RDFFormat.TURTLE);
 
         when(applicationSettingService.getSettingGroups()).thenReturn(model);
         Response response = target().path("settings/groups")
@@ -999,7 +971,7 @@ public class SettingRestTest extends MobiRestTestNg {
     @Test
     public void getPreferenceDefinitions() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/preferenceDefinitions.ttl");
-        Model model = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model model = Rio.parse(inputStream, "", RDFFormat.TURTLE);
 
         when(preferenceService.getSettingDefinitions(any())).thenReturn(model);
         Response response = target().path("settings/groups/" +
@@ -1042,7 +1014,7 @@ public class SettingRestTest extends MobiRestTestNg {
     @Test
     public void getApplicationSettingDefinitions() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/applicationSettingDefinitions.ttl");
-        Model model = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model model = Rio.parse(inputStream, "", RDFFormat.TURTLE);
 
         when(applicationSettingService.getSettingDefinitions(any())).thenReturn(model);
         Response response = target().path("settings/groups/" +

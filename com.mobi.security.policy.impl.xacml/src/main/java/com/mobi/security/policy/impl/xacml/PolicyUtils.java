@@ -25,13 +25,13 @@ package com.mobi.security.policy.impl.xacml;
 
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.QueryResults;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.security.policy.api.xacml.PolicyQueryParams;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -61,7 +61,7 @@ public class PolicyUtils {
         }
     }
 
-    public static Set<Resource> findPolicies(PolicyQueryParams params, Repository repository) {
+    public static Set<Resource> findPolicies(PolicyQueryParams params, OsgiRepository repository) {
         StringBuilder values = new StringBuilder(" ");
         StringBuilder filters = new StringBuilder(" ");
         setBindings(params.getResourceIRIs(), RESOURCES_BINDING, RESOURCES_PROP, values, filters);
@@ -78,7 +78,7 @@ public class PolicyUtils {
     }
 
     private static void setBindings(Set<IRI> iris, String variableName, String propertyName, StringBuilder values,
-                             StringBuilder filters) {
+                                    StringBuilder filters) {
         if (iris.size() > 0) {
             filters.append("?").append(POLICY_ID_BINDING).append(" :").append(propertyName).append(" ?")
                     .append(variableName).append(". ");

@@ -47,10 +47,6 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
@@ -67,8 +63,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -76,9 +74,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -86,22 +86,20 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Component(service = MergeRequestRest.class, immediate = true)
+@Component(service = MergeRequestRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/merge-requests")
 public class MergeRequestRest {
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
 
     private MergeRequestManager manager;
     private CatalogConfigProvider configProvider;
-    private SesameTransformer transformer;
     private EngineManager engineManager;
     private MergeRequestFactory mergeRequestFactory;
     private CommentFactory commentFactory;
-    private ValueFactory vf;
 
     @Reference
     void setManager(MergeRequestManager manager) {
@@ -111,11 +109,6 @@ public class MergeRequestRest {
     @Reference
     void setConfigProvider(CatalogConfigProvider configProvider) {
         this.configProvider = configProvider;
-    }
-
-    @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
     }
 
     @Reference
@@ -131,11 +124,6 @@ public class MergeRequestRest {
     @Reference
     void setCommentFactory(CommentFactory commentFactory) {
         this.commentFactory = commentFactory;
-    }
-
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
     }
 
     /**
@@ -176,7 +164,7 @@ public class MergeRequestRest {
         builder.setAscending(asc).setAccepted(accepted);
         try {
             JSONArray result = JSONArray.fromObject(manager.getMergeRequests(builder.build()).stream()
-                    .map(request -> modelToJsonld(request.getModel(), transformer))
+                    .map(request -> modelToJsonld(request.getModel()))
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
             return Response.ok(result).build();
@@ -190,7 +178,7 @@ public class MergeRequestRest {
      * `sourceBranchId`, and `targetBranchId` fields to be set. Returns a Response with the IRI of the new
      * {@link MergeRequest}.
      *
-     * @param context Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param title The required title for the new {@link MergeRequest}.
      * @param description Optional description for the new {@link MergeRequest}.
      * @param recordId The required IRI of the {@link VersionedRDFRecord} to associate with the new
@@ -224,46 +212,45 @@ public class MergeRequestRest {
             }
     )
     public Response createMergeRequests(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required title for the new MergeRequest", required = true))
-            @FormDataParam("title") String title,
+            @FormParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional description for the new MergeRequest"))
-            @FormDataParam("description") String description,
+            @FormParam("description") String description,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required IRI of the VersionedRDFRecord to associate with the "
                     + "new MergeRequest", required = true))
-            @FormDataParam("recordId") String recordId,
+            @FormParam("recordId") String recordId,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required IRI of the source Branch with the new commits to add "
                     + "to the target Branch of the new MergeRequest", required = true))
-            @FormDataParam("sourceBranchId") String sourceBranchId,
+            @FormParam("sourceBranchId") String sourceBranchId,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required IRI of the target Branch which will receive the new commits "
                     + "from the source Branch of the new MergeRequest", required = true))
-            @FormDataParam("targetBranchId") String targetBranchId,
+            @FormParam("targetBranchId") String targetBranchId,
             @Parameter(array = @ArraySchema(
                     arraySchema = @Schema(description = "List of username of Users to assign the new MergeRequest to"),
                     schema = @Schema(implementation = String.class, description = "Username")))
-            @FormDataParam("assignees") List<FormDataBodyPart> assignees,
+            @FormParam("assignees") List<String> assignees,
             @Parameter(schema = @Schema(type = "string",
                     description = "Boolean value to remove source"))
-            @FormDataParam("removeSource") @DefaultValue("false") boolean removeSource) {
+            @FormParam("removeSource") @DefaultValue("false") boolean removeSource) {
 
         checkStringParam(title, "Merge Request title is required");
         checkStringParam(recordId, "Merge Request record is required");
         checkStringParam(sourceBranchId, "Merge Request source branch is required");
         checkStringParam(targetBranchId, "Merge Request target branch is required");
-        User activeUser = getActiveUser(context, engineManager);
+        User activeUser = getActiveUser(servletRequest, engineManager);
         MergeRequestConfig.Builder builder = new MergeRequestConfig.Builder(title, createIRI(recordId, vf),
                 createIRI(sourceBranchId, vf), createIRI(targetBranchId, vf), activeUser, removeSource);
         if (!StringUtils.isBlank(description)) {
             builder.description(description);
         }
         if (assignees != null ) {
-            assignees.forEach(part -> {
-                String username = part.getValue();
+            assignees.forEach(username -> {
                 Optional<User> assignee = engineManager.retrieveUser(username);
                 if (!assignee.isPresent()) {
                     throw ErrorUtils.sendError("User " + username + " does not exist", Response.Status.BAD_REQUEST);
@@ -318,7 +305,7 @@ public class MergeRequestRest {
             MergeRequest request = manager.getMergeRequest(requestIdResource).orElseThrow(() ->
                     ErrorUtils.sendError("Merge Request " + requestId + " could not be found",
                             Response.Status.NOT_FOUND));
-            String json = groupedModelToString(request.getModel(), getRDFFormat("jsonld"), transformer);
+            String json = groupedModelToString(request.getModel(), getRDFFormat("jsonld"));
             return Response.ok(getObjectFromJsonld(json)).build();
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -366,7 +353,7 @@ public class MergeRequestRest {
      * Accepts a {@link MergeRequest} with the provided ID by completing the merge it represents and changing the
      * type to an {@link com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest}.
      *
-     * @param context Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
      *                  String begins with "_:".
      * @return Response indicating the status of the acceptance.
@@ -394,11 +381,11 @@ public class MergeRequestRest {
     @ActionAttributes(@AttributeValue(type = ValueType.PROP_PATH, value = "<" + MergeRequest.targetBranch_IRI + ">",
             id = VersionedRDFRecord.branch_IRI, start = @Value(type = ValueType.PATH, value = "requestId")))
     public Response acceptMergeRequest(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
-        User activeUser = getActiveUser(context, engineManager);
+        User activeUser = getActiveUser(servletRequest, engineManager);
         try {
             manager.acceptMergeRequest(requestIdResource, activeUser);
             return Response.ok().build();
@@ -476,7 +463,7 @@ public class MergeRequestRest {
             List<List<JSONObject>> commentsJson = manager.getComments(requestIdResource).stream().map(
                     commentChain -> commentChain.stream()
                             .map(comment -> getObjectFromJsonld(groupedModelToString(comment.getModel(),
-                                    getRDFFormat("jsonld"), transformer)))
+                                    getRDFFormat("jsonld"))))
                             .collect(Collectors.toList())).collect(Collectors.toList());
             return Response.ok(commentsJson).build();
         } catch (IllegalArgumentException ex) {
@@ -522,7 +509,7 @@ public class MergeRequestRest {
             Comment comment = manager.getComment(createIRI(commentId, vf)).orElseThrow(() ->
                     ErrorUtils.sendError("Comment " + commentId + " could not be found",
                             Response.Status.NOT_FOUND));
-            String json = groupedModelToString(comment.getModel(), getRDFFormat("jsonld"), transformer);
+            String json = groupedModelToString(comment.getModel(), getRDFFormat("jsonld"));
             return Response.ok(getObjectFromJsonld(json)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -537,7 +524,7 @@ public class MergeRequestRest {
      * the `commentId` already has a reply comment, the newly created comment is added to the bottom of the comment
      * chain. Returns a Response with the IRI of the new {@link Comment}.
      *
-     * @param context Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
      *                  String begins with "_:".
      * @param commentId Optional IRI of the parent {@link Comment} that the newly created Comment is a reply
@@ -565,7 +552,7 @@ public class MergeRequestRest {
             }
     )
     public Response createComment(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId,
             @Parameter(description = "Optional IRI of the parent Comment that the newly created "
@@ -574,7 +561,7 @@ public class MergeRequestRest {
             @Parameter(description = "String containing comment text for the Comment", required = true)
                     String commentStr) {
         checkStringParam(commentStr, "Comment string is required");
-        User activeUser = getActiveUser(context, engineManager);
+        User activeUser = getActiveUser(servletRequest, engineManager);
 
         try {
             Comment comment = null;
@@ -639,7 +626,7 @@ public class MergeRequestRest {
     /**
      * Deletes an existing {@link Comment} that has the {@code commentId} if it belongs to the active {@link User}.
      *
-     * @param context Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param requestId String representing the {@link MergeRequest} ID the comment is on. NOTE: Assumes ID
      *                  represents an IRI unless String begins with "_:".
      * @param commentId String representing the {@link Comment} ID to delete. NOTE: Assumes ID represents an IRI
@@ -662,7 +649,7 @@ public class MergeRequestRest {
             }
     )
     public Response deleteComment(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the MergeRequest ID the comment is on", required = true)
             @PathParam("requestId") String requestId,
             @Parameter(description = "String representing the Comment ID to delete", required = true)
@@ -675,8 +662,8 @@ public class MergeRequestRest {
             Comment comment = manager.getComment(commentIRI).orElseThrow(() ->
                     ErrorUtils.sendError("Comment " + commentId + " could not be found",
                             Response.Status.NOT_FOUND));
-            Optional<com.mobi.rdf.api.Value> commentUser = comment.getProperty(vf.createIRI(_Thing.creator_IRI));
-            User user = getActiveUser(context, engineManager);
+            Optional<org.eclipse.rdf4j.model.Value> commentUser = comment.getProperty(vf.createIRI(_Thing.creator_IRI));
+            User user = getActiveUser(servletRequest, engineManager);
             if (commentUser.isPresent() && commentUser.get().stringValue().equals(user.getResource().stringValue())) {
                 manager.deleteComment(commentIRI);
             } else {
@@ -692,7 +679,7 @@ public class MergeRequestRest {
     }
 
     private MergeRequest jsonToMergeRequest(Resource requestId, String jsonMergeRequest) {
-        Model mergeReqModel = jsonldToModel(jsonMergeRequest, transformer);
+        Model mergeReqModel = jsonldToModel(jsonMergeRequest);
         MergeRequest mergeRequest = mergeRequestFactory.getExisting(requestId, mergeReqModel).orElseThrow(() ->
                 ErrorUtils.sendError("MergeRequest IDs must match", Response.Status.BAD_REQUEST));
 
@@ -707,7 +694,7 @@ public class MergeRequestRest {
     }
 
     private Comment jsonToComment(Resource commentId, String jsonComment) {
-        Model commentModel = jsonldToModel(jsonComment, transformer);
+        Model commentModel = jsonldToModel(jsonComment);
         return commentFactory.getExisting(commentId, commentModel).orElseThrow(() ->
                 ErrorUtils.sendError("Comment IDs must match", Response.Status.BAD_REQUEST));
     }

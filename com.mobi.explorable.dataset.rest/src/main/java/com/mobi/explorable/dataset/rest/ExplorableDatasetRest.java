@@ -47,24 +47,9 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.Statements;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.BindingSet;
-import com.mobi.query.api.GraphQuery;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.Thing;
-import com.mobi.repository.base.RepositoryResult;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
@@ -76,9 +61,25 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -95,6 +96,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.security.RolesAllowed;
@@ -113,18 +115,18 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@Component(service = ExplorableDatasetRest.class, immediate = true)
+@Component(service = ExplorableDatasetRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/explorable-datasets")
 public class ExplorableDatasetRest {
 
     private final Logger log = LoggerFactory.getLogger(ExplorableDatasetRest.class);
 
+    private final ValueFactory factory = SimpleValueFactory.getInstance();
+    private final ModelFactory modelFactory = new DynamicModelFactory();
+
     private DatasetManager datasetManager;
     private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
-    private ValueFactory factory;
-    private ModelFactory modelFactory;
-    private SesameTransformer sesameTransformer;
     private OntologyManager ontologyManager;
     private OntologyRecordFactory ontologyRecordFactory;
     private BNodeService bNodeService;
@@ -186,11 +188,6 @@ public class ExplorableDatasetRest {
     }
 
     @Reference
-    public void setFactory(ValueFactory factory) {
-        this.factory = factory;
-    }
-
-    @Reference
     void setConfigProvider(CatalogConfigProvider configProvider) {
         this.configProvider = configProvider;
     }
@@ -198,16 +195,6 @@ public class ExplorableDatasetRest {
     @Reference
     public void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
-    }
-
-    @Reference
-    public void setSesameTransformer(SesameTransformer sesameTransformer) {
-        this.sesameTransformer = sesameTransformer;
     }
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
@@ -255,10 +242,12 @@ public class ExplorableDatasetRest {
         try {
             DatasetRecord record = datasetManager.getDatasetRecord(datasetRecordRsr).orElseThrow(() ->
                     ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_TYPES, "", null);
-            List<ClassDetails> classes = getClassDetailsFromQueryResults(results, datasetRecordRsr);
-            classes = addOntologyDetailsToClasses(classes, record.getOntology(), record.getModel());
-            return Response.ok(classes).build();
+            List<ClassDetails> classes = new ArrayList<>();
+            Consumer<TupleQueryResult> tupleQueryResultConsumer = results ->
+                    getClassDetailsFromQueryResults(results, datasetRecordRsr, classes);
+            getQueryResults(datasetRecordRsr, GET_CLASSES_TYPES, "", null, tupleQueryResultConsumer);
+            List<ClassDetails> finalClasses = addOntologyDetailsToClasses(classes, record.getOntology(), record.getModel());
+            return Response.ok(finalClasses).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -312,15 +301,15 @@ public class ExplorableDatasetRest {
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
         try {
             final List<InstanceDetails> instances = new ArrayList<>();
+            Consumer<TupleQueryResult> tupleQueryResultConsumer = results ->
+                    getInstanceDetailsFromQueryResults(results, instances);
             if (infer) {
                 String classes = getInferredClasses(datasetRecordRsr, factory.createIRI(classIRI));
                 String query = String.format(GET_ALL_CLASS_INSTANCES, classes);
-                TupleQueryResult results = getQueryResults(datasetRecordRsr, query, "", null);
-                instances.addAll(getInstanceDetailsFromQueryResults(results));
+                getQueryResults(datasetRecordRsr, query, "", null, tupleQueryResultConsumer);
             } else {
-                TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_INSTANCES, CLASS_BINDING,
-                        factory.createIRI(classIRI));
-                instances.addAll(getInstanceDetailsFromQueryResults(results));
+                getQueryResults(datasetRecordRsr, GET_CLASSES_INSTANCES, CLASS_BINDING, factory.createIRI(classIRI),
+                        tupleQueryResultConsumer);
             }
             Comparator<InstanceDetails> comparator = Comparator.comparing(InstanceDetails::getTitle);
             return createPagedResponse(uriInfo, instances, comparator, asc, limit, offset);
@@ -400,7 +389,7 @@ public class ExplorableDatasetRest {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(newInstanceJson, "The Instance's JSON-LD is required.");
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
-            Model instanceModel = jsonldToModel(newInstanceJson, sesameTransformer);
+            Model instanceModel = jsonldToModel(newInstanceJson);
             Resource instanceId = instanceModel.stream()
                     .filter(statement -> !(statement.getSubject() instanceof BNode))
                     .findAny().orElseThrow(() ->
@@ -454,7 +443,7 @@ public class ExplorableDatasetRest {
             if (instanceModel.size() == 0) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
             }
-            String json = modelToSkolemizedJsonld(instanceModel, sesameTransformer, bNodeService);
+            String json = modelToSkolemizedJsonld(instanceModel, bNodeService);
             return Response.ok(JSONArray.fromObject(json)).build();
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
@@ -503,15 +492,15 @@ public class ExplorableDatasetRest {
             if (!statements.hasNext()) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
             }
-            RepositoryResult<Statement> reifiedDeclarations = conn.getStatements(null,
-                    sesameTransformer.mobiIRI(RDF.SUBJECT), instanceId);
+            RepositoryResult<Statement> reifiedDeclarations = conn.getStatements(null, RDF.SUBJECT, instanceId);
             conn.begin();
             conn.remove(statements);
+            statements.close();
             reifiedDeclarations.forEach(statement -> {
                 RepositoryResult<Statement> reification = conn.getStatements(statement.getSubject(), null, null);
                 conn.remove(reification);
             });
-            conn.add(jsonldToDeskolemizedModel(json, sesameTransformer, bNodeService));
+            conn.add(jsonldToDeskolemizedModel(json, bNodeService));
             conn.commit();
             return Response.ok().build();
         } catch (IllegalArgumentException e) {
@@ -602,7 +591,7 @@ public class ExplorableDatasetRest {
      * @return A Model containing all triples which represent the instance.
      */
     private Model getLimitedInstance(String instanceIRI, DatasetConnection conn) {
-        Model instanceModel = modelFactory.createModel();
+        Model instanceModel = modelFactory.createEmptyModel();
         Resource instanceId = factory.createIRI(instanceIRI);
         RepositoryResult<Statement> statements = conn.getStatements(instanceId, null, null);
         int count = 100;
@@ -626,7 +615,7 @@ public class ExplorableDatasetRest {
      * @return A Model containing all triples which represent the instance.
      */
     private Model getInstance(String instanceIRI, DatasetConnection conn) {
-        Model instanceModel = modelFactory.createModel();
+        Model instanceModel = modelFactory.createEmptyModel();
         Resource instanceId = factory.createIRI(instanceIRI);
         RepositoryResult<Statement> statements = conn.getStatements(instanceId, null, null);
         statements.forEach(statement -> {
@@ -760,16 +749,16 @@ public class ExplorableDatasetRest {
      * @param query            query result object with instances examples
      * @param bindingStr       name of the variable that should be bound
      * @param bindingVal       value for the specified variable
-     * @return variable-binding query result
+     * @param tupleQueryResultConsumer  Consumer to handle the TupleQueryResult
      */
-    private TupleQueryResult getQueryResults(Resource datasetRecordRsr, String query, String bindingStr,
-                                             Value bindingVal) {
+    private void getQueryResults(Resource datasetRecordRsr, String query, String bindingStr,
+                                 Value bindingVal, Consumer<TupleQueryResult> tupleQueryResultConsumer) {
         try (DatasetConnection dsConn = datasetManager.getConnection(datasetRecordRsr)) {
             TupleQuery tq = dsConn.prepareTupleQuery(query);
             if (!bindingStr.isEmpty() && !bindingVal.stringValue().isEmpty()) {
                 tq.setBinding(bindingStr, bindingVal);
             }
-            return tq.evaluateAndReturn();
+            tupleQueryResultConsumer.accept(tq.evaluate());
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException e) {
@@ -782,16 +771,14 @@ public class ExplorableDatasetRest {
      * beautified version of local name.
      *
      * @param examplesResults query result object with instances examples
-     * @return examples list
+     * @param exList examples list to populate
      */
-    private List<String> parseInstanceExamples(TupleQueryResult examplesResults) {
-        List<String> exList = new ArrayList<>();
+    private void parseInstanceExamples(TupleQueryResult examplesResults, List<String> exList) {
         examplesResults.forEach(bindingSetEx -> {
             IRI exampleIRI = factory.createIRI(Bindings.requiredResource(bindingSetEx, EXAMPLE_BINDING).stringValue());
             String fallback = splitCamelCase(exampleIRI.getLocalName());
             exList.add(getValueFromBindingSet(bindingSetEx, LABEL_BINDING, TITLE_BINDING, fallback));
         });
-        return exList;
     }
 
     /**
@@ -804,8 +791,10 @@ public class ExplorableDatasetRest {
      * @return the binding value that is found
      */
     private String getValueFromBindingSet(BindingSet bindingSet, String first, String second, String fallback) {
-        String firstStr = bindingSet.getValue(first).flatMap(value -> Optional.of(value.stringValue())).orElse("");
-        String secondStr = bindingSet.getValue(second).flatMap(value -> Optional.of(value.stringValue()))
+        String firstStr = Optional.ofNullable(bindingSet.getValue(first))
+                .flatMap(value -> Optional.of(value.stringValue())).orElse("");
+        String secondStr = Optional.ofNullable(bindingSet.getValue(second))
+                .flatMap(value -> Optional.of(value.stringValue()))
                 .orElse(fallback);
         return !firstStr.isEmpty() ? firstStr : secondStr;
     }
@@ -843,7 +832,7 @@ public class ExplorableDatasetRest {
                     log.warn("OntologyRecord " + ontologyRecordIRI + " could not be found");
                 }
                 Model ontologyRecordModel = ontologyRecordOpt.map(Thing::getModel).orElseGet(() ->
-                        modelFactory.createModel());
+                        modelFactory.createEmptyModel());
                 List<ClassDetails> found = new ArrayList<>();
                 copy.forEach(classDetails -> {
                     IRI classIRI = factory.createIRI(classDetails.getClassIRI());
@@ -873,37 +862,39 @@ public class ExplorableDatasetRest {
      *
      * @param results        the query results which contain the basic class details
      * @param recordResource the dataset record IRI
-     * @return list of class details with their count, IRI, and examples
+     * @param classes  list of class details to populate with their count, IRI, and examples
      */
-    private List<ClassDetails> getClassDetailsFromQueryResults(TupleQueryResult results, Resource recordResource) {
-        List<ClassDetails> classes = new ArrayList<>();
+    private void getClassDetailsFromQueryResults(TupleQueryResult results, Resource recordResource, List<ClassDetails> classes) {
         results.forEach(bindingSet -> {
-            if (bindingSet.getValue(TYPE_BINDING).isPresent() && bindingSet.getValue(COUNT_BINDING).isPresent()) {
-                TupleQueryResult examplesResults = getQueryResults(recordResource, GET_CLASSES_DETAILS, CLASS_BINDING,
-                        bindingSet.getValue(TYPE_BINDING).get());
+            if (Optional.ofNullable(bindingSet.getValue(TYPE_BINDING)).isPresent()
+                    && Optional.ofNullable(bindingSet.getValue(COUNT_BINDING)).isPresent()) {
+                List<String> exList = new ArrayList<>();
+                Consumer<TupleQueryResult> tupleQueryResultConsumer = exampleResults ->
+                        parseInstanceExamples(exampleResults, exList);
+                getQueryResults(recordResource, GET_CLASSES_DETAILS, CLASS_BINDING,
+                        bindingSet.getValue(TYPE_BINDING), tupleQueryResultConsumer);
                 ClassDetails classDetails = new ClassDetails();
-                classDetails.setInstancesCount(Integer.parseInt(bindingSet.getValue(COUNT_BINDING).get()
+                classDetails.setInstancesCount(Integer.parseInt(bindingSet.getValue(COUNT_BINDING)
                         .stringValue()));
-                classDetails.setClassIRI(bindingSet.getValue(TYPE_BINDING).get().stringValue());
-                classDetails.setClassExamples(parseInstanceExamples(examplesResults));
+                classDetails.setClassIRI(bindingSet.getValue(TYPE_BINDING).stringValue());
+                classDetails.setClassExamples(exList);
                 classes.add(classDetails);
             }
         });
-        return classes;
     }
 
     /**
      * Compile the instance details associated with a specific class type of instances of a dataset.
      *
      * @param results the query results which contain instance details
-     * @return list of instance details with their IRI, title, and description
+     * @param instances list of instance details to populate with their IRI, title, and description
      */
-    private List<InstanceDetails> getInstanceDetailsFromQueryResults(TupleQueryResult results) {
-        List<InstanceDetails> instances = new ArrayList<>();
+    private void getInstanceDetailsFromQueryResults(TupleQueryResult results, List<InstanceDetails> instances) {
         results.forEach(instance -> {
             if (instance.size() > 0) {
                 InstanceDetails instanceDetails = new InstanceDetails();
-                String instanceIRI = instance.getValue(INSTANCE_BINDING).flatMap(value -> Optional.of(value.stringValue()))
+                String instanceIRI = Optional.ofNullable(instance.getValue(INSTANCE_BINDING))
+                        .flatMap(value -> Optional.of(value.stringValue()))
                         .orElse("");
                 instanceDetails.setInstanceIRI(instanceIRI);
                 instanceDetails.setTitle(getValueFromBindingSet(instance, LABEL_BINDING, TITLE_BINDING,
@@ -912,7 +903,6 @@ public class ExplorableDatasetRest {
                 instances.add(instanceDetails);
             }
         });
-        return instances;
     }
 
     /**

@@ -32,24 +32,20 @@ import com.mobi.document.translator.expression.IriExpressionProcessor;
 import com.mobi.document.translator.ontology.ExtractedClass;
 import com.mobi.document.translator.ontology.ExtractedDatatypeProperty;
 import com.mobi.document.translator.ontology.ExtractedOntology;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.Model;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Value;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 
-import java.nio.file.Paths;
-import java.io.File;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStream;
-import java.util.*;
-import java.lang.*;
+import java.nio.file.Paths;
+import java.util.Collection;
 
-@RunWith(MockitoJUnitRunner.class)
 public class CsvSemanticTranslatorTest extends OrmEnabledTestCase {
 
     private static final String ONT_URI = "urn://test.ontology";
@@ -63,11 +59,8 @@ public class CsvSemanticTranslatorTest extends OrmEnabledTestCase {
     public void initTranslator() {
         csvTranslator = new CsvSemanticTranslator();
         injectOrmFactoryReferencesIntoService(csvTranslator);
-        csvTranslator.setValueFactory(VALUE_FACTORY);
-        csvTranslator.setModelFactory(MODEL_FACTORY);
         csvTranslator.setOrmFactoryRegistry(ORM_FACTORY_REGISTRY);
         IriExpressionProcessor processor = new DefaultIriExpressionProcessor();
-        ((DefaultIriExpressionProcessor) processor).setValueFactory(VALUE_FACTORY);
         csvTranslator.setExpressionProcessor(processor);
     }
 

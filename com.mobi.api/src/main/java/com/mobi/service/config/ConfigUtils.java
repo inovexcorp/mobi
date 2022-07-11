@@ -29,8 +29,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ConfigUtils {
 
@@ -65,5 +70,18 @@ public class ConfigUtils {
             LOGGER.error("Could not get configuration for service: " + serviceName, e);
             // Continue along, since we'll just re-generate the service configuration next time the server starts.
         }
+    }
+
+    /**
+     * Get a map of the properties to values of the passed in Configuration object.
+     *
+     * @param config The configuration to retrieve properties for.
+     * @return Map of properties to values of the passed in config.
+     */
+    public static Map<String, Object> getPropertiesMap(Configuration config) {
+        Dictionary<String, Object> propertiesDict = config.getProperties();
+        List<String> keys = Collections.list(propertiesDict.keys());
+        return keys.stream()
+                .collect(Collectors.toMap(Function.identity(), propertiesDict::get));
     }
 }

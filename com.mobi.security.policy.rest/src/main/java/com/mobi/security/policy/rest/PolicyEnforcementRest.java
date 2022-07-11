@@ -31,9 +31,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.PDP;
@@ -43,43 +40,42 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
-@Component(service = PolicyEnforcementRest.class, immediate = true)
+@Component(service = PolicyEnforcementRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/pep")
 public class PolicyEnforcementRest {
 
     private final Logger log = LoggerFactory.getLogger(PolicyEnforcementRest.class);
 
     private PDP pdp;
-    private ValueFactory vf;
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
     private EngineManager engineManager;
 
     @Reference
     void setPdp(PDP pdp) {
         this.pdp = pdp;
-    }
-
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
     }
 
     @Reference
@@ -98,7 +94,7 @@ public class PolicyEnforcementRest {
      *     }
      * }
      *
-     * @param context the request context supplied by the underlying JAX-RS implementation
+     * @param servletRequest the HttpServletRequest
      * @param jsonRequest a JSON object containing XACML required fields
      * @return the decision of the XACML request evaluation
      */
@@ -116,14 +112,14 @@ public class PolicyEnforcementRest {
             }
     )
     public Response evaluateRequest(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "A JSON object containing XACML required fields", required = true)
                     String jsonRequest) {
         log.debug("Authorizing...");
         long start = System.currentTimeMillis();
         try {
             JSONObject json = JSONObject.fromObject(jsonRequest);
-            IRI subjectId = (IRI) RestUtils.optActiveUser(context, engineManager).map(User::getResource)
+            IRI subjectId = (IRI) RestUtils.optActiveUser(servletRequest, engineManager).map(User::getResource)
                     .orElse(vf.createIRI(ANON_USER));
 
             String actionIdStr = json.optString("actionId");
@@ -168,7 +164,7 @@ public class PolicyEnforcementRest {
      *     "actionId": ["http://mobi.com/ontologies/policy#Delete"]
      * }
      *
-     * @param context the request context supplied by the underlying JAX-RS implementation
+     * @param servletRequest the request supplied by the underlying JAX-RS implementation
      * @param jsonRequest a JSON object containing XACML required fields
      * @return an array of xacml responses to the jsonRequest
      */
@@ -187,14 +183,14 @@ public class PolicyEnforcementRest {
             }
     )
     public Response evaluateMultiDecisionRequest(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "A JSON object with XACML required fields", required = true)
                     String jsonRequest) {
         log.debug("Authorizing...");
         long start = System.currentTimeMillis();
         try {
             JSONObject json = JSONObject.fromObject(jsonRequest);
-            IRI subjectId = (IRI) RestUtils.optActiveUser(context, engineManager).map(User::getResource)
+            IRI subjectId = (IRI) RestUtils.optActiveUser(servletRequest, engineManager).map(User::getResource)
                     .orElse(vf.createIRI(ANON_USER));
 
             List<IRI> actionIds = Arrays.stream(json.optJSONArray("actionId").stream().toArray())

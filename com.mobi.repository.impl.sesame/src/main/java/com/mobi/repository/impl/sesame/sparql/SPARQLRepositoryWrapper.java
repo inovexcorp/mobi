@@ -23,59 +23,42 @@ package com.mobi.repository.impl.sesame.sparql;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Deactivate;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.metatype.Configurable;
-import com.mobi.repository.api.DelegatingRepository;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.base.RepositoryWrapper;
-import com.mobi.repository.exception.RepositoryConfigException;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import org.apache.commons.validator.routines.UrlValidator;
+import com.mobi.repository.api.OsgiRepository;
+import com.mobi.repository.base.OsgiRepositoryWrapper;
+import com.mobi.repository.impl.sesame.RepositoryConfigHelper;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
-
-import java.util.Map;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.metatype.annotations.Designate;
 
 @Component(
         immediate = true,
-        provide = { Repository.class, DelegatingRepository.class },
+        service = { OsgiRepository.class },
         name = SPARQLRepositoryWrapper.NAME,
-        configurationPolicy = ConfigurationPolicy.require,
-        designateFactory = SPARQLRepositoryConfig.class,
-        properties = {
+        configurationPolicy = ConfigurationPolicy.REQUIRE,
+        property = {
                 "repositorytype=" + SPARQLRepositoryWrapper.REPOSITORY_TYPE
         }
 )
-public class SPARQLRepositoryWrapper extends RepositoryWrapper {
+@Designate(ocd = SPARQLRepositoryConfig.class)
+public class SPARQLRepositoryWrapper extends OsgiRepositoryWrapper {
 
     protected static final String REPOSITORY_TYPE = "sparql";
     protected static final String NAME = "com.mobi.service.repository." + REPOSITORY_TYPE;
 
     @Activate
-    protected void start(Map<String, Object> props) {
-        super.start(props);
-    }
-
-    @Deactivate
-    protected void stop() {
-        super.stop();
-    }
-
-    @Modified
-    protected void modified(Map<String, Object> props) {
-        super.modified(props);
-    }
-
-    @Override
-    protected Repository getRepo(Map<String, Object> props) {
-        SPARQLRepositoryConfig config = Configurable.createConfigurable(SPARQLRepositoryConfig.class, props);
-        this.repositoryID = config.id();
+    protected void start(final SPARQLRepositoryConfig config) {
+        RepositoryConfigHelper.validateBaseParams(config.id(), config.title());
+        RepositoryConfigHelper.validateUrl(config.endpointUrl(), "endpointUrl");
+        if ("".equals(config.updateEndpointUrl()) || config.updateEndpointUrl() != null) {
+            RepositoryConfigHelper.validateUrl(config.updateEndpointUrl(), "updateEndpointUrl");
+        }
 
         SPARQLRepository sesameSparqlStore;
-
         if (config.updateEndpointUrl() != null) {
             sesameSparqlStore = new SPARQLRepository(config.endpointUrl(), config.updateEndpointUrl());
         } else {
@@ -83,31 +66,28 @@ public class SPARQLRepositoryWrapper extends RepositoryWrapper {
         }
 
         sesameSparqlStore.enableQuadMode(true);
+        setDelegate(sesameSparqlStore);
+        this.repositoryID = config.id();
+        this.repositoryTitle = config.title();
+    }
 
-        SesameRepositoryWrapper repo = new SesameRepositoryWrapper(sesameSparqlStore);
-        repo.setConfig(config);
+    @Deactivate
+    protected void stop() {
+        try {
+            getDelegate().shutDown();
+        } catch (RepositoryException e) {
+            throw new RepositoryException("Could not shutdown Repository \"" + repositoryID + "\".", e);
+        }
+    }
 
-        return repo;
+    @Modified
+    protected void modified(final SPARQLRepositoryConfig config) {
+        stop();
+        start(config);
     }
 
     @Override
-    public void validateConfig(Map<String, Object> props) {
-        super.validateConfig(props);
-        SPARQLRepositoryConfig config = Configurable.createConfigurable(SPARQLRepositoryConfig.class, props);
-
-        String[] schemes = {"http","https"};
-        UrlValidator urlValidator = new UrlValidator(schemes, UrlValidator.ALLOW_LOCAL_URLS);
-        if (!urlValidator.isValid(config.endpointUrl())) {
-            throw new RepositoryConfigException(
-                    new IllegalArgumentException("Repository endpointUrl is not a valid URL: " + config.endpointUrl())
-            );
-        }
-
-        if (config.updateEndpointUrl() != null && !urlValidator.isValid(config.updateEndpointUrl())) {
-            throw new RepositoryConfigException(
-                    new IllegalArgumentException("Repository updateEndpointUrl is not a valid URL: "
-                            + config.updateEndpointUrl())
-            );
-        }
+    public Class<SPARQLRepositoryConfig> getConfigType() {
+        return SPARQLRepositoryConfig.class;
     }
 }

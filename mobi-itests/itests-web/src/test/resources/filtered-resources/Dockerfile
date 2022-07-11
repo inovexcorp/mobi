@@ -1,4 +1,4 @@
-FROM maven:3.3-jdk-8
+FROM maven:3.8.6-jdk-11
 
 # Maven filtered to produce correct versioning.
 ENV MOBI_VERSION ${project.version}
@@ -17,5 +17,4 @@ RUN echo "\norg.osgi.service.http.port=${http-port}" >> ./mobi-distribution/etc/
     && sed -i "s|sshPort = 8101|sshPort = ${ssh-port}|g" ./mobi-distribution/etc/org.apache.karaf.shell.cfg
 CMD ./mobi-distribution/bin/karaf server
 
-EXPOSE 10000
-
+EXPOSE ${https-port}

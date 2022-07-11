@@ -33,9 +33,6 @@ import static com.mobi.security.policy.api.xacml.XACML.SUBJECT_CATEGORY;
 import static com.mobi.security.policy.api.xacml.XACML.SUBJECT_ID;
 
 import com.mobi.exception.MobiException;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.xacml.jaxb.AttributeType;
 import com.mobi.security.policy.api.xacml.jaxb.AttributeValueType;
@@ -43,6 +40,9 @@ import com.mobi.security.policy.api.xacml.jaxb.AttributesType;
 import com.mobi.security.policy.api.xacml.jaxb.ObjectFactory;
 import com.mobi.security.policy.api.xacml.jaxb.RequestType;
 import com.mobi.vocabularies.xsd.XSD;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.ValueFactory;
 
 import java.io.StringWriter;
 import java.time.OffsetDateTime;

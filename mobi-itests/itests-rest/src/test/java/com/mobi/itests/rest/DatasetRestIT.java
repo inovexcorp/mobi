@@ -24,23 +24,18 @@ package com.mobi.itests.rest;
  */
 
 import static com.mobi.itests.rest.utils.RestITUtils.authenticateUser;
-import static com.mobi.itests.rest.utils.RestITUtils.getBaseUrl;
 import static com.mobi.itests.rest.utils.RestITUtils.createHttpClient;
+import static com.mobi.itests.rest.utils.RestITUtils.getBaseUrl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.itests.rest.utils.RestITUtils;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.Statements;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
+import com.mobi.repository.api.OsgiRepository;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -50,6 +45,13 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.apache.karaf.itests.KarafTestSupport;
 import org.junit.Before;
 import org.junit.Test;
@@ -122,15 +124,14 @@ public class DatasetRestIT extends KarafTestSupport {
         waitForService("(&(objectClass=com.mobi.jaas.rest.AuthRest))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
-        waitForService("(&(objectClass=com.mobi.rdf.api.ValueFactory))", 10000L);
 
         setupComplete = true;
     }
 
     @Test
     public void uploadDataToDataset() throws Exception {
-        ValueFactory vf = getOsgiService(ValueFactory.class);
-        Repository repo = getOsgiService(Repository.class, "id=system", 30000L);
+        ValueFactory vf = SimpleValueFactory.getInstance();
+        OsgiRepository repo = getOsgiService(OsgiRepository.class, "id=system", 30000L);
         IRI datasetIRI = vf.createIRI(DatasetRecord.dataset_IRI);
         IRI repositoryIRI = vf.createIRI(DatasetRecord.repository_IRI);
         IRI systemDefaultNGIRI = vf.createIRI(Dataset.systemDefaultNamedGraph_IRI);
@@ -145,13 +146,13 @@ public class DatasetRestIT extends KarafTestSupport {
             // Assert setup of DatasetRecord, Dataset, and system default named graph
             try (RepositoryConnection conn = repo.getConnection()) {
                 assertTrue(conn.size(recordId) > 0);
-                assertTrue(conn.contains(recordId, repositoryIRI, vf.createLiteral("system")));
+                assertTrue(ConnectionUtils.contains(conn, recordId, repositoryIRI, vf.createLiteral("system")));
                 RepositoryResult<Statement> datasetResults = conn.getStatements(recordId, datasetIRI, null);
                 assertTrue(datasetResults.hasNext());
                 Optional<Resource> opt1 = Statements.objectResource(datasetResults.next());
                 assertTrue(opt1.isPresent());
                 datasetId = opt1.get();
-                assertTrue(conn.contains(datasetId, null, null));
+                assertTrue(ConnectionUtils.contains(conn, datasetId, null, null));
                 RepositoryResult<Statement> sdngResults = conn.getStatements(datasetId, systemDefaultNGIRI, null);
                 assertTrue(sdngResults.hasNext());
                 Optional<Resource> opt2 = Statements.objectResource(sdngResults.next());

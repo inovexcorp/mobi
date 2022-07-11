@@ -27,10 +27,10 @@ import com.mobi.etl.api.delimited.MappingId;
 import com.mobi.etl.api.delimited.MappingWrapper;
 import com.mobi.etl.api.ontologies.delimited.ClassMapping;
 import com.mobi.etl.api.ontologies.delimited.Mapping;
-import com.mobi.rdf.api.Model;
+import org.eclipse.rdf4j.model.Model;
 
-import javax.annotation.Nonnull;
 import java.util.Collection;
+import javax.annotation.Nonnull;
 
 public class SimpleMappingWrapper implements MappingWrapper {
 

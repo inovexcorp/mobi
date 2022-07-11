@@ -27,9 +27,9 @@ import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.etl.api.pagination.MappingPaginatedSearchParams;
 import com.mobi.exception.MobiException;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.File;

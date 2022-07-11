@@ -23,8 +23,8 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
 
 import java.time.OffsetDateTime;
 import java.util.List;

@@ -25,8 +25,8 @@ package com.mobi.etl.api.pagination;
 
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.etl.api.ontologies.delimited.MappingRecord;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 
 public class MappingPaginatedSearchParams {
     private PaginatedSearchParams.Builder builder;

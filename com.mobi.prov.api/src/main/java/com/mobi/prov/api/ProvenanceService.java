@@ -25,11 +25,8 @@ package com.mobi.prov.api;
 
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.prov.api.builder.ActivityConfig;
-import com.mobi.rdf.api.Resource;
-import com.mobi.ontologies.provo.Activity;
-import com.mobi.prov.api.builder.ActivityConfig;
-import com.mobi.rdf.api.Resource;
-import com.mobi.repository.api.RepositoryConnection;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 
 import java.util.Optional;
 

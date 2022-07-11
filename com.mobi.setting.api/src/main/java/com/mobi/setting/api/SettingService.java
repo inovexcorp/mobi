@@ -24,10 +24,10 @@ package com.mobi.setting.api;
  */
 
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
 import com.mobi.setting.api.ontologies.Setting;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
 
 import java.util.Optional;
 import java.util.Set;
@@ -79,7 +79,7 @@ public interface SettingService<T extends Setting> {
     Optional<T> getSetting(Resource settingId);
 
     /**
-     * Creates a {@link Setting} of type {@link T} and stores it in the {@link com.mobi.repository.api.Repository}.
+     * Creates a {@link Setting} of type {@link T} and stores it in the {@link com.mobi.repository.api.OsgiRepository}.
      * If the service utilizes a {@link User} and one is provided, then it adds the {@link Setting} for that user.
      *
      * @param setting A {@link Setting} of type {@link T} to add to the repository.
@@ -90,7 +90,7 @@ public interface SettingService<T extends Setting> {
 
     /**
      * Creates a {@link Setting} of type {@link T} from the provided {@link Model} and stores it in the
-     * {@link com.mobi.repository.api.Repository}. Uses the provided {@code settingType} to find the factory type to use
+     * {@link com.mobi.repository.api.OsgiRepository}. Uses the provided {@code settingType} to find the factory type to use
      * to create the {@link Setting}. If the service utilizes a {@link User} and one is provided, then it adds the
      * {@link Setting} for that user.
      *

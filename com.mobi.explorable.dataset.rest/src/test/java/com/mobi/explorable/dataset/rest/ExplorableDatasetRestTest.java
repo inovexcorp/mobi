@@ -28,16 +28,16 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -51,35 +51,35 @@ import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import com.mobi.rest.test.util.TestQueryResult;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import com.mobi.repository.impl.sesame.query.TestQueryResult;
-import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.rest.test.util.MobiRestTestCXF;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
-import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -90,18 +90,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 
-public class ExplorableDatasetRestTest extends MobiRestTestNg {
-    private ExplorableDatasetRest rest;
-
-    private ValueFactory vf;
-    private ModelFactory mf;
+public class ExplorableDatasetRestTest extends MobiRestTestCXF {
+    private AutoCloseable closeable;
     private OrmFactory<OntologyRecord> ontologyRecordFactory;
 
-    private Repository repository;
+    private MemoryRepositoryWrapper repository;
     private RepositoryConnection conn;
     private Resource recordId;
     private DatasetRecord record;
@@ -128,26 +124,22 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
     private static final String ONTOLOGY_RECORD_ID_STR = "https://mobi.com/records/0";
     private static final String CATALOG_ID_STR = "https://mobi.com/catalog-local";
 
-    @Mock
-    private DatasetManager datasetManager;
+    // Mock services used in server
+    private static ExplorableDatasetRest rest;
+    private static ValueFactory vf;
+    private static ModelFactory mf;
+    private static DatasetManager datasetManager;
+    private static CatalogConfigProvider configProvider;
+    private static CatalogManager catalogManager;
+    private static OntologyManager ontologyManager;
+    private static BNodeService bNodeService;
 
-    @Mock
-    private CatalogConfigProvider configProvider;
-
-    @Mock
-    private CatalogManager catalogManager;
 
     @Mock
     private DatasetConnection datasetConnection;
 
     @Mock
-    private SesameTransformer sesameTransformer;
-
-    @Mock
     private Ontology ontology;
-
-    @Mock
-    private OntologyManager ontologyManager;
 
     @Mock
     private DataProperty dataProperty;
@@ -155,15 +147,33 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
     @Mock
     private ObjectProperty objectProperty;
 
-    @Mock
-    private BNodeService bNodeService;
-
-    @Override
-    protected Application configureApp() throws Exception {
-        MockitoAnnotations.initMocks(this);
-
+    @BeforeClass
+    public static void startServer() {
         vf = getValueFactory();
         mf = getModelFactory();
+
+        datasetManager = Mockito.mock(DatasetManager.class);
+        catalogManager = Mockito.mock(CatalogManager.class);
+        configProvider = Mockito.mock(CatalogConfigProvider.class);
+        
+        ontologyManager = Mockito.mock(OntologyManager.class);
+        bNodeService = Mockito.mock(BNodeService.class);
+
+        rest = new ExplorableDatasetRest();
+        injectOrmFactoryReferencesIntoService(rest);
+        rest.setConfigProvider(configProvider);
+        rest.setCatalogManager(catalogManager);
+        rest.setDatasetManager(datasetManager);
+        rest.setOntologyManager(ontologyManager);
+        rest.setBNodeService(bNodeService);
+
+        configureServer(rest);
+    }
+
+    @Before
+    public void setupMocks() throws Exception {
+        closeable = MockitoAnnotations.openMocks(this);
+        reset(datasetManager, catalogManager, datasetConnection, ontology, bNodeService);
 
         OrmFactory<DatasetRecord> datasetRecordFactory = getRequiredOrmFactory(DatasetRecord.class);
         ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
@@ -177,15 +187,15 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
         record.setOntology(Stream.of(identifier.getNode()).collect(Collectors.toSet()));
         record.getModel().addAll(identifier.getStatements());
 
-        repository = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repository.initialize();
+        repository = new MemoryRepositoryWrapper();
+        repository.setDelegate(new SailRepository(new MemoryStore()));
 
         InputStream testData = getClass().getResourceAsStream("/test-dataset-data.trig");
         conn = repository.getConnection();
-        conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+        conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
 
         InputStream compiledData = getClass().getResourceAsStream("/compiled-resource.trig");
-        compiledModel = Values.mobiModel(Rio.parse(compiledData, "", RDFFormat.TRIG));
+        compiledModel = Rio.parse(compiledData, "", RDFFormat.TRIG);
 
         classId = vf.createIRI(CLASS_ID_STR);
         IRI dataPropertyId = vf.createIRI(DATA_PROPERTY_ID);
@@ -203,39 +213,16 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
         when(objectProperty.getIRI()).thenReturn(objectPropertyId);
         when(ontologyManager.retrieveOntology(ontologyRecordId, vf.createIRI(branchId), vf.createIRI(commitId))).thenReturn(Optional.of(ontology));
 
-        rest = new ExplorableDatasetRest();
-        injectOrmFactoryReferencesIntoService(rest);
-        rest.setConfigProvider(configProvider);
-        rest.setCatalogManager(catalogManager);
-        rest.setDatasetManager(datasetManager);
-        rest.setFactory(vf);
-        rest.setSesameTransformer(sesameTransformer);
-        rest.setModelFactory(mf);
-        rest.setOntologyManager(ontologyManager);
-        rest.setBNodeService(bNodeService);
-
-        return new ResourceConfig().register(rest);
-    }
-
-    @BeforeMethod
-    public void setupMocks() {
-        reset(datasetManager, catalogManager, sesameTransformer, datasetConnection, ontology, bNodeService);
-
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.of(record));
         when(datasetManager.getConnection(recordId)).thenReturn(datasetConnection);
 
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(compiledModel);
         when(catalogManager.getRecord(catalogId, ontologyRecordId, ontologyRecordFactory)).thenReturn(Optional.empty());
 
-        when(sesameTransformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
-        when(sesameTransformer.mobiIRI(any(org.eclipse.rdf4j.model.IRI.class))).thenAnswer(i -> Values.mobiIRI(i.getArgumentAt(0, org.eclipse.rdf4j.model.IRI.class)));
-        when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(sesameTransformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-
-        when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgumentAt(0, String.class)));
-        when(datasetConnection.prepareGraphQuery(any(String.class))).thenAnswer(i -> conn.prepareGraphQuery(i.getArgumentAt(0, String.class)));
-        when(datasetConnection.getStatements(any(Resource.class), any(IRI.class), any(Value.class))).thenAnswer(i -> conn.getStatements(i.getArgumentAt(0, Resource.class), i.getArgumentAt(1, IRI.class), i.getArgumentAt(2, Value.class)));
-        when(datasetConnection.contains(any(Resource.class), any(IRI.class), any(Value.class))).thenAnswer(i -> conn.contains(i.getArgumentAt(0, Resource.class), i.getArgumentAt(1, IRI.class), i.getArgumentAt(2, Value.class)));
+        when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgument(0, String.class)));
+        when(datasetConnection.prepareGraphQuery(any(String.class))).thenAnswer(i -> conn.prepareGraphQuery(i.getArgument(0, String.class)));
+        when(datasetConnection.getStatements(any(), any(), any())).thenAnswer(i -> conn.getStatements(i.getArgument(0, Resource.class), i.getArgument(1, IRI.class), i.getArgument(2, Value.class)));
+        when(datasetConnection.contains(any(Resource.class), any(), any())).thenAnswer(i -> ConnectionUtils.contains(conn, i.getArgument(0, Resource.class), i.getArgument(1, IRI.class), i.getArgument(2, Value.class)));
 
         when(ontology.getAllClassDataProperties(classId)).thenReturn(dataProperties);
         when(ontology.getAllClassObjectProperties(classId)).thenReturn(objectProperties);
@@ -248,12 +235,13 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
         when(ontology.getSubClassesFor(any(IRI.class))).thenReturn(Collections.singleton(vf.createIRI(CLASS_ID_STR_2)));
         when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenReturn(new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
 
-        when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
-        when(bNodeService.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
+        when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgument(0, Model.class));
+        when(bNodeService.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgument(0, Statement.class));
     }
 
-    @AfterTest
-    public void after() {
+    @After
+    public void after() throws Exception {
+        closeable.close();
         conn.close();
     }
 
@@ -269,7 +257,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
     @Test
     public void getClassDetailsWhenClassesNotFound() {
         //Setup:
-        when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(mf.createModel());
+        when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(mf.createEmptyModel());
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
@@ -282,7 +270,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
     public void getClassDetailsWhenDeprecatedClassFound() throws Exception {
         //Setup:
         InputStream partialData = getClass().getResourceAsStream("/partial-compiled-resource.trig");
-        Model partialModel = Values.mobiModel(Rio.parse(partialData, "", RDFFormat.TRIG));
+        Model partialModel = Rio.parse(partialData, "", RDFFormat.TRIG);
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(partialModel);
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
@@ -675,10 +663,10 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
                 .element(_Thing.title_IRI, new JSONArray().add(new JSONObject().element("@value", "title")));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
-                + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance));
+                + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance.toString()));
         assertEquals(response.getStatus(), 200);
         verify(datasetConnection).begin();
-        verify(datasetConnection).remove(any(Iterable.class));
+        verify(datasetConnection).remove(any(RepositoryResult.class));
         verify(datasetConnection).add(any(Model.class));
         verify(bNodeService).deskolemize(any(Model.class));
         verify(datasetConnection).commit();
@@ -691,10 +679,10 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
                 .element(_Thing.title_IRI, new JSONArray().add(new JSONObject().element("@value", "title")));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
-                + encode(REIFIED_ID)).request().put(Entity.json(instance));
+                + encode(REIFIED_ID)).request().put(Entity.json(instance.toString()));
         assertEquals(response.getStatus(), 200);
         verify(datasetConnection).begin();
-        verify(datasetConnection, times(2)).remove(any(Iterable.class));
+        verify(datasetConnection, times(2)).remove(any(RepositoryResult.class));
         verify(datasetConnection).add(any(Model.class));
         verify(bNodeService).deskolemize(any(Model.class));
         verify(datasetConnection).commit();
@@ -707,7 +695,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
                 .element(_Thing.title_IRI, new JSONObject().element("@value", "title"));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
-                + encode(MISSING_ID)).request().put(Entity.json(instance));
+                + encode(MISSING_ID)).request().put(Entity.json(instance.toString()));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -719,7 +707,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
-                + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance));
+                + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance.toString()));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -731,7 +719,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
-                + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance));
+                + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance.toString()));
         assertEquals(response.getStatus(), 500);
     }
 

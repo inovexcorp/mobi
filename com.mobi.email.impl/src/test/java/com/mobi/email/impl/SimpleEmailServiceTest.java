@@ -1,42 +1,5 @@
 package com.mobi.email.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.internal.verification.VerificationModeFactory.times;
-
-import com.dumbster.smtp.SimpleSmtpServer;
-import com.dumbster.smtp.SmtpMessage;
-import com.mobi.email.api.EmailServiceConfig;
-import com.mobi.security.api.EncryptionService;
-import com.mobi.server.api.Mobi;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.service.cm.ConfigurationAdmin;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-
 /*-
  * #%L
  * com.mobi.email.impl
@@ -59,10 +22,44 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({FrameworkUtil.class})
-public class SimpleEmailServiceTest {
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
+
+import com.dumbster.smtp.SimpleSmtpServer;
+import com.dumbster.smtp.SmtpMessage;
+import com.mobi.email.api.EmailServiceConfig;
+import com.mobi.security.api.EncryptionService;
+import com.mobi.server.api.Mobi;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.service.cm.ConfigurationAdmin;
+
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+public class SimpleEmailServiceTest {
+    private AutoCloseable closeable;
     private SimpleEmailService es;
     private Map<String, Object> config;
     private SimpleSmtpServer smtpServer;
@@ -93,10 +90,8 @@ public class SimpleEmailServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
-        mockStatic(FrameworkUtil.class);
-        when(FrameworkUtil.getBundle(any())).thenReturn(bundle);
         when(mobi.getHostName()).thenReturn("https://localhost:8443/");
         templatePath = SimpleEmailService.class.getResource("/emailTemplate.html");
         when(bundle.getEntry(any(String.class))).thenReturn(templatePath);
@@ -121,37 +116,52 @@ public class SimpleEmailServiceTest {
 
         System.setProperty("karaf.etc", SimpleEmailServiceTest.class.getResource("/").getPath());
 
-        Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
-        m.setAccessible(true);
-        m.invoke(es, emailServiceConfig);
-        assertNotNull(es);
+        try (MockedStatic<FrameworkUtil> frameworkUtil = Mockito.mockStatic(FrameworkUtil.class)) {
+            frameworkUtil.when(() -> FrameworkUtil.getBundle(any())).thenReturn(bundle);
+
+            Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
+            m.setAccessible(true);
+            m.invoke(es, emailServiceConfig);
+            assertNotNull(es);
+        }
     }
 
     @After
     public void tearDown() throws Exception {
         smtpServer.stop();
+        closeable.close();
     }
 
     @Test
     public void encryptionEnabledTest() throws Exception {
         when(encryptionService.isEnabled()).thenReturn(true);
         when(encryptionService.decrypt(anyString(), anyString(), any())).thenReturn("TEST_PASS");
-        Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
-        m.setAccessible(true);
-        m.invoke(es, emailServiceConfig);
-        assertNotNull(es);
-        verify(encryptionService, times(1)).decrypt(anyString(), anyString(), any());
+
+        try (MockedStatic<FrameworkUtil> frameworkUtil = Mockito.mockStatic(FrameworkUtil.class)) {
+            frameworkUtil.when(() -> FrameworkUtil.getBundle(any())).thenReturn(bundle);
+
+            Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
+            m.setAccessible(true);
+            m.invoke(es, emailServiceConfig);
+            assertNotNull(es);
+            verify(encryptionService, times(1)).decrypt(anyString(), anyString(), any());
+        }
     }
 
     @Test
     public void encryptionDisabledTest() throws Exception {
         when(encryptionService.isEnabled()).thenReturn(false);
         when(encryptionService.decrypt(anyString(), anyString(), any())).thenReturn("TEST_PASS");
-        Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
-        m.setAccessible(true);
-        m.invoke(es, emailServiceConfig);
-        assertNotNull(es);
-        verify(encryptionService, times(0)).decrypt(anyString(), anyString(), any());
+
+        try (MockedStatic<FrameworkUtil> frameworkUtil = Mockito.mockStatic(FrameworkUtil.class)) {
+            frameworkUtil.when(() -> FrameworkUtil.getBundle(any())).thenReturn(bundle);
+
+            Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
+            m.setAccessible(true);
+            m.invoke(es, emailServiceConfig);
+            assertNotNull(es);
+            verify(encryptionService, times(0)).decrypt(anyString(), anyString(), any());
+        }
     }
 
     @Test
@@ -187,9 +197,13 @@ public class SimpleEmailServiceTest {
     @Test(expected = ExecutionException.class)
     public void sendSimpleEmailInvalidPortTest() throws Exception {
         when(emailServiceConfig.port()).thenReturn(1);
-        Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
-        m.setAccessible(true);
-        m.invoke(es, emailServiceConfig);
+        try (MockedStatic<FrameworkUtil> frameworkUtil = Mockito.mockStatic(FrameworkUtil.class)) {
+            frameworkUtil.when(() -> FrameworkUtil.getBundle(any())).thenReturn(bundle);
+
+            Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
+            m.setAccessible(true);
+            m.invoke(es, emailServiceConfig);
+        }
 
         CompletableFuture<Set<String>> cf = es.sendSimpleEmail(SUBJECT_LINE, TEXT_MESSAGE, TO_EMAIL_ADDRESS);
         cf.get();
@@ -198,9 +212,13 @@ public class SimpleEmailServiceTest {
     @Test
     public void sendSimpleEmailAbsoluteTemplateTest() throws Exception {
         when(emailServiceConfig.emailTemplate()).thenReturn(URLDecoder.decode(templatePath.getPath(), "UTF-8"));
-        Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
-        m.setAccessible(true);
-        m.invoke(es, emailServiceConfig);
+        try (MockedStatic<FrameworkUtil> frameworkUtil = Mockito.mockStatic(FrameworkUtil.class)) {
+            frameworkUtil.when(() -> FrameworkUtil.getBundle(any())).thenReturn(bundle);
+
+            Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
+            m.setAccessible(true);
+            m.invoke(es, emailServiceConfig);
+        }
 
         CompletableFuture<Set<String>> cf = es.sendSimpleEmail(SUBJECT_LINE, TEXT_MESSAGE, TO_EMAIL_ADDRESS);
         Set<String> failedEmails = cf.get();
@@ -246,9 +264,13 @@ public class SimpleEmailServiceTest {
     @Test(expected = ExecutionException.class)
     public void sendEmailInvalidPortTest() throws Exception {
         when(emailServiceConfig.port()).thenReturn(1);
-        Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
-        m.setAccessible(true);
-        m.invoke(es, emailServiceConfig);
+        try (MockedStatic<FrameworkUtil> frameworkUtil = Mockito.mockStatic(FrameworkUtil.class)) {
+            frameworkUtil.when(() -> FrameworkUtil.getBundle(any())).thenReturn(bundle);
+
+            Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
+            m.setAccessible(true);
+            m.invoke(es, emailServiceConfig);
+        }
 
         CompletableFuture<Set<String>> cf = es.sendEmail(SUBJECT_LINE, HTML_MESSAGE, TO_EMAIL_ADDRESS);
         cf.get();

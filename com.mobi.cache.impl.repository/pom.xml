@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.23.0-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -73,7 +73,7 @@
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.annotation</artifactId>
+            <artifactId>osgi.annotation</artifactId>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
@@ -110,14 +110,6 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-module-junit4</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-api-mockito</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
@@ -142,7 +134,6 @@
                             com.mobi.cache.api; provide:=true,
                             com.mobi.cache.api.repository; provide:=true
                         </Export-Package>
-                        <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>

@@ -35,21 +35,20 @@ import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.provo.Activity;
-import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.core.utils.Values;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -63,8 +62,8 @@ import java.util.List;
 import java.util.UUID;
 
 public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
-
-    private Repository repo;
+    private AutoCloseable closeable;
+    private MemoryRepositoryWrapper repo;
     private SimpleCatalogManager manager;
     private SimpleCatalogUtilsService utilsService;
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
@@ -86,29 +85,25 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
 
     @Before
     public void setUp() throws Exception {
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));;
-        repo.initialize();
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         when(configProvider.getRepository()).thenReturn(repo);
 
         manager = new SimpleCatalogManager();
         injectOrmFactoryReferencesIntoService(manager);
-        manager.setConfigProvider(configProvider);
-        manager.setValueFactory(VALUE_FACTORY);
-        manager.setModelFactory(MODEL_FACTORY);
-        manager.setUtils(utilsService);
+        manager.configProvider = configProvider;
+        manager.utils = utilsService;
 
         utilsService = new SimpleCatalogUtilsService();
         injectOrmFactoryReferencesIntoService(utilsService);
-        utilsService.setMf(MODEL_FACTORY);
-        utilsService.setVf(VALUE_FACTORY);
 
         InputStream testData = getClass().getResourceAsStream("/testCommitChainData.trig");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+            conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
         }
 
         manager.start();
@@ -122,6 +117,11 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
         commentB = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"),
                 VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"),
                 VALUE_FACTORY.createLiteral("Comment B"));
+    }
+
+    @After
+    public void reset() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -138,9 +138,9 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
         IRI rightBranchIri = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#right-branch1");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            Model sourceCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitDIri), MODEL_FACTORY);
-            Model targetCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitCIri), MODEL_FACTORY);
-            Model rightBranchModel = RepositoryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
+            Model sourceCommitModel = QueryResults.asModel(conn.getStatements(null, null, null, commitDIri), MODEL_FACTORY);
+            Model targetCommitModel = QueryResults.asModel(conn.getStatements(null, null, null, commitCIri), MODEL_FACTORY);
+            Model rightBranchModel = QueryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
             Commit sourceHead = commitFactory.getExisting(commitDIri, sourceCommitModel).get();
             Commit targetHead = commitFactory.getExisting(commitCIri, targetCommitModel).get();
             Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
@@ -148,10 +148,10 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
             // Resolve conflict and delete statement
-            Model deletions = MODEL_FACTORY.createModel();
+            Model deletions = MODEL_FACTORY.createEmptyModel();
             deletions.add(commentB);
             utilsService.addCommit(rightBranch, mergeCommit, conn);
-            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), deletions, conn);
+            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), deletions, conn);
 
             List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
             Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
@@ -176,9 +176,9 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
         IRI rightBranchIri = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#right-branch2");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            Model sourceCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitDIri), MODEL_FACTORY);
-            Model targetCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitEIri), MODEL_FACTORY);
-            Model rightBranchModel = RepositoryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
+            Model sourceCommitModel = QueryResults.asModel(conn.getStatements(null, null, null, commitDIri), MODEL_FACTORY);
+            Model targetCommitModel = QueryResults.asModel(conn.getStatements(null, null, null, commitEIri), MODEL_FACTORY);
+            Model rightBranchModel = QueryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
             Commit sourceHead = commitFactory.getExisting(commitDIri, sourceCommitModel).get();
             Commit targetHead = commitFactory.getExisting(commitEIri, targetCommitModel).get();
             Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
@@ -186,10 +186,10 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
             // Resolve conflict and delete statement
-            Model deletions = MODEL_FACTORY.createModel();
+            Model deletions = MODEL_FACTORY.createEmptyModel();
             deletions.add(commentB);
             utilsService.addCommit(rightBranch, mergeCommit, conn);
-            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), deletions, conn);
+            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), deletions, conn);
 
             List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
             Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
@@ -214,9 +214,9 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
         IRI rightBranchIri = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#right-branch3");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            Model sourceCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitDIri), MODEL_FACTORY);
-            Model targetCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitFIri), MODEL_FACTORY);
-            Model rightBranchModel = RepositoryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
+            Model sourceCommitModel = QueryResults.asModel(conn.getStatements(null, null, null, commitDIri), MODEL_FACTORY);
+            Model targetCommitModel = QueryResults.asModel(conn.getStatements(null, null, null, commitFIri), MODEL_FACTORY);
+            Model rightBranchModel = QueryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
             Commit sourceHead = commitFactory.getExisting(commitDIri, sourceCommitModel).get();
             Commit targetHead = commitFactory.getExisting(commitFIri, targetCommitModel).get();
             Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
@@ -224,10 +224,10 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
             // Resolve conflict and delete statement
-            Model deletions = MODEL_FACTORY.createModel();
+            Model deletions = MODEL_FACTORY.createEmptyModel();
             deletions.add(commentB);
             utilsService.addCommit(rightBranch, mergeCommit, conn);
-            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), deletions, conn);
+            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), deletions, conn);
 
             List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
             Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
@@ -252,9 +252,9 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
         IRI rightBranchIri = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#right-branch1");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            Model sourceCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitJIri), MODEL_FACTORY);
-            Model targetCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitIIri), MODEL_FACTORY);
-            Model rightBranchModel = RepositoryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
+            Model sourceCommitModel = QueryResults.asModel(conn.getStatements(null, null, null, commitJIri), MODEL_FACTORY);
+            Model targetCommitModel = QueryResults.asModel(conn.getStatements(null, null, null, commitIIri), MODEL_FACTORY);
+            Model rightBranchModel = QueryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
             Commit sourceHead = commitFactory.getExisting(commitJIri, sourceCommitModel).get();
             Commit targetHead = commitFactory.getExisting(commitIIri, targetCommitModel).get();
             Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
@@ -262,7 +262,7 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
             utilsService.addCommit(rightBranch, mergeCommit, conn);
-            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), MODEL_FACTORY.createModel(), conn);
+            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), MODEL_FACTORY.createEmptyModel(), conn);
 
             List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
             Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
@@ -286,9 +286,9 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
         IRI rightBranchIri = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#right-branch2");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            Model sourceCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitJIri), MODEL_FACTORY);
-            Model targetCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitKIri), MODEL_FACTORY);
-            Model rightBranchModel = RepositoryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
+            Model sourceCommitModel = QueryResults.asModel(conn.getStatements(null, null, null, commitJIri), MODEL_FACTORY);
+            Model targetCommitModel = QueryResults.asModel(conn.getStatements(null, null, null, commitKIri), MODEL_FACTORY);
+            Model rightBranchModel = QueryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
             Commit sourceHead = commitFactory.getExisting(commitJIri, sourceCommitModel).get();
             Commit targetHead = commitFactory.getExisting(commitKIri, targetCommitModel).get();
             Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
@@ -296,7 +296,7 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
             utilsService.addCommit(rightBranch, mergeCommit, conn);
-            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), MODEL_FACTORY.createModel(), conn);
+            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), MODEL_FACTORY.createEmptyModel(), conn);
 
             List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
             Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
@@ -320,9 +320,9 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
         IRI rightBranchIri = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#right-branch3");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            Model sourceCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitJIri), MODEL_FACTORY);
-            Model targetCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitLIri), MODEL_FACTORY);
-            Model rightBranchModel = RepositoryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
+            Model sourceCommitModel = QueryResults.asModel(conn.getStatements(null, null, null, commitJIri), MODEL_FACTORY);
+            Model targetCommitModel = QueryResults.asModel(conn.getStatements(null, null, null, commitLIri), MODEL_FACTORY);
+            Model rightBranchModel = QueryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
             Commit sourceHead = commitFactory.getExisting(commitJIri, sourceCommitModel).get();
             Commit targetHead = commitFactory.getExisting(commitLIri, targetCommitModel).get();
             Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
@@ -330,7 +330,7 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
             utilsService.addCommit(rightBranch, mergeCommit, conn);
-            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), MODEL_FACTORY.createModel(), conn);
+            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createEmptyModel(), MODEL_FACTORY.createEmptyModel(), conn);
 
             List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
             Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
@@ -354,7 +354,7 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Branch branch = branchFactory.createNew(VALUE_FACTORY.createIRI("urn:testBranch"));
             utilsService.addObject(branch, conn);
             Commit previousCommit = null;
-            Model statementsToDelete = getModelFactory().createModel();
+            Model statementsToDelete = getModelFactory().createEmptyModel();
             int numberOfCommits = 1000;
             for (int i = 0; i < numberOfCommits; i++) {
                 IRI commitIRI = VALUE_FACTORY.createIRI("urn:commit" + i);
@@ -375,8 +375,9 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
                 commit.setProperty(revisionIRI, VALUE_FACTORY.createIRI(Activity.generated_IRI));
                 commit.setProperty(VALUE_FACTORY.createLiteral(df.format(calendar.getTime())), PROV_AT_TIME);
 
-                Model additions = MODEL_FACTORY.createModel();
-                Model currentDeletions = MODEL_FACTORY.createModel(statementsToDelete);
+                Model additions = MODEL_FACTORY.createEmptyModel();
+                Model currentDeletions = MODEL_FACTORY.createEmptyModel();
+                currentDeletions.addAll(statementsToDelete);
                 statementsToDelete.clear();
 
                 for (int j = 0; j < 10; j++) {

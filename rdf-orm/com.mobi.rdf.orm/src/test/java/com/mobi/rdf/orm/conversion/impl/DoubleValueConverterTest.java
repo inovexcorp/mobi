@@ -26,7 +26,7 @@ package com.mobi.rdf.orm.conversion.impl;
 import com.mobi.rdf.orm.conversion.ValueConversionException;
 import junit.framework.TestCase;
 import org.junit.Test;
-import com.mobi.rdf.api.Value;
+import org.eclipse.rdf4j.model.Value;
 import com.mobi.rdf.orm.conversion.ValueConversionException;
 
 public class DoubleValueConverterTest extends ValueConverterTestCase<Double> {

@@ -33,6 +33,7 @@ import com.mobi.jaas.api.modules.token.SimpleTokenLoginModule;
 import com.mobi.jaas.api.modules.token.TokenLoginModule;
 import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.jaas.proxy.ProxyLoginModule;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -43,6 +44,7 @@ import org.osgi.framework.BundleContext;
 import java.util.Map;
 
 public class SimpleTokenLoginModuleProviderTest {
+    private AutoCloseable closeable;
     private SimpleTokenLoginModuleProvider provider;
 
     private long bundleId = 10L;
@@ -61,13 +63,18 @@ public class SimpleTokenLoginModuleProviderTest {
 
     @Before
     public void before() {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         when(context.getBundle()).thenReturn(bundle);
         when(bundle.getBundleId()).thenReturn(bundleId);
 
         provider = new SimpleTokenLoginModuleProvider();
-        provider.setEngineManager(engineManager);
-        provider.setTokenManager(tokenManager);
+        provider.engineManager = engineManager;
+        provider.tokenManager = tokenManager;
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test

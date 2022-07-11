@@ -25,11 +25,11 @@ package com.mobi.dataset.api.builder;
 
 
 import com.mobi.dataset.ontology.dataset.MobiDataset_Thing;
-import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 
 public class OntologyIdentifier {
     private Resource recordId;
@@ -43,7 +43,7 @@ public class OntologyIdentifier {
         this.branchId = vf.createIRI(branchId);
         this.commitId = vf.createIRI(commitId);
         this.node = vf.createBNode();
-        statements = mf.createModel();
+        statements = mf.createEmptyModel();
         statements.add(this.node, vf.createIRI(MobiDataset_Thing.linksToRecord_IRI), this.recordId);
         statements.add(this.node, vf.createIRI(MobiDataset_Thing.linksToBranch_IRI), this.branchId);
         statements.add(this.node, vf.createIRI(MobiDataset_Thing.linksToCommit_IRI), this.commitId);
@@ -54,7 +54,7 @@ public class OntologyIdentifier {
         this.branchId = branchId;
         this.commitId = commitId;
         this.node = vf.createBNode();
-        statements = mf.createModel();
+        statements = mf.createEmptyModel();
         statements.add(this.node, vf.createIRI(MobiDataset_Thing.linksToRecord_IRI), this.recordId);
         statements.add(this.node, vf.createIRI(MobiDataset_Thing.linksToBranch_IRI), this.branchId);
         statements.add(this.node, vf.createIRI(MobiDataset_Thing.linksToCommit_IRI), this.commitId);

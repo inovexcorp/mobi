@@ -24,7 +24,7 @@ package com.mobi.catalog.api.builder;
  */
 
 
-import com.mobi.rdf.api.Model;
+import org.eclipse.rdf4j.model.Model;
 
 public class Difference {
     private Model additions;

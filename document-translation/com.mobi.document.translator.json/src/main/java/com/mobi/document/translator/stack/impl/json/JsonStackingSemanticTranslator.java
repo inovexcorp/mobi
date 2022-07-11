@@ -23,17 +23,10 @@ package com.mobi.document.translator.stack.impl.json;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.document.translator.SemanticTranslationException;
 import com.mobi.document.translator.SemanticTranslator;
@@ -44,6 +37,11 @@ import com.mobi.document.translator.ontology.ExtractedOntology;
 import com.mobi.document.translator.stack.AbstractStackingSemanticTranslator;
 import com.mobi.document.translator.stack.StackingSemanticTranslator;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Value;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +49,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
-@Component(immediate = true, provide = {SemanticTranslator.class, StackingSemanticTranslator.class})
+@Component(immediate = true, service = {SemanticTranslator.class, StackingSemanticTranslator.class})
 public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTranslator<JsonStackItem>
         implements StackingSemanticTranslator<JsonStackItem> {
 
@@ -61,16 +59,6 @@ public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTran
 
     public JsonStackingSemanticTranslator() {
         super("json", "application/json");
-    }
-
-    @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        super.valueFactory = valueFactory;
-    }
-
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        super.modelFactory = modelFactory;
     }
 
     @Reference
@@ -86,7 +74,7 @@ public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTran
     @Override
     public Model translate(InputStream dataStream, String entityIdentifier, ExtractedOntology managedOntology)
             throws SemanticTranslationException {
-        final Model result = modelFactory.createModel();
+        final Model result = modelFactory.createEmptyModel();
         try (final JsonParser jsonParser = JSON_FACTORY.createParser(dataStream)) {
             JsonToken token = null;
             while ((token = jsonParser.nextToken()) != null) {

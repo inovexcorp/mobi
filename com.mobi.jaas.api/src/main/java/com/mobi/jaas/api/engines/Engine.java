@@ -26,7 +26,7 @@ package com.mobi.jaas.api.engines;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.Resource;
+import org.eclipse.rdf4j.model.Resource;
 
 import java.util.Optional;
 import java.util.Set;

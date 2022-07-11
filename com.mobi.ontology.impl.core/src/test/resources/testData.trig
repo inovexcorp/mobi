@@ -11,6 +11,10 @@ records:ontology-record a ontedit:OntologyRecord ;
 
 branches:branch a mcat:Branch .
 
+<http://mobi.com/test/revisions#revision> mcat:additions <http://mobi.com/test/additions#commit> .
+
+<http://mobi.com/test/revisions#revisionUsed> mcat:additions <http://mobi.com/test/additions#used> .
+
 GRAPH <http://mobi.com/test/additions#commit> {
     <http://test.com/ontology/new> a owl:Ontology .
 }

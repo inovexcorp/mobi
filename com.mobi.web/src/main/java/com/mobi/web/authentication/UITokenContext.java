@@ -24,13 +24,13 @@ package com.mobi.web.authentication;
  */
 
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.jaas.api.token.TokenManager;
 import com.nimbusds.jwt.SignedJWT;
 import org.ops4j.pax.web.extender.whiteboard.ExtenderConstants;
 import org.osgi.framework.BundleContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.http.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +41,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @Component(
-        provide = { UITokenContext.class, HttpContext.class },
-        properties = {
+        service = { UITokenContext.class, HttpContext.class },
+        property = {
                 ExtenderConstants.PROPERTY_HTTP_CONTEXT_ID + "=" + UITokenContext.CONTEXT_ID
         }
 )

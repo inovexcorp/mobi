@@ -23,7 +23,8 @@ package com.mobi.rest.util.logging;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ServiceScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.Provider;
 
 @Provider
-@Component(immediate = true)
+@Component(scope = ServiceScope.PROTOTYPE, property = {
+        "osgi.jaxrs.extension=true"
+})
 @Priority(10000)
 public class RequestLoggingFilter implements ContainerRequestFilter {
 

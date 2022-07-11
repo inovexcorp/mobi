@@ -25,22 +25,21 @@ package com.mobi.sparql.cli;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.vocabularies.xsd.XSD;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.query.parser.ParsedUpdate;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParser;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -49,28 +48,27 @@ import org.mockito.MockitoAnnotations;
 import java.util.Optional;
 
 public class QueryTest extends OrmEnabledTestCase {
-
-    private Repository repo;
+    private AutoCloseable closeable;
+    private MemoryRepositoryWrapper repo;
     private Query service;
 
     @Mock
     RepositoryManager repositoryManager;
 
-    @Mock
-    SesameTransformer transformer;
-
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
         service = new Query();
         service.setRepoManager(repositoryManager);
-        service.setTransformer(transformer);
-        service.vf = VALUE_FACTORY;
-        service.mf = MODEL_FACTORY;
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -90,7 +88,7 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
 
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
@@ -98,7 +96,7 @@ public class QueryTest extends OrmEnabledTestCase {
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/creator"),
                 VALUE_FACTORY.createLiteral("A.N.Other"));
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
         assertModelsEqual(expectedInserts, result.getAdditions());
         assertModelsEqual(expectedDeletes, result.getDeletions());
     }
@@ -109,11 +107,11 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
         expectedInserts.add(VALUE_FACTORY.createIRI("urn:1"),
                 VALUE_FACTORY.createIRI("urn:2"),
                 VALUE_FACTORY.createIRI("urn:3"));
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
         assertModelsEqual(expectedInserts, result.getAdditions());
         assertModelsEqual(expectedDeletes, result.getDeletions());
     }
@@ -135,14 +133,14 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
 
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://example.org/ns#price"),
                 VALUE_FACTORY.createLiteral(42),
                 VALUE_FACTORY.createIRI("http://example/bookStore"));
 
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
         assertModelsEqual(expectedInserts, result.getAdditions());
         assertModelsEqual(expectedDeletes, result.getDeletions());
     }
@@ -154,7 +152,7 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
         expectedInserts.add(VALUE_FACTORY.createIRI("urn:1"),
                 VALUE_FACTORY.createIRI("urn:2"),
                 VALUE_FACTORY.createIRI("urn:3"),
@@ -163,7 +161,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("urn:2"),
                 VALUE_FACTORY.createIRI("urn:3"),
                 VALUE_FACTORY.createIRI("urn:test2"));
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
         assertModelsEqual(expectedInserts, result.getAdditions());
         assertModelsEqual(expectedDeletes, result.getDeletions());
     }
@@ -192,9 +190,9 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
 
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book2"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
                 VALUE_FACTORY.createLiteral("David Copperfield"));
@@ -217,8 +215,8 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
         expectedDeletes.add(VALUE_FACTORY.createIRI("urn:1"),
                 VALUE_FACTORY.createIRI("urn:2"),
                 VALUE_FACTORY.createIRI("urn:3"));
@@ -247,13 +245,13 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
                 VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"),
                 VALUE_FACTORY.createIRI("http://example/bookStore"));
 
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
                 VALUE_FACTORY.createLiteral("Fundamentals of Compiler Desing"),
@@ -302,9 +300,9 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
 
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
                 VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"));
@@ -367,7 +365,7 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
                 VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"),
@@ -377,7 +375,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
 
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
 
         assertModelsEqual(expectedInserts, result.getAdditions());
         assertModelsEqual(expectedDeletes, result.getDeletions());
@@ -438,7 +436,7 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
                 VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"),
@@ -456,7 +454,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
 
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
 
         assertModelsEqual(expectedInserts, result.getAdditions());
         assertModelsEqual(expectedDeletes, result.getDeletions());
@@ -517,7 +515,7 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
                 VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"),
@@ -535,7 +533,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createLiteral("1977-01-01T00:00:00-02:00", VALUE_FACTORY.createIRI(XSD.DATE_TIME)),
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
 
-        Model expectedInserts = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
 
         assertModelsEqual(expectedInserts, result.getAdditions());
         assertModelsEqual(expectedDeletes, result.getDeletions());
@@ -559,8 +557,8 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
         expectedDeletes.add(VALUE_FACTORY.createIRI("urn:1"),
                 VALUE_FACTORY.createIRI("urn:2"),
                 VALUE_FACTORY.createIRI("urn:3"),
@@ -621,7 +619,7 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
                 VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"),
@@ -635,7 +633,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://purl.org/dc/dcmitype/PhysicalObject"),
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
 
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
                 VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"),
@@ -701,7 +699,7 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
         expectedInserts.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
                 VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"),
@@ -715,7 +713,7 @@ public class QueryTest extends OrmEnabledTestCase {
                 VALUE_FACTORY.createIRI("http://purl.org/dc/dcmitype/PhysicalObject"),
                 VALUE_FACTORY.createIRI("http://example/bookStore2"));
 
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/book1"),
                 VALUE_FACTORY.createIRI("http://purl.org/dc/elements/1.1/title"),
                 VALUE_FACTORY.createLiteral("Fundamentals of Compiler Design"),
@@ -776,9 +774,9 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
 
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/fred"),
                 VALUE_FACTORY.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
                 VALUE_FACTORY.createIRI("http://xmlns.com/foaf/0.1/Person"),
@@ -829,9 +827,9 @@ public class QueryTest extends OrmEnabledTestCase {
 
         ParsedUpdate parsedUpdate = new SPARQLParser().parseUpdate(queryStr, null);
         Difference result = service.getUpdateStatements(parsedUpdate, repo);
-        Model expectedInserts = MODEL_FACTORY.createModel();
+        Model expectedInserts = MODEL_FACTORY.createEmptyModel();
 
-        Model expectedDeletes = MODEL_FACTORY.createModel();
+        Model expectedDeletes = MODEL_FACTORY.createEmptyModel();
         expectedDeletes.add(VALUE_FACTORY.createIRI("http://example/william"),
                 VALUE_FACTORY.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
                 VALUE_FACTORY.createIRI("http://xmlns.com/foaf/0.1/Person"),
@@ -856,8 +854,7 @@ public class QueryTest extends OrmEnabledTestCase {
     private void assertModelsEqual(Model expected, Model actual) {
         expected.forEach(expectedStatement -> {
             assertTrue(actual.contains(expectedStatement.getSubject(), expectedStatement.getPredicate(),
-                    expectedStatement.getObject(), expectedStatement.getContext().isPresent()
-                            ? expectedStatement.getContext().get() : null));
+                    expectedStatement.getObject(), expectedStatement.getContext()));
         });
         assertEquals(expected.size(), actual.size());
     }

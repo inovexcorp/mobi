@@ -28,16 +28,18 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.shapes.api.ShapesGraph;
 import com.mobi.shapes.api.ShapesGraphManager;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -72,11 +74,8 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
     @Reference
     CatalogManager catalogManager;
 
-    @Reference
-    ValueFactory vf;
-
-    @Reference
-    ModelFactory mf;
+    final ValueFactory vf = SimpleValueFactory.getInstance();
+    final ModelFactory mf = new DynamicModelFactory();
 
     @Override
     public boolean shapesGraphIriExists(Resource shapesGraphId) {

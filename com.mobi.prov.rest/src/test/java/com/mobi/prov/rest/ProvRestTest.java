@@ -26,50 +26,45 @@ package com.mobi.prov.rest;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 import com.mobi.exception.MobiException;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.persistence.utils.ResourceUtils;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ProvenanceService;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import com.mobi.rest.util.MobiRestTestNg;
-import com.mobi.rest.util.UsernameTestFilter;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import com.mobi.rest.test.util.MobiRestTestCXF;
+import com.mobi.rest.test.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.mockito.Mock;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -83,18 +78,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-public class ProvRestTest extends MobiRestTestNg {
-    private ProvRest rest;
-
-    private ValueFactory vf;
+public class ProvRestTest extends MobiRestTestCXF {
+    private AutoCloseable closeable;
     private OrmFactory<Activity> activityFactory;
     private OrmFactory<Entity> entityFactory;
-    private Repository repo;
 
     private String provData;
     private List<String> activityIRIs;
@@ -104,21 +95,36 @@ public class ProvRestTest extends MobiRestTestNg {
     private final String NULL_ACT_IRI = "http://test.org/activities#ProvActNull";
     private Map<String, List<String>> entityMap;
 
-    @Mock
-    private ProvenanceService provService;
+    // Mock services used in server
+    private static ProvRest rest;
+    private static ValueFactory vf;
+    private static ModelFactory mf;
+    private static ProvenanceService provService;
+    private static RepositoryManager repositoryManager;
+    private static MemoryRepositoryWrapper repo;
 
-    @Mock
-    private SesameTransformer transformer;
-
-    @Mock
-    private RepositoryManager repositoryManager;
-
-    @Override
-    protected Application configureApp() throws Exception {
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
-
+    @BeforeClass
+    public static void startServer() {
         vf = getValueFactory();
+        mf = getModelFactory();
+
+        provService = Mockito.mock(ProvenanceService.class);
+        
+        repositoryManager = Mockito.mock(RepositoryManager.class);
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
+
+        rest = new ProvRest();
+        rest.setProvService(provService);
+        rest.setRepositoryManager(repositoryManager);
+
+        configureServer(rest, new UsernameTestFilter());
+    }
+
+    @Before
+    public void setUpMocks() throws Exception {
+        closeable = MockitoAnnotations.openMocks(this);
+        reset(provService);
 
         activityFactory = getRequiredOrmFactory(Activity.class);
         entityFactory = getRequiredOrmFactory(Entity.class);
@@ -145,51 +151,27 @@ public class ProvRestTest extends MobiRestTestNg {
         entityMap.put(activityIRIs.get(8), Collections.singletonList(entityIRIs.get(4)));
         entityMap.put(activityIRIs.get(9), Stream.of(entityIRIs.get(2), entityIRIs.get(3)).collect(Collectors.toList()));
 
-        MockitoAnnotations.initMocks(this);
-
-        when(transformer.mobiModel(any(Model.class)))
-                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, Model.class)));
-        when(transformer.sesameModel(any(com.mobi.rdf.api.Model.class)))
-                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, com.mobi.rdf.api.Model.class)));
-        when(transformer.sesameStatement(any(Statement.class)))
-                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
 
-        rest = new ProvRest();
-        rest.setMf(getModelFactory());
-        rest.setVf(vf);
-        rest.setProvService(provService);
-        rest.setTransformer(transformer);
-        rest.setRepositoryManager(repositoryManager);
-
-        return new ResourceConfig()
-                .register(rest)
-                .register(UsernameTestFilter.class)
-                .register(MultiPartFeature.class);
-    }
-
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
-    }
-
-    @BeforeMethod
-    public void setUpMocks() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(Values.mobiModel(Rio.parse(new ByteArrayInputStream(provData.getBytes()), "", RDFFormat.TURTLE)));
+            conn.add(Rio.parse(new ByteArrayInputStream(provData.getBytes()), "", RDFFormat.TURTLE));
         }
-        reset(provService);
 
         when(provService.getConnection()).thenReturn(repo.getConnection());
         when(provService.getActivity(any(Resource.class))).thenAnswer(i -> {
-            Resource resource = i.getArgumentAt(0, Resource.class);
+            Resource resource = i.getArgument(0, Resource.class);
             if (resource.stringValue().equals(NULL_ACT_IRI)) {
                 return Optional.empty();
             }
-            Activity activity = activityFactory.createNew(i.getArgumentAt(0, Resource.class));
+            Activity activity = activityFactory.createNew(i.getArgument(0, Resource.class));
             entityMap.get(activity.getResource().stringValue()).forEach(entityIRI -> entityFactory.createNew(vf.createIRI(entityIRI), activity.getModel()));
             return Optional.of(activity);
         });
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test

@@ -27,13 +27,17 @@ import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.DatasetFactory;
 import com.mobi.ontology.utils.cache.repository.OntologyDatasets;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,19 +48,22 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
 
     private final Logger LOG = LoggerFactory.getLogger(AbstractDatasetRepositoryCache.class);
 
-    protected ValueFactory vf;
-    protected ModelFactory mf;
-    protected Repository repository;
+    protected final ValueFactory vf = SimpleValueFactory.getInstance();
+    protected final ModelFactory mf = new DynamicModelFactory();
+    protected OsgiRepository repository;
     protected DatasetFactory datasetFactory;
     protected DatasetManager datasetManager;
 
     protected DatasetConnection getDatasetConnection(Resource datasetIRI, boolean createNotExists) {
         LOG.debug("Retrieving cache dataset connection for " + datasetIRI.stringValue());
         try (RepositoryConnection conn = repository.getConnection()) {
-            if (!conn.contains(datasetIRI, null, null)) {
+            RepositoryResult<Statement> statements = conn.getStatements(datasetIRI, null, null);
+            boolean contains = statements.hasNext();
+            statements.close();
+            if (!contains) {
                 if (createNotExists) {
                     LOG.debug("Creating cache dataset " + datasetIRI.stringValue());
-                    datasetManager.createDataset(datasetIRI.stringValue(), repository.getConfig().id());
+                    datasetManager.createDataset(datasetIRI.stringValue(), repository.getRepositoryID());
                 } else {
                     LOG.trace("The dataset " + datasetIRI + " does not exist in the specified repository.");
                     throw new IllegalArgumentException("The dataset " + datasetIRI
@@ -64,7 +71,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
                 }
             }
         }
-        DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false);
+        DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getRepositoryID(), false);
         updateDatasetTimestamp(conn);
         return conn;
     }

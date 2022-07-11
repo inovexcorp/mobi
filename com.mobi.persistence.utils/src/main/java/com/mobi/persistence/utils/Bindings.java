@@ -23,11 +23,12 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
-import com.mobi.query.api.Binding;
-import com.mobi.query.api.BindingSet;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
+
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.query.Binding;
+import org.eclipse.rdf4j.query.BindingSet;
 
 import java.util.Optional;
 
@@ -41,7 +42,7 @@ public class Bindings {
     }
 
     public static <T extends Value> T getRequired(BindingSet bindingSet, String binding, Class<T> clazz) {
-        Optional<Binding> bindingOptional = bindingSet.getBinding(binding);
+        Optional<Binding> bindingOptional = Optional.ofNullable(bindingSet.getBinding(binding));
 
         if (bindingOptional.isPresent()) {
             Value value = bindingOptional.get().getValue();

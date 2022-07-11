@@ -1,5 +1,5 @@
-(&(objectClass=com.mobi.repository.api.Repository)(component.name=com.mobi.service.repository.native)(id=system))
-(&(objectClass=com.mobi.repository.api.Repository)(component.name=com.mobi.service.repository.native)(id=prov))
+(&(objectClass=com.mobi.repository.api.OsgiRepository)(component.name=com.mobi.service.repository.native)(id=system))
+(&(objectClass=com.mobi.repository.api.OsgiRepository)(component.name=com.mobi.service.repository.native)(id=prov))
 (&(objectClass=com.mobi.catalog.api.CatalogManager))
 (&(objectClass=com.mobi.sparql.rest.SparqlRest))
 (&(objectClass=com.mobi.etl.api.delimited.DelimitedConverter))

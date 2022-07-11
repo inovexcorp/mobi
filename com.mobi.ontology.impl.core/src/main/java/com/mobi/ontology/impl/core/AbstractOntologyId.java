@@ -27,12 +27,12 @@ import com.mobi.namespace.api.NamespaceService;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.utils.OntologyModels;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.ontologies.ApplicationSetting;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 
 public abstract class AbstractOntologyId implements OntologyId {
 

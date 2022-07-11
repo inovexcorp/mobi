@@ -48,23 +48,22 @@ import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.ParsedModel;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.ResourceUtils;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.Binding;
-import com.mobi.query.api.BindingSet;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
 import com.mobi.security.policy.api.ontologies.policy.Policy;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.query.Binding;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,9 +131,6 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     @Reference
     public EngineManager engineManager;
 
-    @Reference
-    public SesameTransformer sesameTransformer;
-
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
         BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
@@ -177,7 +173,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         if (fileName != null && inputStream != null) {
             String fileExtension = RDFFiles.getFileExtension(fileName);
             try {
-                ParsedModel parsedModel = Models.createModel(fileExtension, inputStream, sesameTransformer);
+                ParsedModel parsedModel = Models.createModel(fileExtension, inputStream);
                 ontologyModel = parsedModel.getModel();
                 if ("trig".equalsIgnoreCase(parsedModel.getRdfFormatName())) {
                     throw new IllegalArgumentException("TriG data is not supported for upload.");
@@ -290,20 +286,22 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                 valueFactory.createIRI(Policy.relatedResource_IRI), record.getResource());
         if (results.hasNext()) {
             Resource recordPolicyId = results.next().getSubject();
+            results.close();
 
-            results = conn.getStatements(null, valueFactory.createIRI(Policy.relatedResource_IRI), recordPolicyId);
-            if (!results.hasNext()) {
+            RepositoryResult<Statement> policyPolicyIds = conn.getStatements(null,
+                    valueFactory.createIRI(Policy.relatedResource_IRI), recordPolicyId);
+            if (!policyPolicyIds.hasNext()) {
                 LOGGER.info("Could not find policy policy for record: " + record.getResource()
                         + " with a policyId of: " + recordPolicyId + ". Continuing with record deletion.");
             }
-            Resource policyPolicyId = results.next().getSubject();
+            Resource policyPolicyId = policyPolicyIds.next().getSubject();
             xacmlPolicyManager.deletePolicy(recordPolicyId);
             xacmlPolicyManager.deletePolicy(policyPolicyId);
+            policyPolicyIds.close();
         } else {
             LOGGER.info("Could not find policy for record: " + record.getResource()
                     + ". Continuing with record deletion.");
         }
-        results.close();
     }
 
     /**
@@ -437,9 +435,9 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
 
             while (result.hasNext()) {
                 BindingSet bindings = result.next();
-                Optional<Binding> recordBinding = bindings.getBinding("record");
-                Optional<Binding> masterBinding = bindings.getBinding("master");
-                Optional<Binding> publisherBinding = bindings.getBinding("publisher");
+                Optional<Binding> recordBinding = Optional.ofNullable(bindings.getBinding("record"));
+                Optional<Binding> masterBinding = Optional.ofNullable(bindings.getBinding("master"));
+                Optional<Binding> publisherBinding = Optional.ofNullable(bindings.getBinding("publisher"));
                 if (recordBinding.isPresent() && masterBinding.isPresent() && publisherBinding.isPresent()) {
                     IRI recordIRI = valueFactory.createIRI(recordBinding.get().getValue().stringValue());
                     IRI masterIRI = valueFactory.createIRI(masterBinding.get().getValue().stringValue());

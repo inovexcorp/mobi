@@ -24,7 +24,7 @@ package com.mobi.persistence.utils.rio;
  */
 
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.rdf.api.Statement;
+import org.eclipse.rdf4j.model.Statement;
 
 public class SkolemizeHandler implements StatementHandler {
 

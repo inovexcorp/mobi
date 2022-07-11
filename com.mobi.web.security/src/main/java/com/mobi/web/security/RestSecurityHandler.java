@@ -23,14 +23,16 @@ package com.mobi.web.security;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
-import com.eclipsesource.jaxrs.provider.security.AuthenticationHandler;
-import com.eclipsesource.jaxrs.provider.security.AuthorizationHandler;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import com.mobi.web.security.jaxrs.provider.AuthenticationHandler;
+import com.mobi.web.security.jaxrs.provider.AuthorizationHandler;
 import com.mobi.jaas.api.principals.UserPrincipal;
 import com.mobi.web.security.util.AuthenticationProps;
 import com.mobi.web.security.util.api.SecurityHelper;
 import org.apache.commons.lang3.StringUtils;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +51,7 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
 
     private Map<String, SecurityHelper> helpers = new HashMap<>();
 
-    @Reference(type = '*', dynamic = true)
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     void addSecurityHelper(SecurityHelper helper) {
         helpers.put(helper.getClass().getSimpleName(), helper);
     }
@@ -76,7 +78,7 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
 
         if (!authenticated) {
             LOG.debug("Not authenticated using: " + StringUtils.join(helpers, ", "));
-            LOG.info("RestSecurityHelper.autheticate() complete in " + (System.currentTimeMillis() - start) + "ms");
+            LOG.info("RestSecurityHelper.authenticate() complete in " + (System.currentTimeMillis() - start) + "ms");
             return null;
         }
 
@@ -85,7 +87,7 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
                 .collect(Collectors.toList());
         if (principals.isEmpty()) {
             LOG.debug("No UserPrincipals found.");
-            LOG.info("RestSecurityHelper.autheticate() complete in " + (System.currentTimeMillis() - start) + "ms");
+            LOG.info("RestSecurityHelper.authenticate() complete in " + (System.currentTimeMillis() - start) + "ms");
             return null;
         }
 

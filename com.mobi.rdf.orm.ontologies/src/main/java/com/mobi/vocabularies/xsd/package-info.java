@@ -25,4 +25,4 @@ package com.mobi.vocabularies.xsd;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

@@ -80,18 +80,6 @@ import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.ParsedModel;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
@@ -115,21 +103,31 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.eclipse.rdf4j.query.MalformedQueryException;
 import org.eclipse.rdf4j.query.QueryLanguage;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.query.parser.ParsedGraphQuery;
 import org.eclipse.rdf4j.query.parser.ParsedOperation;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.QueryParserUtil;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -159,8 +157,10 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -173,23 +173,21 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 @Path("/ontologies")
-@Component(service = OntologyRest.class, immediate = true)
+@Component(service = OntologyRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 public class OntologyRest {
 
-    private ModelFactory modelFactory;
-    private ValueFactory valueFactory;
+    private final ModelFactory modelFactory = new DynamicModelFactory();
+    private final ValueFactory valueFactory = SimpleValueFactory.getInstance();
     private OntologyManager ontologyManager;
     private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private EngineManager engineManager;
-    private SesameTransformer sesameTransformer;
     private OntologyCache ontologyCache;
     private BNodeService bNodeService;
 
@@ -225,16 +223,6 @@ public class OntologyRest {
         }
     }
 
-    @Reference
-    void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
-    }
-
-    @Reference
-    void setValueFactory(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
-    }
-
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
     void setOntologyManager(OntologyManager ontologyManager) {
         this.ontologyManager = ontologyManager;
@@ -256,11 +244,6 @@ public class OntologyRest {
     }
 
     @Reference
-    void setSesameTransformer(SesameTransformer sesameTransformer) {
-        this.sesameTransformer = sesameTransformer;
-    }
-
-    @Reference
     void setOntologyCache(OntologyCache ontologyCache) {
         this.ontologyCache = ontologyCache;
     }
@@ -276,13 +259,7 @@ public class OntologyRest {
      * and stored with an initial Commit containing the data provided in the ontology file. Only provide either an
      * ontology file or ontology JSON-LD.
      *
-     * @param context         Context of the request.
-     * @param fileInputStream Ontology file to upload.
-     * @param ontologyJson    Ontology JSON-LD to upload.
-     * @param title           Title for the OntologyRecord.
-     * @param description     Optional description for the OntologyRecord.
-     * @param markdown        Optional markdown abstract for the new OntologyRecord.
-     * @param keywords        Optional list of keyword strings for the OntologyRecord.
+     * @param servletRequest  The HttpServletRequest.
      * @return CREATED with record ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
      *      SERVER ERROR if there is a problem creating the OntologyRecord.
      */
@@ -300,61 +277,107 @@ public class OntologyRest {
                     @ApiResponse(responseCode = "400", description = "Publisher can't be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "Problem creating OntologyRecord")
-            }
+            },
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
+                                    schema = @Schema(implementation = OntologyFileUpload.class)
+                            )
+                    }
+            )
     )
     @RolesAllowed("user")
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
-    public Response uploadFile(
-            @Context ContainerRequestContext context,
-            @Parameter(schema = @Schema(type = "string", format = "binary",
-                    description = "Ontology file to upload.", required = true))
-            @FormDataParam("file") InputStream fileInputStream,
-            @Parameter(description = "File details", hidden = true)
-            @FormDataParam("file") FormDataContentDisposition fileDetail,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Ontology JSON-LD to upload"))
-            @FormDataParam("json") String ontologyJson,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Title for the OntologyRecord", required = true))
-            @FormDataParam("title") String title,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Optional description for the OntologyRecord"))
-            @FormDataParam("description") String description,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Optional markdown abstract for the new OntologyRecord"))
-            @FormDataParam("markdown") String markdown,
-            @Parameter(array = @ArraySchema(
-                    arraySchema = @Schema(description =
-                            "Optional list of keyword strings for the OntologyRecord"),
-                    schema = @Schema(implementation = String.class, description = "Keyword")))
-            @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
+    public Response uploadFile(@Context HttpServletRequest servletRequest) {
+        Map<String, List<Class>> fields = new HashMap<>();
+        fields.put("title", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("description", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("json", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("markdown", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("keywords", Stream.of(Set.class, String.class).collect(Collectors.toList()));
+
+        Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);
+        String title = (String) formData.get("title");
+        String description = (String) formData.get("description");
+        String json = (String) formData.get("json");
+        String markdown = (String) formData.get("markdown");
+        Set<String> keywords = (Set<String>) formData.get("keywords");
+        InputStream inputStream = (InputStream) formData.get("stream");
+        String filename = (String) formData.get("filename");
+
         checkStringParam(title, "The title is missing.");
-        if (fileInputStream == null && ontologyJson == null) {
+        if (inputStream == null && json == null) {
             throw ErrorUtils.sendError("The ontology data is missing.", Response.Status.BAD_REQUEST);
-        } else if (fileInputStream != null && ontologyJson != null) {
+        } else if (inputStream != null && json != null) {
             throw ErrorUtils.sendError("Only provide either an ontology file or ontology json data.",
                     Response.Status.BAD_REQUEST);
         }
 
-        Set<String> keywordSet = Collections.emptySet();
-        if (keywords != null) {
-            keywordSet = keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
+        if (keywords == null) {
+            keywords = Collections.emptySet();
         }
-        if (fileInputStream != null) {
+        if (inputStream != null) {
             RecordOperationConfig config = new OperationConfig();
-            config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, fileInputStream);
-            config.set(VersionedRDFRecordCreateSettings.FILE_NAME, fileDetail.getFileName());
-            return createOntologyRecord(context, title, description, markdown, keywordSet, config);
+            config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, inputStream);
+            config.set(VersionedRDFRecordCreateSettings.FILE_NAME, filename);
+            return createOntologyRecord(servletRequest, title, description, markdown, keywords, config);
         } else {
-            checkStringParam(ontologyJson, "The ontologyJson is missing.");
+            checkStringParam(json, "The ontologyJson is missing.");
             RecordOperationConfig config = new OperationConfig();
-            Model jsonModel = getModelFromJson(ontologyJson);
+            Model jsonModel = getModelFromJson(json);
             config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonModel);
-            return createOntologyRecord(context, title, description, markdown, keywordSet, config);
+            return createOntologyRecord(servletRequest, title, description, markdown, keywords, config);
         }
     }
 
+    /**
+     * Class used for OpenAPI documentation for file upload endpoint.
+     */
+    private class OntologyFileUpload {
+        @Schema(type = "string", format = "binary", description = "Ontology file to upload.")
+        public String file;
+
+        @Schema(type = "string", description = "Ontology JSON-LD to upload")
+        public String json;
+
+        @Schema(type = "string", description = "Title for the OntologyRecord", required = true)
+        public String title;
+
+        @Schema(type = "string", description = "Optional description for the OntologyRecord")
+        public String description;
+
+        @Schema(type = "string", description = "Optional markdown abstract for the new OntologyRecord")
+        public String markdown;
+
+        @ArraySchema(
+                arraySchema = @Schema(description =
+                        "Optional list of keyword strings for the OntologyRecord"),
+                schema = @Schema(implementation = String.class, description = "Keyword"))
+        public List<String> keywords;
+    }
+
+    /**
+     * Returns the ontology associated with the requested record ID in the requested format.
+     *
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param rdfFormat   the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param clearCache  whether or not the cached version of the identified Ontology should be cleared before
+     *                    retrieval
+     * @param skolemize   whether or not the JSON-LD of the ontology should be skolemized
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
+     * @return a Response with the ontology in the requested format.
+     */
     @GET
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
@@ -370,7 +393,7 @@ public class OntologyRest {
     @RolesAllowed("user")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID. NOTE: Assumes id represents an "
                     + "IRI unless String begins with \"_:\"", required = true)
             @PathParam("recordId") String recordIdStr,
@@ -399,7 +422,7 @@ public class OntologyRest {
             if (clearCache) {
                 ontologyCache.removeFromCache(recordIdStr, commitIdStr);
             }
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit)
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit)
                     .orElseThrow(() ->
                             ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
 
@@ -415,7 +438,7 @@ public class OntologyRest {
     /**
      * Deletes the ontology associated with the requested record ID in the requested format.
      *
-     * @param context     Context of the request.
+     * @param servletRequest the HttpServletRequest.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @return OK.
@@ -436,11 +459,11 @@ public class OntologyRest {
     @ActionId(Delete.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr) {
         try {
-            catalogManager.deleteRecord(getActiveUser(context, engineManager), valueFactory.createIRI(recordIdStr),
+            catalogManager.deleteRecord(getActiveUser(servletRequest, engineManager), valueFactory.createIRI(recordIdStr),
                     OntologyRecord.class);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -453,8 +476,8 @@ public class OntologyRest {
     /**
      * Streams the ontology associated with the requested record ID to an OutputStream.
      *
-     * @param context     Context of the request
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -483,7 +506,7 @@ public class OntologyRest {
     @RolesAllowed("user")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadOntologyFile(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID. "
                     + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"", required = true)
             @PathParam("recordId") String recordIdStr,
@@ -502,9 +525,9 @@ public class OntologyRest {
             @DefaultValue("ontology") @QueryParam("fileName") String fileName
     ) {
         try {
-            Ontology ontology = getOntology(context,
-                    recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    Response.Status.BAD_REQUEST));
             StreamingOutput stream = os -> {
                 Writer writer = new BufferedWriter(new OutputStreamWriter(os));
                 writer.write(getOntologyAsRdf(ontology, rdfFormat, false));
@@ -523,8 +546,8 @@ public class OntologyRest {
      * Updates the InProgressCommit associated with the User making the request for the OntologyRecord identified
      * by the provided recordId.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -557,7 +580,7 @@ public class OntologyRest {
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response saveChangesToOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -569,13 +592,13 @@ public class OntologyRest {
             @Parameter(description = "String representing the edited Resource", required = true)
                     String entityJson) {
         try {
-            Ontology ontology = getOntology(context,
-                    recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
             Model entityModel = getModelForEntityInOntology(ontology, entityIdStr);
             Difference diff = catalogManager.getDiff(entityModel, getModelFromJson(entityJson));
             Resource recordId = valueFactory.createIRI(recordIdStr);
-            User user = getActiveUser(context, engineManager);
+            User user = getActiveUser(servletRequest, engineManager);
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
             catalogManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
                     diff.getAdditions(), diff.getDeletions());
@@ -589,17 +612,7 @@ public class OntologyRest {
      * Updates the InProgressCommit associated with the User making the request for the OntologyRecord identified by the
      * provided recordId.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:".
-     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                    master Branch.
-     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                    otherwise, nothing will be returned.
-     * @param fileInputStream the ontology file to upload.
+     * @param servletRequest the HttpServletRequest.
      * @return OK if successful or METHOD_NOT_ALLOWED if the changes can not be applied to the commit specified.
      */
     @PUT
@@ -617,25 +630,30 @@ public class OntologyRest {
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
+            },
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
+                                    schema = @Schema(implementation = OntologyFileUploadChanges.class)
+                            )
+                    }
+            )
     )
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response uploadChangesToOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
-            @QueryParam("commitId") String commitIdStr,
-            @Parameter(schema = @Schema(type = "string", format = "binary",
-                    description = "Ontology file to upload", required = true))
-            @FormDataParam("file") InputStream fileInputStream,
-            @Parameter(description = "File details", hidden = true)
-            @FormDataParam("file") FormDataContentDisposition fileDetail) {
-        long totalTime = System.currentTimeMillis();
+            @QueryParam("commitId") String commitIdStr) {
+        Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
+        InputStream fileInputStream = (InputStream) formData.get("stream");
+        String filename = (String) formData.get("filename");
 
+        long totalTime = System.currentTimeMillis();
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
@@ -643,7 +661,7 @@ public class OntologyRest {
             Resource catalogIRI = configProvider.getLocalCatalogIRI();
             Resource recordId = valueFactory.createIRI(recordIdStr);
 
-            User user = getActiveUser(context, engineManager);
+            User user = getActiveUser(servletRequest, engineManager);
             Optional<InProgressCommit> commit = catalogManager.getInProgressCommit(catalogIRI, recordId, user);
 
             if (commit.isPresent()) {
@@ -673,7 +691,7 @@ public class OntologyRest {
                 try {
                     long startTimeF = System.currentTimeMillis();
                     Model temp = getUploadedModel(fileInputStream,
-                            RDFFiles.getFileExtension(fileDetail.getFileName()), uploadedBNodes);
+                            RDFFiles.getFileExtension(filename), uploadedBNodes);
                     log.trace("uploadedModelFuture took {} ms", System.currentTimeMillis() - startTimeF);
                     return temp;
                 } catch (IOException e) {
@@ -738,6 +756,14 @@ public class OntologyRest {
     }
 
     /**
+     * Class used for OpenAPI documentation for upload changes endpoint.
+     */
+    private class OntologyFileUploadChanges {
+        @Schema(type = "string", format = "binary", description = "Ontology file to upload.")
+        public String file;
+    }
+
+    /**
      * Calculates the garbage collection time in milliseconds.
      *
      * @return The total garbage collection time.
@@ -764,7 +790,7 @@ public class OntologyRest {
             throws IOException {
         // Load uploaded ontology into a skolemized model
         ParsedModel parsedModel = Models.createSkolemizedModel(fileExtension, fileInputStream,
-                modelFactory, sesameTransformer, bNodeService, bNodesMap);
+                modelFactory, bNodeService, bNodesMap);
 
         if ("trig".equalsIgnoreCase(parsedModel.getRdfFormatName())) {
             throw new IllegalArgumentException("TriG data is not supported for ontology upload changes.");
@@ -794,8 +820,8 @@ public class OntologyRest {
      Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is
      * specified. In which case the branch specified by the branchId query parameter will be removed and nothing else.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
@@ -821,7 +847,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteOntologyBranch(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = true)
@@ -842,8 +868,8 @@ public class OntologyRest {
      * skos:ConceptSchemes, an object with the concept hierarchy and index, and an object with the concept scheme
      * hierarchy and index.
      *
-     * @param context Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -873,7 +899,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVocabularyStuff(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -881,7 +907,8 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
+            Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                    true);
             if (optionalOntology.isPresent()) {
                 StreamingOutput output = getVocabularyStuffStream(optionalOntology.get());
                 return Response.ok(output).build();
@@ -957,7 +984,7 @@ public class OntologyRest {
             watch.start();
 
             outputStream.write(", \"conceptHierarchy\": ".getBytes());
-            writeHierarchyToStream(ontology.getConceptRelationships(valueFactory, modelFactory), outputStream);
+            writeHierarchyToStream(ontology.getConceptRelationships(), outputStream);
 
             watch.stop();
             log.trace("End conceptHierarchy: " + watch.getTime() + "ms");
@@ -966,7 +993,7 @@ public class OntologyRest {
             watch.start();
 
             outputStream.write(", \"conceptSchemeHierarchy\": ".getBytes());
-            writeHierarchyToStream(ontology.getConceptSchemeRelationships(valueFactory, modelFactory), outputStream);
+            writeHierarchyToStream(ontology.getConceptSchemeRelationships(), outputStream);
             outputStream.write("}".getBytes());
 
             watch.stop();
@@ -978,8 +1005,8 @@ public class OntologyRest {
      * Returns a JSON object with all of the lists and objects needed by the UI to properly display and work with
      * ontologies.
      *
-     * @param context Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -1008,7 +1035,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyStuff(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -1023,8 +1050,8 @@ public class OntologyRest {
             if (clearCache) {
                 ontologyCache.removeFromCache(recordIdStr, commitIdStr);
             }
-            Optional<Ontology> optionalOntology = getOntology(context,
-                    recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit);
+            Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                    applyInProgressCommit);
             if (optionalOntology.isPresent()) {
                 StreamingOutput output = getOntologyStuffStream(optionalOntology.get());
                 return Response.ok(output).build();
@@ -1088,7 +1115,7 @@ public class OntologyRest {
             log.trace("Start classHierarchy");
             watch.start();
             outputStream.write(", \"classHierarchy\": ".getBytes());
-            writeHierarchyToStream(ontology.getSubClassesOf(valueFactory, modelFactory), outputStream);
+            writeHierarchyToStream(ontology.getSubClassesOf(), outputStream);
             watch.stop();
             log.trace("End classHierarchy: " + watch.getTime() + "ms");
 
@@ -1097,7 +1124,7 @@ public class OntologyRest {
             watch.start();
             outputStream.write(", \"individuals\": ".getBytes());
             ObjectNode classesWithIndividuals = mapper.valueToTree(
-                    ontology.getClassesWithIndividuals(valueFactory, modelFactory).getParentMap());
+                    ontology.getClassesWithIndividuals().getParentMap());
             outputStream.write(classesWithIndividuals.toString().getBytes());
             watch.stop();
             log.trace("End individuals: " + watch.getTime() + "ms");
@@ -1106,7 +1133,7 @@ public class OntologyRest {
             log.trace("Start dataPropertyHierarchy");
             watch.start();
             outputStream.write(", \"dataPropertyHierarchy\": ".getBytes());
-            writeHierarchyToStream(ontology.getSubDatatypePropertiesOf(valueFactory, modelFactory), outputStream);
+            writeHierarchyToStream(ontology.getSubDatatypePropertiesOf(), outputStream);
             watch.stop();
             log.trace("End dataPropertyHierarchy: " + watch.getTime() + "ms");
 
@@ -1114,7 +1141,7 @@ public class OntologyRest {
             log.trace("Start objectPropertyHierarchy");
             watch.start();
             outputStream.write(", \"objectPropertyHierarchy\": ".getBytes());
-            writeHierarchyToStream(ontology.getSubObjectPropertiesOf(valueFactory, modelFactory), outputStream);
+            writeHierarchyToStream(ontology.getSubObjectPropertiesOf(), outputStream);
             watch.stop();
             log.trace("End objectPropertyHierarchy: " + watch.getTime() + "ms");
 
@@ -1122,7 +1149,7 @@ public class OntologyRest {
             log.trace("Start annotationHierarchy");
             watch.start();
             outputStream.write(", \"annotationHierarchy\": ".getBytes());
-            writeHierarchyToStream(ontology.getSubAnnotationPropertiesOf(valueFactory, modelFactory), outputStream);
+            writeHierarchyToStream(ontology.getSubAnnotationPropertiesOf(), outputStream);
             watch.stop();
             log.trace("End annotationHierarchy: " + watch.getTime() + "ms");
 
@@ -1130,7 +1157,7 @@ public class OntologyRest {
             log.trace("Start conceptHierarchy");
             watch.start();
             outputStream.write(", \"conceptHierarchy\": ".getBytes());
-            writeHierarchyToStream(ontology.getConceptRelationships(valueFactory, modelFactory), outputStream);
+            writeHierarchyToStream(ontology.getConceptRelationships(), outputStream);
             watch.stop();
             log.trace("End conceptHierarchy: " + watch.getTime() + "ms");
 
@@ -1138,7 +1165,7 @@ public class OntologyRest {
             log.trace("Start conceptSchemeHierarchy");
             watch.start();
             outputStream.write(", \"conceptSchemeHierarchy\": ".getBytes());
-            writeHierarchyToStream(ontology.getConceptSchemeRelationships(valueFactory, modelFactory), outputStream);
+            writeHierarchyToStream(ontology.getConceptSchemeRelationships(), outputStream);
             watch.stop();
             log.trace("End conceptSchemeHierarchy: " + watch.getTime() + "ms");
 
@@ -1211,7 +1238,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getPropertyToRanges(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -1222,7 +1249,7 @@ public class OntologyRest {
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
 
-            Optional<Ontology> optionalOntology = getOntology(context,
+            Optional<Ontology> optionalOntology = getOntology(servletRequest,
                     recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit);
             if (optionalOntology.isPresent()) {
                 StreamingOutput output = getPropertyToRangesStream(optionalOntology.get());
@@ -1255,7 +1282,6 @@ public class OntologyRest {
     /**
      * Returns IRIs in the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -1284,7 +1310,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getIRIsInOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -1292,7 +1318,8 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs, true);
+            ObjectNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs,
+                    true);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1302,8 +1329,8 @@ public class OntologyRest {
     /**
      * Returns annotation property IRIs in the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -1331,7 +1358,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getAnnotationsInOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -1339,7 +1366,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+            ObjectNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getAnnotationIRIObject, true);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
@@ -1351,8 +1378,8 @@ public class OntologyRest {
      * Add a new owl annotation property to the ontology identified by the provided IDs associated with the
      * requester's InProgressCommit.
      *
-     * @param context        Context of the request.
-     * @param recordIdStr    String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr    String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                       String begins with "_:".
      * @param annotationJson String representing the new annotation in JSON-LD.
      * @return a Response indicating whether it was successfully added.
@@ -1376,7 +1403,7 @@ public class OntologyRest {
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addAnnotationToOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID. NOTE: Assumes id represents an "
                     + "IRI unless String begins with \"_:\"")
             @PathParam("recordId") String recordIdStr,
@@ -1384,7 +1411,7 @@ public class OntologyRest {
                     String annotationJson) {
         verifyJsonldType(annotationJson, OWL.ANNOTATIONPROPERTY.stringValue());
         try {
-            return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(annotationJson));
+            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(annotationJson));
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1394,8 +1421,8 @@ public class OntologyRest {
     /**
      * Delete annotation with requested annotation ID from ontology identified by the provided IDs from the server.
      *
-     * @param context         Context of the request.
-     * @param recordIdStr     String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest  the HttpServletRequest.
+     * @param recordIdStr     String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                        String begins with "_:".
      * @param annotationIdStr String representing the annotation Resource id. NOTE: Assumes id represents
      *                        an IRI unless String begins with "_:".
@@ -1429,7 +1456,7 @@ public class OntologyRest {
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteAnnotationFromOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the annotation Resource ID", required = true)
@@ -1439,10 +1466,10 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            Ontology ontology = getOntology(context,
-                    recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(context, ontology, annotationIdStr, recordIdStr);
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
+            return deletionsToInProgressCommit(servletRequest, ontology, annotationIdStr, recordIdStr);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1451,8 +1478,8 @@ public class OntologyRest {
     /**
      * Returns class IRIs in the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -1482,7 +1509,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesInOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -1493,8 +1520,8 @@ public class OntologyRest {
                     + "applied to the return value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
-            ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray,
-                    applyInProgressCommit);
+            ArrayNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                    this::getClassArray, applyInProgressCommit);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1505,8 +1532,8 @@ public class OntologyRest {
      * Add a new class to ontology identified by the provided IDs from the server associated with the requester's
      * InProgressCommit.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param classJson   String representing the new class model.
      * @return a Response indicating whether it was successfully added.
@@ -1530,14 +1557,14 @@ public class OntologyRest {
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addClassToOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new class model", required = true)
                     String classJson) {
         verifyJsonldType(classJson, OWL.CLASS.stringValue());
         try {
-            return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(classJson));
+            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(classJson));
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1546,8 +1573,8 @@ public class OntologyRest {
     /**
      * Delete class with requested class ID from ontology identified by the provided IDs from the server.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param classIdStr  String representing the class Resource id. NOTE: Assumes id represents
      *                    an IRI unless String begins with "_:".
@@ -1578,7 +1605,7 @@ public class OntologyRest {
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteClassFromOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the class Resource ID", required = true)
@@ -1588,9 +1615,10 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(context, ontology, classIdStr, recordIdStr);
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
+            return deletionsToInProgressCommit(servletRequest, ontology, classIdStr, recordIdStr);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1599,8 +1627,8 @@ public class OntologyRest {
     /**
      * Returns datatype IRIs in the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -1628,7 +1656,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDatatypesInOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -1636,7 +1664,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+            ObjectNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getDatatypeIRIObject, true);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
@@ -1648,8 +1676,8 @@ public class OntologyRest {
      * Adds a new datatype to the ontology identified by the provided IDs associated with the requester's
      * InProgressCommit.
      *
-     * @param context      Context of the request.
-     * @param recordIdStr  String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr  String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                     String begins with "_:".
      * @param datatypeJson String representing the new datatype model.
      * @return a Response indicating whether it was successfully added.
@@ -1673,14 +1701,14 @@ public class OntologyRest {
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addDatatypeToOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "JSON String representing the new datatype model", required = true)
                     String datatypeJson) {
         verifyJsonldType(datatypeJson, OWL.DATATYPEPROPERTY.stringValue());
         try {
-            return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(datatypeJson));
+            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(datatypeJson));
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1689,8 +1717,8 @@ public class OntologyRest {
     /**
      * Delete the datatype from the ontology identified by the provided IDs.
      *
-     * @param context       Context of the request.
-     * @param recordIdStr   String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr   String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                      String begins with "_:".
      * @param datatypeIdStr String representing the datatype Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
@@ -1721,7 +1749,7 @@ public class OntologyRest {
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteDatatypeFromOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the datatype Resource ID", required = true)
@@ -1731,9 +1759,10 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(context, ontology, datatypeIdStr, recordIdStr);
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
+            return deletionsToInProgressCommit(servletRequest, ontology, datatypeIdStr, recordIdStr);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1742,8 +1771,8 @@ public class OntologyRest {
     /**
      * Returns object property IRIs in the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -1771,7 +1800,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getObjectPropertiesInOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -1779,7 +1808,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+            ArrayNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getObjectPropertyArray, true);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
@@ -1791,8 +1820,8 @@ public class OntologyRest {
      * Adds a new object property to the ontology identified by the provided IDs from the server associated with the
      * requester's InProgressCommit.
      *
-     * @param context            Context of the request.
-     * @param recordIdStr        String representing the Record Resource ID. NOTE: Assumes id represents an IRI
+     * @param servletRequest     the HttpServletRequest.
+     * @param recordIdStr        String representing the record Resource id. NOTE: Assumes id represents an IRI
      *                           unless String begins with "_:".
      * @param objectPropertyJson String representing the new property model.
      * @return a Response indicating whether it was successfully added.
@@ -1816,14 +1845,14 @@ public class OntologyRest {
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addObjectPropertyToOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new property model", required = true)
                     String objectPropertyJson) {
         verifyJsonldType(objectPropertyJson, OWL.OBJECTPROPERTY.stringValue());
         try {
-            return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(objectPropertyJson));
+            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(objectPropertyJson));
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1832,8 +1861,8 @@ public class OntologyRest {
     /**
      * Delete object property with requested class ID from ontology identified by the provided IDs from the server.
      *
-     * @param context             Context of the request.
-     * @param recordIdStr         String representing the Record Resource ID. NOTE: Assumes id represents an IRI
+     * @param servletRequest      the HttpServletRequest.
+     * @param recordIdStr         String representing the record Resource id. NOTE: Assumes id represents an IRI
      *                            unless String begins with "_:".
      * @param objectPropertyIdStr String representing the class Resource id. NOTE: Assumes id represents
      *                            an IRI unless String begins with "_:".
@@ -1864,7 +1893,7 @@ public class OntologyRest {
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteObjectPropertyFromOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the class Resource ID", required = true)
@@ -1874,9 +1903,10 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(context, ontology, objectPropertyIdStr, recordIdStr);
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
+            return deletionsToInProgressCommit(servletRequest, ontology, objectPropertyIdStr, recordIdStr);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1885,8 +1915,8 @@ public class OntologyRest {
     /**
      * Returns data properties in the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -1914,7 +1944,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDataPropertiesInOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -1922,7 +1952,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+            ArrayNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getDataPropertyArray, true);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
@@ -1934,8 +1964,8 @@ public class OntologyRest {
      * Adds a new data property to the ontology identified by the provided IDs from the server associated with the
      * requester's InProgressCommit.
      *
-     * @param context          Context of the request.
-     * @param recordIdStr      String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest   the HttpServletRequest.
+     * @param recordIdStr      String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                         String begins with "_:".
      * @param dataPropertyJson String representing the new property model.
      * @return a Response indicating whether it was successfully added.
@@ -1959,14 +1989,14 @@ public class OntologyRest {
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addDataPropertyToOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "JSON String representing the new property model", required = true)
                     String dataPropertyJson) {
         verifyJsonldType(dataPropertyJson, OWL.DATATYPEPROPERTY.stringValue());
         try {
-            return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(dataPropertyJson));
+            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(dataPropertyJson));
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1975,8 +2005,8 @@ public class OntologyRest {
     /**
      * Delete data property with requested class ID from ontology identified by the provided IDs from the server.
      *
-     * @param context           Context of the request.
-     * @param recordIdStr       String representing the Record Resource ID. NOTE: Assumes id represents an IRI
+     * @param servletRequest    the HttpServletRequest.
+     * @param recordIdStr       String representing the record Resource id. NOTE: Assumes id represents an IRI
      *                          unless String begins with "_:".
      * @param dataPropertyIdStr String representing the class Resource id. NOTE: Assumes id represents
      *                          an IRI unless String begins with "_:".
@@ -2007,7 +2037,7 @@ public class OntologyRest {
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteDataPropertyFromOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the class Resource ID", required = true)
@@ -2017,9 +2047,10 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(context, ontology, dataPropertyIdStr, recordIdStr);
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
+            return deletionsToInProgressCommit(servletRequest, ontology, dataPropertyIdStr, recordIdStr);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2028,8 +2059,8 @@ public class OntologyRest {
     /**
      * Returns named individual IRIs in the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2057,7 +2088,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getNamedIndividualsInOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2065,7 +2096,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+            ObjectNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getNamedIndividualIRIObject, true);
             return Response.ok(result.toString()).build();
         } catch (MobiException e) {
@@ -2077,8 +2108,8 @@ public class OntologyRest {
      * Adds a new individual to the ontology identified by the provided IDs from the server associated with the
      * requester's InProgressCommit.
      *
-     * @param context        Context of the request.
-     * @param recordIdStr    String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr    String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                       String begins with "_:".
      * @param individualJson String representing the new individual model.
      * @return a Response indicating whether it was successfully added.
@@ -2102,14 +2133,14 @@ public class OntologyRest {
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addIndividualToOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new individual model", required = true)
                     String individualJson) {
         verifyJsonldType(individualJson, OWL.INDIVIDUAL.stringValue());
         try {
-            return additionsToInProgressCommit(context, recordIdStr, getModelFromJson(individualJson));
+            return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(individualJson));
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2118,8 +2149,8 @@ public class OntologyRest {
     /**
      * Delete individual with requested class ID from ontology identified by the provided IDs from the server.
      *
-     * @param context         Context of the request.
-     * @param recordIdStr     String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest  the HttpServletRequest.
+     * @param recordIdStr     String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                        String begins with "_:".
      * @param individualIdStr String representing the individual Resource id. NOTE: Assumes id represents
      *                        an IRI unless String begins with "_:".
@@ -2150,7 +2181,7 @@ public class OntologyRest {
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteIndividualFromOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the individual Resource ID", required = true)
@@ -2160,9 +2191,10 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            return deletionsToInProgressCommit(context, ontology, individualIdStr, recordIdStr);
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
+            return deletionsToInProgressCommit(servletRequest, ontology, individualIdStr, recordIdStr);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2171,8 +2203,8 @@ public class OntologyRest {
     /**
      * Returns IRIs in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2202,7 +2234,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getIRIsInImportedOntologies(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2212,7 +2244,7 @@ public class OntologyRest {
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs, applyInProgressCommit);
+            return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs, applyInProgressCommit);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2221,8 +2253,8 @@ public class OntologyRest {
     /**
      * Returns IRIs of the ontologies in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2251,7 +2283,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getImportedOntologyIRIs(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2261,8 +2293,9 @@ public class OntologyRest {
         try {
             ArrayNode arrayNode = mapper.createArrayNode();
             Set<String> importedOntologyIris = new HashSet<>();
-            Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, false);
-            if (optionalOntology.isPresent()) {
+            Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                    false);
+            if(optionalOntology.isPresent()) {
                 Ontology ontology = optionalOntology.get();
                 ontology.getUnloadableImportIRIs().stream()
                         .map(Value::stringValue)
@@ -2287,8 +2320,8 @@ public class OntologyRest {
      * Returns an array of the imports closure in the requested format from the ontology
      * with the requested ID.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param rdfFormat   the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -2318,7 +2351,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getImportsClosure(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "Desired RDF return format")
@@ -2330,8 +2363,8 @@ public class OntologyRest {
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
-            Set<Ontology> importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    applyInProgressCommit);
+            Set<Ontology> importedOntologies = getImportedOntologies(servletRequest, recordIdStr, branchIdStr,
+                    commitIdStr, applyInProgressCommit);
             ArrayNode arrayNode = mapper.createArrayNode();
             importedOntologies.stream()
                     .map(ontology -> getOntologyAsJsonObject(ontology, rdfFormat))
@@ -2345,8 +2378,8 @@ public class OntologyRest {
     /**
      * Returns annotation property IRIs in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2376,7 +2409,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getAnnotationsInImportedOntologies(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2386,7 +2419,7 @@ public class OntologyRest {
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+            return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getAnnotationIRIObject, applyInProgressCommit);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2396,8 +2429,8 @@ public class OntologyRest {
     /**
      * Returns class IRIs in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2427,7 +2460,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesInImportedOntologies(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2438,7 +2471,8 @@ public class OntologyRest {
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
             ) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getClassIRIArray, applyInProgressCommit);
+            return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                    this::getClassIRIArray, applyInProgressCommit);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2447,8 +2481,8 @@ public class OntologyRest {
     /**
      * Returns datatype IRIs in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2478,7 +2512,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDatatypesInImportedOntologies(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2488,7 +2522,8 @@ public class OntologyRest {
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getDatatypeIRIObject, applyInProgressCommit);
+            return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                    this::getDatatypeIRIObject, applyInProgressCommit);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2497,8 +2532,8 @@ public class OntologyRest {
     /**
      * Returns object property IRIs in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2528,7 +2563,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getObjectPropertiesInImportedOntologies(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2538,7 +2573,7 @@ public class OntologyRest {
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+            return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getObjectPropertyIRIObject, applyInProgressCommit);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2548,8 +2583,8 @@ public class OntologyRest {
     /**
      * Returns data property IRIs in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2580,7 +2615,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDataPropertiesInImportedOntologies(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2590,7 +2625,7 @@ public class OntologyRest {
             @Parameter(description = "Whether to apply in progress commit", required = false)
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+            return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getDataPropertyIRIObject, applyInProgressCommit);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2600,8 +2635,8 @@ public class OntologyRest {
     /**
      * Returns named individual IRIs in the imports closure for the ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2631,7 +2666,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getNamedIndividualsInImportedOntologies(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2642,7 +2677,7 @@ public class OntologyRest {
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
             ) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+            return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     this::getNamedIndividualIRIObject, applyInProgressCommit);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2654,8 +2689,8 @@ public class OntologyRest {
      * map of parent class IRIs to arrays of children class IRIs and a map of child class IRIs to arrays of parent class
      * IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2687,7 +2722,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyClassHierarchy(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2700,9 +2735,10 @@ public class OntologyRest {
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            Hierarchy hierarchy = ontology.getSubClassesOf(valueFactory, modelFactory);
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                            applyInProgressCommit).orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
+            Hierarchy hierarchy = ontology.getSubClassesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getClassIRIs(ontology))).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2714,8 +2750,8 @@ public class OntologyRest {
      * for a map of parent property IRIs to arrays of children property IRIs and a map of child property IRIs to arrays
      * of parent property IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2746,7 +2782,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyObjectPropertyHierarchy(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2756,9 +2792,10 @@ public class OntologyRest {
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            Hierarchy hierarchy = ontology.getSubObjectPropertiesOf(valueFactory, modelFactory);
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
+            Hierarchy hierarchy = ontology.getSubObjectPropertiesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getObjectPropertyIRIs(ontology))).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2770,8 +2807,8 @@ public class OntologyRest {
      * for a map of parent property IRIs to arrays of children property IRIs and a map of child property IRIs to arrays
      * of parent property IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2802,7 +2839,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyDataPropertyHierarchy(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2812,9 +2849,10 @@ public class OntologyRest {
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            Hierarchy hierarchy = ontology.getSubDatatypePropertiesOf(valueFactory, modelFactory);
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
+            Hierarchy hierarchy = ontology.getSubDatatypePropertiesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getDataPropertyIRIs(ontology))).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2827,8 +2865,8 @@ public class OntologyRest {
      * arrays of parent property IRIs. Optionally can also have a key for a nested JSON-LD representation of the
      * hierarchy.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2859,7 +2897,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyAnnotationPropertyHierarchy(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2869,9 +2907,10 @@ public class OntologyRest {
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            Hierarchy hierarchy = ontology.getSubAnnotationPropertiesOf(valueFactory, modelFactory);
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
+            Hierarchy hierarchy = ontology.getSubAnnotationPropertiesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getAnnotationIRIs(ontology))).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2883,8 +2922,8 @@ public class OntologyRest {
      * a map of parent concept IRIs to arrays of children concept IRIs and a map of child concept IRIs to arrays of
      * parent concept IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2914,7 +2953,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConceptHierarchy(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2924,9 +2963,10 @@ public class OntologyRest {
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            Hierarchy hierarchy = ontology.getConceptRelationships(valueFactory, modelFactory);
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
+            Hierarchy hierarchy = ontology.getConceptRelationships();
             return Response.ok(getHierarchyStream(hierarchy, nested, getConceptIRIs(ontology))).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2939,8 +2979,8 @@ public class OntologyRest {
      * to arrays of parent concept scheme IRIs. Optionally can also have a key for a nested JSON-LD representation of
      * the hierarchy.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -2971,7 +3011,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConceptSchemeHierarchy(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -2981,9 +3021,10 @@ public class OntologyRest {
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            Hierarchy hierarchy = ontology.getConceptSchemeRelationships(valueFactory, modelFactory);
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
+            Hierarchy hierarchy = ontology.getConceptSchemeRelationships();
             return Response.ok(getHierarchyStream(hierarchy, nested, getConceptSchemeIRIs(ontology))).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2994,8 +3035,8 @@ public class OntologyRest {
      * Returns classes with individuals defined in the ontology identified by the provided IDs as a JSON object with a
      * key for a map of class IRIs to arrays of individual IRIs.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -3025,7 +3066,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesWithIndividuals(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -3033,11 +3074,12 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
             ObjectNode objectNode = mapper.createObjectNode();
             objectNode.set("individuals",
-                    mapper.valueToTree(ontology.getClassesWithIndividuals(valueFactory, modelFactory).getParentMap()));
+                    mapper.valueToTree(ontology.getClassesWithIndividuals().getParentMap()));
             return Response.ok(objectNode.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -3049,8 +3091,8 @@ public class OntologyRest {
      * of each result when the queryType is "select". Returns JSON-LD containing statements with the requested entity
      * IRI as the predicate or object of each statement when the queryType is "construct".
      *
-     * @param context      Context of the request.
-     * @param recordIdStr  String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr  String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                     String begins with "_:".
      * @param entityIRIStr String representing the entity Resource IRI.
      * @param branchIdStr  String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -3082,7 +3124,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntityUsages(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the entity Resource IRI", required = true)
@@ -3094,12 +3136,13 @@ public class OntologyRest {
             @Parameter(description = "String identifying whether you want to do a select or construct query")
             @DefaultValue("select") @QueryParam("queryType") String queryType) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
             Resource entityIRI = valueFactory.createIRI(entityIRIStr);
             if (queryType.equals("construct")) {
-                Model results = ontology.constructEntityUsages(entityIRI, modelFactory);
-                return Response.ok(modelToJsonld(results, sesameTransformer)).build();
+                Model results = ontology.constructEntityUsages(entityIRI);
+                return Response.ok(modelToJsonld(results)).build();
             } else if (queryType.equals("select")) {
                 TupleQueryResult results = ontology.getEntityUsages(entityIRI);
                 return Response.ok(JSONQueryResults.getResponse(results).toString()).build();
@@ -3116,8 +3159,8 @@ public class OntologyRest {
      * Returns the JSON String of the resulting entities sorted by type from the ontology with the requested record ID
      * that have statements which contain the requested searchText in a Literal Value.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param searchText  the String for the text that is searched for in all of the Literals within the ontology with
      *                    the requested record ID.
@@ -3150,7 +3193,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getSearchResults(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String for the text that is searched for in all of the Literals within the "
@@ -3161,10 +3204,11 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
             checkStringParam(searchText, "The searchText is missing.");
-            TupleQueryResult results = ontology.getSearchResults(searchText, valueFactory);
+            TupleQueryResult results = ontology.getSearchResults(searchText);
             Map<String, Set<String>> response = new HashMap<>();
             results.forEach(queryResult -> {
                 Value entity = Bindings.requiredResource(queryResult, "entity");
@@ -3192,8 +3236,8 @@ public class OntologyRest {
     /**
      * Returns a list of ontology IRIs that were not imported.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -3220,7 +3264,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getFailedImports(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -3228,8 +3272,9 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID", required = false)
             @QueryParam("commitId") String commitIdStr) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
             return Response.ok(getUnloadableImportIRIs(ontology)).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -3240,8 +3285,8 @@ public class OntologyRest {
      * Retrieves the results of the provided SPARQL query, which targets a specific ontology, and its import closures.
      * Accepts SELECT and CONSTRUCT queries.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param queryString SPARQL Query to perform against ontology.
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -3275,7 +3320,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response queryOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "SPARQL Query to perform against ontology", required = true)
@@ -3295,15 +3340,15 @@ public class OntologyRest {
             throw ErrorUtils.sendError("Parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
 
-        return handleSparqlQuery(context, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
-                acceptString, queryString, "", "").build();
+        return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports,
+                applyInProgressCommit, acceptString, queryString, "", "").build();
     }
 
     /**
      * Retrieves the results of the provided SPARQL query, which targets a specific ontology, and its import closures.
      * Accepts SELECT and CONSTRUCT queries.
      *
-     * @param context     Context of the request.
+     * @param servletRequest the HttpServletRequest.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -3340,7 +3385,7 @@ public class OntologyRest {
     @ActionId(value = Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response postQueryOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
@@ -3359,7 +3404,8 @@ public class OntologyRest {
             throw ErrorUtils.sendError("SPARQL query must be provided in request body.", Response.Status.BAD_REQUEST);
         }
 
-        return handleSparqlQuery(context, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
+        return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                   includeImports, applyInProgressCommit,
                 acceptString, queryString, "", "").build();
     }
 
@@ -3367,7 +3413,7 @@ public class OntologyRest {
      * Retrieves the results of the provided SPARQL query, which targets a specific ontology, and its import closures.
      * Accepts SELECT and CONSTRUCT queries.
      *
-     * @param context     Context of the request.
+     * @param servletRequest     the HttpServletRequest.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param queryString SPARQL Query to perform against ontology.
@@ -3449,7 +3495,7 @@ public class OntologyRest {
     @ActionId(value = Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response postQueryUrlEncodedOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "SPARQL Query to perform against ontology", required = true)
@@ -3469,15 +3515,15 @@ public class OntologyRest {
             throw ErrorUtils.sendError("Form parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
 
-        return handleSparqlQuery(context, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
-                acceptString, queryString, "", "").build();
+        return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports,
+                applyInProgressCommit, acceptString, queryString, "", "").build();
     }
 
     /**
      * Downloads the results of the provided SPARQL query, which targets a specific ontology, and its import closures.
      * Accepts SELECT and CONSTRUCT queries.
      *
-     * @param context     Context of the request.
+     * @param servletRequest     the HttpServletRequest.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param queryString SPARQL Query to perform against ontology.
@@ -3514,7 +3560,7 @@ public class OntologyRest {
     @ActionId(value = Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response postDownloadQueryOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Commit Resource ID", required = false)
@@ -3539,16 +3585,16 @@ public class OntologyRest {
         if (queryString == null) {
             throw ErrorUtils.sendError("SPARQL query must be provided in request body.", Response.Status.BAD_REQUEST);
         }
-        return handleSparqlQuery(context, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
-                acceptString, queryString, fileType, fileName).header("Content-Disposition", "attachment;filename="
-                + fileName + "." + fileType).build();
+        return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports,
+                applyInProgressCommit, acceptString, queryString, fileType, fileName)
+                .header("Content-Disposition", "attachment;filename=" + fileName + "." + fileType).build();
     }
 
     /**
      * Downloads the results of the provided SPARQL query, which targets a specific ontology, and its import closures.
      * Accepts SELECT and CONSTRUCT queries.
      *
-     * @param context     Context of the request.
+     * @param servletRequest the HttpServletRequest.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param queryString SPARQL Query to perform against ontology.
@@ -3606,24 +3652,22 @@ public class OntologyRest {
                     }
             ),
             parameters = {
-                    @Parameter(name = "branchId", description = "Optional Branch ID representing the branch IRI of the "
-                            + "Record to query when the `CONTENT-TYPE` is **NOT** set to "
-                            + "`application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
-                    @Parameter(name = "commitId", description = "Optional Commit ID representing the commit IRI of the "
-                            + "Record to query when the `CONTENT-TYPE` is **NOT** set to " +
-                            "`application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
+                    @Parameter(name = "branchId", description = "Optional Branch ID representing the Record to "
+                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
+                            in = ParameterIn.QUERY),
+                    @Parameter(name = "commitId", description = "Optional Commit ID representing the Record to "
+                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
+                            in = ParameterIn.QUERY),
                     @Parameter(name = "includeImports", description = "Optional boolean representing whether to "
                             + "include imported ontologies when executing the query when the `CONTENT-TYPE` is " +
-                            "**NOT** set to `application/x-www-form-urlencoded`", schema = @Schema(type = "boolean",
-                            defaultValue = "true"), in = ParameterIn.QUERY),
+                            "**NOT** set to `application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
                     @Parameter(name = "applyInProgressCommit", description = "Optional boolean representing whether to "
                             + "apply the in progress commit when executing the query when the `CONTENT-TYPE` is " +
-                            "**NOT** set to `application/x-www-form-urlencoded`", schema = @Schema(type = "boolean",
-                            defaultValue = "false"), in = ParameterIn.QUERY),
-                    @Parameter(name = "fileName", description = "File name of the downloaded results file when the "
-                            + "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY),
-                    @Parameter(name = "fileType", description = "Format of the downloaded results file when the `ACCEPT` "
-                            + "header is set to `application/octet-stream`", in = ParameterIn.QUERY,
+                            "**NOT** set to `application/x-www-form-urlencoded`", in = ParameterIn.QUERY),
+                    @Parameter(name = "fileName", description = "File name of the downloaded results file when the " +
+                            "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY),
+                    @Parameter(name = "fileType", description = "Format of the downloaded results file when the `ACCEPT` " +
+                            "header is set to `application/octet-stream`", in = ParameterIn.QUERY,
                             schema = @Schema(allowableValues = {"ttl", "jsonld", "rdf", "json"}))
 
             }
@@ -3631,7 +3675,7 @@ public class OntologyRest {
     @ActionId(value = Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response postUrlEncodedDownloadQueryOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @FormParam("query") String queryString,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
@@ -3656,7 +3700,7 @@ public class OntologyRest {
         if (queryString == null) {
             throw ErrorUtils.sendError("Form parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
-        return handleSparqlQuery(context, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
+        return handleSparqlQuery(servletRequest, recordIdStr, branchIdStr, commitIdStr, includeImports, applyInProgressCommit,
                 acceptString, queryString, fileType, fileName).header("Content-Disposition", "attachment;filename="
                 + fileName + "." + fileType).build();
     }
@@ -3665,7 +3709,7 @@ public class OntologyRest {
      * Retrieves the results of the provided SPARQL query, which targets a specific ontology, and its import closures.
      * Accepts SELECT and CONSTRUCT queries.
      *
-     * @param context     Context of the request.
+     * @param servletRequest     Context of the request.
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -3698,7 +3742,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response groupQueryOntology(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "SPARQL Query to perform against ontology", required = true)
@@ -3714,8 +3758,10 @@ public class OntologyRest {
         checkStringParam(queryString, "Parameter 'query' must be set.");
 
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                    applyInProgressCommit)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
 
             ObjectNode results = mapper.createObjectNode();
             int queryLimitNum = Integer.parseInt(queryLimit);
@@ -3765,7 +3811,7 @@ public class OntologyRest {
                     return Optional.empty();
                 }
             } else if (parsedOperation instanceof ParsedGraphQuery) {
-                Model graphQueryResults = ontology.getGraphQueryResults(queryString, false, modelFactory);
+                Model graphQueryResults = ontology.getGraphQueryResults(queryString, false);
                 if (graphQueryResults != null && !graphQueryResults.isEmpty()) {
                     ObjectNode constructResults = mapper.createObjectNode();
                     ArrayNode stringResults = mapper.createArrayNode();
@@ -3787,8 +3833,8 @@ public class OntologyRest {
     /**
      * Retrieves the triples for a specified entity including all of is transitively attached Blank Nodes.
      *
-     * @param context        Context of the request.
-     * @param recordIdStr    String representing the Record Resource ID. NOTE: Assumes ID represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr    String representing the record Resource ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
      * @param entityIdStr    String representing the entity Resource ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
@@ -3824,7 +3870,7 @@ public class OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntity(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the entity Resource ID", required = true)
@@ -3844,8 +3890,9 @@ public class OntologyRest {
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                    applyInProgressCommit).orElseThrow(() -> ErrorUtils.sendError(
+                            "The ontology could not be found.", Response.Status.BAD_REQUEST));
 
             IRI entity = valueFactory.createIRI(entityIdStr);
             String queryString = GET_ENTITY_QUERY.replace("%ENTITY%", "<" + entity.stringValue() + ">");
@@ -3861,8 +3908,8 @@ public class OntologyRest {
     /**
      * Retrieves the map of EntityNames in an Ontology.
      *
-     * @param context     Context of the request.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
@@ -3893,7 +3940,7 @@ public class OntologyRest {
     @ActionId(Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntityNames(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID", required = false)
@@ -3928,12 +3975,13 @@ public class OntologyRest {
                         .collect(Collectors.joining("> <")) + ">}";
                 queryString = GET_ENTITY_NAMES.replace("%ENTITIES%", resourcesString);
             }
-            Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr,
+            Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit);
             if (optionalOntology.isPresent()) {
                 String finalQueryString = queryString;
                 StreamingOutput output = outputStream -> {
-                    TupleQueryResult result = optionalOntology.get().getTupleQueryResults(finalQueryString, includeImports);
+                    TupleQueryResult result = optionalOntology.get().getTupleQueryResults(finalQueryString,
+                            includeImports);
                     writeEntityNamesToStream(result, outputStream);
                 };
                 watch.stop();
@@ -4004,7 +4052,7 @@ public class OntologyRest {
         }
         if (includeNested) {
             outputStream.write(", \"hierarchy\": ".getBytes());
-            hierarchy.writeHierarchyString(sesameTransformer, outputStream);
+            hierarchy.writeHierarchyString(outputStream);
         }
         outputStream.write("}".getBytes());
     }
@@ -4080,7 +4128,7 @@ public class OntologyRest {
         String entityBinding = "entity";
         String namesBinding = "names_array";
         tupleQueryResults.forEach(bindings -> {
-            if (bindings.getBinding(entityBinding).isPresent()) {
+            if (Optional.ofNullable(bindings.getBinding(entityBinding)).isPresent()) {
                 String entity = Bindings.requiredResource(bindings, entityBinding).stringValue();
                 String namesString = Bindings.requiredLiteral(bindings, namesBinding).stringValue();
                 if (!namesString.isEmpty()) {
@@ -4124,7 +4172,7 @@ public class OntologyRest {
     /**
      * Optionally gets the Ontology based on the provided IDs.
      *
-     * @param context     Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param recordIdStr the record ID String to process.
      * @param branchIdStr the branch ID String to process.
      * @param commitIdStr the commit ID String to process.
@@ -4132,7 +4180,7 @@ public class OntologyRest {
      *                              applied to the return value
      * @return an Optional containing the Ontology if it was found.
      */
-    private Optional<Ontology> getOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+    private Optional<Ontology> getOntology(HttpServletRequest servletRequest, String recordIdStr, String branchIdStr,
                                            String commitIdStr, boolean applyInProgressCommit) {
         checkStringParam(recordIdStr, "The recordIdStr is missing.");
         Optional<Ontology> optionalOntology;
@@ -4154,7 +4202,7 @@ public class OntologyRest {
             }
 
             if (optionalOntology.isPresent() && applyInProgressCommit) {
-                User user = getActiveUser(context, engineManager);
+                User user = getActiveUser(servletRequest, engineManager);
                 Optional<InProgressCommit> inProgressCommitOpt = catalogManager.getInProgressCommit(
                         configProvider.getLocalCatalogIRI(), valueFactory.createIRI(recordIdStr), user);
 
@@ -4175,7 +4223,7 @@ public class OntologyRest {
     /**
      * Gets the List of entity IRIs identified by a lambda function in an Ontology identified by the provided IDs.
      *
-     * @param context     Context of the request.
+     * @param servletRequest the HttpServletRequest.
      * @param recordIdStr the record ID String to process.
      * @param branchIdStr the branch ID String to process.
      * @param commitIdStr the commit ID String to process.
@@ -4185,11 +4233,11 @@ public class OntologyRest {
      *                              applied to the return value
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
-    private <T extends JsonNode> T doWithOntology(ContainerRequestContext context, String recordIdStr,
+    private <T extends JsonNode> T doWithOntology(HttpServletRequest servletRequest, String recordIdStr,
                                                   String branchIdStr, String commitIdStr,
                                                   Function<Ontology, T> iriFunction,
                                                   boolean applyInProgressCommit) {
-        Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr,
+        Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                 applyInProgressCommit);
         if (optionalOntology.isPresent()) {
             return iriFunction.apply(optionalOntology.get());
@@ -4202,6 +4250,7 @@ public class OntologyRest {
      * Gets the List of entity IRIs identified by a lambda function in imported Ontologies for the Ontology identified
      * by the provided IDs.
      *
+     * @param servletRequest the HttpServletRequest.
      * @param recordIdStr the record ID String to process.
      * @param branchIdStr the branch ID String to process.
      * @param commitIdStr the commit ID String to process.
@@ -4211,13 +4260,13 @@ public class OntologyRest {
      *                              applied to the return value
      * @return the JSON list of imported IRI lists determined by the provided Function.
      */
-    private Response doWithImportedOntologies(ContainerRequestContext context, String recordIdStr,
+    private Response doWithImportedOntologies(HttpServletRequest servletRequest, String recordIdStr,
                                               String branchIdStr, String commitIdStr,
                                               Function<Ontology, ObjectNode> iriFunction,
                                               boolean applyInProgressCommit) {
         Set<Ontology> importedOntologies;
         try {
-            importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit);
+            importedOntologies = getImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit);
         } catch (MobiOntologyException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -4247,15 +4296,16 @@ public class OntologyRest {
     /**
      * Gets the imported Ontologies for the Ontology identified by the provided IDs.
      *
+     * @param servletRequest the HttpServletRequest.
      * @param recordIdStr the record ID String to process.
      * @param branchIdStr the branch ID String to process.
      * @param commitIdStr the commit ID String to process.
      * @param applyInProgressCommit whether to apply uncommitted changes when grabbing the ontologies
      * @return the Set of imported Ontologies.
      */
-    private Set<Ontology> getImportedOntologies(ContainerRequestContext context, String recordIdStr,
+    private Set<Ontology> getImportedOntologies(HttpServletRequest servletRequest, String recordIdStr,
                                                 String branchIdStr, String commitIdStr, boolean applyInProgressCommit) {
-        Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr,
+        Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                 applyInProgressCommit);
         if (optionalOntology.isPresent()) {
             Ontology baseOntology = optionalOntology.get();
@@ -4332,11 +4382,11 @@ public class OntologyRest {
      */
     private ArrayNode getClassArray(Ontology ontology) {
         ArrayNode arrayNode = mapper.createArrayNode();
-        Model model = ontology.asModel(modelFactory);
+        Model model = ontology.asModel();
         ontology.getAllClasses().stream()
                 .map(oClass -> model.filter(oClass.getIRI(), null, null))
                 .filter(m -> !m.isEmpty())
-                .map(m -> getObjectNodeFromJsonld(modelToJsonld(m, sesameTransformer)))
+                .map(m -> getObjectNodeFromJsonld(modelToJsonld(m)))
                 .forEach(arrayNode::add);
         return arrayNode;
     }
@@ -4387,10 +4437,9 @@ public class OntologyRest {
      */
     private ArrayNode getObjectPropertyArray(Ontology ontology) {
         ArrayNode arrayNode = mapper.createArrayNode();
-        Model model = ontology.asModel(modelFactory);
+        Model model = ontology.asModel();
         ontology.getAllObjectProperties().stream()
-                .map(property -> getObjectNodeFromJsonld(modelToJsonld(model.filter(property.getIRI(), null, null),
-                        sesameTransformer)))
+                .map(property -> getObjectNodeFromJsonld(modelToJsonld(model.filter(property.getIRI(), null, null))))
                 .forEach(arrayNode::add);
         return arrayNode;
     }
@@ -4427,11 +4476,11 @@ public class OntologyRest {
      */
     private ArrayNode getDataPropertyArray(Ontology ontology) {
         ArrayNode arrayNode = mapper.createArrayNode();
-        Model model = ontology.asModel(modelFactory);
+        Model model = ontology.asModel();
         ontology.getAllDataProperties().stream()
                 .map(dataProperty ->
                         getObjectNodeFromJsonld(modelToJsonld(model.filter(dataProperty.getIRI(),
-                                null, null), sesameTransformer)))
+                                null, null))))
                 .forEach(arrayNode::add);
         return arrayNode;
     }
@@ -4477,7 +4526,7 @@ public class OntologyRest {
      * @return a Set of Concept IRIs from the provided Ontology.
      */
     private Set<IRI> getConceptIRIs(Ontology ontology) {
-        return ontology.getIndividualsOfType(sesameTransformer.mobiIRI(SKOS.CONCEPT)).stream()
+        return ontology.getIndividualsOfType(SKOS.CONCEPT).stream()
                 .map(Individual::getIRI)
                 .collect(Collectors.toSet());
     }
@@ -4500,7 +4549,7 @@ public class OntologyRest {
      * @return a Set of ConceptScheme IRIs from the provided Ontology.
      */
     private Set<IRI> getConceptSchemeIRIs(Ontology ontology) {
-        return ontology.getIndividualsOfType(sesameTransformer.mobiIRI(SKOS.CONCEPT_SCHEME)).stream()
+        return ontology.getIndividualsOfType(SKOS.CONCEPT_SCHEME).stream()
                 .map(Individual::getIRI)
                 .collect(Collectors.toSet());
     }
@@ -4510,7 +4559,7 @@ public class OntologyRest {
     }
 
     private ArrayNode getDerivedConceptTypeIRIArray(Ontology ontology) {
-        return irisToJsonArray(ontology.getSubClassesFor(sesameTransformer.mobiIRI(SKOS.CONCEPT)));
+        return irisToJsonArray(ontology.getSubClassesFor(SKOS.CONCEPT));
     }
 
     private ObjectNode getDerivedConceptSchemeTypeIRIObject(Ontology ontology) {
@@ -4518,7 +4567,7 @@ public class OntologyRest {
     }
 
     private ArrayNode getDerivedConceptSchemeTypeIRIArray(Ontology ontology) {
-        return irisToJsonArray(ontology.getSubClassesFor(sesameTransformer.mobiIRI(SKOS.CONCEPT_SCHEME)));
+        return irisToJsonArray(ontology.getSubClassesFor(SKOS.CONCEPT_SCHEME));
     }
 
     private ObjectNode getDerivedSemanticRelationIRIObject(Ontology ontology) {
@@ -4526,7 +4575,7 @@ public class OntologyRest {
     }
 
     private ArrayNode getDerivedSemanticRelationIRIArray(Ontology ontology) {
-        return irisToJsonArray(ontology.getSubPropertiesFor(sesameTransformer.mobiIRI(SKOS.SEMANTIC_RELATION)));
+        return irisToJsonArray(ontology.getSubPropertiesFor(SKOS.SEMANTIC_RELATION));
     }
 
     /**
@@ -4687,20 +4736,20 @@ public class OntologyRest {
      * @return a Model created using the JSON-LD.
      */
     private Model getModelFromJson(String json) {
-        return jsonldToModel(json, sesameTransformer);
+        return jsonldToModel(json);
     }
 
     /**
      * Adds the provided Model to the requester's InProgressCommit additions.
      *
-     * @param context     Context of the request.
+     * @param servletRequest the HttpServletRequest.
      * @param recordIdStr the record ID String to process.
      * @param entityModel the Model to add to the additions in the InProgressCommit.
      * @return a Response indicating the success or failure of the addition.
      */
-    private Response additionsToInProgressCommit(ContainerRequestContext context, String recordIdStr,
+    private Response additionsToInProgressCommit(HttpServletRequest servletRequest, String recordIdStr,
                                                  Model entityModel) {
-        User user = getActiveUser(context, engineManager);
+        User user = getActiveUser(servletRequest, engineManager);
         Resource recordId = valueFactory.createIRI(recordIdStr);
         Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
         catalogManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
@@ -4712,20 +4761,21 @@ public class OntologyRest {
      * Adds the Statements associated with the entity identified by the provided ID to the requester's InProgressCommit
      * deletions.
      *
-     * @param context     Context of the request.
+     * @param servletRequest the HttpServletRequest.
      * @param ontology    the ontology to process.
      * @param entityIdStr the ID of the entity to be deleted.
      * @param recordIdStr the ID of the record which contains the entity to be deleted.
      * @return a Response indicating the success or failure of the deletion.
      */
-    private Response deletionsToInProgressCommit(ContainerRequestContext context, Ontology ontology,
+    private Response deletionsToInProgressCommit(HttpServletRequest servletRequest, Ontology ontology,
                                                  String entityIdStr, String recordIdStr) {
-        User user = getActiveUser(context, engineManager);
+        User user = getActiveUser(servletRequest, engineManager);
         Resource recordId = valueFactory.createIRI(recordIdStr);
         Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
-        Model ontologyModel = ontology.asModel(modelFactory);
+        Model ontologyModel = ontology.asModel();
         Resource entityId = valueFactory.createIRI(entityIdStr);
-        Model model = modelFactory.createModel(ontologyModel.stream()
+        Model model = modelFactory.createEmptyModel();
+        model.addAll(ontologyModel.stream()
                 .filter(statement -> statement.getSubject().equals(entityId)
                         || statement.getPredicate().equals(entityId) || statement.getObject().equals(entityId))
                 .collect(Collectors.toSet()));
@@ -4746,8 +4796,10 @@ public class OntologyRest {
      * @return a Model representation of the entity with the provided ID.
      */
     private Model getModelForEntityInOntology(Ontology ontology, String entityIdStr) {
-        Model ontologyModel = ontology.asModel(modelFactory);
-        return modelFactory.createModel(ontologyModel).filter(valueFactory.createIRI(entityIdStr), null, null);
+        Model ontologyModel = ontology.asModel();
+        Model temp = modelFactory.createEmptyModel();
+        temp.addAll(ontologyModel);
+        return temp.filter(valueFactory.createIRI(entityIdStr), null, null);
     }
 
     /**
@@ -4784,16 +4836,16 @@ public class OntologyRest {
     /**
      * Creates the OntologyRecord using CatalogManager.
      *
-     * @param context          Context of the request.
+     * @param servletRequest   the HttpServletRequest.
      * @param title            the title for the OntologyRecord.
      * @param description      the description for the OntologyRecord.
      * @param keywordSet       the comma separated list of keywords associated with the OntologyRecord.
      * @param config           the RecordOperationConfig containing the appropriate model or input file.
      * @return a Response indicating the success of the creation.
      */
-    private Response createOntologyRecord(ContainerRequestContext context, String title, String description,
+    private Response createOntologyRecord(HttpServletRequest servletRequest, String title, String description,
                                           String markdown, Set<String> keywordSet, RecordOperationConfig config) {
-        User user = getActiveUser(context, engineManager);
+        User user = getActiveUser(servletRequest, engineManager);
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         Resource catalogId = configProvider.getLocalCatalogIRI();
@@ -4835,26 +4887,28 @@ public class OntologyRest {
         return Response.status(Response.Status.CREATED).entity(objectNode.toString()).build();
     }
 
-    private Response.ResponseBuilder handleSparqlQuery(ContainerRequestContext context, String recordIdStr, String branchIdStr,
-                                       String commitIdStr, boolean includeImports, boolean applyInProgressCommit,
-                                       String acceptString, String queryString, String fileExtension, String fileName) {
+    private Response.ResponseBuilder handleSparqlQuery(HttpServletRequest context, String recordIdStr,
+                                                       String branchIdStr, String commitIdStr, boolean includeImports,
+                                                       boolean applyInProgressCommit, String acceptString,
+                                                       String queryString, String fileExtension, String fileName) {
         try {
-            if (acceptString.equals("application/octet-stream") && (fileName == null || fileExtension == null ||
-                    fileExtension.isEmpty())) {
-                throw ErrorUtils.sendError("Must provide both fileName and fileExtension when accept header is " +
-                        "application/octet-stream", Response.Status.BAD_REQUEST);
+            if (acceptString.equals("application/octet-stream") && (fileName == null || fileExtension == null
+                    || fileExtension.isEmpty())) {
+                throw ErrorUtils.sendError("Must provide both fileName and fileExtension when accept header is "
+                        + "application/octet-stream", Response.Status.BAD_REQUEST);
             }
 
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit)
+                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                            Response.Status.BAD_REQUEST));
 
             ParsedOperation parsedOperation = QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
 
             if (parsedOperation instanceof ParsedQuery) {
                 if (parsedOperation instanceof ParsedTupleQuery) {
                     if (fileName.isEmpty() && !acceptString.equals("application/json")) {
-                        throw ErrorUtils.sendError("Unsupported response format for SELECT queries. Must be " +
-                                "application/json.", Response.Status.BAD_REQUEST);
+                        throw ErrorUtils.sendError("Unsupported response format for SELECT queries. Must be "
+                                + "application/json.", Response.Status.BAD_REQUEST);
                     }
                     TupleQueryResult tupResults = ontology.getTupleQueryResults(queryString, includeImports);
                     if (tupResults.hasNext()) {

@@ -24,12 +24,7 @@ package com.mobi.platform.config.rest;
  */
 
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.platform.config.api.state.StateManager;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,12 +35,25 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -55,52 +63,29 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-@Component(service = StateRest.class, immediate = true)
+@Component(service = StateRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/states")
 public class StateRest {
     protected StateManager stateManager;
-    protected ValueFactory factory;
-    protected ModelFactory modelFactory;
-    protected SesameTransformer transformer;
+    protected final ValueFactory factory = SimpleValueFactory.getInstance();
+    protected final ModelFactory modelFactory = new DynamicModelFactory();
 
     @Reference
     protected void setStateManager(StateManager stateManager) {
         this.stateManager = stateManager;
     }
 
-    @Reference
-    protected void setValueFactory(final ValueFactory vf) {
-        factory = vf;
-    }
-
-    @Reference
-    protected void setModelFactory(final ModelFactory mf) {
-        modelFactory = mf;
-    }
-
-    @Reference
-    protected void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
-
     /**
      * Retrieves a JSON array of the IDs and associated resources for all State for the User making the request
      * which match the passed criteria. Can filter by associated Application and by the IDs of associated resources.
      *
-     * @param context Context of the request
-     * @param applicationId ID of the Application to filter State by
-     * @param subjectIds List of all the IDs of resources that should be associated with the States
+     * @param servletRequest the HttpServletRequest
+     * @param applicationId the ID of the Application to filter State by
+     * @param subjectIds a List of all the IDs of resources that should be associated with the States
      * @return a Response with an JSON array of the IDs and JSON-LD serialization of the resources for all States
      *      that match the passed criteria
      */
@@ -118,7 +103,7 @@ public class StateRest {
             }
     )
     public Response getStates(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "ID of the Application to filter State by", required = true)
             @QueryParam("application") String applicationId,
             @Parameter(array = @ArraySchema(
@@ -126,7 +111,7 @@ public class StateRest {
                             "associated with the States"),
                     schema = @Schema(implementation = String.class, description = "ID")))
             @QueryParam("subjects") List<String> subjectIds) {
-        String username = RestUtils.getActiveUsername(context);
+        String username = RestUtils.getActiveUsername(servletRequest);
         Set<Resource> subjects = subjectIds.stream()
                 .map(factory::createIRI)
                 .collect(Collectors.toSet());
@@ -149,7 +134,7 @@ public class StateRest {
      * Creates a new State for the User making the request using the passed JSON-LD to be associated with the new State.
      * Can pass the ID of an Application to be associated with the new State. Returns the ID of the new State.
      *
-     * @param context Context of the request
+     * @param servletRequest the HttpServletRequest
      * @param applicationId the ID of the Application to associate the new State with
      * @param stateJson the JSON-LD of all resources to be linked to the new State
      * @return a Response with the ID of the new State
@@ -170,15 +155,15 @@ public class StateRest {
             }
     )
     public Response createState(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "ID of the Application to associate the new State with", required = true)
             @QueryParam("application") String applicationId,
             @Parameter(description = "JSON-LD of all resources to be linked to the new State", required = true)
                     String stateJson) {
-        String username = RestUtils.getActiveUsername(context);
+        String username = RestUtils.getActiveUsername(servletRequest);
         try {
-            Model newState = transformer.mobiModel(Rio.parse(IOUtils.toInputStream(stateJson, StandardCharsets.UTF_8),
-                    "", RDFFormat.JSONLD));
+            Model newState = Rio.parse(IOUtils.toInputStream(stateJson, StandardCharsets.UTF_8),
+                    "", RDFFormat.JSONLD);
             if (newState.isEmpty()) {
                 throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);
             }
@@ -198,7 +183,7 @@ public class StateRest {
      * Retrieves all resources associated with the State identified by ID. Will only retrieve the State if it belongs
      * to the User making the request; returns a 403 otherwise. If state cannot be found, returns a 400.
      *
-     * @param context Context of the request
+     * @param servletRequest the HttpServletRequest
      * @param stateId the ID of the State to retrieve
      * @return a Response with the JSON-LD serialization of all resources associated with the specified State
      */
@@ -219,10 +204,10 @@ public class StateRest {
             }
     )
     public Response getState(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "ID of the State to retrieve", required = true)
             @PathParam("stateId") String stateId) {
-        String username = RestUtils.getActiveUsername(context);
+        String username = RestUtils.getActiveUsername(servletRequest);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
                 throw ErrorUtils.sendError("Not allowed", Response.Status.UNAUTHORIZED);
@@ -241,7 +226,7 @@ public class StateRest {
      * the State if it belongs to the User making the request; returns a 403 code otherwise. If state cannot be found,
      * returns a 400.
      *
-     * @param context Context of the request
+     * @param servletRequest the HttpServletRequest
      * @param stateId the ID of the State to update
      * @param newStateJson the JSON-LD serialization of the new resources to associate with the State
      * @return a Response indicating the success of the request
@@ -263,19 +248,19 @@ public class StateRest {
             }
     )
     public Response updateState(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "ID of the State to update", required = true)
             @PathParam("stateId") String stateId,
             @Parameter(description = "JSON-LD serialization of the new resources to associate with the State",
                     required = true)
                     String newStateJson) {
-        String username = RestUtils.getActiveUsername(context);
+        String username = RestUtils.getActiveUsername(servletRequest);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
                 throw ErrorUtils.sendError("Not allowed", Response.Status.UNAUTHORIZED);
             }
-            Model newState = transformer.mobiModel(Rio.parse(
-                    IOUtils.toInputStream(newStateJson, StandardCharsets.UTF_8), "", RDFFormat.JSONLD));
+            Model newState = Rio.parse(
+                    IOUtils.toInputStream(newStateJson, StandardCharsets.UTF_8), "", RDFFormat.JSONLD);
             if (newState.isEmpty()) {
                 throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);
             }
@@ -295,7 +280,7 @@ public class StateRest {
      * the State if it belongs to the User making the request; returns a 403 code otherwise. If state cannot be found,
      * returns a 400.
      *
-     * @param context Context of the request
+     * @param servletRequest the HttpServletRequest
      * @param stateId the ID of the State to remove
      * @return a Response indicating the success of the request
      */
@@ -315,10 +300,10 @@ public class StateRest {
             }
     )
     public Response deleteState(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "ID of the State to remove", required = true)
             @PathParam("stateId") String stateId) {
-        String username = RestUtils.getActiveUsername(context);
+        String username = RestUtils.getActiveUsername(servletRequest);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
                 throw ErrorUtils.sendError("Not allowed", Response.Status.UNAUTHORIZED);
@@ -333,6 +318,6 @@ public class StateRest {
     }
 
     private String convertModel(Model model) {
-        return RestUtils.modelToJsonld(model, transformer);
+        return RestUtils.modelToJsonld(model);
     }
 }

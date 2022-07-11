@@ -24,10 +24,10 @@ package com.mobi.dataset.api;
  */
 
 import com.mobi.catalog.api.PaginatedSearchResults;
-import com.mobi.dataset.pagination.DatasetPaginatedSearchParams;
 import com.mobi.dataset.api.builder.DatasetRecordConfig;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
-import com.mobi.rdf.api.Resource;
+import com.mobi.dataset.pagination.DatasetPaginatedSearchParams;
+import org.eclipse.rdf4j.model.Resource;
 
 import java.util.Optional;
 import java.util.Set;

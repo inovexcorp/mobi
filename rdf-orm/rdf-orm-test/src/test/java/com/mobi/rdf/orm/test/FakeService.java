@@ -23,10 +23,10 @@ package com.mobi.rdf.orm.test;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.impl.ThingFactory;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * This is an example of a service that will have a {@link ThingFactory} reference we can test the auto-injection

@@ -27,9 +27,7 @@ import com.mobi.document.translator.SemanticTranslator;
 import com.mobi.document.translator.expression.DefaultIriExpressionProcessor;
 import com.mobi.document.translator.impl.xml.XmlStackingSemanticTranslator;
 import com.mobi.document.translator.stack.impl.json.JsonStackingSemanticTranslator;
-import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -51,26 +49,20 @@ public class DocumentTranslationCLITest extends OrmEnabledTestCase {
         getField(cli.getClass(), "valueFactory").set(cli, VALUE_FACTORY);
         getField(cli.getClass(), "modelFactory").set(cli, MODEL_FACTORY);
         getField(cli.getClass(), "ormFactoryRegistry").set(cli, ORM_FACTORY_REGISTRY);
-        getField(cli.getClass(), "sesameTransformer").set(cli, new SimpleSesameTransformer());
     }
 
     private void injectTranslators() throws Exception {
         DefaultIriExpressionProcessor processor = new DefaultIriExpressionProcessor();
         injectOrmFactoryReferencesIntoService(processor);
-        processor.setValueFactory(VALUE_FACTORY);
 
         JsonStackingSemanticTranslator json = new JsonStackingSemanticTranslator();
         injectOrmFactoryReferencesIntoService(json);
         json.setExpressionProcessor(processor);
-        json.setModelFactory(MODEL_FACTORY);
-        json.setValueFactory(VALUE_FACTORY);
         json.setOrmFactoryRegistry(ORM_FACTORY_REGISTRY);
 
         XmlStackingSemanticTranslator xml = new XmlStackingSemanticTranslator();
         injectOrmFactoryReferencesIntoService(xml);
         xml.setExpressionProcessor(processor);
-        xml.setModelFactory(MODEL_FACTORY);
-        xml.setValueFactory(VALUE_FACTORY);
         xml.setOrmFactoryRegistry(ORM_FACTORY_REGISTRY);
 
         Field f = cli.getClass().getDeclaredField("translators");

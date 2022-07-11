@@ -36,15 +36,16 @@ import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Reference;
 
 import java.time.OffsetDateTime;
@@ -66,12 +67,11 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     public CatalogUtilsService utilsService;
 
     @Reference
-    public ValueFactory valueFactory;
-
-    @Reference
     public CatalogFactory catalogFactory;
 
     public OrmFactory<T> recordFactory;
+
+    public final ValueFactory valueFactory = SimpleValueFactory.getInstance();
 
     @Override
     public T create(User user, RecordOperationConfig config, RepositoryConnection conn) {

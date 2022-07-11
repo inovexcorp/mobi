@@ -26,7 +26,7 @@ package com.mobi.jaas.engines;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import com.mobi.jaas.api.engines.GroupConfig;
@@ -37,46 +37,39 @@ import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.foaf.Agent;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.karaf.jaas.modules.Encryption;
 import org.apache.karaf.jaas.modules.encryption.EncryptionSupport;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.osgi.framework.BundleContext;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(RdfEngine.class)
 public class RdfEngineTest extends OrmEnabledTestCase {
-    private Repository repo;
+    private AutoCloseable closeable;
+    private MemoryRepositoryWrapper repo;
     private RdfEngine engine;
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private OrmFactory<ExternalUser> externalUserFactory = getRequiredOrmFactory(ExternalUser.class);
@@ -97,7 +90,6 @@ public class RdfEngineTest extends OrmEnabledTestCase {
     private String userRoleId = "http://mobi.com/roles/user";
     private String adminRoleId = "http://mobi.com/roles/admin";
     private boolean setUp = false;
-    private Map<String, Object> options = new HashMap<>();
 
     @Mock
     private BundleContext bundleContext;
@@ -108,16 +100,18 @@ public class RdfEngineTest extends OrmEnabledTestCase {
     @Mock
     private EncryptionSupport encryptionSupport;
 
+    @Mock
+    private RdfEngineConfig rdfEngineConfig;
+
     @Before
     public void setUp() throws Exception {
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        closeable = MockitoAnnotations.openMocks(this);
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
         
         engine = new RdfEngine();
         injectOrmFactoryReferencesIntoService(engine);
-        engine.setRepository(repo);
-        engine.setValueFactory(VALUE_FACTORY);
-        engine.setModelFactory(MODEL_FACTORY);
+        engine.setOsgiRepository(repo);
 
         if (!setUp) {
             OrmFactory<Role> roleFactory = getRequiredOrmFactory(Role.class);
@@ -153,26 +147,26 @@ public class RdfEngineTest extends OrmEnabledTestCase {
             setUp = true;
         }
 
-        PowerMockito.whenNew(EncryptionSupport.class).withAnyArguments().thenReturn(encryptionSupport);
         when(encryptionSupport.getEncryption()).thenReturn(encryption);
         when(encryptionSupport.getEncryptionPrefix()).thenReturn("");
         when(encryptionSupport.getEncryptionSuffix()).thenReturn("");
         when(encryption.checkPassword(anyString(), anyString())).thenReturn(true);
-        when(encryption.encryptPassword(anyString())).thenAnswer(i -> i.getArgumentAt(0, String.class));
+        when(encryption.encryptPassword(anyString())).thenAnswer(i -> i.getArgument(0, String.class));
 
-        options.put("roles", new String[] {"admin", "user"});
-        options.put("encryption.enabled", false);
-        options.put("encryption.name", "basic");
-        options.put("encryption.prefix", "{CRYPT}");
-        options.put("encryption.suffix", "{CRYPT}");
-        options.put("encryption.algorithm", "MD5");
-        options.put("encryption.encoding", "hexadecimal");
+        when(rdfEngineConfig.roles()).thenReturn("admin,user");
+        when(rdfEngineConfig.encryption_enabled()).thenReturn(false);
+        when(rdfEngineConfig.encryption_name()).thenReturn("basic");
+        when(rdfEngineConfig.encryption_prefix()).thenReturn("{CRYPT}");
+        when(rdfEngineConfig.encryption_suffix()).thenReturn("{CRYPT}");
+        when(rdfEngineConfig.encryption_algorithm()).thenReturn("MD5");
+        when(rdfEngineConfig.encryption_encoding()).thenReturn("hexadecimal");
 
-        engine.start(bundleContext, options);
+        engine.start(bundleContext, rdfEngineConfig);
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
+        closeable.close();
         repo.shutDown();
     }
 
@@ -291,7 +285,7 @@ public class RdfEngineTest extends OrmEnabledTestCase {
         newUser.setPassword(VALUE_FACTORY.createLiteral("123"));
         newUser.setUsername(VALUE_FACTORY.createLiteral("user"));
         engine.updateUser(newUser);
-        Model userModel = MODEL_FACTORY.createModel();
+        Model userModel = MODEL_FACTORY.createEmptyModel();
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(VALUE_FACTORY.createIRI(userId), null, null);
         statements.forEach(userModel::add);
@@ -418,7 +412,7 @@ public class RdfEngineTest extends OrmEnabledTestCase {
     public void testUpdateGroup() {
         Group newGroup = groupFactory.createNew(VALUE_FACTORY.createIRI(groupId1));
         engine.updateGroup(newGroup);
-        Model groupModel = MODEL_FACTORY.createModel();
+        Model groupModel = MODEL_FACTORY.createEmptyModel();
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(VALUE_FACTORY.createIRI(groupId1), null, null);
         statements.forEach(groupModel::add);

@@ -23,11 +23,6 @@ package com.mobi.server.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.component.Reference;
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.exception.MobiException;
 import com.mobi.server.api.Mobi;
 import com.mobi.server.api.MobiConfig;
@@ -35,15 +30,16 @@ import com.mobi.server.api.ServerUtils;
 import com.mobi.service.config.ConfigUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
-import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -55,17 +51,18 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Component(immediate = true, name = MobiImpl.SERVICE_NAME)
+@Component(
+        immediate = true,
+        name = MobiImpl.SERVICE_NAME
+)
 public class MobiImpl implements Mobi {
 
     public static final String SERVICE_NAME = "com.mobi.platform.server";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MobiImpl.class);
 
-    private ConfigurationAdmin configurationAdmin;
     private UUID serverId;
     private String hostName;
-    private ServerUtils utils;
 
     private static String PRODUCT_ID = "";
 
@@ -81,20 +78,26 @@ public class MobiImpl implements Mobi {
     }
 
     @Reference
-    void setServerUtils(ServerUtils utils) {
-        this.utils = utils;
-    }
+    ServerUtils utils;
+
+    @Reference
+    ConfigurationAdmin configurationAdmin;
 
     @Activate
-    public void activate(final Map<String, Object> configuration) {
-        final MobiConfig serviceConfig = Configurable.createConfigurable(MobiConfig.class, configuration);
+    @Modified
+    public void activate(final MobiConfig serviceConfig) {
         if (serviceConfig.serverId() == null) {
             LOGGER.warn("No server id configured in startup, going to rebuild our Server UUID from the MAC ID of this machine.");
             final byte[] macId = utils.getMacId();
             this.serverId = UUID.nameUUIDFromBytes(macId);
-            final Map<String, Object> data = new HashMap<>(configuration);
-            data.put("serverId", this.serverId.toString());
-            ConfigUtils.updateServiceConfig(data, configurationAdmin, SERVICE_NAME);
+            try {
+                Map<String, Object> data = ConfigUtils.getPropertiesMap(this.configurationAdmin.getConfiguration(SERVICE_NAME));
+                data.put("serverId", this.serverId.toString());
+                ConfigUtils.updateServiceConfig(data, configurationAdmin, SERVICE_NAME);
+            } catch (IOException e) {
+                LOGGER.error("Could not get configuration for " + SERVICE_NAME, e);
+                throw new MobiException(e);
+            }
         } else {
             final String id = serviceConfig.serverId();
             LOGGER.info("Server ID present in service configuration. {}", id);
@@ -149,25 +152,6 @@ public class MobiImpl implements Mobi {
                 LOGGER.debug("Shutdown of server start completed");
             }
         }
-    }
-
-    /**
-     * Method triggered when the configuration changes for this service.
-     *
-     * @param configuration The configuration map for this service
-     */
-    @Modified
-    void modified(Map<String, Object> configuration) {
-        LOGGER.warn("Modified configuration of service. Going to re-activate with new configuration...");
-        activate(configuration);
-    }
-
-    /**
-     * Inject the {@link ConfigurationAdmin} into our service.
-     */
-    @Reference
-    public void setConfigurationAdmin(ConfigurationAdmin admin) {
-        this.configurationAdmin = admin;
     }
 
     /**

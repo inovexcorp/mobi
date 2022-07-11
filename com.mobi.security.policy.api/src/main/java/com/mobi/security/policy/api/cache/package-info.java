@@ -25,4 +25,4 @@ package com.mobi.security.policy.api.cache;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

@@ -24,12 +24,12 @@ package com.mobi.ontology.utils.cache.impl;
  */
 
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.cache.api.CacheManager;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.utils.cache.OntologyCache;
-import com.mobi.rdf.api.Resource;
+import org.eclipse.rdf4j.model.Resource;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -40,12 +40,9 @@ import javax.cache.Cache;
 @Component
 public class OntologyCacheImpl implements OntologyCache {
     private final String CACHE_NAME = "ontologyCache";
-    private CacheManager cacheManager;
 
     @Reference
-    public void setCacheManager(CacheManager cacheManager) {
-        this.cacheManager = cacheManager;
-    }
+    CacheManager cacheManager;
 
     @Override
     public String generateKey(String recordIri, String commitIri) {

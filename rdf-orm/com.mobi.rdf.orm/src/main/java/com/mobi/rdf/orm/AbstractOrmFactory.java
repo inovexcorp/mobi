@@ -1,14 +1,16 @@
 package com.mobi.rdf.orm;
 
-import aQute.bnd.annotation.component.Reference;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.exception.MobiException;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.conversion.ValueConversionException;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -71,17 +73,18 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
      * The {@link ValueFactory} we'll use for representing RDF data in this
      * {@link OrmFactory} when one isn't provided to our objects.
      */
-    protected ValueFactory valueFactory;
+    protected final ValueFactory valueFactory = SimpleValueFactory.getInstance();
     /**
      * The {@link ModelFactory} we'll use for constructing {@link Model} objects
      * when one isn't provided.
      */
-    protected ModelFactory modelFactory;
+    protected final ModelFactory modelFactory = new DynamicModelFactory();
     /**
      * The {@link ValueConverterRegistry} to use to convert {@link Value} data
      * to objects when one isn't provided to our objects.
      */
-    protected ValueConverterRegistry valueConverterRegistry;
+    @Reference
+    public ValueConverterRegistry valueConverterRegistry;
 
     /**
      * Construct a new instance of an {@link AbstractOrmFactory}.
@@ -227,41 +230,7 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
      */
     @Override
     public T createNew(Resource resource) {
-        return createNew(resource, modelFactory.createModel(), this.valueFactory, this.valueConverterRegistry);
-    }
-
-    /**
-     * Set the {@link ModelFactory}. OSGi platform will inject this value.
-     *
-     * @param modelFactory The {@link ModelFactory} to use by default when the argument
-     *                     isn't passed in
-     */
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
-    }
-
-    /**
-     * Set the {@link ValueFactory}. OSGi platform will inject this value.
-     *
-     * @param valueFactory The {@link ValueFactory} to use by default when the argument
-     *                     isn't passed in
-     */
-    @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
-    }
-
-    /**
-     * Set the {@link ValueConverterRegistry}. OSGi platform will inject this
-     * value.
-     *
-     * @param valueConverterRegistry The {@link ValueConverterRegistry} to use by default when the
-     *                               argument isn't passed in
-     */
-    @Reference
-    public void setValueConverterRegistry(ValueConverterRegistry valueConverterRegistry) {
-        this.valueConverterRegistry = valueConverterRegistry;
+        return createNew(resource, modelFactory.createEmptyModel(), this.valueFactory, this.valueConverterRegistry);
     }
 
     /**

@@ -22,25 +22,18 @@ package com.mobi.rest.security;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 import static com.mobi.web.security.util.AuthenticationProps.ANON_USER;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.UNAUTHORIZED;
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.Binding;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.persistence.utils.Models;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
@@ -61,20 +54,37 @@ import com.mobi.security.policy.api.ontologies.policy.Create;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.security.policy.api.ontologies.policy.Update;
+import org.apache.commons.fileupload.FileItemIterator;
+import org.apache.commons.fileupload.FileItemStream;
+import org.apache.commons.fileupload.FileUpload;
+import org.apache.commons.fileupload.FileUploadBase;
+import org.apache.commons.fileupload.RequestContext;
+import org.apache.commons.fileupload.util.Streams;
 import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.message.internal.MediaTypes;
-import org.glassfish.jersey.server.ContainerRequest;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.Binding;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ServiceScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Priority;
 import javax.ws.rs.Priorities;
@@ -84,9 +94,11 @@ import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
+import javax.ws.rs.ext.Providers;
 
 /**
  * Utilizes annotations set on the REST endpoint method to collect information about the request and
@@ -94,41 +106,32 @@ import javax.ws.rs.ext.Provider;
  */
 @Provider
 @Priority(Priorities.AUTHORIZATION - 1)
-@Component(immediate = true)
+@Component(scope = ServiceScope.PROTOTYPE, property = {
+        "osgi.jaxrs.extension=true"
+})
 public class XACMLRequestFilter implements ContainerRequestFilter {
 
     private final Logger log = LoggerFactory.getLogger(XACMLRequestFilter.class);
 
-    private PDP pdp;
-    private ValueFactory vf;
-    private EngineManager engineManager;
-    private Repository repository;
+    final ValueFactory vf = SimpleValueFactory.getInstance();
 
     @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
+    EngineManager engineManager;
 
     @Reference
-    void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
-
-    @Reference
-    void setPdp(PDP pdp) {
-        this.pdp = pdp;
-    }
+    PDP pdp;
 
     @Reference(target = "(id=system)")
-    void setRepository(Repository repository) {
-        this.repository = repository;
-    }
+    OsgiRepository repository;
 
     @Context
     ResourceInfo resourceInfo;
 
     @Context
     UriInfo uriInfo;
+
+    @Context
+    Providers providers;
 
     @Override
     public void filter(ContainerRequestContext context) throws IOException {
@@ -257,29 +260,10 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                     resourceIdIri = vf.createIRI(queryParameters.getFirst(resourceValueStr));
                     break;
                 case BODY:
-                    if (context instanceof ContainerRequest) {
-                        ContainerRequest request = (ContainerRequest) context;
-                        if (request.hasEntity()) {
-                            if (MediaTypes.typeEqual(MediaType.MULTIPART_FORM_DATA_TYPE, request.getMediaType())) {
-                                FormDataMultiPart form = getFormDataMultiPart(request);
-                                validateFormDataMultipartParam(resourceValueStr, form, true);
-                                resourceIdIri = vf.createIRI(form.getField(resourceValueStr).getValue());
-                                break;
-                            } else if (MediaTypes.typeEqual(MediaType.APPLICATION_FORM_URLENCODED_TYPE,
-                                    request.getMediaType())) {
-                                Form form = getFormData(request);
-                                validateFormParam(resourceValueStr, form, true);
-                                List<String> resourceVal = form.asMap().get(resourceValueStr);
-                                if (resourceVal == null) {
-                                    throw ErrorUtils.sendError("Could not find request resource",
-                                            INTERNAL_SERVER_ERROR);
-                                }
-                                resourceIdIri = vf.createIRI(resourceVal.get(0));
-                                break;
-                            }
-                        }
-                    }
-                    throw ErrorUtils.sendError("Expected Request to have form data", INTERNAL_SERVER_ERROR);
+                    MultivaluedMap<String, String> formMap = getFormData(context);
+                    validateFormParam(resourceValueStr, formMap, true);
+                    resourceIdIri = vf.createIRI(formMap.getFirst(resourceValueStr));
+                    break;
                 case PROP_PATH:
                     IRI pathStart = getPropPathStart(validatePropPathValue(resourceIdAnnotation.start()),
                             pathParameters, queryParameters, context, true);
@@ -290,6 +274,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                                     INTERNAL_SERVER_ERROR);
                         }
                         resourceIdIri = (IRI) Bindings.requiredResource(result.next(), "value");
+                        result.close();
                     }
                     break;
                 case PRIMITIVE:
@@ -353,18 +338,11 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         return params.containsKey(key);
     }
 
-    private boolean validateFormParam(String key, Form params, boolean isRequired) {
-        if (!params.asMap().containsKey(key) && isRequired) {
+    private boolean validateFormParam(String key, MultivaluedMap<String, String> params, boolean isRequired) {
+        if ((!params.containsKey(key) || params.get(key) == null) && isRequired) {
             throw ErrorUtils.sendError("Form parameters do not contain " + key, INTERNAL_SERVER_ERROR);
         }
-        return params.asMap().containsKey(key);
-    }
-
-    private boolean validateFormDataMultipartParam(String key, FormDataMultiPart params, boolean isRequired) {
-        if (params.getField(key) == null && isRequired) {
-            throw ErrorUtils.sendError("Form parameters do not contain " + key, INTERNAL_SERVER_ERROR);
-        }
-        return params.getField(key) == null;
+        return params.containsKey(key) && params.get(key) != null;
     }
 
     private Value validatePropPathValue(Value[] values) {
@@ -375,14 +353,90 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         return values[0];
     }
 
-    private Form getFormData(ContainerRequest request) {
-        request.bufferEntity();
-        return request.readEntity(Form.class);
+    private MultivaluedMap<String, String> getFormData(ContainerRequestContext context) {
+        if (!context.hasEntity()
+                || (!typeEqual(MediaType.MULTIPART_FORM_DATA_TYPE, context.getMediaType())
+                && !typeEqual(MediaType.APPLICATION_FORM_URLENCODED_TYPE, context.getMediaType()))) {
+            throw ErrorUtils.sendError("Expected Request to have form data", INTERNAL_SERVER_ERROR);
+        }
+
+        if (typeEqual(MediaType.MULTIPART_FORM_DATA_TYPE, context.getMediaType())) {
+            return getFormDataMultipart(context);
+        } else if (typeEqual(MediaType.APPLICATION_FORM_URLENCODED_TYPE, context.getMediaType())) {
+            return getFormDataUrlEncoded(context);
+        }
+        throw ErrorUtils.sendError("Expected Request to have form data", INTERNAL_SERVER_ERROR);
     }
 
-    private FormDataMultiPart getFormDataMultiPart(ContainerRequest request) {
-        request.bufferEntity();
-        return request.readEntity(FormDataMultiPart.class);
+    private MultivaluedMap<String, String> getFormDataMultipart(ContainerRequestContext context) {
+        try {
+            ByteArrayInputStream resettableIS = Models.toByteArrayInputStream(context.getEntityStream());
+            MultivaluedMap<String, String> formMap = new MultivaluedHashMap<>();
+
+            FileUploadBase upload = new FileUpload();
+            RequestContext requestContext = new RequestContext() {
+                @Override
+                public String getCharacterEncoding() {
+                    return StandardCharsets.UTF_8.name();
+                }
+
+                @Override
+                public String getContentType() {
+                    return context.getMediaType().toString();
+                }
+
+                // Deprecated
+                @Override
+                public int getContentLength() {
+                    return 0;
+                }
+
+                @Override
+                public InputStream getInputStream() throws IOException {
+                    return resettableIS;
+                }
+            };
+
+            FileItemIterator iter = upload.getItemIterator(requestContext);
+            while (iter.hasNext()) {
+                FileItemStream item = iter.next();
+                String name = item.getFieldName();
+                InputStream stream = item.openStream();
+                if (item.isFormField()) {
+                    formMap.add(name, Streams.asString(stream));
+                }
+            }
+
+            resettableIS.reset();
+            context.setEntityStream(resettableIS);
+            return formMap;
+        } catch (Exception e) {
+            throw ErrorUtils.sendError(e,"Could not retrieve form from request: ", INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private MultivaluedMap<String, String> getFormDataUrlEncoded(ContainerRequestContext context) {
+        try {
+            ByteArrayInputStream resettableIS = Models.toByteArrayInputStream(context.getEntityStream());
+            Form form = providers.getMessageBodyReader(Form.class, Form.class, new Annotation[0],
+                            MediaType.APPLICATION_FORM_URLENCODED_TYPE)
+                    .readFrom(Form.class, Form.class, new Annotation[0], MediaType.APPLICATION_FORM_URLENCODED_TYPE,
+                            null, resettableIS);
+
+            resettableIS.reset();
+            context.setEntityStream(resettableIS);
+            return form.asMap();
+        } catch (Exception e) {
+            throw ErrorUtils.sendError(e,"Could not retrieve form from request: ", INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private boolean typeEqual(MediaType m1, MediaType m2) {
+        if (m1 == null || m2 == null) {
+            return false;
+        }
+
+        return m1.getSubtype().equalsIgnoreCase(m2.getSubtype()) && m1.getType().equalsIgnoreCase(m2.getType());
     }
 
     private void setAttributes(Map<String, Literal> attrs, AttributeValue[] values,
@@ -406,33 +460,11 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                                     : null;
                             break;
                         case BODY:
-                            if (context instanceof ContainerRequest) {
-                                ContainerRequest request = (ContainerRequest) context;
-                                if (request.hasEntity()) {
-                                    if (MediaTypes.typeEqual(MediaType.MULTIPART_FORM_DATA_TYPE,
-                                            request.getMediaType())) {
-                                        FormDataMultiPart form = getFormDataMultiPart(request);
-                                        value = validateFormDataMultipartParam(valueStr, form, true)
-                                                ? getLiteral(form.getField(valueStr).getValue(), datatype)
-                                                : null;
-                                        break;
-                                    } else if (MediaTypes.typeEqual(MediaType.APPLICATION_FORM_URLENCODED_TYPE,
-                                            request.getMediaType())) {
-                                        Form form = getFormData(request);
-                                        validateFormParam(valueStr, form, true);
-                                        List<String> resourceVal = form.asMap().get(valueStr);
-                                        if (resourceVal == null) {
-                                            throw ErrorUtils.sendError("Could not find request resource",
-                                                    INTERNAL_SERVER_ERROR);
-                                        }
-                                        value = validateFormParam(valueStr, form, true)
-                                                ? getLiteral(form.asMap().get(valueStr).get(0), datatype)
-                                                : null;
-                                        break;
-                                    }
-                                }
-                            }
-                            throw ErrorUtils.sendError("Expected Request to have form data", INTERNAL_SERVER_ERROR);
+                            MultivaluedMap<String, String> formMap = getFormData(context);
+                            value = validateFormParam(valueStr, formMap, isRequired)
+                                    ? getLiteral(formMap.getFirst(valueStr), datatype)
+                                    : null;
+                            break;
                         case PROP_PATH:
                             IRI pathStart = getPropPathStart(validatePropPathValue(attributeValue.start()),
                                     pathParameters, queryParameters, context, isRequired);
@@ -446,9 +478,10 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                                                 INTERNAL_SERVER_ERROR);
                                     }
                                 } else {
-                                    Binding binding = result.next().getBinding("value").orElseThrow(() ->
-                                            ErrorUtils.sendError("Property Value binding is not present",
-                                                    INTERNAL_SERVER_ERROR));
+                                    Binding binding = Optional.ofNullable(result.next().getBinding("value"))
+                                            .orElseThrow(() ->
+                                                    ErrorUtils.sendError("Property Value binding is not present",
+                                                            INTERNAL_SERVER_ERROR));
                                     value = getLiteral(binding.getValue().stringValue(), datatype);
                                 }
                             }
@@ -482,32 +515,11 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                         : null;
                 break;
             case BODY:
-                if (context instanceof ContainerRequest) {
-                    ContainerRequest request = (ContainerRequest) context;
-                    if (request.hasEntity()) {
-                        if (MediaTypes.typeEqual(MediaType.MULTIPART_FORM_DATA_TYPE, request.getMediaType())) {
-                            FormDataMultiPart form = getFormDataMultiPart(request);
-                            propPathStart = validateFormDataMultipartParam(propPathValue, form, true)
-                                    ? vf.createIRI(form.getField(propPathValue).getValue())
-                                    : null;
-                            break;
-                        } else if (MediaTypes.typeEqual(MediaType.APPLICATION_FORM_URLENCODED_TYPE,
-                                request.getMediaType())) {
-                            Form form = getFormData(request);
-                            validateFormParam(propPathValue, form, true);
-                            List<String> resourceVal = form.asMap().get(propPathValue);
-                            if (resourceVal == null) {
-                                throw ErrorUtils.sendError("Could not find request resource",
-                                        INTERNAL_SERVER_ERROR);
-                            }
-                            propPathStart = validateFormParam(propPathValue, form, true)
-                                    ? vf.createIRI(form.asMap().get(propPathValue).get(0))
-                                    : null;
-                            break;
-                        }
-                    }
-                }
-                throw ErrorUtils.sendError("Expected Request to have form data", INTERNAL_SERVER_ERROR);
+                MultivaluedMap<String, String> formMap = getFormData(context);
+                propPathStart = validateFormParam(propPathValue, formMap, isRequired)
+                        ? vf.createIRI(formMap.getFirst(propPathValue))
+                        : null;
+                break;
             case PROP_PATH:
                 throw ErrorUtils.sendError("Property Path not supported as a property path starting point",
                         INTERNAL_SERVER_ERROR);

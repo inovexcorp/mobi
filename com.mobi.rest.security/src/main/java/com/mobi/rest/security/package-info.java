@@ -25,4 +25,4 @@ package com.mobi.rest.security;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

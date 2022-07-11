@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.23.0-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -65,14 +65,6 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>com.eclipsesource.jaxrs</groupId>
-            <artifactId>features</artifactId>
-            <classifier>features</classifier>
-            <version>5.3</version>
-            <type>xml</type>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
             <!-- scope is runtime so the feature repo is listed in etc/org.apache.karaf.features.cfg file, and features will installed into the system directory if specify in the plugin configuration -->
             <groupId>org.apache.karaf.features</groupId>
             <artifactId>spring</artifactId>
@@ -94,6 +86,11 @@
             <artifactId>jaas.proxy</artifactId>
             <version>${project.version}</version>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.servicemix.specs</groupId>
+            <artifactId>org.apache.servicemix.specs.activation-api-1.2.1</artifactId>
+            <version>1.2.1_4-MOBI</version>
         </dependency>
     </dependencies>
 
@@ -137,6 +134,32 @@
                 </executions>
             </plugin>
             <plugin>
+                <!-- Remove old activation-api with bug for java 11-->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>remove-activation-api</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                        <configuration>
+                            <excludeDefaultDirectories>true</excludeDefaultDirectories>
+                            <filesets>
+                                <filesets>
+                                    <directory>target/assembly/lib/jdk9plus</directory>
+                                    <includes>
+                                        <include>org.apache.servicemix.specs.activation-api-1.2.1-1.2.1_3.jar</include>
+                                    </includes>
+                                </filesets>
+                            </filesets>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
@@ -152,6 +175,12 @@
                                     <groupId>com.mobi</groupId>
                                     <artifactId>jaas.proxy</artifactId>
                                     <outputDirectory>target/classes/lib/boot</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <!-- Add updated activation-api with bug fix for java 11-->
+                                    <groupId>org.apache.servicemix.specs</groupId>
+                                    <artifactId>org.apache.servicemix.specs.activation-api-1.2.1</artifactId>
+                                    <outputDirectory>target/classes/lib/jdk9plus</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -197,10 +226,6 @@
                         <feature>http</feature>
                         <feature>pax-http-whiteboard</feature>
                         <feature>obr</feature>
-                        <feature>jax-rs-connector</feature>
-                        <feature>jax-rs-provider-multipart</feature>
-                        <feature>jax-rs-provider-gson</feature>
-                        <feature>jax-rs-provider-security</feature>
 
                         <!-- Mobi Features -->
                         <feature>mobi-server-deps</feature>

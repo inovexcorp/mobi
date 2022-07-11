@@ -22,6 +22,8 @@
  */
 package com.mobi.catalog.impl
 
+import com.mobi.repository.api.OsgiRepository
+
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory
@@ -42,15 +44,14 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord
 import com.mobi.catalog.config.CatalogConfigProvider
 import com.mobi.jaas.api.ontologies.usermanagement.User
-import com.mobi.rdf.api.Model
-import com.mobi.repository.api.Repository
+import org.eclipse.rdf4j.model.Model
 import spock.lang.Specification
 
 class SimpleCatalogManagerSpec extends Specification {
 
     def service = new SimpleCatalogManager()
     def configProvider = Mock(CatalogConfigProvider)
-    def repository = Mock(Repository)
+    def repository = Mock(OsgiRepository)
     def model = Mock(Model)
     def vf = getValueFactory()
     def mf = getModelFactory()
@@ -90,10 +91,8 @@ class SimpleCatalogManagerSpec extends Specification {
     def dummyBranchIRI
 
     def setup() {
-        service.setConfigProvider(configProvider)
+        service.configProvider = configProvider
         injectOrmFactoryReferencesIntoService(service)
-        service.setValueFactory(vf)
-        service.setModelFactory(mf)
 
         configProvider.getRepository() >> repository
 

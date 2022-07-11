@@ -24,9 +24,8 @@ package com.mobi.cache.impl.repository.jcache;
  */
 
 import static javax.cache.configuration.OptionalFeature.STORE_BY_REFERENCE;
-
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -38,11 +37,7 @@ import javax.cache.CacheManager;
 import javax.cache.configuration.OptionalFeature;
 import javax.cache.spi.CachingProvider;
 
-@Component(
-        properties = {
-                "provider=RepositoryCachingProvider"
-        }
-)
+@Component(property = {"provider=RepositoryCachingProvider"})
 public class RepositoryCachingProvider implements CachingProvider {
 
     private final Map<ClassLoader, Map<URI, CacheManager>> cacheManagers = new WeakHashMap<>(1);

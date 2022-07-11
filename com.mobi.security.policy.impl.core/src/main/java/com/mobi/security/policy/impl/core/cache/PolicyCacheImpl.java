@@ -23,8 +23,8 @@ package com.mobi.security.policy.impl.core.cache;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.cache.api.CacheManager;
 import com.mobi.security.policy.api.Policy;
 import com.mobi.security.policy.api.cache.PolicyCache;
@@ -36,12 +36,9 @@ import javax.cache.Cache;
 public class PolicyCacheImpl implements PolicyCache {
 
     private final String CACHE_NAME = "policyCache";
-    private CacheManager cacheManager;
 
     @Reference
-    void setCacheManager(CacheManager cacheManager) {
-        this.cacheManager = cacheManager;
-    }
+    CacheManager cacheManager;
 
     @Override
     public Optional<Cache<String, Policy>> getPolicyCache() {

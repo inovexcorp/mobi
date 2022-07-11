@@ -23,87 +23,74 @@ package com.mobi.repository.impl.sesame.memory;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Deactivate;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.metatype.Configurable;
-import com.mobi.repository.api.DelegatingRepository;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.base.RepositoryWrapper;
-import com.mobi.repository.exception.RepositoryConfigException;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.api.OsgiRepository;
+import com.mobi.repository.base.OsgiRepositoryWrapper;
+import com.mobi.repository.impl.sesame.RepositoryConfigHelper;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.metatype.annotations.Designate;
 
 import java.io.File;
-import java.util.Map;
 
 @Component(
         immediate = true,
-        provide = { Repository.class, DelegatingRepository.class },
+        service = { OsgiRepository.class },
         name = MemoryRepositoryWrapper.NAME,
-        configurationPolicy = ConfigurationPolicy.require,
-        designateFactory = MemoryRepositoryConfig.class,
-        properties = {
+        configurationPolicy = ConfigurationPolicy.REQUIRE,
+        property = {
                 "repositorytype=" + MemoryRepositoryWrapper.REPOSITORY_TYPE
         }
 )
-public class MemoryRepositoryWrapper extends RepositoryWrapper {
+@Designate(ocd = MemoryRepositoryConfig.class)
+public class MemoryRepositoryWrapper extends OsgiRepositoryWrapper {
 
     protected static final String REPOSITORY_TYPE = "memory";
     protected static final String NAME = "com.mobi.service.repository." + REPOSITORY_TYPE;
 
-    @Override
-    protected Repository getRepo(Map<String, Object> props) {
-        MemoryRepositoryConfig config = Configurable.createConfigurable(MemoryRepositoryConfig.class, props);
-        this.repositoryID = config.id();
+    @Activate
+    public void start(final MemoryRepositoryConfig config) {
+        RepositoryConfigHelper.validateBaseParams(config.id(), config.title());
+        RepositoryConfigHelper.validateIndexes(config.tripleIndexes());
 
         MemoryStore sesameMemoryStore;
-
-        if (props.containsKey("dataDir")) {
+        if ("".equals(config.dataDir()) || config.dataDir() == null) {
+            sesameMemoryStore = new MemoryStore();
+        } else {
             File file = new File(config.dataDir());
             sesameMemoryStore = new MemoryStore(file);
-        } else {
-            sesameMemoryStore = new MemoryStore();
         }
+        sesameMemoryStore.setSyncDelay(config.syncDelay());
 
-        if (props.containsKey("syncDelay")) {
-            sesameMemoryStore.setSyncDelay(config.syncDelay());
-        }
-
-        SesameRepositoryWrapper repo = new SesameRepositoryWrapper(new SailRepository(sesameMemoryStore));
-        repo.setConfig(config);
-
-        return repo;
-    }
-
-    @Override
-    public void validateConfig(Map<String, Object> props) {
-        super.validateConfig(props);
-        MemoryRepositoryConfig config = Configurable.createConfigurable(MemoryRepositoryConfig.class, props);
-
-        if (props.containsKey("dataDir")) {
-            if (config.dataDir().equals(""))
-                throw new RepositoryConfigException(
-                        new IllegalArgumentException("Repository property 'dataDir' cannot be empty.")
-                );
-        }
-    }
-
-    @Activate
-    protected void start(Map<String, Object> props) {
-        super.start(props);
+        Repository repo = new SailRepository(sesameMemoryStore);
+        setDelegate(repo);
+        this.repositoryID = config.id();
+        this.repositoryTitle = config.title();
     }
 
     @Deactivate
     protected void stop() {
-        super.stop();
+        try {
+            getDelegate().shutDown();
+        } catch (RepositoryException e) {
+            throw new RepositoryException("Could not shutdown Repository \"" + repositoryID + "\".", e);
+        }
     }
 
     @Modified
-    protected void modified(Map<String, Object> props) {
-        super.modified(props);
+    protected void modified(final MemoryRepositoryConfig config) {
+        stop();
+        start(config);
+    }
+
+    @Override
+    public Class<MemoryRepositoryConfig> getConfigType() {
+        return MemoryRepositoryConfig.class;
     }
 }

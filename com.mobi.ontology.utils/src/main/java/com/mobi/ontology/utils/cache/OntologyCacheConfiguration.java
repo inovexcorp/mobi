@@ -23,11 +23,6 @@ package com.mobi.ontology.utils.cache;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
 import com.mobi.cache.config.CacheConfiguration;
 import com.mobi.cache.config.CacheServiceConfig;
@@ -36,13 +31,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.jsr107.Eh107Configuration;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Modified;
 
-import java.util.Map;
 import javax.cache.configuration.Configuration;
 
 @Component(
         immediate = true,
-        configurationPolicy = ConfigurationPolicy.require
+        configurationPolicy = ConfigurationPolicy.REQUIRE
 )
 public class OntologyCacheConfiguration implements CacheConfiguration {
 
@@ -51,25 +49,15 @@ public class OntologyCacheConfiguration implements CacheConfiguration {
     private int numEntries;
 
     @Activate
-    public void start(Map<String, Object> props) {
-        CacheServiceConfig config = Configurable.createConfigurable(CacheServiceConfig.class, props);
-
+    public void start(CacheServiceConfig config) {
         this.cacheId = config.id();
-
-        if (props.containsKey("numEntries")) {
-            this.numEntries = config.numEntries();
-        } else {
-            this.numEntries = 10;
-        }
-
-        if (props.containsKey("repoId")) {
-            this.repoId = config.repoId();
-        }
+        this.numEntries = config.numEntries();
+        this.repoId = config.repoId();
     }
 
     @Modified
-    public void modified(Map<String, Object> props) {
-        start(props);
+    public void modified(CacheServiceConfig config) {
+        start(config);
     }
 
     @Override

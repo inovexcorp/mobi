@@ -73,19 +73,11 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
@@ -101,10 +93,17 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -126,9 +125,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -136,14 +137,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
-@Component(service = CatalogRest.class, immediate = true)
+@Component(service = CatalogRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/catalogs")
 public class CatalogRest {
 
@@ -151,13 +151,13 @@ public class CatalogRest {
     private static final Set<String> SORT_RESOURCES;
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ModelFactory mf = new DynamicModelFactory();
+    
     private OrmFactoryRegistry factoryRegistry;
-    private SesameTransformer transformer;
     private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private CatalogUtilsService catalogUtilsService;
-    private ValueFactory vf;
-    private ModelFactory mf;
     private VersioningManager versioningManager;
     private BNodeService bNodeService;
     private CatalogProvUtils provUtils;
@@ -182,11 +182,6 @@ public class CatalogRest {
     }
 
     @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
-
-    @Reference
     void setConfigProvider(CatalogConfigProvider configProvider) {
         this.configProvider = configProvider;
     }
@@ -204,16 +199,6 @@ public class CatalogRest {
     @Reference
     void setCatalogUtilsService(CatalogUtilsService catalogUtilsService) {
         this.catalogUtilsService = catalogUtilsService;
-    }
-
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    @Reference
-    void setMf(ModelFactory mf) {
-        this.mf = mf;
     }
 
     @Reference
@@ -289,7 +274,7 @@ public class CatalogRest {
             }
 
             ArrayNode array = mapper.valueToTree(catalogs.stream()
-                    .map(catalog -> thingToSkolemizedObjectNode(catalog, Catalog.TYPE, transformer, bNodeService))
+                    .map(catalog -> thingToSkolemizedObjectNode(catalog, Catalog.TYPE, bNodeService))
                     .collect(Collectors.toList()));
 
             return Response.ok(array.toString()).build();
@@ -327,10 +312,10 @@ public class CatalogRest {
             Resource catalogIri = vf.createIRI(catalogId);
             if (catalogIri.equals(configProvider.getLocalCatalogIRI())) {
                 return Response.ok(thingToSkolemizedObjectNode(catalogManager.getLocalCatalog(),
-                        Catalog.TYPE, transformer, bNodeService).toString()).build();
+                        Catalog.TYPE, bNodeService).toString()).build();
             } else if (catalogIri.equals(configProvider.getDistributedCatalogIRI())) {
                 return Response.ok(thingToSkolemizedObjectNode(catalogManager.getDistributedCatalog(),
-                        Catalog.TYPE, transformer, bNodeService).toString()).build();
+                        Catalog.TYPE, bNodeService).toString()).build();
             } else {
                 throw ErrorUtils.sendError("Catalog " + catalogId + " does not exist", Response.Status.NOT_FOUND);
             }
@@ -369,7 +354,8 @@ public class CatalogRest {
             }
     )
     public Response getRecords(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
+            @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(schema = @Schema(description = "IRI of the field to use for sort order",
@@ -421,9 +407,9 @@ public class CatalogRest {
                 builder.keywords(keywords);
             }
             PaginatedSearchResults<Record> records = catalogManager.findRecord(vf.createIRI(catalogId),
-                    builder.build(), getActiveUser(context, engineManager), pdp);
-            return createPaginatedResponseJackson(context.getUriInfo(), records.getPage(), records.getTotalSize(), limit, offset,
-                    Record.TYPE, transformer, bNodeService);
+                    builder.build(), getActiveUser(servletRequest, engineManager), pdp);
+            return createPaginatedResponseJackson(uriInfo, records.getPage(), records.getTotalSize(), limit, offset,
+                    Record.TYPE, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -435,7 +421,7 @@ public class CatalogRest {
      * Creates a new Record in the repository using the passed form data. Determines the type of the new Record
      * based on the `type` field. Requires the `title` and `identifier` fields to be set.
      *
-     * @param context Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param typeIRI The required IRI of the type for the new Record. Must be a valid IRI for a Record or one of its
@@ -469,37 +455,37 @@ public class CatalogRest {
                     type = ValueType.BODY))
     @ResourceId(value = "catalogId", type = ValueType.PATH)
     public Response createRecord(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(schema = @Schema(description = "String representing the Catalog ID", required = true,
                 implementation = String.class))
             @PathParam("catalogId") String catalogId,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required IRI of the type for the new Record"
                     + "Must be a valid IRI for a Record or one of its subclasses", required = true))
-            @FormDataParam("type") String typeIRI,
+            @FormParam("type") String typeIRI,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required title for the new Record", required = true))
-            @FormDataParam("title") String title,
+            @FormParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required identifier for the new Record. Must be a valid IRI", required = true))
-            @FormDataParam("identifier") String identifier,
+            @FormParam("identifier") String identifier,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional description for the new Record"))
-            @FormDataParam("description") String description,
+            @FormParam("description") String description,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional markdown abstract for the new Record"))
-            @FormDataParam("markdown") String markdown,
+            @FormParam("markdown") String markdown,
             @Parameter(array = @ArraySchema(
                     arraySchema = @Schema(description =
                             "Optional list of keywords strings for the new Record"),
                     schema = @Schema(implementation = String.class, description = "keyword")))
-            @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
+            @FormParam("keywords") List<String> keywords) {
         checkStringParam(title, "Record title is required");
         Map<String, OrmFactory<? extends Record>> recordFactories = getRecordFactories();
         if (typeIRI == null || !recordFactories.keySet().contains(typeIRI)) {
             throw ErrorUtils.sendError("Invalid Record type", Response.Status.BAD_REQUEST);
         }
-        User activeUser = getActiveUser(context, engineManager);
+        User activeUser = getActiveUser(servletRequest, engineManager);
         CreateActivity createActivity = null;
         try {
             createActivity = provUtils.startCreateActivity(activeUser);
@@ -514,7 +500,7 @@ public class CatalogRest {
                 builder.markdown(markdown);
             }
             if (keywords != null && keywords.size() > 0) {
-                builder.keywords(keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet()));
+                builder.keywords(new HashSet<>(keywords));
             }
 
             Record newRecord = catalogManager.createRecord(builder.build(), recordFactories.get(typeIRI));
@@ -568,7 +554,7 @@ public class CatalogRest {
             Record record = catalogManager.getRecord(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Record " + recordId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(modelToSkolemizedJsonld(removeContext(record.getModel()), transformer,
+            return Response.ok(modelToSkolemizedJsonld(removeContext(record.getModel()),
                     bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -580,8 +566,8 @@ public class CatalogRest {
     /**
      * Deletes a Record from the repository.
      *
-     * @param context Context of the request
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     * @param servletRequest The HttpServletRequest.
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
@@ -604,12 +590,12 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteRecord(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the Record ID", required = true)
             @PathParam("recordId") String recordId) {
-        User activeUser = getActiveUser(context, engineManager);
+        User activeUser = getActiveUser(servletRequest, engineManager);
         IRI recordIri = vf.createIRI(recordId);
         DeleteActivity deleteActivity = null;
         try {
@@ -668,7 +654,7 @@ public class CatalogRest {
             Record newRecord = getNewThing(newRecordJson, vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get());
             catalogManager.updateRecord(vf.createIRI(catalogId), newRecord);
-            return Response.ok(modelToSkolemizedJsonld(removeContext(newRecord.getModel()), transformer,
+            return Response.ok(modelToSkolemizedJsonld(removeContext(newRecord.getModel()),
                     bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -676,7 +662,7 @@ public class CatalogRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     /**
      * Retrieves a list of all the Keywords in the Catalog.
      * Parameters can be passed to control paging.
@@ -804,7 +790,7 @@ public class CatalogRest {
                     vf.createIRI(recordId));
             return createPaginatedThingResponseJackson(uriInfo, distributions, vf.createIRI(sort), offset,
                     limit, asc, null,
-                    Distribution.TYPE, transformer, bNodeService);
+                    Distribution.TYPE, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -814,8 +800,9 @@ public class CatalogRest {
 
     /**
      * Creates a new Distribution for the provided UnversionedRecord using the passed form data. Requires the "title"
-     * field to be set.
+     * field to be set. Returns a Response with the IRI of the new Distribution.
      *
+     * @param servletRequest The HttpServletRequest
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the UnversionedRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -844,29 +831,29 @@ public class CatalogRest {
             }
     )
     public Response createUnversionedDistribution(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the UnversionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required title for the new Distribution", required = true))
-            @FormDataParam("title") String title,
+            @FormParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional description for the new Distribution"))
-            @FormDataParam("description") String description,
+            @FormParam("description") String description,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional format string for the new Distribution. Expects a MIME type"))
-            @FormDataParam("format") String format,
+            @FormParam("format") String format,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional access URL for the new Distribution"))
-            @FormDataParam("accessURL") String accessURL,
+            @FormParam("accessURL") String accessURL,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional download URL for the new Distribution"))
-            @FormDataParam("downloadURL") String downloadURL) {
+            @FormParam("downloadURL") String downloadURL) {
         try {
             Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL,
-                    context);
+                    servletRequest);
             catalogManager.addUnversionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId), newDistribution);
             return Response.status(201).entity(newDistribution.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
@@ -914,7 +901,7 @@ public class CatalogRest {
                     vf.createIRI(recordId), vf.createIRI(distributionId)).orElseThrow(() ->
                     ErrorUtils.sendError("Distribution " + distributionId + " could not be found",
                             Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedObjectNode(distribution, Distribution.TYPE, transformer, bNodeService)
+            return Response.ok(thingToSkolemizedObjectNode(distribution, Distribution.TYPE, bNodeService)
                     .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -1066,7 +1053,7 @@ public class CatalogRest {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Version> versions = catalogManager.getVersions(vf.createIRI(catalogId), vf.createIRI(recordId));
             return createPaginatedThingResponseJackson(uriInfo, versions, vf.createIRI(sort), offset, limit,
-                    asc, null, Version.TYPE, transformer, bNodeService);
+                    asc, null, Version.TYPE, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -1078,6 +1065,7 @@ public class CatalogRest {
      * Creates a Version for the identified VersionedRecord using the passed form data and stores it in the repository.
      * This Version will become the latest Version for the identified VersionedRecord.
      *
+     * @param servletRequest The HttpServletRequest.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -1109,7 +1097,7 @@ public class CatalogRest {
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createVersion(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
@@ -1117,22 +1105,22 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "Required IRI of the type for the new Version. Must be a valid IRI for a "
                     + "Version or one of its subclasses", required = true))
-            @FormDataParam("type") String typeIRI,
+            @FormParam("type") String typeIRI,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required title for the new Version", required = true))
-            @FormDataParam("title") String title,
+            @FormParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional description for the new Version", required = false))
-            @FormDataParam("description") String description) {
+            @FormParam("description") String description) {
         try {
             checkStringParam(title, "Version title is required");
             Map<String, OrmFactory<? extends Version>> versionFactories = getVersionFactories();
-            if (typeIRI == null || !versionFactories.keySet().contains(typeIRI)) {
+            if (typeIRI == null || !versionFactories.containsKey(typeIRI)) {
                 throw ErrorUtils.sendError("Invalid Version type", Response.Status.BAD_REQUEST);
             }
 
             Version newVersion = catalogManager.createVersion(title, description, versionFactories.get(typeIRI));
-            newVersion.setProperty(getActiveUser(context, engineManager).getResource(),
+            newVersion.setProperty(getActiveUser(servletRequest, engineManager).getResource(),
                     vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
             catalogManager.addVersion(vf.createIRI(catalogId), vf.createIRI(recordId), newVersion);
             return Response.status(201).entity(newVersion.getResource().stringValue()).build();
@@ -1148,6 +1136,7 @@ public class CatalogRest {
      * it in the repository. Requires the IRI for the Tag and the IRI of the Commit to attach it to. This Tag will
      * become the latest Version for the identified VersionedRecord
      *
+     * @param servletRequest The HttpServletRequest.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -1181,23 +1170,23 @@ public class CatalogRest {
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createTag(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required title for the new Tag", required = true))
-            @FormDataParam("title") String title,
+            @FormParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional description for the new Tag"))
-            @FormDataParam("description") String description,
+            @FormParam("description") String description,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required IRI for the new Tag. Must be unique in the repository", required = true))
-            @FormDataParam("iri") String iri,
+            @FormParam("iri") String iri,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required String representing the Commit ID", required = true))
-            @FormDataParam("commit") String commitId) {
+            @FormParam("commit") String commitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(iri, "Tag iri is required");
             checkStringParam(title, "Tag title is required");
@@ -1220,7 +1209,7 @@ public class CatalogRest {
             }
             tag.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
             tag.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
-            tag.setProperty(getActiveUser(context, engineManager).getResource(),
+            tag.setProperty(getActiveUser(servletRequest, engineManager).getResource(),
                     vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
             tag.setCommit(commitFactory.createNew(commitIri));
             catalogManager.addVersion(vf.createIRI(catalogId), recordIri, tag);
@@ -1265,7 +1254,7 @@ public class CatalogRest {
             Version version = catalogManager.getLatestVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Version.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Latest Version could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedObjectNode(version, Version.TYPE, transformer, bNodeService)
+            return Response.ok(thingToSkolemizedObjectNode(version, Version.TYPE, bNodeService)
                     .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -1311,7 +1300,7 @@ public class CatalogRest {
             Version version = catalogManager.getVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(versionId), factoryRegistry.getFactoryOfType(Version.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Version " + versionId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedObjectNode(version, Version.TYPE, transformer, bNodeService)
+            return Response.ok(thingToSkolemizedObjectNode(version, Version.TYPE, bNodeService)
                     .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -1475,7 +1464,7 @@ public class CatalogRest {
                     vf.createIRI(recordId), vf.createIRI(versionId));
             return createPaginatedThingResponseJackson(uriInfo, distributions, vf.createIRI(sort), offset,
                     limit, asc, null,
-                    Distribution.TYPE, transformer, bNodeService);
+                    Distribution.TYPE, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -1486,6 +1475,7 @@ public class CatalogRest {
     /**
      * Creates a new Distribution for the identified Version using the passed form data.
      *
+     * @param servletRequest The HttpServletRequest.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -1516,7 +1506,7 @@ public class CatalogRest {
             }
     )
     public Response createVersionedDistribution(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
@@ -1525,23 +1515,23 @@ public class CatalogRest {
             @PathParam("versionId") String versionId,
             @Parameter(schema = @Schema(type = "string",
                     description = "String representing the Version ID", required = true))
-            @FormDataParam("title") String title,
+            @FormParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required title for the new Distribution. " +
                             "If the title is null, throws a 400 Response", required = true))
-            @FormDataParam("description") String description,
+            @FormParam("description") String description,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional format string for the new Distribution. Expects a MIME type"))
-            @FormDataParam("format") String format,
+            @FormParam("format") String format,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional access URL for the new Distribution"))
-            @FormDataParam("accessURL") String accessURL,
+            @FormParam("accessURL") String accessURL,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional download URL for the new Distribution"))
-            @FormDataParam("downloadURL") String downloadURL) {
+            @FormParam("downloadURL") String downloadURL) {
         try {
             Distribution newDistribution = createDistribution(title, description, format, accessURL, downloadURL,
-                    context);
+                    servletRequest);
             catalogManager.addVersionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(versionId), newDistribution);
             return Response.status(201).entity(newDistribution.getResource().stringValue()).build();
@@ -1594,7 +1584,7 @@ public class CatalogRest {
                     vf.createIRI(recordId), vf.createIRI(versionId), vf.createIRI(distributionId)).orElseThrow(() ->
                     ErrorUtils.sendError("Distribution " + distributionId + " could not be found",
                             Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedObjectNode(distribution, Distribution.TYPE, transformer, bNodeService)
+            return Response.ok(thingToSkolemizedObjectNode(distribution, Distribution.TYPE, bNodeService)
                     .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -1745,7 +1735,7 @@ public class CatalogRest {
             Commit commit = catalogManager.getTaggedCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(versionId));
             return createCommitResponse(commit, catalogManager.getCommitDifference(commit.getResource()), format,
-                    transformer, bNodeService);
+                    bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -1758,7 +1748,7 @@ public class CatalogRest {
     /**
      * Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs.
      *
-     * @param context Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param uriInfo The URI information of the request to be used in creating links to other pages of branches
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -1789,7 +1779,7 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranches(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
@@ -1811,7 +1801,7 @@ public class CatalogRest {
             Set<Branch> branches = catalogManager.getBranches(vf.createIRI(catalogId), vf.createIRI(recordId));
             Function<Branch, Boolean> filterFunction = null;
             if (applyUserFilter) {
-                User activeUser = getActiveUser(context, engineManager);
+                User activeUser = getActiveUser(servletRequest, engineManager);
                 filterFunction = branch -> {
                     Set<String> types = branch.getProperties(vf.createIRI(RDF.TYPE.stringValue())).stream()
                             .map(Value::stringValue)
@@ -1823,7 +1813,7 @@ public class CatalogRest {
             }
             return createPaginatedThingResponseJackson(uriInfo, branches, vf.createIRI(sort), offset, limit,
                     asc, filterFunction,
-                    Branch.TYPE, transformer, bNodeService);
+                    Branch.TYPE, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -1834,6 +1824,7 @@ public class CatalogRest {
     /**
      * Creates a Branch for a VersionedRDFRecord identified by the IDs using the passed form data.
      *
+     * @param servletRequest The HttpServletRequest.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -1865,23 +1856,23 @@ public class CatalogRest {
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createBranch(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required IRI of the type for the new Branch", required = true))
-            @FormDataParam("type") String typeIRI,
+            @FormParam("type") String typeIRI,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required title for the new Branch", required = true))
-            @FormDataParam("title") String title,
+            @FormParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional description for the new Branch"))
-            @FormDataParam("description") String description,
+            @FormParam("description") String description,
             @Parameter(schema = @Schema(type = "string",
                     description = "String representing the Commit ID", required = true))
-            @FormDataParam("commitId") String commitId) {
+            @FormParam("commitId") String commitId) {
         try ( RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(title, "Branch title is required");
             checkStringParam(commitId, "Commit ID is required");
@@ -1896,7 +1887,7 @@ public class CatalogRest {
             }
 
             Branch newBranch = catalogManager.createBranch(title, description, branchFactories.get(typeIRI));
-            newBranch.setProperty(getActiveUser(context, engineManager).getResource(),
+            newBranch.setProperty(getActiveUser(servletRequest, engineManager).getResource(),
                     vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
             Commit newCommit = catalogManager.getCommit(commitIri).orElseThrow(() -> ErrorUtils.sendError("Commit "
                     + commitId + " could not be found", Response.Status.BAD_REQUEST));
@@ -1942,7 +1933,7 @@ public class CatalogRest {
             @PathParam("recordId") String recordId) {
         try {
             Branch masterBranch = catalogManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId));
-            return Response.ok(thingToSkolemizedObjectNode(masterBranch, Branch.TYPE, transformer, bNodeService)
+            return Response.ok(thingToSkolemizedObjectNode(masterBranch, Branch.TYPE, bNodeService)
                     .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -1989,7 +1980,7 @@ public class CatalogRest {
             Branch branch = catalogManager.getBranch(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId), factoryRegistry.getFactoryOfType(Branch.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Branch " + branchId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedObjectNode(branch, Branch.TYPE, transformer, bNodeService)
+            return Response.ok(thingToSkolemizedObjectNode(branch, Branch.TYPE, bNodeService)
                     .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -2181,7 +2172,7 @@ public class CatalogRest {
      * Creates a new Commit in the repository for a specific Branch using the InProgressCommit associated with the user
      * making this request. The HEAD Commit is updated to be this new Commit.
      *
-     * @param context Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -2213,7 +2204,7 @@ public class CatalogRest {
             @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
     )
     public Response createBranchCommit(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
@@ -2224,7 +2215,7 @@ public class CatalogRest {
             @QueryParam("message") String message) {
         try {
             checkStringParam(message, "Commit message is required");
-            User activeUser = getActiveUser(context, engineManager);
+            User activeUser = getActiveUser(servletRequest, engineManager);
             Resource newCommitId = versioningManager.commit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId), activeUser, message);
             return Response.status(201).entity(newCommitId.stringValue()).build();
@@ -2278,7 +2269,7 @@ public class CatalogRest {
             Commit headCommit = catalogManager.getHeadCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId));
             return createCommitResponse(headCommit, catalogManager.getCommitDifference(headCommit.getResource()),
-                    format, transformer, bNodeService);
+                    format, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -2336,7 +2327,7 @@ public class CatalogRest {
                     vf.createIRI(branchId), vf.createIRI(commitId)).orElseThrow(() ->
                     ErrorUtils.sendError("Commit " + commitId + " could not be found", Response.Status.NOT_FOUND));
             return createCommitResponse(commit, catalogManager.getCommitDifference(commit.getResource()), format,
-                    transformer, bNodeService);
+                    bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -2399,7 +2390,7 @@ public class CatalogRest {
             Commit sourceHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(branchId));
             Commit targetHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(targetBranchId));
             Difference diff = catalogManager.getDifference(sourceHead.getResource(), targetHead.getResource());
-            return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
+            return Response.ok(getDifferenceJsonString(diff, rdfFormat, bNodeService),
                     MediaType.APPLICATION_JSON).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -2482,7 +2473,7 @@ public class CatalogRest {
      * that are required to resolve any conflicts will be used to create the merged Commit. The target Branch will
      * point to the new merge commit, but the source Branch will still point to the original head commit.
      *
-     * @param context Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -2520,7 +2511,7 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response merge(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "Catalog IRI", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "VersionedRecord IRI", required = true)
@@ -2532,13 +2523,13 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that"
                     + "were added to the entity"))
-            @FormDataParam("additions") String additionsJson,
+            @FormParam("additions") String additionsJson,
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that "
                     + "were deleted in the entity"))
-            @FormDataParam("deletions") String deletionsJson) {
+            @FormParam("deletions") String deletionsJson) {
         try {
-            User activeUser = getActiveUser(context, engineManager);
+            User activeUser = getActiveUser(servletRequest, engineManager);
             Model additions = StringUtils.isEmpty(additionsJson) ? null : convertJsonld(additionsJson);
             Model deletions = StringUtils.isEmpty(deletionsJson) ? null : convertJsonld(deletionsJson);
             Resource newCommitId = versioningManager.merge(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -2555,7 +2546,7 @@ public class CatalogRest {
      * Gets the Commit identified by the provided IDs and returns the compiled Resource following the Commit chain
      * which terminates at the identified Commit.
      *
-     * @param context Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -2587,7 +2578,7 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getCompiledResource(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
@@ -2608,14 +2599,14 @@ public class CatalogRest {
             catalogManager.getCommit(catalogIRI, recordIRI, vf.createIRI(branchId), commitIRI);
             Model resource = catalogManager.getCompiledResource(commitIRI);
             if (apply) {
-                User activeUser = getActiveUser(context, engineManager);
+                User activeUser = getActiveUser(servletRequest, engineManager);
                 Optional<InProgressCommit> inProgressCommit = catalogManager.getInProgressCommit(catalogIRI, recordIRI,
                         activeUser);
                 if (inProgressCommit.isPresent()) {
                     resource = catalogManager.applyInProgressCommit(inProgressCommit.get().getResource(), resource);
                 }
             }
-            return Response.ok(modelToSkolemizedString(resource, rdfFormat, transformer, bNodeService)).build();
+            return Response.ok(modelToSkolemizedString(resource, rdfFormat, bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -2627,7 +2618,7 @@ public class CatalogRest {
      * Gets the Commit identified by the provided IDs and creates an OutputStream of the compiled Resource following the
      * Commit chain which terminates at the identified Commit.
      *
-     * @param context Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -2660,7 +2651,7 @@ public class CatalogRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadCompiledResource(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
@@ -2685,7 +2676,7 @@ public class CatalogRest {
             Model resource;
             Model temp = catalogManager.getCompiledResource(vf.createIRI(commitId));
             if (apply) {
-                User activeUser = getActiveUser(context, engineManager);
+                User activeUser = getActiveUser(servletRequest, engineManager);
                 Optional<InProgressCommit> inProgressCommit = catalogManager.getInProgressCommit(catalogIRI, recordIRI,
                         activeUser);
                 resource = inProgressCommit.map(inProgressCommit1 ->
@@ -2695,7 +2686,7 @@ public class CatalogRest {
             }
             StreamingOutput stream = os -> {
                 try (Writer writer = new BufferedWriter(new OutputStreamWriter(os))) {
-                    writer.write(modelToSkolemizedString(resource, rdfFormat, transformer, bNodeService));
+                    writer.write(modelToSkolemizedString(resource, rdfFormat, bNodeService));
                     writer.flush();
                 }
             };
@@ -2713,7 +2704,7 @@ public class CatalogRest {
     /**
      * Creates a new InProgressCommit in the repository for the User making this request.
      *
-     * @param context Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -2736,13 +2727,13 @@ public class CatalogRest {
             }
     )
     public Response createInProgressCommit(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
             @PathParam("recordId") String recordId) {
         try {
-            User activeUser = getActiveUser(context, engineManager);
+            User activeUser = getActiveUser(servletRequest, engineManager);
             InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(activeUser);
             catalogManager.addInProgressCommit(vf.createIRI(catalogId), vf.createIRI(recordId), inProgressCommit);
             return Response.ok().build();
@@ -2757,7 +2748,7 @@ public class CatalogRest {
      * Retrieves the current changes the user making the request has made in the InProgressCommit identified by the
      * provided IDs.
      *
-     * @param context Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -2781,7 +2772,7 @@ public class CatalogRest {
             }
     )
     public Response getInProgressCommit(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
@@ -2789,7 +2780,7 @@ public class CatalogRest {
             @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         try {
-            User activeUser = getActiveUser(context, engineManager);
+            User activeUser = getActiveUser(servletRequest, engineManager);
             InProgressCommit inProgressCommit = catalogManager.getInProgressCommit(vf.createIRI(catalogId),
                     vf.createIRI(recordId), activeUser).orElseThrow(() ->
                     ErrorUtils.sendError("InProgressCommit could not be found", Response.Status.NOT_FOUND));
@@ -2806,7 +2797,7 @@ public class CatalogRest {
      * Deletes the InProgressCommit identified by the provided IDs and associated with the User making the request from
      * the repository.
      *
-     * @param context Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -2831,13 +2822,13 @@ public class CatalogRest {
             }
     )
     public Response deleteInProgressCommit(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
             @PathParam("recordId") String recordId) {
         try {
-            User activeUser = getActiveUser(context, engineManager);
+            User activeUser = getActiveUser(servletRequest, engineManager);
             catalogManager.removeInProgressCommit(vf.createIRI(catalogId), vf.createIRI(recordId), activeUser);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
@@ -2851,7 +2842,7 @@ public class CatalogRest {
      * Updates the InProgressCommit for a user identified by the provided IDs using the statements found in the provided
      * form data. If the user does not have an InProgressCommit, one will be created with the provided data.
      *
-     * @param context Context of the request.
+     * @param servletRequest The HttpServletRequest.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -2880,7 +2871,7 @@ public class CatalogRest {
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateInProgressCommit(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
@@ -2888,13 +2879,13 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that"
                     + " were added to the entity", required = true))
-            @FormDataParam("additions") String additionsJson,
+            @FormParam("additions") String additionsJson,
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that"
                     + " were deleted in the entity", required = true))
-            @FormDataParam("deletions") String deletionsJson) {
+            @FormParam("deletions") String deletionsJson) {
         try {
-            User activeUser = getActiveUser(context, engineManager);
+            User activeUser = getActiveUser(servletRequest, engineManager);
             Model additions = StringUtils.isEmpty(additionsJson) ? null : convertJsonld(additionsJson);
             Model deletions = StringUtils.isEmpty(deletionsJson) ? null : convertJsonld(deletionsJson);
             catalogManager.updateInProgressCommit(vf.createIRI(catalogId), vf.createIRI(recordId), activeUser,
@@ -2999,14 +2990,14 @@ public class CatalogRest {
             ObjectNode differenceJson = mapper.createObjectNode();
             if (format.equals("jsonld")) {
                 differenceJson.set("additions", mapper.readTree(modelToSkolemizedString(difference.getAdditions(),
-                        format, transformer, bNodeService)));
+                        format, bNodeService)));
                 differenceJson.set("deletions", mapper.readTree(modelToSkolemizedString(difference.getDeletions(),
-                        format, transformer, bNodeService)));
+                        format, bNodeService)));
             } else {
                 differenceJson.put("additions", modelToSkolemizedString(difference.getAdditions(),
-                        format, transformer, bNodeService));
+                        format, bNodeService));
                 differenceJson.put("deletions", modelToSkolemizedString(difference.getDeletions(),
-                        format, transformer, bNodeService));
+                        format, bNodeService));
             }
             return differenceJson;
         } catch (IOException e) {
@@ -3024,11 +3015,12 @@ public class CatalogRest {
      * @param format      Optional format string for the new Distribution.
      * @param accessURL   Optional access URL for the new Distribution.
      * @param downloadURL Optional download URL for the Distribution.
+     * @param servletRequest The HttpServletRequest.
      *
      * @return The new Distribution if passed a title.
      */
     private Distribution createDistribution(String title, String description, String format, String accessURL,
-                                            String downloadURL, ContainerRequestContext context) {
+                                            String downloadURL, HttpServletRequest servletRequest) {
         checkStringParam(title, "Distribution title is required");
         DistributionConfig.Builder builder = new DistributionConfig.Builder(title);
         if (description != null) {
@@ -3044,7 +3036,7 @@ public class CatalogRest {
             builder.downloadURL(vf.createIRI(downloadURL));
         }
         Distribution distribution = catalogManager.createDistribution(builder.build());
-        distribution.setProperty(getActiveUser(context, engineManager).getResource(),
+        distribution.setProperty(getActiveUser(servletRequest, engineManager).getResource(),
                 vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
         return distribution;
     }
@@ -3093,7 +3085,7 @@ public class CatalogRest {
      * @return A Model containing the statements from the JSON-LD string.
      */
     private Model convertJsonld(String jsonld) {
-        return jsonldToDeskolemizedModel(jsonld, transformer, bNodeService);
+        return jsonldToDeskolemizedModel(jsonld, bNodeService);
     }
 
     private Map<String, OrmFactory<? extends Record>> getRecordFactories() {
@@ -3116,7 +3108,7 @@ public class CatalogRest {
     }
 
     private Model removeContext(Model model) {
-        Model result = mf.createModel();
+        Model result = mf.createEmptyModel();
         model.forEach(statement -> result.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
         return result;
     }

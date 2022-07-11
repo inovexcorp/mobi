@@ -25,16 +25,34 @@ package com.mobi.repository.impl.sesame.http
 import com.mobi.repository.exception.RepositoryConfigException
 import spock.lang.Specification
 
+import java.lang.annotation.Annotation
 
 class HTTPRepositoryWrapperSpec extends Specification {
 
     def "Invalid URLs throw an exception"() {
         setup:
-        def props = [
-                id: "test",
-                title: "test repo",
-                serverUrl: "urn:test"
-        ]
+        def props = new HTTPRepositoryConfig() {
+
+            @Override
+            String id() {
+                return "test"
+            }
+
+            @Override
+            String title() {
+                return "test repo"
+            }
+
+            @Override
+            String serverUrl() {
+                return "urn:invalid"
+            }
+
+            @Override
+            Class<? extends Annotation> annotationType() {
+                return null
+            }
+        }
 
         def service = new HTTPRepositoryWrapper()
 
@@ -47,11 +65,28 @@ class HTTPRepositoryWrapperSpec extends Specification {
 
     def "Valid URLs work"() {
         setup:
-        def props = [
-                id: "test",
-                title: "test repo",
-                serverUrl: "http://test.com/server"
-        ]
+        def props = new HTTPRepositoryConfig() {
+
+            @Override
+            String id() {
+                return "test"
+            }
+
+            @Override
+            String title() {
+                return "test repo"
+            }
+
+            @Override
+            String serverUrl() {
+                return "http://test.com/server"
+            }
+
+            @Override
+            Class<? extends Annotation> annotationType() {
+                return null
+            }
+        }
 
         def service = new HTTPRepositoryWrapper()
 
@@ -64,11 +99,28 @@ class HTTPRepositoryWrapperSpec extends Specification {
 
     def "Valid local URLs work"() {
         setup:
-        def props = [
-                id: "test",
-                title: "test repo",
-                serverUrl: "http://localhost/server"
-        ]
+        def props = new HTTPRepositoryConfig() {
+
+            @Override
+            String id() {
+                return "test"
+            }
+
+            @Override
+            String title() {
+                return "test repo"
+            }
+
+            @Override
+            String serverUrl() {
+                return "http://localhost/server"
+            }
+
+            @Override
+            Class<? extends Annotation> annotationType() {
+                return null
+            }
+        }
 
         def service = new HTTPRepositoryWrapper()
 

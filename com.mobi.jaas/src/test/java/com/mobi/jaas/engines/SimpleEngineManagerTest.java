@@ -29,9 +29,9 @@ import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -47,17 +47,18 @@ import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.RoleFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.AbstractOrmFactory;
 import com.mobi.rdf.orm.OrmException;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -70,6 +71,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public class SimpleEngineManagerTest extends OrmEnabledTestCase {
+    private AutoCloseable closeable;
     private SimpleEngineManager engineManager;
 
     private static final String USER_STR = "http://mobi.com/users/tester";
@@ -107,7 +109,7 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
     GroupConfig groupConfig;
 
     @Mock
-    Repository repository;
+    OsgiRepository repository;
 
     @Mock
     RepositoryConnection repositoryConnection;
@@ -154,7 +156,7 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         when(engine.getEngineName()).thenReturn(ENGINE_NAME);
         when(engine.getRole(anyString())).thenReturn(Optional.of(role));
@@ -180,7 +182,7 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
 
         when(user.getResource()).thenReturn(USER_IRI);
         when(user.getUsername()).thenReturn(Optional.of(VALUE_FACTORY.createLiteral(USERNAME)));
-        Model model = MODEL_FACTORY.createModel();
+        Model model = MODEL_FACTORY.createEmptyModel();
         model.add(user.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(User.TYPE));
         when(user.getModel()).thenReturn(model);
 
@@ -192,7 +194,7 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
         when(factoryRegistry.getSortedFactoriesOfType(ExternalUser.class)).thenReturn(Arrays.asList(aUserFactory));
 
         when(group.getResource()).thenReturn(GROUP_IRI);
-        Model groupModel = MODEL_FACTORY.createModel();
+        Model groupModel = MODEL_FACTORY.createEmptyModel();
         groupModel.add(group.getResource(), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Group.TYPE));
         when(group.getModel()).thenReturn(groupModel);
         when(aGroupFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(AGroup.TYPE));
@@ -204,15 +206,19 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
         when(errorUser.getResource()).thenReturn(ERROR_IRI);
 
         when(errorGroup.getResource()).thenReturn(ERROR_IRI);
+        when(group.getResource()).thenReturn(USER_IRI);
 
         engineManager = new SimpleEngineManager();
         engineManager.addEngine(engine);
-        engineManager.setModelFactory(MODEL_FACTORY);
-        engineManager.setValueFactory(VALUE_FACTORY);
         engineManager.setRepository(repository);
         engineManager.setRoleFactory(roleFactory);
         engineManager.setOrmFactoryRegistry(factoryRegistry);
         engineManager.start();
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test

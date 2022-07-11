@@ -25,14 +25,15 @@ package com.mobi.etl.cli;
 
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.rdf.RDFImportService;
-import com.mobi.rdf.api.ValueFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
-import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
+import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +45,8 @@ public class CLIImporter implements Action {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CLIImporter.class);
 
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
+
     // Service References
 
     @Reference
@@ -51,13 +54,6 @@ public class CLIImporter implements Action {
 
     void setImportService(RDFImportService importService) {
         this.importService = importService;
-    }
-
-    @Reference
-    private ValueFactory vf;
-
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
     }
 
     // Command Parameters

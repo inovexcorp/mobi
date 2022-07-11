@@ -25,4 +25,4 @@ package com.mobi.catalog.api.versioning;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

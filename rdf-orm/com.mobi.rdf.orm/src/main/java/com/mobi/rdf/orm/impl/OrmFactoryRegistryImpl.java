@@ -23,16 +23,19 @@ package com.mobi.rdf.orm.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.rdf.orm.OrmException;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,15 +47,11 @@ import java.util.stream.Stream;
 
 @Component(immediate = true)
 public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
-    private ValueFactory valueFactory;
     private List<OrmFactory<? extends Thing>> factories = new ArrayList<>();
 
-    @Reference
-    protected void setValueFactory(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
-    }
+    final ValueFactory valueFactory = SimpleValueFactory.getInstance();
 
-    @Reference(type = '*', dynamic = true)
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     protected void addFactory(OrmFactory<? extends Thing> factory) {
         factories.add(factory);
     }

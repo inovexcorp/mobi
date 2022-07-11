@@ -37,13 +37,11 @@ import com.mobi.itests.orm.ontologies.inherit.Entity;
 import com.mobi.itests.orm.ontologies.inherit.EntityFactory;
 import com.mobi.itests.orm.ontologies.test.Person;
 import com.mobi.itests.orm.ontologies.test.PersonFactory;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactoryService;
-import com.mobi.rdf.core.impl.sesame.ValueFactoryService;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
@@ -55,6 +53,8 @@ import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
 import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 import com.mobi.rdf.orm.impl.ThingFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -99,8 +99,8 @@ public class SourceGeneratorIT {
 
     @BeforeClass
     public static void beforeTest() {
-        valueFactory = new ValueFactoryService();
-        modelFactory = new LinkedHashModelFactoryService();
+        valueFactory = SimpleValueFactory.getInstance();
+        modelFactory = new DynamicModelFactory();
         valueConverterRegistry = new DefaultValueConverterRegistry();
         valueConverterRegistry.registerValueConverter(new DoubleValueConverter());
         valueConverterRegistry.registerValueConverter(new IntegerValueConverter());
@@ -124,7 +124,7 @@ public class SourceGeneratorIT {
         MBOX_PROP = valueFactory.createIRI("http://xmlns.com/foaf/0.1/mbox");
         ACCOUNT_NAME_PROP = valueFactory.createIRI("http://xmlns.com/foaf/0.1/accountName");
 
-        model = modelFactory.createModel();
+        model = modelFactory.createEmptyModel();
         model.add(TEST_AGENT, RDF_TYPE, AGENT_CLASS, TEST_AGENT);
         model.add(TEST_AGENT, GENDER_PROP, valueFactory.createLiteral("male"), TEST_AGENT);
         model.add(TEST_AGENT, AGE_PROP, valueFactory.createLiteral(100), TEST_AGENT);
@@ -144,7 +144,7 @@ public class SourceGeneratorIT {
         TEST_CAR3 = valueFactory.createIRI("urn://mobi.com/orm/test/car3");
         CAR_CLASS = valueFactory.createIRI("http://mobi.com/ontologies/person#Car");
 
-        personModel = modelFactory.createModel();
+        personModel = modelFactory.createEmptyModel();
         personModel.add(TEST_PERSON, RDF_TYPE, PERSON_CLASS);
         personModel.add(TEST_PERSON, NAME_PROP, valueFactory.createLiteral("Bob"));
         personModel.add(TEST_PERSON, NICKNAME_PROP, valueFactory.createLiteral("Bobby"));
@@ -161,9 +161,7 @@ public class SourceGeneratorIT {
     public void testAgent() {
         final AgentFactory factory = new AgentFactory();
         valueConverterRegistry.registerValueConverter(factory);
-        factory.setValueFactory(valueFactory);
-        factory.setModelFactory(modelFactory);
-        factory.setValueConverterRegistry(valueConverterRegistry);
+        factory.valueConverterRegistry = valueConverterRegistry;
 
         // agent
         final Agent a = factory.getExisting(TEST_AGENT, model, valueFactory, valueConverterRegistry)
@@ -174,15 +172,11 @@ public class SourceGeneratorIT {
 
         // account
         final OnlineAccountFactory f = new OnlineAccountFactory();
-        f.setModelFactory(modelFactory);
-        f.setValueConverterRegistry(valueConverterRegistry);
-        f.setValueFactory(valueFactory);
+        f.valueConverterRegistry = valueConverterRegistry;
         valueConverterRegistry.registerValueConverter(f);
         final OnlineChatAccountFactory acctFactory = new OnlineChatAccountFactory();
         valueConverterRegistry.registerValueConverter(acctFactory);
-        acctFactory.setModelFactory(modelFactory);
-        acctFactory.setValueConverterRegistry(valueConverterRegistry);
-        acctFactory.setValueFactory(valueFactory);
+        acctFactory.valueConverterRegistry = valueConverterRegistry;
         final OnlineChatAccount account = acctFactory.createNew(valueFactory.createIRI("urn://account"), model, valueFactory, valueConverterRegistry);
         a.setAccount(Collections.singleton(account));
         assertNotNull(a.getAccount());
@@ -209,9 +203,7 @@ public class SourceGeneratorIT {
     public void testMultiType() {
         final OnlineChatAccountFactory factory = new OnlineChatAccountFactory();
         valueConverterRegistry.registerValueConverter(factory);
-        factory.setValueFactory(valueFactory);
-        factory.setModelFactory(modelFactory);
-        factory.setValueConverterRegistry(valueConverterRegistry);
+        factory.valueConverterRegistry = valueConverterRegistry;
         OnlineChatAccount account = factory.createNew(valueFactory.createIRI("urn://mobi.com/orm/test/testOCA"), model, valueFactory, valueConverterRegistry);
         Model m = account.getModel().filter(account.getResource(), null, null);
         assertFalse(m.isEmpty());
@@ -226,13 +218,9 @@ public class SourceGeneratorIT {
         Method m = Entity.class.getDeclaredMethod("getFriend");
         assertEquals(Optional.class, m.getReturnType());
         EntityFactory f = new EntityFactory();
-        f.setModelFactory(modelFactory);
-        f.setValueConverterRegistry(valueConverterRegistry);
-        f.setValueFactory(valueFactory);
+        f.valueConverterRegistry = valueConverterRegistry;
         AgentFactory agentFactory = new AgentFactory();
-        agentFactory.setModelFactory(modelFactory);
-        agentFactory.setValueConverterRegistry(valueConverterRegistry);
-        agentFactory.setValueFactory(valueFactory);
+        agentFactory.valueConverterRegistry = valueConverterRegistry;
 
         Entity entity = f.createNew(valueFactory.createIRI("urn://entityTest"), model);
         entity.setFriend(agentFactory.createNew(valueFactory.createIRI("urn://agentTest"), model));
@@ -244,9 +232,7 @@ public class SourceGeneratorIT {
     public void testRetrievingValues() throws Exception {
         final PersonFactory factory = new PersonFactory();
         valueConverterRegistry.registerValueConverter(factory);
-        factory.setValueFactory(valueFactory);
-        factory.setModelFactory(modelFactory);
-        factory.setValueConverterRegistry(valueConverterRegistry);
+        factory.valueConverterRegistry = valueConverterRegistry;
 
         final Person person = factory.getExisting(TEST_PERSON, personModel, valueFactory, valueConverterRegistry)
                 .orElseThrow(() -> new RuntimeException("WHAT? No person returned"));

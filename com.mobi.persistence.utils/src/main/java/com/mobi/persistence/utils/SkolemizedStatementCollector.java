@@ -24,11 +24,10 @@ package com.mobi.persistence.utils;
  */
 
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
@@ -36,23 +35,21 @@ import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import java.util.Map;
 
 public class SkolemizedStatementCollector extends StatementCollector {
-    private final SesameTransformer sesameTransformer;
     private final BNodeService bNodeService;
     private final Model statementsToSkolemize;
-    private final Map<com.mobi.rdf.api.BNode, IRI> skolemizedBNodes;
+    private final Map<BNode, IRI> skolemizedBNodes;
 
-    public SkolemizedStatementCollector(ModelFactory modelFactory, SesameTransformer sesameTransformer,
-                                        BNodeService bNodeService, Map<com.mobi.rdf.api.BNode, IRI> skolemizedBNodes) {
+    public SkolemizedStatementCollector(ModelFactory modelFactory, BNodeService bNodeService,
+                                        Map<BNode, IRI> skolemizedBNodes) {
         super();
-        this.sesameTransformer = sesameTransformer;
         this.bNodeService = bNodeService;
-        statementsToSkolemize = modelFactory.createModel();
+        statementsToSkolemize = modelFactory.createEmptyModel();
         this.skolemizedBNodes = skolemizedBNodes;
     }
 
     public void handleStatement(Statement st) {
         if (st.getSubject() instanceof BNode || st.getObject() instanceof BNode) {
-            statementsToSkolemize.add(sesameTransformer.mobiStatement(st));
+            statementsToSkolemize.add(st);
         } else {
             super.handleStatement(st);
         }
@@ -60,7 +57,7 @@ public class SkolemizedStatementCollector extends StatementCollector {
 
     public void endRDF() throws RDFHandlerException {
         bNodeService.deterministicSkolemize(statementsToSkolemize, skolemizedBNodes)
-                .forEach(statement -> super.handleStatement(sesameTransformer.sesameStatement(statement)));
+                .forEach(super::handleStatement);
         super.endRDF();
     }
 }

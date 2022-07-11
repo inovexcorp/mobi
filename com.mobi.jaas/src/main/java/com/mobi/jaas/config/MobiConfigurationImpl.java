@@ -23,22 +23,24 @@ package com.mobi.jaas.config;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.api.modules.provider.AppConfigEntryProvider;
 import com.mobi.jaas.proxy.ProxyLoginModule;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 
 import java.util.HashSet;
 import java.util.Set;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 
-@Component(provide = MobiConfiguration.class)
+@Component(service = MobiConfiguration.class)
 public class MobiConfigurationImpl extends MobiConfiguration {
     private Set<AppConfigEntryProvider> configEntryProviders = new HashSet<>();
 
-    @Reference(type = '*', dynamic = true)
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     void addConfigEntryProvider(AppConfigEntryProvider provider) {
         configEntryProviders.add(provider);
     }

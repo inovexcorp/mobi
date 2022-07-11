@@ -23,8 +23,8 @@ package com.mobi.web.security.util.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
@@ -40,24 +40,14 @@ import javax.ws.rs.container.ContainerRequestContext;
 @Component(immediate = true)
 public class SimpleSecurityHelper implements SecurityHelper {
 
-    private MobiConfiguration configuration;
-    private EngineManager engineManager;
-    private TokenManager tokenManager;
+    @Reference
+    MobiConfiguration configuration;
 
     @Reference
-    protected void setMobiConfiguration(MobiConfiguration configuration) {
-        this.configuration = configuration;
-    }
+    EngineManager engineManager;
 
     @Reference
-    protected void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
-
-    @Reference
-    protected void setTokenManager(TokenManager tokenManager) {
-        this.tokenManager = tokenManager;
-    }
+    TokenManager tokenManager;
 
     @Override
     public boolean authenticate(ContainerRequestContext context, Subject subject) {

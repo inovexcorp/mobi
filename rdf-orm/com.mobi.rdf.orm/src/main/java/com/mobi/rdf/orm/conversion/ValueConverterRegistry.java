@@ -25,9 +25,7 @@ package com.mobi.rdf.orm.conversion;
 
 import com.mobi.rdf.orm.OrmException;
 import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.orm.OrmException;
-import com.mobi.rdf.orm.Thing;
+import org.eclipse.rdf4j.model.Value;
 
 import java.util.Set;
 

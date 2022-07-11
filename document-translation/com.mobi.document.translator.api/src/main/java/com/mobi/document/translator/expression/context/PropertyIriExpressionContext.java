@@ -24,7 +24,7 @@ package com.mobi.document.translator.expression.context;
  */
 
 import com.mobi.document.translator.ontology.ExtractedProperty;
-import com.mobi.rdf.api.IRI;
+import org.eclipse.rdf4j.model.IRI;
 
 /**
  * This interface describes the context required for generating the {@link IRI} for a
@@ -43,13 +43,13 @@ public interface PropertyIriExpressionContext extends IriExpressionContext {
     String getComment();
 
     /**
-     * @return The {@link IRI} representing the domain of the property
+     * @return The string of the {@link IRI} representing the domain of the property
      */
-    IRI getDomain();
+    String getDomain();
 
     /**
-     * @return The {@link IRI} representing the range of the property
+     * @return The string of the {@link IRI} representing the range of the property
      */
-    IRI getRange();
+    String getRange();
 
 }

@@ -28,11 +28,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Value;
+import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 
 import java.util.ArrayList;
 import java.util.List;

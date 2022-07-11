@@ -35,19 +35,17 @@ import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
-import com.mobi.repository.api.RepositoryConnection;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 public interface CatalogUtilsService {
@@ -486,50 +484,6 @@ public interface CatalogUtilsService {
      * @return The Revision associated with the provided commit Resource.
      */
     Revision getRevision(Resource commitId, RepositoryConnection conn);
-
-    /**
-     * Gets the Stream of addition statements from the Commit identified by the provided Resource. The returned
-     * statements will have a context that matches the tracked quad. That is, tracked triples will have no context and
-     * tracked quads will have a context that matches the data named graph.
-     *
-     * @param commitId The Resource identifying the commit
-     * @param conn     The connection to the repository
-     * @return The Stream of addition statements
-     */
-    Stream<Statement> getAdditions(Resource commitId, RepositoryConnection conn);
-
-    /**
-     * Gets the Stream of addition statements from the provided Commit. The returned statements will have a context that
-     * matches the tracked quad. That is, tracked triples will have no context and tracked quads will have a context
-     * that matches the data named graph.
-     *
-     * @param commit The Commit
-     * @param conn   The connection to the repository
-     * @return The Stream of addition statements
-     */
-    Stream<Statement> getAdditions(Commit commit, RepositoryConnection conn);
-
-    /**
-     * Gets the Stream of deletion statements from the Commit identified by the provided Resource. The returned
-     * statements will have a context that matches the tracked quad. That is, tracked triples will have no context and
-     * tracked quads will have a context that matches the data named graph.
-     *
-     * @param commitId The Resource identifying the commit
-     * @param conn     The connection to the repository
-     * @return The Stream of deletion statements
-     */
-    Stream<Statement> getDeletions(Resource commitId, RepositoryConnection conn);
-
-    /**
-     * Gets the Stream of deletion statements from the provided Commit. The returned statements will have a context that
-     * matches the tracked quad. That is, tracked triples will have no context and tracked quads will have a context
-     * that matches the data named graph.
-     *
-     * @param commit The Commit
-     * @param conn   The connection to the repository
-     * @return The Stream of deletion statements
-     */
-    Stream<Statement> getDeletions(Commit commit, RepositoryConnection conn);
 
     /**
      * Adds the provided statements as changes in the target named graph. If a statement in the changes exists in the

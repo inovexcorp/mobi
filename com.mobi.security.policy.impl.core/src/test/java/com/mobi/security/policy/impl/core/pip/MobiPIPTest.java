@@ -29,17 +29,17 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ResourceUtils;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.security.policy.api.AttributeDesignator;
 import com.mobi.security.policy.api.Request;
 import com.mobi.vocabularies.xsd.XSD;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -52,8 +52,9 @@ import java.util.List;
 import java.util.Map;
 
 public class MobiPIPTest extends OrmEnabledTestCase {
+    private AutoCloseable closeable;
     private MobiPIP pip;
-    private Repository repo;
+    private MemoryRepositoryWrapper repo;
 
     private IRI subjectCategory = VALUE_FACTORY.createIRI("http://test.com/category-subject");
     private IRI resourceCategory = VALUE_FACTORY.createIRI("http://test.com/category-resource");
@@ -80,8 +81,8 @@ public class MobiPIPTest extends OrmEnabledTestCase {
 
     @Before
     public void setup() throws Exception {
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
 
         pathId = VALUE_FACTORY.createIRI(MobiPIP.PROP_PATH_NAMESPACE + "("
                 + ResourceUtils.encode("^<" + pathPropId.stringValue() + ">/<" + titleIRI.stringValue() + ">") + ")");
@@ -95,7 +96,7 @@ public class MobiPIPTest extends OrmEnabledTestCase {
             conn.add(parentId, titleIRI, VALUE_FACTORY.createLiteral("Title"));
         }
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         when(designator.attributeId()).thenReturn(prop1Id);
         when(designator.category()).thenReturn(subjectCategory);
         when(designator.datatype()).thenReturn(datatypeId);
@@ -112,8 +113,12 @@ public class MobiPIPTest extends OrmEnabledTestCase {
         when(request.getRequestTime()).thenReturn(time);
 
         pip = new MobiPIP();
-        pip.setRepo(repo);
-        pip.setVf(VALUE_FACTORY);
+        pip.repo = repo;
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test

@@ -33,13 +33,14 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.repository.api.RepositoryConnection;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Reference;
 
 import java.time.OffsetDateTime;
@@ -49,8 +50,7 @@ import java.util.concurrent.Semaphore;
 public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
 
-    @Reference
-    public ModelFactory modelFactory;
+    public final ModelFactory modelFactory = new DynamicModelFactory();
 
     @Reference
     public OntologyManager ontologyManager;

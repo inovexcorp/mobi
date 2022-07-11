@@ -25,4 +25,4 @@ package com.mobi.rdf.orm.generate;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

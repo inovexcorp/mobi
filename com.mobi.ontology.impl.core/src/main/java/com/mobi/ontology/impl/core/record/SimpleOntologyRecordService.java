@@ -28,7 +28,7 @@ import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.core.api.record.AbstractOntologyRecordService;
 import com.mobi.ontology.utils.cache.OntologyCache;
-import com.mobi.repository.api.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;

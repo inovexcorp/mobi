@@ -307,7 +307,7 @@ Example:
 ```java
 Model ontologyModel;
 try {
-    ontologyModel = Models.createModel("ttl", MY_ONTOLOGY_STREAM, transformer);
+    ontologyModel = Models.createModel("ttl", MY_ONTOLOGY_STREAM);
 } catch (IOException e) {
     throw new MobiException(e);
 }

@@ -25,7 +25,7 @@ package com.mobi.rdf.orm.conversion.impl;
 
 import junit.framework.TestCase;
 import org.junit.Test;
-import com.mobi.rdf.api.Value;
+import org.eclipse.rdf4j.model.Value;
 import com.mobi.rdf.orm.Thing;
 
 import java.util.Calendar;

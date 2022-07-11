@@ -23,10 +23,10 @@ package com.mobi.jaas.modules.token;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.component.Reference;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.jaas.api.config.LoginModuleConfig;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.modules.provider.AppConfigEntryProvider;
@@ -42,19 +42,13 @@ import java.util.Map;
 @Component
 public class SimpleTokenLoginModuleProvider implements AppConfigEntryProvider {
 
-    private EngineManager engineManager;
-    private TokenManager tokenManager;
     protected BundleContext context;
 
     @Reference
-    public void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
+    EngineManager engineManager;
 
     @Reference
-    public void setTokenManager(TokenManager tokenManager) {
-        this.tokenManager = tokenManager;
-    }
+    TokenManager tokenManager;
 
     @Activate
     protected void start(BundleContext context) {

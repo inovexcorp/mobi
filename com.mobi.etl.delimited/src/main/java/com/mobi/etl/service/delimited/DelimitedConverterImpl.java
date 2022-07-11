@@ -23,7 +23,8 @@ package com.mobi.etl.service.delimited;
  * #L%
  */
 
-import com.google.common.base.CharMatcher;
+import static com.google.common.base.CharMatcher.whitespace;
+
 import com.mobi.etl.api.config.delimited.ExcelConfig;
 import com.mobi.etl.api.config.delimited.SVConfig;
 import com.mobi.etl.api.delimited.DelimitedConverter;
@@ -33,15 +34,9 @@ import com.mobi.etl.api.ontologies.delimited.ClassMappingFactory;
 import com.mobi.etl.api.ontologies.delimited.Mapping;
 import com.mobi.etl.api.ontologies.delimited.MappingFactory;
 import com.mobi.exception.MobiException;
+import com.mobi.ontology.core.api.DataProperty;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.DataProperty;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.CharsetUtils;
 import com.mobi.vocabularies.xsd.XSD;
 import com.opencsv.CSVReader;
@@ -54,6 +49,15 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -84,21 +88,11 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     private static final String LOCAL_NAME_PATTERN = "\\$\\{(\\d+|UUID)\\}";
     private static final String DEFAULT_PREFIX = "http://mobi.com/data/";
 
-    private ValueFactory valueFactory;
-    private ModelFactory modelFactory;
+    private final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    private final ModelFactory modelFactory = new DynamicModelFactory();
     private MappingFactory mappingFactory;
     private ClassMappingFactory classMappingFactory;
     private OntologyManager ontologyManager;
-
-    @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
-    }
-
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
-    }
 
     @Reference
     public void setMappingFactory(MappingFactory mappingFactory) {
@@ -126,7 +120,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 new MobiException("Unsupported character set"));
         CSVReader reader = new CSVReader(new InputStreamReader(new ByteArrayInputStream(data), charset),
                 config.getSeparator());
-        Model convertedRDF = modelFactory.createModel();
+        Model convertedRDF = modelFactory.createEmptyModel();
         ArrayList<ClassMapping> classMappings = parseClassMappings(config.getMapping());
         long offset = config.getOffset();
         boolean containsHeaders = config.getContainsHeaders();
@@ -138,7 +132,6 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
         // Skip to offset point
         while (reader.getLinesRead() - (containsHeaders ? 1 : 0) < offset) {
-            System.out.println(reader.getLinesRead() - (containsHeaders ? 1 : 0));
             reader.readNext();
         }
 
@@ -172,7 +165,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         Set<Ontology> sourceOntologies = config.getOntologies().isEmpty() ? getSourceOntologies(mapping) :
                 config.getOntologies();
         String[] nextRow;
-        Model convertedRDF = modelFactory.createModel();
+        Model convertedRDF = modelFactory.createEmptyModel();
         ArrayList<ClassMapping> classMappings = parseClassMappings(config.getMapping());
 
         try {
@@ -215,7 +208,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 }
                 lastRowNumber++;
             }
-        } catch (InvalidFormatException | NotImplementedException e) {
+        } catch (NotImplementedException | InvalidFormatException e) {
             throw new MobiException(e);
         }
 
@@ -232,7 +225,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     private void writeClassMappingsToModel(Model convertedRDF, String[] line, List<ClassMapping> classMappings,
                                            Set<Ontology> sourceOntologies) {
         // Map holds ClassMappings to instance IRIs. Modified by writeClassToModel().
-        Map<com.mobi.rdf.api.Resource, IRI> mappedClasses = new HashMap<>();
+        Map<Resource, IRI> mappedClasses = new HashMap<>();
         for (ClassMapping cm : classMappings) {
             convertedRDF.addAll(writeClassToModel(cm, line, mappedClasses, sourceOntologies));
         }
@@ -256,9 +249,9 @@ public class DelimitedConverterImpl implements DelimitedConverter {
      *                      Modified by this method.
      * @return A Model of RDF based on the line of CSV data
      */
-    private Model writeClassToModel(ClassMapping cm, String[] nextLine, Map<com.mobi.rdf.api.Resource, IRI> mappedClasses,
+    private Model writeClassToModel(ClassMapping cm, String[] nextLine, Map<Resource, IRI> mappedClasses,
                                     Set<Ontology> sourceOntologies) {
-        Model convertedRDF = modelFactory.createModel();
+        Model convertedRDF = modelFactory.createEmptyModel();
 
         IRI classInstance;
         if (mappedClasses.containsKey(cm.getResource())) {
@@ -277,7 +270,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             }
         }
 
-        Set<com.mobi.rdf.api.Resource> mapsTo = cm.getMapsTo_resource();
+        Set<Resource> mapsTo = cm.getMapsTo_resource();
         mapsTo.forEach(resource ->
                         convertedRDF.add(classInstance,
                                 valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), resource));
@@ -294,7 +287,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             Optional<Value> datatypeOpt = dataMapping.getDatatypeSpec();
             Optional<Value> languageOpt = dataMapping.getLanguageSpec();
             int columnIndex = dataMapping.getColumnIndex().iterator().next();
-            com.mobi.rdf.api.Resource prop = dataMapping.getHasProperty_resource().iterator().next();
+            Resource prop = dataMapping.getHasProperty_resource().iterator().next();
 
             // If the column exists
             if (columnIndex < nextLine.length && columnIndex >= 0) {
@@ -346,7 +339,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                         + objectMapping.getResource());
             }
 
-            com.mobi.rdf.api.Resource prop = objectMapping.getHasProperty_resource().iterator().next();
+            Resource prop = objectMapping.getHasProperty_resource().iterator().next();
 
             IRI targetIri;
             if (mappedClasses.containsKey(targetClassMapping.getResource())) {
@@ -395,7 +388,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 int colIndex = Integer.parseInt(mat.group(1));
                 if (colIndex < currentLine.length && colIndex >= 0) {
                     //remove whitespace
-                    String replacement = CharMatcher.WHITESPACE.removeFrom(currentLine[colIndex]);
+                    String replacement = whitespace().removeFrom(currentLine[colIndex]);
                     if (LOGGER.isDebugEnabled() && !replacement.equals(currentLine[colIndex])) {
                         LOGGER.debug(String.format("Local name for IRI was converted from \"%s\" to \"%s\" in order to"
                                 + "remove whitespace.", currentLine[colIndex], replacement));
@@ -450,9 +443,9 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     }
 
     private Set<Ontology> getSourceOntologies(Mapping mapping) {
-        Optional<com.mobi.rdf.api.Resource> recordIRI = mapping.getSourceRecord_resource();
-        Optional<com.mobi.rdf.api.Resource> branchIRI = mapping.getSourceBranch_resource();
-        Optional<com.mobi.rdf.api.Resource> commitIRI = mapping.getSourceCommit_resource();
+        Optional<Resource> recordIRI = mapping.getSourceRecord_resource();
+        Optional<Resource> branchIRI = mapping.getSourceBranch_resource();
+        Optional<Resource> commitIRI = mapping.getSourceCommit_resource();
         if (recordIRI.isPresent() && branchIRI.isPresent() && commitIRI.isPresent()) {
             Optional<Ontology> ontology = ontologyManager.retrieveOntology(recordIRI.get(), branchIRI.get(),
                     commitIRI.get());
@@ -492,7 +485,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 case XSD.DATE_TIME:
                 case XSD.DATE_TIME_STAMP:
                 case XSD.TIME:
-                    literal.dateTimeValue();
+                    literal.temporalAccessorValue(); // TODO: NOT SURE
                     return true;
                 case XSD.ANYURI:
                     valueFactory.createIRI(literal.stringValue());

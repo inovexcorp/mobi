@@ -23,9 +23,9 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 
 import java.util.Optional;
 

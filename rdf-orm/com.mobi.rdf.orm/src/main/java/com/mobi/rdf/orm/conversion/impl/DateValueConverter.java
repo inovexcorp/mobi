@@ -23,23 +23,23 @@ package com.mobi.rdf.orm.conversion.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import com.mobi.rdf.api.Value;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.AbstractValueConverter;
 import com.mobi.rdf.orm.conversion.ValueConversionException;
 import com.mobi.rdf.orm.conversion.ValueConverter;
+import org.eclipse.rdf4j.model.Value;
+import org.osgi.service.component.annotations.Component;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 /**
- * {@link ValueConverter} for creating {@link Date} objects from statements.
+ * {@link ValueConverter} for creating {@link java.util.Date} objects from statements.
  *
  * @author bdgould
  */
-@Component(provide = ValueConverter.class)
+@Component(service = ValueConverter.class)
 public class DateValueConverter extends AbstractValueConverter<OffsetDateTime> {
 
     /**
@@ -54,7 +54,7 @@ public class DateValueConverter extends AbstractValueConverter<OffsetDateTime> {
      */
     @Override
     public OffsetDateTime convertValue(final Value value, final Thing thing,
-            final Class<? extends OffsetDateTime> desiredType) throws ValueConversionException {
+                                       final Class<? extends OffsetDateTime> desiredType) throws ValueConversionException {
         try {
             return OffsetDateTime.parse(value.stringValue(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         } catch (DateTimeParseException e) {

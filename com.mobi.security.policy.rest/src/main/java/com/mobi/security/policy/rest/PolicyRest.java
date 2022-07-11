@@ -28,8 +28,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import com.mobi.exception.MobiException;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
@@ -43,9 +41,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
+import java.io.IOException;
+import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -57,20 +60,13 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.Optional;
 
-@Component(service = PolicyRest.class, immediate = true)
+@Component(service = PolicyRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/policies")
 public class PolicyRest {
 
-    private ValueFactory vf;
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
     private XACMLPolicyManager policyManager;
-
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
 
     @Reference
     void setPolicyManager(XACMLPolicyManager policyManager) {

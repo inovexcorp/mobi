@@ -30,11 +30,11 @@ import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.api.builder.DatasetRecordConfig;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.apache.karaf.itests.KarafTestSupport;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.junit.Before;
@@ -107,11 +107,11 @@ public class ImportIT extends KarafTestSupport {
         waitForService("(&(objectClass=com.mobi.ontology.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
 
-        data = Values.mobiModel(Rio.parse(new FileInputStream(new File(dataFile)), "", RDFFormat.TRIG));
+        data = Rio.parse(new FileInputStream(new File(dataFile)), "", RDFFormat.TRIG);
 
         manager = getOsgiService(DatasetManager.class);
         userFactory = getOsgiService(UserFactory.class);
-        vf = getOsgiService(ValueFactory.class);
+        vf = SimpleValueFactory.getInstance();
         DatasetRecordConfig config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset",
                 Collections.singleton(userFactory.createNew(vf.createIRI("http://mobi.com/users/admin"))), "system").build();
         record = manager.createDataset(config);
@@ -127,7 +127,7 @@ public class ImportIT extends KarafTestSupport {
             List<Resource> contexts = new ArrayList<>();
             Resource systemNG = conn.getSystemDefaultNamedGraph();
             data.forEach(statement -> {
-                Resource context = statement.getContext().orElse(systemNG);
+                Resource context = statement.getContext() == null ? systemNG : statement.getContext();
                 contexts.add(context);
                 assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
             });

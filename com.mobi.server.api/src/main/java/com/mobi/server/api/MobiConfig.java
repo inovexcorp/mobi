@@ -23,24 +23,25 @@ package com.mobi.server.api;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 /**
  * Service configuration for a {@link Mobi} implementation.  Should only be one in the system.
  */
-@Meta.OCD
-public interface MobiConfig {
+@ObjectClassDefinition
+public @interface MobiConfig {
 
     /**
      * @return The configured server identifier for the system
      */
-    @Meta.AD(required = false)
+    @AttributeDefinition(required = false)
     String serverId();
 
     /**
      * @return The configured host name for the system
      */
-    @Meta.AD(required = false)
+    @AttributeDefinition(required = false)
     String hostName();
 
 }

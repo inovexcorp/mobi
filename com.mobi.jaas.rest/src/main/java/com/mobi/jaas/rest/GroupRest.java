@@ -38,12 +38,6 @@ import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.GroupFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,15 +47,19 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -69,6 +67,7 @@ import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -79,14 +78,12 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Component(service = GroupRest.class, immediate = true)
+@Component(service = GroupRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/groups")
 public class GroupRest {
     private EngineManager engineManager;
-    private ValueFactory vf;
-    private UserFactory userFactory;
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
     private GroupFactory groupFactory;
-    private SesameTransformer transformer;
     private Engine rdfEngine;
     private final Logger logger = LoggerFactory.getLogger(GroupRest.class);
 
@@ -96,23 +93,8 @@ public class GroupRest {
     }
 
     @Reference
-    void setValueFactory(ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    @Reference
-    void setUserFactory(UserFactory userFactory) {
-        this.userFactory = userFactory;
-    }
-
-    @Reference
     void setGroupFactory(GroupFactory groupFactory) {
         this.groupFactory = groupFactory;
-    }
-
-    @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
     }
 
     @Reference(target = "(engineName=RdfEngine)")
@@ -140,7 +122,7 @@ public class GroupRest {
         try {
             JSONArray result = JSONArray.fromObject(engineManager.getGroups().stream()
                     .map(group -> group.getModel().filter(group.getResource(), null, null))
-                    .map(groupModel -> modelToJsonld(groupModel, transformer))
+                    .map(RestUtils::modelToJsonld)
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
             return Response.ok(result).build();
@@ -175,18 +157,18 @@ public class GroupRest {
     public Response createGroup(
             @Parameter(schema = @Schema(type = "string",
                     description = "Title of the Group", required = true))
-            @FormDataParam("title") String title,
+            @FormParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
                     description = "Description of the Group", required = true))
-            @FormDataParam("description") String description,
+            @FormParam("description") String description,
             @Parameter(array = @ArraySchema(
                     arraySchema = @Schema(description = "List of roles of the Group", required = true),
                     schema = @Schema(implementation = String.class, description = "Role")))
-            @FormDataParam("roles") List<FormDataBodyPart> roles,
+            @FormParam("roles") List<String> roles,
             @Parameter(array = @ArraySchema(
                     arraySchema = @Schema(description = "List of members of the Group", required = true),
                     schema = @Schema(implementation = String.class, description = "Member")))
-            @FormDataParam("members") List<FormDataBodyPart> members) {
+            @FormParam("members") List<String> members) {
         checkStringParam(title, "Group title is required");
         try {
             if (engineManager.groupExists(title)) {
@@ -197,7 +179,7 @@ public class GroupRest {
 
             if (members != null && members.size() > 0) {
                 builder.members(members.stream()
-                        .map(part -> engineManager.retrieveUser(part.getValue()))
+                        .map(member -> engineManager.retrieveUser(member))
                         .filter(Optional::isPresent)
                         .map(Optional::get)
                         .collect(Collectors.toSet()));
@@ -206,7 +188,7 @@ public class GroupRest {
                 builder.description(description);
             }
             if (roles != null && roles.size() > 0) {
-                Set<String> roleSet = roles.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
+                Set<String> roleSet = new HashSet<>(roles);
                 builder.roles(roleSet);
             }
 
@@ -251,7 +233,7 @@ public class GroupRest {
                     ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.NOT_FOUND));
 
             String json = groupedModelToString(group.getModel().filter(group.getResource(), null, null),
-                    getRDFFormat("jsonld"), transformer);
+                    getRDFFormat("jsonld"));
             return Response.ok(getObjectFromJsonld(json)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -287,7 +269,7 @@ public class GroupRest {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
-        Model groupModel = jsonldToModel(newGroupStr, transformer);
+        Model groupModel = jsonldToModel(newGroupStr);
         Set<Resource> subjects = groupModel.filter(null, vf.createIRI(RDF.TYPE.stringValue()),
                 vf.createIRI(Group.TYPE)).subjects();
         if (subjects.size() < 1) {
@@ -395,7 +377,7 @@ public class GroupRest {
 
             JSONArray result = JSONArray.fromObject(group.getHasGroupRole().stream()
                     .map(role -> role.getModel().filter(role.getResource(), null, null))
-                    .map(roleModel -> modelToJsonld(roleModel, transformer))
+                    .map(roleModel -> modelToJsonld(roleModel))
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
             return Response.ok(result).build();
@@ -534,7 +516,7 @@ public class GroupRest {
                         member.clearPassword();
                         return member.getModel().filter(member.getResource(), null, null);
                     })
-                    .map(roleModel -> modelToJsonld(roleModel, transformer))
+                    .map(roleModel -> modelToJsonld(roleModel))
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
             return Response.ok(result).build();

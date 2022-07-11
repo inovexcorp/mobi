@@ -27,19 +27,20 @@ import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertNotNull;
 
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.builder.Difference;
@@ -53,45 +54,35 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import com.mobi.rest.test.util.FormDataMultiPart;
+import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.util.UsernameTestFilter;
 import com.mobi.shapes.api.ShapesGraph;
 import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
 import com.mobi.shapes.impl.SimpleShapesGraph;
 import net.sf.json.JSONObject;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -102,64 +93,58 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-public class ShapesGraphRestTest extends MobiRestTestNg {
-    private ShapesGraphRest rest;
-    private ValueFactory vf;
-    private ModelFactory mf;
-    private Repository repo;
-    private OrmFactory<ShapesGraphRecord> recordFactory;
-    private OrmFactory<Branch> branchFactory;
-    private OrmFactory<Commit> commitFactory;
-    private User user;
-    private ShapesGraphRecord record;
-    private Branch branch;
-    private Commit commit;
-    private IRI inProgressCommitId;
-    private InProgressCommit inProgressCommit;
-    private SimpleBNodeService bNodeService;
-    private IRI branchId;
-    private IRI commitId;
-    private IRI recordId;
-    private IRI catalogId;
-    private IRI shapesGraphId;
-    private Model shaclModel;
-    private Difference difference;
-    private ShapesGraph shapesGraph;
-    private ShapesGraph shapesGraphSpy;
+public class ShapesGraphRestTest extends MobiRestTestCXF {
+    private static ShapesGraphRest rest;
+    private static ValueFactory vf;
+    private static ModelFactory mf;
+    private static MemoryRepositoryWrapper repo;
+    private static CatalogConfigProvider configProvider;
+    private static CatalogManager catalogManager;
+    private static EngineManager engineManager;
+    private static SimpleBNodeService bNodeService;
+    private static ShapesGraphManager shapesGraphManager;
+    private static OrmFactory<ShapesGraphRecord> recordFactory;
+    private static OrmFactory<Branch> branchFactory;
+    private static OrmFactory<Commit> commitFactory;
 
-    @Mock
-    CatalogConfigProvider configProvider;
+    private static User user;
+    private static ShapesGraphRecord record;
+    private static Branch branch;
+    private static Commit commit;
+    private static IRI inProgressCommitId;
+    private static InProgressCommit inProgressCommit;
+    private static IRI branchId;
+    private static IRI commitId;
+    private static IRI recordId;
+    private static IRI catalogId;
+    private static IRI shapesGraphId;
+    private static Model shaclModel;
+    private static Difference difference;
+    private static ShapesGraph shapesGraph;
+    private static ShapesGraph shapesGraphSpy;
 
-    @Mock
-    CatalogManager catalogManager;
-
-    @Mock
-    EngineManager engineManager;
-
-    @Mock
-    ShapesGraphManager shapesGraphManager;
-
-    @Mock
-    SesameTransformer transformer;
-
-    @Override
-    protected Application configureApp() throws Exception {
+    @BeforeClass
+    public static void startServer() throws Exception {
         vf = getValueFactory();
         mf = getModelFactory();
-
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
         repo.initialize();
+
+        engineManager = mock(EngineManager.class) ;
+        configProvider = mock(CatalogConfigProvider.class);
+        catalogManager = mock(CatalogManager.class);
+        shapesGraphManager = mock(ShapesGraphManager.class);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream stream = new ByteArrayInputStream("<http://mobi.com/branch> <http://mobi.com/ontologies/catalog#head> <http://mobi.com/commit> .".getBytes(StandardCharsets.UTF_8));
-            shaclModel = Values.mobiModel(Rio.parse(stream, "", RDFFormat.TRIG));
+            shaclModel = Rio.parse(stream, "", RDFFormat.TRIG);
             conn.add(shaclModel);
         }
-        
+
         shapesGraph = new SimpleShapesGraph(shaclModel, getValueFactory(), getModelFactory());
         shapesGraphSpy = Mockito.spy(shapesGraph);
 
@@ -180,9 +165,9 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         inProgressCommit = inProgressCommitFactory.createNew(inProgressCommitId);
 
         IRI titleIRI = vf.createIRI(DCTERMS.TITLE.stringValue());
-        Model additions = mf.createModel();
+        Model additions = mf.createEmptyModel();
         additions.add(catalogId, titleIRI, vf.createLiteral("Addition"));
-        Model deletions = mf.createModel();
+        Model deletions = mf.createEmptyModel();
         deletions.add(catalogId, titleIRI, vf.createLiteral("Deletion"));
         difference = new Difference.Builder()
                 .additions(additions)
@@ -197,35 +182,19 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         commit = commitFactory.createNew(commitId);
         branch.setHead(commit);
 
-        MockitoAnnotations.initMocks(this);
-
         rest = new ShapesGraphRest();
         rest.configProvider = configProvider;
         rest.catalogManager = catalogManager;
         rest.engineManager = engineManager;
         rest.shapesGraphManager = shapesGraphManager;
-        rest.transformer = transformer;
-        rest.vf = vf;
-        rest.mf = mf;
 
         bNodeService = new SimpleBNodeService();
-        bNodeService.setModelFactory(mf);
-        bNodeService.setValueFactory(vf);
-
         rest.bNodeService = bNodeService;
 
-        return new ResourceConfig()
-                .register(rest)
-                .register(MultiPartFeature.class)
-                .register(UsernameTestFilter.class);
+        configureServer(rest, new com.mobi.rest.test.util.UsernameTestFilter());
     }
 
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
-    }
-
-    @BeforeMethod
+    @Before
     public void setupMocks() {
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
@@ -238,34 +207,28 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
         when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), eq(user))).thenReturn(Optional.of(inProgressCommit));
         when(catalogManager.applyInProgressCommit(any(Resource.class), any(Model.class))).thenAnswer(i -> {
-            return i.getArgumentAt(1, Model.class);
+            return i.getArgument(1, Model.class);
         });
-        when(transformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-        when(transformer.mobiStatement(any(org.eclipse.rdf4j.model.Statement.class))).thenAnswer(i -> {
-                return Values.mobiStatement(i.getArgumentAt(0, org.eclipse.rdf4j.model.Statement.class));
-        });
-        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenAnswer(i -> {
-            return Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class));
-        });
+
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
     }
 
-    @AfterMethod
+    @After
     public void resetMocks() {
-        reset(engineManager, configProvider, catalogManager, transformer, shapesGraphManager, shapesGraphSpy);
+        reset(engineManager, configProvider, catalogManager,  shapesGraphManager, shapesGraphSpy);
     }
 
     @Test
     public void uploadFileTest() {
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-shape.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
         fd.field("title", "title");
         fd.field("description", "description");
         fd.field("markdown", "#markdown");
         fd.field("keywords", "keyword1");
         fd.field("keywords", "keyword2");
 
-        Response response = target().path("shapes-graphs").request().post(Entity.entity(fd,
+        Response response = target().path("shapes-graphs").request().post(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         String id = getResponse(response).optString("shapesGraphId");
@@ -287,14 +250,14 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         Mockito.doThrow(new MobiException("I'm an exception!")).when(catalogManager).createRecord(any(), any(), any());
 
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-shape.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
         fd.field("title", "title");
         fd.field("description", "description");
         fd.field("markdown", "#markdown");
         fd.field("keywords", "keyword1");
         fd.field("keywords", "keyword2");
 
-        Response response = target().path("shapes-graphs").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("shapes-graphs").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 500);
 
@@ -309,14 +272,14 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         Mockito.doThrow(new RDFParseException("I'm an exception!")).when(catalogManager).createRecord(any(), any(), any());
 
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-shape.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
         fd.field("title", "title");
         fd.field("description", "description");
         fd.field("markdown", "#markdown");
         fd.field("keywords", "keyword1");
         fd.field("keywords", "keyword2");
 
-        Response response = target().path("shapes-graphs").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("shapes-graphs").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 400);
 
@@ -331,14 +294,14 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         Mockito.doThrow(new IllegalArgumentException("I'm an exception!")).when(catalogManager).createRecord(any(), any(), any());
 
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-shape.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
         fd.field("title", "title");
         fd.field("description", "description");
         fd.field("markdown", "#markdown");
         fd.field("keywords", "keyword1");
         fd.field("keywords", "keyword2");
 
-        Response response = target().path("shapes-graphs").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("shapes-graphs").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 400);
 
@@ -351,13 +314,13 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
     @Test
     public void uploadFileWithoutTitleTest() {
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-shape.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
         fd.field("description", "description");
         fd.field("markdown", "#markdown");
         fd.field("keywords", "keyword1");
         fd.field("keywords", "keyword2");
 
-        Response response = target().path("shapes-graphs").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("shapes-graphs").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -483,18 +446,13 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
                 any(User.class))).thenReturn(Optional.empty());
 
         FormDataMultiPart fd = new FormDataMultiPart();
-        FormDataContentDisposition dispo = FormDataContentDisposition
-                .name("file")
-                .fileName("test-shape.ttl")
-                .build();
-        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-shape.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
-        fd.bodyPart(bodyPart);
+        fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
+        fd.field("branchId", branchId.stringValue());
+        fd.field("commitId", commitId.stringValue());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
-                .queryParam("branchId", branchId.stringValue())
-                .queryParam("commitId", commitId.stringValue())
                 .request()
-                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
@@ -505,6 +463,21 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
     }
 
     @Test
+    public void testUploadChangesToShapesGraphReplaceInProgressCommit() {
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
+        fd.field("branchId", branchId.stringValue());
+        fd.field("commitId", commitId.stringValue());
+        fd.field("replaceInProgressCommit", "true");
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
+                .request()
+                .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+
+    @Test
     public void testUploadChangesToShapesGraphWithoutBranchId() {
         when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(shaclModel);
@@ -512,17 +485,12 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
                 any(User.class))).thenReturn(Optional.empty());
         when(catalogManager.getMasterBranch(eq(catalogId), eq(recordId))).thenReturn(branch);
         FormDataMultiPart fd = new FormDataMultiPart();
-        FormDataContentDisposition dispo = FormDataContentDisposition
-                .name("file")
-                .fileName("test-shape.ttl")
-                .build();
-        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-shape.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
-        fd.bodyPart(bodyPart);
+        fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
+        fd.field("commitId", commitId.stringValue());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
-                .queryParam("commitId", commitId.stringValue())
                 .request()
-                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
@@ -539,17 +507,12 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
                 any(User.class))).thenReturn(Optional.empty());
         when(catalogManager.getHeadCommit(eq(catalogId), eq(recordId), eq(branchId))).thenReturn(commit);
         FormDataMultiPart fd = new FormDataMultiPart();
-        FormDataContentDisposition dispo = FormDataContentDisposition
-                .name("file")
-                .fileName("test-shape.ttl")
-                .build();
-        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-shape.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
-        fd.bodyPart(bodyPart);
+        fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
+        fd.field("branchId", branchId.stringValue());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
-                .queryParam("branchId", branchId.stringValue())
                 .request()
-                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
@@ -564,18 +527,13 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId), any(User.class))).thenReturn(Optional.of(inProgressCommit));
 
         FormDataMultiPart fd = new FormDataMultiPart();
-        FormDataContentDisposition dispo = FormDataContentDisposition
-                .name("file")
-                .fileName("search-results.json")
-                .build();
-        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/search-results.json"), MediaType.MULTIPART_FORM_DATA_TYPE);
-        fd.bodyPart(bodyPart);
+        fd.bodyPart("file", "search-results.json", getClass().getResourceAsStream("/search-results.json"));
+        fd.field("branchId", branchId.stringValue());
+        fd.field("commitId", commitId.stringValue());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
-                .queryParam("branchId", branchId.stringValue())
-                .queryParam("commitId", commitId.stringValue())
                 .request()
-                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
     }
@@ -586,22 +544,17 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
                 .thenReturn(shaclModel);
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
                 any(User.class))).thenReturn(Optional.empty());
-        Difference difference = new Difference.Builder().additions(mf.createModel()).deletions(mf.createModel()).build();
+        Difference difference = new Difference.Builder().additions(mf.createEmptyModel()).deletions(mf.createEmptyModel()).build();
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
 
         FormDataMultiPart fd = new FormDataMultiPart();
-        FormDataContentDisposition dispo = FormDataContentDisposition
-                .name("file")
-                .fileName("test-shape.ttl")
-                .build();
-        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/test-shape.ttl"), MediaType.MULTIPART_FORM_DATA_TYPE);
-        fd.bodyPart(bodyPart);
+        fd.bodyPart("file", "test-shape.ttl", getClass().getResourceAsStream("/test-shape.ttl"));
+        fd.field("branchId", branchId.stringValue());
+        fd.field("commitId", commitId.stringValue());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
-                .queryParam("branchId", branchId.stringValue())
-                .queryParam("commitId", commitId.stringValue())
                 .request()
-                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
         assertGetUserFromContext();
@@ -617,23 +570,17 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
                 .thenReturn(shaclModel);
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
                 any(User.class))).thenReturn(Optional.empty());
-        Difference difference = new Difference.Builder().additions(mf.createModel()).deletions(mf.createModel()).build();
+        Difference difference = new Difference.Builder().additions(mf.createEmptyModel()).deletions(mf.createEmptyModel()).build();
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
 
         FormDataMultiPart fd = new FormDataMultiPart();
-        FormDataContentDisposition dispo = FormDataContentDisposition
-                .name("file")
-                .fileName("testShapesGraphData.trig")
-                .build();
-        FormDataBodyPart bodyPart = new FormDataBodyPart(dispo, getClass().getResourceAsStream("/testShapesGraphData.trig"),
-                MediaType.MULTIPART_FORM_DATA_TYPE);
-        fd.bodyPart(bodyPart);
+        fd.bodyPart("file", "testShapesGraphData.trig", getClass().getResourceAsStream("/testShapesGraphData.trig"));
+        fd.field("branchId", branchId.stringValue());
+        fd.field("commitId", commitId.stringValue());
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
-                .queryParam("branchId", branchId.stringValue())
-                .queryParam("commitId", commitId.stringValue())
                 .request()
-                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+                .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
         JSONObject responseObject = getResponse(response);
@@ -844,7 +791,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         Model shaclModel;
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream stream = new ByteArrayInputStream("<http://mobi.com/blah> a <http://www.w3.org/2002/07/owl#Ontology> .".getBytes(StandardCharsets.UTF_8));
-            shaclModel = Values.mobiModel(Rio.parse(stream, "", RDFFormat.TRIG));
+            shaclModel = Rio.parse(stream, "", RDFFormat.TRIG);
 
             conn.add(shaclModel);
         }
@@ -869,7 +816,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         assertGetUserFromContext();
         verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
-        verify(shapesGraphSpy).serializeShapesGraph("turtle", transformer);
+        verify(shapesGraphSpy).serializeShapesGraph("turtle");
     }
 
     @Test
@@ -877,7 +824,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         Model shaclModel;
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream stream = new ByteArrayInputStream("<http://mobi.com/blah> a <http://www.w3.org/2002/07/owl#Ontology> .".getBytes(StandardCharsets.UTF_8));
-            shaclModel = Values.mobiModel(Rio.parse(stream, "", RDFFormat.TRIG));
+            shaclModel = Rio.parse(stream, "", RDFFormat.TRIG);
 
             conn.add(shaclModel);
         }
@@ -908,7 +855,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         Model shaclModel;
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream stream = new ByteArrayInputStream("<http://mobi.com/blah> a <http://www.w3.org/2002/07/owl#Ontology> .".getBytes(StandardCharsets.UTF_8));
-            shaclModel = Values.mobiModel(Rio.parse(stream, "", RDFFormat.TRIG));
+            shaclModel = Rio.parse(stream, "", RDFFormat.TRIG);
 
             conn.add(shaclModel);
         }
@@ -938,7 +885,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         Model shaclModel;
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream stream = new ByteArrayInputStream("<http://mobi.com/blah> a <http://www.w3.org/2002/07/owl#Ontology> .".getBytes(StandardCharsets.UTF_8));
-            shaclModel = Values.mobiModel(Rio.parse(stream, "", RDFFormat.TRIG));
+            shaclModel = Rio.parse(stream, "", RDFFormat.TRIG);
 
             conn.add(shaclModel);
         }
@@ -962,7 +909,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId),
                 any(User.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId));
-        verify(shapesGraphSpy).serializeShapesGraph(eq("turtle"), eq(transformer));
+        verify(shapesGraphSpy).serializeShapesGraph(eq("turtle"));
     }
 
     @Test
@@ -970,7 +917,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         Model shaclModel;
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream stream = new ByteArrayInputStream("<http://mobi.com/blah> a <http://www.w3.org/2002/07/owl#Ontology> .".getBytes(StandardCharsets.UTF_8));
-            shaclModel = Values.mobiModel(Rio.parse(stream, "", RDFFormat.TRIG));
+            shaclModel = Rio.parse(stream, "", RDFFormat.TRIG);
 
             conn.add(shaclModel);
         }
@@ -994,7 +941,7 @@ public class ShapesGraphRestTest extends MobiRestTestNg {
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
         verify(catalogManager).applyInProgressCommit(eq(inProgressCommit.getResource()),
                 eq(shaclModel));
-        verify(shapesGraphSpy).serializeShapesGraph(eq("turtle"), eq(transformer));
+        verify(shapesGraphSpy).serializeShapesGraph(eq("turtle"));
     }
 
     private JSONObject getResponse(Response response) {

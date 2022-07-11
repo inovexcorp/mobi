@@ -25,17 +25,17 @@ package com.mobi.rdf.orm.conversion.impl;
 
 import static org.junit.Assert.assertEquals;
 
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.junit.Test;
 
 import java.time.OffsetDateTime;
 
 public class DateValueConverterTest extends ValueConverterTestCase<OffsetDateTime> {
 
-    private ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
 
     public DateValueConverterTest() {
         super(new DateValueConverter(), OffsetDateTime.class);

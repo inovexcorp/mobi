@@ -23,7 +23,6 @@ package com.mobi.rdf.orm.conversion;
  * #L%
  */
 
-import com.mobi.rdf.api.Value;
 import com.mobi.rdf.orm.OrmException;
 
 import java.util.List;
@@ -31,7 +30,7 @@ import java.util.stream.Collectors;
 
 /**
  * This exception indicates there was an issue performing the conversion from a
- * {@link Value} into a specific type using the {@link ValueConverter}
+ * {@link org.eclipse.rdf4j.model.Value} into a specific type using the {@link ValueConverter}
  * infrastructure.
  *
  * @author bdgould

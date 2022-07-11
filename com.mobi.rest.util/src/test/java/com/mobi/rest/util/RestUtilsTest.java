@@ -26,42 +26,41 @@ package com.mobi.rest.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import net.sf.json.JSONObject;
-import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Test;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.utils.Values;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.impl.ThingImpl;
 import com.mobi.web.security.util.AuthenticationProps;
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -82,9 +81,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 public class RestUtilsTest {
-
-    private static ValueFactory vf = SimpleValueFactory.getInstance();
-    private static ModelFactory mf = LinkedHashModelFactory.getInstance();
+    private AutoCloseable closeable;
+    private static final ValueFactory vf = SimpleValueFactory.getInstance();
+    private static final ModelFactory mf = new DynamicModelFactory();
     private static IRI testPropIRI = vf.createIRI("http://example.com/test#prop");
 
     private String expectedJsonld;
@@ -94,8 +93,8 @@ public class RestUtilsTest {
     private String expectedGroupedRdfxml;
     private String expectedRdfxml;
     private String expectedTrig;
-    private Model model = mf.createModel();
-    private Model typedModel = mf.createModel();
+    private Model model = mf.createEmptyModel();
+    private Model typedModel = mf.createEmptyModel();
 
     @Mock
     private ContainerRequestContext context;
@@ -105,9 +104,6 @@ public class RestUtilsTest {
 
     @Mock
     private User user;
-
-    @Mock
-    private SesameTransformer transformer;
 
     @Mock
     private BNodeService service;
@@ -133,17 +129,20 @@ public class RestUtilsTest {
                 StandardCharsets.UTF_8);
         expectedTrig= IOUtils.toString(getClass().getResourceAsStream("/test.trig"), StandardCharsets.UTF_8);
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn("tester");
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
-        when(transformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenReturn(model);
-        when(service.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
+        when(service.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgument(0, Statement.class));
         when(service.deskolemize(model)).thenReturn(model);
         when(uriInfo.getPath(eq(false))).thenReturn("tests");
         when(uriInfo.getBaseUri()).thenReturn(URI.create("urn://test/rest/"));
         when(uriInfo.getAbsolutePath()).thenReturn(URI.create("urn://test/rest/tests"));
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<String, String>());
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -200,32 +199,32 @@ public class RestUtilsTest {
 
     @Test
     public void modelToStringWithRDFFormatTest() throws Exception {
-        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, RDFFormat.JSONLD, transformer)));
-        assertEquals(expectedTurtle, RestUtils.modelToString(model, RDFFormat.TURTLE, transformer));
-        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, RDFFormat.RDFXML, transformer)));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, RDFFormat.JSONLD)));
+        assertEquals(expectedTurtle, RestUtils.modelToString(model, RDFFormat.TURTLE));
+        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, RDFFormat.RDFXML)));
     }
 
     @Test
     public void modelToStringTest() throws Exception {
-        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, "jsonld", transformer)));
-        assertEquals(expectedTurtle, RestUtils.modelToString(model, "turtle", transformer));
-        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, "rdf/xml", transformer)));
-        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, "something", transformer)));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, "jsonld")));
+        assertEquals(expectedTurtle, RestUtils.modelToString(model, "turtle"));
+        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, "rdf/xml")));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, "something")));
     }
 
     @Test
     public void modelToSkolemizedStringWithRDFFormatTest() throws Exception {
-        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, RDFFormat.JSONLD, transformer, service)));
-        assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, RDFFormat.TURTLE, transformer, service));
-        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToSkolemizedString(model, RDFFormat.RDFXML, transformer, service)));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, RDFFormat.JSONLD, service)));
+        assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, RDFFormat.TURTLE, service));
+        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToSkolemizedString(model, RDFFormat.RDFXML, service)));
     }
 
     @Test
     public void modelToSkolemizedStringTest() throws Exception {
-        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, "jsonld", transformer, service)));
-        assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, "turtle", transformer, service));
-        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToSkolemizedString(model, "rdf/xml", transformer, service)));
-        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, "something", transformer, service)));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, "jsonld", service)));
+        assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, "turtle", service));
+        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToSkolemizedString(model, "rdf/xml", service)));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, "something", service)));
     }
 
     @Test
@@ -235,7 +234,7 @@ public class RestUtilsTest {
             Path file = Files.createTempFile("test", format.getDefaultFileExtension());
             OutputStream os = new ByteArrayOutputStream();
 
-            RestUtils.groupedModelToOutputStream(model, format, transformer, os);
+            RestUtils.groupedModelToOutputStream(model, format, os);
 
             String result = os.toString();
             switch (format.getName()) {
@@ -255,65 +254,63 @@ public class RestUtilsTest {
 
     @Test
     public void groupedModelToStringWithRDFFormatTest() throws Exception {
-        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToString(model, RDFFormat.JSONLD, transformer)));
-        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, RDFFormat.TURTLE, transformer));
-        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, RDFFormat.RDFXML, transformer)));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToString(model, RDFFormat.JSONLD)));
+        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, RDFFormat.TURTLE));
+        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, RDFFormat.RDFXML)));
     }
 
     @Test
     public void groupedModelToStringTest() throws Exception {
-        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToString(model, "jsonld", transformer)));
-        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, "turtle", transformer));
-        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, "rdf/xml", transformer)));
-        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToString(model, "something", transformer)));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToString(model, "jsonld")));
+        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, "turtle"));
+        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, "rdf/xml")));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToString(model, "something")));
     }
 
     @Test
     public void groupedModelToSkolemizedStringWithRDFFormatTest() throws Exception {
-        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, RDFFormat.JSONLD, transformer, service)));
-        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.TURTLE, transformer, service));
-        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.RDFXML, transformer, service)));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, RDFFormat.JSONLD, service)));
+        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.TURTLE, service));
+        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.RDFXML, service)));
     }
 
     @Test
     public void groupedModelToSkolemizedStringTest() throws Exception {
-        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, "jsonld", transformer, service)));
-        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, "turtle", transformer, service));
-        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, "rdf/xml", transformer, service)));
-        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, "something", transformer, service)));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, "jsonld", service)));
+        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, "turtle", service));
+        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, "rdf/xml", service)));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, "something", service)));
     }
 
     @Test
     public void jsonldToModelTest() throws Exception {
-        Model result = RestUtils.jsonldToModel(expectedJsonld, transformer);
+        Model result = RestUtils.jsonldToModel(expectedJsonld);
         assertEquals(model, result);
-        verify(transformer).mobiModel(any(org.eclipse.rdf4j.model.Model.class));
     }
 
     @Test
     public void jsonldToDeskolemizedModelTest() throws Exception {
-        Model result = RestUtils.jsonldToDeskolemizedModel(expectedJsonld, transformer, service);
+        Model result = RestUtils.jsonldToDeskolemizedModel(expectedJsonld, service);
         assertEquals(model, result);
-        verify(transformer).mobiModel(any(org.eclipse.rdf4j.model.Model.class));
         verify(service).deskolemize(model);
     }
 
     @Test
     public void modelToSkolemizedJsonldTest() throws Exception {
-        String result = RestUtils.modelToSkolemizedJsonld(model, transformer, service);
+        String result = RestUtils.modelToSkolemizedJsonld(model, service);
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(result));
         verify(service, atLeastOnce()).skolemize(any(Statement.class));
     }
 
     @Test
     public void modelToJsonldTest() throws Exception {
-        String result = RestUtils.modelToJsonld(model, transformer);
+        String result = RestUtils.modelToJsonld(model);
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(result));
     }
 
     @Test
     public void modelToTrigTest() throws Exception {
-        String result = RestUtils.modelToTrig(model, transformer);
+        String result = RestUtils.modelToTrig(model);
         assertEquals(expectedTrig, result);
     }
 
@@ -354,7 +351,7 @@ public class RestUtilsTest {
 
     @Test
     public void checkStringParamTest() {
-        String errorMessage = "Error";
+        String errorMessage = "Bad Request";
         try {
             RestUtils.checkStringParam("", errorMessage);
         } catch (MobiWebException e) {
@@ -422,7 +419,7 @@ public class RestUtilsTest {
         // TEST ASC
         Response response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1,
                 true, (Function<Thing, Boolean>) null,
-                "http://example.com/test#TestThing", transformer, service);
+                "http://example.com/test#TestThing", service);
         Object object = response.getEntity();
         assertTrue(object instanceof JSONArray);
         JSONArray array = (JSONArray) object;
@@ -435,7 +432,7 @@ public class RestUtilsTest {
         assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, true,
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer,
+                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing",
                 service);
         object = response.getEntity();
         assertTrue(object instanceof JSONArray);
@@ -449,7 +446,7 @@ public class RestUtilsTest {
                         && lnk.getUri().getRawPath().equals("/rest/tests")));
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 2, 1, true,
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer,
+                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing",
                 service);
         object = response.getEntity();
         assertTrue(object instanceof JSONArray);
@@ -464,7 +461,7 @@ public class RestUtilsTest {
 
         // TEST DESC
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1, false,
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer,
+                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing",
                 service);
         object = response.getEntity();
         assertTrue(object instanceof JSONArray);
@@ -478,7 +475,7 @@ public class RestUtilsTest {
         assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, false,
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer,
+                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing",
                 service);
         object = response.getEntity();
         assertTrue(object instanceof JSONArray);
@@ -492,7 +489,7 @@ public class RestUtilsTest {
                         && lnk.getUri().getRawPath().equals("/rest/tests")));
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 2, 1, false,
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer,
+                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing",
                 service);
         object = response.getEntity();
         assertTrue(object instanceof JSONArray);
@@ -507,7 +504,7 @@ public class RestUtilsTest {
 
         // TEST NO PAGING REQUIRED
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 10, true,
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer,
+                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing",
                 service);
         assertEquals(response.getLinks().size(), 0);
     }
@@ -525,7 +522,7 @@ public class RestUtilsTest {
         };
 
         Response response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1, true,
-                f, "http://example.com/test#TestThing", transformer, service);
+                f, "http://example.com/test#TestThing", service);
         Object object = response.getEntity();
         assertTrue(object instanceof JSONArray);
         JSONArray array = (JSONArray) object;
@@ -538,7 +535,7 @@ public class RestUtilsTest {
         assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, true,
-                f, "http://example.com/test#TestThing", transformer, service);
+                f, "http://example.com/test#TestThing", service);
         object = response.getEntity();
         assertTrue(object instanceof JSONArray);
         array = (JSONArray) object;
@@ -582,7 +579,7 @@ public class RestUtilsTest {
         // Setup
         when(thing.getModel()).thenReturn(typedModel);
 
-        JSONObject result = RestUtils.thingToSkolemizedJsonObject(thing, "urn:test", transformer, service);
+        JSONObject result = RestUtils.thingToSkolemizedJsonObject(thing, "urn:test", service);
         assertTrue(expectedTypedJsonld.startsWith(result.toString(), 1));
     }
 
@@ -678,9 +675,9 @@ public class RestUtilsTest {
         Set<Thing> set = new HashSet<>();
 
         predicateValues.forEach((key, value) -> {
-            set.add(new TestThing("http://example.com/test/0", mf.createModel(), vf, null).addPropertyValue(key, vf.createLiteral(value + " 1")));
-            set.add(new TestThing("http://example.com/test/1", mf.createModel(), vf, null).addPropertyValue(key, vf.createLiteral(value + " 2")));
-            set.add(new TestThing("http://example.com/test/2", mf.createModel(), vf, null).addPropertyValue(key, vf.createLiteral(value + " 3")));
+            set.add(new TestThing("http://example.com/test/0", mf.createEmptyModel(), vf, null).addPropertyValue(key, vf.createLiteral(value + " 1")));
+            set.add(new TestThing("http://example.com/test/1", mf.createEmptyModel(), vf, null).addPropertyValue(key, vf.createLiteral(value + " 2")));
+            set.add(new TestThing("http://example.com/test/2", mf.createEmptyModel(), vf, null).addPropertyValue(key, vf.createLiteral(value + " 3")));
 
         });
 

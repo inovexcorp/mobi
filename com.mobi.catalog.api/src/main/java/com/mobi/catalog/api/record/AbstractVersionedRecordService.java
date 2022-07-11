@@ -24,7 +24,7 @@ package com.mobi.catalog.api.record;
  */
 
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
-import com.mobi.repository.api.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 
 public abstract class AbstractVersionedRecordService<T extends VersionedRecord>
         extends AbstractRecordService<T> implements RecordService<T> {

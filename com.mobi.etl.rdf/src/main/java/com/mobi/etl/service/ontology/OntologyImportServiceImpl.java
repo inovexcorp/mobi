@@ -31,10 +31,12 @@ import com.mobi.etl.api.ontology.OntologyImportService;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.owl.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -42,22 +44,12 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 @Component
 public class OntologyImportServiceImpl implements OntologyImportService {
 
-    private ValueFactory vf;
-    private ModelFactory mf;
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ModelFactory mf = new DynamicModelFactory();
     private VersioningManager versioningManager;
     private CatalogManager catalogManager;
     private OntologyManager ontologyManager;
     private CatalogConfigProvider configProvider;
-
-    @Reference
-    void setValueFactory(ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    @Reference
-    void setModelFactory(ModelFactory mf) {
-        this.mf = mf;
-    }
 
     @Reference
     void setVersioningManager(VersioningManager versioningManager) {
@@ -91,7 +83,8 @@ public class OntologyImportServiceImpl implements OntologyImportService {
     @Override
     public Difference importOntology(Resource ontologyRecord, Resource branch, boolean update, Model ontologyData,
                                      User user, String commitMsg) {
-        Model newData = mf.createModel(ontologyData);
+        Model newData = mf.createEmptyModel();
+        newData.addAll(ontologyData);
         Model existingData = ontologyManager.getOntologyModel(ontologyRecord, branch);
 
         if (update) {
@@ -113,7 +106,7 @@ public class OntologyImportServiceImpl implements OntologyImportService {
                 versioningManager.commit(configProvider.getLocalCatalogIRI(), ontologyRecord, branch, user, commitMsg,
                         newData, null);
             }
-            return new Difference.Builder().additions(newData).deletions(mf.createModel()).build();
+            return new Difference.Builder().additions(newData).deletions(mf.createEmptyModel()).build();
         }
     }
 }

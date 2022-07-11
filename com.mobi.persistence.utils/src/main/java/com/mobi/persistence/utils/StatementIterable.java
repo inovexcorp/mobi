@@ -23,18 +23,15 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
-import com.mobi.persistence.utils.api.SesameTransformer;
 import org.eclipse.rdf4j.model.Statement;
 
 import java.util.Iterator;
 
 public class StatementIterable implements Iterable<Statement>, Iterator<Statement> {
-    private Iterator<com.mobi.rdf.api.Statement> it;
-    private SesameTransformer transformer;
+    private Iterator<Statement> it;
 
-    public StatementIterable(Iterable<com.mobi.rdf.api.Statement> it, SesameTransformer transformer) {
+    public StatementIterable(Iterable<Statement> it) {
         this.it = it.iterator();
-        this.transformer = transformer;
     }
 
     @Override
@@ -49,6 +46,6 @@ public class StatementIterable implements Iterable<Statement>, Iterator<Statemen
 
     @Override
     public Statement next() {
-        return transformer.sesameStatement(it.next());
+        return it.next();
     }
 }

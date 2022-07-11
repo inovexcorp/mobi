@@ -23,9 +23,9 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-import com.mobi.rdf.api.Literal;
 import com.mobi.security.policy.api.exception.MissingAttributeException;
 import com.mobi.security.policy.api.exception.ProcessingException;
+import org.eclipse.rdf4j.model.Literal;
 
 import java.util.List;
 

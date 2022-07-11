@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.23.0-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -72,18 +72,10 @@
             <artifactId>checker-framework</artifactId>
         </dependency>
         <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
@@ -91,12 +83,6 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>rdf.impl.sesame</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
@@ -120,9 +106,9 @@
                         <Export-Package>
                         	com.mobi.ontology.core*
                         </Export-Package>
-                        <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
+                        <_dsannotations-options>inherit</_dsannotations-options>
                     </instructions>
                 </configuration>
             </plugin>

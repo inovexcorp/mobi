@@ -25,66 +25,96 @@ package com.mobi.catalog.impl.config;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
+import static org.mockito.Mockito.when;
 
-import aQute.bnd.annotation.metatype.Configurable;
-import com.mobi.rdf.api.IRI;
+import com.mobi.catalog.config.CatalogConfig;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.config.RepositoryConfig;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import org.eclipse.rdf4j.repository.sail.SailRepository;
-import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.annotation.Annotation;
 
 public class CatalogConfigProviderImplTest extends OrmEnabledTestCase {
-    private CatalogConfigProviderImpl provider;
-    private Repository repo;
 
-    private Map<String, Object> props;
+    @Mock
+    private CatalogConfig catalogConfig;
+
+    private AutoCloseable closeable;
+    private CatalogConfigProviderImpl provider;
+    private MemoryRepositoryWrapper repo;
     private IRI localCatalogId;
     private IRI distributedCatalogId;
 
     @Before
     public void setUp() throws Exception {
-        SesameRepositoryWrapper repositoryWrapper = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        Map<String, Object> repoProps = new HashMap<>();
-        repoProps.put("id", "system");
-        RepositoryConfig config = Configurable.createConfigurable(RepositoryConfig.class, repoProps);
-        repositoryWrapper.setConfig(config);
-        repo = repositoryWrapper;
-        repo.initialize();
+        repo = new MemoryRepositoryWrapper();
+        repo.start(new MemoryRepositoryConfig() {
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return null;
+            }
+
+            @Override
+            public String id() {
+                return "system";
+            }
+
+            @Override
+            public String title() {
+                return "System Repo";
+            }
+
+            @Override
+            public String dataDir() {
+                return null;
+            }
+
+            @Override
+            public String tripleIndexes() {
+                return "spoc,posc,cspo";
+            }
+
+            @Override
+            public long syncDelay() {
+                return 0;
+            }
+        });
+        closeable = MockitoAnnotations.openMocks(this);
 
         provider = new CatalogConfigProviderImpl();
         injectOrmFactoryReferencesIntoService(provider);
-        provider.setValueFactory(VALUE_FACTORY);
-        provider.setRepository(repo);
+        provider.repository = repo;
 
-        props = new HashMap<>();
-        props.put("title", "Mobi Test Catalog");
-        props.put("description", "This is a test catalog");
-        props.put("iri", "http://mobi.com/test/catalogs#catalog");
-        provider.start(props);
 
-        localCatalogId = VALUE_FACTORY.createIRI(props.get("iri") + "-local");
-        distributedCatalogId = VALUE_FACTORY.createIRI(props.get("iri") + "-distributed");
+        when(catalogConfig.title()).thenReturn("Mobi Test Catalog");
+        when(catalogConfig.description()).thenReturn("This is a test catalog");
+        when(catalogConfig.iri()).thenReturn("http://mobi.com/test/catalogs#catalog");
+        provider.start(catalogConfig);
+
+        localCatalogId = VALUE_FACTORY.createIRI(catalogConfig.iri() + "-local");
+        distributedCatalogId = VALUE_FACTORY.createIRI(catalogConfig.iri() + "-distributed");
     }
 
     @After
     public void tearDown() throws Exception {
         repo.shutDown();
+        closeable.close();
     }
 
     @Test
     public void startTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.contains(null, null, null, localCatalogId));
-            assertTrue(conn.contains(null, null, null, distributedCatalogId));
+            assertTrue(ConnectionUtils.contains(conn, null, null, null, localCatalogId));
+            assertTrue(ConnectionUtils.contains(conn, null, null, null, distributedCatalogId));
         }
     }
 

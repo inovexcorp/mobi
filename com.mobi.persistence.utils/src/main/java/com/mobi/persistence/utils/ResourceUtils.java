@@ -24,8 +24,8 @@ package com.mobi.persistence.utils;
  */
 
 import com.mobi.exception.MobiException;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;

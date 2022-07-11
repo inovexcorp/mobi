@@ -23,7 +23,7 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import com.mobi.rdf.api.Value;
+import org.eclipse.rdf4j.model.Value;
 
 
 public interface Annotation {

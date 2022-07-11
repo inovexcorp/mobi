@@ -1,12 +1,10 @@
 package com.mobi.etl.api.ontologies.delimited
 
-import com.mobi.rdf.api.Model
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
-import com.mobi.rdf.core.utils.Values
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry
 import com.mobi.rdf.orm.conversion.impl.*
 import com.mobi.rdf.orm.impl.ThingFactory
+import org.eclipse.rdf4j.model.Model
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
 import org.springframework.core.io.ClassPathResource
@@ -15,7 +13,6 @@ import spock.lang.Specification
 class DelimitedOntologySpec extends Specification {
 
     def vf = SimpleValueFactory.getInstance()
-    def mf = LinkedHashModelFactory.getInstance()
     def classFactory = new ClassMappingFactory()
     def dataMappingFactory = new DataMappingFactory()
     def objectMappingFactory = new ObjectMappingFactory()
@@ -49,18 +46,10 @@ class DelimitedOntologySpec extends Specification {
  */
 
     def setup() {
-        classFactory.setModelFactory(mf)
-        classFactory.setValueFactory(vf)
-        classFactory.setValueConverterRegistry(vcr)
-        dataMappingFactory.setValueFactory(vf)
-        dataMappingFactory.setModelFactory(mf)
-        dataMappingFactory.setValueConverterRegistry(vcr)
-        objectMappingFactory.setModelFactory(mf)
-        objectMappingFactory.setValueFactory(vf)
-        objectMappingFactory.setValueConverterRegistry(vcr)
-        propertyMappingFactory.setModelFactory(mf)
-        propertyMappingFactory.setValueFactory(vf)
-        propertyMappingFactory.setValueConverterRegistry(vcr)
+        classFactory.valueConverterRegistry = vcr
+        dataMappingFactory.valueConverterRegistry = vcr
+        objectMappingFactory.valueConverterRegistry = vcr
+        propertyMappingFactory.valueConverterRegistry = vcr
 
         vcr.registerValueConverter(classFactory)
         vcr.registerValueConverter(dataMappingFactory)
@@ -77,7 +66,7 @@ class DelimitedOntologySpec extends Specification {
         vcr.registerValueConverter(new ValueValueConverter())
 
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        Model mapping = Values.mobiModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
+        Model mapping = Rio.parse(mappingFile, "", RDFFormat.TURTLE)
         classMapping = classFactory.getExisting(vf.createIRI("http://mobi.com/mappings/demo/Material"), mapping, vf, vcr).get()
     }
 

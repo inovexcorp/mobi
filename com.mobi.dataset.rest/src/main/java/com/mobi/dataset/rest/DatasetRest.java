@@ -49,12 +49,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
@@ -62,6 +57,7 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
+import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.jaxb.Links;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
@@ -70,49 +66,57 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@Component(service = DatasetRest.class, immediate = true)
+@Component(service = DatasetRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
 @Path("/datasets")
 public class DatasetRest {
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ModelFactory mf = new DynamicModelFactory();
+
     private DatasetManager manager;
     private EngineManager engineManager;
     private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
-    private SesameTransformer transformer;
     private BNodeService bNodeService;
-    private ValueFactory vf;
-    private ModelFactory mf;
     private CatalogProvUtils provUtils;
     private RDFImportService importService;
     private PDP pdp;
@@ -138,23 +142,8 @@ public class DatasetRest {
     }
 
     @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
-
-    @Reference
     void setBNodeService(BNodeService bNodeService) {
         this.bNodeService = bNodeService;
-    }
-
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    @Reference
-    void setMf(ModelFactory mf) {
-        this.mf = mf;
     }
 
     @Reference
@@ -197,7 +186,7 @@ public class DatasetRest {
             }
     )
     public Response getDatasetRecords(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Context UriInfo uriInfo,
             @Parameter(description = "Offset for a page of DatasetRecords", required = true)
             @QueryParam("offset") int offset,
@@ -225,11 +214,11 @@ public class DatasetRest {
 
             PaginatedSearchResults<Record> results = catalogManager.findRecord(
                     vf.createIRI("http://mobi.com/catalog-local"), params.build(),
-                    getActiveUser(context, engineManager), pdp);
+                    getActiveUser(servletRequest, engineManager), pdp);
 
             JSONArray array = JSONArray.fromObject(results.getPage().stream()
                     .map(datasetRecord -> removeContext(datasetRecord.getModel()))
-                    .map(model -> modelToSkolemizedJsonld(model, transformer, bNodeService))
+                    .map(model -> modelToSkolemizedJsonld(model, bNodeService))
                     .collect(Collectors.toList()));
 
             Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.getTotalSize(), limit, offset);
@@ -252,15 +241,15 @@ public class DatasetRest {
      * Creates a new DatasetRecord in the local Catalog using the passed information and Dataset with the passed
      * IRI in the repository with the passed id.
      *
-     * @param context Context of the request
-     * @param title Required title for the new DatasetRecord
-     * @param repositoryId Required IO of a repository in Mobi
-     * @param datasetIRI Optional IRI for the new Dataset
-     * @param description Optional description for the new DatasetRecord
-     * @param markdown Optional markdown abstract for the new DatasetRecord.
-     * @param keywords Optional list of keywords strings for the new DatasetRecord
-     * @param ontologies Optional list of OntologyRecord IRI strings for the new DatasetRecord
-     * @return Response with the IRI string of the created DatasetRecord
+     * @param servletRequest The HttpServletRequest
+     * @param title The required title for the new DatasetRecord
+     * @param repositoryId The required id of a repository in Mobi
+     * @param datasetIRI The optional IRI for the new Dataset
+     * @param description The optional description for the new DatasetRecord
+     * @param markdown The optional markdown abstract for the new DatasetRecord.
+     * @param keywords The optional list of keywords strings for the new DatasetRecord
+     * @param ontologies The optional list of OntologyRecord IRI strings for the new DatasetRecord
+     * @return A Response with the IRI string of the created DatasetRecord
      */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -281,35 +270,35 @@ public class DatasetRest {
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = DatasetRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response createDatasetRecord(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required title for the new DatasetRecord", required = true))
-            @FormDataParam("title") String title,
+            @FormParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
                     description = "Required ID of a repository in Mobi", required = true))
-            @FormDataParam("repositoryId") String repositoryId,
+            @FormParam("repositoryId") String repositoryId,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional IRI for the new Dataset"))
-            @FormDataParam("datasetIRI") String datasetIRI,
+            @FormParam("datasetIRI") String datasetIRI,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional description for the new DatasetRecord"))
-            @FormDataParam("description") String description,
+            @FormParam("description") String description,
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional markdown abstract for the new DatasetRecord"))
-            @FormDataParam("markdown") String markdown,
+            @FormParam("markdown") String markdown,
             @Parameter(array = @ArraySchema(
                     arraySchema = @Schema(description =
                             "Optional list of keywords strings for the new DatasetRecord"),
                     schema = @Schema(implementation = String.class, description = "Keyword")))
-            @FormDataParam("keywords") List<FormDataBodyPart> keywords,
+            @FormParam("keywords") List<String> keywords,
             @Parameter(array = @ArraySchema(
                     arraySchema = @Schema(description =
                             "Optional list of OntologyRecord IRI strings for the new DatasetRecord"),
                     schema = @Schema(implementation = String.class, description = "OntologyRecord IRI")))
-            @FormDataParam("ontologies") List<FormDataBodyPart> ontologies) {
+            @FormParam("ontologies") List<String> ontologies) {
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
-        User user = getActiveUser(context, engineManager);
+        User user = getActiveUser(servletRequest, engineManager);
         try {
             RecordOperationConfig config = new OperationConfig();
             config.set(RecordCreateSettings.CATALOG_ID, configProvider.getLocalCatalogIRI().stringValue());
@@ -317,15 +306,14 @@ public class DatasetRest {
             config.set(RecordCreateSettings.RECORD_DESCRIPTION, description);
             config.set(RecordCreateSettings.RECORD_MARKDOWN, markdown);
             if (keywords != null) {
-                config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords.stream().map(FormDataBodyPart::getValue)
-                        .collect(Collectors.toSet()));
+                config.set(RecordCreateSettings.RECORD_KEYWORDS, new HashSet<>(keywords));
             }
             config.set(RecordCreateSettings.RECORD_PUBLISHERS, Stream.of(user).collect(Collectors.toSet()));
             config.set(DatasetRecordCreateSettings.DATASET, datasetIRI);
             config.set(DatasetRecordCreateSettings.REPOSITORY_ID, repositoryId);
             if (ontologies != null) {
-                Set<OntologyIdentifier> ontologyIdentifiers = ontologies.stream().map(formDataBodyPart ->
-                        getOntologyIdentifier(vf.createIRI(formDataBodyPart.getValue()))).collect(Collectors.toSet());
+                Set<OntologyIdentifier> ontologyIdentifiers = ontologies.stream().map(ontology ->
+                        getOntologyIdentifier(vf.createIRI(ontology))).collect(Collectors.toSet());
                 config.set(DatasetRecordCreateSettings.ONTOLOGIES, ontologyIdentifiers);
             }
             DatasetRecord record = catalogManager.createRecord(user, config, DatasetRecord.class);
@@ -370,9 +358,9 @@ public class DatasetRest {
             DatasetRecord datasetRecord = manager.getDatasetRecord(recordIRI).orElseThrow(() ->
                     ErrorUtils.sendError("DatasetRecord " + datasetRecordId + " could not be found",
                             Response.Status.NOT_FOUND));
-            Model copy = mf.createModel();
+            Model copy = mf.createEmptyModel();
             datasetRecord.getModel().forEach(st -> copy.add(st.getSubject(), st.getPredicate(), st.getObject()));
-            return Response.ok(modelToJsonld(copy, transformer)).build();
+            return Response.ok(modelToJsonld(copy)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -384,7 +372,7 @@ public class DatasetRest {
      * Deletes a specific DatasetRecord and its Dataset from the local Catalog. By default only removes named graphs
      * that aren't used by another Dataset, but can be forced to delete them.
      *
-     * @param context Context of the request
+     * @param servletRequest The HttpServletRequest
      * @param datasetRecordId The IRI of a DatasetRecord
      * @param force Whether or not the delete should be forced
      * @return A Response indicating the success of the request
@@ -405,14 +393,14 @@ public class DatasetRest {
     @ActionId(value = Delete.TYPE)
     @ResourceId(type = ValueType.PATH, value = "datasetRecordId")
     public Response deleteDatasetRecord(
-            @Context ContainerRequestContext context,
+            @Context HttpServletRequest servletRequest,
             @Parameter(schema = @Schema(description = "DatasetRecord IRI", required = true,
                     ref = "#/components/schemas/IRI"))
             @PathParam("datasetRecordId") String datasetRecordId,
             @Parameter(description = "Whether or not the delete should be forced")
             @DefaultValue("false") @QueryParam("force") boolean force) {
         Resource recordIRI = vf.createIRI(datasetRecordId);
-        User activeUser = getActiveUser(context, engineManager);
+        User activeUser = getActiveUser(servletRequest, engineManager);
         DeleteActivity deleteActivity = null;
         try {
             deleteActivity = provUtils.startDeleteActivity(activeUser, recordIRI);
@@ -478,9 +466,8 @@ public class DatasetRest {
     /**
      * Uploads all RDF data in the provided file into the Dataset of a specific DatasetRecord.
      *
+     * @param servletRequest The HttpServletRequest
      * @param datasetRecordId The IRI of a DatasetRecord
-     * @param fileInputStream An InputStream of a RDF file passed as form data
-     * @param fileDetail Information about the RDF file being uploaded, including the name
      * @return A Response indicating the success of the request
      */
     @POST
@@ -494,23 +481,28 @@ public class DatasetRest {
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
-            }
+            },
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
+                                    schema = @Schema(implementation = DatasetFileUpload.class)
+                            )
+                    }
+            )
     )
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "datasetRecordId")
-    public Response uploadData(
-            @Parameter(description = "IRI of a DatasetRecord", required = true)
-            @PathParam("datasetRecordId") String datasetRecordId,
-            @Parameter(schema = @Schema(type = "string", format="binary",
-                    description = "InputStream of a RDF file passed as form data", required = true))
-            @FormDataParam("file") InputStream fileInputStream,
-            @Parameter(schema = @Schema(type = "string",
-                    description = "Information about the RDF file being uploaded, including the name"), hidden = true)
-            @FormDataParam("file") FormDataContentDisposition fileDetail) {
-        if (fileInputStream == null) {
+    public Response uploadData(@Context HttpServletRequest servletRequest,
+                               @Parameter(description = "IRI of a DatasetRecord", required = true)
+                               @PathParam("datasetRecordId") String datasetRecordId) {
+        Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
+        InputStream inputStream = (InputStream) formData.get("stream");
+        String filename = (String) formData.get("filename");
+
+        if (inputStream == null) {
             throw ErrorUtils.sendError("Must provide a file", Response.Status.BAD_REQUEST);
         }
-        RDFFormat format = Rio.getParserFormatForFileName(fileDetail.getFileName()).orElseThrow(() ->
+        RDFFormat format = Rio.getParserFormatForFileName(filename).orElseThrow(() ->
                 ErrorUtils.sendError("File is not in a valid RDF format", Response.Status.BAD_REQUEST));
 
         ImportServiceConfig.Builder builder = new ImportServiceConfig.Builder()
@@ -518,13 +510,21 @@ public class DatasetRest {
                 .format(format)
                 .logOutput(true);
         try {
-            importService.importInputStream(builder.build(), fileInputStream);
+            importService.importInputStream(builder.build(), inputStream);
             return Response.ok().build();
         } catch (IllegalArgumentException | RDFParseException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (Exception ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Class used for OpenAPI documentation for file upload endpoint.
+     */
+    private class DatasetFileUpload {
+        @Schema(type = "string", format = "binary", description = "Dataset RDF file to upload.")
+        public String file;
     }
 
     private OntologyIdentifier getOntologyIdentifier(Resource recordId) {
@@ -536,7 +536,7 @@ public class DatasetRest {
     }
 
     private Model removeContext(Model model) {
-        Model result = mf.createModel();
+        Model result = mf.createEmptyModel();
         model.forEach(statement -> result.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
         return result;
     }

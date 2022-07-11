@@ -23,30 +23,28 @@ package com.mobi.rdf.orm.conversion.impl;
  * #L%
  */
 
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.core.impl.sesame.SimpleLiteral;
-import com.mobi.rdf.core.impl.sesame.ValueFactoryService;
 import com.mobi.rdf.orm.conversion.ValueConverter;
 import junit.framework.TestCase;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleLiteral;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.junit.Test;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleLiteral;
-import com.mobi.rdf.core.impl.sesame.ValueFactoryService;
-import com.mobi.rdf.orm.conversion.ValueConverter;
 
-import java.time.OffsetDateTime;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 public class DefaultValueConverterRegistryTest {
 
-    protected ValueFactory valueFactory = new ValueFactoryService();
+    protected final ValueFactory valueFactory = SimpleValueFactory.getInstance();
 
     @Test
     public void testBoxify() {
@@ -120,13 +118,13 @@ public class DefaultValueConverterRegistryTest {
         }
 
         @Override
-        public OffsetDateTime dateTimeValue() {
-            return null;
+        public double doubleValue() {
+            return 0;
         }
 
         @Override
-        public double doubleValue() {
-            return 0;
+        public XMLGregorianCalendar calendarValue() {
+            return null;
         }
 
         @Override
@@ -145,13 +143,23 @@ public class DefaultValueConverterRegistryTest {
         }
 
         @Override
+        public BigInteger integerValue() {
+            return new BigInteger("0".getBytes(StandardCharsets.UTF_8));
+        }
+
+        @Override
+        public BigDecimal decimalValue() {
+            return new BigDecimal(new BigInteger("0".getBytes(StandardCharsets.UTF_8)));
+        }
+
+        @Override
         public short shortValue() {
             return 0;
         }
 
         @Override
         public String stringValue() {
-            return null;
+            return "0";
         }
     }
 

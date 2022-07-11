@@ -23,11 +23,20 @@ package com.mobi.jaas.config;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-@Meta.OCD
-public interface SimpleTokenConfig {
+/**
+ * Configuration for Tokens used by the application.
+ */
+@ObjectClassDefinition
+public @interface SimpleTokenConfig {
 
-    @Meta.AD(deflt = "1440", required = false)
-    long tokenDurationMins();
+    /**
+     * The duration in minutes the token will last before it expires.
+     *
+     * @return number of minutes the token will last before it expires
+     */
+    @AttributeDefinition(defaultValue = "1440", required = false)
+    long tokenDurationMins() default 1440;
 }

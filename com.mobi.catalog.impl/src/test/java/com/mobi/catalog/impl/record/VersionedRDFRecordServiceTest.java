@@ -26,10 +26,9 @@ package com.mobi.catalog.impl.record;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -61,31 +60,26 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
-import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.Binding;
-import com.mobi.query.api.BindingSet;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
-import com.mobi.repository.exception.RepositoryException;
-import com.mobi.security.policy.api.ontologies.policy.Policy;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -101,12 +95,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
-
+    private AutoCloseable closeable;
     private final IRI testIRI = VALUE_FACTORY.createIRI("urn:test");
     private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
     private final IRI branchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch");
@@ -118,7 +111,6 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private final IRI recordPolicyIRI = VALUE_FACTORY.createIRI("http://mobi.com/policies/record/encoded-record-policy");
 
     private SimpleVersionedRDFRecordService recordService;
-    private SimpleSesameTransformer transformer;
     private VersionedRDFRecord testRecord;
     private Branch branch;
     private Commit headCommit;
@@ -126,6 +118,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private User user;
     private DeleteActivity deleteActivity;
     private Tag tag;
+    private MemoryRepositoryWrapper repository;
 
     private OrmFactory<VersionedRDFRecord> recordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
     private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
@@ -146,34 +139,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private CatalogUtilsService utilsService;
 
     @Mock
-    private Repository repository;
-
-    @Mock
-    private RepositoryConnection connection;
-
-    @Mock
-    private RepositoryResult<Statement> results;
-
-    @Mock
-    private RepositoryResult<Statement> inProgressResults;
-
-    @Mock
-    private Statement statement;
-
-    @Mock
     private InProgressCommit inProgressCommit;
-
-    @Mock
-    private TupleQuery tupleQuery;
-
-    @Mock
-    private TupleQueryResult tupleQueryResult;
-
-    @Mock
-    private BindingSet bindingSet;
-
-    @Mock
-    private Binding binding;
 
     @Mock
     private CatalogProvUtils provUtils;
@@ -190,11 +156,15 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     @Mock
     private EngineManager engineManager;
 
+    @Mock
+    private CreateActivity createActivity;
+
     @Before
     public void setUp() throws Exception {
         recordService = new SimpleVersionedRDFRecordService();
+        repository = new MemoryRepositoryWrapper();
+        repository.setDelegate(new SailRepository(new MemoryStore()));
 
-        transformer = new SimpleSesameTransformer();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
 
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));
@@ -203,12 +173,12 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         branch.setHead(headCommit);
         branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
 
-        Model deletions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createEmptyModel();
         deletions.add(VALUE_FACTORY.createIRI("http://test.com#sub"), VALUE_FACTORY.createIRI(_Thing.description_IRI),
                 VALUE_FACTORY.createLiteral("Description"));
 
         difference = new Difference.Builder()
-                .additions(MODEL_FACTORY.createModel())
+                .additions(MODEL_FACTORY.createEmptyModel())
                 .deletions(deletions)
                 .build();
 
@@ -224,47 +194,30 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setBranch(Collections.singleton(branch));
         testRecord.setMasterBranch(branchFactory.createNew(masterBranchIRI));
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         when(versioningManager.commit(any(IRI.class), any(IRI.class), any(IRI.class), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitIRI);
-        when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
-        when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection))).thenReturn(branch);
+        when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(testRecord));
+        when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(branch);
         when(utilsService.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
         doReturn(Stream.of(commitIRI).collect(Collectors.toList()))
                 .when(utilsService).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
-        when(utilsService.getExpectedObject(eq(commitIRI), any(OrmFactory.class), eq(connection))).thenReturn(headCommit);
-        when(utilsService.getRevisionChanges(eq(commitIRI), eq(connection))).thenReturn(difference);
+        when(utilsService.getExpectedObject(eq(commitIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(headCommit);
+        when(utilsService.getRevisionChanges(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(difference);
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
+        when(provUtils.startCreateActivity(any())).thenReturn(createActivity);
         doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
         when(xacmlPolicyManager.addPolicy(any(XACMLPolicy.class))).thenReturn(recordPolicyIRI);
-        when(connection.getStatements(eq(null), eq(VALUE_FACTORY.createIRI(Policy.relatedResource_IRI)), any(IRI.class))).thenReturn(results);
-        when(results.hasNext()).thenReturn(true);
-        when(results.next()).thenReturn(statement);
-        when(statement.getSubject()).thenReturn(recordPolicyIRI);
         when(configProvider.getRepository()).thenReturn(repository);
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
-        when(repository.getConnection()).thenReturn(connection);
-        when(connection.prepareTupleQuery(anyString())).thenReturn(tupleQuery);
-        when(tupleQuery.evaluate()).thenReturn(tupleQueryResult);
-        when(tupleQueryResult.hasNext()).thenReturn(true, false);
-        when(tupleQueryResult.next()).thenReturn(bindingSet);
-        when(bindingSet.getBinding(anyString())).thenReturn(Optional.of(binding));
-        when(binding.getValue()).thenReturn(VALUE_FACTORY.createLiteral("urn:record"),
-                VALUE_FACTORY.createLiteral("urn:master"), VALUE_FACTORY.createLiteral("urn:user"));
 
         // InProgressCommit deletion setup
-        when(connection.getStatements(eq(null), eq(VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI)), any(IRI.class))).thenReturn(inProgressResults);
-        Set<Statement> inProgressCommitIris = new HashSet<>();
-        inProgressCommitIris.add(VALUE_FACTORY.createStatement(inProgressCommitIRI, VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI), testIRI));
-        when(inProgressResults.iterator()).thenReturn(inProgressCommitIris.iterator());
-        doCallRealMethod().when(inProgressResults).forEach(any(Consumer.class));
-        when(utilsService.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), eq(connection))).thenReturn(inProgressCommit);
-        doNothing().when(utilsService).removeInProgressCommit(any(InProgressCommit.class), eq(connection));
+        when(utilsService.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
+        doNothing().when(utilsService).removeInProgressCommit(any(InProgressCommit.class), any(RepositoryConnection.class));
 
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.versioningManager = versioningManager;
         recordService.utilsService = utilsService;
-        recordService.valueFactory = VALUE_FACTORY;
         recordService.provUtils = provUtils;
         recordService.mergeRequestManager = mergeRequestManager;
         recordService.xacmlPolicyManager = xacmlPolicyManager;
@@ -273,10 +226,23 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         recordService.recordFactory = recordService.versionedRDFRecordFactory;
     }
 
+    @After
+    public void reset() throws Exception {
+        closeable.close();
+        try (RepositoryConnection connection = repository.getConnection()) {
+            connection.clear();
+        }
+    }
+
     /* activate() */
 
     @Test
     public void activateUserPresentTest() throws Exception {
+        try (RepositoryConnection connection = repository.getConnection()) {
+            connection.add(testRecord.getModel(), testRecord.getResource());
+            connection.add(testRecord.getResource(), DCTERMS.PUBLISHER, VALUE_FACTORY.createIRI("urn:user"));
+        }
+
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("urn:user"));
         when(engineManager.getUsername(any(IRI.class))).thenReturn(Optional.of("user"));
         when(engineManager.retrieveUser(eq("user"))).thenReturn(Optional.of(user));
@@ -287,6 +253,11 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void activateUserNotPresentTest() throws Exception {
+        try (RepositoryConnection connection = repository.getConnection()) {
+            connection.add(testRecord.getModel(), testRecord.getResource());
+            connection.add(testRecord.getResource(), DCTERMS.PUBLISHER, VALUE_FACTORY.createIRI("urn:user"));
+        }
+
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("urn:admin"));
         when(engineManager.getUsername(any(IRI.class))).thenReturn(Optional.empty());
         when(engineManager.retrieveUser(eq("admin"))).thenReturn(Optional.of(user));
@@ -311,12 +282,14 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        recordService.create(user, config, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.create(user, config, connection);
+        }
 
-        verify(utilsService, times(2)).addObject(any(Record.class),
+        verify(utilsService, times(2)).addObject(any(),
                 any(RepositoryConnection.class));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
-                anyString(), any(Model.class), eq(null));
+                anyString(), any(), eq(null));
         verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
@@ -336,7 +309,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        recordService.create(user, config, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.create(user, config, connection);
+        }
         verify(provUtils).removeActivity(any(CreateActivity.class));
     }
 
@@ -354,7 +329,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestDescription");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
 
-        recordService.create(user, config, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.create(user, config, connection);
+        }
         verify(provUtils).removeActivity(any(CreateActivity.class));
     }
 
@@ -372,7 +349,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        recordService.create(user, config, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.create(user, config, connection);
+        }
         verify(provUtils).removeActivity(any(CreateActivity.class));
     }
 
@@ -380,26 +359,31 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void deleteTest() throws Exception {
-        VersionedRDFRecord deletedRecord = recordService.delete(testIRI, user, connection);
-
+        VersionedRDFRecord deletedRecord;
+        try (RepositoryConnection connection = repository.getConnection()) {
+            connection.add(testRecord.getModel(), testRecord.getResource());
+            connection.add(inProgressCommitIRI, VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI), testRecord.getResource());
+            deletedRecord = recordService.delete(testIRI, user, connection);
+        }
         assertEquals(testRecord, deletedRecord);
-        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class));
         verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
         verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
         verify(utilsService).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).removeBranch(eq(testRecord.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
         verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));
-        verify(connection).getStatements(eq(null), eq(VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI)), eq(testIRI));
-        verify(utilsService).getInProgressCommit(eq(catalogId), eq(testIRI), eq(inProgressCommitIRI), eq(connection));
-        verify(utilsService).removeInProgressCommit(eq(inProgressCommit), eq(connection));
+        verify(utilsService).getInProgressCommit(eq(catalogId), eq(testIRI), eq(inProgressCommitIRI), any(RepositoryConnection.class));
+        verify(utilsService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void deleteRecordDoesNotExistTest() throws Exception {
-        when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.empty());
+        when(utilsService.optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
 
-        recordService.delete(testIRI, user, connection);
-        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.delete(testIRI, user, connection);
+        }
+        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), any(RepositoryConnection.class));
     }
 
     @Test
@@ -407,7 +391,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         doThrow(RepositoryException.class).when(utilsService).removeObject(any(VersionedRDFRecord.class), any(RepositoryConnection.class));
         thrown.expect(RepositoryException.class);
 
-        recordService.delete(testIRI, user, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.delete(testIRI, user, connection);
+        }
         verify(provUtils).removeActivity(any(DeleteActivity.class));
     }
 
@@ -416,7 +402,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     @Test
     public void exportUsingBatchExporterTest() throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        BatchExporter exporter =  new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
+        BatchExporter exporter =  new BatchExporter(new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
         RecordOperationConfig config = new OperationConfig();
 
         config.set(RecordExportSettings.BATCH_EXPORTER, exporter);
@@ -424,28 +410,30 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         assertFalse(exporter.isActive());
         exporter.startRDF();
         assertTrue(exporter.isActive());
-        recordService.export(testIRI, config, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.export(testIRI, config, connection);
+        }
         exporter.endRDF();
         assertFalse(exporter.isActive());
 
-        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString(), StandardCharsets.UTF_8)), "", RDFFormat.JSONLD));
+        Model outputModel = Rio.parse((IOUtils.toInputStream(os.toString(), StandardCharsets.UTF_8)), "", RDFFormat.JSONLD);
         assertTrue(outputModel.containsAll(testRecord.getModel()));
         assertTrue(outputModel.containsAll(branch.getModel()));
         assertTrue(outputModel.containsAll(difference.getAdditions()));
         assertTrue(outputModel.containsAll(difference.getDeletions()));
 
-        verify(utilsService).optObject(eq(testIRI), any(OrmFactory.class), eq(connection));
-        verify(utilsService).getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection));
+        verify(utilsService).optObject(eq(testIRI), any(OrmFactory.class), any(RepositoryConnection.class));
+        verify(utilsService).getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class));
         verify(utilsService).getHeadCommitIRI(eq(branch));
         verify(utilsService).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
-        verify(utilsService).getExpectedObject(eq(commitIRI), any(OrmFactory.class), eq(connection));
-        verify(utilsService).getRevisionChanges(eq(commitIRI), eq(connection));
+        verify(utilsService).getExpectedObject(eq(commitIRI), any(OrmFactory.class), any(RepositoryConnection.class));
+        verify(utilsService).getRevisionChanges(eq(commitIRI), any(RepositoryConnection.class));
     }
 
     @Test
     public void exportRecordOnlyTest() throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        BatchExporter exporter =  new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
+        BatchExporter exporter =  new BatchExporter(new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
         RecordOperationConfig config = new OperationConfig();
 
         config.set(RecordExportSettings.BATCH_EXPORTER, exporter);
@@ -454,21 +442,23 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         assertFalse(exporter.isActive());
         exporter.startRDF();
         assertTrue(exporter.isActive());
-        recordService.export(testIRI, config, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.export(testIRI, config, connection);
+        }
         exporter.endRDF();
         assertFalse(exporter.isActive());
 
-        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString(), StandardCharsets.UTF_8)), "", RDFFormat.JSONLD));
+        Model outputModel = Rio.parse((IOUtils.toInputStream(os.toString(), StandardCharsets.UTF_8)), "", RDFFormat.JSONLD);
         assertTrue(outputModel.containsAll(testRecord.getModel()));
         assertFalse(outputModel.containsAll(branch.getModel()));
         assertFalse(outputModel.containsAll(difference.getDeletions()));
 
-        verify(utilsService).optObject(eq(testIRI), any(OrmFactory.class), eq(connection));
-        verify(utilsService, never()).getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection));
+        verify(utilsService).optObject(eq(testIRI), any(OrmFactory.class), any(RepositoryConnection.class));
+        verify(utilsService, never()).getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class));
         verify(utilsService, never()).getHeadCommitIRI(eq(branch));
         verify(utilsService, never()).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
-        verify(utilsService, never()).getExpectedObject(eq(commitIRI), any(OrmFactory.class), eq(connection));
-        verify(utilsService, never()).getRevisionChanges(eq(commitIRI), eq(connection));
+        verify(utilsService, never()).getExpectedObject(eq(commitIRI), any(OrmFactory.class), any(RepositoryConnection.class));
+        verify(utilsService, never()).getRevisionChanges(eq(commitIRI), any(RepositoryConnection.class));
     }
 
     @Test
@@ -482,7 +472,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         branchesToExport.add(branchIRI);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        BatchExporter exporter =  new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
+        BatchExporter exporter =  new BatchExporter(new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
         RecordOperationConfig config = new OperationConfig();
 
         config.set(RecordExportSettings.BATCH_EXPORTER, exporter);
@@ -491,23 +481,25 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         assertFalse(exporter.isActive());
         exporter.startRDF();
         assertTrue(exporter.isActive());
-        recordService.export(testIRI, config, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.export(testIRI, config, connection);
+        }
         exporter.endRDF();
         assertFalse(exporter.isActive());
 
-        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString(), StandardCharsets.UTF_8)), "", RDFFormat.JSONLD));
+        Model outputModel = Rio.parse((IOUtils.toInputStream(os.toString(), StandardCharsets.UTF_8)), "", RDFFormat.JSONLD);
         testRecord.removeBranch(doNotWriteBranch);
         assertTrue(outputModel.containsAll(testRecord.getModel()));
         assertTrue(outputModel.containsAll(branch.getModel()));
         assertFalse(outputModel.containsAll(doNotWriteBranch.getModel()));
         assertTrue(outputModel.containsAll(difference.getDeletions()));
 
-        verify(utilsService).optObject(eq(testIRI), any(OrmFactory.class), eq(connection));
-        verify(utilsService).getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection));
+        verify(utilsService).optObject(eq(testIRI), any(OrmFactory.class), any(RepositoryConnection.class));
+        verify(utilsService).getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class));
         verify(utilsService).getHeadCommitIRI(eq(branch));
         verify(utilsService).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
-        verify(utilsService).getExpectedObject(eq(commitIRI), any(OrmFactory.class), eq(connection));
-        verify(utilsService).getRevisionChanges(eq(commitIRI), eq(connection));
+        verify(utilsService).getExpectedObject(eq(commitIRI), any(OrmFactory.class), any(RepositoryConnection.class));
+        verify(utilsService).getRevisionChanges(eq(commitIRI), any(RepositoryConnection.class));
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -516,7 +508,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         RecordOperationConfig config = new OperationConfig();
 
         config.set(RecordExportSettings.BATCH_EXPORTER, exporter);
-        recordService.export(testIRI, config, connection);
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.export(testIRI, config, connection);
+        }
     }
 
     @Test

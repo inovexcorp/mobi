@@ -23,93 +23,87 @@ package com.mobi.security.policy.rest;
  * #L%
  */
 
-import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
-import static org.mockito.Matchers.any;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
 
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rest.util.MobiRestTestNg;
-import com.mobi.rest.util.UsernameTestFilter;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import com.mobi.rest.test.util.MobiRestTestCXF;
+import com.mobi.rest.test.util.UsernameTestFilter;
 import com.mobi.security.policy.api.exception.PolicySyntaxException;
 import com.mobi.security.policy.api.xacml.PolicyQueryParams;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
-import com.mobi.security.policy.rest.PolicyRest;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.mockito.Mock;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 
-public class PolicyRestTest extends MobiRestTestNg {
-    private PolicyRest rest;
-    private ValueFactory vf;
-
+public class PolicyRestTest extends MobiRestTestCXF {
+    private AutoCloseable closeable;
     private String xml;
     private String json;
     private XACMLPolicy policy;
     private IRI policyId;
 
-    @Mock
-    private XACMLPolicyManager policyManager;
+    // Mock services used in server
+    private static PolicyRest rest;
+    private static ValueFactory vf;
+    private static XACMLPolicyManager policyManager;
 
-    @Override
-    protected Application configureApp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+    @BeforeClass
+    public static void startServer() {
         vf = getValueFactory();
 
+        policyManager = Mockito.mock(XACMLPolicyManager.class);
+
+        rest = new PolicyRest();
+        rest.setPolicyManager(policyManager);
+
+        configureServer(rest, new UsernameTestFilter());
+    }
+
+    @Before
+    public void setUpMocks() throws Exception {
+        closeable = MockitoAnnotations.openMocks(this);
+        reset(policyManager);
         xml = IOUtils.toString(getClass().getResourceAsStream("/policy.xml"), StandardCharsets.UTF_8);
         json = IOUtils.toString(getClass().getResourceAsStream("/policy.json"), StandardCharsets.UTF_8);
         policy = new XACMLPolicy(xml, vf);
         policyId = vf.createIRI("http://mobi.com/policies/policy1");
-
-        rest = new PolicyRest();
-        rest.setVf(vf);
-        rest.setPolicyManager(policyManager);
-
-        return new ResourceConfig()
-                .register(rest)
-                .register(UsernameTestFilter.class)
-                .register(MultiPartFeature.class);
-    }
-
-    @Override
-    protected void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
-    }
-
-    @BeforeMethod
-    public void setUpMocks() throws Exception {
-        reset(policyManager);
 
         when(policyManager.getPolicies(any(PolicyQueryParams.class))).thenReturn(Collections.singletonList(policy));
         when(policyManager.createPolicy(any(PolicyType.class))).thenReturn(policy);
         when(policyManager.addPolicy(policy)).thenReturn(policyId);
         when(policyManager.getPolicy(any(Resource.class))).thenReturn(Optional.empty());
         when(policyManager.getPolicy(policyId)).thenReturn(Optional.of(policy));
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     // GET policies

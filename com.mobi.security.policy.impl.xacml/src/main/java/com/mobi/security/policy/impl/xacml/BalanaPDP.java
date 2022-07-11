@@ -32,21 +32,24 @@ import static com.mobi.security.policy.api.xacml.XACML.POLICY_ORDERED_PERMIT_OVE
 import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_UNLESS_DENY;
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.PIP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.Response;
 import com.mobi.security.policy.api.xacml.XACML;
 import com.mobi.security.policy.api.xacml.XACMLResponse;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.balana.Balana;
 import org.wso2.balana.PDPConfig;
 import org.wso2.balana.combine.PolicyCombiningAlgorithm;
@@ -76,14 +79,14 @@ import java.util.Map;
 import java.util.Set;
 import javax.xml.bind.JAXBContext;
 
-@Component(immediate = true, provide = {PDP.class, BalanaPDP.class})
+@Component(immediate = true, service = {PDP.class, BalanaPDP.class})
 public class BalanaPDP implements PDP {
+
+    final ValueFactory vf = SimpleValueFactory.getInstance();
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private Set<PIP> pips = new HashSet<>();
-    private BalanaPRP balanaPRP;
-    private ValueFactory vf;
 
     private Balana balana;
 
@@ -96,7 +99,7 @@ public class BalanaPDP implements PDP {
                 com.mobi.security.policy.api.xacml.jaxb.ObjectFactory.class.getClassLoader());
     }
 
-    @Reference(type = '*', dynamic = true)
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     void addPIP(PIP pip) {
         this.pips.add(pip);
     }
@@ -106,14 +109,7 @@ public class BalanaPDP implements PDP {
     }
 
     @Reference
-    void setBalanaPRP(BalanaPRP balanaPRP) {
-        this.balanaPRP = balanaPRP;
-    }
-
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
+    BalanaPRP balanaPRP;
 
     @Override
     public Request createRequest(List<IRI> subjectId, Map<String, Literal> subjectAttrs, List<IRI> resourceId,

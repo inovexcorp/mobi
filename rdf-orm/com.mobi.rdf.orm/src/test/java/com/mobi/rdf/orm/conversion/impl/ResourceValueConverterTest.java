@@ -23,10 +23,10 @@ package com.mobi.rdf.orm.conversion.impl;
  * #L%
  */
 
-import com.mobi.rdf.api.Resource;
+import org.eclipse.rdf4j.model.Resource;
 import junit.framework.TestCase;
 import org.junit.Test;
-import com.mobi.rdf.api.Resource;
+import org.eclipse.rdf4j.model.Resource;
 
 public class ResourceValueConverterTest extends ValueConverterTestCase<Resource> {
 

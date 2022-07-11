@@ -27,9 +27,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -52,15 +52,15 @@ import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
+import com.mobi.persistence.utils.ConnectionUtils;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
@@ -83,7 +83,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
-    private Repository repo;
+    private AutoCloseable closeable;
+    private MemoryRepositoryWrapper repo;
     private SimpleMergeRequestManager manager;
     private OrmFactory<MergeRequest> mergeRequestFactory = getRequiredOrmFactory(MergeRequest.class);
     private OrmFactory<AcceptedMergeRequest> acceptedMergeRequestFactory = getRequiredOrmFactory(AcceptedMergeRequest.class);
@@ -152,8 +153,8 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() {
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
 
         titleIRI = VALUE_FACTORY.createIRI(_Thing.title_IRI);
 
@@ -296,13 +297,13 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
             conn.add(commentZ.getModel(), commentZ.getResource());
         }
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         when(configProvider.getRepository()).thenReturn(repo);
         when(configProvider.getLocalCatalogIRI()).thenReturn(LOCAL_CATALOG_IRI);
 
         when(utilsService.getExpectedObject(any(Resource.class), eq(mergeRequestFactory), any(RepositoryConnection.class))).thenAnswer(i -> {
-            Resource iri = i.getArgumentAt(0, Resource.class);
+            Resource iri = i.getArgument(0, Resource.class);
             if (iri.equals(request1.getResource())) {
                 return request1;
             } else if (iri.equals(request2.getResource())) {
@@ -317,7 +318,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
             throw new IllegalArgumentException();
         });
         when(utilsService.getExpectedObject(any(Resource.class), eq(branchFactory), any(RepositoryConnection.class))).thenAnswer(i -> {
-            Resource iri = i.getArgumentAt(0, Resource.class);
+            Resource iri = i.getArgument(0, Resource.class);
             if (iri.equals(SOURCE_BRANCH_1_IRI)) {
                 return sourceBranch1;
             } else if (iri.equals(SOURCE_BRANCH_2_IRI)) {
@@ -354,15 +355,15 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
         manager = spy(new SimpleMergeRequestManager());
         injectOrmFactoryReferencesIntoService(manager);
-        manager.setVf(VALUE_FACTORY);
-        manager.setCatalogUtils(utilsService);
-        manager.setVersioningManager(versioningManager);
-        manager.setConfigProvider(configProvider);
+        manager.catalogUtils = utilsService;
+        manager.versioningManager = versioningManager;
+        manager.configProvider = configProvider;
     }
 
     @After
     public void tearDown() throws Exception {
         repo.shutDown();
+        closeable.close();
     }
 
     /* getMergeRequests */
@@ -615,8 +616,8 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void addMergeRequestTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.addMergeRequest(request3, conn);
-            assertTrue(conn.containsContext(request3.getResource()));
-            assertTrue(conn.contains(request3.getResource(), null, null, request3.getResource()));
+            assertTrue(ConnectionUtils.containsContext(conn, request3.getResource()));
+            assertTrue(ConnectionUtils.contains(conn, request3.getResource(), null, null, request3.getResource()));
         }
     }
 

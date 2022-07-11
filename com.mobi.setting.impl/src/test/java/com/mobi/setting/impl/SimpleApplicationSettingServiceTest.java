@@ -30,24 +30,24 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.core.utils.Values;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.ontologies.ApplicationSetting;
 import com.mobi.setting.api.ontologies.Setting;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -60,7 +60,8 @@ import java.util.Optional;
 import java.util.Set;
 
 public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
-    private Repository repo;
+    private AutoCloseable closeable;
+    private MemoryRepositoryWrapper repo;
     private SimpleApplicationSettingService service;
     private final OrmFactory<ApplicationSetting> applicationSettingFactory = getRequiredOrmFactory(ApplicationSetting.class);
     private final OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
@@ -76,10 +77,10 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         when(registry.getFactoriesOfType(User.class)).thenReturn(Collections.singletonList(userFactory));
         when(testComplexApplicationSettingFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(SimpleApplicationSettingServiceTest.TestComplexApplicationSetting.TYPE));
@@ -90,11 +91,14 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
 
         service = new SimpleApplicationSettingService();
         injectOrmFactoryReferencesIntoService(service);
-        service.vf = VALUE_FACTORY;
-        service.mf = MODEL_FACTORY;
         service.configProvider = configProvider;
         service.factoryRegistry = registry;
         service.start();
+    }
+
+    @After
+    public void resetMocks() throws Exception {
+        closeable.close();
     }
 
     // createApplicationSetting
@@ -103,13 +107,13 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     public void createApplicationSettingWithObjectValueTest() throws Exception {
         // Setup:
         InputStream inputStream = getClass().getResourceAsStream("/complexApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting applicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), testDataModel).get();
 
         service.createSetting(applicationSetting);
         try (RepositoryConnection conn = repo.getConnection()) {
-            applicationSetting.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+            applicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
     }
@@ -118,13 +122,13 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     public void createApplicationSettingWithDataValueTest() throws Exception {
         // Setup:
         InputStream inputStream = getClass().getResourceAsStream("/simpleApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting applicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MySimpleApplicationSetting"), testDataModel).get();
 
         service.createSetting(applicationSetting);
         try (RepositoryConnection conn = repo.getConnection()) {
-            applicationSetting.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+            applicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
     }
@@ -133,7 +137,7 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     public void createApplicationSettingWithExistingApplicationSettingTest() throws Exception {
         // Setup:
         InputStream inputStream = getClass().getResourceAsStream("/simpleApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting applicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MySimpleApplicationSetting"), testDataModel).get();
         repo.getConnection().add(applicationSetting.getModel(), VALUE_FACTORY.createIRI(SettingService.GRAPH));
@@ -145,14 +149,14 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     public void createApplicationSettingWithExistingApplicationSettingTypeTest() throws Exception {
         // Setup:
         InputStream inputStream = getClass().getResourceAsStream("/simpleApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting applicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MySimpleApplicationSetting"), testDataModel).get();
 
         service.createSetting(applicationSetting);
 
         InputStream secondInputStream = getClass().getResourceAsStream("/altSimpleApplicationSetting.ttl");
-        Model secondTestDataModel = Values.mobiModel(Rio.parse(secondInputStream, "", RDFFormat.TURTLE));
+        Model secondTestDataModel = Rio.parse(secondInputStream, "", RDFFormat.TURTLE);
         ApplicationSetting secondApplicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/AltSimpleApplicationSetting"), secondTestDataModel).get();
 
@@ -164,7 +168,7 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     @Test
     public void validateApplicationSettingTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/complexApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting applicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), testDataModel).get();
 
@@ -174,7 +178,7 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     @Test(expected = IllegalArgumentException.class)
     public void validateApplicationSettingWithoutReferenceTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/complexApplicationSettingMissingReference.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting applicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), testDataModel).get();
 
@@ -184,7 +188,7 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     @Test(expected = IllegalArgumentException.class)
     public void validateApplicationSettingWithoutValueTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/applicationSettingNoValue.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting applicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), testDataModel).get();
 
@@ -196,13 +200,13 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     @Test
     public void getApplicationSettingByTypeTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/complexApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting applicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), testDataModel).get();
 
         service.createSetting(applicationSetting);
         try (RepositoryConnection conn = repo.getConnection()) {
-            applicationSetting.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+            applicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
 
@@ -225,36 +229,36 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     @Test
     public void getUserApplicationSettingsTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/complexApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting firstApplicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), testDataModel).get();
 
         service.createSetting(firstApplicationSetting);
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstApplicationSetting.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+            firstApplicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
 
         InputStream secondInputStream = getClass().getResourceAsStream("/simpleApplicationSetting.ttl");
-        Model secondTestModel = Values.mobiModel(Rio.parse(secondInputStream, "", RDFFormat.TURTLE));
+        Model secondTestModel = Rio.parse(secondInputStream, "", RDFFormat.TURTLE);
         ApplicationSetting secondApplicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MySimpleApplicationSetting"), secondTestModel).get();
 
         service.createSetting(secondApplicationSetting);
         try (RepositoryConnection conn = repo.getConnection()) {
-            secondApplicationSetting.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+            secondApplicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
 
         service.getSettings();
 
         Set<ApplicationSetting> retrievedApplicationSettings = service.getSettings();
-        Model retrievedApplicationSettingsModel = MODEL_FACTORY.createModel();
+        Model retrievedApplicationSettingsModel = MODEL_FACTORY.createEmptyModel();
         retrievedApplicationSettings.forEach(retrievedApplicationSetting -> {
             retrievedApplicationSettingsModel.addAll(retrievedApplicationSetting.getModel());
         });
 
-        Model combinedModel = MODEL_FACTORY.createModel();
+        Model combinedModel = MODEL_FACTORY.createEmptyModel();
         combinedModel.addAll(firstApplicationSetting.getModel());
         combinedModel.addAll(secondApplicationSetting.getModel());
         combinedModel.forEach(statement -> assertTrue(retrievedApplicationSettingsModel.contains(statement)));
@@ -263,13 +267,13 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     @Test
     public void getApplicationSettingsCorruptApplicationSettingTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/complexApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting firstApplicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), testDataModel).get();
 
         service.createSetting(firstApplicationSetting);
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstApplicationSetting.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+            firstApplicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
 
@@ -288,20 +292,20 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     @Test
     public void deleteApplicationSettingTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/complexApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting firstApplicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), testDataModel).get();
 
         service.createSetting(firstApplicationSetting);
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstApplicationSetting.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+            firstApplicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
 
         service.deleteSettingByType(VALUE_FACTORY.createIRI(SimpleApplicationSettingServiceTest.TestComplexApplicationSetting.TYPE));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstApplicationSetting.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(),
+            firstApplicationSetting.getModel().forEach(statement -> assertFalse(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
     }
@@ -309,20 +313,20 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     @Test
     public void deleteUserApplicationSettingTestByResource() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/complexApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting firstApplicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), testDataModel).get();
 
         service.createSetting(firstApplicationSetting);
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstApplicationSetting.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+            firstApplicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
 
         service.deleteSetting(VALUE_FACTORY.createIRI("http://example.com/MyComplexApplicationSetting"));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstApplicationSetting.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(),
+            firstApplicationSetting.getModel().forEach(statement -> assertFalse(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
     }
@@ -330,13 +334,13 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     @Test(expected = IllegalArgumentException.class)
     public void deleteUserApplicationSettingTypeDoesNotExistTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/complexApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting firstApplicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), testDataModel).get();
 
         service.createSetting(firstApplicationSetting);
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstApplicationSetting.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+            firstApplicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
 
@@ -346,20 +350,20 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     @Test(expected = IllegalArgumentException.class)
     public void deleteUserApplicationSettingResourceDoesNotExistTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/complexApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting firstApplicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), testDataModel).get();
 
         service.createSetting(firstApplicationSetting);
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstApplicationSetting.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+            firstApplicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
 
         service.deleteSetting(VALUE_FACTORY.createIRI("http://example.com/MySimpleApplicationSetting"));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            firstApplicationSetting.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(),
+            firstApplicationSetting.getModel().forEach(statement -> assertFalse(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
     }
@@ -370,30 +374,30 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     public void updateApplicationSettingTest() throws Exception {
         // Setup:
         InputStream inputStream = getClass().getResourceAsStream("/complexApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting applicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), testDataModel).get();
 
         service.createSetting(applicationSetting);
         try (RepositoryConnection conn = repo.getConnection()) {
-            applicationSetting.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+            applicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
 
         InputStream secondInputStream = getClass().getResourceAsStream("/updatedComplexApplicationSetting.ttl");
-        Model secondTestDataModel = Values.mobiModel(Rio.parse(secondInputStream, "", RDFFormat.TURTLE));
+        Model secondTestDataModel = Rio.parse(secondInputStream, "", RDFFormat.TURTLE);
         ApplicationSetting secondApplicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), secondTestDataModel).get();
 
         service.updateSetting(secondApplicationSetting.getResource(), secondApplicationSetting);
         try (RepositoryConnection conn = repo.getConnection()) {
-            secondApplicationSetting.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+            secondApplicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertFalse(conn.contains(null, null, applicationSetting.getHasObjectValue_resource().iterator().next()));
-            assertFalse(conn.contains(applicationSetting.getHasObjectValue_resource().iterator().next(), null, null));
+            assertFalse(ConnectionUtils.contains(conn, null, null, applicationSetting.getHasObjectValue_resource().iterator().next()));
+            assertFalse(ConnectionUtils.contains(conn, applicationSetting.getHasObjectValue_resource().iterator().next(), null, null));
         }
     }
 
@@ -401,18 +405,18 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     public void updateApplicationSettingDoesNotExistTest() throws Exception {
         // Setup:
         InputStream inputStream = getClass().getResourceAsStream("/complexApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting applicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), testDataModel).get();
 
         service.updateSetting(applicationSetting.getResource(), applicationSetting);
         try (RepositoryConnection conn = repo.getConnection()) {
-            applicationSetting.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+            applicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
 
         InputStream secondInputStream = getClass().getResourceAsStream("/simpleApplicationSetting.ttl");
-        Model secondTestDataModel = Values.mobiModel(Rio.parse(secondInputStream, "", RDFFormat.TURTLE));
+        Model secondTestDataModel = Rio.parse(secondInputStream, "", RDFFormat.TURTLE);
         ApplicationSetting secondApplicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MySimpleApplicationSetting"), secondTestDataModel).get();
 
@@ -424,10 +428,10 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     @Test
     public void getApplicationSettingGroupsTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/applicationSettingDefinitions.ttl");
-        Model applicationSettingDefinitionsModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model applicationSettingDefinitionsModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
 
         InputStream groupsInputStream = getClass().getResourceAsStream("/applicationSettingDefinitions.ttl");
-        Model applicationSettingGroupsModel = Values.mobiModel(Rio.parse(groupsInputStream, "", RDFFormat.TURTLE));
+        Model applicationSettingGroupsModel = Rio.parse(groupsInputStream, "", RDFFormat.TURTLE);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(applicationSettingDefinitionsModel);
@@ -442,7 +446,7 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     @Test
     public void getApplicationSettingDefinitions() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/applicationSettingDefinitions.ttl");
-        Model applicationSettingDefinitionsModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model applicationSettingDefinitionsModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(applicationSettingDefinitionsModel);
@@ -462,13 +466,13 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     @Test
     public void getSettingTest() throws Exception {
         InputStream inputStream = getClass().getResourceAsStream("/complexApplicationSetting.ttl");
-        Model testDataModel = Values.mobiModel(Rio.parse(inputStream, "", RDFFormat.TURTLE));
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
         ApplicationSetting applicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
                 ".com/MyComplexApplicationSetting"), testDataModel).get();
 
         service.createSetting(applicationSetting);
         try (RepositoryConnection conn = repo.getConnection()) {
-            applicationSetting.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(),
+            applicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
                     statement.getPredicate(), statement.getObject())));
         }
 

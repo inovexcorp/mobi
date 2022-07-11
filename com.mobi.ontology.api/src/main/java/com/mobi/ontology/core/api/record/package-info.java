@@ -25,4 +25,4 @@ package com.mobi.ontology.core.api.record;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.osgi.annotation.versioning.Version;

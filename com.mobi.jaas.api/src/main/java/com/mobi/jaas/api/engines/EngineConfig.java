@@ -23,34 +23,35 @@ package com.mobi.jaas.api.engines;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-@Meta.OCD
-public interface EngineConfig {
+@ObjectClassDefinition
+public @interface EngineConfig {
     /**
      * The list of roles for this engine.
      */
-    @Meta.AD(id = "roles")
-    String[] roles();
+    @AttributeDefinition(name = "roles")
+    String roles();
 
     /**
      * Boolean enabling / disabling encrypted passwords.
      */
-    @Meta.AD(id = "encryption.enabled", deflt = "false")
-    boolean encryptionEnabled();
+    @AttributeDefinition(name = "encryption.enabled", defaultValue = "false")
+    boolean encryption_enabled() default false;
 
     /**
      * Encryption Service name. The default one is 'basic'. A more powerful one named 'jasypt' is available
      * when installing the encryption feature.
      */
-    @Meta.AD(id = "encryption.name", deflt = "basic")
-    String encryptionName();
+    @AttributeDefinition(name = "encryption.name", defaultValue = "basic")
+    String encryption_name() default "basic";
 
-    @Meta.AD(id = "encryption.prefix", deflt = "{CRYPT}")
-    String encryptionPrefix();
+    @AttributeDefinition(name = "encryption.prefix", defaultValue = "{CRYPT}")
+    String encryption_prefix() default "{CRYPT}";
 
-    @Meta.AD(id = "encryption.suffix", deflt = "{CRYPT}")
-    String encryptionSuffix();
+    @AttributeDefinition(name = "encryption.suffix", defaultValue = "{CRYPT}")
+    String encryptionuffix() default "{CRYPT}";
 
     /**
      * Set the encryption algorithm to use in engine. Supported encryption algorithms follow:
@@ -63,8 +64,8 @@ public interface EngineConfig {
      *     <li>SHA-512</li>
      * </ul>
      */
-    @Meta.AD(id = "encryption.algorithm", deflt = "MD5")
-    String encryptionAlgorithm();
+    @AttributeDefinition(name = "encryption.algorithm", defaultValue = "MD5")
+    String encryptionAlgorithm() default "MD5";
 
     /**
      * Encoding of the encrypted password.
@@ -73,6 +74,6 @@ public interface EngineConfig {
      *     <li>base64</li>
      * </ul>
      */
-    @Meta.AD(id = "encryption.encoding", deflt = "hexadecimal")
-    String encryptionEncoding();
+    @AttributeDefinition(name = "encryption.encoding", defaultValue = "hexadecimal")
+    String encryptionEncoding() default "hexadecimal";
 }

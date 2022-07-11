@@ -28,16 +28,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.token.TokenVerifier;
+import com.mobi.jaas.config.SimpleTokenConfig;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,10 +56,14 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.NewCookie;
 
 public class SimpleTokenManagerTest {
+    private AutoCloseable closeable;
     SimpleTokenManager manager;
 
     static final String MOBI_TOKEN = "mobi";
     static final String OTHER_TOKEN = "other";
+
+    @Mock
+    public SimpleTokenConfig config;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -85,7 +91,7 @@ public class SimpleTokenManagerTest {
 
     @Before
     public void setup() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         when(jwt.serialize()).thenReturn(MOBI_TOKEN);
         when(servletCookie.getName()).thenReturn(SimpleTokenManager.TOKEN_NAME);
         when(servletCookie.getValue()).thenReturn(MOBI_TOKEN);
@@ -93,7 +99,7 @@ public class SimpleTokenManagerTest {
         when(mobiTokenVerifier.getName()).thenReturn("MobiVerifier");
         when(mobiTokenVerifier.verifyToken(anyString())).thenReturn(Optional.empty());
         when(mobiTokenVerifier.verifyToken(MOBI_TOKEN)).thenReturn(Optional.of(jwt));
-        when(mobiTokenVerifier.generateToken(anyString(), anyString(), anyString(), anyLong(), any(Map.class))).thenReturn(jwt);
+        when(mobiTokenVerifier.generateToken(anyString(), anyString(), anyString(), anyLong(), any())).thenReturn(jwt);
         when(otherVerifier.getName()).thenReturn("OtherVerifier");
         when(otherVerifier.verifyToken(anyString())).thenReturn(Optional.empty());
         when(otherVerifier.verifyToken(OTHER_TOKEN)).thenReturn(Optional.of(jwt));
@@ -102,14 +108,18 @@ public class SimpleTokenManagerTest {
         when(requestContext.getCookies()).thenReturn(cookies);
         when(servletRequest.getCookies()).thenReturn(new Cookie[]{servletCookie});
 
-        Map<String, Object> config = new HashMap<>();
-        config.put("tokenDurationMins", 1440);
+        when(config.tokenDurationMins()).thenReturn((long) 1440);
 
         manager = new SimpleTokenManager();
         manager.setMobiTokenVerifier(mobiTokenVerifier);
         manager.addVerifier(mobiTokenVerifier);
         manager.addVerifier(otherVerifier);
         manager.start(config);
+    }
+
+    @After
+    public void reset() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -149,7 +159,7 @@ public class SimpleTokenManagerTest {
     @Test
     public void generateUnauthTokenExceptionTest() throws Exception {
         // Setup:
-        when(mobiTokenVerifier.generateToken(anyString(), anyString(), anyString(), anyLong(), any(Map.class))).thenThrow(new JOSEException(""));
+        when(mobiTokenVerifier.generateToken(anyString(), anyString(), anyString(), anyLong(), any())).thenThrow(new JOSEException(""));
         thrown.expect(MobiException.class);
 
         SignedJWT result = manager.generateUnauthToken();
@@ -160,8 +170,7 @@ public class SimpleTokenManagerTest {
     @Test
     public void generateAuthTokenTest() throws Exception {
         // Setup:
-        Map<String, Object> config = new HashMap<>();
-        config.put("tokenDurationMins", 1);
+        when(config.tokenDurationMins()).thenReturn((long) 1);
         manager.start(config);
 
         SignedJWT result = manager.generateAuthToken("username");
@@ -172,8 +181,7 @@ public class SimpleTokenManagerTest {
     @Test
     public void generateZeroTokenTest() throws Exception {
         // Setup:
-        Map<String, Object> config = new HashMap<>();
-        config.put("tokenDurationMins", 0);
+        when(config.tokenDurationMins()).thenReturn((long) 0);
         manager.start(config);
 
         SignedJWT result = manager.generateAuthToken("username");
@@ -184,8 +192,7 @@ public class SimpleTokenManagerTest {
     @Test
     public void generateNegativeTokenTest() throws Exception {
         // Setup:
-        Map<String, Object> config = new HashMap<>();
-        config.put("tokenDurationMins", -500000);
+        when(config.tokenDurationMins()).thenReturn((long) -500000);
         manager.start(config);
 
         SignedJWT result = manager.generateAuthToken("username");
@@ -196,7 +203,7 @@ public class SimpleTokenManagerTest {
     @Test
     public void generateAuthTokenExceptionTest() throws Exception {
         // Setup:
-        when(mobiTokenVerifier.generateToken(anyString(), anyString(), anyString(), anyLong(), any(Map.class))).thenThrow(new JOSEException(""));
+        when(mobiTokenVerifier.generateToken(anyString(), anyString(), anyString(), anyLong(), any())).thenThrow(new JOSEException(""));
         thrown.expect(MobiException.class);
 
         SignedJWT result = manager.generateAuthToken("username");

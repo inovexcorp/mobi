@@ -25,17 +25,40 @@ package com.mobi.repository.impl.sesame.sparql
 import com.mobi.repository.exception.RepositoryConfigException
 import spock.lang.Specification
 
+import java.lang.annotation.Annotation
+
 
 class SPARQLRepositoryWrapperSpec extends Specification {
 
     def "Invalid URLs throw an exception"() {
         setup:
-        def props = [
-                id: "test",
-                title: "test repo",
-                endpointUrl: "urn:test",
-                updateEndpointUrl: "urn:test/statements"
-        ]
+        def props = new SPARQLRepositoryConfig() {
+
+            @Override
+            String id() {
+                return "test"
+            }
+
+            @Override
+            String title() {
+                return "test repo"
+            }
+
+            @Override
+            String endpointUrl() {
+                return "urn:test"
+            }
+
+            @Override
+            String updateEndpointUrl() {
+                return "urn:test/statements"
+            }
+
+            @Override
+            Class<? extends Annotation> annotationType() {
+                return null
+            }
+        }
 
         def service = new SPARQLRepositoryWrapper()
 
@@ -48,12 +71,33 @@ class SPARQLRepositoryWrapperSpec extends Specification {
 
     def "Valid URLs work"() {
         setup:
-        def props = [
-                id: "test",
-                title: "test repo",
-                endpointUrl: "http://test.com/sparql",
-                updateEndpointUrl: "http://test.com/sparql/statements"
-        ]
+        def props = new SPARQLRepositoryConfig() {
+
+            @Override
+            String id() {
+                return "test"
+            }
+
+            @Override
+            String title() {
+                return "test repo"
+            }
+
+            @Override
+            String endpointUrl() {
+                return "http://test.com/sparql"
+            }
+
+            @Override
+            String updateEndpointUrl() {
+                return "http://test.com/sparql/statements"
+            }
+
+            @Override
+            Class<? extends Annotation> annotationType() {
+                return null
+            }
+        }
 
         def service = new SPARQLRepositoryWrapper()
 
@@ -66,12 +110,33 @@ class SPARQLRepositoryWrapperSpec extends Specification {
 
     def "Valid local URLs work"() {
         setup:
-        def props = [
-                id: "test",
-                title: "test repo",
-                endpointUrl: "http://locahost/sparql",
-                updateEndpointUrl: "http://localhost/sparql/statements"
-        ]
+        def props = new SPARQLRepositoryConfig() {
+
+            @Override
+            String id() {
+                return "test"
+            }
+
+            @Override
+            String title() {
+                return "test repo"
+            }
+
+            @Override
+            String endpointUrl() {
+                return "http://localhost/sparql"
+            }
+
+            @Override
+            String updateEndpointUrl() {
+                return "http://localhost/sparql/statements"
+            }
+
+            @Override
+            Class<? extends Annotation> annotationType() {
+                return null
+            }
+        }
 
         def service = new SPARQLRepositoryWrapper()
 

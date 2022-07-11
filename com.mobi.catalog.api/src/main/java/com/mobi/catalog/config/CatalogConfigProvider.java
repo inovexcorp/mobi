@@ -23,9 +23,8 @@ package com.mobi.catalog.config;
  * #L%
  */
 
-
-import com.mobi.rdf.api.IRI;
-import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.IRI;
 
 public interface CatalogConfigProvider {
     /**
@@ -40,7 +39,7 @@ public interface CatalogConfigProvider {
      *
      * @return The catalog Repository
      */
-    Repository getRepository();
+    OsgiRepository getRepository();
 
     /**
      * Returns the IRI for the distributed Catalog.

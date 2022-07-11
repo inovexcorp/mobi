@@ -26,18 +26,16 @@ package com.mobi.platform.config.api.application;
 import com.mobi.platform.config.api.ontologies.platformconfig.Application;
 import com.mobi.exception.MobiException;
 
-import java.util.Map;
-
 public interface ApplicationWrapper {
     /**
      * Validates a set of configurations for an application to ensure the correct
      * properties have been set.
      *
-     * @param props a collection of key-value configurations for an Application
+     * @param config a config for an Application
      * @throws IllegalArgumentException if configuration is invalid or missing properties
      * @throws MobiException if a connection to the Repository could not be made
      */
-    void validateConfig(Map<String, Object> props) throws IllegalArgumentException;
+    void validateConfig(ApplicationConfig config) throws IllegalArgumentException;
 
     /**
      * Returns the ID of the application. The ID is the local name of the Application's IRI.

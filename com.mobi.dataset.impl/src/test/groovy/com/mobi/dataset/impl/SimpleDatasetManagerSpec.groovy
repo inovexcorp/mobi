@@ -22,11 +22,6 @@
  */
 package com.mobi.dataset.impl
 
-import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory
-import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory
-import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory
-import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService
-
 import com.mobi.catalog.api.CatalogManager
 import com.mobi.catalog.api.PaginatedSearchResults
 import com.mobi.catalog.config.CatalogConfigProvider
@@ -37,20 +32,22 @@ import com.mobi.dataset.ontology.dataset.DatasetRecord
 import com.mobi.dataset.ontology.dataset.DatasetRecordFactory
 import com.mobi.dataset.pagination.DatasetPaginatedSearchParams
 import com.mobi.ontologies.rdfs.Resource
-import com.mobi.rdf.api.IRI
-import com.mobi.rdf.api.Model
-import com.mobi.rdf.core.utils.Values
-import com.mobi.repository.api.Repository
-import com.mobi.repository.api.RepositoryConnection
+import com.mobi.repository.api.OsgiRepository
 import com.mobi.repository.api.RepositoryManager
-import com.mobi.repository.base.RepositoryResult
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper
+import org.eclipse.rdf4j.model.IRI
+import org.eclipse.rdf4j.model.Model
+import org.eclipse.rdf4j.repository.RepositoryConnection
+import org.eclipse.rdf4j.repository.RepositoryResult
 import org.eclipse.rdf4j.repository.sail.SailRepository
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
 import org.eclipse.rdf4j.sail.memory.MemoryStore
+import org.mockito.Mockito
 import spock.lang.Shared
 import spock.lang.Specification
+
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.*
 
 class SimpleDatasetManagerSpec extends Specification {
 
@@ -66,9 +63,9 @@ class SimpleDatasetManagerSpec extends Specification {
     // Mocks
     def configProviderMock = Mock(CatalogConfigProvider)
     def catalogManagerMock = Mock(CatalogManager)
-    def repositoryMock = Mock(Repository)
+    def repositoryMock = Mock(OsgiRepository)
     def connMock = Mock(RepositoryConnection)
-    def resultsMock = Mock(RepositoryResult)
+    def resultsMock = Mockito.mock(RepositoryResult.class)
     def repoManagerMock = Mock(RepositoryManager)
 
     // Objects
@@ -85,7 +82,7 @@ class SimpleDatasetManagerSpec extends Specification {
     def testConn
     def dynamicConn
     def repos = [ : ]
-    def datasetIRI
+    IRI datasetIRI
     def dataset
     def record
     
@@ -161,12 +158,12 @@ class SimpleDatasetManagerSpec extends Specification {
     ]
     
     def setup() {
-        systemRepo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()))
-        systemRepo.initialize()
+        systemRepo = new MemoryRepositoryWrapper()
+        systemRepo.setDelegate(new SailRepository(new MemoryStore()));
         systemConn = systemRepo.getConnection()
 
-        testRepo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()))
-        testRepo.initialize()
+        testRepo = new MemoryRepositoryWrapper()
+        testRepo.setDelegate(new SailRepository(new MemoryStore()))
         testConn = testRepo.getConnection()
 
         repos << [ "system": systemRepo ]
@@ -175,24 +172,24 @@ class SimpleDatasetManagerSpec extends Specification {
         datasetIRI = datasetsInFile[1]
         dataset = dsFactory.createNew(datasetIRI)
         record = dsRecFactory.createNew(recordIRI)
-        
+
         // Set Services
         injectOrmFactoryReferencesIntoService(service)
 
-        service.setConfigProvider(configProviderMock)
-        service.setCatalogManager(catalogManagerMock)
-        service.setValueFactory(vf)
-        service.setRepoManager(repoManagerMock)
+        service.configProvider = configProviderMock
+        service.catalogManager = catalogManagerMock
+        service.repoManager = repoManagerMock
 
         // Mock Behavior
         repositoryMock.getConnection() >> connMock
         connMock.getStatements(*_) >> resultsMock
+        Mockito.doNothing().when(resultsMock).close()
 
         configProviderMock.getLocalCatalogIRI() >> localCatalog
 
         repoManagerMock.getRepository("system") >> Optional.of(repositoryMock)
         repoManagerMock.getRepository("test") >> Optional.of(testRepo)
-        
+
         record.setDataset(dataset)
         record.setRepository("system")
     }
@@ -215,13 +212,11 @@ class SimpleDatasetManagerSpec extends Specification {
         record.setDataset(dataset)
         record.setRepository(repo)
 
-        resultsMock.hasNext() >>> [true, true, false]
-        resultsMock.next() >>> [
-                vf.createStatement(recordIri, datasetPred, datasetIri),
-                vf.createStatement(recordIri, repoPred, vf.createLiteral(repo))
-        ]
+        Mockito.when(resultsMock.hasNext()).thenReturn(true).thenReturn(true).thenReturn(false)
+        Mockito.when(resultsMock.next()).thenReturn(vf.createStatement(recordIri, datasetPred, datasetIri)).thenReturn(vf.createStatement(recordIri, repoPred, vf.createLiteral(repo)))
         1 * catalogManagerMock.getRecord(!null, recordIri, !null) >> Optional.of(record)
         configProviderMock.getRepository() >> repositoryMock
+        connMock.contains(*_) >>> [true, true, false]
 
         when:
         def results = service.getDatasetRecord(datasetIri, repo)
@@ -258,14 +253,14 @@ class SimpleDatasetManagerSpec extends Specification {
         record.setDataset(dataset)
         record.setRepository(repo)
 
-        resultsMock.hasNext() >>> [true, true, true, false]
-        resultsMock.next() >>> [
+        Mockito.when(resultsMock.hasNext()).thenReturn(true, true, true, false)
+        Mockito.when(resultsMock.next()).thenReturn(
                 vf.createStatement(recordIri, datasetPred, datasetIri),
                 vf.createStatement(recordIri, repoPred, vf.createLiteral("someOtherRepo")),
-                vf.createStatement(recordIri, repoPred, vf.createLiteral(repo))
-        ]
+                vf.createStatement(recordIri, repoPred, vf.createLiteral(repo)))
         1 * catalogManagerMock.getRecord(!null, recordIri, !null) >> Optional.of(record)
         configProviderMock.getRepository() >> repositoryMock
+        connMock.contains(*_) >>> [true, true, true, false]
 
         when:
         def results = service.getDatasetRecord(datasetIri, repo)
@@ -341,7 +336,7 @@ class SimpleDatasetManagerSpec extends Specification {
     def "getDatasets() returns an empty set when there are no datasets in that repository"() {
         setup:
         configProviderMock.getRepository() >> systemRepo
-        systemConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-records.trig"), "", RDFFormat.TRIG)))
+        systemConn.add(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-records.trig"), "", RDFFormat.TRIG))
 
         expect:
         service.getDatasets("system").size() == 0
@@ -350,7 +345,7 @@ class SimpleDatasetManagerSpec extends Specification {
     def "getDatasets() returns an empty set when there are no datasets in the local catalog in that repository, but there are other datasets in that repository"() {
         setup:
         configProviderMock.getRepository() >> systemRepo
-        systemConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-catalog-records.trig"), "", RDFFormat.TRIG)))
+        systemConn.add(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-catalog-records.trig"), "", RDFFormat.TRIG))
 
         expect:
         service.getDatasets("system").size() == 0
@@ -359,8 +354,8 @@ class SimpleDatasetManagerSpec extends Specification {
     def "getDatasets() returns a set with #size elements in the #repo repo"() {
         setup:
         configProviderMock.getRepository() >> systemRepo
-        systemConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
-        testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        systemConn.add(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
+        testConn.add(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG))
 
         expect:
         service.getDatasets(repo).size() == size
@@ -439,9 +434,10 @@ class SimpleDatasetManagerSpec extends Specification {
         def recordIRI = vf.createIRI("http://test.com/record1")
         def record = dsRecFactory.createNew(recordIRI)
 
-        def testRepo = Mock(Repository)
+        def testRepo = Mock(OsgiRepository)
         def testConn = Mock(RepositoryConnection)
-        def testResults = Mock(RepositoryResult)
+        def testResults = Mockito.mock(RepositoryResult.class)
+        Mockito.doNothing().when(testResults).close();
 
         // Mock Record Creation
         record.setDataset(dataset)
@@ -451,7 +447,7 @@ class SimpleDatasetManagerSpec extends Specification {
 
         catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
         testConn.getStatements(*_) >> testResults
-        testResults.hasNext() >> false
+        Mockito.when(testResults.hasNext()).thenReturn(false)
 
         when:
         service.createDataset(config)
@@ -465,6 +461,9 @@ class SimpleDatasetManagerSpec extends Specification {
             model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
             model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
         }
+
+        and: "parent method stubbing does not work"
+        testResults.close() == null
     }
 
     def "createDataset creates the DatasetRecord if the dataset already exists in another repo"() {
@@ -517,10 +516,8 @@ class SimpleDatasetManagerSpec extends Specification {
         catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
         connMock.contains(*_) >> true
 
-        resultsMock.next() >>> [
-                vf.createStatement(recordIRI, datasetPred, datasetIRI),
-                vf.createStatement(recordIRI, repoPred, vf.createLiteral(repo))
-        ]
+        Mockito.when(resultsMock.hasNext()).thenReturn(true)
+        Mockito.when(resultsMock.next()).thenReturn(vf.createStatement(recordIRI, datasetPred, datasetIRI)).thenReturn(vf.createStatement(recordIRI, repoPred, vf.createLiteral(repo)))
 
         when:
         service.createDataset(config)
@@ -565,9 +562,10 @@ class SimpleDatasetManagerSpec extends Specification {
     def "deleteDataset() calls removeRecord() to delete the DatasetRecord"() {
         setup:
         def repo = "system"
-        resultsMock.hasNext() >> true
-        resultsMock.next() >> vf.createStatement(recordIRI, datasetPred, datasetIRI)
+        Mockito.when(resultsMock.hasNext()).thenReturn(true)
+        Mockito.when(resultsMock.next()).thenReturn(vf.createStatement(recordIRI, datasetPred, datasetIRI))
         configProviderMock.getRepository() >> repositoryMock
+        connMock.contains(*_) >> true
 
         when:
         def result = service.deleteDataset(datasetIRI, repo)
@@ -581,7 +579,7 @@ class SimpleDatasetManagerSpec extends Specification {
         setup:
         def testRecord = bootstrapCatalog(testDatasetIRI, testRecordIRI, repo)
         1 * catalogManagerMock.removeRecord(!null, testRecordIRI, !null) >> testRecord
-        testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        testConn.add(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG))
         dynamicConn = repos.get(repo).getConnection()
 
         when:
@@ -609,11 +607,11 @@ class SimpleDatasetManagerSpec extends Specification {
         ]
     }
 
-    def "safeDeleteDataset() correctly removes DatasetRecord, Dataset, and associated graphs in a #repo repository for #datasetIRI"() {
+    def "safeDeleteDataset() correctly removes DatasetRecord, Dataset, and associated graphs in a #repo repository for #testDatasetIRI"() {
         setup:
         def testRecord = bootstrapCatalog(testDatasetIRI, testRecordIRI, repo)
         1 * catalogManagerMock.removeRecord(!null, testRecordIRI, !null) >> testRecord
-        testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        testConn.add(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG))
         dynamicConn = repos.get(repo).getConnection()
 
         when:
@@ -655,9 +653,9 @@ class SimpleDatasetManagerSpec extends Specification {
         ]
     }
     
-    def "safeDeleteDataset() Dataset, and associated graphs in a #repo repository for #datasetIRI"() {
+    def "safeDeleteDataset() Dataset, and associated graphs in a #repo repository for #testDatasetIRI"() {
         setup:
-        testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        testConn.add(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG))
         dynamicConn = repos.get(repo).getConnection()
 
         when:
@@ -701,7 +699,7 @@ class SimpleDatasetManagerSpec extends Specification {
         setup:
         def testRecord = bootstrapCatalog(testDatasetIRI, testRecordIRI, repo)
         1 * catalogManagerMock.getRecord(!null, testRecordIRI, !null) >> Optional.of(testRecord)
-        testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        testConn.add(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG))
         dynamicConn = repos.get(repo).getConnection()
 
         when:
@@ -732,11 +730,11 @@ class SimpleDatasetManagerSpec extends Specification {
         ]
     }
 
-    def "safeClearDataset() correctly removes associated graphs in a #repo repository for #datasetIRI"() {
+    def "safeClearDataset() correctly removes associated graphs in a #repo repository for #testDatasetIRI"() {
         setup:
         def testRecord = bootstrapCatalog(testDatasetIRI, testRecordIRI, repo)
         1 * catalogManagerMock.getRecord(!null, testRecordIRI, !null) >> Optional.of(testRecord)
-        testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        testConn.add(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG))
         dynamicConn = repos.get(repo).getConnection()
 
         when:
@@ -788,6 +786,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def recordIRI = vf.createIRI("http://test.com/record1")
         mockRetrieveRecord(datasetIRI, repo, recordIRI)
         configProviderMock.getRepository() >> repositoryMock
+        connMock.contains(*_) >> true
 
         when:
         def dsConn = service.getConnection(datasetIRI, repo)
@@ -833,16 +832,16 @@ class SimpleDatasetManagerSpec extends Specification {
 
         configProviderMock.getRepository() >> systemRepo
 
-        systemConn.add(Values.mobiModel(
-                Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
+        systemConn.add(
+                Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG))
         
         return record
     }
 
     private mockRetrieveRecord(datasetIRI, repo, recordIRI) {
         def dataset = dsFactory.createNew(datasetIRI)
-        resultsMock.hasNext() >> true
-        resultsMock.next() >> vf.createStatement(recordIRI, datasetPred, datasetIRI)
+        Mockito.when(resultsMock.hasNext()).thenReturn(true)
+        Mockito.when(resultsMock.next()).thenReturn(vf.createStatement(recordIRI, datasetPred, datasetIRI))
 
         def record = dsRecFactory.createNew(recordIRI)
         record.setDataset(dataset)

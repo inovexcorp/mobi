@@ -1,24 +1,21 @@
 package com.mobi.etl.service.delimited
 
-import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory
-import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory
-import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService
-
 import com.mobi.etl.api.config.delimited.ExcelConfig
 import com.mobi.etl.api.config.delimited.SVConfig
 import com.mobi.etl.api.exception.MobiETLException
 import com.mobi.etl.api.ontologies.delimited.ClassMapping
+import com.mobi.ontology.core.api.DataProperty
 import com.mobi.ontology.core.api.Ontology
 import com.mobi.ontology.core.api.OntologyManager
-import com.mobi.ontology.core.api.DataProperty
-import com.mobi.rdf.api.Model
-import com.mobi.rdf.core.utils.Values
 import com.mobi.vocabularies.xsd.XSD
+import org.eclipse.rdf4j.model.Model
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
 
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService
 /*-
  * #%L
  * com.mobi.etl.delimited
@@ -74,8 +71,6 @@ class ConverterSpec extends Specification {
 
     def setup() {
         injectOrmFactoryReferencesIntoService(c)
-        c.setValueFactory(vf)
-        c.setModelFactory(getModelFactory())
         c.setOntologyManager(om)
         c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         ontology.getImportsClosure() >> Collections.singleton(ontology)
@@ -610,7 +605,7 @@ class ConverterSpec extends Specification {
     }
 
     private def loadModel(InputStream stream) {
-        Values.mobiModel(Rio.parse(stream, "", RDFFormat.TURTLE))
+        Rio.parse(stream, "", RDFFormat.TURTLE)
     }
 
     private def getSVConfigBuilder(String inputFilename, String mappingFilename) {

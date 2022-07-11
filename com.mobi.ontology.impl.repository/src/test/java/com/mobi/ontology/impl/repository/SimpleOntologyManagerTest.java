@@ -27,9 +27,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -59,23 +59,18 @@ import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.core.impl.sesame.SimpleIRI;
-import com.mobi.rdf.core.utils.Values;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
-import com.mobi.repository.impl.sesame.query.SesameOperationDatasetFactory;
 import org.apache.commons.lang.NotImplementedException;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.junit.After;
@@ -104,9 +99,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Mock
     private CatalogUtilsService catalogUtilsService;
-
-    @Mock
-    private SesameTransformer sesameTransformer;
 
     @Mock
     private OntologyId ontologyId;
@@ -139,18 +131,15 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     private DatasetManager datasetManager;
 
     @Mock
-    private RepositoryConfig cacheRepoConfig;
-
-    @Mock
     private RDFImportService importService;
 
+    private AutoCloseable closeable;
     private SimpleOntologyManager manager;
     private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
     private OrmFactory<Dataset> datasetFactory = getRequiredOrmFactory(Dataset.class);
-    private SesameOperationDatasetFactory operationDatasetFactory = new SesameOperationDatasetFactory();
     private IRI missingIRI;
     private IRI recordIRI;
     private IRI branchIRI;
@@ -164,9 +153,9 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     private Model ontologyModel;
     private Model model;
     private RepositoryManager repoManager = new SimpleRepositoryManager();
-    private Repository repo;
-    private Repository vocabRepo;
-    private Repository cacheRepo;
+    private OsgiRepository repo;
+    private OsgiRepository vocabRepo;
+    private OsgiRepository cacheRepo;
     private File file;
 
     private static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
@@ -182,7 +171,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         versionIRI = VALUE_FACTORY.createIRI("http://mobi.com/ontology/1.0");
 
         record = ontologyRecordFactory.createNew(recordIRI);
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         difference = new Difference.Builder().build();
         inProgressCommit = inProgressCommitFactory.createNew(VALUE_FACTORY.createIRI("urn:inprogresscommit"));
@@ -198,31 +187,29 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         doThrow(new IllegalArgumentException()).when(catalogManager).getBranch(catalogIRI, recordIRI, missingIRI, branchFactory);
         doThrow(new IllegalArgumentException()).when(catalogManager).getCommit(catalogIRI, recordIRI, branchIRI, missingIRI);
 
-        when(sesameTransformer.sesameModel(any(Model.class))).thenReturn(new org.eclipse.rdf4j.model.impl.LinkedHashModel());
-
         InputStream testOntology = getClass().getResourceAsStream("/test-ontology.ttl");
-        ontologyModel = Values.mobiModel(Rio.parse(testOntology, "", RDFFormat.TURTLE));
-        when(ontology.asModel(MODEL_FACTORY)).thenReturn(ontologyModel);
+        ontologyModel = Rio.parse(testOntology, "", RDFFormat.TURTLE);
+        when(ontology.asModel()).thenReturn(ontologyModel);
         when(ontology.getImportsClosure()).thenReturn(Collections.singleton(ontology));
         when(ontology.getOntologyId()).thenReturn(ontologyId);
         when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
         when(ontologyId.getOntologyIdentifier()).thenReturn(ontologyIRI);
 
-        when(nonSimpleOntology.asModel(MODEL_FACTORY)).thenReturn(ontologyModel);
+        when(nonSimpleOntology.asModel()).thenReturn(ontologyModel);
         when(nonSimpleOntology.getImportsClosure()).thenReturn(Collections.singleton(nonSimpleOntology));
         when(nonSimpleOntology.getOntologyId()).thenReturn(ontologyId);
         when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
         when(ontologyId.getOntologyIdentifier()).thenReturn(ontologyIRI);
 
-        model = MODEL_FACTORY.createModel();
+        model = MODEL_FACTORY.createEmptyModel();
         model.add(VALUE_FACTORY.createIRI("urn:ontologyIRI"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(OWL.ONTOLOGY.stringValue()));
         Path path = Files.createTempFile(null, null);
-        Rio.write(Values.sesameModel(model), Files.newOutputStream(path), RDFFormat.RDFXML);
+        Rio.write(model, Files.newOutputStream(path), RDFFormat.RDFXML);
         file = path.toFile();
         file.deleteOnExit();
 
         InputStream testVocabulary = getClass().getResourceAsStream("/test-vocabulary.ttl");
-        when(vocabulary.asModel(MODEL_FACTORY)).thenReturn(Values.mobiModel(Rio.parse(testVocabulary, "", RDFFormat.TURTLE)));
+        when(vocabulary.asModel()).thenReturn(Rio.parse(testVocabulary, "", RDFFormat.TURTLE));
         when(vocabulary.getImportsClosure()).thenReturn(Collections.singleton(vocabulary));
 
         when(catalogUtilsService.getCommitDifference(any(Resource.class), any(RepositoryConnection.class))).thenReturn(difference);
@@ -234,29 +221,24 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(ontologyCache.generateKey(anyString(), anyString())).thenReturn("test");
 
         repo = repoManager.createMemoryRepository();
-        repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.begin();
             InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
-            conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
-            conn.add(ontology.asModel(MODEL_FACTORY));
+            conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
+            conn.add(ontology.asModel());
             conn.commit();
         }
         vocabRepo = repoManager.createMemoryRepository();
-        vocabRepo.initialize();
         try (RepositoryConnection conn = vocabRepo.getConnection()) {
-            conn.add(vocabulary.asModel(MODEL_FACTORY));
+            conn.add(vocabulary.asModel());
         }
         cacheRepo = spy(repoManager.createMemoryRepository());
-        cacheRepo.initialize();
-        when(cacheRepo.getConfig()).thenReturn(cacheRepoConfig);
-        when(cacheRepoConfig.id()).thenReturn("ontologyCache");
+        when(cacheRepo.getRepositoryID()).thenReturn("ontologyCache");
 
         when(mockRepoManager.getRepository("ontologyCache")).thenReturn(Optional.of(cacheRepo));
 
         when(configProvider.getRepository()).thenReturn(repo);
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
-        when(sesameTransformer.sesameResource(any(Resource.class))).thenReturn(new SimpleIRI("http://test.com/ontology1"));
 
         doNothing().when(datasetManager).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
         ArgumentCaptor<String> datasetIRIStr = ArgumentCaptor.forClass(String.class);
@@ -272,11 +254,11 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
         when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> {
             datasetManager.createDataset(resource.getValue().stringValue(), "ontologyCache");
-            return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY, operationDatasetFactory);
+            return new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), "ontologyCache", VALUE_FACTORY);
         });
 
         doAnswer(invocation -> {
-            Resource graph = invocation.getArgumentAt(2, Resource.class);
+            Resource graph = invocation.getArgument(2, Resource.class);
             try (RepositoryConnection conn = cacheRepo.getConnection()) {
                 conn.add(model, graph);
             }
@@ -285,9 +267,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
         manager = Mockito.spy(new SimpleOntologyManager());
         injectOrmFactoryReferencesIntoService(manager);
-        manager.setValueFactory(VALUE_FACTORY);
-        manager.setModelFactory(MODEL_FACTORY);
-        manager.setSesameTransformer(sesameTransformer);
         manager.setConfigProvider(configProvider);
         manager.setCatalogManager(catalogManager);
         manager.setUtilsService(catalogUtilsService);
@@ -305,6 +284,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         repo.shutDown();
         vocabRepo.shutDown();
         cacheRepo.shutDown();
+        closeable.close();
     }
 
     /* applyChanges */
@@ -425,7 +405,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         branch.setHead(commitFactory.createNew(commitIRI));
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
         when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createEmptyModel());
         when(mockCache.containsKey(key)).thenReturn(true);
 
         Optional<Ontology> result = manager.retrieveOntologyByIRI(ontologyIRI);
@@ -492,7 +472,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         branch.setHead(commitFactory.createNew(commitIRI));
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
         when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createEmptyModel());
         when(mockCache.containsKey(key)).thenReturn(true);
         when(mockCache.get(key)).thenReturn(ontology);
 
@@ -569,7 +549,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         branch.setHead(commitFactory.createNew(commitIRI));
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
         when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createEmptyModel());
         when(mockCache.containsKey(key)).thenReturn(true);
         when(mockCache.get(key)).thenReturn(ontology);
 
@@ -634,7 +614,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         Commit commit = commitFactory.createNew(commitIRI);
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
         when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createEmptyModel());
         when(mockCache.containsKey(key)).thenReturn(true);
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);

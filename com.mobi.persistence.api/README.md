@@ -10,10 +10,10 @@ The Repository Sesame Impl provides Mobi Repositories via an OSGi Service backed
 
 | Repository Type | Providing Module | Factory-PID |
 | --------------- | ---------------- | ----------- |
-| memory | com.mobi.rdf.impl.sesame | com.mobi.service.repository.memory |
-| native | com.mobi.rdf.impl.sesame | com.mobi.service.repository.native |
-| sparql | com.mobi.rdf.impl.sesame | com.mobi.service.repository.sparql |
-| http | com.mobi.rdf.impl.sesame | com.mobi.service.repository.http |
+| memory | com.mobi.repository.impl.sesame | com.mobi.service.repository.memory |
+| native | com.mobi.repository.impl.sesame | com.mobi.service.repository.native |
+| sparql | com.mobi.repository.impl.sesame | com.mobi.service.repository.sparql |
+| http | com.mobi.repository.impl.sesame | com.mobi.service.repository.http |
 
 ### Configuring Repository Services
 

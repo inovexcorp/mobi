@@ -24,8 +24,8 @@ package com.mobi.catalog.impl.record;
  */
 
 import static junit.framework.TestCase.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -39,12 +39,13 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.exception.RepositoryException;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -57,7 +58,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public class VersionedRecordServiceTest extends OrmEnabledTestCase {
-
+    private AutoCloseable closeable;
     private final IRI testIRI = VALUE_FACTORY.createIRI("urn:test");
     private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
 
@@ -101,15 +102,19 @@ public class VersionedRecordServiceTest extends OrmEnabledTestCase {
         versions.add(version2);
         testRecord.setVersion(versions);
 
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.utilsService = utilsService;
-        recordService.valueFactory = VALUE_FACTORY;
         recordService.provUtils = provUtils;
         recordService.start();
+    }
+
+    @After
+    public void reset() throws Exception {
+        closeable.close();
     }
 
     /* delete() */

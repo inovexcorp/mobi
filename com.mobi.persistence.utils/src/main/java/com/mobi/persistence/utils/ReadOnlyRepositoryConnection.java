@@ -23,90 +23,31 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
-import com.mobi.rdf.api.Statement;
-import com.mobi.query.api.BooleanQuery;
-import com.mobi.query.api.GraphQuery;
-import com.mobi.query.api.Operation;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.query.api.Update;
-import com.mobi.query.exception.MalformedQueryException;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryConnectionWrapper;
-import com.mobi.repository.base.RepositoryResult;
-import com.mobi.repository.exception.RepositoryException;
+import org.eclipse.rdf4j.common.iteration.Iteration;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.query.MalformedQueryException;
+import org.eclipse.rdf4j.query.QueryLanguage;
+import org.eclipse.rdf4j.query.Update;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.RepositoryResult;
+import org.eclipse.rdf4j.repository.base.RepositoryConnectionWrapper;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParseException;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.net.URL;
 
 public class ReadOnlyRepositoryConnection extends RepositoryConnectionWrapper {
 
     public ReadOnlyRepositoryConnection(RepositoryConnection conn) {
-        super(conn);
-    }
-
-    @Override
-    public long size(Resource... resources) throws RepositoryException {
-        return getDelegate().size(resources);
-    }
-
-    @Override
-    public boolean contains(Resource resource, IRI iri, Value value, Resource... resources) throws RepositoryException {
-        return getDelegate().contains(resource, iri, value, resources);
-    }
-
-    @Override
-    public boolean containsContext(Resource resource) throws RepositoryException {
-        return getDelegate().containsContext(resource);
-    }
-
-    @Override
-    public RepositoryResult<Resource> getContextIDs() throws RepositoryException {
-        return getDelegate().getContextIDs();
-    }
-
-    @Override
-    public RepositoryResult<Statement> getStatements(Resource resource, IRI iri, Value value, Resource... resources) throws RepositoryException {
-        return getDelegate().getStatements(resource, iri, value, resources);
-    }
-
-    @Override
-    public Operation prepareQuery(String s) throws RepositoryException, MalformedQueryException {
-        return getDelegate().prepareQuery(s);
-    }
-
-    @Override
-    public Operation prepareQuery(String s, String s1) throws RepositoryException, MalformedQueryException {
-        return getDelegate().prepareQuery(s, s1);
-    }
-
-    @Override
-    public BooleanQuery prepareBooleanQuery(String s) throws RepositoryException, MalformedQueryException {
-        return getDelegate().prepareBooleanQuery(s);
-    }
-
-    @Override
-    public BooleanQuery prepareBooleanQuery(String s, String s1) throws RepositoryException, MalformedQueryException {
-        return getDelegate().prepareBooleanQuery(s, s1);
-    }
-
-    @Override
-    public GraphQuery prepareGraphQuery(String s) throws RepositoryException, MalformedQueryException {
-        return getDelegate().prepareGraphQuery(s);
-    }
-
-    @Override
-    public GraphQuery prepareGraphQuery(String s, String s1) throws RepositoryException, MalformedQueryException {
-        return getDelegate().prepareGraphQuery(s, s1);
-    }
-
-    @Override
-    public TupleQuery prepareTupleQuery(String s) throws RepositoryException, MalformedQueryException {
-        return getDelegate().prepareTupleQuery(s);
-    }
-
-    @Override
-    public TupleQuery prepareTupleQuery(String s, String s1) throws RepositoryException, MalformedQueryException {
-        return getDelegate().prepareTupleQuery(s, s1);
+        super(conn.getRepository(), conn);
     }
 
     @Override
@@ -115,42 +56,132 @@ public class ReadOnlyRepositoryConnection extends RepositoryConnectionWrapper {
     }
 
     @Override
-    public Update prepareUpdate(String s, String s1) throws RepositoryException, MalformedQueryException {
+    public Update prepareUpdate(QueryLanguage ql, String update) throws RepositoryException, MalformedQueryException {
         throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
     }
 
     @Override
-    public void add(Iterable<? extends Statement> iterable, Resource... resources) throws RepositoryException {
+    public Update prepareUpdate(QueryLanguage ql, String update, String baseURI)
+            throws RepositoryException, MalformedQueryException {
         throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
     }
 
     @Override
-    public void add(Statement statement, Resource... resources) throws RepositoryException {
+    public void add(InputStream in, RDFFormat dataFormat, Resource... contexts)
+            throws IOException, RDFParseException, RepositoryException {
         throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
     }
 
     @Override
-    public void add(Resource resource, IRI iri, Value value, Resource... resources) throws RepositoryException {
+    public void add(InputStream in, String baseURI, RDFFormat dataFormat, Resource... contexts)
+            throws IOException, RDFParseException, RepositoryException {
         throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
     }
 
     @Override
-    public void clear(Resource... resources) throws RepositoryException {
+    public void add(Reader reader, RDFFormat dataFormat, Resource... contexts)
+            throws IOException, RDFParseException, RepositoryException {
         throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
     }
 
     @Override
-    public void remove(Iterable<? extends Statement> iterable, Resource... resources) throws RepositoryException {
+    public void add(Reader reader, String baseURI, RDFFormat dataFormat, Resource... contexts)
+            throws IOException, RDFParseException, RepositoryException {
         throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
     }
 
     @Override
-    public void remove(Statement statement, Resource... resources) throws RepositoryException {
+    public void add(URL url, Resource... contexts)
+            throws IOException, RDFParseException, RepositoryException {
         throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
     }
 
     @Override
-    public void remove(Resource resource, IRI iri, Value value, Resource... resources) throws RepositoryException {
+    public void add(URL url, RDFFormat dataFormat, Resource... contexts)
+            throws IOException, RDFParseException, RepositoryException {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public void add(URL url, String baseURI, RDFFormat dataFormat, Resource... contexts)
+            throws IOException, RDFParseException, RepositoryException {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public void add(File file, Resource... contexts)
+            throws IOException, RDFParseException, RepositoryException {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public void add(File file, RDFFormat dataFormat, Resource... contexts)
+            throws IOException, RDFParseException, RepositoryException {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public void add(File file, String baseURI, RDFFormat dataFormat, Resource... contexts)
+            throws IOException, RDFParseException, RepositoryException {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public void add(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public void add(Statement st, Resource... contexts) throws RepositoryException {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public <E extends Exception> void add(Iteration<? extends Statement, E> statements, Resource... contexts)
+            throws RepositoryException, E {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public void add(RepositoryResult<Statement> statements, Resource... contexts)
+            throws RepositoryException {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public void remove(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public void remove(Statement st, Resource... contexts) throws RepositoryException {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public void remove(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public <E extends Exception> void remove(Iteration<? extends Statement, E> statements, Resource... contexts)
+            throws RepositoryException, E {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public void remove(RepositoryResult<Statement> statements, Resource... contexts)
+            throws RepositoryException {
+        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+    }
+
+    @Override
+    public void clear(Resource... contexts) throws RepositoryException {
         throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
     }
 }

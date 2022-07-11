@@ -24,7 +24,7 @@ package com.mobi.ontology.impl.repository;
  */
 
 import com.mobi.ontology.core.api.OClass;
-import com.mobi.rdf.api.IRI;
+import org.eclipse.rdf4j.model.IRI;
 
 import javax.annotation.Nonnull;
 

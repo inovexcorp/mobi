@@ -25,15 +25,16 @@ package com.mobi.security.policy.impl.core.pip;
 
 import static com.mobi.persistence.utils.ResourceUtils.decode;
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import com.mobi.security.policy.api.AttributeDesignator;
 import com.mobi.security.policy.api.PIP;
 import com.mobi.security.policy.api.Request;
@@ -58,18 +59,10 @@ public class MobiPIP implements PIP {
     static final String PROP_PATH_NAMESPACE = "http://mobi.com/policy/prop-path";
     private static final String PROP_PATH_QUERY = "SELECT ?value WHERE { ?sub %s ?value .}";
 
-    private Repository repo;
-    private ValueFactory vf;
+    final ValueFactory vf = SimpleValueFactory.getInstance();
 
     @Reference(target = "(id=system)")
-    public void setRepo(Repository repo) {
-        this.repo = repo;
-    }
-
-    @Reference
-    public void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
+    OsgiRepository repo;
 
     @Override
     public List<Literal> findAttribute(AttributeDesignator attributeDesignator, Request request)
@@ -94,7 +87,7 @@ public class MobiPIP implements PIP {
                     TupleQuery query = conn.prepareTupleQuery(String.format(PROP_PATH_QUERY, path));
                     query.setBinding("sub", pathSource);
                     literals.addAll(StreamSupport.stream(query.evaluate().spliterator(), false)
-                            .map(bindings -> bindings.getBinding("value").get().getValue())
+                            .map(bindings -> bindings.getBinding("value").getValue())
                             .map(value -> {
                                 if (Literal.class.isAssignableFrom(value.getClass())) {
                                     return (Literal) value;

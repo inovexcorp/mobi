@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.23.0-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -59,10 +59,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-model</artifactId>
         </dependency>
@@ -78,13 +74,11 @@
                     <groupId>org.eclipse.rdf4j</groupId>
                     <artifactId>*</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.github.jsonld-java</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>rdf.impl.sesame</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
@@ -130,9 +124,9 @@
                             com.mobi.cache.config; provide:=true,
                             com.mobi.ontology.utils.imports; provide:=true
                         </Export-Package>
-                        <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
+                        <_dsannotations-options>inherit</_dsannotations-options>
                     </instructions>
                 </configuration>
             </plugin>

@@ -23,11 +23,13 @@ package com.mobi.document.translator;
  * #L%
  */
 
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.document.translator.expression.IriExpressionProcessor;
+import com.mobi.rdf.orm.OrmFactoryRegistry;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 
 /**
  * This abstract base for the {@link SemanticTranslator} interface provides hooks to provide some base functionality to
@@ -41,9 +43,8 @@ public abstract class AbstractSemanticTranslator implements SemanticTranslator {
 
     private static final String RDF_PREFIX = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 
-    protected ValueFactory valueFactory;
-
-    protected ModelFactory modelFactory;
+    protected final ValueFactory valueFactory = SimpleValueFactory.getInstance();
+    protected final ModelFactory modelFactory = new DynamicModelFactory();
 
     protected IriExpressionProcessor expressionProcessor;
 

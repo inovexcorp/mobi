@@ -27,13 +27,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactoryService;
-import com.mobi.rdf.core.impl.sesame.ValueFactoryService;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
@@ -43,6 +41,8 @@ import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
 import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -53,9 +53,9 @@ public class CoreThingApiTest {
 
     private static final ThingFactory thingFactory = new ThingFactory();
 
-    private static final ModelFactory modelFactory = new LinkedHashModelFactoryService();
+    private static final ModelFactory modelFactory = new DynamicModelFactory();
 
-    private static final ValueFactory valueFactory = new ValueFactoryService();
+    private static final ValueFactory valueFactory = SimpleValueFactory.getInstance();
     private Model model;
 
     @BeforeClass
@@ -68,14 +68,12 @@ public class CoreThingApiTest {
         valueConverterRegistry.registerValueConverter(new StringValueConverter());
         valueConverterRegistry.registerValueConverter(new ValueValueConverter());
 
-        thingFactory.setModelFactory(modelFactory);
-        thingFactory.setValueFactory(new ValueFactoryService());
-        thingFactory.setValueConverterRegistry(valueConverterRegistry);
+        thingFactory.valueConverterRegistry = valueConverterRegistry;
     }
 
     @Before
     public void before() {
-        model = modelFactory.createModel();
+        model = modelFactory.createEmptyModel();
         model.add(valueFactory.createIRI("urn://mobi.com/orm/test/testAgent"),
                 valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
                 valueFactory.createIRI("http://xmlns.com/foaf/0.1/Agent"),
@@ -158,7 +156,7 @@ public class CoreThingApiTest {
         IRI pred3 = valueFactory.createIRI("urn:pred3");
         IRI context = valueFactory.createIRI("http://test.com/c1");
 
-        Model model = modelFactory.createModel();
+        Model model = modelFactory.createEmptyModel();
         model.add(sub, pred1, valueFactory.createLiteral("A"));
         model.add(sub, pred2, valueFactory.createLiteral("B"));
         model.add(sub, pred2, valueFactory.createLiteral("C"));

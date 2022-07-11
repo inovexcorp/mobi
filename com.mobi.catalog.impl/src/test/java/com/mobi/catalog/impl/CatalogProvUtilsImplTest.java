@@ -26,7 +26,7 @@ package com.mobi.catalog.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,34 +37,29 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
-import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.server.api.Mobi;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.prov.api.builder.ActivityConfig;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
+import com.mobi.server.api.Mobi;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(RepositoryResults.class)
 public class CatalogProvUtilsImplTest extends OrmEnabledTestCase {
+    private AutoCloseable closeable;
     private static final String recordIri = "http://test.org/record";
     private static final String predAtLocation = "http://www.w3.org/ns/prov#atLocation";
 
@@ -98,7 +93,7 @@ public class CatalogProvUtilsImplTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
 
         createActivity = createActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/create"));
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
@@ -111,21 +106,21 @@ public class CatalogProvUtilsImplTest extends OrmEnabledTestCase {
 
         IRI recordIRI = VALUE_FACTORY.createIRI(recordIri);
 
-        PowerMockito.mockStatic(RepositoryResults.class);
-
         when(provenanceService.getConnection()).thenReturn(connProv);
         when(connProv.getStatements(recordIRI, null, null)).thenReturn(resultEntity);
-        when(RepositoryResults.asModel(resultEntity, MODEL_FACTORY)).thenReturn(entity.getModel());
 
         record = recordFactory.createNew(recordIRI);
         record.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
 
         injectOrmFactoryReferencesIntoService(utils);
-        utils.setVf(VALUE_FACTORY);
-        utils.setMobi(mobi);
-        utils.setProvenanceService(provenanceService);
-        utils.setConfig(config);
-        utils.setModelFactory(MODEL_FACTORY);
+        utils.mobi = mobi;
+        utils.provenanceService = provenanceService;
+        utils.config = config;
+    }
+
+    @After
+    public void reset() throws Exception {
+        closeable.close();
     }
 
     @Test
@@ -201,7 +196,6 @@ public class CatalogProvUtilsImplTest extends OrmEnabledTestCase {
         newEntity.addProperty(VALUE_FACTORY.createLiteral("system"), VALUE_FACTORY.createIRI(predAtLocation));
         deleteActivity.addInvalidated(newEntity);
         deleteActivity.getModel().addAll(newEntity.getModel());
-        when(RepositoryResults.asModel(resultEntity, MODEL_FACTORY)).thenReturn(MODEL_FACTORY.createModel());
 
         DeleteActivity result = utils.startDeleteActivity(user, VALUE_FACTORY.createIRI(recordIri));
         verify(provenanceService).createActivity(any(ActivityConfig.class));

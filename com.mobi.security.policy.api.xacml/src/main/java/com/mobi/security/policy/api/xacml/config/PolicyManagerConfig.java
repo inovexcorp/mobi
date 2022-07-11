@@ -23,17 +23,21 @@ package com.mobi.security.policy.api.xacml.config;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
-import com.mobi.repository.config.RepositoryConsumerConfig;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-@Meta.OCD
-public interface PolicyManagerConfig extends RepositoryConsumerConfig {
+@ObjectClassDefinition
+public @interface PolicyManagerConfig {
 
     /**
      * The absolute path to where policies should be stored and retrieved.
      */
+    @AttributeDefinition
     String policyFileLocation();
 
-    @Meta.AD(required = false)
+    @AttributeDefinition(required = false)
     boolean createLocationIfNotExists();
+
+    @AttributeDefinition(name = "repository.target")
+    String repository_id();
 }

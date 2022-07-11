@@ -23,14 +23,12 @@ package com.mobi.persistence.cli;
  * #L%
  */
 
-import com.mobi.repository.config.RepositoryConfig;
+import com.mobi.repository.api.RepositoryManager;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.table.ShellTable;
-import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.config.RepositoryConfig;
 
 @Command(scope = "mobi", name = "repository-list", description = "Lists the currently managed repositories.")
 @Service
@@ -57,8 +55,7 @@ public class RepositoryList implements Action {
 
         if (repositoryManager != null) {
             repositoryManager.getAllRepositories().forEach((repoID, repo) -> {
-                RepositoryConfig config = repo.getConfig();
-                table.addRow().addContent(config.id(), config.title());
+                table.addRow().addContent(repo.getRepositoryID(), repo.getRepositoryTitle());
             });
         }
 

@@ -23,24 +23,27 @@ package com.mobi.prov.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.ActivityFactory;
 import com.mobi.ontologies.provo.Entity;
+import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.ReadOnlyRepositoryConnection;
-import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.Statements;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.prov.api.builder.ActivityConfig;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -53,38 +56,21 @@ import java.util.stream.Collectors;
 
 @Component
 public class SimpleProvenanceService implements ProvenanceService {
-    private Repository repo;
-    private OrmFactoryRegistry factoryRegistry;
-    private ValueFactory vf;
-    private ModelFactory mf;
-    private ActivityFactory activityFactory;
 
     private static String ACTIVITY_NAMESPACE = "http://mobi.com/activities/";
 
     @Reference(target = "(id=prov)")
-    void setRepo(Repository repo) {
-        this.repo = repo;
-    }
+    OsgiRepository repo;
 
     @Reference
-    void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
-        this.factoryRegistry = factoryRegistry;
-    }
+    OrmFactoryRegistry factoryRegistry;
+
+    final ValueFactory vf = SimpleValueFactory.getInstance();
+
+    final ModelFactory mf = new DynamicModelFactory();
 
     @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    @Reference
-    void setMf(ModelFactory mf) {
-        this.mf = mf;
-    }
-
-    @Reference
-    void setActivityFactory(ActivityFactory activityFactory) {
-        this.activityFactory = activityFactory;
-    }
+    ActivityFactory activityFactory;
 
     @Override
     public RepositoryConnection getConnection() {
@@ -115,7 +101,7 @@ public class SimpleProvenanceService implements ProvenanceService {
     @Override
     public void addActivity(Activity activity) {
         try (RepositoryConnection conn = repo.getConnection()) {
-            if (conn.contains(activity.getResource(), null, null)) {
+            if (ConnectionUtils.contains(conn, activity.getResource(), null, null)) {
                 throw new IllegalArgumentException("Activity " + activity.getResource() + " already exists");
             }
             conn.add(activity.getModel());
@@ -125,7 +111,7 @@ public class SimpleProvenanceService implements ProvenanceService {
     @Override
     public Optional<Activity> getActivity(Resource activityIRI) {
         try (RepositoryConnection conn = repo.getConnection()) {
-            Model activityModel = RepositoryResults.asModel(conn.getStatements(activityIRI, null, null), mf);
+            Model activityModel = QueryResults.asModel(conn.getStatements(activityIRI, null, null), mf);
             return activityFactory.getExisting(activityIRI, activityModel).flatMap(activity -> {
                 addEntitiesToModel(activity.getGenerated_resource(), activityModel, conn);
                 addEntitiesToModel(activity.getInvalidated_resource(), activityModel, conn);
@@ -138,11 +124,11 @@ public class SimpleProvenanceService implements ProvenanceService {
     @Override
     public void updateActivity(Activity newActivity) {
         try (RepositoryConnection conn = repo.getConnection()) {
-            if (!conn.contains(newActivity.getResource(), null, null)) {
+            if (!ConnectionUtils.contains(conn, newActivity.getResource(), null, null)) {
                 throw new IllegalArgumentException("Activity " + newActivity.getResource() + " does not exist");
             }
             conn.begin();
-            Model activityModel = RepositoryResults.asModel(conn.getStatements(newActivity.getResource(), null, null),
+            Model activityModel = QueryResults.asModel(conn.getStatements(newActivity.getResource(), null, null),
                     mf);
             conn.remove(activityModel);
             Activity activity = activityFactory.getExisting(newActivity.getResource(), activityModel).orElseThrow(() ->
@@ -158,7 +144,7 @@ public class SimpleProvenanceService implements ProvenanceService {
     @Override
     public void deleteActivity(Resource activityIRI) {
         try (RepositoryConnection conn = repo.getConnection()) {
-            if (!conn.contains(activityIRI, null, null)) {
+            if (!ConnectionUtils.contains(conn, activityIRI, null, null)) {
                 throw new IllegalArgumentException("Activity " + activityIRI + " does not exist");
             }
             conn.begin();
@@ -175,13 +161,13 @@ public class SimpleProvenanceService implements ProvenanceService {
     }
 
     private void removeIfNotReferenced(Resource iri, RepositoryConnection conn) {
-        if (!conn.contains(null, null, iri)) {
+        if (!ConnectionUtils.contains(conn, null, null, iri)) {
             conn.remove(iri, null, null);
         }
     }
 
     private List<Resource> getReferencedEntityIRIs(Resource activityIRI, String propIRI, RepositoryConnection conn) {
-        return RepositoryResults.asList(conn.getStatements(activityIRI, vf.createIRI(propIRI), null)).stream()
+        return QueryResults.asList(conn.getStatements(activityIRI, vf.createIRI(propIRI), null)).stream()
                 .map(Statements::objectResource)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -197,7 +183,7 @@ public class SimpleProvenanceService implements ProvenanceService {
 
     private void addEntitiesToModel(Set<Resource> entityIRIs, Model model, RepositoryConnection conn) {
         entityIRIs.forEach(resource -> {
-            Model entityModel = RepositoryResults.asModel(conn.getStatements(resource, null, null), mf);
+            Model entityModel = QueryResults.asModel(conn.getStatements(resource, null, null), mf);
             model.addAll(entityModel);
         });
     }
