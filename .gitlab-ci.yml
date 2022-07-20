@@ -125,7 +125,7 @@ build_distribution:
   retry: 1
 
 # Following is an optional manual job to allow developers to run the integration and functional tests against a MR before merging.
-integration_tests:
+.integration_tests:
   stage: test-functional
   only:
     - merge_requests
