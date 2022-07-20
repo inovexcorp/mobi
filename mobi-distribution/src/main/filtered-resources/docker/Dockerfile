@@ -1,4 +1,4 @@
-FROM maven:3.8.6-jdk-11
+FROM openjdk:17.0.2
 
 # Maven filtered to produce correct versioning.
 ENV MOBI_VERSION ${project.version}
