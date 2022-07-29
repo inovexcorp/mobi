@@ -21,32 +21,26 @@
   #L%
   -->
 <div class="request-branch-select h-100">
-    <error-display ng-if="dvm.state.requestConfig.sameBranch">A branch cannot be merged into itself.</error-display>
+    <error-display *ngIf="state.sameBranch">A branch cannot be merged into itself.</error-display>
     <div class="form-container">
-        <form name="dvm.form" class="branch-select-form form-horizontal justify-content-center" novalidate autocomplete="off">
-            <div class="form-group">
-                <span class="form-control-static">Merge </span>
-                <branch-select class="select-branch" [model]="dvm.state.requestConfig.sourceBranch" [required]="true" (model-change)="dvm.changeSource($event)" [branches]="dvm.branches"></branch-select>
-            </div>
-
-             <div class="form-group">
-                <span class="form-control-static">into</span>
-                <branch-select class="select-branch" [model]="dvm.state.requestConfig.targetBranch" [required]="true" (model-change)="dvm.changeTarget($event)" [branches]="dvm.branches"></branch-select>
-            </div>
-
-            <div class="form-group">
-                <span class="form-control-static">in <strong>{{dvm.util.getDctermsValue(dvm.state.requestConfig.record, 'title')}}</strong></span>
-            </div>
-        </form>
+        <div>Merge</div>
+        <branch-select class="select-branch" [model]="state.requestConfig.sourceBranch" [required]="true" (modelChange)="changeSource($event)" [branches]="branches"></branch-select>
+        <div>into</div>
+        <branch-select class="select-branch" [model]="state.requestConfig.targetBranch" [required]="true" (modelChange)="changeTarget($event)" [branches]="branches"></branch-select>
+        <div class="mr-record-title">
+            <span>in <strong>{{recordTitle}}</strong></span>
+        </div>
     </div>
-    <commit-difference-tabset ng-if="dvm.state.requestConfig.difference && !dvm.state.requestConfig.sameBranch"
-                              [difference]="dvm.state.requestConfig.difference"
-                              [branch-title]="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')"
-                              [target-id]="dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head')"
-                              [commit-id]="dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head')"
-                              [entity-name-func]="dvm.state.getEntityNameLabel"
-                              [show-more-results-func]="dvm.state.retrieveMoreResults"
-                              [start-index]="dvm.state.requestConfig.startIndex"
-                              [record-id]="dvm.state.requestConfig.recordId"
-                              (receive-commits)="dvm.receiveCommits($event)"></commit-difference-tabset>
+    <div #commitDifferenceTabset class="flex-1 remove-min-height">
+        <commit-difference-tabset *ngIf="state.difference"
+            [difference]="state.difference"
+            [branchTitle]="branchTitle"
+            [targetId]="targetCommitId"
+            [commitId]="sourceCommitId"
+            [entityNameFunc]="getEntityName.bind(this)"
+            (showMoreResultsFunc)="state.retrieveMoreResults($event)"
+            [startIndex]="state.startIndex"
+            [recordId]="state.requestConfig.recordId"
+            (receive-commits)="receiveCommits($event)"></commit-difference-tabset>
+    </div>
 </div>

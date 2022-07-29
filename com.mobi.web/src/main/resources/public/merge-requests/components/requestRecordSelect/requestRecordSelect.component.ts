@@ -20,78 +20,79 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { chunk, get, find } from 'lodash';
+import { HttpResponse } from '@angular/common/http';
+import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { PageEvent } from '@angular/material';
+import { get, find } from 'lodash';
+
+import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 
 import './requestRecordSelect.component.scss';
 
-const template = require('./requestRecordSelect.component.html');
-
 /**
- * @ngdoc component
- * @name merge-requests.component:requestRecordSelect
- * @requires shared.service:catalogManagerService
- * @requires shared.service:mergeRequestsStateService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @class merge-requests.RequestRecordSelectComponent
  *
- * @description
- * `requestRecordSelect` is a component which creates a div containing a search form, a list of
- * VersionedRDFRecords and a {@link shared.component:paging} container to select the VersionedRDFRecord for a
- * new MergeRequest.
+ * A component which creates a div containing a search form, a list of VersionedRDFRecords and a pagination controls to
+ * select the VersionedRDFRecord for a new MergeRequest.
  */
-const requestRecordSelectComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: requestRecordSelectComponentCtrl
-};
-
-requestRecordSelectComponentCtrl.$inject = ['catalogManagerService', 'mergeRequestsStateService', 'utilService', 'prefixes'];
-
-function requestRecordSelectComponentCtrl(catalogManagerService, mergeRequestsStateService, utilService, prefixes) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    var catalogId = get(cm.localCatalog, '@id');
-    dvm.state = mergeRequestsStateService;
-    dvm.prefixes = prefixes;
-    dvm.util = utilService;
-    dvm.records = [];
-    dvm.totalSize = 0;
-    dvm.currentPage = 1;
-    dvm.config = {
-        recordType: prefixes.ontologyEditor + 'OntologyRecord',
-        limit: 25,
+@Component({
+    selector: 'request-record-select',
+    templateUrl: './requestRecordSelect.component.html'
+})
+export class RequestRecordSelectComponent implements OnInit {
+    catalogId = '';
+    ontologyEditorPrefix = ONTOLOGYEDITOR;
+    records: JSONLDObject[] = [];
+    totalSize = 0;
+    config: PaginatedConfig = {
+        type: '',
+        limit: 20,
         searchText: '',
-        sortOption: find(cm.sortOptions, {field: prefixes.dcterms + 'title', asc: true}),
+        sortOption: undefined,
         pageIndex: 0,
     };
 
-    dvm.$onInit = function() {
-        dvm.setInitialRecords();
+    @ViewChild('mrRecords') mrRecords: ElementRef;
+
+    constructor(public cm: CatalogManagerService, public state: MergeRequestsStateService,
+        private spinnerSvc: ProgressSpinnerService, @Inject('utilService') public util) {}
+    
+    ngOnInit(): void {
+        this.catalogId = get(this.cm.localCatalog, '@id');
+        this.config.type = ONTOLOGYEDITOR + 'OntologyRecord';
+        this.config.sortOption = find(this.cm.sortOptions, { field: DCTERMS + 'title', asc: true });
+        this.setInitialRecords();
     }
-    dvm.selectRecord = function(record) {
-        dvm.state.requestConfig.recordId = record['@id'];
-        dvm.state.requestConfig.record = record;
+    selectRecord(record: JSONLDObject): void {
+        this.state.requestConfig.recordId = record['@id'];
+        this.state.selectedRecord = record;
     }
-    dvm.setRecords = function(page) {
-        dvm.currentPage = page;
-        dvm.config.pageIndex = dvm.currentPage - 1;
-        cm.getRecords(catalogId, dvm.config)
-            .then(response => setPagination(response), error => {
-                dvm.records = [];
-                dvm.totalSize = 0;
-                dvm.util.createErrorToast(error);
+    setRecords(pageIndex: number): void {
+        this.config.pageIndex = pageIndex;
+        this.spinnerSvc.startLoadingForComponent(this.mrRecords);
+        this.cm.getRecords(this.catalogId, this.config, true)
+            .subscribe((response: HttpResponse<JSONLDObject[]>) => this._setPagination(response), error => {
+                this.records = [];
+                this.totalSize = 0;
+                this.util.createErrorToast(error);
+                this.spinnerSvc.finishLoadingForComponent(this.mrRecords);
             });
     }
-    dvm.setInitialRecords = function() {
-        dvm.setRecords(1);
+    getPage(pageEvent: PageEvent): void {
+        this.setRecords(pageEvent.pageIndex);
+    }
+    setInitialRecords(): void {
+        this.setRecords(0);
     }
 
-    function setPagination(response) {
-        dvm.records = chunk(response.data, 2);
-        var headers = response.headers();
-        dvm.totalSize = get(headers, 'x-total-count', 0);
-    }
+    private _setPagination(response: HttpResponse<JSONLDObject[]>) {
+        this.records = response.body;
+        this.totalSize = Number(response.headers.get('x-total-count')) || 0;
+        this.spinnerSvc.finishLoadingForComponent(this.mrRecords);
+     }
 }
-
-export default requestRecordSelectComponent;

@@ -30,10 +30,12 @@ import { set } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 
-import { cleanStylesFromDOM, mockCatalogManager, mockPrefixes, mockUtil } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { RDF, USER, XSD } from '../../../prefixes';
 import { UserAccessControlsComponent } from '../../../shared/components/userAccessControls/userAccessControls.component';
 import { Group } from '../../../shared/models/group.interface';
 import { User } from '../../../shared/models/user.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { PermissionsPageComponent } from './permissionsPage.component';
@@ -44,9 +46,8 @@ describe('Permissions Page component', function() {
     let fixture: ComponentFixture<PermissionsPageComponent>;
     let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
-    let catalogManagerStub;
+    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let utilStub;
-    let prefixesStub;
     let everyoneMatch;
     let userMatch;
     let groupMatch;
@@ -67,9 +68,8 @@ describe('Permissions Page component', function() {
             providers: [
                 MockProvider(PolicyManagerService),
                 MockProvider(UserManagerService),
-                { provide: 'catalogManagerService', useClass: mockCatalogManager },
+                MockProvider(CatalogManagerService),
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'prefixes', useClass: mockPrefixes },
             ]
         });
     });
@@ -80,21 +80,20 @@ describe('Permissions Page component', function() {
         element = fixture.debugElement;
         userManagerStub = TestBed.get(UserManagerService);
         policyManagerStub = TestBed.get(PolicyManagerService);
-        catalogManagerStub = TestBed.get('catalogManagerService');
+        catalogManagerStub = TestBed.get(CatalogManagerService);
         utilStub = TestBed.get('utilService');
-        prefixesStub = TestBed.get('prefixes');
 
         everyoneMatch = {
             AttributeDesignator: {
-                AttributeId: prefixesStub.user + 'hasUserRole',
+                AttributeId: USER + 'hasUserRole',
                 Category: policyManagerStub.subjectCategory,
-                DataType: prefixesStub.xsd + 'string',
+                DataType: XSD + 'string',
                 MustBePresent: true
             },
             AttributeValue: {
                 content: [component.userRole],
                 otherAttributes: {},
-                DataType: prefixesStub.xsd + 'string'
+                DataType: XSD + 'string'
             },
             MatchId: policyManagerStub.stringEqual
         };
@@ -102,13 +101,13 @@ describe('Permissions Page component', function() {
             AttributeDesignator: {
                 AttributeId: policyManagerStub.subjectId,
                 Category: policyManagerStub.subjectCategory,
-                DataType: prefixesStub.xsd + 'string',
+                DataType: XSD + 'string',
                 MustBePresent: true
             },
             AttributeValue: {
                 content: ['user1'],
                 otherAttributes: {},
-                DataType: prefixesStub.xsd + 'string'
+                DataType: XSD + 'string'
             },
             MatchId: policyManagerStub.stringEqual
         };
@@ -116,13 +115,13 @@ describe('Permissions Page component', function() {
             AttributeDesignator: {
                 AttributeId: component.groupAttributeId,
                 Category: policyManagerStub.subjectCategory,
-                DataType: prefixesStub.xsd + 'string',
+                DataType: XSD + 'string',
                 MustBePresent: true
             },
             AttributeValue: {
                 content: ['group1'],
                 otherAttributes: {},
-                DataType: prefixesStub.xsd + 'string'
+                DataType: XSD + 'string'
             },
             MatchId: policyManagerStub.stringEqual
         };
@@ -146,7 +145,7 @@ describe('Permissions Page component', function() {
             members: []
         };
         userManagerStub.groups = [group];
-        catalogManagerStub.localCatalog = {'@id': 'catalogId'};
+        catalogManagerStub.localCatalog = {'@id': 'catalogId', '@type': []};
     });
 
     afterEach(function() {
@@ -158,7 +157,6 @@ describe('Permissions Page component', function() {
         catalogManagerStub = null;
         userManagerStub = null;
         utilStub = null;
-        prefixesStub = null;
         everyoneMatch = null;
         userMatch = null;
         groupMatch = null;
@@ -172,20 +170,20 @@ describe('Permissions Page component', function() {
                 this.firstTypePolicy = {
                     PolicyId: 'id',
                     Target: {AnyOf: [{AllOf: [{Match: [{
-                        AttributeDesignator: {AttributeId: prefixesStub.rdf + 'type'},
+                        AttributeDesignator: {AttributeId: RDF + 'type'},
                         AttributeValue: {content: ['type']}
                     }]}]}]}
                 };
                 this.secondTypePolicy = {
                     PolicyId: 'id2',
                     Target: {AnyOf: [{AllOf: [{Match: [{
-                        AttributeDesignator: {AttributeId: prefixesStub.rdf + 'type'},
+                        AttributeDesignator: {AttributeId: RDF + 'type'},
                         AttributeValue: {content: ['type']}
                     }]}]}]}
                 };
             });
             it('with no matching policies', fakeAsync(function() {
-                policyManagerStub.getPolicies.and.returnValue(Promise.resolve([]));
+                policyManagerStub.getPolicies.and.resolveTo([]);
                 component.ngOnInit();
                 tick();
                 expect(component.policiesInQuestion).toContain(jasmine.objectContaining({
@@ -208,8 +206,8 @@ describe('Permissions Page component', function() {
                 const secondPolicyPolicies = [set(this.secondTypePolicy, 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', everyoneMatch)];
 
                 policyManagerStub.getPolicies
-                    .withArgs(catalogManagerStub.localCatalog['@id'], undefined, policyManagerStub.actionCreate).and.returnValue(Promise.resolve(firstPolicyPolicies))
-                    .withArgs(component.systemRepoId, undefined, policyManagerStub.actionRead).and.returnValue(Promise.resolve(secondPolicyPolicies));
+                    .withArgs(catalogManagerStub.localCatalog['@id'], undefined, policyManagerStub.actionCreate).and.resolveTo(firstPolicyPolicies)
+                    .withArgs(component.systemRepoId, undefined, policyManagerStub.actionRead).and.resolveTo(secondPolicyPolicies);
 
                 component.ngOnInit();
                 tick();
@@ -251,8 +249,8 @@ describe('Permissions Page component', function() {
                 const secondPolicyPolicies = [set(this.secondTypePolicy, 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', userMatch)];
 
                 policyManagerStub.getPolicies
-                    .withArgs(catalogManagerStub.localCatalog['@id'], undefined, policyManagerStub.actionCreate).and.returnValue(Promise.resolve(firstPolicyPolicies))
-                    .withArgs(component.systemRepoId, undefined, policyManagerStub.actionRead).and.returnValue(Promise.resolve(secondPolicyPolicies));
+                    .withArgs(catalogManagerStub.localCatalog['@id'], undefined, policyManagerStub.actionCreate).and.resolveTo(firstPolicyPolicies)
+                    .withArgs(component.systemRepoId, undefined, policyManagerStub.actionRead).and.resolveTo(secondPolicyPolicies);
 
                 component.ngOnInit();
                 tick();
@@ -291,8 +289,8 @@ describe('Permissions Page component', function() {
                 const secondPolicyPolicies = [set(this.secondTypePolicy, 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', groupMatch)];
 
                 policyManagerStub.getPolicies
-                    .withArgs(catalogManagerStub.localCatalog['@id'], undefined, policyManagerStub.actionCreate).and.returnValue(Promise.resolve(firstPolicyPolicies))
-                    .withArgs(component.systemRepoId, undefined, policyManagerStub.actionRead).and.returnValue(Promise.resolve(secondPolicyPolicies));
+                    .withArgs(catalogManagerStub.localCatalog['@id'], undefined, policyManagerStub.actionCreate).and.resolveTo(firstPolicyPolicies)
+                    .withArgs(component.systemRepoId, undefined, policyManagerStub.actionRead).and.resolveTo(secondPolicyPolicies);
 
                 component.ngOnInit();
                 tick();
@@ -318,7 +316,7 @@ describe('Permissions Page component', function() {
             }));
         });
         it('rejects', fakeAsync(function() {
-            policyManagerStub.getPolicies.and.returnValue(Promise.reject('Error message'));
+            policyManagerStub.getPolicies.and.rejectWith('Error message');
             component.ngOnInit();
             tick();
             expect(component.policiesInQuestion).toContain(jasmine.objectContaining({
@@ -351,7 +349,7 @@ describe('Permissions Page component', function() {
         it('should reset the component', function() {
             spyOn(component, 'ngOnInit');
             component.reset();
-            expect(component.ngOnInit).toHaveBeenCalled();
+            expect(component.ngOnInit).toHaveBeenCalledWith();
         });
         describe('should save changes to the policies', function() {
             beforeEach(function() {
@@ -363,7 +361,7 @@ describe('Permissions Page component', function() {
                 tick();
                 expect(policyManagerStub.updatePolicy).toHaveBeenCalledWith({});
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(this.policy.changed).toEqual(false);
             }));
             it('unless no policies were changed', fakeAsync(function() {
@@ -374,7 +372,7 @@ describe('Permissions Page component', function() {
             }));
             it('unless an error occurs', fakeAsync(function() {
                 component.policies = [this.policy];
-                policyManagerStub.updatePolicy.and.returnValue(Promise.reject('Error'));
+                policyManagerStub.updatePolicy.and.rejectWith('Error');
                 component.saveChanges();
                 tick();
                 expect(policyManagerStub.updatePolicy).toHaveBeenCalledWith({});
@@ -429,6 +427,6 @@ describe('Permissions Page component', function() {
         const saveButton = element.queryAll(By.css('button.mat-fab[color="primary"]'))[0];
         saveButton.triggerEventHandler('click', null);
         fixture.detectChanges();
-        expect(component.saveChanges).toHaveBeenCalled();
+        expect(component.saveChanges).toHaveBeenCalledWith();
     });
 });

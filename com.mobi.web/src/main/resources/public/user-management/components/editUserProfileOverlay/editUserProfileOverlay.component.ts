@@ -21,26 +21,20 @@
  * #L%
  */
 import { Component, Inject } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material';
 import { find } from 'lodash';
 
-import { emailOrEmpty } from '../../../shared/validators/emailOrEmpty.validator';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { FOAF } from '../../../prefixes';
 
 /**
- * @ngdoc component
- * @name user-management.component:editUserProfileOverlay
- * @requires shared.service:userManagerService
- * @requires shared.service:userStateService
- * @requires shared.service:prefixes
+ * @class user-management.EditUserProfileOverlayComponent
  *
- * @description
- * `editUserProfileOverlay` is a component that creates content for a modal with a form to change the
- * {@link shared.service:userStateService#selectedUser selected user's} profile information in Mobi. The
- * form contains fields to edit the user's first name, last name, and email. Meant to be used in conjunction with the
- * `MatDialog` service.
+ * A component that creates content for a modal with a form to change the
+ * {@link shared.UserStateService#selectedUser selected user's} profile information in Mobi. The form contains fields to
+ * edit the user's first name, last name, and email. Meant to be used in conjunction with the `MatDialog` service.
  */
 @Component({
     selector: 'edit-profile-overlay',
@@ -52,22 +46,22 @@ export class EditUserProfileOverlayComponent {
 
     constructor(private dialogRef: MatDialogRef<EditUserProfileOverlayComponent>, private fb: FormBuilder,
         private state: UserStateService, private um: UserManagerService,
-        @Inject('utilService') private util, @Inject('prefixes') private prefixes) {
+        @Inject('utilService') private util) {
             this.editProfileForm = this.fb.group({
                 firstName: [this.state.selectedUser.firstName],
                 lastName: [this.state.selectedUser.lastName],
-                email: [this.state.selectedUser.email, [ emailOrEmpty ]], // TODO: Replace Validators.email after Angular 6
+                email: [this.state.selectedUser.email, [ Validators.email ]]
             });
         }
 
     set(): void {
         const newUser = Object.assign({}, this.state.selectedUser);
         newUser.firstName = this.editProfileForm.controls.firstName.value;
-        this.util.replacePropertyValue(newUser.jsonld, this.prefixes.foaf + 'firstName', this.state.selectedUser.firstName, newUser.firstName);
+        this.util.replacePropertyValue(newUser.jsonld, FOAF + 'firstName', this.state.selectedUser.firstName, newUser.firstName);
         newUser.lastName = this.editProfileForm.controls.lastName.value;
-        this.util.replacePropertyValue(newUser.jsonld, this.prefixes.foaf + 'lastName', this.state.selectedUser.lastName, newUser.lastName);
+        this.util.replacePropertyValue(newUser.jsonld, FOAF + 'lastName', this.state.selectedUser.lastName, newUser.lastName);
         newUser.email = this.editProfileForm.controls.email.value;
-        this.util.replacePropertyId(newUser.jsonld, this.prefixes.foaf + 'mbox', this.state.selectedUser.email, newUser.email);
+        this.util.replacePropertyId(newUser.jsonld, FOAF + 'mbox', this.state.selectedUser.email, newUser.email);
         this.um.updateUser(this.state.selectedUser.username, newUser).then(() => {
             this.util.createSuccessToast('User profile successfully saved');
             this.errorMessage = '';

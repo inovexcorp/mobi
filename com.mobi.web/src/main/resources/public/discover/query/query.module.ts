@@ -20,19 +20,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { NgModule } from '@angular/core';
+import { downgradeComponent } from '@angular/upgrade/static';
 import * as angular from 'angular';
 
-import downloadQueryOverlayComponent from './components/downloadQueryOverlay/downloadQueryOverlay.component';
-import queryTabComponent from './components/queryTab/queryTab.component';
+import { SharedModule } from '../../shared/shared.module';
+import { DiscoverSharedModule } from '../discoverShared.module';
+
+import { DownloadQueryOverlayComponent } from './components/downloadQueryOverlay/downloadQueryOverlay.component';
+import { QueryTabComponent } from './components/queryTab/queryTab.component';
 
 /**
- * @ngdoc overview
- * @name query
+ * @namespace query
  *
- * @description
  * The `query` module provides components that make up the Query submodule of the Discover module in the Mobi
  * application.
  */
+@NgModule({
+    imports: [
+        SharedModule,
+        DiscoverSharedModule
+    ],
+    declarations: [
+        DownloadQueryOverlayComponent,
+        QueryTabComponent
+    ],
+    entryComponents: [
+        DownloadQueryOverlayComponent,
+        QueryTabComponent
+    ],
+    exports: [
+        QueryTabComponent
+    ]
+})
+export class QueryModule {}
+
 angular.module('query', [])
-    .component('downloadQueryOverlay', downloadQueryOverlayComponent)
-    .component('queryTab', queryTabComponent);
+    .directive('downloadQueryOverlay', downgradeComponent({component: DownloadQueryOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('queryTab', downgradeComponent({component: QueryTabComponent}) as angular.IDirectiveFactory);

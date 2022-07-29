@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="catalog-page h-100 container-fluid">
-    <records-view ng-if="!dvm.state.selectedRecord"></records-view>
-    <record-view ng-if="dvm.state.selectedRecord && !dvm.state.editPermissionSelectedRecord"></record-view>
-    <record-permission-view ng-if="dvm.state.selectedRecord && dvm.state.editPermissionSelectedRecord"></record-permission-view>
+    <records-view *ngIf="!state.selectedRecord"></records-view>
+    <record-view *ngIf="state.selectedRecord && !state.editPermissionSelectedRecord"></record-view>
+    <record-permission-view *ngIf="state.selectedRecord && state.editPermissionSelectedRecord"></record-permission-view>
 </div>

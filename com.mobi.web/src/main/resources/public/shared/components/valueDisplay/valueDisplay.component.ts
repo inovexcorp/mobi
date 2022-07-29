@@ -23,8 +23,10 @@
 import { has } from 'lodash';
 import { Inject, Component, Input } from '@angular/core';
 
-import './valueDisplay.component.scss';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { DiscoverStateService } from '../../services/discoverState.service';
+
+import './valueDisplay.component.scss';
 
 /**
  * @ngdoc component
@@ -47,7 +49,7 @@ export class ValueDisplayComponent {
     @Input() value: JSONLDObject;
     @Input() highlightText: string;
 
-    constructor(@Inject('discoverStateService') public ds, @Inject('utilService') public util) {}
+    constructor(public ds: DiscoverStateService, @Inject('utilService') public util) {}
 
     has(obj, key): boolean {
         return has(obj, key);

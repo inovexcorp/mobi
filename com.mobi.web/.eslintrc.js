@@ -76,7 +76,17 @@ module.exports = {
         'allowDestructuring': true, // Allow `const { props, state } = this`; false by default
         'allowedNames': ['self', 'dvm'] // Allow `const self = this`; `[]` by default
       }
-    ]
-
+    ],
   },
+  'overrides': [
+    {
+      'files': ['*spec*'],
+      'rules': {
+        'jasmine/new-line-between-declarations': ['off'],
+        'jasmine/new-line-before-expect': ['off'],
+        'jasmine/no-spec-dupes': ['off'],
+        'jasmine/no-suite-dupes': ['off']
+      }
+    }
+  ]
 };

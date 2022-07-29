@@ -21,10 +21,10 @@
   #L%
   -->
 
-<span ng-if="!dvm.isMaterial" class="record-icon fa-stack">
+<span *ngIf="!isMaterial" class="record-icon fa-stack">
   <i class="fa fa-square fa-stack-2x"></i>
-  <i class="fa {{dvm.icon}} fa-inverse fa-stack-1x"></i>
+  <i class="fa {{icon}} fa-inverse fa-stack-1x"></i>
 </span>
-<span ng-if="dvm.isMaterial" class="record-icon mat">
-  <md-icon>{{dvm.icon}}</md-icon> 
+<span *ngIf="isMaterial" class="record-icon mat">
+  <mat-icon>{{icon}}</mat-icon> 
 </span>

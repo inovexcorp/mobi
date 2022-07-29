@@ -21,78 +21,64 @@
  * #L%
  */
 
-const template = require('./runMappingDownloadOverlay.component.html');
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
+
+import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
+import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
 
 /**
- * @ngdoc component
- * @name mapper.component:runMappingDownloadOverlay
- * @requires $filter
- * @requires shared.service:mapperStateService
- * @requires shared.service:delimitedManagerService
- * @requires shared.service:utilService
+ * @class mapper.component:runMappingDownloadOverlay
  *
- * @description
- * `runMappingDownloadOverlay` is a component that creates content for a modal that contains a configuration
- * settings for running the currently selected {@link shared.service:mapperStateService#mapping mapping} against the
- * uploaded {@link shared.service:delimitedManagerService#dataRows delimited data} and downloading the results. This
- * includes a {@link shared.component:textInput text input} for the file name of the downloaded mapped data and a
- * {@link mapper.component:mapperSerializationSelect mapperSerializationSelect} for the RDF format of the mapped
- * data. Meant to be used in conjunction with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that contains a configuration settings for running the currently selected
+ * {@link shared.MapperStateService#selected mapping} against the uploaded
+ * {@link shared.DelimitedManagerService#dataRows} and downloading the results. This includes a input for the file name
+ * of the downloaded mapped data and a {@link mapper.MapperSerializationSelect} for the RDF format of the mapped data.
+ * Meant to be used in conjunction with the `MatDialog` service.
  */
-const runMappingDownloadOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: runMappingDownloadOverlayComponentCtrl,
-};
+@Component({
+    selector: 'run-mapping-download-overlay',
+    templateUrl: './runMappingDownloadOverlay.component.html'
+})
+export class RunMappingDownloadOverlayComponent implements OnInit {
+    errorMessage = '';
+    runMappingDownloadForm = this.fb.group({
+        fileName: ['', Validators.required],
+        serialization: ['turtle', Validators.required]
+    });
 
-runMappingDownloadOverlayComponentCtrl.$inject = ['$filter', 'mapperStateService', 'delimitedManagerService', 'utilService'];
+    constructor(private dialogRef: MatDialogRef<RunMappingDownloadOverlayComponent>, private fb: FormBuilder,
+        private state: MapperStateService, private dm: DelimitedManagerService,
+        private camelCasePipe: CamelCasePipe, @Inject('utilService') private util) {}
 
-function runMappingDownloadOverlayComponentCtrl($filter, mapperStateService, delimitedManagerService, utilService) {
-    var dvm = this;
-    var state = mapperStateService;
-    var dm = delimitedManagerService;
-    dvm.util = utilService;
-    dvm.fileName = '';
-    dvm.format = 'turtle';
-    dvm.errorMessage = '';
-
-    dvm.$onInit = function() {
-        dvm.fileName = $filter('camelCase')(state.mapping.record.title, 'class') + '_Data';
+    ngOnInit(): void {
+        const title = this.state.selected.record ? this.state.selected.record.title : this.state.selected.config.title;
+        this.runMappingDownloadForm.controls.fileName.setValue(this.camelCasePipe.transform(title, 'class') + '_Data');
     }
-    dvm.run = function() {
-        if (state.editMapping && state.isMappingChanged()) {
-            state.saveMapping().then(runMapping, onError);
+    run(): void {
+        if (this.state.editMapping && this.state.isMappingChanged()) {
+            this.state.saveMapping().subscribe(id => this._runMapping(id), error => this._onError(error));
         } else {
-            runMapping(state.mapping.record.id);
+            this._runMapping(this.state.selected.record.id);
         }
     }
-    dvm.cancel = function() {
-        dvm.dismiss();
-    }
 
-    function onError(errorMessage) {
-        dvm.errorMessage = errorMessage;
+    private _onError(errorMessage: string): void {
+        this.errorMessage = errorMessage;
     }
-    function runMapping(id) {
-        state.mapping.record.id = id;
-        dm.mapAndDownload(id, dvm.format, dvm.fileName);
-        dvm.util.createSuccessToast('Successfully ran mapping');
-        reset();
+    private _runMapping(id: string): void {
+        this.dm.mapAndDownload(id, this.runMappingDownloadForm.controls.serialization.value, this.runMappingDownloadForm.controls.fileName.value);
+        this.util.createSuccessToast('Successfully ran mapping');
+        this._reset();
     }
-    function reset() {
-        state.step = state.selectMappingStep;
-        state.initialize();
-        state.resetEdit();
-        dm.reset();
-        dvm.close();
+    private _reset(): void {
+        this.errorMessage = '';
+        this.state.step = this.state.selectMappingStep;
+        this.state.initialize();
+        this.state.resetEdit();
+        this.dm.reset();
+        this.dialogRef.close();
     }
 }
-
-export default runMappingDownloadOverlayComponent;

@@ -20,73 +20,56 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { forEach, get, has, noop, identity, includes } from 'lodash';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Inject } from '@angular/core';
+import { forEach, get, has, includes } from 'lodash';
+import { Observable } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
-mergeRequestManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'REST_PREFIX'];
+import { REST_PREFIX } from '../../constants';
+import { MERGEREQ } from '../../prefixes';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { MergeRequestConfig } from '../models/mergeRequestConfig.interface';
+import { MergeRequestPaginatedConfig } from '../models/mergeRequestPaginatedConfig.interface';
+import { HelperService } from './helper.service';
 
 /**
- * @ngdoc service
- * @name shared.service:mergeRequestManagerService
+ * @class shared.MergeRequestManagerService
  *
- * @description
- * `mergeRequestManagerService` is a service that provides access to the Mobi merge-requests REST
- * endpoints along with utility methods for working with Merge Requests and their components.
+ * A service that provides access to the Mobi merge-requests REST endpoints along with utility methods for working with
+ * Merge Requests and their components.
  */
-function mergeRequestManagerService($http, $q, utilService, prefixes, REST_PREFIX) {
-    var self = this,
-        prefix = REST_PREFIX + 'merge-requests';
-    var util = utilService;
+export class MergeRequestManagerService {
+    prefix = REST_PREFIX + 'merge-requests';
 
+    constructor(private http: HttpClient, private helper: HelperService, private spinnerSvc: ProgressSpinnerService, 
+        @Inject('utilService') private util) {}
     /**
-     * @ngdoc method
-     * @name getRequests
-     * @methodOf shared.service:mergeRequestManagerService
-     *
-     * @description
      * Calls the GET /mobirest/merge-requests endpoint with the provided object of query parameters
      * which retrieves a list of MergeRequests.
      *
-     * @param {Object} params An object with all the query parameter settings for the REST call
-     * @param {boolean} params.accepted Whether the list should be accepted MergeRequests or open ones
-     * @param {string} params.sort A property to sort the results by
-     * @param {boolean} params.ascending Whether the list should be sorted ascending or descending
-     * @returns {Promise} A promise that resolves with the list of MergeRequests or rejects with an
-     * error message.
+     * @param {MergeRequestPaginatedConfig} config An object with all the query parameter settings for the REST call
+     * @returns {Observable<HttpResponse<JSONLDObject[]>>} An Observable that resolves with an HttpResponse with the
+     * list of MergeRequests or rejects with an error message
      */
-    self.getRequests = function(params) {
-        var config = {params};
-        return $http.get(prefix, config)
-            .then(response => response.data, util.rejectError);
+    getRequests(config: MergeRequestPaginatedConfig): Observable<HttpResponse<JSONLDObject[]>> {
+        const params = this.util.paginatedConfigToParams(config);
+        params.accepted = config.accepted;
+        return this.spinnerSvc.track(this.http.get<JSONLDObject[]>(this.prefix, {params: this.helper.createHttpParams(params), observe: 'response'}))
+            .pipe(catchError(this.helper.handleError));
     }
     /**
-     * @ngdoc method
-     * @name createRequest
-     * @methodOf shared.service:mergeRequestManagerService
-     *
-     * @description
      * Calls the POST /mobirest/merge-requests endpoint with the passed metadata and creates a new
      * MergeRequest. Returns a Promise with the IRI of the new MergeRequest if successful or
      * rejects with an error message.
      *
-     * @param {Object} requestConfig A configuration object containing metadata for the new MergeRequest
-     * @param {string} requestConfig.title The required title of the new MergeRequest
-     * @param {string} requestConfig.description The optional description of the new MergeRequest
-     * @param {string} requestConfig.recordId The required IRI of the VersionedRDFRecord of the new MergeRequest
-     * @param {string} requestConfig.sourceBranchId The required IRI of the source Branch for the new MergeRequest
-     * @param {string} requestConfig.targetBranchId The required IRI of the target Branch for the new MergeRequest
-     * @param {string[]} requestConfig.assignees The optional usernames of the assignees of the new MergeRequest
-     * @param {string} requestConfig.removeSource A boolean indicating whether the sourceBranch should be removed on acceptance
-     * @return {Promise} A promise that resolves to the IRI of the new MergeRequest or is rejected with
+     * @param {MergeRequestConfig} requestConfig A configuration object containing metadata for the new MergeRequest
+     * @return {Observable<string>} An Observable that resolves to the IRI of the new MergeRequest or is rejected with
      * an error message
      */
-    self.createRequest = function(requestConfig) {
-        var fd = new FormData(),
-            config = {
-                transformRequest: identity,
-                headers: {
-                    'Content-Type': undefined
-                }
-            };
+    createRequest(requestConfig: MergeRequestConfig): Observable<string> {
+        const fd = new FormData();
         fd.append('title', requestConfig.title);
         fd.append('recordId', requestConfig.recordId);
         fd.append('sourceBranchId', requestConfig.sourceBranchId);
@@ -96,179 +79,127 @@ function mergeRequestManagerService($http, $q, utilService, prefixes, REST_PREFI
         }
         forEach(get(requestConfig, 'assignees', []), username => fd.append('assignees', username));
         if (has(requestConfig, 'removeSource')) {
-            fd.append('removeSource', requestConfig.removeSource);
+            fd.append('removeSource', '' + requestConfig.removeSource);
         }
-        return $http.post(prefix, fd, config)
-            .then(response => response.data, util.rejectError);
+        return this.spinnerSvc.track(this.http.post(this.prefix, fd, {responseType: 'text'}))
+            .pipe(catchError(this.helper.handleError));
     }
     /**
-     * @ngdoc method
-     * @name getRequest
-     * @methodOf shared.service:mergeRequestManagerService
-     *
-     * @description
      * Calls the GET /mobirest/merge-requests/{requestId} endpoint to retrieve a single Merge Request
      * with a matching IRI.
      *
-     * @param {string} params An IRI ID of a Merge Request
-     * @returns {Promise} A promise that resolves with Merge Request if found or rejects with an
-     * error message.
+     * @param {string} requestId An IRI ID of a Merge Request
+     * @returns {Observable<JSONLDObject>} An Observable that resolves with Merge Request if found or rejects with an
+     * error message
      */
-    self.getRequest = function(requestId) {
-        return $http.get(prefix + '/' + encodeURIComponent(requestId))
-            .then(response => response.data, util.rejectError);
+    getRequest(requestId: string): Observable<JSONLDObject> {
+        return this.spinnerSvc.track(this.http.get<JSONLDObject>(this.prefix + '/' + encodeURIComponent(requestId)))
+           .pipe(catchError(this.helper.handleError));
     }
     /**
-     * @ngdoc method
-     * @name deleteRequest
-     * @methodOf shared.service:mergeRequestManagerService
-     *
-     * @description
      * Calls the DELETE /mobirest/merge-requests/{requestId} endpoint to remove a single Merge Request
      * with a matching IRI from the application.
      *
-     * @param {string} params An IRI ID of a Merge Request
-     * @returns {Promise} A promise that resolves if the request was deleted or rejects with an
-     * error message.
+     * @param {string} requestId An IRI ID of a Merge Request
+     * @returns {Observable<null>} An Observable that resolves if the request was deleted or rejects with an
+     * error message
      */
-    self.deleteRequest = function(requestId) {
-        return $http.delete(prefix + '/' + encodeURIComponent(requestId))
-            .then(noop, util.rejectError);
+    deleteRequest(requestId: string): Observable<null> {
+        return this.spinnerSvc.track(this.http.delete(this.prefix + '/' + encodeURIComponent(requestId)))
+           .pipe(catchError(this.helper.handleError));
     }
     /**
-     * @ngdoc method
-     * @name acceptRequest
-     * @methodOf shared.service:mergeRequestManagerService
-     *
-     * @description
      * Calls the POST /mobirest/merge-requests/{requestId} endpoint to accept a Merge Request
      * with a matching IRI and perform the represented merge.
      *
      * @param {string} requestId An IRI ID of a Merge Request
-     * @returns {Promise} A promise that resolves if the request was accepted or rejects with an
-     * error message.
+     * @returns {Observable<null>} An Observable that resolves if the request was accepted or rejects with an
+     * error message
      */
-    self.acceptRequest = function(requestId) {
-        return $http.post(prefix + '/' + encodeURIComponent(requestId))
-            .then(noop, util.rejectError);
+    acceptRequest(requestId: string): Observable<null> {
+        return this.spinnerSvc.track(this.http.post(this.prefix + '/' + encodeURIComponent(requestId), null))
+           .pipe(catchError(this.helper.handleError));
     }
     /**
-     * @ngdoc method
-     * @name getComments
-     * @methodOf shared.service:mergeRequestManagerService
-     *
-     * @description
      * Calls the GET /mobirest/merge-requests/{requestId}/comments endpoint to retrieve the array of comment
      * chains for the Merge Request with a matching IRI.
      *
      * @param {string} requestId An IRI ID of a Merge Request
-     * @returns {Promise} A promise that resolves with an array of arrays of JSON-LD objects representing
-     *      comment chains or rejects with an error message.
+     * @returns {Observable<JSONLDObject[][]>} An Observable that resolves with an array of arrays of
+     * {@link JSONLDObject} representing comment chains or rejects with an error message
      */
-    self.getComments = function(requestId) {
-        return $http.get(prefix + '/' + encodeURIComponent(requestId) + '/comments')
-            .then(response => response.data, util.rejectError);
+    getComments(requestId: string): Observable<JSONLDObject[][]> {
+        return this.spinnerSvc.track(this.http.get<JSONLDObject[][]>(this.prefix + '/' + encodeURIComponent(requestId) + '/comments'))
+           .pipe(catchError(this.helper.handleError));
     }
     /**
-     * @ngdoc method
-     * @name deleteComment
-     * @methodOf shared.service:mergeRequestManagerService
-     *
-     * @description
      * Calls the DELETE /mobirest/merge-requests/{requestId}/comments/{commentId} endpoint to delete a comment
      * with a matching IRI from the Merge Request with a matching IRI.
      *
      * @param {string} requestId An IRI ID of a Merge Request
      * @param {string} commentId An IRI ID of a Comment on the Merge Request
-     * @returns {Promise} A promise that resolves if the comment was deleted or rejects with an error message.
+     * @returns {Observable<null>} An Observable that resolves if the comment was deleted or rejects with an error
+     * message
      */
-    self.deleteComment = function(requestId, commentId) {
-        return $http.delete(prefix + '/' + encodeURIComponent(requestId) + '/comments/' + encodeURIComponent(commentId))
-            .then(noop, util.rejectError);
+    deleteComment(requestId: string, commentId: string): Observable<null> {
+        return this.spinnerSvc.track(this.http.delete(this.prefix + '/' + encodeURIComponent(requestId) + '/comments/' + encodeURIComponent(commentId)))
+           .pipe(catchError(this.helper.handleError));
     }
     /**
-     * @ngdoc method
-     * @name createComment
-     * @methodOf shared.service:mergeRequestManagerService
-     *
-     * @description
      * Calls the POST /mobirest/merge-requests/{requestId}/comments endpoint to create a comment on the Merge
      * Request with a matching IRI with the provided comment string. Can optionally specify the comment the new
      * comment is reply to.
      *
      * @param {string} requestId An IRI ID of a Merge Request
      * @param {string} commentStr A string to be the body of the new Comment
-     * @param {string} [replyComment = ''] An IRI ID of a Comment on the Merge Request
-     * @returns {Promise} A promise that resolves if the comment was created or rejects with an error message.
+     * @param {string} [replyComment=''] An IRI ID of a Comment on the Merge Request
+     * @returns {Observable<string>} An Observable that resolves to the IRI of the new comment if created or rejects
+     * with an error message
      */
-    self.createComment = function(requestId, commentStr, replyComment = '')  {
-        var config: any = {
-            headers: {
-                'Content-Type': 'text/plain'
-            }
+    createComment(requestId: string, commentStr: string, replyComment = ''): Observable<string> {
+        const params = {
+            commentId: ''
         };
         if (replyComment) {
-            config.params = { commentId: replyComment };
+            params.commentId = replyComment;
         }
-        return $http.post(prefix + '/' + encodeURIComponent(requestId) + '/comments', commentStr, config)
-            .then(noop, util.rejectError);
+        return this.spinnerSvc.track(this.http.post(this.prefix + '/' + encodeURIComponent(requestId) + '/comments', commentStr, {params: this.helper.createHttpParams(params), responseType: 'text'}))
+           .pipe(catchError(this.helper.handleError));
     }
     /**
-     * @ngdoc method
-     * @name updateComment
-     * @methodOf shared.service:mergeRequestManagerService
-     *
-     * @description
      * Calls the PUT /mobirest/merge-requests/{requestId}/comments/{commentId} endpoint to edit a comment on the Merge
      * Request with a matching IRI with the provided comment string.
      *
      * @param {string} requestId An IRI ID of a Merge Request
      * @param {string} commentId An IRI ID of a Comment on the Merge Request
      * @param {string} commentStr A string to be the new body of the Comment
-     * @returns {Promise} A promise that resolves if the comment was edited or rejects with an error message.
+     * @returns {Observable<null>} An Observable that resolves if the comment was edited or rejects with an error message
      */
-    self.updateComment = function(requestId, commentId, commentStr) {
-        var config = {
-            headers: {
-                'Content-Type': 'text/plain'
-            }
-        };
-        return $http.put(prefix + '/' + encodeURIComponent(requestId) + '/comments/' + encodeURIComponent(commentId), commentStr, config)
-            .then(noop, util.rejectError);
+    updateComment(requestId: string, commentId: string, commentStr: string): Observable<null> {
+        return this.spinnerSvc.track(this.http.put(this.prefix + '/' + encodeURIComponent(requestId) + '/comments/' + encodeURIComponent(commentId), commentStr))
+           .pipe(catchError(this.helper.handleError));
     }
     /**
-     * @ngdoc method
-     * @name updateRequest
-     * @methodOf shared.service:mergeRequestManagerService
-     *
-     * @description
      * Calls the PUT /mobirest/merge-requests/{requestId} endpoint to update a Merge Request
      * with a matching IRI.
      * 
      * @param {string} requestId An IRI of a MergeRequest
-     * @param {Object} jsonld A MergeRequest JSON-LD object
-     * @return {Promise} A promise that resolves to the IRI of the updated MergeRequest or is rejected with
-     * an error message
+     * @param {JSONLDObject} jsonld A MergeRequest JSON-LD object
+     * @return {Observable<string>} An Observable that resolves to the IRI of the updated MergeRequest or is rejected
+     * with an error message
      */
-    self.updateRequest = function(requestId, jsonld) {
-        return $http.put(prefix + '/' + encodeURIComponent(requestId), jsonld)
-            .then(response => response.data, util.rejectError);
+    updateRequest(requestId: string, jsonld: JSONLDObject): Observable<string> {
+        return this.spinnerSvc.track(this.http.put(this.prefix + '/' + encodeURIComponent(requestId), jsonld, { responseType: 'text' }))
+           .pipe(catchError(this.helper.handleError));
     }
     
     /**
-     * @ngdoc method
-     * @name isAccepted
-     * @methodOf shared.service:mergeRequestManagerService
-     *
-     * @description
      * Determines whether the passed request is accepted or not.
      *
-     * @param {Object} request A MergeRequest JSON-LD object
+     * @param {JSONLDObject} request A MergeRequest JSON-LD object
      * @return {boolean} True if the MergeRequest is accepted; false otherwise
      */
-    self.isAccepted = function(request) {
-        return includes(request['@type'], prefixes.mergereq + 'AcceptedMergeRequest');
+    isAccepted(request: JSONLDObject): boolean {
+        return includes(request['@type'], MERGEREQ + 'AcceptedMergeRequest');
     }
 }
-
-export default mergeRequestManagerService;

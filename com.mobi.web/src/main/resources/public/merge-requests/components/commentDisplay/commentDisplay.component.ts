@@ -20,84 +20,70 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
+import { MatDialog } from '@angular/material';
 import { get, find } from 'lodash';
+
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { UserManagerService } from '../../../shared/services/userManager.service';
 
 import './commentDisplay.component.scss';
 
-const template = require('./commentDisplay.component.html');
-
 /**
- * @ngdoc component
- * @name merge-requests.component:commentDisplay
- * @requires shared.service:mergeRequestManagerService
- * @requires shared.service:userManagerService
- * @requires shared.service:loginManagerService
- * @requires shared.service:utilService
- * @requires shared.service:modalService
+ * @class merge-requests.CommentDisplayComponent
  *
- * @description
- * `commentDisplay` is a component which creates a div containing a display of the provided Comment on the
- * provided Merge Request. The display includes the user who made the comment, the datetime is was made,
- * and the body of the comment rendered as HTML Markdown. If the current user is the one who made the comment,
- * a button to remove the comment is shown on hover of the body.
+ * A component which creates a div containing a display of the provided Comment on the provided Merge Request. The
+ * display includes the user who made the comment, the datetime is was made, and the body of the comment rendered as
+ * HTML Markdown. If the current user is the one who made the comment, a button to remove the comment is shown on hover
+ * of the body.
  *
- * @param {Object} request An object representing the Merge Request the Comment belongs to
- * @param {Object} comment The Comment to display
+ * @param {MergeRequest} request An object representing the Merge Request the Comment belongs to
+ * @param {JSONLDObject} comment The Comment to display
  * @param {boolean} isReply Whether the Comment is a reply comment
- * @param {Function} updateRequest A function to be called when the value of `request` changes. Expects an argument
- * called `value` and should update the value of `request`.
+ * @param {boolean} accepted Whether the Request has been accepted
+ * @param {Function} delete The Function to call to delete a comment
  */
-const commentDisplayComponent = {
-    template,
-    bindings: {
-        request: '<',
-        comment: '<',
-        isReply: '<',
-        updateRequest: '&'
-    },
-    controllerAs: 'dvm',
-    controller: commentDisplayComponentCtrl
-};
+@Component({
+    selector: 'comment-display',
+    templateUrl: './commentDisplay.component.html'
+})
+export class CommentDisplayComponent {
+    commentText = '';
+    creatorIRI = '';
+    creator = '';
+    isCreator: boolean;
+    issued = '';
 
-commentDisplayComponentCtrl.$inject = ['$q', 'mergeRequestManagerService', 'userManagerService', 'loginManagerService', 'utilService', 'modalService', 'showdown'];
+    private _comment: JSONLDObject;
 
-function commentDisplayComponentCtrl($q, mergeRequestManagerService, userManagerService, loginManagerService, utilService, modalService, showdown) {
-    var dvm = this;
-    var um = userManagerService;
-    var lm = loginManagerService;
-    var util = utilService;
-    dvm.mm = mergeRequestManagerService;
-    dvm.converter = new showdown.Converter();
-    dvm.converter.setFlavor('github');
+    @Input() isReply: boolean;
+    @Input() accepted: boolean;
+    @Input() set comment(value: JSONLDObject) {
+        this._comment = value;
+        this.commentText = this.util.getDctermsValue(value, 'description');
+        this.creatorIRI = this.util.getDctermsId(value, 'creator');
+        this.creator = get(find(this.um.users, {iri: this.creatorIRI}), 'username', '(Unknown)');
+        this.isCreator = this.lm.currentUserIRI === this.creatorIRI;
+        this.issued = this.util.getDctermsValue(value, 'issued');
+    }
+    get comment(): JSONLDObject {
+        return this._comment;
+    }
+    
+    @Output() delete = new EventEmitter<string>();
 
-    dvm.getCreator = function() {
-        var iri = getCreatorIRI();
-        return get(find(um.users, {iri}), 'username', '(Unknown)');
-    }
-    dvm.getComment = function() {
-        return dvm.converter.makeHtml(util.getDctermsValue(dvm.comment, 'description'));
-    }
-    dvm.getIssued = function() {
-        return util.getDctermsValue(dvm.comment, 'issued');
-    }
-    dvm.isCreator = function() {
-        return lm.currentUserIRI === getCreatorIRI();
-    }
-    dvm.confirmDelete = function() {
-        modalService.openConfirmModal('<p>Are you sure you want to delete this comment?</p>', dvm.deleteComment);
-    }
-    dvm.deleteComment = function() {
-        dvm.mm.deleteComment(dvm.request.jsonld['@id'], dvm.comment['@id'])
-            .then(() => dvm.mm.getComments(dvm.request.jsonld['@id']), $q.reject)
-            .then(comments => {
-                dvm.request.comments = comments;
-                dvm.updateRequest({value: dvm.request});
-            }, util.createErrorToast);
-    }
+    constructor(private dialog: MatDialog, private um: UserManagerService, @Inject('loginManagerService') private lm, @Inject('utilService') public util) {}
 
-    function getCreatorIRI() {
-        return util.getDctermsId(dvm.comment, 'creator');
+    confirmDelete(): void {
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: 'Are you sure you want to delete this comment?'
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.delete.emit(this.comment['@id']);
+            }
+        });
     }
 }
-
-export default commentDisplayComponent;

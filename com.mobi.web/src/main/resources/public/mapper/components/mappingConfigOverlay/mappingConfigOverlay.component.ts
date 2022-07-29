@@ -20,280 +20,310 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { get, find, forEach, isEqual, has, uniq, map, set } from 'lodash';
+import { HttpResponse } from '@angular/common/http';
+import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { MatDialogRef, MatSelectionListChange } from '@angular/material';
+import { get, find, isEqual, has, uniq, map, set } from 'lodash';
+import { from } from 'rxjs';
+import { finalize, switchMap } from 'rxjs/operators';
+
+import { CATALOG, DCTERMS, DELIM, ONTOLOGYEDITOR } from '../../../prefixes';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { Mapping } from '../../../shared/models/mapping.class';
+import { MappingClass } from '../../../shared/models/mappingClass.interface';
+import { MappingOntology } from '../../../shared/models/mappingOntology.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { MappingManagerService } from '../../../shared/services/mappingManager.service';
 
 import './mappingConfigOverlay.component.scss';
 
-const template = require('./mappingConfigOverlay.component.html');
+interface SelectedOntology {
+    jsonld: JSONLDObject,
+    recordId: string,
+    ontologyIRI: string,
+    title: string,
+    description: string,
+    modified: string,
+    selected: boolean
+}
+
+interface StateObject {
+    recordId: string,
+    branchId?: string,
+    latest?: VersionObject,
+    saved?: VersionObject
+}
+
+interface VersionObject {
+    commitId?: string,
+    classes?: MappingClass[],
+    ontologies?: MappingOntology[]
+}
 
 /**
- * @ngdoc component
- * @name mapper.component:mappingConfigOverlay
- * @requires $q
- * @requires shared.service:utilService
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:mapperStateService
- * @requires shared.service:mappingManagerService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:prefixes
+ * @class mapper.MappingConfigOverlayComponent
  *
- * @description
- * `mappingConfigOverlay` is a component that creates content for a modal with functionality to edit the
- * configuration of the current {@link shared.service:mapperStateService#mapping mapping}.
- * The configuration consists of the source ontology record, the ontology record version, and the base type
- * class. If editing a mapping that already has those data points set, a new mapping will be created with the
- * new settings and will remove any invalid entity mappings within the mapping. The list of ontologies is searchable
- * and selectable. Only 100 will be shown at a time. Meant to be used in conjunction with the
- * {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal with functionality to edit the configuration of the current
+ * {@link shared.MapperStateService#selected mapping}. The configuration consists of the source ontology record, the
+ * ontology record version, and the base type class. If editing a mapping that already has those data points set, a new
+ * mapping will be created with the new settings and will remove any invalid entity mappings within the mapping. The
+ * list of ontologies is searchable and selectable. Only 100 will be shown at a time. Meant to be used in conjunction
+ * with the `MatDialog` service.
  */
-const mappingConfigOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: mappingConfigOverlayComponentCtrl
-};
-
-mappingConfigOverlayComponentCtrl.$inject = ['$q', 'httpService', 'utilService', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService', 'catalogManagerService', 'prefixes'];
-
-function mappingConfigOverlayComponentCtrl($q, httpService, utilService, ontologyManagerService, mapperStateService, mappingManagerService, catalogManagerService, prefixes) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    var mm = mappingManagerService;
-    var catalogId = '';
-    dvm.util = utilService;
-    dvm.state = mapperStateService;
-    dvm.om = ontologyManagerService;
-
-    dvm.spinnerId = 'mapping-config-overlay';
-    dvm.errorMessage = '';
-    dvm.ontologyStates = [];
-    dvm.recordsConfig = {
+@Component({
+    selector: 'mapping-config-overlay',
+    templateUrl: './mappingConfigOverlay.component.html'
+})
+export class MappingConfigOverlayComponent implements OnInit {
+    catalogId = '';
+    errorMessage = '';
+    recordsErrorMessage = '';
+    ontologyStates: StateObject[] = [];
+    recordsConfig = {
         pageIndex: 0,
-        sortOption: find(cm.sortOptions, {field: prefixes.dcterms + 'title', asc: true}),
-        recordType: prefixes.ontologyEditor + 'OntologyRecord',
+        sortOption: find(this.cm.sortOptions, {field: DCTERMS + 'title', asc: true}),
+        type: ONTOLOGYEDITOR + 'OntologyRecord',
         limit: 100,
         searchText: ''
     };
-    dvm.ontologies = [];
-    dvm.selectedOntology = undefined;
-    dvm.selectedVersion = 'latest';
-    dvm.selectedOntologyState = undefined;
-    dvm.classes = [];
+    ontologies: SelectedOntology[] = [];
+    selectedOntology: SelectedOntology = undefined;
+    selectedVersion = 'latest';
+    selectedOntologyState = undefined;
+    classes: MappingClass[] = [];
 
-    dvm.$onInit = function() {
-        catalogId = get(cm.localCatalog, '@id');
-        var ontologyJsonld = angular.copy(get(dvm.state.mapping, 'ontology'));
-        if (ontologyJsonld) {
-            dvm.selectedOntology = {
+    @ViewChild('ontologyListBox') ontologyListBox: ElementRef;
+
+    constructor(private dialog: MatDialogRef<MappingConfigOverlayComponent>, private spinnerSvc: ProgressSpinnerService,
+        public state: MapperStateService, private mm: MappingManagerService, private cm: CatalogManagerService,
+        @Inject('utilService') public util, @Inject('ontologyManagerService') private om) {}
+
+    ngOnInit(): void {
+        this.catalogId = get(this.cm.localCatalog, '@id');
+        if (this.state.selected.ontology) {
+            const ontologyJsonld: JSONLDObject = Object.assign({}, this.state.selected.ontology);
+            this.selectedOntology = {
                 jsonld: ontologyJsonld,
                 recordId: ontologyJsonld['@id'],
-                ontologyIRI: dvm.getOntologyIRI(ontologyJsonld),
-                title: dvm.util.getDctermsValue(ontologyJsonld, 'title'),
+                ontologyIRI: this.getOntologyIRI(ontologyJsonld),
+                title: this.util.getDctermsValue(ontologyJsonld, 'title'),
+                description: this.util.getDctermsValue(ontologyJsonld, 'description'),
+                modified: this.util.getDate(this.util.getDctermsValue(ontologyJsonld, 'modified'), 'short'),
                 selected: true
             };
-            var stateObj: any = {
-                recordId: dvm.selectedOntology.recordId
+            const stateObj: StateObject = {
+                recordId: this.selectedOntology.recordId
             };
-            var versionObj: any = {};
-            cm.getRecordMasterBranch(dvm.selectedOntology.recordId, catalogId).then(branch => {
+            const versionObj: VersionObject = {};
+            this.cm.getRecordMasterBranch(this.selectedOntology.recordId, this.catalogId).subscribe(branch => {
                 stateObj.branchId = branch['@id'];
-                versionObj.ontologies = dvm.state.sourceOntologies;
-                versionObj.classes = dvm.state.getClasses(versionObj.ontologies);
-                dvm.classes = versionObj.classes;
-                var latestCommitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
-                var savedCommitId = get(mm.getSourceOntologyInfo(dvm.state.mapping.jsonld), 'commitId');
+                versionObj.ontologies = this.state.sourceOntologies;
+                this._setClasses(versionObj);
+                const latestCommitId = this.util.getPropertyId(branch, CATALOG + 'head');
+                const savedCommitId = get(this.state.selected.mapping.getSourceOntologyInfo(), 'commitId');
                 if (savedCommitId === latestCommitId) {
                     stateObj.latest = set(versionObj, 'commitId', latestCommitId);
                 } else {
                     stateObj.saved = set(versionObj, 'commitId', savedCommitId);
-                    dvm.selectedVersion = 'saved';
+                    this.selectedVersion = 'saved';
                 }
-                dvm.ontologyStates.push(stateObj);
-                dvm.selectedOntologyState = stateObj;
-            }, onError);
+                this.ontologyStates.push(stateObj);
+                this.selectedOntologyState = stateObj;
+            }, () => this._onError());
         }
-        dvm.setOntologies();
+        this.setOntologies();
     }
-    
-    dvm.getOntologyIRI = function(record) {
-        return dvm.util.getPropertyId(record, prefixes.ontologyEditor + 'ontologyIRI');
+    getOntologyIRI(record: JSONLDObject): string {
+        return this.util.getPropertyId(record, ONTOLOGYEDITOR + 'ontologyIRI');
     }
-    dvm.setOntologies = function() {
-        httpService.cancel(dvm.spinnerId);
-        cm.getRecords(catalogId, dvm.recordsConfig, dvm.spinnerId).then(parseRecordResults, onRecordsError);
+    ontologyChange(event: MatSelectionListChange): void {
+        if (event.option && event.option.value) {
+            this.toggleOntology(event.option.value);
+        }
     }
-    dvm.toggleOntology = function(ontology) {
+    setOntologies(): void {
+        this.spinnerSvc.startLoadingForComponent(this.ontologyListBox);
+        this.cm.getRecords(this.catalogId, this.recordsConfig, true)
+            .pipe(finalize(() => this.spinnerSvc.finishLoadingForComponent(this.ontologyListBox)))
+            .subscribe(response => this._parseRecordResults(response), () => this._onRecordsError());
+    }
+    toggleOntology(ontology: SelectedOntology): void {
+        ontology.selected = !ontology.selected;
         if (ontology.selected) {
-            forEach(dvm.ontologies, record => {
+            this.ontologies.forEach(record => {
                 if (record.recordId !== ontology.recordId) {
                     record.selected = false;
                 }
             });
-            dvm.selectOntology(ontology);
+            this.selectOntology(ontology);
         } else {
-            if (get(dvm.selectedOntology, 'recordId') === ontology.recordId) {
-                dvm.selectedOntology = undefined;
-                dvm.selectedVersion = 'latest';
-                dvm.selectedOntologyState = undefined;
-                dvm.classes = [];
+            if (get(this.selectedOntology, 'recordId') === ontology.recordId) {
+                this.selectedOntology = undefined;
+                this.selectedVersion = 'latest';
+                this.selectedOntologyState = undefined;
+                this.classes = [];
             }
         }
     }
-    dvm.selectOntology = function(ontology) {
-        dvm.selectedOntology = ontology;
-        var ontologyState = find(dvm.ontologyStates, {recordId: dvm.selectedOntology.recordId});
-        if (ontologyState && !isEqual(ontologyState, dvm.selectedOntologyState)) {
-            dvm.selectedOntologyState = ontologyState;
-            dvm.selectedVersion = has(dvm.selectedOntologyState, 'latest') ? 'latest' : 'saved';
-            dvm.classes = dvm.selectedOntologyState[dvm.selectedVersion].classes;
-            dvm.errorMessage = '';
+    selectOntology(ontology: SelectedOntology): void {
+        this.selectedOntology = ontology;
+        let ontologyState = find(this.ontologyStates, {recordId: this.selectedOntology.recordId});
+        if (ontologyState && !isEqual(ontologyState, this.selectedOntologyState)) {
+            this.selectedOntologyState = ontologyState;
+            this.selectedVersion = has(this.selectedOntologyState, 'latest') ? 'latest' : 'saved';
+            this.classes = this.selectedOntologyState[this.selectedVersion].classes;
+            this.errorMessage = '';
         } else if (!ontologyState) {
             ontologyState = {
-                recordId: dvm.selectedOntology.recordId
+                recordId: this.selectedOntology.recordId
             };
-            var versionObj: any = {};
-            cm.getRecordMasterBranch(dvm.selectedOntology.recordId, catalogId).then(branch => {
-                ontologyState.branchId = branch['@id'];
-                versionObj.commitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
-                var ontologyInfo = {
-                    recordId: dvm.selectedOntology.recordId,
-                    branchId: ontologyState.branchId,
-                    commitId: versionObj.commitId
-                };
-                return mm.getOntology(ontologyInfo);
-            }, $q.reject).then(ontology => {
-                versionObj.ontologies = [ontology];
-                return dvm.om.getImportedOntologies(ontologyState.recordId, ontologyState.branchId, versionObj.commitId);
-            }, $q.reject).then(imported => {
-                forEach(imported, obj => {
-                    var ontology = {id: obj.id, entities: obj.ontology};
-                    versionObj.ontologies.push(ontology);
-                });
-                versionObj.classes = dvm.state.getClasses(versionObj.ontologies);
-                dvm.classes = versionObj.classes;
-                ontologyState.latest = versionObj;
-                dvm.selectedVersion = 'latest';
-                dvm.ontologyStates.push(ontologyState);
-                dvm.selectedOntologyState = ontologyState;
-                dvm.errorMessage = '';
-            }, onError);
-        }
-    }
-    dvm.selectVersion = function() {
-        if (dvm.selectedOntologyState) {
-            if (has(dvm.selectedOntologyState, dvm.selectedVersion)) {
-                dvm.classes = dvm.selectedOntologyState[dvm.selectedVersion].classes;
-                dvm.errorMessage = '';
-            } else {
-                var versionObj: any = {};
-                if (dvm.selectedVersion === 'latest') {
-                    cm.getRecordBranch(dvm.selectedOntologyState.branchId, dvm.selectedOntologyState.recordId, catalogId).then(branch => {
-                        versionObj.commitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
-                        var ontologyInfo = {
-                            recordId: dvm.selectedOntologyState.recordId,
-                            branchId: dvm.selectedOntologyState.branchId,
+            const versionObj: VersionObject = {};
+            this.cm.getRecordMasterBranch(this.selectedOntology.recordId, this.catalogId)
+                .pipe(
+                    switchMap(branch => {
+                        ontologyState.branchId = branch['@id'];
+                        versionObj.commitId = this.util.getPropertyId(branch, CATALOG + 'head');
+                        const ontologyInfo = {
+                            recordId: this.selectedOntology.recordId,
+                            branchId: ontologyState.branchId,
                             commitId: versionObj.commitId
                         };
-                        return mm.getOntology(ontologyInfo);
-                    }, $q.reject).then(ontology => {
+                        return this.mm.getOntology(ontologyInfo);
+                    }),
+                    switchMap(ontology => {
                         versionObj.ontologies = [ontology];
-                        return dvm.om.getImportedOntologies(dvm.selectedOntologyState.recordId, dvm.selectedOntologyState.branchId, versionObj.commitId);
-                    }, $q.reject).then(imported => {
-                        forEach(imported, obj => {
-                            var ontology = {id: obj.id, entities: obj.ontology};
-                            versionObj.ontologies.push(ontology);
-                        });
-                        versionObj.classes = dvm.state.getClasses(versionObj.ontologies);
-                        dvm.classes = versionObj.classes;
-                        dvm.selectedOntologyState.latest = versionObj;
-                        dvm.errorMessage = '';
-                    }, onError);
+                        return from(this.om.getImportedOntologies(ontologyState.recordId, ontologyState.branchId, versionObj.commitId));
+                    })
+                ).subscribe((imported: any[]) => {
+                    this._setVersionOntologies(versionObj, imported);
+                    this._setClasses(versionObj);
+                    ontologyState.latest = versionObj;
+                    this.selectedVersion = 'latest';
+                    this.ontologyStates.push(ontologyState);
+                    this.selectedOntologyState = ontologyState;
+                    this.errorMessage = '';
+                }, () => this._onError());
+        }
+    }
+    selectVersion(): void {
+        if (this.selectedOntologyState) {
+            if (has(this.selectedOntologyState, this.selectedVersion)) {
+                this.classes = this.selectedOntologyState[this.selectedVersion].classes;
+                this.errorMessage = '';
+            } else {
+                const versionObj: VersionObject = {};
+                if (this.selectedVersion === 'latest') {
+                    this.cm.getRecordBranch(this.selectedOntologyState.branchId, this.selectedOntologyState.recordId, this.catalogId)
+                        .pipe(
+                            switchMap(branch => {
+                                versionObj.commitId = this.util.getPropertyId(branch, CATALOG + 'head');
+                                const ontologyInfo = {
+                                    recordId: this.selectedOntologyState.recordId,
+                                    branchId: this.selectedOntologyState.branchId,
+                                    commitId: versionObj.commitId
+                                };
+                                return this.mm.getOntology(ontologyInfo);
+                            }),
+                            switchMap(ontology => {
+                                versionObj.ontologies = [ontology];
+                                return from(this.om.getImportedOntologies(this.selectedOntologyState.recordId, this.selectedOntologyState.branchId, versionObj.commitId));
+                            })
+                        ).subscribe((imported: any[]) => {
+                            this._setVersionOntologies(versionObj, imported);
+                            this._setClasses(versionObj);
+                            this.selectedOntologyState.latest = versionObj;
+                            this.errorMessage = '';
+                        }, () => this._onError());
                 } else {
-                    var ontologyInfo = mm.getSourceOntologyInfo(dvm.state.mapping.jsonld);
+                    const ontologyInfo = this.state.selected.mapping.getSourceOntologyInfo();
                     versionObj.commitId = ontologyInfo.commitId;
-                    mm.getOntology(ontologyInfo).then(ontology => {
-                        versionObj.ontologies = [ontology];
-                        return dvm.om.getImportedOntologies(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
-                    }, $q.reject).then(imported => {
-                        forEach(imported, obj => {
-                            var ontology = {id: obj.id, entities: obj.ontology};
-                            versionObj.ontologies.push(ontology);
-                        });
-                        versionObj.classes = dvm.state.getClasses(versionObj.ontologies);
-                        dvm.classes = versionObj.classes;
-                        dvm.selectedOntologyState.saved = versionObj;
-                        dvm.errorMessage = '';
-                    }, onError);
+                    this.mm.getOntology(ontologyInfo)
+                        .pipe(
+                            switchMap(ontology => {
+                                versionObj.ontologies = [ontology];
+                                return from(this.om.getImportedOntologies(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId));
+                            })
+                        ).subscribe((imported: any[]) => {
+                            this._setVersionOntologies(versionObj, imported);
+                            this._setClasses(versionObj);
+                            this.selectedOntologyState.saved = versionObj;
+                            this.errorMessage = '';
+                        }, () => this._onError());
                 }
             }
         }
     }
-    dvm.set = function() {
-        var selectedOntologyInfo = {
-            recordId: dvm.selectedOntologyState.recordId,
-            branchId: dvm.selectedOntologyState.branchId,
-            commitId: dvm.selectedOntologyState[dvm.selectedVersion].commitId
+    set(): void {
+        const selectedOntologyInfo = {
+            recordId: this.selectedOntologyState.recordId,
+            branchId: this.selectedOntologyState.branchId,
+            commitId: this.selectedOntologyState[this.selectedVersion].commitId
         };
-        var originalOntologyInfo = mm.getSourceOntologyInfo(dvm.state.mapping.jsonld);
+        const originalOntologyInfo = this.state.selected.mapping.getSourceOntologyInfo();
         if (!isEqual(originalOntologyInfo, selectedOntologyInfo)) {
-            dvm.state.sourceOntologies = dvm.selectedOntologyState[dvm.selectedVersion].ontologies;
-            var incompatibleEntities = mm.findIncompatibleMappings(dvm.state.mapping.jsonld, dvm.state.sourceOntologies);
-            forEach(incompatibleEntities, entity => {
-                if (find(dvm.state.mapping.jsonld, {'@id': entity['@id']})) {
-                    if (mm.isPropertyMapping(entity)) {
-                        var parentClassMapping = mm.isDataMapping(entity) ? mm.findClassWithDataMapping(dvm.state.mapping.jsonld, entity['@id']) : mm.findClassWithObjectMapping(dvm.state.mapping.jsonld, entity['@id']);
-                        dvm.state.deleteProp(entity['@id'], parentClassMapping['@id']);
-                    } else if (mm.isClassMapping(entity)) {
-                        dvm.state.deleteClass(entity['@id']);
+            this.state.sourceOntologies = this.selectedOntologyState[this.selectedVersion].ontologies;
+            const incompatibleEntities = this.mm.findIncompatibleMappings(this.state.selected.mapping, this.state.sourceOntologies);
+            const jsonld = this.state.selected.mapping.getJsonld();
+            incompatibleEntities.forEach(entity => {
+                if (find(jsonld, {'@id': entity['@id']})) {
+                    if (this.mm.isPropertyMapping(entity)) {
+                        const parentClassMapping = this.mm.isDataMapping(entity) ? 
+                            this.state.selected.mapping.findClassWithDataMapping(entity['@id']) :
+                            this.state.selected.mapping.findClassWithObjectMapping(entity['@id']);
+                        this.state.deleteProp(entity['@id'], parentClassMapping['@id']);
+                    } else if (this.mm.isClassMapping(entity)) {
+                        this.state.deleteClass(entity['@id']);
                     }
                 }
             });
-            mm.setSourceOntologyInfo(dvm.state.mapping.jsonld, selectedOntologyInfo.recordId, selectedOntologyInfo.branchId, selectedOntologyInfo.commitId);
-            var mappingId = mm.getMappingEntity(dvm.state.mapping.jsonld)['@id'];
-            dvm.state.changeProp(mappingId, prefixes.delim + 'sourceRecord', selectedOntologyInfo.recordId, originalOntologyInfo.recordId, true);
-            dvm.state.changeProp(mappingId, prefixes.delim + 'sourceBranch', selectedOntologyInfo.branchId, originalOntologyInfo.branchId, true);
-            dvm.state.changeProp(mappingId, prefixes.delim + 'sourceCommit', selectedOntologyInfo.commitId, originalOntologyInfo.commitId, true);
-            dvm.state.mapping.ontology = dvm.selectedOntology.jsonld;
-            dvm.state.resetEdit();
-            var classMappings = mm.getAllClassMappings(dvm.state.mapping.jsonld);
-            forEach(uniq(map(classMappings, mm.getClassIdByMapping)), id => {
-                dvm.state.setProps(id);
+            this.state.selected.mapping.setSourceOntologyInfo(selectedOntologyInfo);
+            const mappingId = this.state.selected.mapping.getMappingEntity()['@id'];
+            this.state.changeProp(mappingId, DELIM + 'sourceRecord', selectedOntologyInfo.recordId, originalOntologyInfo.recordId, true);
+            this.state.changeProp(mappingId, DELIM + 'sourceBranch', selectedOntologyInfo.branchId, originalOntologyInfo.branchId, true);
+            this.state.changeProp(mappingId, DELIM + 'sourceCommit', selectedOntologyInfo.commitId, originalOntologyInfo.commitId, true);
+            this.state.selected.ontology = this.selectedOntology.jsonld;
+            this.state.resetEdit();
+            const classMappings = this.state.selected.mapping.getAllClassMappings();
+            uniq(classMappings.map(classMapping => Mapping.getClassIdByMapping(classMapping))).forEach(id => {
+                this.state.setProps(id);
             });
-            dvm.state.availableClasses = dvm.classes;
+            this.state.availableClasses = this.classes;
         }
-        dvm.close();
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
+        this.dialog.close();
     }
 
-    function parseRecordResults(response) {
-        dvm.ontologies = map(response.data, record => ({
+    private _parseRecordResults(response: HttpResponse<JSONLDObject[]>) {
+        this.ontologies = map(response.body, record => ({
             recordId: record['@id'],
-            ontologyIRI: dvm.getOntologyIRI(record),
-            title: dvm.util.getDctermsValue(record, 'title'),
+            ontologyIRI: this.getOntologyIRI(record),
+            title: this.util.getDctermsValue(record, 'title'),
+            description: this.util.getDctermsValue(record, 'description'),
+            modified: this.util.getDate(this.util.getDctermsValue(record, 'modified'), 'short'),
             selected: false,
             jsonld: record
         }));
-        set(find(dvm.ontologies, {recordId: get(dvm.selectedOntology, 'recordId')}), 'selected', true);
-        dvm.recordsErrorMessage = '';
+        set(find(this.ontologies, {recordId: get(this.selectedOntology, 'recordId')}), 'selected', true);
+        this.recordsErrorMessage = '';
     }
-    function onError() {
-        dvm.errorMessage = 'Error retrieving ontology';
-        dvm.selectedOntology = undefined;
-        dvm.selectedOntologyState = undefined;
-        dvm.classes = [];
+    private _onError() {
+        this.errorMessage = 'Error retrieving ontology';
+        this.selectedOntology = undefined;
+        this.selectedOntologyState = undefined;
+        this.classes = [];
     }
-    function onRecordsError() {
-        dvm.recordsErrorMessage = 'Error retrieving ontologies';
+    private _onRecordsError() {
+        this.recordsErrorMessage = 'Error retrieving ontologies';
+    }
+    private _setClasses(versionObj: VersionObject): void {
+        versionObj.classes = this.state.getClasses(versionObj.ontologies);
+        this.classes = versionObj.classes;
+    }
+    private _setVersionOntologies(versionObject: VersionObject, imported: any[]) {
+        imported.forEach(obj => {
+            const ontology = {id: obj.id, entities: obj.ontology};
+            versionObject.ontologies.push(ontology);
+        });
     }
 }
-
-export default mappingConfigOverlayComponent;

@@ -36,7 +36,7 @@
                                   [target-id]="dvm.targetHeadCommitId"
                                   [difference]="dvm.os.listItem.merge.difference"
                                   [entity-name-func]="dvm.os.getEntityNameByListItem"
-                                  [show-more-results-func]="dvm.retrieveMoreResults"
+                                  (show-more-results-func)="dvm.retrieveMoreResults.bind(this)"
                                   [start-index]="dvm.os.listItem.merge.startIndex"
                                   [record-id]="dvm.os.listItem.ontologyRecord.recordId"
                                   (receive-commits)="dvm.commits = $event"></commit-difference-tabset>

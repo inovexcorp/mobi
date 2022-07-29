@@ -21,41 +21,25 @@
  * #L%
  */
 
-const template = require('./mapperSerializationSelect.component.html');
+import { Component, Input } from '@angular/core';
+import { FormGroup } from '@angular/forms';
 
 /**
- * @ngdoc component
- * @name mapaper.component:mapperSerializationSelect
+ * @class mapper.MapperSerializationSelectComponent
  *
- * @description
- * `mapperSerializationSelect` is a component which creates a select with the following options for a RDF
- * serialization format: JSON-LD, Turtle, and RDF/XML that is bound to `format`, but only one way. The provided
- * `changeEvent` function is expected to update the value of `format`.
+ * A component which creates a select with the following options for a RDF serialization format: JSON-LD, Turtle, and
+ * RDF/XML that is bound to `format`.
  *
- * @param {string} format A string representing an RDF serialization
- * @param {string} name The optional string name for the select in a form
- * @param {boolean} required Whether the select should be required. The presence of the attribute is enough to set it
- * @param {Function} changeEvent The function to be called when the format changes. Should update the value of
- * `format`. Expects an argument called `value`
+ * @param {FormGroup} parentForm THe parent FormGroup that is expected to have a FormControl for `serialization`
+ * @param {string} label The label to display for the field
+ * @param {boolean} required Whether the select should be required
  */
-const mapperSerializationSelectComponent = {
-    template,
-    require: {
-        form: '^form'
-    },
-    bindings: {
-        format: '<',
-        name: '<',
-        required: '@',
-        changeEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: mapperSerializationSelectComponentCtrl
-};
-
-function mapperSerializationSelectComponentCtrl() {
-    var dvm = this;
-    dvm.options = [
+@Component({
+    selector: 'mapper-serialization-select',
+    templateUrl: './mapperSerializationSelect.component.html'
+})
+export class MapperSerializationSelectComponent {
+    options = [
         {
             name: 'JSON-LD',
             value: 'jsonld'
@@ -69,11 +53,9 @@ function mapperSerializationSelectComponentCtrl() {
             value: 'rdf/xml'
         }
     ];
-    dvm.isRequired = false;
 
-    dvm.$onInit = function() {
-        dvm.isRequired = dvm.required !== undefined;
-    }
+    @Input() parentForm: FormGroup;
+    @Input() label: string;
+    
+    constructor() {}
 }
-
-export default mapperSerializationSelectComponent;

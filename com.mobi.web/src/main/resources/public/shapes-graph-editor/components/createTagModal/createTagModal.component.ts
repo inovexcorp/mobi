@@ -21,13 +21,16 @@
  * #L%
  */
 import { get } from 'lodash';
-import { Inject, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatDialogRef } from '@angular/material';
 import { FormBuilder, Validators } from '@angular/forms';
+import { first } from 'rxjs/operators';
+
 import { REGEX } from '../../../constants';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 interface TagConfig {
     title: string,
@@ -58,7 +61,7 @@ export class CreateTagModal implements OnInit {
         description: ['']
     });
 
-    constructor(private state: ShapesGraphStateService, @Inject('catalogManagerService') private cm,
+    constructor(private state: ShapesGraphStateService, private cm: CatalogManagerService,
                 private fb: FormBuilder, private dialogRef: MatDialogRef<CreateTagModal>,
                 private splitIRI: SplitIRIPipe, private camelCase: CamelCasePipe) {}
 
@@ -84,7 +87,7 @@ export class CreateTagModal implements OnInit {
             commitId: this.state.listItem.versionedRdfRecord.commitId,
             description: this.createTagForm.controls.description.value
         };
-        return this.cm.createRecordTag(this.state.listItem.versionedRdfRecord.recordId, get(this.cm.localCatalog, '@id', ''), tagConfig)
+        return this.cm.createRecordTag(this.state.listItem.versionedRdfRecord.recordId, get(this.cm.localCatalog, '@id', ''), tagConfig).pipe(first()).toPromise()
             .then(tagId => {
                 return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, undefined, this.state.listItem.versionedRdfRecord.commitId, tagId, this.createTagForm.controls.title.value, true);
             }, error => Promise.reject(error))

@@ -20,8 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpParams } from '@angular/common/http';
+import { HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable, throwError } from 'rxjs';
 
 /**
  * @class shared.HelperService
@@ -56,6 +57,14 @@ export class HelperService {
         });
     
         return httpParams;
+    }
+
+    handleError(error: HttpErrorResponse): Observable<any> {
+        if (error.status === 0) {
+            return throwError('');
+        } else {
+            return throwError(error.statusText || 'Something went wrong. Please try again later.');
+        }
     }
 
     private convertToString(param: any): string {

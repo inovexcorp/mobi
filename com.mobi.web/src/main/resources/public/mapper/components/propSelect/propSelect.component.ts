@@ -20,69 +20,76 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { filter, includes, map, forEach } from 'lodash';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { FormGroup } from '@angular/forms';
+import { MatAutocompleteSelectedEvent } from '@angular/material';
+import { includes, groupBy } from 'lodash';
+import { Observable } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 
-const template = require('./propSelect.component.html');
+import { MappingProperty } from '../../../shared/models/mappingProperty.interface';
 
-/**
- * @ngdoc component
- * @name propSelect.component:propSelect
- * @requires $filter
- * @requires shared.service:ontologyManagerService
- *
- * @description
- * `propSelect` is a component which creates a `ui-select` with the passed property list and binds the selected
- * property object to `selectedProp`, but only one way. The provided `changeEvent` function is expected to update
- * the value of `selectedProp`. The `ui-select` can optionally be disabled with the provided `isDisabledWhen`.
- *
- * @param {object} selectedProp the currently selected property object
- * @param {Function} changeEvent An function to be called when the selected property is changed. Should update the
- * value of `selectedProp`. Expects an argument called `value`.
- * @param {object[]} props an array of property objects from the
- * {@link shared.service:ontologyManagerService ontologyManagerService}
- * @param {boolean} isDisabledWhen whether or not the select should be disabled
- */
-const propSelectComponent = {
-    template,
-    bindings: {
-        selectedProp: '<',
-        changeEvent: '&',
-        props: '<',
-        isDisabledWhen: '<'
-    },
-    controllerAs: 'dvm',
-    controller: propSelectComponentCtrl
-};
-
-propSelectComponentCtrl.$inject = ['$filter', 'ontologyManagerService'];
-
-function propSelectComponentCtrl($filter, ontologyManagerService) {
-    var dvm = this;
-    var om = ontologyManagerService;
-    dvm.selectProps = [];
-
-    dvm.getOntologyId = function(prop) {
-        return prop.ontologyId || $filter('splitIRI')(prop.propObj['@id']).begin;
-    }
-    dvm.setProps = function(searchText) {
-        if (dvm.selectedProp) {
-            dvm.selectedProp.name = om.getEntityName(dvm.selectedProp.propObj);
-        }
-        var tempProps = angular.copy(dvm.props);
-        forEach(tempProps, prop => {
-            prop.name = om.getEntityName(prop.propObj);
-        });
-        if (searchText) {
-            tempProps = filter(tempProps, prop => includes(prop.name.toLowerCase(), searchText.toLowerCase()));
-        }
-        tempProps.sort((prop1, prop2) => prop1.name.localeCompare(prop2.name));
-        dvm.selectProps = map(tempProps.slice(0, 100), prop => {
-            prop.isDeprecated = om.isDeprecated(prop.propObj);
-            prop.groupHeader = dvm.getOntologyId(prop);
-            return prop;
-        });
-    }
+interface PropertyGroup {
+    ontologyId: string,
+    properties: MappingProperty[]
 }
 
-export default propSelectComponent;
+/**
+ * @class mapper.PropSelectComponent
+ *
+ * A component which creates a `mat-autocomplete` with the passed property list attached to a `prop` control on the
+ * provided parent FormGroup and binds the selected property object to `selectedProp`.
+ *
+ * @param {boolean} isReadOnly Whether to make the field readonly
+ * @param {FormGroup} parentForm A FormGroup with a `prop` control
+ * @param {MappingProperty} selectedProp The currently selected property object
+ * @param {MappingProperty[]} properties An array of property objects
+ */
+@Component({
+    selector: 'prop-select',
+    templateUrl: './propSelect.component.html'
+})
+export class PropSelectComponent implements OnInit {
+    @Input() isReadOnly: boolean;
+    @Input() parentForm: FormGroup;
+    @Input() properties: MappingProperty[];
+    @Input() selectedProp: MappingProperty;
+
+    @Output() selectedPropChange = new EventEmitter<MappingProperty>();
+
+    filteredProperties: Observable<PropertyGroup[]>;
+
+    constructor() {}
+
+    ngOnInit(): void {
+        this.filteredProperties = this.parentForm.controls.prop.valueChanges
+            .pipe(
+                startWith<string | MappingProperty>(''),
+                map(val => this.filter(val))
+            );
+    }
+    filter(val: string | MappingProperty): PropertyGroup[] {
+        const searchText = typeof val === 'string' ?
+        val :
+        val ?
+            val.name :
+            '';
+        if (!this.properties) {
+            return [];
+        }
+        const filtered = this.properties.filter(mappingProperty => includes(mappingProperty.name.toLowerCase(), searchText.toLowerCase()));
+        filtered.sort((mappingProperty1, mappingProperty2) => mappingProperty1.name.localeCompare(mappingProperty2.name));
+        const grouped = groupBy(filtered, 'ontologyId');
+        return Object.keys(grouped).map(ontologyId => ({
+            ontologyId,
+            properties: grouped[ontologyId]
+        }));
+    }
+    getDisplayText(mappingProperty?: MappingProperty): string {
+        return mappingProperty ? mappingProperty.name : '';
+    }
+    selectProp(event: MatAutocompleteSelectedEvent): void {
+        this.selectedProp = event.option.value;
+        this.selectedPropChange.emit(this.selectedProp);
+    }
+}

@@ -21,6 +21,7 @@
  * #L%
  */
 import { merge, head, filter, includes } from 'lodash';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 
 const template = require('./newInstanceClassOverlay.component.html');
 
@@ -59,7 +60,7 @@ const newInstanceClassOverlayComponent = {
 
 newInstanceClassOverlayComponentCtrl.$inject = ['$timeout', '$filter', 'uuid', 'discoverStateService', 'exploreService', 'utilService'];
 
-function newInstanceClassOverlayComponentCtrl($timeout, $filter, uuid, discoverStateService, exploreService, utilService) {
+function newInstanceClassOverlayComponentCtrl($timeout, $filter, uuid, discoverStateService: DiscoverStateService, exploreService, utilService) {
     var dvm = this;
     var es = exploreService;
     var util = utilService;

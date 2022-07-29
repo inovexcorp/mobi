@@ -20,32 +20,43 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Create New Dataset</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+<h1 mat-dialog-title>Create New Dataset</h1>
+<div mat-dialog-content [formGroup]="createDatasetForm">
+    <error-display *ngIf="error">{{error}}</error-display>
+    <mat-form-field class="w-100">
+        <mat-label>Title</mat-label>
+        <input matInput type="text" name="title" formControlName="title" required focus/>
+    </mat-form-field>
+    <mat-form-field class="w-100 mb-2" hintLabel="System will create a default IRI if not provided">
+        <mat-label>Dataset IRI</mat-label>
+        <input matInput type="text" name="datasetIRI" formControlName="datasetIRI" >
+        <mat-error *ngIf="createDatasetForm.get('datasetIRI').errors?.pattern">Must be a valid IRI</mat-error>
+    </mat-form-field>
+    <mat-form-field class="w-100">
+        <mat-label>Description</mat-label>
+        <textarea matInput name="description" formControlName="description"></textarea>
+    </mat-form-field>
+    <!-- TODO: Replace with keyword-select when upgraded -->
+    <mat-form-field class="flex-1 w-100">
+        <mat-chip-list #keywordSelect formControlName="keywords">
+            <mat-chip *ngFor="let keyword of createDatasetForm.get('keywords').value" [removable]="true" (removed)="removeKeyword(keyword)">
+                {{keyword}}
+                <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+        </mat-chip-list>
+        <input placeholder="Keywords"
+        [matChipInputFor]="keywordSelect"
+        [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+        [matChipInputAddOnBlur]="false"
+        (matChipInputTokenEnd)="addKeyword($event)">
+    </mat-form-field>
+    <div class="repository-id">
+        <div class="field-label">Repository ID</div>
+        <p>{{repositoryId}}</p>
+    </div>
+    <datasets-ontology-picker class="w-100" [(selected)]="selectedOntologies"></datasets-ontology-picker>
 </div>
-<div class="modal-body">
-    <form name="dvm.form" novalidate autocomplete="off">
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <text-input display-text="'Title'" input-name="'title'" bind-model="dvm.recordConfig.title" change-event="dvm.recordConfig.title = value" required="true" is-focus-me="true"></text-input>
-        <div class="form-group">
-            <custom-label [muted-text]="'(Optional)'">Dataset IRI</custom-label>
-            <input class="form-control" name="iri" ng-model="dvm.recordConfig.datasetIRI" ng-pattern="dvm.iriPattern" ng-class="{'is-invalid': dvm.form.iri.$error.pattern}" />
-            <p ng-messages="dvm.form.iri.$error" class="invalid-feedback">
-                <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
-            </p>
-        </div>
-        <small class="form-text">System will create a default IRI if not provided.</small>
-        <text-area bind-model="dvm.recordConfig.description" change-event="dvm.recordConfig.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
-        <keyword-select bind-model="dvm.keywords" change-event="dvm.keywords = value"></keyword-select>
-        <div class="form-group">
-            <custom-label>Repository ID</custom-label>
-            <p class="form-control-static">{{dvm.recordConfig.repositoryId}}</p>
-        </div>
-        <datasets-ontology-picker selected-ontologies="dvm.selectedOntologies" select-ontology="dvm.selectOntology(ontology)" unselect-ontology="dvm.unselectOntology(ontology)"></datasets-ontology-picker>
-    </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid" ng-click="dvm.create()">Submit</button>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="">Cancel</button>
+    <button mat-raised-button color="primary" (click)="create()" [disabled]="createDatasetForm.invalid">Submit</button>
 </div>

@@ -20,164 +20,214 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { map, find, get } from 'lodash';
+import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
+import { MatDialog } from '@angular/material';
+import { find, get } from 'lodash';
+
+import { DELIM, RDFS, XSD } from '../../../prefixes';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { MappingManagerService } from '../../../shared/services/mappingManager.service';
+import { IriTemplateOverlayComponent } from '../iriTemplateOverlay/iriTemplateOverlay.component';
+import { PropMappingOverlayComponent } from '../propMappingOverlay/propMappingOverlay.component';
 
 import './classMappingDetails.component.scss';
 
-const template = require('./classMappingDetails.component.html');
+interface DataMappingInfo {
+    value: string,
+    preview: string,
+    datatype: string
+}
 
-/**
- * @ngdoc component
- * @name mapper.component:classMappingDetails
- * @requires shared.service:mappingManagerService
- * @requires shared.service:mapperStateService
- * @requires shared.service:delimitedManagerService
- * @requires shared.service:propertyManagerService
- * @requires shared.service:prefixes
- * @requires shared.service:utilService
- * @requires shared.service:modalService
- *
- * @description
- * `classMappingDetails` is a component that creates a div with sections to view and edit information about the
- * {@link shared.service:mapperStateService#selectedClassMappingId selected class mapping}. One section is for
- * viewing and editing the {@link mapper.component:iriTemplateOverlay IRI template} of the class mapping. Another
- * section is for viewing the list of property mappings associated with the class mapping, adding to that list,
- * editing items in the list, and removing from that list. The component houses methods for opening the modals for
- * {@link mapper.component:propMappingOverlay editing, adding}, and removing PropertyMappings.
- */
-const classMappingDetailsComponent = {
-    template,
-    bindings: {
-        classMappingId: '<',
-        changeClassMapping: '&',
-        updateClassMappings: '&'
-    },
-    controllerAs: 'dvm',
-    controller: classMappingDetailsComponentCtrl
-};
+interface ObjectMappingInfo {
+    value: string
+}
 
-classMappingDetailsComponentCtrl.$inject = ['utilService', 'prefixes', 'mappingManagerService', 'mapperStateService', 'delimitedManagerService', 'propertyManagerService', 'modalService'];
-
-function classMappingDetailsComponentCtrl(utilService, prefixes, mappingManagerService, mapperStateService, delimitedManagerService, propertyManagerService, modalService) {
-    var dvm = this;
-    var pm = propertyManagerService;
-    var mm = mappingManagerService;
-    var util = utilService;
-    var dm = delimitedManagerService;
-    dvm.state = mapperStateService;
-    dvm.propMappings = [];
-    dvm.iriTemplate = '';
-    dvm.hasPropsToMap = false;
-
-    dvm.$onChanges = function() {
-        dvm.hasPropsToMap = dvm.state.hasPropsByClassMappingId(dvm.classMappingId);
-        dvm.setPropMappings();
-        dvm.setIriTemplate();
-    }
-    dvm.editIriTemplate = function() {
-        modalService.openModal('iriTemplateOverlay', {}, dvm.setIriTemplate);
-    }
-    dvm.isInvalid = function(propMapping) {
-        return !!find(dvm.state.invalidProps, {'@id': propMapping['@id']});
-    }
-    dvm.clickProperty = function(propMapping) {
-        dvm.state.selectedPropMappingId = propMapping['@id'];
-        dvm.state.highlightIndexes = [dvm.getLinkedColumnIndex(propMapping)];
-    }
-    dvm.setIriTemplate = function() {
-        var classMapping = find(dvm.state.mapping.jsonld, {'@id': dvm.classMappingId});
-        var prefix = util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
-        var localName = util.getPropertyValue(classMapping, prefixes.delim + 'localName');
-        dvm.iriTemplate = prefix + localName;
-    }
-    dvm.getPropValue = function(propMapping) {
-        if (mm.isDataMapping(propMapping)) {
-            return dm.getHeader(dvm.getLinkedColumnIndex(propMapping));
-        } else {
-            return util.getDctermsValue(find(dvm.state.mapping.jsonld, {'@id': dvm.getLinkedClassId(propMapping)}), 'title');
-        }
-    }
-    dvm.getDataValuePreview = function(propMapping) {
-        var firstRowIndex = dm.containsHeaders ? 1 : 0;
-        return get(dm.dataRows, '[' + firstRowIndex + '][' + dvm.getLinkedColumnIndex(propMapping) + ']', '(None)');
-    }
-    dvm.getDatatypePreview = function(propMapping) {
-        var props = dvm.state.getPropsByClassMappingId(dvm.classMappingId);
-        var mapProp = util.getPropertyId(propMapping, prefixes.delim + 'hasProperty');
-        var prop = find(props, {propObj: {'@id': mapProp}});
-        var propIRI = util.getPropertyId(propMapping, prefixes.delim + 'datatypeSpec') || util.getPropertyId(prop.propObj, prefixes.rdfs + 'range') || prefixes.xsd + 'string';
-        return util.getBeautifulIRI(propIRI);
-    }
-    dvm.getLanguagePreview = function(propMapping) {
-        var languageObj = find(pm.languageList, {value: dvm.getLanguageTag(propMapping)});
-        return languageObj ? languageObj.label : undefined;
-    }
-    dvm.getLanguageTag = function(propMapping) {
-        return util.getPropertyValue(propMapping, prefixes.delim + 'languageSpec');
-    }
-    dvm.getLinkedClassId = function(propMapping) {
-        return util.getPropertyId(propMapping, prefixes.delim + 'classMapping');
-    }
-    dvm.getLinkedColumnIndex = function(propMapping) {
-        return util.getPropertyValue(propMapping, prefixes.delim + 'columnIndex');
-    }
-    dvm.switchClass = function(propMapping) {
-        if (mm.isObjectMapping(propMapping)) {
-            dvm.changeClassMapping({value: dvm.getLinkedClassId(propMapping)})
-            dvm.state.selectedPropMappingId = '';
-        }
-    }
-    dvm.addProp = function() {
-        dvm.state.newProp = true;
-        modalService.openModal('propMappingOverlay', {}, () => {
-            dvm.setPropMappings();
-            // In case the added prop added a class mapping
-            dvm.updateClassMappings();
-        });
-    }
-    dvm.editProp = function(propMapping) {
-        dvm.state.selectedPropMappingId = propMapping['@id'];
-        modalService.openModal('propMappingOverlay', {}, dvm.setPropMappings);
-    }
-    dvm.confirmDeleteProp = function(propMapping) {
-        dvm.state.selectedPropMappingId = propMapping['@id'];
-        modalService.openConfirmModal('<p>Are you sure you want to delete <strong>' + dvm.getEntityName(dvm.state.selectedPropMappingId) + '</strong> from <strong>' + dvm.getEntityName(dvm.state.selectedClassMappingId) + '</strong>?</p>', dvm.deleteProp);
-    }
-    dvm.getEntityName = function(id) {
-        return util.getDctermsValue(find(dvm.state.mapping.jsonld, {'@id': id}), 'title');
-    }
-    dvm.deleteProp = function() {
-        dvm.state.deleteProp(dvm.state.selectedPropMappingId, dvm.classMappingId);
-        dvm.state.selectedPropMappingId = '';
-        dvm.state.highlightIndexes = [];
-        dvm.setPropMappings();
-    }
-    dvm.setPropMappings = function() {
-        dvm.propMappings = map(mm.getPropMappingsByClass(dvm.state.mapping.jsonld, dvm.classMappingId), propMapping => {
-            propMapping.isInvalid = dvm.isInvalid(propMapping);
-            propMapping.title = util.getDctermsValue(propMapping, 'title');
-            if (mm.isDataMapping(propMapping)) {
-                propMapping.dataMappingInfo = {
-                    value: dvm.getPropValue(propMapping),
-                    preview: dvm.getDataValuePreview(propMapping),
-                    datatype: dvm.getDatatypePreview(propMapping),
-                };
-                var languageTag = dvm.getLanguageTag(propMapping);
-                if (languageTag) {
-                    propMapping.language = {
-                        preview: dvm.getLanguagePreview(propMapping),
-                        tag: languageTag
-                    };
-                }
-            } else if (mm.isObjectMapping(propMapping)) {
-                propMapping.objectMappingInfo = {
-                    value: dvm.getPropValue(propMapping)
-                };
-            }
-            return propMapping;
-        });
-        dvm.propMappings.sort((propMapping1, propMapping2) => propMapping1.title.localeCompare(propMapping2.title));
+interface PropMappingPreview {
+    jsonld: JSONLDObject,
+    title: string,
+    isInvalid: boolean,
+    dataMappingInfo?: DataMappingInfo
+    objectMappingInfo?: ObjectMappingInfo,
+    language?: {
+        tag: string,
+        preview: string
     }
 }
 
-export default classMappingDetailsComponent;
+/**
+ * @class mapper.ClassMappingDetailsComponent
+ *
+ * A component that creates a div with sections to view and edit information about a Class Mapping identified by the
+ * provided ID. One section is for viewing and editing the {@link mapper.IriTemplateOverlayComponent IRI template} of the class
+ * mapping. Another section is for viewing the list of property mappings associated with the class mapping, adding to
+ * that list, editing items in the list, and removing from that list. The component houses methods for opening the
+ * modals for {@link mapper.PropMappingOverlayComponent editing, adding}, and removing PropertyMappings.
+ */
+@Component({
+    selector: 'class-mapping-details',
+    templateUrl: './classMappingDetails.component.html'
+})
+export class ClassMappingDetailsComponent {
+    propMappings: PropMappingPreview[] = [];
+    iriTemplate = '';
+    hasPropsToMap = false;
+    singleClick = false;
+
+    private _classMappingId: string;
+
+    @Input() set classMappingId(value: string) {
+        this._classMappingId = value;
+        this.hasPropsToMap = this.state.hasPropsByClassMappingId(value);
+        this.setPropMappings();
+        this.setIriTemplate();
+    }
+
+    get classMappingId(): string {
+        return this._classMappingId;
+    }
+    @Output() classMappingIdChange = new EventEmitter<string>();
+    @Output() updateClassMappings = new EventEmitter<void>();
+    
+    constructor(private dialog: MatDialog, private mm: MappingManagerService, public state: MapperStateService,
+        private dm: DelimitedManagerService, @Inject('propertyManagerService') private pm,
+        @Inject('utilService') private util) {}
+
+    editIriTemplate(): void {
+        this.dialog.open(IriTemplateOverlayComponent).afterClosed().subscribe(() => {
+            this.setIriTemplate();
+        });
+    }
+    isInvalid(propMapping: JSONLDObject): boolean {
+        return !!find(this.state.invalidProps, {id: propMapping['@id']});
+    }
+    handleSingleClick(propMapping: JSONLDObject): void {
+        this.singleClick = true;
+        setTimeout(() => {
+            if (this.singleClick) {
+                this.clickProperty(propMapping);
+            }
+        });
+    }
+    handleDoubleClick(propMapping: JSONLDObject): void {
+        this.singleClick = false;
+        this.switchClass(propMapping);
+    }
+    clickProperty(propMapping: JSONLDObject): void {
+        if (this.state.selectedPropMappingId === propMapping['@id']) {
+            this.state.selectedPropMappingId = '';
+            this.state.highlightIndexes = [];
+        } else {
+            this.state.selectedPropMappingId = propMapping['@id'];
+            this.state.highlightIndexes = [this.getLinkedColumnIndex(propMapping)];
+        }
+    }
+    setIriTemplate(): void {
+        const classMapping = this.state.selected.mapping.getClassMapping(this.classMappingId);
+        const prefix = this.util.getPropertyValue(classMapping, DELIM + 'hasPrefix');
+        const localName = this.util.getPropertyValue(classMapping, DELIM + 'localName');
+        this.iriTemplate = prefix + localName;
+    }
+    getPropValue(propMapping: JSONLDObject): string {
+        if (this.mm.isDataMapping(propMapping)) {
+            return this.dm.getHeader(this.getLinkedColumnIndex(propMapping));
+        } else {
+            const classMapping = this.state.selected.mapping.getClassMapping(this.getLinkedClassId(propMapping));
+            return this.util.getDctermsValue(classMapping, 'title');
+        }
+    }
+    getDataValuePreview(propMapping: JSONLDObject): string {
+        const firstRowIndex = this.dm.containsHeaders ? 1 : 0;
+        return get(this.dm.dataRows, `[${firstRowIndex}][${this.getLinkedColumnIndex(propMapping)}]`, '(None)');
+    }
+    getDatatypePreview(propMapping: JSONLDObject): string {
+        const props = this.state.getPropsByClassMappingId(this.classMappingId);
+        const mapProp = this.util.getPropertyId(propMapping, DELIM + 'hasProperty');
+        const prop = find(props, {propObj: {'@id': mapProp}});
+        const propIRI = this.util.getPropertyId(propMapping, DELIM + 'datatypeSpec') || this.util.getPropertyId(prop?.propObj, RDFS + 'range') || XSD + 'string';
+        return this.util.getBeautifulIRI(propIRI);
+    }
+    getLanguagePreview(propMapping: JSONLDObject): string {
+        const languageObj = find(this.pm.languageList, {value: this.getLanguageTag(propMapping)});
+        return languageObj ? languageObj.label : '';
+    }
+    getLanguageTag(propMapping: JSONLDObject): string {
+        return this.util.getPropertyValue(propMapping, DELIM + 'languageSpec');
+    }
+    getLinkedClassId(propMapping: JSONLDObject): string {
+        return this.util.getPropertyId(propMapping, DELIM + 'classMapping');
+    }
+    getLinkedColumnIndex(propMapping: JSONLDObject): string {
+        return this.util.getPropertyValue(propMapping, DELIM + 'columnIndex');
+    }
+    switchClass(propMapping: JSONLDObject): void {
+        if (this.mm.isObjectMapping(propMapping)) {
+            this.classMappingIdChange.emit(this.getLinkedClassId(propMapping));
+            this.state.selectedPropMappingId = '';
+        }
+    }
+    addProp(): void {
+        this.state.newProp = true;
+        this.dialog.open(PropMappingOverlayComponent).afterClosed().subscribe(() => {
+            this.setPropMappings();
+            // In case the added prop added a class mapping
+            this.updateClassMappings.emit();
+        });
+    }
+    editProp(propMapping: PropMappingPreview): void {
+        this.state.selectedPropMappingId = propMapping.jsonld['@id'];
+        this.state.newProp = false;
+        this.dialog.open(PropMappingOverlayComponent).afterClosed().subscribe(() => {
+            this.setPropMappings();
+        });
+    }
+    confirmDeleteProp(propMapping: PropMappingPreview): void {
+        const classMapping = this.state.selected.mapping.getClassMapping(this.classMappingId);
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: `<p>Are you sure you want to delete <strong>${propMapping.title}</strong> from <strong>${this.util.getDctermsValue(classMapping, 'title')}</strong>?</p>`
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.deleteProp(propMapping.jsonld['@id']);
+            }
+        });
+    }
+    deleteProp(propMappingId: string): void {
+        this.state.deleteProp(propMappingId, this.classMappingId);
+        this.state.selectedPropMappingId = '';
+        this.state.highlightIndexes = [];
+        this.setPropMappings();
+    }
+    setPropMappings(): void {
+        this.propMappings = this.state.selected.mapping.getPropMappingsByClass(this.classMappingId).map(propMapping => {
+            const propMappingPreview: PropMappingPreview = {
+                jsonld: propMapping,
+                isInvalid: this.isInvalid(propMapping),
+                title: this.util.getDctermsValue(propMapping, 'title')
+            };
+            if (this.mm.isDataMapping(propMapping)) {
+                propMappingPreview.dataMappingInfo = {
+                    value: this.getPropValue(propMapping),
+                    preview: this.getDataValuePreview(propMapping),
+                    datatype: this.getDatatypePreview(propMapping),
+                };
+                const languageTag = this.getLanguageTag(propMapping);
+                if (languageTag) {
+                    propMappingPreview.language = {
+                        preview: this.getLanguagePreview(propMapping),
+                        tag: languageTag
+                    };
+                }
+            } else if (this.mm.isObjectMapping(propMapping)) {
+                propMappingPreview.objectMappingInfo = {
+                    value: this.getPropValue(propMapping)
+                };
+            }
+            return propMappingPreview;
+        });
+        this.propMappings.sort((propMapping1, propMapping2) => propMapping1.title.localeCompare(propMapping2.title));
+    }
+}

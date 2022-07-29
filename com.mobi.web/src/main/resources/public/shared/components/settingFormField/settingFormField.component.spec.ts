@@ -25,20 +25,19 @@ import { FormGroup, FormControl, FormsModule, ReactiveFormsModule } from '@angul
 import { By } from '@angular/platform-browser';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MatAutocompleteModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatIconModule, MatInputModule, MatLabel, MatMenuModule, MatProgressSpinnerModule, MatSelectModule, MatSlideToggleModule, MatTableModule, MatTabsModule, MatTooltipModule } from '@angular/material';
-
+import { MatAutocompleteModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatIconModule, MatInputModule, MatMenuModule, MatProgressSpinnerModule, MatSelectModule, MatSlideToggleModule, MatTableModule, MatTabsModule, MatTooltipModule } from '@angular/material';
 import { configureTestSuite } from 'ng-bullet';
 import { get } from 'lodash';
 
 import {
-    cleanStylesFromDOM, mockUtil, mockPrefixes
+    cleanStylesFromDOM, mockUtil
 } from '../../../../../../test/ts/Shared';
-
 import { SettingConstants } from '../../models/settingConstants.class';
-import { SettingFormFieldComponent } from './settingFormField.component';
 import { CustomLabelComponent } from '../customLabel/customLabel.component';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
+import { SETTING, SHACL, XSD } from '../../../prefixes';
+import { SettingFormFieldComponent } from './settingFormField.component';
 
 describe('Setting Form Field component', function() {
     let component: SettingFormFieldComponent;
@@ -79,7 +78,6 @@ describe('Setting Form Field component', function() {
             ],
             providers: [
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'prefixes', useClass: mockPrefixes }
             ]
         });
     });
@@ -99,33 +97,33 @@ describe('Setting Form Field component', function() {
         });
 
         formGroup = new FormGroup({
-            'http://mobi.com/ontologies/setting#hasDataValue': new FormControl('firstVal')
+            [SETTING + 'hasDataValue']: new FormControl('firstVal')
         });
 
         field = SettingConstants.HAS_DATA_VALUE;
 
         shaclShape = {
-            '@id': 'setting:SomeSimpleTextPreferencePropertyShape',
-            '@type': [ 'shacl:PropertyShape' ],
-            'setting:usesFormField': [ {
-              '@id': 'setting:TextInput'
+            '@id': SETTING + 'SomeSimpleTextPreferencePropertyShape',
+            '@type': [ SHACL + 'PropertyShape' ],
+            [SETTING + 'usesFormField']: [ {
+              '@id': SETTING + 'TextInput'
             } ],
-            'shacl:datatype': [ {
-              '@id': 'xsd:string'
+            [SHACL + 'datatype']: [ {
+              '@id': XSD + 'string'
             } ],
-            'shacl:name': [ {
+            [SHACL + 'name']: [ {
               '@value': 'Some simple text field'
             } ],
-            'shacl:maxCount': [ {
-              '@type': 'xsd:integer',
+            [SHACL + 'maxCount']: [ {
+              '@type': XSD + 'integer',
               '@value': '2'
             } ],
-            'shacl:minCount': [ {
-              '@type': 'xsd:integer',
+            [SHACL + 'minCount']: [ {
+              '@type': XSD + 'integer',
               '@value': '1'
             } ],
-            'shacl:path': [ {
-              '@id': 'http://mobi.com/ontologies/setting#hasDataValue'
+            [SHACL + 'path']: [ {
+              '@id': SETTING + 'hasDataValue'
             } ]
         };
 
@@ -151,7 +149,7 @@ describe('Setting Form Field component', function() {
                     expect(component.label).toEqual('Some simple text field');
                 });
                 it('when a shacl name does not exist', function() {
-                    delete component.shaclShape['shacl:name'];
+                    delete component.shaclShape[SHACL + 'name'];
                     fixture.detectChanges();
                     component.ngOnChanges();
                     expect(component.label).toEqual('');
@@ -163,30 +161,30 @@ describe('Setting Form Field component', function() {
                     expect(component.formType).toEqual('textInput');
                 });
                 it('when rdf declares a toggle input field', function() {
-                    component.shaclShape['setting:usesFormField'] = [{
-                        '@id': 'setting:ToggleInput'
+                    component.shaclShape[SETTING + 'usesFormField'] = [{
+                        '@id': SETTING + 'ToggleInput'
                     }];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('toggle');
                 });
                 it('when rdf declares an unsupported input field', function() {
-                    component.shaclShape['setting:usesFormField'] = [{
-                        '@id': 'setting:UnknownInput'
+                    component.shaclShape[SETTING + 'usesFormField'] = [{
+                        '@id': SETTING + 'UnknownInput'
                     }];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('');
-                    expect(utilStub.createErrorToast).toHaveBeenCalled();
+                    expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
                 });
                 it('when rdf declares no input field', function() {
-                    delete component.shaclShape['setting:usesFormField'];
+                    delete component.shaclShape[SETTING + 'usesFormField'];
                     component.ngOnChanges();
                     expect(component.formType).toEqual('');
-                    expect(utilStub.createErrorToast).toHaveBeenCalled();
+                    expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
                 });
             });
             describe('should set validators correctly', function() {
                 it('when a min count exists', function() {
-                    component.shaclShape['shacl:pattern'] = [{
+                    component.shaclShape[SHACL + 'pattern'] = [{
                         '@value': '[a-zA-Z ]*'
                     }];
                     component.ngOnChanges();
@@ -194,13 +192,13 @@ describe('Setting Form Field component', function() {
                     expect(component.fieldFormControl.valid).toEqual(false);
                 });
                 it('when a min count does not exist', function() {
-                    delete component.shaclShape['shacl:minCount'];
+                    delete component.shaclShape[SHACL + 'minCount'];
                     component.ngOnChanges();
                     component.fieldFormControl.setValue('');
                     expect(component.fieldFormControl.valid).toEqual(true);
                 });
                 it('when a shacl pattern exists', function() {
-                    component.shaclShape['shacl:pattern'] = [{
+                    component.shaclShape[SHACL + 'pattern'] = [{
                         '@value': '[a-zA-Z ]*'
                     }];
                     component.ngOnChanges();
@@ -219,8 +217,8 @@ describe('Setting Form Field component', function() {
                     expect(component.fieldFormControl.valid).toEqual(true);
                 });
                 it('when shacl datatype is integer', function() {
-                    component.shaclShape['shacl:datatype'] = [{
-                        '@id': 'xsd:integer'
+                    component.shaclShape[SHACL + 'datatype'] = [{
+                        '@id': XSD + 'integer'
                     }];
                     component.ngOnChanges();
 

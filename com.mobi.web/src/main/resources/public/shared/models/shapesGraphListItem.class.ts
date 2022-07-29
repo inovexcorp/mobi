@@ -21,13 +21,13 @@
  * #L%
  */
 import { VersionedRdfListItem } from './versionedRdfListItem.class';
-import { OptionalJSONLD } from './OptionalJSONLD.class';
+import { JSONLDObject } from './JSONLDObject.interface';
 
 export class ShapesGraphListItem extends VersionedRdfListItem {
     shapesGraphId: string;
     changesPageOpen: boolean;
     currentVersionTitle: string;
-    metadata: OptionalJSONLD;
+    metadata: JSONLDObject;
     content: string;
 
     constructor() {
@@ -35,7 +35,7 @@ export class ShapesGraphListItem extends VersionedRdfListItem {
         this.shapesGraphId = '';
         this.changesPageOpen = false;
         this.currentVersionTitle = '';
-        this.metadata = new OptionalJSONLD();
+        this.metadata = undefined;
         this.content = '';
     }
 }

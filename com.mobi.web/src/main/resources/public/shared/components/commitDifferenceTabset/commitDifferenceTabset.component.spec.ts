@@ -28,6 +28,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent } from 'ng-mocks';
+
 import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { Difference } from '../../models/difference.class';
 import { CommitChangesDisplayComponent } from '../commitChangesDisplay/commitChangesDisplay.component';
@@ -66,7 +67,6 @@ describe('Commit Difference Tabset component', function() {
         component.targetId = '';
         component.difference = new Difference();
         component.entityNameFunc = jasmine.createSpy('entityNameFunc');
-        component.showMoreResultsFunc = jasmine.createSpy('showMoreResultsFunc');
         component.recordId = 'recordId';
     });
 
@@ -114,7 +114,7 @@ describe('Commit Difference Tabset component', function() {
         });
         it('with a commit-changes-display', fakeAsync(function() {
             component.difference = new Difference();
-            component.difference.additions = [{}];
+            component.difference.additions = [{'@id': ''}];
             component.difference.deletions = [];
             fixture.detectChanges();
             element.queryAll(By.css('.mat-tab-label'))[0].nativeElement.click();

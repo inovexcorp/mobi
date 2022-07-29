@@ -22,6 +22,7 @@
  */
 import * as angular from 'angular';
 import { map, concat, intersection, forEach, get, assign, join, sortBy, has, keys } from 'lodash';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 
 import './propertyFilterOverlay.component.scss';
 
@@ -55,7 +56,7 @@ const propertyFilterOverlayComponent = {
 
 propertyFilterOverlayComponentCtrl.$inject = ['$timeout', 'discoverStateService', 'utilService', 'searchService', 'prefixes', 'ontologyManagerService']
 
-function propertyFilterOverlayComponentCtrl($timeout, discoverStateService, utilService, searchService, prefixes, ontologyManagerService) {
+function propertyFilterOverlayComponentCtrl($timeout, discoverStateService: DiscoverStateService, utilService, searchService, prefixes, ontologyManagerService) {
     var dvm = this;
     var util = utilService;
     var ds = discoverStateService;

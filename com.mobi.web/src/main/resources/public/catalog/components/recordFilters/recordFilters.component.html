@@ -21,26 +21,26 @@
   #L%
   -->
 <div class="record-filters w-100">
-    <div class="filter-container" ng-repeat="currentFilter in dvm.filters">
-        <h5 class="record-filter-header text-muted d-flex justify-content-between" ng-click="currentFilter.hide = !currentFilter.hide" data-toggle="collapse" data-target="#filter_options_{{$id}}" aria-expanded="true" aria-controls="filter_options_{{$id}}">
-            <span>{{ currentFilter.title }}</span>
-            <span><i class="material-icons">{{currentFilter.hide ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}}</i></span>
-        </h5>
-        <div class="filter-options collapse show" id="filter_options_{{$id}}">
-            <search-bar ng-if="currentFilter.searchable" bind-model="currentFilter.searchModel()" change-event="currentFilter.searchChanged(value)" submit-event="currentFilter.searchSubmitted()"></search-bar>
-            <info-message ng-if="!currentFilter.filterItems.length">No {{ currentFilter.title }} available</info-message>
-            <div ng-class="{pageable: currentFilter.pageable}">
-                <div class="filter-option my-2" ng-repeat="filterItem in currentFilter.filterItems track by $index">
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="filter-checkbox_{{$id}}" ng-model="filterItem.checked" ng-change="currentFilter.filter(filterItem)">
-                        <label class="custom-control-label" for="filter-checkbox_{{$id}}">{{ currentFilter.getItemText(filterItem) }}</label>
-                    </div>
+    <mat-expansion-panel class="mat-elevation-z0" *ngFor="let currentFilter of filters" [expanded]="!currentFilter.hide">
+        <mat-expansion-panel-header>
+            <mat-panel-title>
+                {{ currentFilter.title }}
+            </mat-panel-title>
+        </mat-expansion-panel-header>
+        <div class="filter-options">
+            <!-- TODO: Use search-bar when upgraded -->
+            <mat-form-field *ngIf="currentFilter.searchable" class="w-100">
+                <input matInput placeholder="Search..." [(ngModel)]="currentFilter.searchModel" (ngModelChange)="currentFilter.searchChanged($event)" (keyup.enter)="currentFilter.searchSubmitted()">
+            </mat-form-field>
+            <info-message *ngIf="!currentFilter.filterItems.length">No {{ currentFilter.title }} available</info-message>
+            <div [ngClass]="{pageable: currentFilter.pageable}">
+                <div class="filter-option my-2" *ngFor="let filterItem of currentFilter.filterItems">
+                    <mat-checkbox [(ngModel)]="filterItem.checked" (change)="currentFilter.filter(filterItem)">{{ currentFilter.getItemText(filterItem) }}</mat-checkbox>
                 </div>
             </div>
-            <a ng-if="currentFilter.pageable && currentFilter.pagingData.hasNextPage" ng-click="currentFilter.nextPage()">
+            <a *ngIf="currentFilter.pageable && currentFilter.pagingData.hasNextPage" (click)="currentFilter.nextPage()">
                 <i class="fa fa-fw fa-plus"></i><span>Load More</span>
             </a>
         </div>
-
-    </div>
+    </mat-expansion-panel>
 </div>

@@ -22,8 +22,14 @@
  */
 import { find, get, noop, reject } from 'lodash';
 import { Inject, Component, OnInit, OnDestroy } from '@angular/core';
+import { first } from 'rxjs/operators';
+import { HttpResponse } from '@angular/common/http';
+
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { CATALOG } from '../../../prefixes';
+
 import './shapesGraphMergePage.component.scss';
 
 /**
@@ -45,8 +51,8 @@ import './shapesGraphMergePage.component.scss';
     templateUrl: './shapesGraphMergePage.component.html'
 })
 export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
-    constructor(@Inject('catalogManagerService') private cm, @Inject('utilService') private util,
-                @Inject('prefixes') private prefixes, public state: ShapesGraphStateService) {
+    constructor(private cm: CatalogManagerService, @Inject('utilService') private util,
+                public state: ShapesGraphStateService) {
     }
 
     catalogId = '';
@@ -57,10 +63,10 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
-        this.cm.getRecordBranches(this.state.listItem.versionedRdfRecord.recordId, this.catalogId)
-            .then(response => {
-                this.branches = reject(response.data, {'@id': this.state.listItem.versionedRdfRecord.branchId});
-                const branch = find(response.data, {'@id': this.state.listItem.versionedRdfRecord.branchId});
+        this.cm.getRecordBranches(this.state.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(first()).toPromise()
+            .then((response: HttpResponse<JSONLDObject[]>) => {
+                this.branches = reject(response.body, {'@id': this.state.listItem.versionedRdfRecord.branchId});
+                const branch = find(response.body, {'@id': this.state.listItem.versionedRdfRecord.branchId});
                 this.branchTitle = this.util.getDctermsValue(branch, 'title');
                 this.state.listItem.merge.difference = undefined;
                 this.state.listItem.merge.startIndex = 0;
@@ -78,9 +84,9 @@ export class ShapesGraphMergePageComponent implements OnInit, OnDestroy {
         this.state.listItem.merge.startIndex = 0;
         this.state.listItem.merge.target = value;
         if (this.state.listItem.merge.target) {
-            this.cm.getRecordBranch(this.state.listItem.merge.target['@id'], this.state.listItem.versionedRdfRecord.recordId, this.catalogId)
-                .then(target => {
-                    this.targetHeadCommitId = this.util.getPropertyId(target, this.prefixes.catalog + 'head');
+            this.cm.getRecordBranch(this.state.listItem.merge.target['@id'], this.state.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(first()).toPromise()
+                .then((target: JSONLDObject) => {
+                    this.targetHeadCommitId = this.util.getPropertyId(target, CATALOG + 'head');
                     return this.state.getMergeDifferences(this.state.listItem.versionedRdfRecord.commitId, this.targetHeadCommitId, this.cm.differencePageSize, 0);
                 }, error => Promise.reject(error))
                 .then(noop, errorMessage => {

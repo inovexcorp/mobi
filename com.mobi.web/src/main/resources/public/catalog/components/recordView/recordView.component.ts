@@ -20,126 +20,111 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
+import { Component, Inject, OnInit } from '@angular/core';
 import { find } from 'lodash';
+
+import { CATALOG, POLICY } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { CatalogStateService } from '../../../shared/services/catalogState.service';
 
 import './recordView.component.scss';
 
-const template = require('./recordView.component.html');
-
 /**
- * @ngdoc component
- * @name catalog.component:recordView
- * @requires shared.service:catalogStateService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:policyEnforcementService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @class catalog.RecordViewComponent
  *
- * @description
- * `recordView` is a component which creates a div with a Bootstrap `row` containing columns displaying different
- * information about the currently {@link shared.service:catalogStateService selected catalog Record}. The
- * first column just contains a button to go back to the {@link catalog.component:catalogPage}. The second column
- * contains a display of the Record's title, description, and {@link catalog.component:recordIcon icon} along with a
- * {@link catalog.component:recordViewTabset}. The third column contains the Record's
- * {@link catalog.component:entityPublisher publisher}, modified date, issued date, and
- * {@link catalog.component:catalogRecordKeywords keywords}. On initialization of the component, it will re-retrieve
+ * A component which creates a div with a Bootstrap `row` containing columns displaying different
+ * information about the currently {@link shared.CatalogStateService selected catalog Record}. The
+ * first column just contains a button to go back to the {@link catalog.CatalogPageComponent}. The second column
+ * contains a display of the Record's title, description, and {@link catalog.RecordIconComponent icon} along with a
+ * {@link catalog.RecordViewTabset}. The third column contains the Record's
+ * {@link catalog.EntityPublisher publisher}, modified date, issued date, and
+ * {@link catalog.CatalogRecordKeywords keywords}. On initialization of the component, it will re-retrieve
  * the Record to ensure that it still exists.
  */
-const recordViewComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: recordViewComponentCtrl
-};
+@Component({
+    selector: 'record-view',
+    templateUrl: './recordView.component.html'
+})
+export class RecordViewComponent implements OnInit {
+    record: JSONLDObject = undefined;
+    completeRecord: JSONLDObject[] = undefined;
+    title = '';
+    description = '';
+    modified = '';
+    issued = '';
+    canEdit = false;
 
-recordViewComponentCtrl.$inject = ['$q', 'catalogStateService', 'catalogManagerService', 'ontologyStateService', 'policyEnforcementService', 'utilService', 'prefixes'];
+    constructor(public state: CatalogStateService, public cm: CatalogManagerService, 
+        @Inject('ontologyStateService') public os, @Inject('policyEnforcementService') public pep, 
+        @Inject('utilService') public util) {}
 
-function recordViewComponentCtrl($q, catalogStateService, catalogManagerService, ontologyStateService, policyEnforcementService, utilService, prefixes) {
-    const dvm = this;
-    const state = catalogStateService;
-    const pep = policyEnforcementService;
-
-    dvm.record = undefined;
-    dvm.completeRecord = undefined;
-    dvm.title = '';
-    dvm.description = '';
-    dvm.modified = '';
-    dvm.issued = '';
-    dvm.canEdit = false;
-    
-    dvm.$onInit = function() {
-        const recordCatalogId = utilService.getPropertyId(state.selectedRecord, prefixes.catalog + 'catalog');
-        catalogManagerService.getRecord(state.selectedRecord['@id'], recordCatalogId)
-            .then(responseRecord => {
-                setInfo(responseRecord);
-                dvm.setCanEdit();
+    ngOnInit(): void {
+        this.cm.getRecord(this.state.selectedRecord['@id'], this.util.getPropertyId(this.state.selectedRecord, CATALOG + 'catalog'))
+            .subscribe((response: JSONLDObject[]) => {
+                this.setInfo(response);
+                this.setCanEdit();
             }, (errorMessage) => {
-                utilService.createErrorToast(errorMessage);
-                state.selectedRecord = undefined;
+                this.util.createErrorToast(errorMessage);
+                this.state.selectedRecord = undefined;
             });
     }
-    dvm.goBack = function() {
-        state.selectedRecord = undefined;
+    goBack(): void {
+        this.state.selectedRecord = undefined;
     }
-    dvm.updateRecord = function(newRecord) {
-        const indexToUpdate = dvm.completeRecord.findIndex(oldRecord => oldRecord['@id'] === newRecord['@id']);
+    updateRecord(newRecord: JSONLDObject): void {
+        const indexToUpdate = this.completeRecord.findIndex(oldRecord => oldRecord['@id'] === newRecord['@id']);
         if (indexToUpdate !== -1) {
-            dvm.completeRecord[indexToUpdate] = newRecord;
+            this.completeRecord[indexToUpdate] = newRecord;
         } else {
-            utilService.createErrorToast("Could not find record: " + newRecord['@id']);
+            this.util.createErrorToast('Could not find record: ' + newRecord['@id']);
         }
         
-        const recordCatalogId = utilService.getPropertyId(newRecord, prefixes.catalog + 'catalog');
-        return catalogManagerService.updateRecord(newRecord['@id'], recordCatalogId, dvm.completeRecord)
-            .then((response) => {
-                setInfo(response);
-                utilService.createSuccessToast('Successfully updated the record');
-                state.selectedRecord = newRecord;
+        this.cm.updateRecord(newRecord['@id'], this.util.getPropertyId(newRecord, CATALOG + 'catalog'), this.completeRecord)
+            .subscribe((response: JSONLDObject[]) => {
+                this.setInfo(response);
+                this.util.createSuccessToast('Successfully updated the record');
+                this.state.selectedRecord = newRecord;
             }, errorMessage => {
-                utilService.createErrorToast(errorMessage);
-                return $q.reject();
+                this.util.createErrorToast(errorMessage);
             });
     }
-    dvm.updateTitle = function(newTitle) {
-        const openRecord = find(ontologyStateService.list, item => item.ontologyRecord.title === dvm.title);
+    updateTitle(newTitle: string): void {
+        const openRecord = find(this.os.list, item => item.ontologyRecord.title === this.title);
         if (openRecord) {
             openRecord.ontologyRecord.title = newTitle;
         }
-        utilService.updateDctermsValue(dvm.record, 'title', newTitle);
-        return dvm.updateRecord(dvm.record);
+        this.util.updateDctermsValue(this.record, 'title', newTitle);
+        this.updateRecord(this.record);
     }
-    dvm.updateDescription = function(newDescription) {
-        utilService.updateDctermsValue(dvm.record, 'description', newDescription);
-        return dvm.updateRecord(dvm.record);
+    updateDescription(newDescription: string): void {
+        this.util.updateDctermsValue(this.record, 'description', newDescription.trim());
+        this.updateRecord(this.record);
     }
-    dvm.setCanEdit = function() {
+    setCanEdit(): void {
         const request = {
-            resourceId: dvm.record['@id'],
-            actionId: prefixes.policy + 'Update'
+            resourceId: this.record['@id'],
+            actionId: POLICY + 'Update'
         };
-        pep.evaluateRequest(request)
+        this.pep.evaluateRequest(request)
             .then(response => {
-                dvm.canEdit = response !== pep.deny;
+                this.canEdit = response !== this.pep.deny;
             }, () => {
-                utilService.createWarningToast('Could not retrieve record permissions');
-                dvm.canEdit = false;
+                this.util.createWarningToast('Could not retrieve record permissions');
+                this.canEdit = false;
             });
     }
-    dvm.manageEvent = function(){
-        state.editPermissionSelectedRecord = true;
+    updatePermission(value:boolean):void {
+        this.state.editPermissionSelectedRecord = value;
     }
-
-    function setInfo(record) {
-        dvm.completeRecord = angular.copy(record);
-        dvm.record = find(record, ['@id', state.selectedRecord['@id']]);;
-        dvm.title = utilService.getDctermsValue(dvm.record, 'title');
-        dvm.description = utilService.getDctermsValue(dvm.record, 'description');
-        dvm.modified = utilService.getDate(utilService.getDctermsValue(dvm.record, 'modified'), 'short');
-        dvm.issued = utilService.getDate(utilService.getDctermsValue(dvm.record, 'issued'), 'short');
+    setInfo(record: JSONLDObject[]): void {
+        this.completeRecord = record;
+        const matchingRecord = find(record, ['@id', this.state.selectedRecord['@id']]);
+        this.record = matchingRecord;
+        this.title = this.util.getDctermsValue(this.record, 'title');
+        this.description = this.util.getDctermsValue(this.record, 'description');
+        this.modified = this.util.getDate(this.util.getDctermsValue(this.record, 'modified'), 'short');
+        this.issued = this.util.getDate(this.util.getDctermsValue(this.record, 'issued'), 'short');
     }
 
 }
-
-export default recordViewComponent;

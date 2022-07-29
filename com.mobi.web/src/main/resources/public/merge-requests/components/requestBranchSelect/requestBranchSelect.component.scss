@@ -30,33 +30,15 @@
     .form-container {
         text-align: left;
 
-
-        .branch-select-form {
-            .form-control-static {
-                padding: 0;
-                word-break: break-all;
-            }
-            .ui-select-toggle {
-                width: 100%;
-            }
-            input.ui-select-search {
-                width: 100% !important;
-
-                &.ng-hide {
-                    display: block !important;
-                    visibility: hidden;
-                    height: 0;
-                    border: 0;
-                    padding: 0;
-                }
-            }
-            .select-branch {
-                // margin: 0 5px;
-                text-overflow: ellipsis;
-            }
+        .mr-record-title {
+            word-break: break-all;
         }
     }
     .commit-difference-tabset {
-        margin-top: 20px;
+        height: 100%;
+
+        .mat-tab-body-content {
+            overflow-y: auto;
+        }
     }
 }

@@ -20,7 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { HttpResponse } from '@angular/common/http';
 import { get, find, remove, sortBy, map, filter, forEach, some, includes } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 import './importsOverlay.component.scss';
 
@@ -60,7 +65,7 @@ const importsOverlayComponent = {
 
 importsOverlayComponentCtrl.$inject = ['$http', 'httpService', '$q', 'REGEX', 'ontologyStateService', 'utilService', 'prefixes', 'propertyManagerService', 'catalogManagerService'];
 
-function importsOverlayComponentCtrl($http, httpService, $q, REGEX, ontologyStateService, utilService, prefixes, propertyManagerService, catalogManagerService) {
+function importsOverlayComponentCtrl($http, httpService, $q, REGEX, ontologyStateService, utilService, prefixes, propertyManagerService, catalogManagerService: CatalogManagerService) {
     var dvm = this;
     var os = ontologyStateService;
     var pm = propertyManagerService;
@@ -82,14 +87,14 @@ function importsOverlayComponentCtrl($http, httpService, $q, REGEX, ontologyStat
     dvm.getOntologyConfig = {
         pageIndex: 0,
         limit: 100,
-        recordType: prefixes.ontologyEditor + 'OntologyRecord',
+        type: prefixes.ontologyEditor + 'OntologyRecord',
         sortOption: find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
         searchText: ''
     };
 
     dvm.setOntologies = function() {
         httpService.cancel(dvm.spinnerId);
-        return cm.getRecords(catalogId, dvm.getOntologyConfig, dvm.spinnerId)
+        return cm.getRecords(catalogId, dvm.getOntologyConfig, dvm.spinnerId).pipe(first()).toPromise()
             .then(parseOntologyResults, errorMessage => onError(errorMessage, 'server'));
     }
     dvm.toggleOntology = function(ontology) {
@@ -148,8 +153,8 @@ function importsOverlayComponentCtrl($http, httpService, $q, REGEX, ontologyStat
         dvm.dismiss();
     }
 
-    function parseOntologyResults(response) {
-        dvm.ontologies = map(filter(response.data, isOntologyUnused), record => ({
+    function parseOntologyResults(response: HttpResponse<JSONLDObject[]>) {
+        dvm.ontologies = map(filter(response.body, isOntologyUnused), record => ({
             recordId: record['@id'],
             ontologyIRI: dvm.getOntologyIRI(record),
             title: dvm.util.getDctermsValue(record, 'title'),
@@ -170,7 +175,7 @@ function importsOverlayComponentCtrl($http, httpService, $q, REGEX, ontologyStat
     function onError(errorMessage, tabKey) {
         if (tabKey === 'url') {
             dvm.urlError = errorMessage;
-        } else if (tabKey = 'server') {
+        } else if (tabKey === 'server') {
             dvm.ontologies = [];
             dvm.serverError = errorMessage;
         }

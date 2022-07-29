@@ -32,6 +32,7 @@ recordPermissionsManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilSe
  * @description
  * `recordPermissionsManagerService` is a service that provides access to the Mobi policy REST
  * endpoints and variables with common IRIs used in policies.
+ * @TODO upgrade to angular
  */
 function recordPermissionsManagerService($http, $q, REST_PREFIX, utilService) {
     var self = this;

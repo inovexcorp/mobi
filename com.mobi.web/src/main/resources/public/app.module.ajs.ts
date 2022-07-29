@@ -28,7 +28,7 @@ import * as CodeMirror  from 'codemirror-minified';
 (<any> window).CodeMirror = CodeMirror;
 import * as Handsontable from 'handsontable';
 (<any> window).Handsontable = Handsontable;
-import { downgradeComponent, downgradeInjectable } from '@angular/upgrade/static';
+import { downgradeComponent } from '@angular/upgrade/static';
 import 'codemirror-no-newlines/no-newlines.js';
 import 'codemirror-minified/mode/sparql/sparql.js';
 import 'codemirror-minified/mode/turtle/turtle.js';
@@ -71,6 +71,7 @@ import './css/manchestersyntax.scss';
 import './css/styles.scss';
 import '@triply/yasgui/build/yasgui.min.css';
 import './css/yasgui.scss';
+import 'gridjs/dist/theme/mermaid.min.css';
 
 import './vendor/manchestersyntax.js';
 
@@ -85,8 +86,6 @@ import requestInterceptor from './requestInterceptor.service';
 import beforeUnload from './beforeUnload.service';
 
 import { AppComponent } from './app.component';
-import { SpinnerInterceptor } from './spinner.interceptor';
-import { SpinnerService } from './spinner.service';
 
 import './catalog/catalog.module';
 import './datasets/datasets.module';
@@ -165,9 +164,7 @@ angular
     .service('beforeUnload', beforeUnload)
     .run(runBeforeUnload)
     .run(run)
-    .directive('mobiApp', downgradeComponent({component: AppComponent}) as angular.IDirectiveFactory)
-    .factory('spinnerInterceptor', downgradeInjectable(SpinnerInterceptor))
-    .factory('spinnerService', downgradeInjectable(SpinnerService));
+    .directive('mobiApp', downgradeComponent({component: AppComponent}) as angular.IDirectiveFactory);
 
 runBeforeUnload.$inject = ['beforeUnload'];
 

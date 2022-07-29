@@ -21,67 +21,68 @@
   #L%
   -->
 <div class="merge-request-view d-flex flex-column h-100">
-    <block class="h-100">
-        <block-content>
-            <div class="main-details">
-                <span class="open-indicator badge badge-pill float-right" ng-class="dvm.mm.isAccepted(dvm.state.selected.jsonld) ? 'badge-success' : 'badge-primary'">{{dvm.mm.isAccepted(dvm.state.selected.jsonld) ? 'Accepted' : 'Open'}}</span>
-                <div class="title">
-                    <h2>{{dvm.state.selected.title}}</h2>
-                    <small>Created on {{dvm.state.selected.date}} by {{dvm.state.selected.creator}}</small>
-                </div>
-                <div class="details row">
-                    <div class="details col">
-                        <div class="description">
-                            {{dvm.util.getDctermsValue(dvm.state.selected.jsonld, 'description') || 'No description'}}
-                        </div>
-                        <div class="request-summary">
-                            <p><strong>Branch:</strong> {{dvm.state.selected.sourceTitle}}</p>
-                            <p><strong>Into Branch: </strong>{{dvm.state.selected.targetTitle ? dvm.state.selected.targetTitle : 'NO TARGET'}}</p>
-                            <p><strong>In Ontology: </strong>{{dvm.state.selected.recordTitle}}</p>
-                        </div>
-                        <div class="assignees">
-                            <span class="field-name">Assignee(s): </span>
-                            <ul class="assignees">
-                                <li ng-if="dvm.state.selected.assignees.length === 0" class="last">(None specified)</li>
-                                <li ng-repeat="assignee in dvm.state.selected.assignees" ng-class="{'last': $last}">{{assignee}}</li>
-                            </ul>
-                        </div>
-                        <checkbox ng-if="dvm.state.selected.sourceTitle !== 'MASTER' && !dvm.mm.isAccepted(dvm.state.selected.jsonld)" [(model)]="dvm.state.selected.removeSource" [display-text]="'Remove ' + dvm.state.selected.sourceTitle + ' after merge.'" [is-disabled]="true"></checkbox>
+    <div class="flex-1 vertical-scroll">
+        <div class="main-details">
+            <mat-chip-list class="float-right" selectable="false">
+                <mat-chip ngClass="{{isAccepted ? 'mat-primary' : 'mat-success'}}" selected>{{isAccepted ? 'Accepted' : 'Open'}}</mat-chip>
+            </mat-chip-list>
+            <div class="title mb-2">
+                <h2 class="text-truncate d-inline-block">{{state.selected.title}}</h2>
+                <small class="ml-1">Created on {{state.selected.date}} by {{state.selected.creator}}</small>
+            </div>
+            <div class="details d-flex">
+                <div class="details flex-1 remove-min-width">
+                    <div class="description">{{state.selected.description}}</div>
+                    <dl>
+                        <dt class="text-muted">Branch</dt>
+                        <dd class="text-truncate" [title]="state.selected.sourceTitle">{{state.selected.sourceTitle}}</dd>
+                        <dt class="text-muted">Into Branch</dt>
+                        <dd class="text-truncate" [title]="state.selected.targetTitle">{{state.selected.targetTitle ? state.selected.targetTitle : 'NO TARGET'}}</dd>
+                        <dt class="text-muted">In Record</dt>
+                        <dd class="text-truncate" [title]="state.selected.recordTitle">{{state.selected.recordTitle}}</dd>
+                    </dl>
+                    <div class="assignees mb-2">
+                        <span class="field-label">Assignee(s)</span>
+                        <ul class="assignees">
+                            <li *ngIf="state.selected.assignees.length === 0" class="last">(None specified)</li>
+                            <li *ngFor="let assignee of state.selected.assignees; last as last" [ngClass]="{'last': last}">{{assignee}}</li>
+                        </ul>
                     </div>
-                    <div ng-if="!dvm.mm.isAccepted(dvm.state.selected.jsonld)" class="edit-button-container col-auto text-center">
-                        <button type="button" class="btn btn-link remove-min-width p-0 fa fa-pencil fa-fw" ng-click="dvm.editRequest()"></button>
-                    </div>
+                    <mat-checkbox *ngIf="state.selected.sourceTitle !== 'MASTER' && !isAccepted" [(ngModel)]="state.selected.removeSource" [disabled]="true">{{'Remove ' + state.selected.sourceTitle + ' after merge.'}}</mat-checkbox>
+                </div>
+                <div *ngIf="!isAccepted" class="edit-button-container text-center">
+                    <button mat-icon-button color="primary" (click)="editRequest()"><i class="fa fa-pencil fa-fw"></i></button>
                 </div>
             </div>
-            <div class="view" ng-if="!dvm.resolveConflicts">
-                <div class="alert alert-warning d-flex align-items-center" role="alert" ng-if="dvm.state.selected.conflicts.length">
-                    <div class="flex-grow-1">
-                        <span class="fa fa-exclamation-triangle" />
-                        <span>This request has conflicts. You can resolve them right now or during the merge process.</span>
-                    </div>
-                    <button class="btn btn-outline-primary" ng-click="dvm.showResolutionForm()">Resolve</button>
+        </div>
+        <div class="view" *ngIf="!resolveConflicts">
+            <div class="alert alert-warning d-flex align-items-center mt-1" role="alert" *ngIf="state.selected.conflicts?.length">
+                <div class="flex-grow-1">
+                    <span class="fa fa-exclamation-triangle"></span>
+                    <span>This request has conflicts. You can resolve them right now or during the merge process.</span>
                 </div>
-                <div class="alert alert-warning" role="alert" ng-if="!dvm.state.selected.targetTitle">
-                    <span class="fa fa-exclamation-triangle" />
-                    <span>The target branch for this merge request has been deleted.</span>
-                </div>
-                <merge-request-tabset request="dvm.state.selected" update-request="dvm.state.selected = value"></merge-request-tabset>
+                <button mat-button color="primary" (click)="showResolutionForm()">Resolve</button>
             </div>
-            <div class="resolve-conflicts mt-2 pt-2" ng-if="dvm.resolveConflicts">
-                <error-display ng-if="dvm.resolveError">Conflict resolution failed</error-display>
-                <resolve-conflicts-form source-title="dvm.state.selected.sourceTitle" target-title="dvm.state.selected.targetTitle" conflicts="dvm.copiedConflicts" resolutions="dvm.resolutions"></resolve-conflicts-form>
+            <div class="alert alert-warning" role="alert" *ngIf="!state.selected.targetTitle">
+                <span class="fa fa-exclamation-triangle"></span>
+                <span>The target branch for this merge request has been deleted.</span>
             </div>
-        </block-content>
-        <block-footer>
-            <div class="view-buttons text-right" ng-if="!dvm.resolveConflicts">
-                <button class="btn" ng-click="dvm.back()">Back</button>
-                <button class="btn btn-danger" ng-click="dvm.showDelete()">Delete</button>
-                <button class="btn btn-primary" ng-if="!dvm.mm.isAccepted(dvm.state.selected.jsonld)" ng-disabled="dvm.isDisabled() || dvm.state.selected.conflicts.length || !dvm.state.selected.targetTitle" ng-click="dvm.showAccept()">Accept</button>
-            </div>
-            <div class="conflicts-buttons text-right" ng-if="dvm.resolveConflicts">
-                <button class="btn" ng-click="dvm.cancelResolve()">Cancel</button>
-                <button class="btn btn-primary" ng-disabled="!dvm.allResolved()" ng-click="dvm.resolve()">Resolve</button>
-            </div>
-        </block-footer>
-    </block>
+            <merge-request-tabset [(request)]="state.selected"></merge-request-tabset>
+        </div>
+        <div class="resolve-conflicts mt-2 pt-2" *ngIf="resolveConflicts">
+            <error-display *ngIf="resolveError">Conflict resolution failed</error-display>
+            <resolve-conflicts-form [branchTitle]="state.selected.sourceTitle" [targetTitle]="state.selected.targetTitle" [conflicts]="copiedConflicts"></resolve-conflicts-form>
+        </div>
+    </div>
+    <div class="buttons">
+        <div class="view-buttons" *ngIf="!resolveConflicts">
+            <button mat-raised-button (click)="back()">Back</button>
+            <button mat-raised-button class="float-right" color="primary" *ngIf="!isAccepted" [disabled]="state.selected.conflicts?.length || !state.selected.targetTitle" (click)="showAccept()">Accept</button>
+            <button mat-raised-button class="float-right" color="warn" (click)="showDelete()">Delete</button>
+        </div>
+        <div class="conflicts-buttons" *ngIf="resolveConflicts">
+            <button mat-raised-button (click)="cancelResolve()">Cancel</button>
+            <button mat-raised-button class="float-right" color="primary" [disabled]="!allResolved()" (click)="resolve()">Resolve</button>
+        </div>
+    </div>
 </div>

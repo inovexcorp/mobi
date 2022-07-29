@@ -20,38 +20,37 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="request-details-form">
+<div class="request-details-form h-100 d-flex flex-column">
     <div class="details-form-container w-100 row">
         <div class="col-8 offset-2">
-            <div class="summary-line">
-                <p><strong> Branch: </strong> {{dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')}} </p>
-                <p><strong>into Branch: </strong> {{dvm.util.getDctermsValue(dvm.state.requestConfig.targetBranch, 'title')}} </p>
-                <p><strong>in Ontology:</strong> {{dvm.util.getDctermsValue(dvm.state.requestConfig.record, 'title')}}</p>
+            <dl class="summary-line">
+                <dt class="text-muted">Branch</dt>
+                <dd class="text-truncate" [title]="branchTitle">{{branchTitle}}</dd>
+                <dt class="text-muted">Into Branch</dt>
+                <dd class="text-truncate" [title]="targetBranchTitle">{{targetBranchTitle}}</dd>
+                <dt class="text-muted">In Record</dt>
+                <dd class="text-truncate" [title]="recordTitle">{{recordTitle}}</dd>
+            </dl>
+            <div [formGroup]="detailsForm">
+                <mat-form-field class="w-100">
+                    <mat-label>Title</mat-label>
+                    <input matInput type="text" name="title" [(ngModel)]="state.requestConfig.title" required focus [ngModelOptions]="{standalone: true}"/>
+                </mat-form-field>
+                <mat-form-field class="w-100">
+                    <mat-label>Description</mat-label>
+                    <textarea matInput name="description" [(ngModel)]="state.requestConfig.description" [ngModelOptions]="{standalone: true}"></textarea>
+                </mat-form-field>
+                <assignee-input [(selected)]="state.requestConfig.assignees" [parentForm]="detailsForm"></assignee-input>
+                <mat-checkbox *ngIf="branchTitle !== 'MASTER'" class="remove-source" [(ngModel)]="state.requestConfig.removeSource" [ngModelOptions]="{standalone: true}">Remove {{branchTitle}} after merge</mat-checkbox>
             </div>
-            <form>
-                <text-input bind-model="dvm.state.requestConfig.title" change-event="dvm.state.requestConfig.title = value" display-text="'Title'" required="true"></text-input>
-                <text-area bind-model="dvm.state.requestConfig.description" change-event="dvm.state.requestConfig.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
-                <div class="form-group">
-                    <custom-label [muted-text]="'(Optional)'">Assignee(s)</custom-label>
-                    <ui-select multiple ng-model="dvm.state.requestConfig.assignees">
-                        <ui-select-match placeholder="Select Assignee(s)">
-                            <span title="{{$item.iri}}">{{$item.username}}</span>
-                        </ui-select-match>
-                        <ui-select-choices repeat="user.username as user in dvm.um.users | filter:$select.search">
-                            <div title="{{user.iri}}" ng-bind-html="user.username | highlight: $select.search | trusted"></div>
-                        </ui-select-choices>
-                    </ui-select>
-                </div>
-                <checkbox ng-if="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title') !== 'MASTER'" [(model)]="dvm.state.requestConfig.removeSource" [display-text]="'Remove ' + dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title') + ' after merge.'"></checkbox>
-            </form>
         </div>
     </div>
-    <commit-difference-tabset [difference]="dvm.state.requestConfig.difference"
-                              [branch-title]="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')"
-                              [target-id]="dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head')"
-                              [commit-id]="dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head')"
-                              [entity-name-func]="dvm.state.getEntityNameLabel"
-                              [show-more-results-func]="dvm.state.retrieveMoreResults"
-                              [start-index]="dvm.state.requestConfig.startIndex"
-                              [record-id]="dvm.state.requestConfig.recordId"></commit-difference-tabset>
+    <commit-difference-tabset class="flex-1 remove-min-height" [difference]="state.difference"
+                              [branchTitle]="branchTitle"
+                              [targetId]="targetCommitId"
+                              [commitId]="sourceCommitId"
+                              [entityNameFunc]="getEntityName.bind(this)"
+                              (showMoreResultsFunc)="state.retrieveMoreResults($event)"
+                              [startIndex]="state.startIndex"
+                              [recordId]="state.requestConfig.recordId"></commit-difference-tabset>
 </div>

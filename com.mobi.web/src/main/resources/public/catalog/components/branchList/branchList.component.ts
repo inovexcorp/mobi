@@ -20,86 +20,72 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { isEmpty, find, forEach, get, filter } from 'lodash';
+import { HttpResponse } from '@angular/common/http';
+import { Component, Inject, Input } from '@angular/core';
+import { isEmpty, find, filter } from 'lodash';
 
-const template = require('./branchList.component.html');
+import { CATALOG, DCTERMS } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+
+import './branchList.component.scss';
 
 /**
- * @ngdoc component
- * @name catalog.component:branchList
- * @requires shared.service:catalogManagerService
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @class catalog.BranchList
  *
- * @description
- * `branchList` is a component which creates a list of expansion panels for all the Branches in the provided catalog
- * Record. If the provided Record is not a VersionedRDFRecord, no branches will be shown. The panel for each Branch
- * shows the title, description, and {@link shared.component:commitHistoryTable}. Only one panel can be open at a
- * time.
+ * A component which creates a list of expansion panels for all the Branches in the provided catalog Record. If the
+ * provided Record is not a VersionedRDFRecord, no branches will be shown. The panel for each Branch shows the title,
+ * description, and {@link shared.component:commitHistoryTable}. Only one panel can be open at a time.
  * 
- * @param {Object} record A JSON-LD object for a catalog Record
+ * @param {JSONLDObject} record A JSON-LD object for a catalog Record
  */
-const branchListComponent = {
-    template,
-    bindings: {
-        record: '<'
-    },
-    controllerAs: 'dvm',
-    controller: branchListComponentCtrl
-};
+@Component({
+    selector: 'branch-list',
+    templateUrl: './branchList.component.html'
+})
+export class BranchListComponent {
+    catalogPrefix = CATALOG;
+    totalSize = 0;
+    branches: JSONLDObject[] = [];
+    catalogId = '';
+    increment = 10;
+    limit = this.increment;
+    recordId: string = undefined;
 
-branchListComponentCtrl.$inject = ['catalogManagerService', 'ontologyManagerService', 'utilService', 'prefixes'];
+    private _record: JSONLDObject;
 
-function branchListComponentCtrl(catalogManagerService, ontologyManagerService, utilService, prefixes) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    var om = ontologyManagerService;
-    dvm.util = utilService;
-    dvm.prefixes = prefixes;
-    dvm.totalSize = 0;
-    dvm.branches = [];
-    dvm.catalogId = '';
-    var increment = 10;
-    dvm.limit = increment;
-    dvm.recordId = undefined;
-
-    dvm.$onInit = function() {
-        if (dvm.record && !isEmpty(dvm.record)) {
-            dvm.catalogId = dvm.util.getPropertyId(dvm.record, prefixes.catalog + 'catalog');
-            dvm.setBranches();
+    @Input() set record(value: JSONLDObject) {
+        this._record = value;
+        if (this._record && !isEmpty(this._record)) {
+            this.catalogId = this.util.getPropertyId(this._record, CATALOG + 'catalog');
+            this.setBranches();
         }
     }
-    dvm.$onChanges = function() {
-        if (dvm.record && !isEmpty(dvm.record)) {
-            dvm.catalogId = dvm.util.getPropertyId(dvm.record, prefixes.catalog + 'catalog');
-            dvm.setBranches();
-        }
+
+    get record(): JSONLDObject {
+        return this._record;
     }
-    dvm.loadMore = function () {
-        dvm.limit += increment;
-        dvm.setBranches();
+    constructor(public cm: CatalogManagerService, @Inject('ontologyManagerService') public om, 
+        @Inject('utilService') public util) {}
+
+    loadMore(): void {
+        this.limit += this.increment;
+        this.setBranches();
     }
-    dvm.showPanel = function(branch) {
-        forEach(dvm.branches, result => delete result.show);
-        branch.show = true;
-    }
-    dvm.setBranches = function() {
-        dvm.recordId = om.isOntologyRecord(dvm.record) ? dvm.record['@id'] : undefined;
-        if (cm.isVersionedRDFRecord(dvm.record)) {
-            var paginatedConfig = {
+    setBranches(): void {
+        this.recordId = this.om.isOntologyRecord(this.record) ? this.record['@id'] : undefined;
+        if (this.cm.isVersionedRDFRecord(this.record)) {
+            const paginatedConfig: PaginatedConfig = {
                 pageIndex: 0,
-                limit: dvm.limit,
-                sortOption: find(cm.sortOptions, {field: prefixes.dcterms + 'modified', asc: false})
+                limit: this.limit,
+                sortOption: find(this.cm.sortOptions, {field: DCTERMS + 'modified', asc: false})
             };
-            cm.getRecordBranches(dvm.record['@id'], dvm.catalogId, paginatedConfig)
-                .then(response => {
-                    dvm.branches = filter(response.data, branch => !cm.isUserBranch(branch));
-                    var headers = response.headers();
-                    dvm.totalSize = get(headers, 'x-total-count', 0) - (response.data.length - dvm.branches.length);
-                }, dvm.util.createErrorToast);
+            this.cm.getRecordBranches(this.record['@id'], this.catalogId, paginatedConfig)
+                .subscribe((response: HttpResponse<JSONLDObject[]>) => {
+                    this.branches = filter(response.body, branch => !this.cm.isUserBranch(branch));
+                    this.totalSize = Number(response.headers.get('x-total-count')) || 0 - (response.body.length - this.branches.length);
+                }, this.util.createErrorToast);
         }
     }
 }
-
-export default branchListComponent;

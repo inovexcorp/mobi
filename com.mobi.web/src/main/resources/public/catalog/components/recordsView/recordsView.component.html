@@ -24,27 +24,27 @@
     <div class="col-lg-10 offset-lg-1 h-100">
         <div class="row h-100 flex-nowrap">
             <div class="col-3">
-                <record-filters catalog-id="dvm.catalogId" record-type="dvm.state.recordFilterType" keyword-filter-list="dvm.state.keywordFilterList" change-filter="dvm.changeFilter(recordType, keywordFilterList)"></record-filters>
+                <record-filters [catalogId]="catalogId" [recordType]="state.recordFilterType" [keywordFilterList]="state.keywordFilterList" (changeFilter)="changeFilter($event)"></record-filters>
             </div>
             <div class="col d-flex flex-column remove-min-width">
-                <form name="dvm.form">
-                    <div class="form-row">
-                        <div class="col">
-                            <search-bar class="record-search" bind-model="dvm.state.recordSearchText" change-event="dvm.state.recordSearchText = value" submit-event="dvm.search(dvm.state.recordSearchText)"></search-bar>
-                        </div>
-                        <div class="col-auto">
-                            <sort-options sort-option="dvm.state.recordSortOption" change-sort="dvm.changeSort(sortOption)"></sort-options>
-                        </div>
-                    </div>
-                </form>
+                <div class="search-form d-flex">
+                    <mat-form-field class='flex-1 mr-2'>
+                        <input matInput class="record-search" placeholder="Search..." [(ngModel)]="state.recordSearchText" (keyup.enter)="searchRecords()">
+                    </mat-form-field>
+                    <mat-form-field>
+                        <mat-select [(ngModel)]="state.recordSortOption" (ngModelChange)="changeSort()">
+                            <mat-option *ngFor="let option of cm.sortOptions" [value]="option">{{option.label}}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
                 <div class="results-list flex-1 vertical-scroll p-2">
-                    <div ng-if="!dvm.records.length">
+                    <div *ngIf="!records.length">
                         <info-message>No records found</info-message>
                     </div>
-                    <record-card ng-repeat="record in dvm.records track by record['@id']" record="record" click-card="dvm.openRecord(record)"></record-card>
+                    <record-card *ngFor="let record of records" [record]="record" (clickCard)="openRecord($event)"></record-card>
                 </div>
                 <div>
-                    <paging current-page="dvm.state.currentRecordPage" limit="dvm.state.recordLimit" total="dvm.state.totalRecordSize" change-event="dvm.getRecordPage(page)"></paging>
+                    <mat-paginator [pageIndex]="state.currentRecordPage" [length]="state.totalRecordSize" [pageSize]="state.recordLimit" (page)="getRecordPage($event)"></mat-paginator>
                 </div>
             </div>
         </div>

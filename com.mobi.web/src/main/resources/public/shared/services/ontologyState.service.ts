@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { HttpResponse } from '@angular/common/http';
 import * as angular from 'angular';
 import { Subject } from 'rxjs';
 import {
@@ -62,6 +63,12 @@ import {
     unset,
     values
 } from 'lodash';
+import { first } from 'rxjs/operators';
+import { CommitDifference } from '../models/commitDifference.interface';
+import { Conflict } from '../models/conflict.interface';
+import { Difference } from '../models/difference.class';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { CatalogManagerService } from './catalogManager.service';
 import { SidePanelPayloadI } from '../../ontology-visualization/interfaces/visualization.interfaces';
 
 ontologyStateService.$inject = ['$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'policyEnforcementService', 'policyManagerService', 'httpService', 'uuid'];
@@ -81,7 +88,7 @@ ontologyStateService.$inject = ['$q', '$filter', 'ontologyManagerService', 'upda
  * @requires shared.service:policyManagerService
  * @requires shared.service:httpService
  */
-function ontologyStateService($q, $filter, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, policyEnforcementService, policyManagerService, httpService, uuid) {
+function ontologyStateService($q, $filter, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService: CatalogManagerService, propertyManagerService, prefixes, manchesterConverterService, policyEnforcementService, policyManagerService, httpService, uuid) {
     var self = this;
     var om = ontologyManagerService;
     var pm = propertyManagerService;
@@ -271,10 +278,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     };
     forEach(pm.defaultDatatypes, iri => addIri(ontologyListItemTemplate, 'dataPropertyRange', iri));
 
-    var emptyInProgressCommit = {
-        additions: [],
-        deletions: []
-    };
+    var emptyInProgressCommit: Difference = new Difference();
 
     /**
      * @ngdoc property
@@ -679,10 +683,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             let promise;
             let branchToastShown = false;
             if (branchId) {
-                promise = cm.getRecordBranch(branchId, recordId, catalogId)
-                    .then(branch => {
+                promise = cm.getRecordBranch(branchId, recordId, catalogId).pipe(first()).toPromise()
+                    .then((branch: JSONLDObject) => {
                         upToDate = util.getPropertyId(branch, prefixes.catalog + 'head') === commitId;
-                        return cm.getInProgressCommit(recordId, catalogId);
+                        return cm.getInProgressCommit(recordId, catalogId).pipe(first()).toPromise();
                     }, error => {
                         util.createWarningToast('Branch ' + branchId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                         branchToastShown = true;
@@ -690,25 +694,25 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                     });
             } else if (tagId) {
                 upToDate = true;
-                promise = cm.getRecordVersion(tagId, recordId, catalogId)
+                promise = cm.getRecordVersion(tagId, recordId, catalogId).pipe(first()).toPromise()
                     .then(() => {
-                        return cm.getInProgressCommit(recordId, catalogId);
+                        return cm.getInProgressCommit(recordId, catalogId).pipe(first()).toPromise();
                     }, () => {
                         util.createWarningToast('Tag ' + tagId + ' does not exist. Opening commit ' + util.condenseCommitId(commitId), {timeout: 5000});
-                        return self.updateOntologyState({recordId, commitId})
+                        return self.updateOntologyState({recordId, commitId});
                     })
-                    .then(() => cm.getInProgressCommit(recordId, catalogId), $q.reject);
+                    .then(() => cm.getInProgressCommit(recordId, catalogId).pipe(first()).toPromise(), $q.reject);
             } else {
                 upToDate = true;
-                promise = cm.getInProgressCommit(recordId, catalogId);
+                promise = cm.getInProgressCommit(recordId, catalogId).pipe(first()).toPromise();
             }
             return promise
-                .then(response => {
+                .then((response: Difference) => {
                     inProgressCommit = response;
-                    return cm.getCommit(commitId);
+                    return cm.getCommit(commitId).pipe(first()).toPromise();
                 }, response => {
                     if (get(response, 'status') === 404) {
-                        return cm.getCommit(commitId);
+                        return cm.getCommit(commitId).pipe(first()).toPromise();
                     }
                     return $q.reject(response);
                 })
@@ -717,7 +721,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                         util.createWarningToast('Commit ' + util.condenseCommitId(commitId) + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                     }
                     return self.deleteOntologyState(recordId)
-                        .then(() => self.getLatestOntology(recordId), $q.reject)
+                        .then(() => self.getLatestOntology(recordId), $q.reject);
                 });
         }
         return self.getLatestOntology(recordId);
@@ -738,8 +742,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     // TODO: Added to parent class of versionedRdfState. Remove and change references when upgrading module.
     self.getLatestOntology = function(recordId) {
         var branchId, commitId;
-        return cm.getRecordMasterBranch(recordId, catalogId)
-            .then(masterBranch => {
+        return cm.getRecordMasterBranch(recordId, catalogId).pipe(first()).toPromise()
+            .then((masterBranch: JSONLDObject) => {
                 branchId = get(masterBranch, '@id', '');
                 commitId = get(masterBranch, "['" + prefixes.catalog + "head'][0]['@id']", '');
                 return self.createOntologyState({recordId, commitId, branchId});
@@ -768,9 +772,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         return om.uploadOntology(undefined, ontologyJson, title, description, keywords)
             .then(data => {
                 listItem = setupListItem(data.recordId, data.branchId, data.commitId, emptyInProgressCommit, true, title);
-                return cm.getRecordBranch(data.branchId, data.recordId, catalogId);
+                return cm.getRecordBranch(data.branchId, data.recordId, catalogId).pipe(first()).toPromise();
             }, $q.reject)
-            .then(branch => {
+            .then((branch: JSONLDObject) => {
                 listItem.ontologyId = ontologyJson['@id'];
                 listItem.editorTabStates.project.entityIRI = ontologyJson['@id'];
                 listItem.branches = [branch];
@@ -803,8 +807,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      */
     self.uploadChanges = function(file, recordId, branchId, commitId) {
         return om.uploadChangesFile(file, recordId, branchId, commitId)
-            .then(() => cm.getInProgressCommit(recordId, catalogId), $q.reject)
-            .then(commit => {
+            .then(() => cm.getInProgressCommit(recordId, catalogId).pipe(first()).toPromise(), $q.reject)
+            .then((commit: Difference) => {
                 var listItem = self.getListItemByRecordId(recordId);
                 return self.updateOntology(recordId, branchId, commitId, listItem.upToDate, commit);
             }, $q.reject);
@@ -903,8 +907,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var listItem = setupListItem(recordId, branchId, commitId, inProgressCommit, upToDate, title);
         return $q.all([
             om.getOntologyStuff(recordId, branchId, commitId, clearCache),
-            cm.getRecordBranches(recordId, catalogId),
-            cm.getRecordVersions(recordId, catalogId)
+            cm.getRecordBranches(recordId, catalogId).pipe(first()).toPromise(),
+            cm.getRecordVersions(recordId, catalogId).pipe(first()).toPromise()
         ]).then(response => {
             listItem.ontologyId = response[0].ontologyIRI;
             listItem.editorTabStates.project.entityIRI = response[0].ontologyIRI;    
@@ -963,14 +967,14 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             listItem.flatEverythingTree = self.createFlatEverythingTree(listItem);
             concat(pm.ontologyProperties, keys(listItem.dataProperties.iris), keys(listItem.objectProperties.iris), listItem.derivedSemanticRelations, pm.conceptSchemeRelationshipList, pm.schemeRelationshipList).forEach(iri => delete listItem.annotations.iris[iri]);
             listItem.failedImports = get(response[0], 'failedImports', []);
-            listItem.branches = response[1].data;
+            listItem.branches = response[1].body;
             var branch = find(listItem.branches, { '@id': listItem.ontologyRecord.branchId })
             listItem.userBranch = cm.isUserBranch(branch);
             if (listItem.userBranch) {
                 listItem.createdFromExists = some(listItem.branches, {'@id': util.getPropertyId(branch, prefixes.catalog + 'createdFrom')});
             }
             listItem.masterBranchIRI = find(listItem.branches, {[prefixes.dcterms + 'title']: [{'@value': 'MASTER'}]})['@id'];
-            listItem.tags = filter(response[2].data, version => includes(get(version, '@type'), prefixes.catalog + 'Tag'));
+            listItem.tags = filter(response[2].body, version => includes(get(version, '@type'), prefixes.catalog + 'Tag'));
             return pe.evaluateRequest(modifyRequest);
         },  $q.reject)
         .then(decision => {
@@ -1084,7 +1088,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var newJoinedPath = joinedPath + '.' + iri;
         var item = {
             entityIRI: iri,
-            hasChildren: parentMap.hasOwnProperty(iri),
+            hasChildren: iri in parentMap,
             indent,
             path: newPath,
             entityInfo: getEntityInfoFromListItem(listItem, iri),
@@ -1337,7 +1341,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @returns {Promise} A promise with the ontology ID.
      */
     self.saveChanges = function(recordId, differenceObj) {
-        return cm.updateInProgressCommit(recordId, catalogId, differenceObj);
+        return cm.updateInProgressCommit(recordId, catalogId, differenceObj).pipe(first()).toPromise();
     }
     self.addToAdditions = function(recordId, json) {
         addToInProgress(recordId, json, 'additions');
@@ -1407,20 +1411,20 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.removeBranch = function(recordId, branchId) {
         var listItem = self.getListItemByRecordId(recordId);
         remove(listItem.branches, {'@id': branchId});
-        return cm.getRecordVersions(recordId, catalogId)
-            .then(response => {
-                listItem.tags = filter(response.data, version => includes(get(version, '@type'), prefixes.catalog + 'Tag'));
+        return cm.getRecordVersions(recordId, catalogId).pipe(first()).toPromise()
+            .then((response: HttpResponse<JSONLDObject[]>) => {
+                listItem.tags = filter(response.body, version => includes(get(version, '@type'), prefixes.catalog + 'Tag'));
             }, $q.reject);
     }
     self.afterSave = function() {
-        return cm.getInProgressCommit(self.listItem.ontologyRecord.recordId, catalogId)
-            .then(inProgressCommit => {
+        return cm.getInProgressCommit(self.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise()
+            .then((inProgressCommit: Difference) => {
                 self.listItem.inProgressCommit = inProgressCommit;
 
                 self.listItem.additions = [];
                 self.listItem.deletions = [];
 
-                return isEqual(inProgressCommit, emptyInProgressCommit) ? cm.deleteInProgressCommit(self.listItem.ontologyRecord.recordId, catalogId) : $q.when();
+                return isEqual(inProgressCommit, emptyInProgressCommit) ? cm.deleteInProgressCommit(self.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise() : $q.when();
             }, $q.reject)
             .then(() => {
                 forOwn(self.listItem.editorTabStates, (value, key) => {
@@ -1873,8 +1877,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     // TODO: Added to parent class of versionedRdfState. Remove and change references when upgrading module.
     self.checkConflicts = function() {
-        return cm.getBranchConflicts(self.listItem.ontologyRecord.branchId, self.listItem.merge.target['@id'], self.listItem.ontologyRecord.recordId, catalogId)
-            .then(conflicts => {
+        return cm.getBranchConflicts(self.listItem.ontologyRecord.branchId, self.listItem.merge.target['@id'], self.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise()
+            .then((conflicts: Conflict[]) => {
                 if (isEmpty(conflicts)) {
                     return $q.when();
                 } else {
@@ -1903,18 +1907,18 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      */
     self.getMergeDifferences = function(sourceCommitId, targetCommitId, limit, offset) {
         self.listItem.merge.startIndex = offset;
-        return cm.getDifference(sourceCommitId, targetCommitId, limit, offset)
-        .then(response => {
+        return cm.getDifference(sourceCommitId, targetCommitId, limit, offset).pipe(first()).toPromise()
+        .then((response: HttpResponse<CommitDifference>) => {
             if (!self.listItem.merge.difference) {
                 self.listItem.merge.difference = {
                     additions: [],
                     deletions: []
                 };
             }
-            self.listItem.merge.difference.additions = concat(self.listItem.merge.difference.additions, response.data.additions);
-            self.listItem.merge.difference.deletions = concat(self.listItem.merge.difference.deletions, response.data.deletions);
-            var headers = response.headers();
-            self.listItem.merge.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+            self.listItem.merge.difference.additions = concat(self.listItem.merge.difference.additions, response.body.additions);
+            self.listItem.merge.difference.deletions = concat(self.listItem.merge.difference.deletions, response.body.deletions);
+            var headers = response.headers;
+            self.listItem.merge.difference.hasMoreResults = (headers.get('has-more-results') || 'false') === 'true';
             return $q.when();
         }, $q.reject);
     }
@@ -1923,8 +1927,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var sourceId = self.listItem.ontologyRecord.branchId;
         var checkbox = self.listItem.merge.checkbox;
         var commitId;
-        return cm.mergeBranches(sourceId, self.listItem.merge.target['@id'], self.listItem.ontologyRecord.recordId, catalogId, self.listItem.merge.resolutions)
-            .then(commit => {
+        return cm.mergeBranches(sourceId, self.listItem.merge.target['@id'], self.listItem.ontologyRecord.recordId, catalogId, self.listItem.merge.resolutions).pipe(first()).toPromise()
+            .then((commit: string) => {
                 commitId = commit;
                 if (checkbox) {
                     return om.deleteOntologyBranch(self.listItem.ontologyRecord.recordId, sourceId)

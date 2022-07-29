@@ -21,14 +21,7 @@
   #L%
   -->
 <div class="mapper-page h-100">
-    <mapping-select-page ng-if="dvm.state.step === dvm.state.selectMappingStep"></mapping-select-page>
-    <file-upload-page ng-if="dvm.state.step === dvm.state.fileUploadStep"></file-upload-page>
-    <material-tabset ng-if="dvm.state.step === dvm.state.editMappingStep" centered>
-        <material-tab heading="'Edit'" active="dvm.state.editTabs.edit" set-active="dvm.state.editTabs.edit = value">
-            <edit-mapping-page></edit-mapping-page>
-        </material-tab>
-        <material-tab heading="'Commits'" active="dvm.state.editTabs.commits" set-active="dvm.state.editTabs.commits = value">
-            <mapping-commits-page></mapping-commits-page>
-        </material-tab>
-    </material-tabset>
+    <mapping-select-page *ngIf="state.step === state.selectMappingStep"></mapping-select-page>
+    <file-upload-page *ngIf="state.step === state.fileUploadStep"></file-upload-page>
+    <edit-mapping-page *ngIf="state.step === state.editMappingStep"></edit-mapping-page>
 </div>

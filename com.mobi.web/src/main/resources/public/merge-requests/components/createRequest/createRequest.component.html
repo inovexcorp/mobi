@@ -21,20 +21,34 @@
   #L%
   -->
 <div class="create-request h-100">
-    <block>
-        <block-content>
-            <request-record-select ng-if="dvm.state.createRequestStep === 0"></request-record-select>
-            <request-branch-select ng-if="dvm.state.createRequestStep === 1" update-commits="dvm.updateCommits(commits)"></request-branch-select>
-            <request-details-form ng-if="dvm.state.createRequestStep === 2"></request-details-form>
-        </block-content>
-        <block-footer>
-            <div class="progress-bar-container">
-                <step-progress-bar step-number="3" current-step="dvm.state.createRequestStep"></step-progress-bar>
+    <!-- TODO: Come Angular 11, switch the ngIfs to lazy loading -->
+    <mat-horizontal-stepper editable="false" linear #requestStepper>
+        <mat-step #firstStep label="Select Record" [completed]="!!state.requestConfig.recordId">
+            <div *ngIf="requestStepper.selectedIndex === 0" class="d-flex flex-column h-100">
+                <request-record-select class="flex-1 remove-min-height"></request-record-select>
+                <div class="step-buttons">
+                    <button mat-raised-button (click)="state.createRequest = false">Cancel</button>
+                    <button class="float-right" mat-raised-button color="primary" matStepperNext [disabled]="!state.requestConfig.recordId">Next</button>
+                </div>
             </div>
-            <div class="btn-container">
-                <button class="btn btn-primary float-right" ng-click="dvm.next()" ng-disabled="dvm.isDisabled()">{{dvm.state.createRequestStep === 2 ? 'Submit' : 'Next'}}</button>
-                <button class="btn float-right" ng-click="dvm.back()">{{dvm.state.createRequestStep === 0 ? 'Cancel' : 'Back'}}</button>
+        </mat-step>
+        <mat-step #secondStep label="Select Branches" [completed]="!!state.requestConfig.sourceBranchId && !!state.requestConfig.targetBranchId">
+            <div *ngIf="requestStepper.selectedIndex === 1" class="d-flex flex-column h-100">
+                <request-branch-select class="flex-1 remove-min-height"></request-branch-select>
+                <div class="step-buttons mt-2">
+                    <button mat-raised-button matStepperPrevious (click)="resetBranchSelect()">Back</button>
+                    <button mat-raised-button class="float-right" color="primary" matStepperNext [disabled]="!state.requestConfig.sourceBranchId || !state.requestConfig.targetBranchId || state.sameBranch">Next</button>
+                </div>
             </div>
-        </block-footer>
-    </block>
+        </mat-step>
+        <mat-step #thirdStep label="Set Details" [completed]="!!state.requestConfig.title">
+            <div *ngIf="requestStepper.selectedIndex === 2" class="d-flex flex-column h-100">
+                <request-details-form class="flex-1 remove-min-height"></request-details-form>
+                <div class="step-buttons mt-2">
+                    <button mat-raised-button matStepperPrevious (click)="resetDetailsForm()">Back</button>
+                    <button mat-raised-button class="float-right" color="primary" (click)="submit()" [disabled]="!state.requestConfig.title">Submit</button>
+                </div>
+            </div>
+        </mat-step>
+    </mat-horizontal-stepper>
 </div>

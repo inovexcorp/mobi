@@ -22,6 +22,8 @@
  */
 import { filter, includes, map, concat, sortBy, reject, remove } from 'lodash';
 
+import { CatalogManagerService } from '../services/catalogManager.service';
+
 branchesToDisplay.$inject = ['catalogManagerService', 'utilService', 'loginManagerService', 'prefixes'];
 
 /**
@@ -41,7 +43,7 @@ branchesToDisplay.$inject = ['catalogManagerService', 'utilService', 'loginManag
  * @param {Object[]} branches The array of branches to filter
  * @returns {Object[]} an array of branches to display for the logged in user
  */
-function branchesToDisplay(catalogManagerService, utilService, loginManagerService, prefixes) {
+function branchesToDisplay(catalogManagerService: CatalogManagerService, utilService, loginManagerService, prefixes) {
     var cm = catalogManagerService;
     var util = utilService;
     var lm = loginManagerService;
@@ -53,7 +55,7 @@ function branchesToDisplay(catalogManagerService, utilService, loginManagerServi
             var moreBranches = filter(branches, branch => !cm.isUserBranch(branch) && !includes(toHide, branch['@id']));
             displayBranches = concat(moreBranches, myUserBranches);
         } else {
-            displayBranches = reject(branches, cm.isUserBranch);
+            displayBranches = reject(branches, branch => cm.isUserBranch(branch));
         }
 
         var masterBranchArr = remove(displayBranches, branch => util.getDctermsValue(branch, 'title') === 'MASTER');

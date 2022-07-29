@@ -30,13 +30,13 @@ import { MatButtonModule, MatFormFieldModule, MatInputModule } from '@angular/ma
 
 import {
     mockLoginManager,
-    mockPrefixes,
     cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { ProfileTabComponent } from './profileTab.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { ReactiveFormsModule } from '@angular/forms';
+import { FOAF } from '../../../prefixes';
 
 describe('Profile Tab component', function() {
     let component: ProfileTabComponent;
@@ -44,7 +44,6 @@ describe('Profile Tab component', function() {
     let fixture: ComponentFixture<ProfileTabComponent>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let loginManagerStub;
-    let prefixesStub;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -62,7 +61,6 @@ describe('Profile Tab component', function() {
             providers: [
                 { provide: 'loginManagerService', useClass: mockLoginManager },
                 MockProvider(UserManagerService),
-                { provide: 'prefixes', useClass: mockPrefixes }
             ]
         });
     });
@@ -73,16 +71,15 @@ describe('Profile Tab component', function() {
         element = fixture.debugElement;
         loginManagerStub = TestBed.get('loginManagerService');
         userManagerStub = TestBed.get(UserManagerService);
-        prefixesStub = TestBed.get('prefixes');
 
         loginManagerStub.currentUser = 'user';
         userManagerStub.users = [{
             jsonld: {
                 '@id': 'user',
                 '@type': [],
-                [prefixesStub.foaf + 'firstName']: [{'@value': 'John'}],
-                [prefixesStub.foaf + 'lastName']: [{'@value': 'Doe'}],
-                [prefixesStub.foaf + 'mbox']: [{'@id': 'mailto:john.doe@test.com'}]
+                [FOAF + 'firstName']: [{'@value': 'John'}],
+                [FOAF + 'lastName']: [{'@value': 'Doe'}],
+                [FOAF + 'mbox']: [{'@id': 'mailto:john.doe@test.com'}]
             },
             username: 'user',
             firstName: 'John',
@@ -100,7 +97,6 @@ describe('Profile Tab component', function() {
         fixture = null;
         userManagerStub = null;
         loginManagerStub = null;
-        prefixesStub = null;
     });
 
     describe('should initialize with the current user', function() {
@@ -138,7 +134,7 @@ describe('Profile Tab component', function() {
                 component.currentUser = userManagerStub.users[0];
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.updateUser.and.returnValue(Promise.reject('Error message'));
+                userManagerStub.updateUser.and.rejectWith('Error message');
                 component.save();
                 tick();
                 expect(userManagerStub.updateUser).toHaveBeenCalledWith(loginManagerStub.currentUser, userManagerStub.users[0]);
@@ -151,13 +147,13 @@ describe('Profile Tab component', function() {
                     lastName: 'Reynolds',
                     email: 'mal@serenity.com'
                 });
-                userManagerStub.updateUser.and.returnValue(Promise.resolve());
+                userManagerStub.updateUser.and.resolveTo();
                 component.save();
                 tick();
                 expect(component.currentUser.jsonld).toEqual(jasmine.objectContaining({
-                    [prefixesStub.foaf + 'firstName']: [{'@value': 'Mal'}],
-                    [prefixesStub.foaf + 'lastName']: [{'@value': 'Reynolds'}],
-                    [prefixesStub.foaf + 'mbox']: [{'@id': 'mailto:mal@serenity.com'}]
+                    [FOAF + 'firstName']: [{'@value': 'Mal'}],
+                    [FOAF + 'lastName']: [{'@value': 'Reynolds'}],
+                    [FOAF + 'mbox']: [{'@id': 'mailto:mal@serenity.com'}]
                 }));
                 expect(userManagerStub.updateUser).toHaveBeenCalledWith(loginManagerStub.currentUser, userManagerStub.users[0]);
                 expect(component.success).toEqual(true);
@@ -165,7 +161,7 @@ describe('Profile Tab component', function() {
                 expect(component.profileForm.pristine).toEqual(true);
             }));
             it('with no values', fakeAsync(function() {
-                userManagerStub.updateUser.and.returnValue(Promise.resolve());
+                userManagerStub.updateUser.and.resolveTo();
                 component.save();
                 tick();
                 expect(component.currentUser.jsonld).toEqual({'@id': 'user', '@type': []});
@@ -223,6 +219,6 @@ describe('Profile Tab component', function() {
         const button = element.query(By.css('form'));
         button.triggerEventHandler('ngSubmit', null);
         fixture.detectChanges();
-        expect(component.save).toHaveBeenCalled();
+        expect(component.save).toHaveBeenCalledWith();
     });
 });

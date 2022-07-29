@@ -26,7 +26,10 @@ import { By } from '@angular/platform-browser';
 import { forEach, get } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { cleanStylesFromDOM, mockUtil, mockCatalogManager, mockPrefixes } from '../../../../../../test/ts/Shared';
+import { HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+
+import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
 import { BranchSelectComponent } from '../../../shared/components/branchSelect/branchSelect.component';
 import { CheckboxComponent } from '../../../shared/components/checkbox/checkbox.component';
 import { CommitDifferenceTabsetComponent } from '../../../shared/components/commitDifferenceTabset/commitDifferenceTabset.component';
@@ -34,17 +37,18 @@ import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/e
 import { ResolveConflictsBlock } from '../../../shared/components/resolveConflictsBlock/resolveConflictsBlock.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
-import { ShapesGraphMergePageComponent } from '../shapesGraphMergePage/shapesGraphMergePage.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { CATALOG, DCTERMS } from '../../../prefixes';
+import { ShapesGraphMergePageComponent } from './shapesGraphMergePage.component';
 
-describe('Shapes Graph Changes Page component', function() {
+describe('Shapes Graph Merge Page component', function() {
     let component: ShapesGraphMergePageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ShapesGraphMergePageComponent>;
-    let shapesGraphStateStub;
+    let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
     let utilStub;
-    let catalogManagerStub;
-    let prefixesStub;
+    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
 
     const branch1Iri = 'branch1';
     const branch2Iri = 'branch2';
@@ -68,43 +72,42 @@ describe('Shapes Graph Changes Page component', function() {
             ],
             providers: [
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'catalogManagerService', useClass: mockCatalogManager },
-                { provide: 'prefixes', useClass: mockPrefixes },
+                MockProvider(CatalogManagerService),
                 MockProvider(ShapesGraphStateService)
             ]
         });
     });
 
     beforeEach(function() {
+        catalogManagerStub = TestBed.get(CatalogManagerService);
+        catalogManagerStub.localCatalog = {'@id': 'catalog', '@type': []};
         fixture = TestBed.createComponent(ShapesGraphMergePageComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
-        catalogManagerStub = TestBed.get('catalogManagerService');
         utilStub = TestBed.get('utilService');
-        prefixesStub = TestBed.get('prefixes');
 
         utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {
             return get(entity, '[\'' + propertyIRI + '\'][0][\'@id\']', '');
         });
         utilStub.getDctermsValue.and.callFake((obj, prop) => {
-            return get(obj, "['" + prefixesStub.dcterms + prop + "'][0]['@value']", '');
+            return get(obj, '[\'' + DCTERMS + prop + '\'][0][\'@value\']', '');
         });
 
         branch1 = {
             '@id': branch1Iri,
             '@type': [],
-            [prefixesStub.catalog + 'head']: [{'@id': branch1Commit}],
-            [prefixesStub.dcterms + 'title']: [{'@value': branch1Title}]
+            [CATALOG + 'head']: [{'@id': branch1Commit}],
+            [DCTERMS + 'title']: [{'@value': branch1Title}]
         };
         branch2 = {
             '@id': branch2Iri,
             '@type': [],
-            [prefixesStub.catalog + 'head']: [{'@id': branch2Commit}],
-            [prefixesStub.dcterms + 'title']: [{'@value': branch2Title}]
+            [CATALOG + 'head']: [{'@id': branch2Commit}],
+            [DCTERMS + 'title']: [{'@value': branch2Title}]
         };
 
-        catalogManagerStub.getRecordBranches.and.returnValue(Promise.resolve({data: [branch1, branch2]}));
+        catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse({body: [branch1, branch2]})));
         shapesGraphStateStub.listItem = new ShapesGraphListItem();
         shapesGraphStateStub.listItem.versionedRdfRecord = {
             recordId: 'record1',
@@ -120,7 +123,6 @@ describe('Shapes Graph Changes Page component', function() {
         element = null;
         utilStub = null;
         catalogManagerStub = null;
-        prefixesStub = null;
         shapesGraphStateStub = null;
     });
 
@@ -134,7 +136,7 @@ describe('Shapes Graph Changes Page component', function() {
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
-                catalogManagerStub.getRecordBranches.and.returnValue(Promise.reject('Error'));
+                catalogManagerStub.getRecordBranches.and.returnValue(throwError('Error'));
                 component.ngOnInit();
                 tick();
                 expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith('record1', 'catalog');
@@ -150,8 +152,8 @@ describe('Shapes Graph Changes Page component', function() {
         });
         describe('should change target', function() {
             it('unless an error occurs', fakeAsync(function() {
-                catalogManagerStub.getRecordBranch.and.returnValue(Promise.resolve(branch2));
-                shapesGraphStateStub.getMergeDifferences.and.returnValue(Promise.reject('Error'));
+                catalogManagerStub.getRecordBranch.and.returnValue(of(branch2));
+                shapesGraphStateStub.getMergeDifferences.and.rejectWith('Error');
                 component.changeTarget(branch2);
                 tick();
 
@@ -162,7 +164,7 @@ describe('Shapes Graph Changes Page component', function() {
                 expect(shapesGraphStateStub.listItem.merge.difference).toBeUndefined();
             }));
             it('successfully', fakeAsync(function() {
-                catalogManagerStub.getRecordBranch.and.returnValue(Promise.resolve(branch2));
+                catalogManagerStub.getRecordBranch.and.returnValue(of(branch2));
                 component.changeTarget(branch2);
                 tick();
                 expect(shapesGraphStateStub.listItem.merge.target).toEqual(branch2);
@@ -173,7 +175,7 @@ describe('Shapes Graph Changes Page component', function() {
         });
         describe('should retrieve more results', function() {
             it('successfully', fakeAsync(function() {
-                shapesGraphStateStub.getMergeDifferences.and.returnValue(Promise.resolve());
+                shapesGraphStateStub.getMergeDifferences.and.resolveTo();
                 component.targetHeadCommitId = 'targetCommitId';
                 component.retrieveMoreResults(100, 100);
                 tick();
@@ -181,7 +183,7 @@ describe('Shapes Graph Changes Page component', function() {
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             }));
             it('unless an error occurs', fakeAsync(function() {
-                shapesGraphStateStub.getMergeDifferences.and.returnValue(Promise.reject('Error'));
+                shapesGraphStateStub.getMergeDifferences.and.rejectWith('Error');
                 component.targetHeadCommitId = 'targetCommitId';
                 component.retrieveMoreResults(100, 100);
                 tick();
@@ -191,7 +193,7 @@ describe('Shapes Graph Changes Page component', function() {
         });
         describe('should submit the merge', function() {
             it('unless attemptMerge rejects', fakeAsync(function() {
-                shapesGraphStateStub.attemptMerge.and.returnValue(Promise.reject('Error message'));
+                shapesGraphStateStub.attemptMerge.and.rejectWith('Error message');
                 component.submit();
                 tick();
                 expect(shapesGraphStateStub.attemptMerge).toHaveBeenCalled();
@@ -200,11 +202,11 @@ describe('Shapes Graph Changes Page component', function() {
                 expect(component.error).toEqual('Error message');
             }));
             it('if attemptMerge resolves', fakeAsync(function() {
-                shapesGraphStateStub.attemptMerge.and.returnValue(Promise.resolve());
+                shapesGraphStateStub.attemptMerge.and.resolveTo();
                 component.submit();
                 tick();
                 expect(shapesGraphStateStub.attemptMerge).toHaveBeenCalled();
-                expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                 expect(shapesGraphStateStub.cancelMerge).toHaveBeenCalled();
                 expect(component.error).toEqual('');
             }));
@@ -234,8 +236,8 @@ describe('Shapes Graph Changes Page component', function() {
             it('with buttons to submit and cancel', function() {
                 const buttons = element.queryAll(By.css('.btn-container .btn'));
                 expect(buttons.length).toEqual(2);
-                expect(['Cancel', 'Submit'].indexOf(buttons[0].nativeElement.textContent) >= 0).toEqual(true);
-                expect(['Cancel', 'Submit'].indexOf(buttons[1].nativeElement.textContent) >= 0).toEqual(true);
+                expect(['Cancel', 'Submit'].indexOf(buttons[0].nativeElement.textContent)).toBeGreaterThanOrEqual(0);
+                expect(['Cancel', 'Submit'].indexOf(buttons[1].nativeElement.textContent)).toBeGreaterThanOrEqual(0);
             });
             it('depending on whether there is an error', async function() {
                 expect(element.queryAll(By.css('error-display')).length).toEqual(0);

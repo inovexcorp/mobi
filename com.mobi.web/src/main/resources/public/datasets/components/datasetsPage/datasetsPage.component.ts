@@ -20,25 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import './datasetsPage.component.scss';
-
-const template = require('./datasetsPage.component.html');
+import { Component } from '@angular/core';
 
 /**
- * @ngdoc component
- * @name datasets.component:datasetsPage
+ * @class datasets.component:datasetsPage
  *
- * @description
- * `datasetsPage` is a component which creates the main page of the Datasets module. The component contains
- * a {@link datasets.component.datasetsTabset datsetsTabset} for navigating the Datasets module
+ * A component which creates the main page of the Datasets module. The component contains a
+ * {@link datasets.DatasetsList} for navigating the Datasets module
  */
-const datasetsPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: datasetsPageComponentCtrl
-};
-
-function datasetsPageComponentCtrl() {}
-
-export default datasetsPageComponent;
+@Component({
+    selector: 'datasets-page',
+    templateUrl: './datasetsPage.component.html'
+})
+export class DatasetsPageComponent {
+    constructor() {}
+}

@@ -25,27 +25,27 @@ import { has } from 'lodash';
 
 import { SettingConstants } from './settingConstants.class';
 import { Setting } from './setting.interface';
+import { OWL, SHACL } from '../../prefixes';
 
 /**
- * @ngdoc class
- * @name shared.models:SettingUtils
+ * @class shared.SettingUtils
  *
- * @description
- * `SettingUtils` is a helper class that contains methods used by the Setting implementations
+ * A helper class that contains methods used by the Setting implementations
  */
 export class SettingUtils {
 
     static isSimpleSetting(settingJson, shapeDefinitions): boolean {
-        const requiredPropertyShape = shapeDefinitions[settingJson['http://www.w3.org/ns/shacl#property'][0]['@id']];
-        return requiredPropertyShape['http://www.w3.org/ns/shacl#path'][0]['@id'] === SettingConstants.HAS_DATA_VALUE;
+        const requiredPropertyShape = shapeDefinitions[settingJson[SHACL + 'property'][0]['@id']];
+        return requiredPropertyShape[SHACL + 'path'][0]['@id'] === SettingConstants.HAS_DATA_VALUE;
     }
 
     static convertToJsonLd(object, intendedTypes) {
         if (has(object, '@id') || has(object, '@type')) {
             console.log('Object has unexpected structure. It appears that the object already has an id or type');
         } else {
-            object['@id'] = 'http://mobi.com/setting#' + uuid.v4();
-            object['@type'] = ['http://www.w3.org/2002/07/owl#Thing'];
+            object['@id'] = 'http://mobi.com/setting#' + uuid();
+            // object['@id'] = 'http://mobi.com/setting#' + uuid.v4();
+            object['@type'] = [OWL + 'Thing'];
             intendedTypes.forEach(intendedType => object['@type'].push(intendedType));
         }
         return object;

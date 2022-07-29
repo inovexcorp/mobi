@@ -20,90 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component } from '@angular/core';
+
+import { MapperStateService } from '../../../shared/services/mapperState.service';
+
 import './editMappingPage.component.scss';
 
-const template = require('./editMappingPage.component.html');
-
 /**
- * @ngdoc component
- * @name mapper.component:editMappingPage
- * @requires shared.service:delimitedManagerService
- * @requires shared.service:mapperStateService
- * @requires shared.service:mappingManagerService
- * @requires shared.service:modalService
+ * @class mapper.EditMappingPageComponent
  *
- * @description
- * `editMappingPage` is a component that creates a Bootstrap `row` div with two columns containing
- * {@link shared.component:block blocks} for editing the current
- * {@link shared.service:mapperStateService#mapping mapping}. The left column contains either a block for
- * {@link mapper.component:editMappingForm editing} the mapping or a block for
- * {@link mapper.component:rdfPreviewForm previewing} the mapped data using the current state of the mapping. The
- * right column contains a {@link mapper.component:previewDataGrid preview} of the loaded delimited data. From here,
- * the user can choose to save the mapping and optionally run it against the loaded delimited data. The component
- * houses the method for opening a modal to confirm canceling a mapping.
+ * A component that creates a Material tabset for editing the current {@link shared.MapperStateService#selected mapping}.
+ * The first tab contains a {@link mapper.EditMappingFormComponent}, the second a {@link mapper.RdfPreviewFormComponent},
+ * and the third a display of the commits of the mapping.
  */
-const editMappingPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: editMappingPageComponentCtrl
-};
-
-editMappingPageComponentCtrl.$inject = ['mapperStateService', 'mappingManagerService', 'delimitedManagerService', 'modalService'];
-
-function editMappingPageComponentCtrl(mapperStateService, mappingManagerService, delimitedManagerService, modalService) {
-    var dvm = this;
-    dvm.state = mapperStateService;
-    dvm.mm = mappingManagerService;
-    dvm.dm = delimitedManagerService;
-    dvm.errorMessage = '';
-    dvm.tabs = {
-        edit: true,
-        preview: false
-    };
-
-    dvm.runMappingDownload = function() {
-        modalService.openModal('runMappingDownloadOverlay', {}, undefined, 'sm');
-    }
-    dvm.runMappingDataset = function() {
-        modalService.openModal('runMappingDatasetOverlay', {}, undefined, 'sm');
-    }
-    dvm.runMappingOntology = function() {
-        modalService.openModal('runMappingOntologyOverlay');
-    }
-    dvm.isSaveable = function() {
-        return dvm.state.invalidProps.length === 0 && !!dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld).length;
-    }
-    dvm.save = function() {
-        if (dvm.state.isMappingChanged()) {
-            dvm.state.saveMapping().then(success, onError);
-        } else {
-            success();
-        }
-    }
-    dvm.cancel = function() {
-        if (dvm.state.isMappingChanged()) {
-            modalService.openConfirmModal('<p>Are you sure you want to cancel? Any current progress will be lost.</p>', dvm.reset);
-        } else {
-            success();
-        }
-    }
-    dvm.reset = function() {
-        dvm.state.initialize();
-        dvm.state.resetEdit();
-        dvm.dm.reset();
-    }
-
-    function onError(errorMessage) {
-        dvm.errorMessage = errorMessage
-    }
-    function success() {
-        dvm.errorMessage = '';
-        dvm.state.step = dvm.state.selectMappingStep;
-        dvm.state.initialize();
-        dvm.state.resetEdit();
-        dvm.dm.reset();
-    }
+@Component({
+    selector: 'edit-mapping-page',
+    templateUrl: './editMappingPage.component.html'
+})
+export class EditMappingPageComponent {
+    constructor(public state: MapperStateService) {}
 }
-
-export default editMappingPageComponent;

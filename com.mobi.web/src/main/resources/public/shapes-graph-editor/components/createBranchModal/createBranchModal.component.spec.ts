@@ -25,28 +25,30 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatButtonModule, MatDialogModule, MatDialogRef } from '@angular/material';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { By } from '@angular/platform-browser';
+import { MatInputModule } from '@angular/material/input';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
+import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil, mockCatalogManager } from '../../../../../../test/ts/Shared';
-import { FormsModule, ReactiveFormsModule } from "@angular/forms";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatSelectModule } from "@angular/material/select";
-import { MockComponent, MockProvider } from "ng-mocks";
-import { By } from "@angular/platform-browser";
-import { MatInputModule } from "@angular/material/input";
-import { MatChipsModule } from "@angular/material/chips";
-import { ErrorDisplayComponent } from "../../../shared/components/errorDisplay/errorDisplay.component";
-import { MatIconModule } from "@angular/material/icon";
+import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CreateBranchModal } from './createBranchModal.component';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 describe('Create branch component', function() {
     let component: CreateBranchModal;
     let element: DebugElement;
     let fixture: ComponentFixture<CreateBranchModal>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CreateBranchModal>>;
-    let shapesGraphStateStub;
-    let catalogManagerStub;
+    let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
+    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let utilStub;
     
     configureTestSuite(function() {
@@ -69,7 +71,7 @@ describe('Create branch component', function() {
             ],
             providers: [
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
-                { provide: 'catalogManagerService', useClass: mockCatalogManager },
+                MockProvider(CatalogManagerService),
                 { provide: 'utilService', useClass: mockUtil },
                 MockProvider(ShapesGraphStateService)
             ]
@@ -77,6 +79,8 @@ describe('Create branch component', function() {
     });
 
     beforeEach(function() {
+        catalogManagerStub = TestBed.get(CatalogManagerService);
+        catalogManagerStub.localCatalog = {'@id': 'catalog', '@type': []};
         fixture = TestBed.createComponent(CreateBranchModal);
         component = fixture.componentInstance;
         element = fixture.debugElement;
@@ -87,9 +91,7 @@ describe('Create branch component', function() {
         shapesGraphStateStub.listItem.versionedRdfRecord.commitId = 'commitId';
         shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.resolve());
 
-        catalogManagerStub = TestBed.get('catalogManagerService');
-        catalogManagerStub.localCatalog = {'@id': 'catalog'};
-        catalogManagerStub.createRecordBranch.and.returnValue(Promise.resolve('newBranchId'));
+        catalogManagerStub.createRecordBranch.and.returnValue(of('newBranchId'));
 
         utilStub = TestBed.get('utilService');
     });
@@ -134,7 +136,7 @@ describe('Create branch component', function() {
                 });
             });
             it('unless an error occurs', async function() {
-                catalogManagerStub.createRecordBranch.and.returnValue(Promise.reject('Error'));
+                catalogManagerStub.createRecordBranch.and.returnValue(throwError('Error'));
                 await component.createBranch();
 
                 expect(catalogManagerStub.createRecordBranch).toHaveBeenCalledWith('recordId', 'catalog', this.branchConfig, 'commitId');

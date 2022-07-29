@@ -22,24 +22,25 @@
  */
 import { Inject, Component, OnChanges, Input } from '@angular/core';
 import { get, map, concat, intersection, filter, chunk, noop } from 'lodash';
+import { first } from 'rxjs/operators';
+import { OWL, RDF, SKOS } from '../../../prefixes';
+
 import { CommitChange } from '../../../shared/models/commitChange.interface';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 
 import './shapesGraphChangesPage.component.scss';
 
-interface PredicateObject {
-    p: string,
-    o: string
-}
 interface Statements {
     id: string,
-    additions?: PredicateObject[],
-    deletions?: PredicateObject[]
+    additions?: CommitChange[],
+    deletions?: CommitChange[],
 }
 interface CommitChanges {
     id: string,
-    additions: PredicateObject[],
-    deletions: PredicateObject[],
+    additions: CommitChange[],
+    deletions: CommitChange[],
     disableAll: boolean
 }
 
@@ -63,14 +64,14 @@ interface CommitChanges {
 })
 export class ShapesGraphChangesPageComponent implements OnChanges {
 
-    @Input() additions: CommitChange[];
-    @Input() deletions: CommitChange[];
+    @Input() additions: JSONLDObject[];
+    @Input() deletions: JSONLDObject[];
 
     catalogId: string = get(this.cm.localCatalog, '@id', '');
-    typeIRI = this.prefixes.rdf + 'type';
-    types = [this.prefixes.owl + 'Class', this.prefixes.owl + 'ObjectProperty', this.prefixes.owl + 'DatatypeProperty',
-             this.prefixes.owl + 'AnnotationProperty', this.prefixes.owl + 'NamedIndividual', this.prefixes.skos
-             + 'Concept', this.prefixes.skos + 'ConceptScheme'];
+    typeIRI = RDF + 'type';
+    types = [OWL + 'Class', OWL + 'ObjectProperty', OWL + 'DatatypeProperty',
+             OWL + 'AnnotationProperty', OWL + 'NamedIndividual', SKOS
+             + 'Concept', SKOS + 'ConceptScheme'];
 
     commits: CommitChanges[] = [];
     list: CommitChanges[] = [];
@@ -84,8 +85,8 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
     index = 0;
     size = 100;
 
-    constructor(public state: ShapesGraphStateService, @Inject('catalogManagerService') private cm,
-                @Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
+    constructor(public state: ShapesGraphStateService, private cm: CatalogManagerService,
+                @Inject('utilService') private util) {}
 
     ngOnChanges(): void {
         const inProgressAdditions: Statements[] = map(this.additions, addition => ({
@@ -117,6 +118,7 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
     }
     removeChanges(): void {
         this.cm.deleteInProgressCommit(this.state.listItem.versionedRdfRecord.recordId, this.catalogId)
+            .pipe(first()).toPromise()
             .then(() => {
                 this.state.clearInProgressCommit();
                 this.state.updateShapesGraphMetadata(this.state.listItem.versionedRdfRecord.recordId, this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.commitId);
@@ -128,7 +130,7 @@ export class ShapesGraphChangesPageComponent implements OnChanges {
         const currChunk = get(this.chunks, this.index, []);
         this.showList = concat(this.showList, currChunk);
     }
-    hasSpecificType(array: PredicateObject[]): boolean {
+    hasSpecificType(array: CommitChange[]): boolean {
         return !!intersection(map(filter(array, {p: this.typeIRI}), 'o'), this.types).length;
     }
     getList(): CommitChanges[] {

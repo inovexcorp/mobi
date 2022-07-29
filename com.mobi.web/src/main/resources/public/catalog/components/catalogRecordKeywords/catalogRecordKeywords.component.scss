@@ -23,6 +23,11 @@
 /* Core variables */
 @import "../../../css/variables";
 
-.catalog-record-keywords .static-area {
-    padding: 0.5em 0 0.5em 0.5em;
+.catalog-record-keywords {
+    .keyword-text {
+        @include textOverflow();
+    }
+    .static-area {
+        padding: 0.5em 0 0.5em 0.5em;
+    }
 }

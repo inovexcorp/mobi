@@ -26,16 +26,12 @@ import { forEach, has } from 'lodash';
 import { SettingUtils } from '../../models/settingUtils.class';
 import { Setting } from '../../models/setting.interface';
 import { SimpleSetting } from '../../models/simpleSetting.class';
+import { SETTING } from '../../../prefixes';
 
 /**
- * @ngdoc component
- * @name shared.component:settingGroup
- * @requires shared.service:settingManagerService
- * @requires shared.service.utilService
- * @requires shared.service.prefixes
+ * @class shared.SettingGroupComponent
  *
- * @description
- * `settingGroup` is a component that consisting of a series of {@link shared.component:settingForm settingForm}.
+ * A component that consisting of a series of {@link shared.SettingFormComponent settingForm}.
  */
 @Component({
     selector: 'setting-group',
@@ -50,7 +46,7 @@ export class SettingGroupComponent implements OnChanges {
     settings = {};
     settingIRIs = [];
 
-    constructor(@Inject('settingManagerService') private sm, @Inject('utilService') private util, @Inject('prefixes') private prefixes, private ref: ChangeDetectorRef) {}
+    constructor(@Inject('settingManagerService') private sm, @Inject('utilService') private util, private ref: ChangeDetectorRef) {}
 
     ngOnChanges(): void {
         this.retrieveSettings();
@@ -75,7 +71,7 @@ export class SettingGroupComponent implements OnChanges {
                         forEach(settingObject, (settingJson:any, settingType: string) => {
                             let setting: Setting;
                             if (SettingUtils.isSimpleSetting(settingJson, shapeDefinitions)) {
-                                setting = new SimpleSetting(settingJson, shapeDefinitions, this.util, this.prefixes);
+                                setting = new SimpleSetting(settingJson, shapeDefinitions, this.util);
                                 setting.populate(settingResponse[settingType]);
                                 this.settings[settingType] = setting;
                             } else {
@@ -107,6 +103,6 @@ export class SettingGroupComponent implements OnChanges {
     }
 
     isTopLevelNodeShape(shape): boolean {
-        return has(shape, this.prefixes.setting + 'inGroup');
+        return has(shape, SETTING + 'inGroup');
     }
 }

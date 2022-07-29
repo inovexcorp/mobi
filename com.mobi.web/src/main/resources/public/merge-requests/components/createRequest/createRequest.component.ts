@@ -20,89 +20,62 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Inject, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { MatStepper } from '@angular/material';
+
+import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
+import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+
 import './createRequest.component.scss';
 
-const template = require('./createRequest.component.html');
-
 /**
- * @ngdoc component
- * @name merge-requests.component:createRequest
- * @requires shared.service:mergeRequestsStateService
+ * @class merge-requests.CreateRequestComponent
  *
- * @description
- * `createRequest` is a component which creates a div containing a
- * {@link shared.component:block} with the workflow steps of creating a MergeRequest. These steps are
- * {@link merge-requests.component:requestRecordSelect},
- * {@link merge-requests.component:requestBranchSelect}, and
- * {@link merge-requests.component:requestDetailsForm}.
+ * A component which creates a div containing the workflow steps of creating a MergeRequest. These steps are
+ * {@link merge-requests.RequestRecordSelectComponent}, {@link merge-requests.RequestBranchSelectComponent}, and
+ * {@link merge-requests.RequestDetailsFormComponent}.
  */
-const createRequestComponent = {
-    template,
-    bindings: {
-        commits: '<'
-    },
-    controllerAs: 'dvm',
-    controller: createRequestComponentCtrl
-};
+@Component({
+    selector: 'create-request',
+    templateUrl: './createRequest.component.html'
+})
+export class CreateRequestComponent implements OnInit, OnDestroy {
+    @Input() commits:[any];
+    @ViewChild('requestStepper') requestStepper: MatStepper;
 
-createRequestComponentCtrl.$inject = ['mergeRequestManagerService', 'mergeRequestsStateService', 'utilService', 'prefixes'];
+    constructor(public mm: MergeRequestManagerService, public state: MergeRequestsStateService, @Inject('utilService') public util) {}
 
-function createRequestComponentCtrl(mergeRequestManagerService, mergeRequestsStateService, utilService, prefixes) {
-    var dvm = this;
-    var util = utilService;
-    var mm = mergeRequestManagerService;
-    dvm.state = mergeRequestsStateService;
-    dvm.commits = [];
-
-    dvm.next = function() {
-        if (dvm.state.createRequestStep < 2) {
-            dvm.state.createRequestStep++;
-        } else {
-            mm.createRequest(dvm.state.requestConfig)
-                .then(iri => {
-                    util.createSuccessToast('Successfully created request');
-                    dvm.state.createRequest = false;
-                }, util.createErrorToast);
-        }
+    // TODO: Come Angular 7, replace with binding on stepper in template 
+    ngOnInit(): void {
+        this.requestStepper.selectedIndex = this.state.createRequestStep;
     }
-    dvm.back = function() {
-        if (dvm.state.createRequestStep > 0) {
-            dvm.state.createRequestStep--;
-            if (dvm.state.createRequestStep === 1) {
-                dvm.state.requestConfig.title = '';
-                dvm.state.requestConfig.description = '';
-                dvm.state.requestConfig.assignees = [];
-                dvm.state.requestConfig.removeSource = false;
-            } else if (dvm.state.createRequestStep === 0) {
-                dvm.state.requestConfig.sourceBranchId = '';
-                dvm.state.requestConfig.targetBranchId = '';
-                delete dvm.state.requestConfig.sourceBranch;
-                delete dvm.state.requestConfig.targetBranch;
-                delete dvm.state.requestConfig.difference;
-                delete dvm.state.requestConfig.removeSource;
-                delete dvm.state.requestConfig.sameBranch;
-            }
-            } else {
-            dvm.state.createRequest = false;
-        }
+    ngOnDestroy(): void {
+        this.state.createRequestStep = this.requestStepper.selectedIndex;
     }
-    dvm.isDisabled = function() {
-        if (dvm.state.createRequestStep > 0 && !(dvm.commits?.length > 0)) {
-            return true
-        }
-
-        if (dvm.state.createRequestStep === 0) {
-            return !dvm.state.requestConfig.recordId;
-        } else if (dvm.state.createRequestStep === 1) {
-            return !dvm.state.requestConfig.sourceBranchId || !dvm.state.requestConfig.targetBranchId
-                || dvm.state.requestConfig.sameBranch
-        } else {
-            return !dvm.state.requestConfig.title;
-        }
+    submit(): void {
+        this.mm.createRequest(this.state.requestConfig)
+            .subscribe(() => {
+                this.util.createSuccessToast('Successfully created request');
+                this.state.createRequest = false;
+            }, error => this.util.createErrorToast(error));
     }
-    dvm.updateCommits = function(commits) {
-        dvm.commits = commits;
+    resetBranchSelect(): void  {
+        this.state.requestConfig.sourceBranchId = '';
+        this.state.requestConfig.targetBranchId = '';
+        delete this.state.requestConfig.sourceBranch;
+        delete this.state.requestConfig.targetBranch;
+        delete this.state.requestConfig.removeSource;
+        this.state.clearDifference();
+    }
+    resetDetailsForm(): void {
+        this.state.requestConfig.title = '';
+        this.state.requestConfig.description = '';
+        this.state.requestConfig.assignees = [];
+        this.state.requestConfig.removeSource = false;
+       
+    }
+    
+    updateCommits(commits):void{
+        this.commits = commits;
     }
 }
-
-export default createRequestComponent;

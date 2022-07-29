@@ -22,6 +22,7 @@
  */
 import * as angular from 'angular';
 import { includes, uniq, concat, get, isArray, some, forOwn } from 'lodash';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 
 const template = require('./propertyValueOverlay.component.html');
 
@@ -62,7 +63,7 @@ const propertyValueOverlayComponent = {
 
 propertyValueOverlayComponentCtrl.$inject = ['discoverStateService', 'prefixes', 'utilService', 'exploreUtilsService', 'modalService'];
 
-function propertyValueOverlayComponentCtrl(discoverStateService, prefixes, utilService, exploreUtilsService, modalService) {
+function propertyValueOverlayComponentCtrl(discoverStateService: DiscoverStateService, prefixes, utilService, exploreUtilsService, modalService) {
     var dvm = this;
     var ds = discoverStateService;
     dvm.eu = exploreUtilsService;

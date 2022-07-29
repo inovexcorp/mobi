@@ -22,6 +22,11 @@
  */
 
 import { has, head, map, get, forEach, omit, find, mergeWith, isArray } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { CommitDifference } from '../../models/commitDifference.interface';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../services/catalogManager.service';
 
 import './commitCompiledResource.component.scss';
 
@@ -57,7 +62,7 @@ const commitCompiledResourceComponent = {
 
 commitCompiledResourceComponentCtrl.$inject = ['$q', 'httpService', 'catalogManagerService', 'utilService'];
 
-function commitCompiledResourceComponentCtrl($q, httpService, catalogManagerService, utilService) {
+function commitCompiledResourceComponentCtrl($q, httpService, catalogManagerService: CatalogManagerService, utilService) {
     var dvm = this;
     var cm = catalogManagerService;
     dvm.util = utilService;
@@ -75,16 +80,16 @@ function commitCompiledResourceComponentCtrl($q, httpService, catalogManagerServ
     dvm.setResource = function() {
         if (dvm.commitId) {
             httpService.cancel(dvm.id);
-            cm.getCompiledResource(dvm.commitId, dvm.entityId, dvm.id)
-                .then(resources => {
+            cm.getCompiledResource(dvm.commitId, dvm.entityId, dvm.id).pipe(first()).toPromise()
+                .then((resources: JSONLDObject[]) => {
                     var resource : any = head(resources) || {};
                     dvm.types = map(get(resource, '@type', []), type => ({type}));
                     dvm.resource = omit(resource, ['@id', '@type']);
-                    return cm.getDifferenceForSubject(dvm.entityId, dvm.commitId);
+                    return cm.getDifferenceForSubject(dvm.entityId, dvm.commitId).pipe(first()).toPromise();
                 }, $q.reject)
-                .then(response => {
-                    var additionsObj = find(response.additions, {'@id': dvm.entityId});
-                    var deletionsObj = find(response.deletions, {'@id': dvm.entityId});
+                .then((response: CommitDifference) => {
+                    var additionsObj = find(response.additions as JSONLDObject[], {'@id': dvm.entityId});
+                    var deletionsObj = find(response.deletions as JSONLDObject[], {'@id': dvm.entityId});
                     forEach(get(additionsObj, '@type'), addedType => {
                         var typeObj = find(dvm.types, {type: addedType});
                         typeObj.add = true;

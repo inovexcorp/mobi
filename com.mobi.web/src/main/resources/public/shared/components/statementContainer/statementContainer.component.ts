@@ -20,19 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import './statementContainer.component.scss';
 import { Component, Input, OnInit } from '@angular/core';
 
+import './statementContainer.component.scss';
+
 /**
- * @ngdoc component
- * @name shared.component:statementContainer
+ * @class shared.StatementContainerComponent
  *
- * @description
- * `statementContainer` is a component that creates a display of
- * {@link shared.component:statementDisplay statements}, assumedly from a commit revision. If the component has the
- * `additions` attribute, the container will have an "Additions" title and the statements will be green. If the
- * component has the `deletions` attribute, the container will have a "Deletions" title and the statements will be
- * red.
+ * A component that creates a display of {@link shared.StatementDisplayComponent statements}, assumedly from a commit
+ * revision. If the component has the `additions` attribute, the container will have an "Additions" title and the
+ * statements will be green. If the component has the `deletions` attribute, the container will have a "Deletions" title
+ * and the statements will be red.
  * 
  * @param {string} additions Whether the statements are additions. The presence of the attribute is enough to set it
  * @param {string} deletions Whether the statements are deletions. The presence of the attribute is enough to set it

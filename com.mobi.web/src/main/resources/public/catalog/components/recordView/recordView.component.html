@@ -22,36 +22,37 @@
   -->
 <div class="record-view row p-4 h-100">
     <div class="col-auto back-column h-100">
-        <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+        <button mat-icon-button (click)="goBack()" class="remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
     </div>
     <div class="col record-body h-100 vertical-scroll">
         <div class="record-header">
             <h2 class="record-title d-flex align-items-center">
-                <record-icon class="align-self-start" record="dvm.record"></record-icon><inline-edit text="dvm.title" can-edit="dvm.canEdit" save-event="dvm.updateTitle(text)" class="flex-1" required>{{dvm.title}}</inline-edit>
+                <record-icon class="align-self-start" [record]="record"></record-icon><inline-edit [text]="title" [canEdit]="canEdit" (saveEvent)="updateTitle($event)" class="flex-1" [required]="true">{{title}}</inline-edit>
             </h2>
             <p class="lead text-muted">
-                <inline-edit text="dvm.description" can-edit="dvm.canEdit" placeholder="'(No description)'" save-event="dvm.updateDescription(text)" area="true"><limit-description description="dvm.description" limit="400"></limit-description></inline-edit>
+                <inline-edit [text]="description" [canEdit]="canEdit" [placeholder]="'(No description)'" (saveEvent)="updateDescription($event)" [area]="true"><limit-description [description]="description" [limit]="400"></limit-description></inline-edit>
             </p>
         </div>
-        <record-view-tabset record="dvm.record" update-record="dvm.updateRecord(record)" can-edit="dvm.canEdit"></record-view-tabset>
+        <record-view-tabset [record]="record" (updateRecord)="updateRecord($event)" [canEdit]="canEdit"></record-view-tabset>
     </div>
     <div class="record-sidebar col-auto h-100 vertical-scroll">
         <h3>About this Record</h3>
         <dl>
             <dt class="text-muted">Publisher</dt>
-            <dd><entity-publisher entity="dvm.record"></entity-publisher></dd>
+            <dd><entity-publisher [entity]="record"></entity-publisher></dd>
             <dt class="text-muted">Modified</dt>
-            <dd>{{dvm.modified}}</dd>
+            <dd>{{modified}}</dd>
             <dt class="text-muted">Issued</dt>
-            <dd>{{dvm.issued}}</dd>
+            <dd>{{issued}}</dd>
             <dt class="text-muted pt-2">Keywords</dt>
             <dd class="keyword-description">
-                <catalog-record-keywords record="dvm.record" can-edit="dvm.canEdit" save-event="dvm.updateRecord(record)"></catalog-record-keywords>
+                <catalog-record-keywords [record]="record" [canEdit]="canEdit" (saveEvent)="updateRecord($event)"></catalog-record-keywords>
             </dd>
         </dl>
+       
         <div class="d-flex button-container">
-            <open-record-button record="dvm.record"></open-record-button>
-            <manage-record-button record="dvm.record" manage-event="dvm.manageEvent()"></manage-record-button>
+            <open-record-button [record]="record"></open-record-button>
+            <manage-record-button [record]="record" (manageEvent)="updatePermission($event)"></manage-record-button>
         </div>
     </div>
 </div>

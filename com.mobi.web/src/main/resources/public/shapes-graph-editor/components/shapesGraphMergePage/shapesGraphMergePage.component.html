@@ -39,7 +39,7 @@
                                               [targetId]="targetHeadCommitId"
                                               [difference]="state.listItem.merge.difference"
                                               [startIndex]="state.listItem.merge.startIndex"
-                                              [showMoreResultsFunc]="retrieveMoreResults.bind(this)">
+                                              (showMoreResultsFunc)="retrieveMoreResults($event)">
                     </commit-difference-tabset>
                 </div>
                 <div class="btn-container pt-2">

@@ -20,16 +20,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="prop-select">
-    <ui-select ng-model="dvm.selectedProp" on-select="dvm.changeEvent({value: dvm.selectedProp})" ng-disabled="dvm.isDisabledWhen" autofocus>
-        <ui-select-match placeholder="Select a property">
-            <span title="{{$select.selected.propObj['@id']}}">{{$select.selected.name}}</span>
-        </ui-select-match>
-        <ui-select-choices refresh="dvm.setProps($select.search)" refresh-delay="300" group-by="'groupHeader'" repeat="prop in dvm.selectProps track by prop.propObj['@id']" ui-disable-choice="prop.isDeprecated">
-            <div title="{{prop.propObj['@id']}}">
-                <span ng-bind-html="prop.name | highlight:$select.search | trusted"></span>
-                <span class="text-muted" ng-if="prop.isDeprecated">(Deprecated)</span>
-            </div>
-        </ui-select-choices>
-    </ui-select>
+<div class="prop-select" [formGroup]="parentForm">
+    <mat-form-field class="w-100">
+        <mat-label>Property</mat-label>
+        <input type="text" matInput
+            placeholder="Select a property..."
+            aria-label="Property"
+            formControlName="prop"
+            [matAutocomplete]="propAuto"
+            [readonly]="isReadOnly"
+            [disabled]="parentForm.get('prop').disabled">
+        <mat-autocomplete #propAuto="matAutocomplete" (optionSelected)="selectProp($event)" [displayWith]="getDisplayText.bind(this)">
+            <mat-optgroup *ngFor="let group of filteredProperties | async" [label]="group.ontologyId">
+                <mat-option *ngFor="let mappingProperty of group.properties" [value]="mappingProperty" [title]="mappingProperty.propObj['@id']" [disabled]="mappingProperty.isDeprecated">
+                    {{mappingProperty.name}} <span class="text-muted" *ngIf="mappingProperty.isDeprecated">(Deprecated)</span>
+                </mat-option>
+            </mat-optgroup>
+        </mat-autocomplete>
+    </mat-form-field>
 </div>

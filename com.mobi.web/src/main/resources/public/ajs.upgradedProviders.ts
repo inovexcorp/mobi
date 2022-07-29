@@ -70,16 +70,6 @@ export const provManagerServiceProvider = {
     deps: ['$injector']
 };
 
-export function prefixesFactory(i: any) {
-    return i.get('prefixes');
-}
-
-export const prefixesProvider = {
-    provide: 'prefixes',
-    useFactory: prefixesFactory,
-    deps: ['$injector']
-};
-
 export function httpServiceFactory(i: any) {
     return i.get('httpService');
 }
@@ -130,23 +120,13 @@ export const propertyManagerServiceProvider = {
     deps: ['$injector']
 };
 
-export function discoverStateServiceFactory(i: any) {
-    return i.get('discoverStateService');
+export function policyManagerServiceFactory(i: any) {
+    return i.get('policyManagerService');
 }
 
-export const discoverStateServiceProvider = {
-    provide: 'discoverStateService',
-    useFactory: discoverStateServiceFactory,
-    deps: ['$injector']
-};
-
-export function catalogManagerServiceFactory(i: any) {
-    return i.get('catalogManagerService');
-}
-
-export const catalogManagerServiceProvider = {
-    provide: 'catalogManagerService',
-    useFactory: catalogManagerServiceFactory,
+export const policyManagerServiceProvider = {
+    provide: 'policyManagerService',
+    useFactory: policyManagerServiceFactory,
     deps: ['$injector']
 };
 
@@ -177,5 +157,15 @@ export function toastrFactory(i: any) {
 export const toastrProvider = {
     provide: 'toastr',
     useFactory: toastrFactory,
+    deps: ['$injector']
+};
+
+export function recordPermissionsServiceFactory(i: any) {
+    return i.get('recordPermissionsManagerService');
+}
+
+export const recordPermissionsManagerServiceProvider = {
+    provide: 'recordPermissionsManagerService',
+    useFactory: recordPermissionsServiceFactory,
     deps: ['$injector']
 };

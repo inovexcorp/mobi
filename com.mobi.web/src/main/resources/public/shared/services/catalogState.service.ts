@@ -20,127 +20,79 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Injectable } from '@angular/core';
 import { find, includes, get } from 'lodash';
 
-catalogStateService.$inject = ['catalogManagerService', 'prefixes'];
+import { CATALOG, DATASET, DCTERMS, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../prefixes';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { SortOption } from '../models/sortOption.interface';
+import { CatalogManagerService } from './catalogManager.service';
 
 /**
- * @ngdoc service
- * @name shared.service:catalogStateService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:prefixes
+ * @class shared.CatalogStateService
  *
- * @description
- * `catalogStateService` is a service which contains various variables to hold the state of the
- * {@link catalog.component:catalogPage} and utility functions to update those variables.
+ * A service which contains various variables to hold the state of the {@link catalog.CatalogPageComponent} and utility
+ * functions to update those variables.
  */
-function catalogStateService(catalogManagerService, prefixes) {
-    var self = this;
-    var cm = catalogManagerService;
+@Injectable()
+export class CatalogStateService {
+
+    constructor(private cm: CatalogManagerService) {}
 
     /**
-     * @ngdoc property
-     * @name totalRecordSize
-     * @propertyOf shared.service:catalogStateService
-     * @type {number}
-     *
-     * @description
      * `totalRecordSize` holds an integer for the total number of catalog Records in the latest query on the
-     * {@link catalog.component:recordsView}.
-     */
-    self.totalRecordSize = 0;
-    /**
-     * @ngdoc property
-     * @name currentRecordPage
-     * @propertyOf shared.service:catalogStateService
+     * {@link catalog.RecordsViewComponent}.
      * @type {number}
-     *
-     * @description
-     * `currentRecordPage` holds an 1 based index indicating which page of catalog Records should be displayed
-     * in the {@link catalog.component:recordsView}.
      */
-    self.currentRecordPage = 1;
+    totalRecordSize = 0;
     /**
-     * @ngdoc property
-     * @name recordLimit
-     * @propertyOf shared.service:catalogStateService
+     * `currentRecordPage` holds an 0 based index indicating which page of catalog Records should be displayed
+     * in the {@link catalog.RecordsViewComponent}.
      * @type {number}
-     *
-     * @description
+     */
+    currentRecordPage = 0;
+    /**
      * `recordLimit` holds an integer representing the maximum number of catalog Records to be shown in a page
-     * in the {@link catalog.component:recordsView}.
+     * in the {@link catalog.RecordsViewComponent}.
+     * @type {number}
      */
-    self.recordLimit = 10;
+    recordLimit = 10;
     /**
-     * @ngdoc property
-     * @name recordSortOption
-     * @propertyOf shared.service:catalogStateService
-     * @type {Object}
-     *
-     * @description
      * `recordSortOption` holds one of the options from the `sortOptions` in the
-     * {@link shared.service:catalogManagerService} to be used when sorting the catalog Records in the
-     * {@link catalog.component:recordsView}.
+     * {@link shared.CatalogManagerService} to be used when sorting the catalog Records in the
+     * {@link catalog.RecordsViewComponent}.
+     * @type {SortOption}
      */
-    self.recordSortOption = undefined;
+    recordSortOption: SortOption = undefined;
     /**
-     * @ngdoc property
-     * @name recordFilterType
-     * @propertyOf shared.service:catalogStateService
-     * @type {string}
-     *
-     * @description
      * `recordFilterType` holds the IRI of a catalog Record type to be used to filter the results in the
-     * {@link catalog.component:recordsView}.
+     * {@link catalog.RecordsViewComponent}.
+     * @type {string}
      */
-    self.recordFilterType = '';
-
+    recordFilterType = '';
     /**
-     * @ngdoc property
-     * @name keywordFilterList
-     * @propertyOf shared.service:catalogStateService
-     * @type {list}
-     *
-     * @description
      * `keywordFilterList` holds a list of keyword string values to be used to filter the results in the
-     * {@link catalog.component:recordsView}.
+     * {@link catalog.RecordsViewComponent}.
+     * @type {string[]}
      */
-    self.keywordFilterList = [];
-
+    keywordFilterList = [];
     /**
-     * @ngdoc property
-     * @name keywordSearchText
-     * @propertyOf shared.service:catalogStateService
+     * `keywordSearchText` holds a keyword search string {@link catalog.RecordsViewComponent}.
      * @type {string}
-     *
-     * @description
-     * `keywordSearchText` holds a keyword search string
-     * {@link catalog.component:recordsView}.
      */
-    self.keywordSearchText = '';
-
+    keywordSearchText = '';
     /**
-     * @ngdoc property
-     * @name recordSearchText
-     * @propertyOf shared.service:catalogStateService
-     * @type {string}
-     *
-     * @description
      * `recordSearchText` holds a search text to be used when retrieving catalog Records in the
-     * {@link catalog.component:recordsView}.
+     * {@link catalog.RecordsViewComponent}.
+     * @type {string}
      */
-    self.recordSearchText = '';
+    recordSearchText = '';
     /**
-     * @ngdoc property
-     * @name selectedRecord
-     * @propertyOf shared.service:catalogStateService
-     * @type {Object}
-     *
-     * @description
      * `selectedRecord` holds the currently selected catalog Record object that is being viewed in the
-     * {@link catalog.component:catalogPage}.
+     * {@link catalog.CatalogPageComponent}.
+     * @type {JSONLDObject}
      */
-    self.selectedRecord = undefined;
+    selectedRecord: JSONLDObject = undefined;
 
     /**
      * @ngdoc property
@@ -152,96 +104,65 @@ function catalogStateService(catalogManagerService, prefixes) {
      * `editPermissionSelectedRecord` holds the currently selected catalog Record object that is being viewed in the
      * {@link catalog.component:catalogPage} for permission page.
      */
-    self.editPermissionSelectedRecord = false;
+    editPermissionSelectedRecord = false;
 
     /**
-     * @ngdoc property
-     * @name recordIcons
-     * @propertyOf shared.service:catalogStateService
-     * @type {Object}
-     *
-     * @description
      * `recordIcons` holds each recognized Record type as keys and values of Font Awesome class names to
      * represent the record types.
+     * @type {Object}
      */
-    self.recordIcons = {
-        [prefixes.ontologyEditor + 'OntologyRecord']: 'fa-sitemap',
-        [prefixes.dataset + 'DatasetRecord']: 'fa-database',
-        [prefixes.delim + 'MappingRecord']: 'fa-map',
-        [prefixes.shapesGraphEditor + 'ShapesGraphRecord']: 'mat rule',
+    recordIcons = {
+        [ONTOLOGYEDITOR + 'OntologyRecord']: 'fa-sitemap',
+        [DATASET + 'DatasetRecord']: 'fa-database',
+        [DELIM + 'MappingRecord']: 'fa-map',
+        [SHAPESGRAPHEDITOR + 'ShapesGraphRecord']: 'mat rule',
         default: 'fa-book'
     };
 
     /**
-     * @ngdoc method
-     * @name initialize
-     * @methodOf shared.service:catalogStateService
-     *
-     * @description
-     * Initializes state variables for the {@link catalog.component:catalogPage} using information retrieved
+     * Initializes state variables for the {@link catalog.CatalogPageComponent} using information retrieved
      * from {@link shared.service:catalogManagerService catalogManagerService}.
      */
-    self.initialize = function() {
-        self.initializeRecordSortOption();
+    initialize(): void {
+        this.initializeRecordSortOption();
     }
     /**
-     * @ngdoc method
-     * @name getRecordType
-     * @methodOf shared.service:catalogStateService
-     *
-     * @description
      * Returns the type of the provided Record.
      *
+     * @param {JSONLDObject} record The JSON-LD Record to retrieve the type from
      * @return {string} The type IRI of the record
      */
-    self.getRecordType = function(record) {
-        return find(Object.keys(self.recordIcons), type => includes(get(record, '@type', []), type)) || prefixes.catalog + 'Record';
+    getRecordType(record: JSONLDObject): string {
+        return find(Object.keys(this.recordIcons), type => includes(get(record, '@type', []), type)) || CATALOG + 'Record';
     }
     /**
-     * @ngdoc method
-     * @name getRecordIcon
-     * @methodOf shared.service:catalogStateService
-     *
-     * @description
      * Returns a Font Awesome icon class representing the type of the provided catalog Record object. If the
      * record is not a type that has a specific icon, a generic icon class is returned.
      * 
+     * @param {JSONLDObject} record The JSON-LD Record to get an icon for
      * @return {string} A Font Awesome class string
      */
-    self.getRecordIcon = function(record) {
-        var type = self.getRecordType(record);
-        return self.recordIcons[type === prefixes.catalog + 'Record' ? 'default' : type];
+    getRecordIcon(record: JSONLDObject): string {
+        const type = this.getRecordType(record);
+        return this.recordIcons[type === CATALOG + 'Record' ? 'default' : type];
     }
     /**
-     * @ngdoc method
-     * @name reset
-     * @methodOf shared.service:catalogStateService
-     *
-     * @description
-     * Resets all state variables for the {@link catalog.component:catalogPage}.
+     * Resets all state variables for the {@link catalog.CatalogPageComponent}.
      */
-    self.reset = function() {
-        self.totalRecordSize = 0;
-        self.currentRecordPage = 1;
-        self.recordFilterType = '';
-        self.keywordFilterList = [];
-        self.recordSearchText = '';
-        self.initializeRecordSortOption();
-        self.selectedRecord = undefined;
-        self.editPermissionSelectedRecord = false;
+    reset(): void {
+        this.totalRecordSize = 0;
+        this.currentRecordPage = 1;
+        this.recordFilterType = '';
+        this.keywordFilterList = [];
+        this.recordSearchText = '';
+        this.initializeRecordSortOption();
+        this.selectedRecord = undefined;
+        this.editPermissionSelectedRecord = false;
     }
     /**
-     * @ngdoc method
-     * @name initializeRecordSortOption
-     * @methodOf shared.service:catalogStateService
-     *
-     * @description
-     * Initializes the `recordSortOption` to a certain sort option from the
-     * {@link shared.service:catalogManagerService catalogManagerService}.
+     * Initializes the `recordSortOption` to a certain sort option from the {@link shared.CatalogManagerService}.
      */
-    self.initializeRecordSortOption = function() {
-        self.recordSortOption = find(cm.sortOptions, {field: prefixes.dcterms + 'modified', asc: false});
+    initializeRecordSortOption(): void {
+        this.recordSortOption = find(this.cm.sortOptions, {field: DCTERMS + 'modified', asc: false});
     }
 }
-
-export default catalogStateService;

@@ -20,7 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { JSONLDId } from './JSONLDId.interface';
+import { JSONLDValue } from './JSONLDValue.interface';
+
+/**
+ * Represents an individual change for a specific subject within the changes of a Commit
+ */
 export interface CommitChange {
-    '@id'?: any;
-    [key: string]: any;
+    p: string,
+    o: JSONLDValue|JSONLDId|string,
 }

@@ -30,7 +30,6 @@ import { MockProvider } from 'ng-mocks';
 import {
     mockProvManager,
     mockUtil,
-    mockPrefixes,
     cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
 import { SharedModule } from '../../../shared/shared.module';
@@ -43,7 +42,6 @@ describe('Activity Title component', function() {
     let fixture: ComponentFixture<ActivityTitleComponent>;
     let provManagerStub;
     let utilStub;
-    let prefixesStub;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
 
     configureTestSuite(function() {
@@ -55,7 +53,6 @@ describe('Activity Title component', function() {
             providers: [
                 { provide: 'provManagerService', useClass: mockProvManager },
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'prefixes', useClass: mockPrefixes },
                 MockProvider(UserManagerService)
             ]
         });
@@ -67,7 +64,6 @@ describe('Activity Title component', function() {
         element = fixture.debugElement;
         provManagerStub = TestBed.get('provManagerService');
         utilStub = TestBed.get('utilService');
-        prefixesStub = TestBed.get('prefixes');
         userManagerStub = TestBed.get(UserManagerService);
 
         provManagerStub.activityTypes = [{type: 'type1', word: 'word1', pred: 'pred'}, {type: 'type', word: 'word', pred: 'pred'}];
@@ -82,7 +78,6 @@ describe('Activity Title component', function() {
         fixture = null;
         provManagerStub = null;
         utilStub = null;
-        prefixesStub = null;
         userManagerStub = null;
     });
 

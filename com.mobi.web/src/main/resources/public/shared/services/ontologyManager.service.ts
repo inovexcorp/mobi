@@ -22,8 +22,12 @@
  */
 import { endsWith, identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq } from 'lodash';
 import * as jszip from 'jszip';
-ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
+import { from } from 'rxjs';
 
+import { CatalogManagerService } from './catalogManager.service';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+
+ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX', 'progressSpinnerService'];
 /**
  * @ngdoc service
  * @name shared.service:ontologyManagerService
@@ -37,12 +41,13 @@ ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerServ
  * endpoints and utility functions for editing/creating ontologies and accessing
  * various entities within the ontology.
  */
-function ontologyManagerService($http, $q, prefixes, catalogManagerService, utilService, $httpParamSerializer, httpService, REST_PREFIX) {
+function ontologyManagerService($http, $q, prefixes, catalogManagerService: CatalogManagerService, utilService, $httpParamSerializer, httpService, REST_PREFIX, progressSpinnerService: ProgressSpinnerService) : void {
     const self = this;
     const prefix = REST_PREFIX + 'ontologies';
     const cm = catalogManagerService;
     const util = utilService;
     let catalogId = '';
+    const spinnerSrv = progressSpinnerService;
 
     /**
      * @ngdoc property

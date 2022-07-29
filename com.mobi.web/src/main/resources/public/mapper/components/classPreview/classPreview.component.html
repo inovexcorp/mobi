@@ -21,17 +21,17 @@
   #L%
   -->
 <div class="class-preview">
-    <h3>{{dvm.name}}</h3>
-    <p class="text-muted"><small>{{dvm.classObj['@id']}}</small></p>
+    <h3 class="break-word">{{name}}</h3>
+    <p class="text-muted break-word"><small>{{classObj ? classObj['@id'] : ''}}</small></p>
     <div>
-        <span class="field-name">Description:</span>
-        <p>{{dvm.description}}</p>
+        <span class="field-label">Description</span>
+        <p>{{description}}</p>
     </div>
     <div>
-        <span class="field-name">Properties:</span>
+        <span class="field-label">Properties</span>
         <ul class="props">
-            <li ng-if="dvm.props.length === 0" class="last">None</li>
-            <li ng-repeat="prop in dvm.props track by prop.propObj['@id']" ng-class="{'last': $last, 'limited': $last && dvm.total > 10}" title="{{prop.propObj['@id']}}">{{prop.name}}<span class="text-muted deprecated" ng-if="prop.isDeprecated"> (Deprecated)</span></li>
+            <li *ngIf="props.length === 0" class="last">None</li>
+            <li *ngFor="let mappingProp of props; last as last" [ngClass]="{'last': last, 'limited': last && total > 10}" title="{{mappingProp.propObj['@id']}}">{{mappingProp.name}}<span class="text-muted deprecated" *ngIf="mappingProp.isDeprecated"> (Deprecated)</span></li>
         </ul>
     </div>
 </div>

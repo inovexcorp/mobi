@@ -20,33 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import './mergeRequestsPage.component.scss';
+import { Component } from '@angular/core';
 
-const template = require('./mergeRequestsPage.component.html');
+import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 
 /**
- * @ngdoc component
- * @name merge-requests.component:mergeRequestsPage
- * @requires shared.service:mergeRequestsStateService
- *
- * @description
  * `mergeRequestsPage` is a component which creates a div containing the main parts of the Merge Requests
- * tool. The main parts of the page are the {@link merge-requests.component:mergeRequestList},
- * {@link merge-requests.component:mergeRequestView}, and
- * {@link merge-requests.component:createRequest createRequest page}.
+ * tool. The main parts of the page are the {@link merge-requests.MergeRequestListComponent},
+ * {@link merge-requests.MergeRequestViewComponent}, and
+ * {@link merge-requests.CreateRequestComponent createRequest page}.
  */
-const mergeRequestsPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: mergeRequestsPageComponentCtrl
-};
-
-mergeRequestsPageComponentCtrl.$inject = ['mergeRequestsStateService'];
-
-function mergeRequestsPageComponentCtrl(mergeRequestsStateService) {
-    var dvm = this;
-    dvm.state = mergeRequestsStateService;
+@Component({
+    selector: 'merge-requests-page',
+    templateUrl: './mergeRequestsPage.component.html'
+})
+export class MergeRequestsPageComponent {
+    constructor(public state: MergeRequestsStateService) {}
 }
-
-export default mergeRequestsPageComponent;

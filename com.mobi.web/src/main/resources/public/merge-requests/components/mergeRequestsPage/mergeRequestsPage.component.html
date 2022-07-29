@@ -20,12 +20,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="merge-requests-page h-100">
+<div class="merge-requests-page clearfix h-100">
     <div class="padding h-100 row">
-        <div class="col-8 offset-2 h-100">
-            <merge-request-list ng-if="!dvm.state.selected && !dvm.state.createRequest" class="h-100"></merge-request-list>
-            <merge-request-view ng-if="dvm.state.selected" class="h-100"></merge-request-view>
-            <create-request ng-if="dvm.state.createRequest" class="h-100"></create-request>
+        <div class="col-lg-8 offset-lg-2 h-100">
+            <merge-request-list *ngIf="!state.selected && !state.createRequest" class="h-100"></merge-request-list>
+            <create-request *ngIf="state.createRequest" class="h-100"></create-request>
+            <merge-request-view *ngIf="state.selected" class="h-100"></merge-request-view>
         </div>
     </div>
 </div>

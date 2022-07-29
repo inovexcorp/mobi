@@ -20,96 +20,91 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Inject, Injectable } from '@angular/core';
+import { merge } from 'lodash';
 import * as Yasgui from '@triply/yasgui/build/yasgui.min.js';
+import { PersistedJson } from '@triply/yasgui/build/ts/src/PersistentConfig';
+import { MatDialog } from '@angular/material';
+
 import * as YasrTurtlePlugin from '../../vendor/YASGUI/plugins/turtle/turtle';
 import * as YasrRdfXmlPlugin from '../../vendor/YASGUI/plugins/rdfXml/rdfXml';
 import * as YasrJsonLDlPlugin from '../../vendor/YASGUI/plugins/jsonLD/jsonLD';
-import { hasClass } from "../../vendor/YASGUI/plugins/utils/yasguiUtil";
-import { merge } from 'lodash';
-import { PersistedJson } from '@triply/yasgui/build/ts/src/PersistentConfig';
+import { hasClass } from '../../vendor/YASGUI/plugins/utils/yasguiUtil';
+import { REST_PREFIX } from '../../constants';
+import { DiscoverStateService } from './discoverState.service';
+import { DownloadQueryOverlayComponent } from '../../discover/query/components/downloadQueryOverlay/downloadQueryOverlay.component';
 
 /**
- * @ngdoc service
- * @name shared.service:yasguiService
- * @requires @trpiply/yasgui
- * @requires vendor.YASGUI.plugins:turtle
- * @requires vendor.YASGUI.plugins:rdfXml
- * @requires vendor.YASGUI.plugins:jsonLD
- * @requires vendor.YASGUI.plugins.utils:yasguiUtil
- * @requires lodash
- * @requires shared.service:sparqlManagerService
- * @requires shared.service:modalService
- * @requires shared.service:discoverStateService
- * @requires shared.service:utilService
+ * @class shared.YasguiService
  * 
- * @description
- * `yasguiService` is a service that provide access to YASUI library 
- * Extends YASUI:YASR plugins.
+ * A service that provide access to YASUI library. Extends YASUI:YASR plugins. Requires:
+ * @trpiply/yasgui
+ * vendor.YASGUI.plugins:turtle
+ * vendor.YASGUI.plugins:rdfXml
+ * vendor.YASGUI.plugins:jsonLD
+ * vendor.YASGUI.plugins.utils:yasguiUtil
  * 
  * Documentation: https://triply.cc/docs/yasgui
  * Demo Page: https://yasgui.triply.cc/
  * Code: https://github.com/TriplyDB/Yasgui
  */
-yasguiService.$inject = ['REST_PREFIX','sparqlManagerService', 'modalService', 'discoverStateService', '$window', 'utilService'];
+@Injectable()
+export class YasguiService {
+    defaultUrl : URL = new URL(REST_PREFIX + 'sparql/limited-results', window.location.origin);
+    yasgui : any = {};
+    customURL = null;
+    reponseLimitElement = <HTMLElement>{};
+    yasrRootElement : HTMLElement = <any>{};
+    hasInitialized = false;
 
-function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discoverStateService, $window, utilService) {
-    const defaultUrl : URL = new URL(REST_PREFIX + 'sparql/limited-results', $window.location.origin);
-    const self = this;
-    const util = utilService;
-    let yasgui : any = {};
-    let customURL = null;
-    
-    let reponseLimitElement = <HTMLElement>{};
-    let yasrRootElement : HTMLElement = <any>{};
+    constructor(private matDialog: MatDialog, private state: DiscoverStateService, @Inject('utilService') private util) {}
 
-    self.initYasgui = (element, config :any = {}) => {
-        const localConfig = getDefaultConfig();
+    initYasgui(element: HTMLElement, config :any = {}) : void{
+        const localConfig = this._getDefaultConfig();
         config.name = 'mobiQuery';
         config.tabName = 'mobiQuery';
 
         if (config.endpoint) {
-            customURL = config.endpoint;
+            this.customURL = config.endpoint;
         }
         
         const configuration = merge({}, localConfig, config);
         // Init YASGUI
-        initPlugins();
+        this._initPlugins();
         
-        if (!self.hasInitialized) {
-            self.reset();
+        if (!this.hasInitialized) {
+            this.reset();
         }
         
-        yasgui = new Yasgui(element, configuration);
-        updateYasguiUI();
-        self.hasInitialized = true;
+        this.yasgui = new Yasgui(element, configuration);
+        this._updateYasguiUI();
+        this.hasInitialized = true;
     }
 
-    self.hasInitialized = false;
+    handleYasrContainer = this._handleYasrVisibility;
 
-    self.handleYasrContainer = handleYasrVisibility;
-    
-    self.getYasgui = () => {
-        return yasgui;
+    public getYasgui(): any {
+        return this.yasgui;
     }
     
     // fire a new query
-    self.submitQuery  = (queryConfig = {}) => {
-        if (self.hasInitialized) {
-            setRequestConfig();
-            yasgui.getTab().yasqe.query(queryConfig);
+    public submitQuery(queryConfig = {}): boolean {
+        if (this.hasInitialized) {
+            this._setRequestConfig();
+            this.yasgui.getTab().yasqe.query(queryConfig);
             return true;
         } else {
-            util.createErrorToast('Error: Yasgui has not been initialized');
+            this.util.createErrorToast('Error: Yasgui has not been initialized');
             return false;
         }
     }
 
-    self.reset = () => {
-        discoverStateService.query.datasetRecordIRI = '';
-        if (Object.prototype.hasOwnProperty.call(yasgui, 'getTab')) {
-            self.clearStorage();
+    public reset(): void {
+        this.state.query.datasetRecordId = '';
+        if (Object.prototype.hasOwnProperty.call(this.yasgui, 'getTab')) {
+            this.clearStorage();
         } else  {
-            let yasguiKeyName = 'yagui__config';
+            const yasguiKeyName = 'yagui__config';
             if (localStorage.getItem(yasguiKeyName)) {
                 localStorage.removeItem(yasguiKeyName);
             }
@@ -120,51 +115,49 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
      * Clear Storage
      * https://github.com/TriplyDB/Yasgui/blob/master/packages/utils/src/Storage.ts
      */
-    self.clearStorage = () => {
-        yasgui.getTab().getYasr().storage.removeNamespace();
+    public  clearStorage(): void {
+        this.yasgui.getTab().getYasr().storage.removeNamespace();
     }
     
-    function initPlugins() {
+    private _initPlugins() {
         // register custom plugins
         if (Yasgui.Yasr) {
-            Yasgui.Yasr.registerPlugin("turtle", YasrTurtlePlugin.default as any);
-            Yasgui.Yasr.registerPlugin("rdfXml", YasrRdfXmlPlugin.default as any);
-            Yasgui.Yasr.registerPlugin("jsonLD", YasrJsonLDlPlugin.default as any);
+            Yasgui.Yasr.registerPlugin('turtle', YasrTurtlePlugin.default as any);
+            Yasgui.Yasr.registerPlugin('rdfXml', YasrRdfXmlPlugin.default as any);
+            Yasgui.Yasr.registerPlugin('jsonLD', YasrJsonLDlPlugin.default as any);
         } else {
-            if ($window) {
-                ($window as any).Yasr.registerPlugin("turtle", YasrTurtlePlugin.default as any);
-                ($window as any).Yasr.registerPlugin("rdfXml", YasrRdfXmlPlugin.default as any);
-                ($window as any).Yasr.registerPlugin("jsonLD", YasrJsonLDlPlugin.default as any);
-            }
+            (window as any).Yasr.registerPlugin('turtle', YasrTurtlePlugin.default as any);
+            (window as any).Yasr.registerPlugin('rdfXml', YasrRdfXmlPlugin.default as any);
+            (window as any).Yasr.registerPlugin('jsonLD', YasrJsonLDlPlugin.default as any);
         }
         // set the order of the plugins
-        Yasgui.Yasr.defaults.pluginOrder = [ "table", "turtle" , "rdfXml", "jsonLD"];
+        Yasgui.Yasr.defaults.pluginOrder = [ 'table', 'turtle' , 'rdfXml', 'jsonLD'];
     }
     
     // Register event listeners
-    function initEvents() {
-        const tab =  yasgui.getTab();
+    private _initEvents() {
+        const tab = this.yasgui.getTab();
         tab.once('query',() => {
-            handleYasrVisibility();
+            this._handleYasrVisibility();
         });
 
         // update query string value on blur
         tab.yasqe.on('blur', (yasqe: Yasgui.Yasqe) => {
-            discoverStateService.query.queryString = yasqe.getValue();
+            this.state.query.queryString = yasqe.getValue();
         });
 
         // update plugin data on tab change
         tab.yasr.on('change', (instance: Yasgui.Yasr, config: PersistedJson) => {
-            if (isPluginEnabled(instance?.selectedPlugin)) {
-                refreshPluginData();
+            if (this._isPluginEnabled(instance?.selectedPlugin)) {
+                this._refreshPluginData();
             }
         });
 
-        const downloadIcon = yasrRootElement.querySelector('.yasr_downloadIcon');
+        const downloadIcon = this.yasrRootElement.querySelector('.yasr_downloadIcon');
         if (downloadIcon) {
             downloadIcon.addEventListener('click', (e) => {
                 e.preventDefault();
-                downloadIconOnClick(tab);
+                this._downloadIconOnClick(tab);
             });
         }
         
@@ -173,7 +166,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
          * overwrite download button functionality
          */
         tab.yasr.once('drawn', (instance: Yasgui.yasr, plugin: Plugin) => {
-            drawResponseLimitMessage(instance.headerEl);
+            this._drawResponseLimitMessage(instance.headerEl);
             // dont show table plugin as selected if it cant handled the results
             if (!instance.plugins['table'].canHandleResults() && instance.drawnPlugin !== 'table') {
                 instance.draw();
@@ -185,13 +178,13 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
         tab.yasr.on('drawn', (yasr: Yasgui.Yasr, plugin: Plugin) => {
             const drawnPlugin = yasr.drawnPlugin;
             const results = yasr.results;
-            discoverStateService.query.selectedPlugin = drawnPlugin;
-            let limit = (results.res && results.res.headers['x-limit-exceeded']) ? results.res.headers['x-limit-exceeded'] : 0;
-            updateResponseLimitMessage(limit);
+            this.state.query.selectedPlugin = drawnPlugin;
+            const limit = (results.res && results.res.headers['x-limit-exceeded']) ? results.res.headers['x-limit-exceeded'] : 0;
+            this._updateResponseLimitMessage(limit);
 
             if (drawnPlugin === 'table') {
                 yasr.plugins['table'].dataTable.column().visible(false);
-                let tableFilterInput = yasrRootElement.querySelector('.tableFilter');
+                const tableFilterInput = this.yasrRootElement.querySelector('.tableFilter');
                 if (tableFilterInput) {
                     tableFilterInput.addEventListener('keypress', function (e:KeyboardEvent) {
                         if (e.key === 'Enter') {
@@ -202,17 +195,17 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
             }
 
             if (drawnPlugin === 'error') {
-                const error = yasgui.getTab().getYasr().results?.getError();
-                const errTextEl = yasrRootElement.querySelector('pre');
-                if (errTextEl && error.text && !error.hasOwnProperty('clear')) {
+                const error = this.yasgui.getTab().getYasr().results?.getError();
+                const errTextEl = this.yasrRootElement.querySelector('pre');
+                if (errTextEl && error.text && !Object.prototype.hasOwnProperty.call(error, 'clear')) {
                     try {
                         const errorJson = JSON.parse(decodeURIComponent(error.text));
-                        if (errorJson.hasOwnProperty('details')) {
+                        if (Object.prototype.hasOwnProperty.call(errorJson, 'details')) {
                             errTextEl.textContent = errorJson['details'];
                         } else {
                             errTextEl.textContent = 'Could not find error details from response object.';
                         }
-                    } catch(e) {
+                    } catch (e) {
                         errTextEl.textContent = 'Could not parse error response as JSON.';
                     }
                 }
@@ -224,57 +217,61 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
         });
     }
 
-    function downloadIconOnClick(tab){
-        let downloadIconDisabled = yasrRootElement.querySelector('.yasr_downloadIcon').classList.contains('disabled');
+    private _downloadIconOnClick(tab){
+        const downloadIconDisabled = this.yasrRootElement.querySelector('.yasr_downloadIcon').classList.contains('disabled');
 
         if (downloadIconDisabled) {
             return;
         }
         
-        sparqlManagerService.queryString = tab.yasqe.getQueryWithValues();
-        const queryType = tab.yasqe.getQueryType()?.toLowerCase();
-        modalService.openModal('downloadQueryOverlay', {queryType}, (errorMessage => { 
-                if (errorMessage) {
-                    tab.yasr.setResponse({
-                            data: [],
-                            error: { 
-                                status: 401,
-                                text: errorMessage,
-                                statusText: errorMessage,
-                                clear: true
-                            },
+        this.matDialog.open(DownloadQueryOverlayComponent, {
+            data: {
+                query: tab.yasqe.getQueryWithValues(),
+                queryType: tab.yasqe.getQueryType()?.toLowerCase(),
+                datasetRecordIRI: this.state.query.datasetRecordId
+            }
+        }).afterClosed().subscribe((errorMessage) => {
+            if (errorMessage) {
+                tab.yasr.setResponse({
+                        data: [],
+                        error: { 
                             status: 401,
-                            contentType: undefined,
-                            executionTime: 0
-                        });
-                }
-            }), 'sm');
+                            text: errorMessage,
+                            statusText: errorMessage,
+                            clear: true
+                        },
+                        status: 401,
+                        contentType: undefined,
+                        executionTime: 0
+                    });
+            }
+        });
     }
 
-    function drawResponseLimitMessage(headerElement) {
-        reponseLimitElement = document.createElement('div');
-        reponseLimitElement.classList.add('yasr_response_limit');
-        headerElement.insertBefore(reponseLimitElement, headerElement.querySelector('.yasr_response_chip').nextSibling)
+    private _drawResponseLimitMessage(headerElement) {
+        this.reponseLimitElement = document.createElement('div');
+        this.reponseLimitElement.classList.add('yasr_response_limit');
+        headerElement.insertBefore(this.reponseLimitElement, headerElement.querySelector('.yasr_response_chip').nextSibling);
     }
 
-    function updateResponseLimitMessage(limit = 0) {
-        let className = 'hide';
+    private _updateResponseLimitMessage(limit = 0) {
+        const className = 'hide';
         if (limit) {
-            reponseLimitElement.classList.remove(className);
-            if (!reponseLimitElement.innerText) {
-                reponseLimitElement.innerText = `Warning: Query Results exceeded the limit of ${limit} rows/triples`;
+            this.reponseLimitElement.classList.remove(className);
+            if (!this.reponseLimitElement.innerText) {
+                this.reponseLimitElement.innerText = `Warning: Query Results exceeded the limit of ${limit} rows/triples`;
             }
         } else {
-            reponseLimitElement.classList.add(className)
+            this.reponseLimitElement.classList.add(className);
         }
     }
 
-    function isPluginEnabled(plugin) {
-        if (!(Object.prototype.hasOwnProperty.call(yasgui, 'rootEl') && yasgui.rootEl instanceof HTMLElement)) {
+    private _isPluginEnabled(plugin) {
+        if (!(Object.prototype.hasOwnProperty.call(this.yasgui, 'rootEl') && this.yasgui.rootEl instanceof HTMLElement)) {
             return false;
         }
 
-        let pluginElement = yasgui.rootEl.querySelector(`.select_${plugin}`);
+        const pluginElement = this.yasgui.rootEl.querySelector(`.select_${plugin}`);
         if (pluginElement) {
             return !hasClass(pluginElement, 'disabled');
         } else {
@@ -287,8 +284,8 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
      * @param type format
      * @returns Accept Header Content Type
      */
-    function getFormat(type) {
-        let format = type || yasgui.getTab().yasr.config.defaultPlugin;
+    private _getFormat(type) {
+        const format = type || this.yasgui.getTab().yasr.config.defaultPlugin;
         const formatType =  {
            'turtle': 'text/turtle',
            'rdfXml': 'application/rdf+xml',
@@ -299,25 +296,25 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
     }
 
     // update yasr request configuration
-    function setRequestConfig() {
-        let url =  customURL || defaultUrl.href;
-        const { headers } = yasgui.getTab().getRequestConfig();
-        headers.Accept = getFormat(yasgui.getTab().yasr.selectedPlugin);
+    private _setRequestConfig() {
+        const url =  this.customURL || this.defaultUrl.href;
+        const { headers } = this.yasgui.getTab().getRequestConfig();
+        headers.Accept = this._getFormat(this.yasgui.getTab().yasr.selectedPlugin);
         headers['Content-Type'] = 'application/x-www-form-urlencoded';
-        let requestConfig = {
+        const requestConfig = {
             endpoint: url,
             headers: headers,
             method: 'POST'
         };
-        const datasetIri = discoverStateService.query.datasetRecordId;
+        const datasetIri = this.state.query.datasetRecordId;
         requestConfig['args'] = (datasetIri !== '') ? [{ name: 'dataset', value: datasetIri }] : [];
-        yasgui.getTab().setRequestConfig(requestConfig);
+        this.yasgui.getTab().setRequestConfig(requestConfig);
     }
 
-    function refreshPluginData() {
-        let yasr = yasgui.getTab().yasr;
+    private _refreshPluginData() {
+        const yasr = this.yasgui.getTab().yasr;
         if (yasr.drawnPlugin && yasr.selectedPlugin) {
-            self.submitQuery();
+            this.submitQuery();
         }
     }
 
@@ -328,81 +325,79 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
      * RequestConfig: https://github.com/TriplyDB/Yasgui/blob/89d2f430c75eb10cf400d9187a1d7fdac507943c/packages/yasqe/src/index.ts#L984
      * @returns Config Object
      */
-    function getDefaultConfig() {
+    private _getDefaultConfig() {
         return {
             requestConfig: {
                 method: 'POST',
-                endpoint: defaultUrl.href
+                endpoint: this.defaultUrl.href
             },
             populateFromUrl: false,
             copyEndpointOnNewTab: false
         };
     }
 
-    function handleYasrVisibility () {
-        let className = 'hide'
-        let isElementHidden = hasClass(yasrRootElement, className);
-        let method = isElementHidden ? 'remove' : 'add'
-        let hasResults = !!yasgui.getTab().yasr.results;
+    private _handleYasrVisibility () {
+        const className = 'hide';
+        const isElementHidden = hasClass(this.yasrRootElement, className);
+        const method = isElementHidden ? 'remove' : 'add';
+        const hasResults = !!this.yasgui.getTab().yasr.results;
         
         if (method === 'add' && !hasResults) {
-            yasrRootElement.classList.add(className);
+            this.yasrRootElement.classList.add(className);
         } else {
             if (isElementHidden) {
-                yasrRootElement.classList.remove(className);
+                this.yasrRootElement.classList.remove(className);
             }
         }
     }
     
-    function updateYasguiUI() {
-        overwritePlugins();
+    private _updateYasguiUI() {
+        this._overwritePlugins();
         // Init UI events
-        yasrRootElement = yasgui.getTab().yasr.rootEl;
-        if (yasrRootElement instanceof HTMLElement) {
-            initEvents();
-            handleYasrVisibility();
-            if (yasrRootElement.querySelector(`.select_response`)) {
-                yasrRootElement.querySelector(`.select_response`).classList.add('hide');
+        this.yasrRootElement = this.yasgui.getTab().yasr.rootEl;
+        if (this.yasrRootElement instanceof HTMLElement) {
+            this._initEvents();
+            this._handleYasrVisibility();
+            if (this.yasrRootElement.querySelector('.select_response')) {
+                this.yasrRootElement.querySelector('.select_response').classList.add('hide');
             }
         }
     }
 
-    function overwritePlugins () {
+    private _overwritePlugins() {
         // overwrite table plugin
         // update canHandleResults
         // render plugin only when content type is EQ to json
-        let yasr =  yasgui.getTab().getYasr();
+        const yasr = this.yasgui.getTab().getYasr();
         yasr.plugins['table'].canHandleResults = function() {
-            let isCompatible = !!this.yasr.results
+            const isCompatible = !!this.yasr.results
                 && this.yasr.results?.getVariables()
                 && this.yasr.results?.getVariables().length > 0
-                && this.yasr.results.getContentType() == 'application/json';
+                && this.yasr.results.getContentType() === 'application/json';
             return isCompatible;
-        }
+        };
 
         yasr.plugins['table'].getUriLinkFromBinding = function(binding, prefixes?: { [key: string]: string }) {
             const href = binding.value;
             let visibleString = href;
             if (prefixes) {
                 for (const prefixLabel in prefixes) {
-                    if (visibleString.indexOf(prefixes[prefixLabel]) == 0) {
-                        visibleString = prefixLabel + ":" + href.substring(prefixes[prefixLabel].length);
+                    if (visibleString.indexOf(prefixes[prefixLabel]) === 0) {
+                        visibleString = prefixLabel + ':' + href.substring(prefixes[prefixLabel].length);
                         break;
                     }
                 }
             }
             return `${visibleString}`;
-        }
+        };
 
         // dont show response plugin
         yasr.plugins['response'].canHandleResults = function() {
             return false;
-        }
+        };
         // overwrite yasr download function
         yasr.download = function() {
            return false;
         };
     }
 }
-
-export default yasguiService;

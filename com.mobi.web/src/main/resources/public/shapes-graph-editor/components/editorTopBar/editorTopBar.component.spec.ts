@@ -29,11 +29,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import * as util from 'util';
-import { cleanStylesFromDOM, mockCatalogManager, mockUtil } from '../../../../../../test/ts/Shared';
+import { MatChipsModule, MatButtonToggleModule } from '@angular/material';
+import { of, throwError } from 'rxjs';
+
+import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CreateBranchModal } from '../createBranchModal/createBranchModal.component';
@@ -41,18 +41,21 @@ import { DownloadRecordModalComponent } from '../downloadRecordModal/downloadRec
 import { EditorBranchSelectComponent } from '../editorBranchSelect/editorBranchSelect.component';
 import { EditorRecordSelectComponent } from '../editorRecordSelect/editorRecordSelect.component';
 import { EditorTopBarComponent } from './editorTopBar.component';
-import { MatChipsModule, MatButtonToggleModule } from '@angular/material';
 import { UploadRecordModalComponent } from '../uploadRecordModal/uploadRecordModal.component';
 import { CommitModalComponent } from '../commitModal/commitModal.component';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { CommitDifference } from '../../../shared/models/commitDifference.interface';
 
 describe('Editor Top Bar component', function() {
     let component: EditorTopBarComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<EditorTopBarComponent>;
     let matDialog: jasmine.SpyObj<MatDialog>;
+    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let shapesGraphStateStub;
-    let catalogManagerStub;
     let utilStub;
+
+    const catalogId = 'catalog';
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -71,7 +74,7 @@ describe('Editor Top Bar component', function() {
             ],
             providers: [
                 MockProvider(ShapesGraphStateService),
-                { provide: 'catalogManagerService', useClass: mockCatalogManager },
+                MockProvider(CatalogManagerService),
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
@@ -95,12 +98,11 @@ describe('Editor Top Bar component', function() {
             title: 'title'
         };
         shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.resolve());
-        catalogManagerStub = TestBed.get('catalogManagerService');
-        catalogManagerStub.getBranchHeadCommit.and.returnValue(Promise.resolve(
-            {
-                commit: { '@id': 'commit3' }
-            }
-        ));
+        catalogManagerStub = TestBed.get(CatalogManagerService);
+        catalogManagerStub.localCatalog = {'@id': catalogId};
+        let commitDifference = new CommitDifference();
+        commitDifference.commit = {'@id': 'commit3'};
+        catalogManagerStub.getBranchHeadCommit.and.returnValue(of(commitDifference));
         utilStub = TestBed.get('utilService');
     });
 
@@ -151,7 +153,7 @@ describe('Editor Top Bar component', function() {
                    it('successfully', fakeAsync(function() {
                        component.update();
                        tick();
-                       expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', 'catalog');
+                       expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', catalogId);
                        expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record1', 'branch1', 'commit3', undefined, 'title');
                        expect(utilStub.createSuccessToast).toHaveBeenCalledWith('Shapes Graph branch has been updated.');
                        expect(utilStub.createErrorToast).not.toHaveBeenCalled();
@@ -160,7 +162,7 @@ describe('Editor Top Bar component', function() {
                        shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.reject('Error'));
                        component.update();
                        tick();
-                       expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', 'catalog');
+                       expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', catalogId);
                        expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record1', 'branch1', 'commit3', undefined, 'title');
                        expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
                        expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
@@ -168,10 +170,10 @@ describe('Editor Top Bar component', function() {
                 });
             });
             it('unless an error occurs', fakeAsync(function() {
-                catalogManagerStub.getBranchHeadCommit.and.returnValue(Promise.reject('Error'));
+                catalogManagerStub.getBranchHeadCommit.and.returnValue(throwError('Error'));
                 component.update();
                 tick();
-                expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', 'catalog');
+                expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', catalogId);
                 expect(shapesGraphStateStub.changeShapesGraphVersion).not.toHaveBeenCalled();
                 expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');

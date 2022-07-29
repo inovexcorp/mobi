@@ -32,11 +32,12 @@ import {
     cleanStylesFromDOM,
     mockWindowRef,
     mockOntologyState,
-    mockDiscoverState
 } from '../../../../../../test/ts/Shared';
 import { SharedModule } from '../../../shared/shared.module';
 import { WindowRef } from '../../../shared/services/windowRef.service';
 import { QuickActionGridComponent } from './quickActionGrid.component';
+import { MockProvider } from 'ng-mocks';
+import { DiscoverStateService } from '../../../shared/services/discoverState.service';
 
 // Mocks
 class mockState {
@@ -59,8 +60,8 @@ describe('Quick Action Grid component', function() {
                 QuickActionGridComponent
             ],
             providers: [
+                MockProvider(DiscoverStateService),
                 { provide: 'ontologyStateService', useClass: mockOntologyState },
-                { provide: 'discoverStateService', useClass: mockDiscoverState },
                 { provide: WindowRef, useClass: mockWindowRef },
                 { provide: StateService, useClass: mockState },
             ]
@@ -72,7 +73,7 @@ describe('Quick Action Grid component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.get('ontologyStateService');
-        discoverStateStub = TestBed.get('discoverStateService');
+        discoverStateStub = TestBed.get(DiscoverStateService);
         $stateStub = TestBed.get(StateService);
         windowRefStub = TestBed.get(WindowRef);
     });
@@ -116,16 +117,12 @@ describe('Quick Action Grid component', function() {
         it('should explore data', function() {
             component.exploreData();
             expect($stateStub.go).toHaveBeenCalledWith('root.discover', null, {reload: true});
-            expect(discoverStateStub.explore.active).toEqual(true);
-            expect(discoverStateStub.search.active).toEqual(false);
-            expect(discoverStateStub.query.active).toEqual(false);
+            expect(discoverStateStub.tabIndex).toEqual(0);
         });
         it('should query data', function() {
             component.queryData();
             expect($stateStub.go).toHaveBeenCalledWith('root.discover', null, {reload: true});
-            expect(discoverStateStub.explore.active).toEqual(false);
-            expect(discoverStateStub.search.active).toEqual(false);
-            expect(discoverStateStub.query.active).toEqual(true);
+            expect(discoverStateStub.tabIndex).toEqual(2);
         });
         it('should read the documentation', function() {
             component.readTheDocumentation();

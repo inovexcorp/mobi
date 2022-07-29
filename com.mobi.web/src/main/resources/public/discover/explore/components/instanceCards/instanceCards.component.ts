@@ -23,6 +23,8 @@ import { Chunk } from "antlr4ts/tree/pattern/Chunk";
  * #L%
  */
 import { initial, chunk, orderBy, has, forEach, last } from 'lodash';
+import { DiscoverStateService } from "../../../../shared/services/discoverState.service";
+import { first } from "rxjs/operators";
 
 const template = require('./instanceCards.component.html');
 
@@ -52,7 +54,7 @@ const instanceCardsComponent = {
 
 instanceCardsComponentCtrl.$inject = ['$q', 'discoverStateService', 'exploreService', 'exploreUtilsService', 'utilService', 'modalService', 'prefixes', 'policyEnforcementService']
 
-function instanceCardsComponentCtrl($q, discoverStateService, exploreService, exploreUtilsService, utilService, modalService, prefixes, policyEnforcementService) {
+function instanceCardsComponentCtrl($q, discoverStateService: DiscoverStateService, exploreService, exploreUtilsService, utilService, modalService, prefixes, policyEnforcementService) {
     const dvm = this;
     const ds = discoverStateService;
     const es = exploreService;
@@ -85,7 +87,7 @@ function instanceCardsComponentCtrl($q, discoverStateService, exploreService, ex
                             ds.explore.instance.metadata = item;
                             ds.explore.breadcrumbs.push(item.title);
                             ds.explore.hasPermissionError = false;
-                            return eu.getReferencedTitles(item.instanceIRI, ds.explore.recordId);
+                            return eu.getReferencedTitles(item.instanceIRI, ds.explore.recordId).pipe(first()).toPromise();
                         }, $q.reject)
                         .then(response => {
                             ds.explore.instance.objectMap = {};

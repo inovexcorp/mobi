@@ -22,9 +22,12 @@
  */
 import { Difference } from './difference.class';
 
+/**
+ * A Conflict that would result in the even of a merge of Branches on a VersionedRDFRecord
+ */
 export interface Conflict {
     iri: string,
     left: Difference,
     right: Difference,
-    resolved: string
+    resolved?: boolean|string
 }

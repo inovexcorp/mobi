@@ -23,14 +23,12 @@
 import { Component, Input, OnChanges, Inject } from '@angular/core';
 import { Validators, ValidatorFn, FormControl, FormGroup } from '@angular/forms';
 
+import { SETTING, SHACL, XSD } from '../../../prefixes';
+
 /**
- * @ngdoc component
- * @name shared.component:settingFormField
- * @requires shared.service.utilService
- * @requires shared.service.prefixes
+ * @class shared.SettingFormFieldComponent
  *
- * @description
- * `settingFormField` is a component that create form input(s) for a specific form field
+ * A component that create form input(s) for a specific form field
  */
 @Component({
     selector: 'setting-form-field',
@@ -46,21 +44,21 @@ export class SettingFormFieldComponent implements OnChanges {
     validators: Array<ValidatorFn> = [];
     label = '';
         
-    constructor(@Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
+    constructor(@Inject('utilService') private util) {}
 
     ngOnChanges(): void {
-        this.label = this.util.getPropertyValue(this.shaclShape, this.prefixes.shacl + 'name');
+        this.label = this.util.getPropertyValue(this.shaclShape, SHACL + 'name');
 
-        if (this.shaclShape[this.prefixes.shacl + 'pattern']) {
-            const regex = this.util.getPropertyValue(this.shaclShape, this.prefixes.shacl + 'pattern');
+        if (this.shaclShape[SHACL + 'pattern']) {
+            const regex = this.util.getPropertyValue(this.shaclShape, SHACL + 'pattern');
             this.validators.push(Validators.pattern(regex));
         }
 
-        switch (this.util.getPropertyId(this.shaclShape, this.prefixes.setting + 'usesFormField')) {
-            case this.prefixes.setting + 'TextInput':
+        switch (this.util.getPropertyId(this.shaclShape, SETTING + 'usesFormField')) {
+            case SETTING + 'TextInput':
                 this.formType = 'textInput';
                 break;
-            case this.prefixes.setting + 'ToggleInput':
+            case SETTING + 'ToggleInput':
                 this.formType = 'toggle';
                 break;
             case '':
@@ -70,14 +68,14 @@ export class SettingFormFieldComponent implements OnChanges {
                 this.util.createErrorToast('Unsupported form field type');
         }
         
-        switch (this.util.getPropertyId(this.shaclShape, this.prefixes.shacl + 'datatype')) {
-            case this.prefixes.xsd + 'boolean':
+        switch (this.util.getPropertyId(this.shaclShape, SHACL + 'datatype')) {
+            case XSD + 'boolean':
                 this.convertFormValueToBoolean();
                 break;
-            case this.prefixes.xsd + 'integer':
+            case XSD + 'integer':
                 this.validators.push(Validators.pattern('^[0-9]+$'));
                 break;
-            case this.prefixes.xsd + 'string':
+            case XSD + 'string':
                 break;
             case '':
                 this.util.createErrorToast('Form field datatype not configured');
@@ -86,7 +84,7 @@ export class SettingFormFieldComponent implements OnChanges {
                 this.util.createErrorToast('Unsupported form field datatype');
         }
 
-        if (this.shaclShape[this.prefixes.shacl + 'minCount'] && Number(this.util.getPropertyValue(this.shaclShape, this.prefixes.shacl + 'minCount')) > 0) {
+        if (this.shaclShape[SHACL + 'minCount'] && Number(this.util.getPropertyValue(this.shaclShape, SHACL + 'minCount')) > 0) {
             this.validators.push(Validators.required);
         }
 

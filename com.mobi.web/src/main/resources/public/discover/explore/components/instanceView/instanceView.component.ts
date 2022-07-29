@@ -22,6 +22,7 @@
  */
 import * as angular from 'angular';
 import { omit } from 'lodash';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 
 import './instanceView.component.scss';
 
@@ -54,7 +55,7 @@ const instanceViewComponent = {
 
 instanceViewComponentCtrl.$inject = ['discoverStateService', 'utilService', 'exploreUtilsService', 'prefixes', 'policyEnforcementService'];
 
-function instanceViewComponentCtrl(discoverStateService, utilService, exploreUtilsService, prefixes, policyEnforcementService) {
+function instanceViewComponentCtrl(discoverStateService: DiscoverStateService, utilService, exploreUtilsService, prefixes, policyEnforcementService) {
     const dvm = this;
     const pep = policyEnforcementService;
     dvm.util = utilService;

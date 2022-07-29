@@ -23,19 +23,16 @@
 import { fakeAsync, TestBed, flush } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-
-import { OntologyVisualizationService } from './ontologyVisualizaton.service';
-import { SharedModule } from '../../shared/shared.module';
-import { listItem, visData } from './testData';
+import { of, throwError } from 'rxjs';
 
 import {
     mockOntologyState,
     mockOntologyManager,
     mockUtil
 } from '../../../../../test/ts/Shared';
-
-import { of, throwError } from 'rxjs';
-
+import { SharedModule } from '../../shared/shared.module';
+import { listItem, visData } from './testData';
+import { OntologyVisualizationService } from './ontologyVisualizaton.service';
 
 describe('OntologyVisualization Service', () => {
     let visualizationStub : OntologyVisualizationService;
@@ -73,10 +70,10 @@ describe('OntologyVisualization Service', () => {
             items.classes.iris = listItem.classes.iris;
         });
 
-        ontologyManagerServiceStub.getClassHierarchies = jasmine.createSpy('getClassHierarchies').and.returnValue(Promise.resolve(Object.freeze(listItem.classHierarchy)));
-        ontologyManagerServiceStub.getOntologyEntityNames = jasmine.createSpy('getOntologyEntityNames').and.returnValue(Promise.resolve(Object.freeze(listItem.entityInfo)));
-        ontologyManagerServiceStub.getPropertyToRange = jasmine.createSpy('getPropertyToRange').and.returnValue(Promise.resolve(Object.freeze(listItem.propertyToRanges)));
-        ontologyManagerServiceStub.getImportedIris = jasmine.createSpy('getImportedIris').and.returnValue(Promise.resolve(Object.freeze([{
+        ontologyManagerServiceStub.getClassHierarchies = jasmine.createSpy('getClassHierarchies').and.resolveTo(Object.freeze(listItem.classHierarchy));
+        ontologyManagerServiceStub.getOntologyEntityNames = jasmine.createSpy('getOntologyEntityNames').and.resolveTo(Object.freeze(listItem.entityInfo));
+        ontologyManagerServiceStub.getPropertyToRange = jasmine.createSpy('getPropertyToRange').and.resolveTo(Object.freeze(listItem.propertyToRanges));
+        ontologyManagerServiceStub.getImportedIris = jasmine.createSpy('getImportedIris').and.resolveTo(Object.freeze([{
             id: 1,
             ontologyId: 1,
             classes: []
@@ -85,7 +82,7 @@ describe('OntologyVisualization Service', () => {
             id: 2,
             ontologyId: 2,
             classes: []
-        }])));
+        }]));
 
         visualizationStub.getOntologyLocalObservable = jasmine.createSpy('getOntologyLocalObservable').and.returnValue(mockRequest(visData));
         visualizationStub.getSidebarState = jasmine.createSpy('getSidebarState').and.returnValue({
@@ -160,7 +157,7 @@ describe('OntologyVisualization Service', () => {
 
         }));
 
-        it('with InProgressCommit', fakeAsync(function() {
+        it('without InProgressCommit', fakeAsync(function() {
             visualizationStub.getOntologyLocalObservable = jasmine.createSpy('getOntologyLocalObservable').and.returnValue(mockRequest({}));
             expect(() => visualizationStub.getGraphState('commit', true)).toThrowError(Error); // ensure no state exist
 

@@ -20,35 +20,40 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="class-mapping-details h-100">
+<div class="class-mapping-details">
     <div class="iri-template">
-        <custom-label><small>IRI Template <button class="btn btn-link no-padding remove-min-width" ng-disabled="!dvm.classMappingId" ng-click="dvm.editIriTemplate()"><i class="fa fa-pencil"></i></button></small></custom-label>
-        <p><small class="text-muted">{{dvm.iriTemplate}}</small></p>
+        <div class="field-label"><small>IRI Template <button mat-icon-button color="primary" [disabled]="!classMappingId" (click)="editIriTemplate()"><i class="fa fa-pencil"></i></button></small></div>
+        <p><small class="text-muted">{{iriTemplate}}</small></p>
     </div>
     <div class="class-mapping-props">
         <div class="properties-field-name">
-            <span class="field-name">Properties</span>
-            <button class="btn btn-link no-padding float-right add-prop-mapping-button" ng-disabled="!dvm.hasPropsToMap" ng-click="dvm.addProp()"><i class="fa fa-plus"></i> Add Property</button>
+            <span class="field-label">Properties</span>
+            <button mat-button color="primary" class="float-right add-prop-mapping-button" [disabled]="!hasPropsToMap" (click)="addProp()"><i class="fa fa-plus"></i> Add Property</button>
         </div>
-        <div class="prop-list list-group">
-            <div ng-repeat="propMapping in dvm.propMappings track by propMapping['@id']" class="list-group-item" ng-class="{'active': dvm.state.selectedPropMappingId === propMapping['@id'], 'invalid': propMapping.isInvalid}" ng-click="dvm.clickProperty(propMapping)" ng-dblclick="dvm.switchClass(propMapping)" disable-animate>
-                <div class="prop-actions float-right">
-                    <a class="edit-prop" ng-click="dvm.editProp(propMapping)"><i class="fa fa-pencil"></i></a>
-                    <a class="delete-prop" ng-click="dvm.confirmDeleteProp(propMapping)"><i class="fa fa-trash"></i></a>
-                </div>
-                <h4 class="list-group-item-heading">{{propMapping.title}}</h4>
-                <div class="list-group-item-text">
-                    <div ng-if="propMapping.dataMappingInfo" class="data-prop-value">
-                        <div><span class="field-name">Column: </span>{{propMapping.dataMappingInfo.value}}</div>
-                        <div><span class="field-name">Preview: </span><span ng-class="{'text-muted': propMapping.dataMappingInfo.preview === '(None)'}">{{propMapping.dataMappingInfo.preview}}</span></div>
-                        <div><span class="field-name">Datatype: </span>{{propMapping.dataMappingInfo.datatype}}</div>
-                        <div ng-if="propMapping.dataMappingInfo.language"><span class="field-name">Language: </span>{{propMapping.dataMappingInfo.language.preview}}<small class="ml-1 text-muted">&#64;{{propMapping.dataMappingInfo.language.tag}}</small></div>
+        <mat-list class="prop-list">
+            <mat-list-item *ngFor="let propMapping of propMappings; last as last"
+                [ngClass]="{'selected-prop': state.selectedPropMappingId === propMapping.jsonld['@id'], 'invalid': propMapping.isInvalid}"
+                (click)="handleSingleClick(propMapping.jsonld)"
+                (dblclick)="handleDoubleClick(propMapping.jsonld)">
+                <div class="d-flex w-100">
+                    <div class="prop-mapping-details flex-1 remove-min-width">
+                        <h4 matLine>{{propMapping.title}}</h4>
+                        <div matLine *ngIf="propMapping.dataMappingInfo"><span class="field-name">Column: </span>{{propMapping.dataMappingInfo.value}}</div>
+                        <div matLine *ngIf="propMapping.dataMappingInfo"><span class="field-name">Preview: </span><span [ngClass]="{'text-muted': propMapping.dataMappingInfo.preview === '(None)'}">{{propMapping.dataMappingInfo.preview}}</span></div>
+                        <div matLine *ngIf="propMapping.dataMappingInfo"><span class="field-name">Datatype: </span>{{propMapping.dataMappingInfo.datatype}}</div>
+                        <div matLine *ngIf="propMapping.language"><span class="field-name">Language: </span>{{propMapping.language.preview}}<small class="ml-1 text-muted">&#64;{{propMapping.language.tag}}</small></div>
+                        <div matLine *ngIf="propMapping.objectMappingInfo" class="object-prop-value"><span class="field-name">Class: </span>{{propMapping.objectMappingInfo.value}}</div>
                     </div>
-                    <div ng-if="propMapping.objectMappingInfo" class="object-prop-value">
-                        <p><span class="field-name">Class: </span>{{propMapping.objectMappingInfo.value}}</p>
+                    <div class="prop-actions">
+                        <button class="menu-button" mat-icon-button [matMenuTriggerFor]="propMappingActions"><mat-icon>more_vert</mat-icon></button>
+                        <mat-menu #propMappingActions="matMenu">
+                            <button mat-menu-item (click)="editProp(propMapping)" class="edit"><i class="fa fa-fw fa-pencil"></i> Edit</button>
+                            <button mat-menu-item (click)="confirmDeleteProp(propMapping)" class="delete"><i class="fa fa-fw fa-trash-o"></i> Delete</button>
+                        </mat-menu>
                     </div>
                 </div>
-            </div>
-        </div>
+                <mat-divider [inset]="true" *ngIf="!last"></mat-divider>
+            </mat-list-item>
+        </mat-list>
     </div>
 </div>

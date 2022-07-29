@@ -20,52 +20,48 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Input } from '@angular/core';
+
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogStateService } from '../../../shared/services/catalogState.service';
+
 import './recordIcon.component.scss';
 
-const template = require('./recordIcon.component.html');
-
 /**
- * @ngdoc component
- * @name catalog.component:recordIcon
- * @requires shared.service:catalogStateService
+ * @class catalog.RecordIconComponent
  *
- * @description
- * `recordIcon` is a component that creates a Font Awesome Icon stack for the provided catalog Record using the
- * {@link shared.service:catalogStateService}.
+ * A component that creates a Font Awesome Icon stack for the provided catalog Record using the
+ * {@link shared.CatalogStateService}.
  *
- * @param {object} Record A catalog Record JSON-LD object
+ * @param {JSONLDObject} Record A catalog Record JSON-LD object
  */
-const recordIconComponent = {
-    template,
-    bindings: {
-        record: '<'
-    },
-    controllerAs: 'dvm',
-    controller: recordIconComponentCtrl
-};
+@Component({
+    selector: 'record-icon',
+    templateUrl: './recordIcon.component.html'
+})
+export class RecordIconComponent {
+    icon = '';
+    isMaterial = false;
 
-recordIconComponentCtrl.$inject = ['catalogStateService'];
+    private _record: JSONLDObject;
 
-function recordIconComponentCtrl(catalogStateService) {
-    var dvm = this;
-    var state = catalogStateService;
-    dvm.icon = '';
-    dvm.isMaterial = false;
-
-    dvm.$onInit = function() {
-        changeIcon(state.getRecordIcon(dvm.record));
+    @Input() set record(value: JSONLDObject) {
+        this._record = value;
+        this._changeIcon(this.state.getRecordIcon(this._record));
     }
-    dvm.$onChanges = function(changesObj) {
-        changeIcon(state.getRecordIcon(changesObj.record.currentValue));
+
+    get record(): JSONLDObject {
+        return this._record;
     }
-    function changeIcon(recordIcon){
-        if (recordIcon.startsWith("mat ")) {
-            dvm.isMaterial = true;
-            dvm.icon = recordIcon.substring(4)
+
+    constructor(public state: CatalogStateService) {}
+
+    private _changeIcon(recordIcon: string): void {
+        if (recordIcon.startsWith('mat ')) {
+            this.isMaterial = true;
+            this.icon = recordIcon.substring(4);
         } else {
-            dvm.icon = recordIcon;
+            this.icon = recordIcon;
         }
     }
 }
-
-export default recordIconComponent;

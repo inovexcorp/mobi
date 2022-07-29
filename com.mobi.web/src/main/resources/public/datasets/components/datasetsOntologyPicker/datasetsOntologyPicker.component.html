@@ -20,25 +20,26 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="datasets-ontology-picker form-group">
-    <custom-label [muted-text]="'(Optional)'">Ontologies</custom-label>
-    <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-    <search-bar bind-model="dvm.ontologySearchConfig.searchText" change-event="dvm.ontologySearchConfig.searchText = value" submit-event="dvm.setOntologies()"></search-bar>
-    <div class="ontologies my-2" targeted-spinner="dvm.spinnerId">
-        <info-message ng-if="dvm.ontologies.length === 0">No ontologies are available</info-message>
-        <md-list>
-            <md-list-item class="ontology" ng-repeat="ontology in dvm.ontologies track by ontology.recordId">
-                <div class="md-list-item-text">
-                    <h4 class="header" ng-bind-html="ontology.title | highlight:dvm.ontologySearchConfig.searchText | trusted"></h4>
-                    <p><small class="ontology-iri text-muted">{{ontology.ontologyIRI}}</small></p>
-                </div>
-                <md-checkbox class="md-primary" ng-model="ontology.selected" aria-label="Selected" ng-change="dvm.toggleOntology(ontology)"></md-checkbox>
-            </md-list-item>
-        </md-list>
-    </div>
-    <div class="selected-ontologies">
-        <span class="field-name">Selected: </span>
-        <span class="none-selected" ng-if="dvm.selectedOntologies.length === 0">(None)</span>
-        <span class="selected-ontology break-word hyphens" ng-repeat="ontology in dvm.selectedOntologies track by ontology.recordId">{{ontology.title}} <a ng-click="dvm.unselect(ontology)" class="remove-ontology"><i class="fa fa-times"></i></a> </span>
+<div class="datasets-ontology-picker">
+    <div class="field-label mb-2">Ontologies</div>
+    <error-display *ngIf="error">{{error}}</error-display>
+    <mat-chip-list>
+        <mat-chip *ngFor="let ontology of selected" class="text-truncate" [title]="ontology.title" [removable]="true" (removed)="toggleOntology(ontology)">
+            {{ontology.title}}
+            <mat-icon matChipRemove>cancel</mat-icon>
+        </mat-chip>
+    </mat-chip-list>
+    <!-- TODO: Use search-bar when upgraded -->
+    <mat-form-field class="w-100 mt-2">
+        <input matInput placeholder="Search..." [(ngModel)]="ontologySearchConfig.searchText" (keyup.enter)="setOntologies()">
+    </mat-form-field>
+    <div class="ontologies" #datasetOntologies>
+        <info-message *ngIf="ontologies.length === 0">No ontologies are available</info-message>
+        <mat-selection-list #ontologyList (selectionChange)="selectedUpdate($event)">
+            <mat-list-option *ngFor="let ontology of ontologies" [selected]="ontology.selected" [value]="ontology">
+                <h4 matLine [title]="ontology.title">{{ontology.title}}</h4>
+                <p matLine [title]="ontology.ontologyIRI"><small class="ontology-iri text-muted">{{ontology.ontologyIRI}}</small></p>
+            </mat-list-option>
+        </mat-selection-list>
     </div>
 </div>

@@ -81,8 +81,8 @@ module.exports = {
             .setValue('create-user-overlay input[name=email]', newUser.email)
             .click('label.mat-slide-toggle-label')
             .useXpath()
-            .click("//button/span[text() [contains(., 'Submit')]]")
-            .assert.not.elementPresent("//button/span[text() [contains(., 'Submit')]]")
+            .click("//button/span[text() [contains(., 'Submit')]]");
+        browser.globals.wait_for_no_spinners(browser)
     },
 
     'Step 5: The new user is displayed in users list' : function(browser) {
@@ -179,7 +179,7 @@ module.exports = {
             .useXpath()
             .click('//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
             .useCss()
-            .waitForElementNotPresent('div.spinner')
+            .waitForElementNotVisible('div.spinner')
             .waitForElementVisible('div.btn-container button')
             .useXpath()
             .waitForElementVisible('//button[text()="New Ontology"]')
@@ -216,16 +216,18 @@ module.exports = {
 
     'Step 18: The admin user can manage the newly created ontology' : function(browser) {
         browser
-            .click('sidebar div ul a[class=nav-link][href="#/catalog"]')
-            .waitForElementNotPresent('div.spinner')
-            .setValue('catalog-page records-view search-bar.record-search input','z-catalog-ontology-1.ttl')
-            .sendKeys('catalog-page records-view search-bar.record-search input', browser.Keys.ENTER)
-            .waitForElementNotPresent('div.spinner')
-            .click('xpath', '//catalog-page//records-view//record-card//*[div[contains(@class, "card-body")]//h5[contains(@class, "card-title")]//span[contains(@class, "ng-binding")][text()[contains(., "z-catalog-ontology-1.ttl")]]]')
-            .waitForElementVisible('catalog-page record-view div.record-body')
-            .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain('z-catalog-ontology-1.ttl')
-        browser.assert.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button');
-
+            .useXpath()
+            .click('//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
+            .useCss()
+            .waitForElementNotVisible('div.spinner')
+            .useXpath()
+            .click('xpath', '//search-bar')
+            .keys("testOntology")
+            .keys(browser.Keys.ENTER)
+            .waitForElementNotVisible('css selector', 'div.spinner')
+            .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "TestOntology")]')
+            .click('css selector', 'div.action-menu.dropdown')
+            .assert.visible('//div//div[contains(@class, "action-menu")]//i[contains(@class, "fa-lock")]')
     }
 
 }

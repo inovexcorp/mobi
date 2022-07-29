@@ -20,10 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { HttpResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule, MatDialogModule } from '@angular/material';
+import { MatButtonModule, MatDialogModule, MatProgressSpinnerModule } from '@angular/material';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
@@ -39,14 +40,19 @@ import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
-import { cleanStylesFromDOM, mockCatalogManager, mockPrefixes, mockUtil, mockModal, mockPolicyEnforcement } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM, mockUtil, mockModal, mockPolicyEnforcement } from '../../../../../../test/ts/Shared';
 import { Difference } from '../../../shared/models/difference.class';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { RecordSelectFiltered } from '../../models/recordSelectFiltered.interface';
 import { NewShapesGraphRecordModalComponent } from '../newShapesGraphRecordModal/newShapesGraphRecordModal.component';
 import { EditorRecordSelectComponent } from './editorRecordSelect.component';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { DCTERMS } from '../../../prefixes';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 
 describe('Editor Record Select component', function() {
@@ -55,11 +61,8 @@ describe('Editor Record Select component', function() {
     let fixture: ComponentFixture<EditorRecordSelectComponent>;
     let matDialog: jasmine.SpyObj<MatDialog>;
     let shapesGraphStateStub;
-    let prefixesStub;
-    let catalogManagerStub;
-    let modalStub;
+    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let policyManagerStub;
-    let shapesGraphManagerStub;
     let policyEnforcementStub;
     let utilStub;
 
@@ -97,6 +100,7 @@ describe('Editor Record Select component', function() {
                 MatIconModule,
                 MatAutocompleteModule,
                 MatDividerModule,
+                MatProgressSpinnerModule,
                 MatTooltipModule
             ],
             declarations: [
@@ -104,13 +108,13 @@ describe('Editor Record Select component', function() {
             ],
             providers: [
                 MockProvider(ShapesGraphStateService),
+                MockProvider(CatalogManagerService),
                 MockProvider(ShapesGraphManagerService),
+                MockProvider(ProgressSpinnerService),
                 MockProvider(PolicyManagerService),
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: 'modalService', useClass: mockModal },
-                { provide: 'prefixes', useClass: mockPrefixes },
                 { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
-                { provide: 'catalogManagerService', useClass: mockCatalogManager },
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
                     })
@@ -120,11 +124,14 @@ describe('Editor Record Select component', function() {
     });
 
     beforeEach(function() {
+        catalogManagerStub = TestBed.get(CatalogManagerService);
+        catalogManagerStub.localCatalog = {'@id': 'catalog', '@type': []};
+        shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
+        shapesGraphStateStub.deleteShapesGraph.and.resolveTo({});
         fixture = TestBed.createComponent(EditorRecordSelectComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         matDialog = TestBed.get(MatDialog);
-        shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
         shapesGraphStateStub.listItem = new ShapesGraphListItem();
         policyEnforcementStub = TestBed.get('policyEnforcementService')
         policyEnforcementStub.evaluateMultiDecisionRequest.and.returnValue([
@@ -143,27 +150,22 @@ describe('Editor Record Select component', function() {
         record3Item.versionedRdfRecord.recordId = record3.recordId;
         record3Item.versionedRdfRecord.title = record3.title;
         shapesGraphStateStub.list = [record1Item, record2Item];
-        shapesGraphStateStub.openShapesGraph.and.returnValue(Promise.resolve());
+        shapesGraphStateStub.openShapesGraph.and.resolveTo();
         shapesGraphStateStub.closeShapesGraph.and.callFake(ShapesGraphStateService.prototype.closeShapesGraph);
 
-        shapesGraphManagerStub = TestBed.get(ShapesGraphManagerService);
-        prefixesStub = TestBed.get('prefixes');
-        modalStub = TestBed.get('modalService');
+        utilStub = TestBed.get('utilService');
+
         policyManagerStub = TestBed.get(PolicyManagerService);
         policyManagerStub.actionDelete = 'http://mobi.com/ontologies/policy#Delete';
-        catalogManagerStub = TestBed.get('catalogManagerService');
-        catalogManagerStub.localCatalog = {'@id': 'catalog'};
-        catalogManagerStub.sortOptions = {field: prefixesStub.dcterms + 'title', asc: true};
-        catalogManagerStub.getRecords.and.returnValue(Promise.resolve({
-            data: [
-                {'@id': record1.recordId, 'title': record1.title},
-                {'@id': record2.recordId, 'title': record2.title},
-                {'@id': record3.recordId, 'title': record3.title}
+
+        catalogManagerStub.sortOptions = [{field: DCTERMS + 'title', asc: true, label: ''}];
+        catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse<JSONLDObject[]>({
+            body: [
+                {'@id': record1.recordId, '@type': [], 'title': record1.title},
+                {'@id': record2.recordId, '@type': [], 'title': record2.title},
+                {'@id': record3.recordId, '@type': [], 'title': record3.title}
             ]
-        }));
-
-
-        utilStub = TestBed.get('utilService');
+        })));
         utilStub.getDctermsValue.and.callFake((obj, prop) => {
             if (prop === 'title') {
                 return obj.title;
@@ -183,7 +185,6 @@ describe('Editor Record Select component', function() {
         shapesGraphStateStub = null;
         policyEnforcementStub = null;
         policyManagerStub = null;
-        prefixesStub = null;
         catalogManagerStub = null;
     });
 
@@ -198,8 +199,8 @@ describe('Editor Record Select component', function() {
             spyOn(component, 'resetSearch');
             component.ngOnInit();
 
-            expect(component['setFilteredOptions']).toHaveBeenCalled();
-            expect(component.resetSearch).toHaveBeenCalled();
+            expect(component['setFilteredOptions']).toHaveBeenCalledWith();
+            expect(component.resetSearch).toHaveBeenCalledWith();
         });
         it('should blur the input and call reset search on close', function() {
             spyOn(component, 'resetSearch');
@@ -229,7 +230,7 @@ describe('Editor Record Select component', function() {
         it('should open the delete confirmation modal', function() {
             spyOn(component.autocompleteTrigger, 'closePanel');
             component.showDeleteConfirmationOverlay(record1, new Event('delete'));
-            expect(modalStub.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('Are you sure you want to delete'), jasmine.any(Function));
+            expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.stringMatching('Are you sure you want to delete')}});
             expect(component.autocompleteTrigger.closePanel).toHaveBeenCalled();
 
         });
@@ -249,7 +250,7 @@ describe('Editor Record Select component', function() {
             spyOn(component.autocompleteTrigger, 'closePanel');
             component.createShapesGraph(new Event('create'));
 
-            expect(component.autocompleteTrigger.closePanel).toHaveBeenCalled();
+            expect(component.autocompleteTrigger.closePanel).toHaveBeenCalledWith();
             expect(matDialog.open).toHaveBeenCalledWith(NewShapesGraphRecordModalComponent);
         });
         it('should select the record and update state', async function() {
@@ -285,14 +286,14 @@ describe('Editor Record Select component', function() {
                 shapesGraphStateStub.list = [record1Item];
                 component.unopened = [];
                 await component.retrieveShapesGraphRecords();
-
-                expect(catalogManagerStub.getRecords).toHaveBeenCalledWith('catalog', jasmine.anything(), component.spinnerId);
+                
+                expect(catalogManagerStub.getRecords).toHaveBeenCalledWith('catalog', jasmine.anything(), true);
                 expect(shapesGraphStateStub.list).toContain(record1Item);
             });
             it('when an unopened record exists', async function() {
                 await component.retrieveShapesGraphRecords();
     
-                expect(catalogManagerStub.getRecords).toHaveBeenCalledWith('catalog', jasmine.anything(), component.spinnerId);
+                expect(catalogManagerStub.getRecords).toHaveBeenCalledWith('catalog', jasmine.anything(), true);
                 expect(shapesGraphStateStub.list).toContain(record1Item, record2Item);
                 expect(policyEnforcementStub.evaluateMultiDecisionRequest).toHaveBeenCalledWith({
                     "resourceId": [
@@ -317,7 +318,7 @@ describe('Editor Record Select component', function() {
                 fixture.detectChanges();
                 await fixture.whenStable();
     
-                expect(catalogManagerStub.getRecords).toHaveBeenCalledWith('catalog', jasmine.anything(), component.spinnerId);
+                expect(catalogManagerStub.getRecords).toHaveBeenCalledWith('catalog', jasmine.anything(), true);
                 expect(shapesGraphStateStub.list).toContain(record1Item, record2Item);
                 expect(policyEnforcementStub.evaluateMultiDecisionRequest).toHaveBeenCalledWith({
                     "resourceId": [
@@ -334,13 +335,13 @@ describe('Editor Record Select component', function() {
         
         describe('should delete shapes graph record', function() {
             it('successfully', async function() {
-                shapesGraphStateStub.deleteShapesGraph.and.returnValue(Promise.resolve({}));
+                shapesGraphStateStub.deleteShapesGraph.and.resolveTo({});
                 await component.deleteShapesGraphRecord('record1');
                 expect(shapesGraphStateStub.deleteShapesGraph).toHaveBeenCalledWith('record1');
                 expect(utilStub.createSuccessToast).toHaveBeenCalled();
             });
             it('unless an error occurs', async function() {
-                shapesGraphStateStub.deleteShapesGraph.and.returnValue(Promise.reject('error'));
+                shapesGraphStateStub.deleteShapesGraph.and.rejectWith('error');
                 await component.deleteShapesGraphRecord('record1');
                 expect(shapesGraphStateStub.deleteShapesGraph).toHaveBeenCalledWith('record1');
                 expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
@@ -423,7 +424,7 @@ describe('Editor Record Select component', function() {
         createButton.triggerEventHandler('click', null);
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(component.createShapesGraph).toHaveBeenCalled();
+        expect(component.createShapesGraph).toHaveBeenCalledWith(null);
     });
     it('should call showDeleteConfirmationOverlay when the delete button is clicked', async function() {
         spyOn(component, 'showDeleteConfirmationOverlay');
@@ -453,7 +454,7 @@ describe('Editor Record Select component', function() {
         option.triggerEventHandler('click', null);
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(component.selectRecord).toHaveBeenCalled();
+        expect(component.selectRecord).toHaveBeenCalledWith(jasmine.any(MatAutocompleteSelectedEvent));
     });
     it('should close a record when clicked', async function() {
         spyOn(component, 'closeShapesGraphRecord');
@@ -468,6 +469,6 @@ describe('Editor Record Select component', function() {
         close.triggerEventHandler('click', null);
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(component.closeShapesGraphRecord).toHaveBeenCalled();
+        expect(component.closeShapesGraphRecord).toHaveBeenCalledWith(jasmine.any(String));
     });
 });

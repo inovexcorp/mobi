@@ -23,6 +23,11 @@
 import * as angular from 'angular';
 import { forEach, initial, flatten, find, map, get, concat, assign, forOwn, has, set, some, last } from 'lodash';
 
+import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
+import { DiscoverStateService } from '../../../shared/services/discoverState.service';
+import { SparqlManagerService } from '../../../shared/services/sparqlManager.service';
+import { first } from 'rxjs/operators';
+
 searchService.$inject = ['$q', 'discoverStateService', 'httpService', 'sparqlManagerService', 'sparqljs', 'prefixes', 'datasetManagerService', 'ontologyManagerService', 'utilService'];
 
 /**
@@ -39,7 +44,7 @@ searchService.$inject = ['$q', 'discoverStateService', 'httpService', 'sparqlMan
  * `searchService` is a service that provides methods to create search query strings
  * and submit them to the {@link shared.service:sparqlManagerService SPARQL query endpoints}.
  */
-function searchService($q, discoverStateService, httpService, sparqlManagerService, sparqljs, prefixes, datasetManagerService, ontologyManagerService, utilService) {
+function searchService($q, discoverStateService: DiscoverStateService, httpService, sparqlManagerService: SparqlManagerService, sparqljs, prefixes, datasetManagerService: DatasetManagerService, ontologyManagerService, utilService) {
     var self = this;
     var ds = discoverStateService;
     var sm = sparqlManagerService;
@@ -88,7 +93,7 @@ function searchService($q, discoverStateService, httpService, sparqlManagerServi
      */
     self.submitSearch = function(datasetRecordIRI, queryConfig) {
         httpService.cancel(ds.search.targetedId);
-        return sm.query(self.createQueryString(queryConfig), datasetRecordIRI, ds.search.targetedId);
+        return sm.query(self.createQueryString(queryConfig), datasetRecordIRI, ds.search.targetedId).pipe(first()).toPromise();
     }
     /**
      * @ngdoc method

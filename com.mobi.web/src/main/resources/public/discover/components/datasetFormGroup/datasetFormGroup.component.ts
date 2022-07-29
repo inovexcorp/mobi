@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Directive, ElementRef, EventEmitter, Injector, Input, Output } from '@angular/core';
+import { UpgradeComponent } from '@angular/upgrade/static';
 import './datasetFormGroup.component.scss';
 
 const template = require('./datasetFormGroup.component.html');
@@ -36,7 +38,7 @@ const template = require('./datasetFormGroup.component.html');
  * @param {Function} changeEvent A function to be called when the value of the {@link discover.component:datasetSelect datasetSelect}
  * changes. Expects an argument called `value` and should update the value of `bindModel`.
  */
-const datasetFormGroupComponent = {
+export const datasetFormGroupComponent = {
     template,
     bindings: {
         bindModel: '<',
@@ -59,4 +61,14 @@ function datasetFormGroupComponentCtrl() {
     }
 }
 
-export default datasetFormGroupComponent;
+@Directive({
+    selector: 'dataset-form-group'
+})
+export class DatasetFormGroupDirective extends UpgradeComponent {
+    @Input() bindModel: string;
+    @Output() changeEvent: EventEmitter<string>;
+
+    constructor(elementRef: ElementRef, injector: Injector) {
+        super('datasetFormGroup', elementRef, injector);
+    }
+}

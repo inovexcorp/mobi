@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { CommitChange } from './commitChange.interface';
+import { JSONLDObject } from './JSONLDObject.interface';
 
+/**
+ * A collection of RDF statements that represent a difference between two sets of RDF
+ */
 export class Difference {
-    additions: CommitChange[];
-    deletions: CommitChange[];
-    hasMoreResults: boolean;
+    additions: string|JSONLDObject[] // The added statements either as JSON-LD array or a string of another RDF format
+    deletions: string|JSONLDObject[] // The deleted statements either as JSON-LD array or a string of another RDF format
+    hasMoreResults: boolean // Whether there are more differences than what is stored within this object
 
     constructor() {
         this.additions = [];

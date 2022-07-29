@@ -27,6 +27,7 @@ import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger }
 import { filter, remove, set, get, find } from 'lodash';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
+import { FOAF, USER, XSD } from '../../../prefixes';
 
 import { Group } from '../../models/group.interface';
 import { Policy } from '../../models/policy.interface';
@@ -67,7 +68,7 @@ export class UserAccessControlsComponent implements OnInit {
     @ViewChild('userInput', {read: MatAutocompleteTrigger}) userTrigger: MatAutocompleteTrigger;
     @ViewChild('groupInput', {read: MatAutocompleteTrigger}) groupTrigger: MatAutocompleteTrigger;
 
-    groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + this.prefixes.foaf + 'member' + '>') + ')';
+    groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + FOAF + 'member' + '>') + ')';
     userRole = 'http://mobi.com/roles/user';
 
     userSearchControl: FormControl = new FormControl();
@@ -78,7 +79,7 @@ export class UserAccessControlsComponent implements OnInit {
     filteredAvailableGroups: Observable<Group[]>;
 
     constructor(private pm: PolicyManagerService, @Inject('loginManagerService') private lm,
-        public um: UserManagerService, @Inject('prefixes') private prefixes) { }
+        public um: UserManagerService) { }
 
     ngOnInit(): void {
         if (this.item && this.item.everyone) {
@@ -176,7 +177,7 @@ export class UserAccessControlsComponent implements OnInit {
         if (this.item.everyone) {
             if (!this.ruleId) {
                 set(this.item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);
-                this.addMatch(this.userRole, this.prefixes.user + 'hasUserRole', this.item.policy);
+                this.addMatch(this.userRole, USER + 'hasUserRole', this.item.policy);
             }
             this.item.selectedUsers = [];
             this.item.selectedGroups = [];
@@ -223,12 +224,12 @@ export class UserAccessControlsComponent implements OnInit {
                 AttributeValue: {
                     content: [value],
                     otherAttributes: {},
-                    DataType: this.prefixes.xsd + 'string'
+                    DataType: XSD + 'string'
                 },
                 AttributeDesignator: {
                     Category: this.pm.subjectCategory,
                     AttributeId: id,
-                    DataType: this.prefixes.xsd + 'string',
+                    DataType: XSD + 'string',
                     MustBePresent: true
                 },
                 MatchId: this.pm.stringEqual

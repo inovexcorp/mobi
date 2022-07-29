@@ -21,5 +21,6 @@
   #L%
   -->
 <div class="open-record-button">
-    <button ng-if="dvm.showButton" class="btn" ng-class="{'btn-primary': !dvm.isFlat, 'btn-flat-primary': dvm.isFlat}" ng-click="dvm.openRecord($event)">Open</button>
+    <button mat-raised-button *ngIf="showButton && !flat" color="primary" (click)="openRecord($event)">Open</button>
+    <button mat-button *ngIf="showButton && flat" color="primary" (click)="openRecord($event)">Open</button>
 </div>

@@ -20,92 +20,82 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
 import { isEmpty } from 'lodash';
 
-import './recordMarkdown.component.scss';
-
-const template = require('./recordMarkdown.component.html');
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 /**
- * @ngdoc component
- * @name catalog.component:recordMarkdown
- * @requires shared.service:utilService
+ * @class catalog.RecordMarkdownComponent
  *
- * @description
- * `recordMarkdown` is a component which creates a display for the `dcterms:abstract` of the provided catalog Record
- * as markdown HTML. If the user can edit the record, as determined by the provided `canEdit` boolean, the display
- * will turn into a {@link shared.component:markdownEditor}. Saving the edited markdown will call the
- * provided `updateRecord` method passing the edited Record JSON-LD.
+ * A component which creates a display for the `dcterms:abstract` of the provided catalog Record as markdown HTML. If
+ * the user can edit the record, as determined by the provided `canEdit` boolean, the display will turn into a
+ * `MatMarkdownEditor`. Saving the edited markdown will call the provided `updateRecord` method passing the edited
+ * Record JSON-LD.
  * 
- * @param {Object} record A JSON-LD object for a catalog Record
+ * @param {JSONLDObject} record A JSON-LD object for a catalog Record
  * @param {boolean} canEdit Whether the Record can be edited by the current user
  * @param {Function} updateRecord A method to update the Record. Expects a parameter called `record` and that the
  * method will return a Promise.
  */
-const recordMarkdownComponent = {
-    template,
-    bindings: {
-        record: '<',
-        canEdit: '<',
-        updateRecord: '&'
-    },
-    controllerAs: 'dvm',
-    controller: recordMarkdownComponentCtrl
-};
+@Component({
+    selector: 'record-markdown',
+    templateUrl: './recordMarkdown.component.html'
+})
+export class RecordMarkdownComponent {
+    text = '';
+    edit = false;
+    editMarkdown = ''
+    showPreview = false;
 
-recordMarkdownComponentCtrl.$inject = ['$q', 'utilService', 'showdown'];
+    private _record: JSONLDObject;
 
-function recordMarkdownComponentCtrl($q, utilService, showdown) {
-    var dvm = this;
-    var util = utilService;
-    dvm.converter = new showdown.Converter();
-    dvm.converter.setFlavor('github');
-    dvm.markdownHTML = '';
-    dvm.edit = false;
-    dvm.editMarkdown = ''
+    @Input() set record(value: JSONLDObject) {
+        this._record = value;
+        this._updateHtml(this._record);
+    }
+
+    get record(): JSONLDObject {
+        return this._record;
+    }
+
+    @Input() canEdit: boolean;
+    @Output() updateRecord = new EventEmitter<JSONLDObject>();
+
+    constructor(@Inject('utilService') public util) {}
     
-    dvm.$onInit = function() {
-        if (dvm.record && !isEmpty(dvm.record)) {
-            dvm.markdownHTML = dvm.converter.makeHtml(util.getDctermsValue(dvm.record, 'abstract'));
+    showEdit(): void {
+        if (this.canEdit) {
+            this.edit = true;
+            this.editMarkdown = this.util.getDctermsValue(this.record, 'abstract');
         }
     }
-    dvm.$onChanges = function() {
-        if (dvm.record && !isEmpty(dvm.record)) {
-            dvm.markdownHTML = dvm.converter.makeHtml(util.getDctermsValue(dvm.record, 'abstract'));                
-        }
-    }
-    dvm.showEdit = function() {
-        if (dvm.canEdit) {
-            dvm.edit = true;
-            dvm.editMarkdown = util.getDctermsValue(dvm.record, 'abstract');
-        }
-    }
-    dvm.saveEdit = function() {
-        this.originalValue = util.getDctermsValue(dvm.record, 'abstract');
-        if (this.originalValue === this.editMarkdown) {
-            dvm.edit = false;
-            dvm.editMarkdown = '';
+    saveEdit(): void {
+        const originalValue = this.util.getDctermsValue(this.record, 'abstract');
+        if (originalValue === this.editMarkdown) {
+            this.edit = false;
+            this.editMarkdown = '';
         } else {
-            if (!dvm.editMarkdown) {
-                util.removeDctermsValue(dvm.record, 'abstract', this.originalValue);
+            if (!this.editMarkdown) {
+                this.util.removeDctermsValue(this.record, 'abstract', originalValue);
             } else {
-                util.updateDctermsValue(dvm.record, 'abstract', this.editMarkdown);
+                this.util.updateDctermsValue(this.record, 'abstract', this.editMarkdown);
             }
-            $q.when()
-                .then(() => dvm.updateRecord({record: dvm.record}))
-                .then(() => {
-                    dvm.edit = false;
-                    dvm.editMarkdown = '';
-                    dvm.$onChanges();
-                }, () => {
-                    util.updateDctermsValue(dvm.record, 'abstract', this.originalValue);
-                });
+            this.updateRecord.emit(this.record);
+            this.edit = false;
+            this.editMarkdown = '';
+            this._updateHtml(this.record);
         }
     }
-    dvm.cancelEdit = function() {
-        dvm.edit = false;
-        dvm.editMarkdown = '';
+    cancelEdit(): void {
+        this.edit = false;
+        this.editMarkdown = '';
+        this.showPreview = false;
+    }
+    
+    private _updateHtml(record: JSONLDObject): void {
+        if (record && !isEmpty(record)) {
+            this.text = this.util.getDctermsValue(record, 'abstract');
+        }
     }
 }
-
-export default recordMarkdownComponent;

@@ -21,6 +21,9 @@
  * #L%
  */
 import { some, map } from 'lodash';
+import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
+
+import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 
 const template = require('./datasetSelect.component.html');
 
@@ -50,21 +53,23 @@ const datasetSelectComponent = {
 
 datasetSelectComponentCtrl.$inject = ['utilService', 'datasetManagerService', 'prefixes'];
 
-function datasetSelectComponentCtrl(utilService, datasetManagerService, prefixes) {
+function datasetSelectComponentCtrl(utilService, datasetManagerService: DatasetManagerService, prefixes) {
     var dvm = this;
     dvm.dm = datasetManagerService;
     dvm.util = utilService;
     dvm.datasetRecords = [];
 
     dvm.$onInit = function() {
-        var paginatedConfig = {
+        const paginatedConfig: PaginatedConfig = {
             sortOption: {
-                field: prefixes.dcterms + 'title'
+                field: prefixes.dcterms + 'title',
+                label: '',
+                asc: true
             }
-        }
+        };
         return dvm.dm.getDatasetRecords(paginatedConfig)
-            .then(response => {
-                dvm.datasetRecords = map(response.data, dvm.dm.getRecordFromArray);
+            .subscribe(response => {
+                dvm.datasetRecords = map(response.body, dataset => dvm.dm.getRecordFromArray(dataset));
                 if (!some(dvm.datasetRecords, {'@id': dvm.bindModel})) {
                     dvm.bindModel = '';
                     dvm.changeEvent({value: dvm.bindModel});

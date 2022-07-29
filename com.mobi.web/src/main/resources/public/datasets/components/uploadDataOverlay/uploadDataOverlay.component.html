@@ -20,20 +20,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3 class="break-word">Upload Data to {{dvm.datasetTitle}}</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+<h1 mat-dialog-title>Upload Data to {{datasetTitle}}</h1>
+<div mat-dialog-content class="pb-2">
+    <error-display *ngIf="error">{{error}}</error-display>
+    <file-input [displayText]="'RDF File'" [(files)]="fileObj" [accept]="['.ttl','.xml','.jsonld','.rdf','.trig','.json','.n3','.nq','.nt']" required></file-input>
+    <div *ngIf="importing" class="importing-indicator pt-2">
+        <progress-spinner [isLoading]="importing" [diameter]="18"></progress-spinner> <span class="text-muted">Importing Data</span>
+    </div>
 </div>
-<div class="modal-body">
-    <form name="dvm.form" novalidate autocomplete="off">
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <file-input [display-text]="'RDF File'" [(files)]="dvm.fileObj" [accept]="['.ttl','.xml','.jsonld','.rdf','.trig','.json','.n3','.nq','.nt']" required></file-input>
-        <div ng-if="dvm.importing" class="importing-indicator">
-            <span targeted-spinner="dvm.uploadId" diameter="18"></span> <span class="text-muted">Importing Data</span>
-        </div>
-    </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid || dvm.importing" ng-click="dvm.submit()">Submit</button>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="">Cancel</button>
+    <button mat-raised-button color="primary" (click)="submit()" [disabled]="!fileObj || importing">Submit</button>
 </div>

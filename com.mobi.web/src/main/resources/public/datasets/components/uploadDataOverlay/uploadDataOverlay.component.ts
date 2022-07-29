@@ -20,70 +20,48 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Inject, OnInit } from '@angular/core';
+import { MatDialogRef } from '@angular/material';
+
+import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
+import { DatasetStateService } from '../../../shared/services/datasetState.service';
+
 import './uploadDataOverlay.component.scss';
 
-const template = require('./uploadDataOverlay.component.html');
-
 /**
- * @ngdoc component
- * @name datasets.component:uploadDataOverlay
- * @requires shared.service:datasetManagerService
- * @requires shared.service:datasetStateService
- * @requires shared.service:utilService
- * @requires shared.service:httpService
+ * @class datasets.UploadDataOverlayComponent
  *
- * @description
- * `uploadDataOverlay` is a component that creates content for a modal with a form to select an RDF file to
- * import into the {@link shared.service:datasetStateService selected dataset}. Meant to be used in
- * conjunction with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal with a form to select an RDF file to import into the
+ * {@link shared.DatasetStateService selected dataset}. Meant to be used in conjunction with the `MatDialog` service.
  */
-const uploadDataOverlayComponent ={
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: uploadDataOverlayComponentCtrl
-};
+@Component({
+    selector: 'upload-data-overlay',
+    templateUrl: './uploadDataOverlay.component.html'
+})
+export class UploadDataOverlayComponent implements OnInit {
+    error = '';
+    fileObj: File = undefined;
+    datasetTitle = '';
+    importing = false;
 
-uploadDataOverlayComponentCtrl.$inject = ['datasetManagerService', 'datasetStateService', 'utilService', 'httpService'];
-
-function uploadDataOverlayComponentCtrl(datasetManagerService, datasetStateService, utilService, httpService) {
-    var dvm = this;
-    var state = datasetStateService;
-    var dm = datasetManagerService;
-    var util = utilService;
-    dvm.error = '';
-    dvm.fileObj = undefined;
-    dvm.datasetTitle = '';
-    dvm.uploadId = 'upload-dataset-data';
-    dvm.importing = false;
-
-    dvm.$onInit = function() {
-        dvm.datasetTitle = util.getDctermsValue(state.selectedDataset.record, 'title');
+    constructor(private dialogRef: MatDialogRef<UploadDataOverlayComponent>, public dm: DatasetManagerService,
+        public state: DatasetStateService, @Inject('utilService') public util) {}
+    
+    ngOnInit(): void {
+        this.datasetTitle = this.util.getDctermsValue(this.state.selectedDataset.record, 'title');
     }
-    dvm.submit = function() {
-        dvm.importing = true;
-        dm.uploadData(state.selectedDataset.record['@id'], dvm.fileObj, dvm.uploadId)
-            .then(() => {
-                dvm.importing = false;
-                util.createSuccessToast("Data successfully uploaded to " + dvm.datasetTitle);
-                dvm.close();
-            }, onError);
-    }
-    dvm.cancel = function() {
-        httpService.cancel(dvm.uploadId);
-        dvm.dismiss();
+    submit(): void {
+        this.importing = true;
+        this.dm.uploadData(this.state.selectedDataset.record['@id'], this.fileObj, true)
+            .subscribe(() => {
+                this.importing = false;
+                this.util.createSuccessToast('Data successfully uploaded to ' + this.datasetTitle);
+                this.dialogRef.close();
+            }, error => this._onError(error));
     }
 
-    function onError(errorMessage) {
-        dvm.importing = false;
-        dvm.error = errorMessage;
+    private _onError(errorMessage: string) {
+        this.importing = false;
+        this.error = errorMessage;
     }
 }
-
-export default uploadDataOverlayComponent;

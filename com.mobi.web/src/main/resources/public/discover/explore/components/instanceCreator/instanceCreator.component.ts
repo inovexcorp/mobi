@@ -21,6 +21,7 @@
  * #L%
  */
 import { initial, find, get } from 'lodash';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 
 import './instanceCreator.component.scss';
 
@@ -50,7 +51,7 @@ const instanceCreatorComponent = {
 
 instanceCreatorComponentCtrl.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'exploreUtilsService', 'prefixes', 'policyEnforcementService'];
 
-function instanceCreatorComponentCtrl($q, discoverStateService, utilService, exploreService, exploreUtilsService, prefixes, policyEnforcementService) {
+function instanceCreatorComponentCtrl($q, discoverStateService: DiscoverStateService, utilService, exploreService, exploreUtilsService, prefixes, policyEnforcementService) {
     const dvm = this;
     const es = exploreService;
     const eu = exploreUtilsService;

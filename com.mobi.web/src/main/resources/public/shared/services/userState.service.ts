@@ -65,6 +65,8 @@ export class UserStateService {
      */
     tabIndex = 0;
 
+    constructor() {}
+
     /**
      * Resets all the main state variables back to false and undefined.
      */

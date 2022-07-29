@@ -20,157 +20,94 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { map, get } from 'lodash';
+import { HttpResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
-datasetStateService.$inject = ['datasetManagerService', 'utilService', 'prefixes', '$q'];
+import { DCTERMS } from '../../prefixes';
+import { Dataset } from '../models/dataset.interface';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { PaginatedConfig } from '../models/paginatedConfig.interface';
+import { DatasetManagerService } from './datasetManager.service';
 
 /**
- * @ngdoc service
- * @name shared.service:datasetStateService
- * @requires shared.service:datasetManagerService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @class shared.DatasetStateService
  *
- * @description
- * `datasetStateService` is a service which contains various variables to hold the
- * state of the catalog page and utility functions to update those variables.
+ * A service which contains various variables to hold the state of the datasets page and utility functions to update
+ * those variables.
  */
-function datasetStateService(datasetManagerService, utilService, prefixes, $q) {
-    var self = this;
-    var dm = datasetManagerService;
-    var util = utilService;
-    var cachedOntologyRecords = [];
+@Injectable()
+export class DatasetStateService {
+
+    constructor(private dm: DatasetManagerService) {}
+
     /**
-     * @ngdoc property
-     * @name paginationConfig
-     * @propertyOf shared.service:datasetStateService
-     * @type {Object}
-     *
-     * @description
-     * `pageIndex` holds the configuration to be used when retrieving the results of a
+     * `paginationConfig` holds the configuration to be used when retrieving the results of a
      * Dataset Records query. These configurations are the limit, page index, search text,
      * and sort option. The limit and sortOption are not to be changed for now.
+     * @type {PaginatedConfig}
      */
-    self.paginationConfig = {
+    paginationConfig: PaginatedConfig = {
         limit: 10,
         pageIndex: 0,
         searchText: '',
         sortOption: {
-            field: prefixes.dcterms + 'title',
+            field: DCTERMS + 'title',
+            label: 'Title',
             asc: true
         }
     };
     /**
-     * @ngdoc property
-     * @name links
-     * @propertyOf shared.service:datasetStateService
-     * @type {Object}
-     *
-     * @description
-     * `links` holds the URLs for the next and previous pages of results for the current paginated
-     * results list.
-     */
-    self.links = {
-        prev: '',
-        next: ''
-    };
-    /**
-     * @ngdoc property
-     * @name totalSize
-     * @propertyOf shared.service:datasetStateService
-     * @type {number}
-     *
-     * @description
      * `totalSize` holds an integer for the total number of results for the current paginated
      * results list.
+     * @type {number}
      */
-    self.totalSize = 0;
+    totalSize = 0;
     /**
-     * @ngdoc property
-     * @name results
-     * @propertyOf shared.service:datasetStateService
-     * @type {Object[]}
-     *
-     * @description
-     * `results` holds an array of Objects representing the results for the current page of the
-     * current paginated results list.
+     * `selectedDataset` holds the currently selected Dataset being edited or having data uploaded to it.
+     * @type {Dataset}
      */
-    self.results = [];
+    selectedDataset: Dataset;
     /**
-     * @ngdoc property
-     * @name openedDatasetId
-     * @propertyOf shared.service:datasetStateService
-     * @type {string}
-     *
-     * @description
-     * `openedDatasetId` holds the id of the dataset which is currently open.
+     * `submittedSearch` holds a boolean determining whether a search has been submitted on the datasets-page
+     * @type {boolean}
      */
-    self.openedDatasetId = '';
+    submittedSearch = false;
 
     /**
-     * @ngdoc method
-     * @name reset
-     * @methodOf shared.service:datasetStateService
-     *
-     * @description
      * Resets all state variables.
      */
-    self.reset = function() {
-        self.resetPagination();
+    reset(): void {
+        this.resetPagination();
     }
     /**
-     * @ngdoc method
-     * @name setResults
-     * @methodOf shared.service:datasetStateService
-     *
-     * @description
-     * Calls the appropriate {@link shared.service:datasetManagerService datasetManagerService}
-     * method to retrieve results of a Dataset Records query depending on whether or not a URL is passed
-     * in. The passed URL is assumed to be from the `links` of a previous query.
-     *
-     * @param {string=''} url The URL to be used to retrieve Dataset Record results if desired
+     * Calls the appropriate {@link shared.DatasetManagerService} method to retrieve results of a Dataset Records query.
      */
-    self.setResults = function(url = '') {
-        var promise = url ? util.getResultsPage(url) : dm.getDatasetRecords(self.paginationConfig);
-        promise.then(self.setPagination, util.createErrorToast);
+    setResults(): Observable<Dataset[]> {
+        return this.dm.getDatasetRecords(this.paginationConfig, true)
+            .pipe(
+                switchMap(response => {
+                    this.setPagination(response);
+                    return of(response.body.map(arr => this.dm.splitDatasetArray(arr)));
+                })
+            );
     }
     /**
-     * @ngdoc method
-     * @name resetPagination
-     * @methodOf shared.service:datasetStateService
-     *
-     * @description
      * Resets all the pagination related variables.
      */
-    self.resetPagination = function() {
-        self.paginationConfig.pageIndex = 0;
-        self.links = {
-            prev: '',
-            next: ''
-        };
-        self.totalSize = 0;
-        self.results = [];
+    resetPagination(): void {
+        this.paginationConfig.pageIndex = 0;
+        this.paginationConfig.searchText = '';
+        this.totalSize = 0;
     }
     /**
-     * @ngdoc method
-     * @name setPagination
-     * @methodOf shared.service:datasetStateService
-     *
-     * @description
      * Sets the pagination state variables based on the information in the passed response from
      * an HTTP call.
      *
-     * @param {Object} response A response from a paginated HTTP call
+     * @param {HttpResponse<JSONLDObject[][]>} response A response from a paginated HTTP call
      */
-    self.setPagination = function(response) {
-        self.results = map(response.data, arr => dm.splitDatasetArray(arr));
-        var headers = response.headers();
-        self.totalSize = get(headers, 'x-total-count', 0);
-        var links = util.parseLinks(get(headers, 'link', ''));
-        self.links.prev = get(links, 'prev', '');
-        self.links.next = get(links, 'next', '');
-        self.openedDatasetId = '';
+    setPagination(response: HttpResponse<JSONLDObject[][]>): void {
+        this.totalSize = Number(response.headers.get('x-total-count')) || 0;
     }
 }
-
-export default datasetStateService;

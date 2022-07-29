@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="commit-history-table" targeted-spinner="id">
+<div class="commit-history-table" #commitHistoryTable>
     <error-display *ngIf="error">{{error}}</error-display>
     <info-message *ngIf="!commits.length && !error">No commits to display</info-message>
     <div class="wrapper">

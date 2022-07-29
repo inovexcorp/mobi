@@ -20,11 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<material-tabset>
-    <material-tab heading="'Overview'" active="dvm.tabs.overview" set-active="dvm.tabs.overview = value">
-        <record-markdown record="dvm.record" update-record="dvm.updateRecordCall(record)" can-edit="dvm.canEdit"></record-markdown>
-    </material-tab>
-    <material-tab hide-tab="!dvm.isVersionedRDFRecord" heading="'Branches'" active="dvm.tabs.branches" set-active="dvm.tabs.branches = value">
-        <branch-list record="dvm.record"></branch-list>
-    </material-tab>
-</material-tabset>
+<mat-tab-group class="record-view-tabset" dynamicHeight="true" [(selectedIndex)]="tabIndex">
+    <mat-tab label="Overview">
+        <record-markdown [record]="record" (updateRecord)="updateRecordCall($event)" [canEdit]="canEdit"></record-markdown>
+    </mat-tab>
+    <mat-tab *ngIf="isVersionedRDFRecord" label="Branches">
+        <branch-list [record]="record"></branch-list>
+    </mat-tab>
+</mat-tab-group>

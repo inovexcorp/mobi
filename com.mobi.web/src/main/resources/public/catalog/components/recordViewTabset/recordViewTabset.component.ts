@@ -21,55 +21,47 @@
  * #L%
  */
 
-const template = require('./recordViewTabset.component.html');
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 /**
- * @ngdoc component
- * @name catalog.component:recordViewTabset
- * @requires shared.service:catalogManagerService
+ * @class catalog.RecordViewTabsetComponent
  *
- * @description
- * `recordViewTabset` is a component which creates a {@link shared.component:materialTabset} with tabs displaying
- * information about the provided catalog Record. These tabs contain a {@link catalog.component.recordMarkdown} and
- * a {@link catalog.component:branchList} if the Record is a  `VersionedRDFRecord`.
+ * A component which creates a `mat-tab`group with tabs displaying information about the provided catalog Record. These
+ * tabs contain a {@link catalog.RecordMarkdownComponent} and a {@link catalog.BranchListComponent} if the Record is a
+ * `VersionedRDFRecord`.
  * 
- * @param {Object} record A JSON-LD object for a catalog Record
+ * @param {JSONLDObject} record A JSON-LD object for a catalog Record
  * @param {boolean} canEdit Whether the Record can be edited by the current user
  * @param {Function} updateRecord A method to update the Record. Expects a parameter called `record`
  */
-const recordViewTabsetComponent = {
-    template,
-    bindings: {
-        record: '<',
-        canEdit: '<',
-        updateRecord: '&'
-    },
-    controllerAs: 'dvm',
-    controller: recordViewTabsetComponentCtrl
-};
+@Component({
+    selector: 'record-view-tabset',
+    templateUrl: './recordViewTabset.component.html'
+})
+export class RecordViewTabsetComponent {
+    isVersionedRDFRecord = false;
+    tabIndex = 0;
 
-recordViewTabsetComponentCtrl.$inject = ['catalogManagerService'];
+    private _record: JSONLDObject;
 
-function recordViewTabsetComponentCtrl(catalogManagerService) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    dvm.isVersionedRDFRecord = false;
-    dvm.tabs = {
-        overview: true,
-        branches: false
-    };
-
-    dvm.$onInit = function() {
-        dvm.isVersionedRDFRecord = cm.isVersionedRDFRecord(dvm.record);
+    @Input() set record(value: JSONLDObject) {
+        this._record = value;
+        this.isVersionedRDFRecord = this.cm.isVersionedRDFRecord(this._record);
     }
-    dvm.$onChanges = function(changesObj) {
-        if (changesObj.record) {
-            dvm.isVersionedRDFRecord = cm.isVersionedRDFRecord(changesObj.record.currentValue);
-        }
+
+    get record(): JSONLDObject {
+        return this._record;
     }
-    dvm.updateRecordCall = function(record) {
-        return dvm.updateRecord({record});
+
+    @Input() canEdit: boolean;
+    @Output() updateRecord = new EventEmitter<JSONLDObject>();
+
+    constructor(public cm: CatalogManagerService) {}
+
+    updateRecordCall(record: JSONLDObject): void {
+        return this.updateRecord.emit(record);
     }
 }
-
-export default recordViewTabsetComponent;

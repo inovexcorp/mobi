@@ -21,20 +21,16 @@
  * #L%
  */
 
+import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
+
 import './inlineEdit.component.scss';
 
-const template = require('./inlineEdit.component.html');
-
 /**
- * @ngdoc component
- * @name shared.component:inlineEdit
- * @requires shared.service:utilService
+ * @class shared.InlineEditComponent
  *
- * @description
- * `inlineEdit` is a component which creates a `div` to display transcluded content. If the user is allowed to edit
- * the content, upon clicking the area it provides an `input` or a `textArea` for editing. A save icon is provided
- * to call the supplied callback. When changes are made to the field and the area is blurred, the display is reset
- * to the initial state.
+ * A component which creates a `div` to display transcluded content. If the user is allowed to edit the content, upon
+ * clicking the area it provides an `input` or a `textArea` for editing. A save icon is provided to call the supplied
+ * callback. When changes are made to the field and the area is blurred, the display is reset to the initial state.
  *
  * @param {String} text The text field to edit
  * @param {boolean} canEdit A boolean indicating if the user can edit the field
@@ -43,55 +39,44 @@ const template = require('./inlineEdit.component.html');
  * @param {String} placeholder Placeholder text to display when the field is empty
  * @param {Function} saveEvent A function to call when the "save" button is clicked
  */
-const inlineEditComponent = {
-    template,
-    transclude: true,
-    bindings: {
-        text: '<',
-        canEdit: '<',
-        area: '<',
-        required: '@',
-        placeholder: '<',
-        saveEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: inlineEditComponentCtrl,
-}
+@Component({
+    selector: 'inline-edit',
+    templateUrl: './inlineEdit.component.html'
+})
+export class InlineEditComponent {
+    edit = false;
+    editedText = '';
 
-inlineEditComponentCtrl.$inject = ['utilService'];
+    private _text: string;
 
-function inlineEditComponentCtrl(utilService) {
-    var dvm = this;
-    dvm.edit = false;
-    var util = utilService;
-
-    dvm.$onInit = function() {
-        dvm.initialText = dvm.text;
-        dvm.isRequired = dvm.required !== undefined;
+    @Input() set text(value: string) {
+        this._text = value;
+        this.editedText = this._text;
     }
-    dvm.$onChanges = function() {
-        dvm.initialText = dvm.text;
+
+    get text(): string {
+        return this._text;
     }
-    dvm.saveChanges = function() {
-        if (dvm.isRequired && dvm.text === '') {
-            dvm.onBlur();
-            util.createWarningToast('Text input must not be empty')
+
+    @Input() canEdit: boolean;
+    @Input() required: boolean;
+    @Input() area: boolean;
+    @Input() placeholder: string;
+    @Output() saveEvent = new EventEmitter<string>();
+
+    constructor(@Inject('utilService') public util) {}
+    
+    saveChanges(): void {
+        if (this.required && this.editedText === '') {
+            this.onBlur();
+            this.util.createWarningToast('Text input must not be empty')
         } else {
-            dvm.edit = false;
-            dvm.saveEvent({text: dvm.text});
+            this.edit = false;
+            this.saveEvent.emit(this.editedText);
         }
     }
-    dvm.onBlur = function() {
-        dvm.text = dvm.initialText;
-        dvm.edit = false;
-    }
-    dvm.onKeyUp = function(event) {
-        if (event.keyCode === 13 && !event.shiftKey) {
-            dvm.saveChanges();
-        } else if (event.keyCode == 27) {
-            dvm.onBlur();
-        }
+    onBlur(): void {
+        this.editedText = this.text;
+        this.edit = false;
     }
 }
-
-export default inlineEditComponent;

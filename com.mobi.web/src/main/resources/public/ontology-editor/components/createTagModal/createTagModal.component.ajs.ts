@@ -21,6 +21,9 @@
  * #L%
  */
 import { get } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 import './createTagModal.component.scss';
 
@@ -53,7 +56,7 @@ const createTagModalComponentAjs = {
 
 createTagModalComponentCtrl.$inject = ['$q', '$filter', 'REGEX', 'catalogManagerService', 'ontologyStateService'];
 
-function createTagModalComponentCtrl($q, $filter, REGEX, catalogManagerService, ontologyStateService) {
+function createTagModalComponentCtrl($q, $filter, REGEX, catalogManagerService: CatalogManagerService, ontologyStateService) {
     var dvm = this;
     var cm = catalogManagerService;
     var catalogId = get(cm.localCatalog, '@id', '');
@@ -83,8 +86,8 @@ function createTagModalComponentCtrl($q, $filter, REGEX, catalogManagerService, 
         }
     }
     dvm.create = function() {
-        cm.createRecordTag(dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.tagConfig)
-            .then(() => cm.getRecordVersion(dvm.tagConfig.iri, dvm.os.listItem.ontologyRecord.recordId, catalogId), $q.reject)
+        cm.createRecordTag(dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.tagConfig).pipe(first()).toPromise()
+            .then(() => cm.getRecordVersion(dvm.tagConfig.iri, dvm.os.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise(), $q.reject)
             .then(tag => {
                 dvm.os.listItem.tags.push(tag);
                 dvm.os.listItem.ontologyRecord.branchId = '';

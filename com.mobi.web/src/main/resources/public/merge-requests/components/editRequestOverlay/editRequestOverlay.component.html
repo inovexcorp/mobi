@@ -20,43 +20,31 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Edit Merge Request</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+<h1 mat-dialog-title>Edit Merge Request</h1>
+<div mat-dialog-content [formGroup]="editRequestForm">
+    <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+    <mat-form-field class="w-100">
+        <mat-label>Title</mat-label>
+        <input matInput type="text" name="title" formControlName="title" required focus/>
+    </mat-form-field>
+    <mat-form-field class="w-100">
+        <mat-label>Description</mat-label>
+        <textarea matInput name="description" formControlName="description"></textarea>
+    </mat-form-field>
+    <dl class="source-details">
+        <dt class="text-muted">In Record</dt>
+        <dd class="text-truncate" [title]="state.selected.recordTitle">{{state.selected.recordTitle}}</dd>
+        <dt class="text-muted">Branch</dt>
+        <dd class="text-truncate" [title]="state.selected.sourceTitle">{{state.selected.sourceTitle}}</dd>
+        <dt class="text-muted">Into</dt>
+        <dd>
+            <branch-select class="select-branch w-100" [(model)]="targetBranch" [required]="true" [branches]="branches"></branch-select>
+        </dd>
+    </dl>
+    <assignee-input [(selected)]="assignees" [parentForm]="editRequestForm"></assignee-input>
+    <mat-checkbox *ngIf="state.selected.sourceTitle !== 'MASTER'" class="remove-source" formControlName="removeSource">Remove {{state.selected.sourceTitle}} after merge</mat-checkbox>
 </div>
-<div class="modal-body">
-    <form name="dvm.editMergeRequestForm" novalidate autocomplete="off">
-        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-        <div class="form-group">
-            <text-input bind-model="dvm.request.title" change-event="dvm.request.title = value" display-text="'Title'" required="true">{{dvm.request.title}}</text-input>
-        </div>
-        <div class="form-group">
-            <text-area bind-model="dvm.request.description" change-event="dvm.request.description = value" display-text="'Description'" muted-text="'(Optional)'">{{dvm.request.description}}</text-area>
-        </div>
-        <div class="edit-target-branch">
-            <div class="form-group">
-                <span class="form-control-static">
-                    <p><strong>In Ontology: </strong>{{dvm.state.selected.recordTitle}}</p>
-                    <p><strong>Merge Branch: </strong>{{dvm.request.sourceTitle}}<strong> into </strong></p>
-                </span>
-            </div>
-        </div>
-        <branch-select class="select-branch" [(model)]="dvm.request.targetBranch" [required]="true" [branches]="dvm.branches"></branch-select>
-        <div class="form-group">
-            <custom-label [muted-text]="'(Optional)'">Assignee(s)</custom-label>
-            <ui-select multiple ng-model="dvm.request.assignees">
-                <ui-select-match placeholder="Select Assignee(s)">
-                    <span title="{{$item.iri}}">{{$item.username}}</span>
-                </ui-select-match>
-                <ui-select-choices repeat="user.iri as user in dvm.um.users | filter:$select.search">
-                    <div title="{{user.iri}}" ng-bind-html="user.username | highlight: $select.search | trusted"></div>
-                </ui-select-choices>
-            </ui-select>
-        </div>
-        <checkbox ng-if="dvm.request.sourceTitle !== 'MASTER'" [(model)]="dvm.request.removeSource" [display-text]="'Remove ' + dvm.request.sourceTitle + ' after merge.'"></checkbox>
-    </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-click="dvm.submit()" ng-disabled="dvm.isDisabled()">Submit</button>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
+    <button mat-raised-button color="primary" (click)="submit()" [disabled]="editRequestForm.invalid || state.selected?.sourceBranch['@id'] === targetBranch['@id']">Submit</button>
 </div>

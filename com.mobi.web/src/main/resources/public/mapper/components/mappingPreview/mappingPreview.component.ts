@@ -20,74 +20,85 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { find, some, map } from 'lodash';
+import { Component, Inject, Input } from '@angular/core';
+import { some } from 'lodash';
+
+import { DELIM } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { Mapping } from '../../../shared/models/mapping.class';
+import { MappingInvalidProp } from '../../../shared/models/mappingInvalidProp.interface';
+import { MappingManagerService } from '../../../shared/services/mappingManager.service';
 
 import './mappingPreview.component.scss';
 
-const template = require('./mappingPreview.component.html');
-
 /**
- * @ngdoc component
- * @name mapper.component:mappingPreview
- * @requires shared.service:prefixes
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:mappingManagerService
- * @requires shared.service:mapperStateService
+ * @class mapper.MappingPreviewComponent
  *
- * @description
- * `mappingPreview` is a component that creates a "boxed" div with a preview of a mapping with its description,
- * source ontology, and all its mapped classes and properties.
+ * A component that creates a "boxed" div with a preview of a mapping with its description, source ontology, and all its
+ * mapped classes and properties.
  */
-const mappingPreviewComponent = {
-    template,
-    bindings: {
-        mapping: '<',
-        invalidProps: '<'
-    },
-    controllerAs: 'dvm',
-    controller: mappingPreviewComponentCtrl
-};
-
-mappingPreviewComponentCtrl.$inject = ['prefixes', 'utilService', 'mappingManagerService'];
-
-function mappingPreviewComponentCtrl(prefixes, utilService, mappingManagerService) {
-    var dvm = this;
-    var util = utilService;
-    var mm = mappingManagerService;
-    dvm.classMappings = [];
-
-    dvm.$onChanges = function() {
-        dvm.classMappings = map(mm.getAllClassMappings(dvm.mapping.jsonld), originalClassMapping => {
-            var classMapping = angular.copy(originalClassMapping);
-            classMapping.title = util.getDctermsValue(classMapping, 'title');
-            classMapping.iriTemplate = dvm.getIriTemplate(classMapping);
-            classMapping.propMappings = map(mm.getPropMappingsByClass(dvm.mapping.jsonld, classMapping['@id']), originalPropMapping => {
-                var propMapping = angular.copy(originalPropMapping);
-                propMapping.title = util.getDctermsValue(propMapping, 'title');
-                propMapping.isInvalid = dvm.isInvalid(propMapping['@id']);
-                propMapping.value = dvm.getPropValue(propMapping);
-                return propMapping;
-            }).sort((propMapping1, propMapping2) => propMapping1.title.localeCompare(propMapping2.title));
-            return classMapping;
-        }).sort((classMapping1, classMapping2) => classMapping1.title.localeCompare(classMapping2.title));
-    }
-    dvm.getIriTemplate = function(classMapping) {
-        var prefix = util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
-        var localName = util.getPropertyValue(classMapping, prefixes.delim + 'localName');
-        return prefix + localName;
-    }
-    dvm.getPropValue = function(propMapping) {
-        if (mm.isDataMapping(propMapping)) {
-            return util.getPropertyValue(propMapping, prefixes.delim + 'columnIndex')
-        } else {
-            var classMapping = find(dvm.mapping.jsonld, {'@id': util.getPropertyId(propMapping, prefixes.delim + 'classMapping')});
-            return util.getDctermsValue(classMapping, 'title');
-        }
-    }
-    dvm.isInvalid = function(propMappingId) {
-        return some(dvm.invalidProps, {'@id': propMappingId});
-    }
+interface PropMappingPreview {
+    id: string,
+    title: string,
+    isInvalid: boolean,
+    value: string
 }
 
-export default mappingPreviewComponent;
+interface ClassMappingPreview {
+    id: string,
+    title: string,
+    iriTemplate: string,
+    propMappings: PropMappingPreview[]
+}
+
+@Component({
+    selector: 'mapping-preview',
+    templateUrl: './mappingPreview.component.html'
+})
+export class MappingPreviewComponent {
+    classMappings: ClassMappingPreview[] = [];
+
+    private _mapping: Mapping;
+
+    @Input() invalidProps: MappingInvalidProp[];
+    @Input() set mapping(value: Mapping) {
+        this._mapping = value;
+        this.setClassMappings();
+    }
+
+    get mapping(): Mapping {
+        return this._mapping;
+    }
+    
+    constructor(private mm: MappingManagerService, @Inject('utilService') public util) {}
+
+    getIriTemplate(classMapping: JSONLDObject): string {
+        const prefix = this.util.getPropertyValue(classMapping, DELIM + 'hasPrefix');
+        const localName = this.util.getPropertyValue(classMapping, DELIM + 'localName');
+        return prefix + localName;
+    }
+    getPropValue(propMapping: JSONLDObject): string {
+        if (this.mm.isDataMapping(propMapping)) {
+            return this.util.getPropertyValue(propMapping, DELIM + 'columnIndex');
+        } else {
+            const classMapping = this.mapping.getClassMapping(this.util.getPropertyId(propMapping, DELIM + 'classMapping'));
+            return this.util.getDctermsValue(classMapping, 'title');
+        }
+    }
+    isInvalid(propMappingId: string): boolean {
+        return some(this.invalidProps, {id: propMappingId});
+    }
+    setClassMappings(): void {
+        this.classMappings = this.mapping.getAllClassMappings().map(originalClassMapping => ({
+            id: originalClassMapping['@id'],
+            title: this.util.getDctermsValue(originalClassMapping, 'title'),
+            iriTemplate: this.getIriTemplate(originalClassMapping),
+            propMappings: this.mapping.getPropMappingsByClass(originalClassMapping['@id']).map(originalPropMapping => ({
+                    id: originalPropMapping['@id'],
+                    title: this.util.getDctermsValue(originalPropMapping, 'title'),
+                    isInvalid: this.isInvalid(originalPropMapping['@id']),
+                    value: this.getPropValue(originalPropMapping)
+            })).sort((propMapping1, propMapping2) => propMapping1.title.localeCompare(propMapping2.title))
+        })).sort((classMapping1, classMapping2) => classMapping1.title.localeCompare(classMapping2.title));
+    }
+}

@@ -19,6 +19,7 @@
   #L%
   -->
 <mat-form-field class="editor-record-select">
+    <span matPrefix #editorRecordSelectSpinner><mat-spinner style="opacity: 0;" [diameter]="15"></mat-spinner></span>
     <input class="text-truncate" matInput #textInput placeholder="Select a record" [matAutocomplete]="recordAutocomplete"
            [formControl]="recordSearchControl"/>
     <mat-icon matSuffix>keyboard_arrow_down</mat-icon>

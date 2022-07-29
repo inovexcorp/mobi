@@ -24,7 +24,10 @@ import { get } from 'lodash';
 import { Inject, Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material';
 import { FormBuilder, Validators } from '@angular/forms';
+import { first } from 'rxjs/operators';
+
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 interface BranchConfig {
     title: string,
@@ -50,7 +53,7 @@ export class CreateBranchModal {
     });
 
     constructor(private state: ShapesGraphStateService, @Inject('utilService') private util,
-                @Inject('catalogManagerService') private cm, private fb: FormBuilder,
+                private cm: CatalogManagerService, private fb: FormBuilder,
                 private dialogRef: MatDialogRef<CreateBranchModal>) {}
 
     createBranch(): Promise<any> {
@@ -59,7 +62,8 @@ export class CreateBranchModal {
             description: this.createBranchForm.controls.description.value
         };
 
-        return this.cm.createRecordBranch(this.state.listItem.versionedRdfRecord.recordId, this.catalogId, branchConfig, this.state.listItem.versionedRdfRecord.commitId)
+        return this.cm.createRecordBranch(this.state.listItem.versionedRdfRecord.recordId, this.catalogId, branchConfig,
+            this.state.listItem.versionedRdfRecord.commitId).pipe(first()).toPromise()
             .then(branchId => {
                 return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, branchId, this.state.listItem.versionedRdfRecord.commitId, undefined, this.createBranchForm.controls.title.value);
             }, error => Promise.reject(error))

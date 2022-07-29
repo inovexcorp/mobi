@@ -22,21 +22,21 @@
   -->
 <div class="record-permission-view row p-4 h-100 vertical-scroll">
     <div class="col-auto back-column h-100">
-        <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width back-button"><span class="fa fa-chevron-left fa-2x"></span></button>
+        <button (click)="goBack()" class="btn btn-flat remove-min-width back-button"><span class="fa fa-chevron-left fa-2x"></span></button>
     </div>
     <div class="col permissions-page container-fluid py-3">
         <div class="row padding">
             <div class="col-6 offset-3">
-                <h2>Manage {{ dvm.title }}</h2>
+                <h2>Manage {{ title }}</h2>
             </div>
         </div>
-        <div ng-repeat="policy in dvm.policies" class="row padding">
+        <div *ngFor="let policy of this.policies" class="row padding">
             <div class="col-6 offset-3">
-                <user-access-controls [item]="policy" [rule-title]="policy.title"></user-access-controls>
+                <user-access-controls [item]="policy" [ruleTitle]="policy.title"></user-access-controls>
             </div>
         </div>
         <div class="save-container">
-            <button type="button" class="btn btn-float save-button btn-primary fa fa-fw fa-floppy-o" ng-click="dvm.save()" ng-disabled="!dvm.hasChanges()" button-hover-text="Save Changes"></button>
+            <button type="button" class="btn btn-float save-button btn-primary fa fa-fw fa-floppy-o" (click)="save()" ng-disabled="!hasChanges()" button-hover-text="Save Changes"></button>
         </div>
     </div>
 </div>

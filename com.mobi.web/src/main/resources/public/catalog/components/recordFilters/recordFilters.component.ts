@@ -20,24 +20,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { forEach, map, filter, get, includes} from 'lodash';
+import { HttpResponse } from '@angular/common/http';
+import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
+import { forEach, map, filter, includes} from 'lodash';
+
+import { CATALOG } from '../../../prefixes';
+import { KeywordCount } from '../../../shared/models/keywordCount.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { FilterItem } from '../../models/filterItem.interface';
+import { RecordFilter } from '../../models/recordFilter.interface';
+import { SearchableRecordFilter } from '../../models/searchableRecordFilter.interface';
 
 import './recordFilters.component.scss';
 
-const template = require('./recordFilters.component.html');
-
 /**
- * @ngdoc component
- * @name catalog.component:recordFilters
- * @requires shared.service:catalogStateService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @class catalog.RecordFiltersComponent
  *
- * @description
- * `recordFilters` is a component which creates a div with collapsible containers for various filters that can be
+ * A component which creates a div with collapsible containers for various filters that can be
  * performed on catalog Records. Each filter option has a checkbox to indicate whether that filter is active. These
- * filter categories currently only include {@link shared.service:catalogManagerService record types}.
+ * filter categories currently only include {@link shared.CatalogManagerService record types}.
  * The `recordType` will be the selected record type filter, it is one way bound.
  * The `keywordFilterList` will be the selected keywords filter, it is one way bound.
  * The `changeFilter` function is expected to update the `recordType` and `keywordFilterList` binding.
@@ -47,34 +49,26 @@ const template = require('./recordFilters.component.html');
  * It will be called when the value of the select is changed. This function should update the `recordType` binding and
  * `keywordFilterList` binding.
  * @param {string} recordType The selected record type filter. Should be a catalog Record type string.
- * @param {list} keywordFilterList The selected keywords list for filter. Should be a list of strings.
- * @param {catalogId} catalogId The catalog ID.
+ * @param {string[]} keywordFilterList The selected keywords list for filter. Should be a list of strings.
+ * @param {string} catalogId The catalog ID.
  */
-const recordFiltersComponent = {
-    template,
-    bindings: {
-        changeFilter: '&',
-        recordType: '<',
-        keywordFilterList: '<',
-        catalogId: '<'
-    },
-    controllerAs: 'dvm',
-    controller: recordFiltersComponentCtrl
-};
+@Component({
+    selector: 'record-filters',
+    templateUrl: './recordFilters.component.html'
+})
+export class RecordFiltersComponent implements OnInit {
+    filters: RecordFilter[] = [];
 
-recordFiltersComponentCtrl.$inject = ['catalogStateService', 'catalogManagerService', 'utilService', 'prefixes'];
+    @Input() recordType: string;
+    @Input() catalogId: string;
+    @Input() keywordFilterList: string[];
+    @Output() changeFilter = new EventEmitter<{recordType: string, keywordFilterList: string[]}>();
 
-function recordFiltersComponentCtrl(catalogStateService, catalogManagerService, utilService, prefixes) {
-    var dvm = this;
-    dvm.state = catalogStateService;
-    dvm.cm = catalogManagerService;
-    dvm.util = utilService;
-    const keywordPrefix = prefixes.catalog + 'keyword';
+    constructor(public state: CatalogStateService, public cm: CatalogManagerService, @Inject('utilService') public util) {}
 
-    dvm.filters = [];
-
-    dvm.$onInit = function() {
-        const recordTypeFilter = {
+    ngOnInit(): void {
+        const componentContext = this;
+        const recordTypeFilter: RecordFilter = {
             title: 'Record Type',
             hide: false,
             pageable: false,
@@ -83,40 +77,40 @@ function recordFiltersComponentCtrl(catalogStateService, catalogManagerService, 
             onInit: function() {
                 this.setFilterItems();
             },
-            getItemText: function(filterItem) {
-                return dvm.util.getBeautifulIRI(filterItem.value);
+            getItemText: function(filterItem: FilterItem) {
+                return componentContext.util.getBeautifulIRI(filterItem.value);
             },
             setFilterItems: function() {
-               this.filterItems = map(dvm.cm.recordTypes, type => ({
-                   value: type,
-                   checked: type === dvm.recordType,
-               }));
+                this.filterItems = map(componentContext.cm.recordTypes, type => ({
+                    value: type,
+                    checked: type === componentContext.recordType,
+                }));
             },
-            filter: function(filterItem) {
+            filter: function(filterItem: FilterItem) {
                 if (filterItem.checked) {
                     forEach(this.filterItems, typeFilter => {
                         if (typeFilter.value !== filterItem.value) {
                             typeFilter.checked = false;
                         }
                     });
-                    dvm.changeFilter({recordType: filterItem.value, keywordFilterList: dvm.keywordFilterList});
+                    componentContext.changeFilter.emit({recordType: filterItem.value, keywordFilterList: componentContext.keywordFilterList});
                 } else {
-                    if (dvm.recordType === filterItem.value) {
-                        dvm.changeFilter({recordType: '', keywordFilterList: dvm.keywordFilterList});
+                    if (componentContext.recordType === filterItem.value) {
+                        componentContext.changeFilter.emit({recordType: '', keywordFilterList: componentContext.keywordFilterList});
                     }
-               }
+                }
             }
         };
 
-        const keywordsFilter = {
+        const keywordsFilter: SearchableRecordFilter = {
             title: 'Keywords',
             hide: false,
             pageable: true,
             searchable: true,
             pagingData: {
                 limit: 12,
-                totalKeywordSize: 0,
-                currentKeywordPage: 1,
+                totalSize: 0,
+                currentPage: 1,
                 hasNextPage: false
             },
             rawFilterItems: [],
@@ -124,15 +118,13 @@ function recordFiltersComponentCtrl(catalogStateService, catalogManagerService, 
             onInit: function() {
                 this.nextPage();
             },
-            searchModel: function(){
-                return dvm.state.keywordSearchText;
-            },
-            searchChanged: function(value){
-                dvm.state.keywordSearchText = value;
+            searchModel: componentContext.state.keywordSearchText,
+            searchChanged: function(value: string){
+                componentContext.state.keywordSearchText = value;
             },
             searchSubmitted: function(){
-                this.pagingData['totalKeywordSize'] = 0;
-                this.pagingData['currentKeywordPage'] = 1;
+                this.pagingData['totalSize'] = 0;
+                this.pagingData['currentPage'] = 1;
                 this.pagingData['hasNextPage'] = false;
                 this.nextPage();
             },
@@ -140,52 +132,50 @@ function recordFiltersComponentCtrl(catalogStateService, catalogManagerService, 
                 const filterInstance = this;
                 const pagingData = filterInstance.pagingData;
                 const paginatedConfig = {
-                    searchText: dvm.state.keywordSearchText,
-                    pageIndex: pagingData.currentKeywordPage - 1,
+                    searchText: componentContext.state.keywordSearchText,
+                    pageIndex: pagingData.currentPage - 1,
                     limit: pagingData.limit,
                 };
-                dvm.cm.getKeywords(dvm.catalogId, paginatedConfig)
-                    .then(response => {
-                         if (pagingData.currentKeywordPage === 1) {
-                            filterInstance.rawFilterItems = response.data;
-                         } else {
-                            filterInstance.rawFilterItems = filterInstance.rawFilterItems.concat(response.data);
-                         }
-                         filterInstance.setFilterItems();
-                         pagingData['totalKeywordSize'] = get(response.headers(), 'x-total-count', 0);
-                         pagingData['hasNextPage'] = filterInstance.filterItems.length < pagingData.totalKeywordSize;
-                         pagingData['currentKeywordPage'] = pagingData['currentKeywordPage'] + 1;
-                    }, dvm.util.createErrorToast);
+                componentContext.cm.getKeywords(componentContext.catalogId, paginatedConfig)
+                    .subscribe((response: HttpResponse<KeywordCount[]>) => {
+                        if (pagingData.currentPage === 1) {
+                            filterInstance.rawFilterItems = response.body;
+                        } else {
+                            filterInstance.rawFilterItems = filterInstance.rawFilterItems.concat(response.body);
+                        }
+                        filterInstance.setFilterItems();
+                        pagingData['totalSize'] = Number(response.headers.get('x-total-count')) || 0;
+                        pagingData['hasNextPage'] = filterInstance.filterItems.length < pagingData.totalSize;
+                        pagingData['currentPage'] = pagingData['currentPage'] + 1;
+                    }, componentContext.util.createErrorToast);
             },
             getItemText: function(filterItem) {
-                const keywordString = filterItem.value[keywordPrefix];
+                const keywordString = filterItem.value[CATALOG + 'keyword'];
                 const keywordCount = filterItem.value['count'];
                 return `${keywordString} (${keywordCount})`;
             },
             setFilterItems: function() {
                 this.filterItems = map(this.rawFilterItems, keywordObject => ({
                     value: keywordObject,
-                    checked: includes(dvm.keywordFilterList, keywordObject[keywordPrefix])
+                    checked: includes(componentContext.keywordFilterList, keywordObject[CATALOG + 'keyword'])
                 }));
-                const keywords = filter(dvm.state.keywordFilterList, keyword => {
-                    return this.filterItems.filter(currentFilterItem => currentFilterItem.value[keywordPrefix].indexOf(keyword) !== -1).length;
+                const keywords = filter(componentContext.state.keywordFilterList, keyword => {
+                    return this.filterItems.filter(currentFilterItem => currentFilterItem.value[CATALOG + 'keyword'].indexOf(keyword) !== -1).length;
                 });
-                dvm.changeFilter({recordType: dvm.recordType, keywordFilterList: keywords});
+                componentContext.changeFilter.emit({recordType: componentContext.recordType, keywordFilterList: keywords});
             },
-            filter: function(filterItem) {
+            filter: function(filterItem: FilterItem) {
                 const checkedKeywordObjects = filter(this.filterItems, currentFilterItem => currentFilterItem.checked);
-                const keywords = map(checkedKeywordObjects, currentFilterItem => currentFilterItem.value[keywordPrefix]);
-                dvm.changeFilter({recordType: dvm.recordType, keywordFilterList: keywords});
+                const keywords = map(checkedKeywordObjects, currentFilterItem => currentFilterItem.value[CATALOG + 'keyword']);
+                componentContext.changeFilter.emit({recordType: componentContext.recordType, keywordFilterList: keywords});
             }
         };
 
-        dvm.filters = [recordTypeFilter, keywordsFilter];
-        forEach(dvm.filters, filter => {
-            if (filter.hasOwnProperty('onInit')) {
+        this.filters = [recordTypeFilter, keywordsFilter];
+        forEach(this.filters, filter => {
+            if ('onInit' in filter) {
                 filter.onInit();
             }
         });
     }
 }
-
-export default recordFiltersComponent;

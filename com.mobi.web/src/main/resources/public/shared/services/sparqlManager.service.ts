@@ -20,408 +20,156 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { has, get, join } from 'lodash';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
-sparqlManagerService.$inject = ['$http', '$q', '$httpParamSerializer', '$rootScope', 'utilService', 'httpService', 'REST_PREFIX'];
+import { REST_PREFIX } from '../../constants';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
+import { HelperService } from './helper.service';
 
 /**
- * @ngdoc service
- * @name shared.service:sparqlManagerService
- * @requires shared.service:utilService
- * @requires shared.service:httpService
+ * @class shared.SparqlManagerService
  *
- * @description
- * `sparqlManagerService` is a service that provides access to the Mobi SPARQL query
- * REST endpoint and various state variables for the SPARQL Editor.
+ * A service that provides access to the Mobi SPARQL query REST endpoint and various state variables for the SPARQL
+ * Editor.
  */
-function sparqlManagerService($http, $q, $httpParamSerializer, $rootScope, utilService, httpService, REST_PREFIX) {
-    const prefix = REST_PREFIX + 'sparql';
-    const self = this;
-    const util = utilService;
-    /**
-     * @ngdoc property
-     * @name prefixes
-     * @propertyOf shared.service:sparqlManagerService
-     * @type {string[]}
-     *
-     * @description
-     * The list of selected prefixes for use in the
-     * {@link sparqlEditor.directive:sparqlEditor SPARQL editor}.
-     */
-    self.prefixes = [];
-    /**
-     * @ngdoc property
-     * @name queryString
-     * @propertyOf shared.service:sparqlManagerService
-     * @type {string}
-     *
-     * @description
-     * The query string from the {@link sparqlEditor.directive:sparqlEditor SPARQL editor} to
-     * be ran against the Mobi repository.
-     */
-    self.queryString = '';
-    /**
-     * @ngdoc property
-     * @name datasetRecordIRI
-     * @propertyOf shared.service:sparqlManagerService
-     * @type {string}
-     *
-     * @description
-     * The IRI of a DatasetRecord in the Mobi repository to perform the query against.
-     */
-    self.datasetRecordIRI = '';
-    /**
-     * @ngdoc property
-     * @name data
-     * @propertyOf shared.service:sparqlManagerService
-     * @type {Object[]}
-     *
-     * @description
-     * The results from the running the {@link shared.service:sparqlManagerService#queryString}.
-     */
-    self.data = undefined;
-    /**
-     * @ngdoc property
-     * @name errorMessage
-     * @propertyOf shared.service:sparqlManagerService
-     * @type {string}
-     *
-     * @description
-     * An error message obtained from attempting to run a SPARQL query against the Mobi repository.
-     */
-    self.errorMessage = '';
-    /**
-     * @ngdoc property
-     * @name errorDetails
-     * @propertyOf shared.service:sparqlManagerService
-     * @type {string}
-     *
-     * @description
-     * Details about an error obtained from attempting to run a SPARQL query against the Mobi repository.
-     */
-    self.errorDetails = '';
-    /**
-     * @ngdoc property
-     * @name infoMessage
-     * @propertyOf shared.service:sparqlManagerService
-     * @type {string}
-     *
-     * @description
-     * A generic information message to be used when there is no data.
-     */
-    self.infoMessage = 'Please submit a query to see results here.';
-    /**
-     * @ngdoc property
-     * @name currentPage
-     * @propertyOf shared.service:sparqlManagerService
-     * @type {number}
-     *
-     * @description
-     * The 1 based index that indicates the current page of
-     * {@link shared.service:sparqlManagerService#data results} to be displayed in the
-     * {@link sparqlResultTable.directive:sparqlResultTable SPARQL result table}.
-     */
-    self.currentPage = 1;
-    /**
-     * @ngdoc property
-     * @name links
-     * @propertyOf shared.service:sparqlManagerService
-     * @type {Object}
-     *
-     * @description
-     * The URLs for the next and previous page of results from running the
-     * {@link shared.service:sparqlManagerService#queryString query}.
-     */
-    self.links = {
-        next: '',
-        prev: ''
-    };
-    /**
-     * @ngdoc property
-     * @name limit
-     * @propertyOf shared.service:sparqlManagerService
-     * @type {number}
-     *
-     * @description
-     * The number of results to return at one time from {@link sparqlManager.service:sparqlManager#queryRdf querying}
-     * the repository.
-     */
-    self.limit = 100;
-    /**
-     * @ngdoc property
-     * @name totalSize
-     * @propertyOf shared.service:sparqlManagerService
-     * @type {number}
-     *
-     * @description
-     * The total number of results from running the {@link shared.service:sparqlManagerService#queryString query}
-     * with {@link sparqlManager.service:sparqlManager#queryRdf queryRdf}.
-     */
-    self.totalSize = 0;
-    /**
-     * @ngdoc property
-     * @name bindings
-     * @propertyOf shared.service:sparqlManagerService
-     * @type {string[]}
-     *
-     * @description
-     * The binding names in the result of running the {@link shared.service:sparqlManagerService#queryString query}.
-     */
-    self.bindings = [];
+@Injectable()
+export class SparqlManagerService {
+    prefix = REST_PREFIX + 'sparql';
+
+    constructor(private http: HttpClient, private helper: HelperService, private spinnerSvc: ProgressSpinnerService) {}
 
     /**
-     * @ngdoc method
-     * @name reset
-     * @methodOf shared.service:sparqlManagerService
-     *
-     * @description
-     * Resets all state variables.
-     */
-    self.reset = function() {
-        self.prefixes = [];
-        self.queryString = '';
-        self.datasetRecordIRI = '';
-        self.data = undefined;
-        self.errorMessage = '';
-        self.infoMessage = 'Please submit a query to see results here.';
-        self.currentPage = 1;
-        self.links = {
-            next: '',
-            prev: ''
-        };
-        self.totalSize = 0;
-        self.bindings = [];
-    }
-
-    /**
-     * @ngdoc method
-     * @name query
-     * @methodOf shared.service:sparqlManagerService
-     *
-     * @description
      * Calls the GET /sparql REST endpoint to conduct a SPARQL query using the provided query
      * and optionally using the provided DatasetRecord IRI to limit the query to a dataset.
      *
      * @param {string} query The SPARQL query string to submit
      * @param {string} datasetRecordIRI The IRI of the DatasetRecord to restrict the query to
      * @param {string} id The identifier for this call
-     * @return {Promise} A Promise that resolves to the data from the response or rejects with an
+     * @return {Observable} A Observable that resolves to the data from the response or rejects with an
      * error message.
      */
-    self.query = function(query, datasetRecordIRI = '', id = '') {
-        var config: any = { params: { query } };
+    query(query: string, datasetRecordIRI = '', isTracked = false): Observable<string|SPARQLSelectResults> {
+        const params: any = { query };
         if (datasetRecordIRI) {
-            config.params.dataset = datasetRecordIRI;
+            params.dataset = datasetRecordIRI;
         }
-        var promise = id ? httpService.get(prefix, config, id) : $http.get(prefix, config);
-        return promise.then(response => response.data, util.rejectError);
+        const request = this.http.get(this.prefix, {params: this.helper.createHttpParams(params), responseType: 'text', observe: 'response'})
+            .pipe(
+                catchError(this.helper.handleError),
+                map((response: HttpResponse<string>) => {
+                    const contentType = response.headers.get('Content-Type');
+                    if (contentType === 'application/json') {
+                        return (JSON.parse(response.body)) as SPARQLSelectResults;
+                    } else {
+                        return response.body;
+                    }
+                })
+            );
+        return this._trackedRequest(request, isTracked);
     }
 
     /**
-     * @ngdoc method
-     * @name postQuery
-     * @methodOf shared.service:sparqlManagerService
-     *
-     * @description
      * Calls the POST /sparql REST endpoint to conduct a SPARQL query using the provided query
      * and optionally using the provided DatasetRecord IRI to limit the query to a dataset.
      *
      * @param {string} query The SPARQL query string to submit
      * @param {string} datasetRecordIRI The IRI of the DatasetRecord to restrict the query to
      * @param {string} id The identifier for this call
-     * @return {Promise} A Promise that resolves to the data from the response or rejects with an
+     * @return {Observable} A Observable that resolves to the data from the response or rejects with an
      * error message.
      */
-    self.postQuery = function(query, datasetRecordIRI = '', id = '') {
-        var config: any = { params: { } };
+    postQuery(query: string, datasetRecordIRI = '', isTracked = false): Observable<string|SPARQLSelectResults> {
+        const params: any = {};
         if (datasetRecordIRI) {
-            config.params.dataset = datasetRecordIRI;
+            params.dataset = datasetRecordIRI;
         }
-        var promise = id ? httpService.post(prefix, query, config, id) : $http.post(prefix, query, config);
-        return promise.then(response => response.data, util.rejectError);
+        const request = this.http.post(this.prefix, query, {params: this.helper.createHttpParams(params), responseType: 'text', observe: 'response'})
+            .pipe(
+                catchError(this.helper.handleError),
+                map((response: HttpResponse<string>) => {
+                    const contentType = response.headers.get('Content-Type');
+                    if (contentType === 'application/json') {
+                        return (JSON.parse(response.body)) as SPARQLSelectResults;
+                    } else {
+                        return response.body;
+                    }
+                })
+            );
+        return this._trackedRequest(request, isTracked);
     }
 
     /**
-     * @ngdoc method
-     * @name pagedQuery
-     * @methodOf shared.service:sparqlManagerService
+     * Calls the GET /mobirest/sparql endpoint using the `window.location` variable which will start a download of the
+     * results of running the provided, optionally using a provided datasetRecordIRI, in the specified file type with
+     * an optional file name.
      *
-     * @description
-     * Calls the GET /sparql/page REST endpoint to conduct a SPARQL query using the provided query and
-     * optionally using the provided DatasetRecord IRI and pagination parameters to limit the query to
-     * a dataset.
-     *
-     * @param {string} query The SPARQL query string to submit
-     * @param {Object} paramObj The Object which contains all of the params to set
-     * @param {string} paramObj.datasetRecordIRI The IRI of the DatasetRecord to restrict the query to
-     * @param {string} paramObj.id The identifier for this call
-     * @param {number} [paramObj.limit=100] The number of results per page
-     * @param {number} [paramObj.page=0] The page of results that you want to retrieve
-     * @return {Promise} A Promise that resolves to the data from the response or rejects with an
-     * error message.
-     */
-    self.pagedQuery = function(query, paramObj) {
-        var limit = get(paramObj, 'limit', 100);
-        var config: any = {
-            params: {
-                query,
-                limit,
-                offset: get(paramObj, 'page', 0) * limit
-            }
-        };
-        if (has(paramObj, 'datasetRecordIRI')) {
-            config.params.dataset = paramObj.datasetRecordIRI;
-        }
-        var url = prefix + '/page';
-        var promise = has(paramObj, 'id') ? httpService.get(url, config, paramObj.id) : $http.get(url, config);
-        return promise.then($q.when, util.rejectError);
-    }
-
-    /**
-     * @ngdoc method
-     * @name downloadResults
-     * @methodOf shared.service:sparqlManagerService
-     *
-     * @description
-     * Calls the GET /mobirest/sparql endpoint using the `window.location` variable which
-     * will start a download of the results of running the current
-     * {@link shared.service:sparqlManagerService#queryString query} and
-     * {@link shared.service:sparqlManagerService#prefixes prefixes}, optionally using
-     * the selected {@link shared.service:sparqlManagerService#datasetRecordIRI dataset},
-     * in the specified file type with an optional file name.
-     *
+     * @param {string} query The query to run
      * @param {string} fileType The type of file to download based on file extension
-     * @param {string=''} fileName The optional name of the downloaded file
+     * @param {string} fileName The optional name of the downloaded file
+     * @param {string} datasetRecordIRI The optional Dataset to run the query against
      */
-    self.downloadResults = function(fileType, fileName = '') {
-        var paramsObj: any = {
-            query: getPrefixString() + this.queryString,
+    downloadResults(query: string, fileType: string, fileName = '', datasetRecordIRI = ''): void {
+        const paramsObj: any = {
+            query,
             fileType
         };
         if (fileName) {
             paramsObj.fileName = fileName;
         }
-        if (self.datasetRecordIRI) {
-            paramsObj.dataset = self.datasetRecordIRI;
+        if (datasetRecordIRI) {
+            paramsObj.dataset = datasetRecordIRI;
         }
-        util.startDownload(prefix + '?' + $httpParamSerializer(paramsObj));
+        window.open(this.prefix + '?' + this.helper.createHttpParams(paramsObj).toString());
     }
 
     /**
-     * @ngdoc method
-     * @name downloadResultsPost
-     * @methodOf shared.service:sparqlManagerService
-     *
-     * @description
-     * Calls the POST /mobirest/sparql endpoint with an Accept Header of application/octet-stream which
-     * will start a download of the results of running the current
-     * {@link shared.service:sparqlManagerService#queryString query} and
-     * {@link shared.service:sparqlManagerService#prefixes prefixes}, optionally using
-     * the selected {@link shared.service:sparqlManagerService#datasetRecordIRI dataset},
-     * in the specified file type with an optional file name.
+     * Calls the POST /mobirest/sparql endpoint with an Accept Header of application/octet-stream which will start a
+     * download of the results of running the provided query, optionally using a provided datasetRecordIRI, in the
+     * specified file type with an optional file name.
      *
      * @param {string} fileType The type of file to download based on file extension
      * @param {string=''} fileName The optional name of the downloaded file
      */
-    self.downloadResultsPost = function(fileType, fileName = '') {
-        const config: any = {
-            params: { 
-                fileType, fileName 
-            },
-            headers: {
-                'Accept': 'application/octet-stream',
-                'Content-Type': 'application/sparql-query'
-            },
-            responseType: 'arraybuffer'
+    downloadResultsPost(query: string, fileType: string, fileName = '', datasetRecordIRI = ''): Observable<any> {
+        const params: any = {
+            fileType,
+            fileName
         };
+        let headers = new HttpHeaders();
+        headers = headers.append('Accept', 'application/octet-stream').append('Content-Type', 'application/sparql-query');
         
-        if (self.datasetRecordIRI) {
-            config.params.dataset = self.datasetRecordIRI;
+        if (datasetRecordIRI) {
+            params.dataset = datasetRecordIRI;
         }
         
-        $rootScope.isDownloading = true;
-        const promise = $http.post(prefix, getPrefixString() + this.queryString, config);
-
-        return promise.then(response => {
-            const file = new Blob([response.data], {
-                type: response.headers('content-type')
-            });
-            const fileURL = URL.createObjectURL(file);
-            const a = document.createElement('a');
-            a.href = fileURL;
-            a.target = '_blank';
-            a.download = fileName;
-            document.body.appendChild(a); //create the link "a"
-            a.click(); //click the link "a"
-            document.body.removeChild(a); //remove the link "a"
-            return response.data;
-        }, util.rejectError);
-    };
-
-    self.initialQueryRdf = function() {
-        self.currentPage = 1;
-        self.data = undefined;
-        self.queryRdf();
-    }
-    /**
-     * @ngdoc method
-     * @name queryRdf
-     * @methodOf shared.service:sparqlManagerService
-     *
-     * @description
-     * Calls the GET /sparql/page REST endpoint to conduct a SPARQL query using the current
-     * {@link shared.service:sparqlManagerService#queryString query} and
-     * {@link shared.service:sparqlManagerService#prefixes prefixes}, optionally using
-     * the selected {@link shared.service:sparqlManagerService#datasetRecordIRI dataset},
-     * and sets the results to {@link shared.service:sparqlManagerService#data data}.
-     */
-    self.queryRdf = function() {
-        self.errorMessage = '';
-        self.errorDetails = '';
-        self.infoMessage = '';
-
-        var prefixes = getPrefixString();
-        var config: any = {
-            params: {
-                query: prefixes + self.queryString,
-                limit: self.limit,
-                offset: (self.currentPage - 1) * self.limit
-            }
-        };
-        if (self.datasetRecordIRI) {
-            config.params.dataset = self.datasetRecordIRI;
-        }
-        return $http.get(prefix + '/page', config)
-            .then(onSuccess, response => {
-                if (response.status === 401) {
-                    util.createErrorToast(getMessage(response))
-                    self.infoMessage = 'Please submit a query to see results here.';
-                } else {
-                    self.errorMessage = getMessage(response)
-                }
-            });
+        return this.http.post(this.prefix, query, {headers, params: this.helper.createHttpParams(params), responseType: 'arraybuffer', observe: 'response'})
+            .pipe(
+                catchError(this.helper.handleError),
+                map((response: HttpResponse<any>) => {
+                    const file = new Blob([response.body], {
+                        type: response.headers.get('Content-Type')
+                    });
+                    const fileURL = URL.createObjectURL(file);
+                    const a = document.createElement('a');
+                    a.href = fileURL;
+                    a.target = '_blank';
+                    a.download = fileName;
+                    document.body.appendChild(a); //create the link "a"
+                    a.click(); //click the link "a"
+                    document.body.removeChild(a); //remove the link "a"
+                    return response.body;
+                }));
     }
 
-    function onSuccess(response) {
-        if (get(response, 'data.bindings', []).length) {
-            self.bindings = response.data.bindings;
-            self.data = response.data.data;
-            var headers = response.headers();
-            self.totalSize = get(headers, 'x-total-count', 0);
-            var links = util.parseLinks(get(headers, 'link', ''));
-            self.links.prev = get(links, 'prev', '');
-            self.links.next = get(links, 'next', '');
+    private _trackedRequest(request, tracked) {
+        if (tracked) {
+            return request;
         } else {
-            self.infoMessage = 'There were no results for the submitted query.';
+            return this.spinnerSvc.track(request);
         }
-    }
-    function getMessage(response) {
-        self.errorDetails = get(response, 'data.details', '');
-        return util.getErrorMessage(response, 'A server error has occurred. Please try again later.');
-    }
-    function getPrefixString() {
-        return self.prefixes.length ? 'PREFIX ' + join(self.prefixes, '\nPREFIX ') + '\n\n' : '';
     }
 }
-
-export default sparqlManagerService;

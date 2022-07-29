@@ -23,19 +23,15 @@
 
 import { Component, Input, EventEmitter, Output, OnChanges, Inject } from '@angular/core';
 import { FormArray, FormGroup } from '@angular/forms';
-
 import { filter } from 'lodash';
 
+import { SHACL } from '../../../prefixes';
 import { Setting } from '../../models/setting.interface';
 
 /**
- * @ngdoc component
- * @name shared.component:settingForm
- * @requires shared.service.utilService
- * @requires shared.service.prefixes
+ * @class shared.SettingFormComponent
  *
- * @description
- * `settingForm` is a component that contains a form allowing a user to change their settings
+ * A component that contains a form allowing a user to change their settings
  */
 @Component({
     selector: 'setting-form',
@@ -53,11 +49,11 @@ export class SettingFormComponent implements OnChanges {
         formBlocks: new FormArray([])
     });
         
-    constructor(@Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
+    constructor(@Inject('utilService') private util) {}
 
     ngOnChanges(): void {
-        if (this.setting.requiredPropertyShape[this.prefixes.shacl + 'maxCount']) {
-            this.maxBlocks = Number(this.util.getPropertyValue(this.setting.requiredPropertyShape, this.prefixes.shacl + 'maxCount'));
+        if (this.setting.requiredPropertyShape[SHACL + 'maxCount']) {
+            this.maxBlocks = Number(this.util.getPropertyValue(this.setting.requiredPropertyShape, SHACL + 'maxCount'));
         }
 
         this.numValues = this.setting.numValues();
@@ -65,7 +61,7 @@ export class SettingFormComponent implements OnChanges {
         // Create a lookup object to get the associated property shape for a given formFieldProperty.
         this.setting.formFieldProperties.forEach(formFieldProperty => {
             const shaclShape = filter(this.setting.formFieldPropertyShapes, formFieldPropertyShape => {
-                return this.util.getPropertyId(formFieldPropertyShape, this.prefixes.shacl + 'path') === formFieldProperty;
+                return this.util.getPropertyId(formFieldPropertyShape, SHACL + 'path') === formFieldProperty;
             })[0];
             this.shaclShapes[formFieldProperty] = shaclShape;
         });

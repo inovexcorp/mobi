@@ -23,6 +23,7 @@
 
 import { Component, Input, EventEmitter, Output } from '@angular/core';
 import { Difference } from '../../models/difference.class';
+
 import './commitDifferenceTabset.component.scss';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
@@ -54,12 +55,16 @@ export class CommitDifferenceTabsetComponent {
     @Input() commitId: string;
     @Input() targetId: string;
     @Input() difference: Difference;
-    @Input() showMoreResultsFunc: (limit: number, offset: number) => void
     @Input() entityNameFunc?: (args: any) => string;
     @Input() startIndex?: number;
     @Input() recordId?: string;
 
+    @Output() showMoreResultsFunc = new EventEmitter<{limit: number, offset: number}>();
     @Output() receiveCommits = new EventEmitter<JSONLDObject[]>();
+
+    middleShowMoreResultsFunc(deets: {limit: number, offset: number}): void {
+        this.showMoreResultsFunc.emit(deets);
+    }
 
     emitCommits(value: JSONLDObject[]): void {
         this.receiveCommits.emit(value);

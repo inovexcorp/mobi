@@ -26,26 +26,26 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 
 import {
     mockUtil,
-    mockPrefixes,
     cleanStylesFromDOM
 } from '../../../../../test/ts/Shared';
 import { Group } from '../models/group.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { User } from '../models/user.interface';
 import { ADMIN_USER_IRI } from '../../constants';
-import { UserManagerService } from './userManager.service';
 import { HelperService } from './helper.service';
+import { DCTERMS, FOAF, ROLES, USER } from '../../prefixes';
+import { UserManagerService } from './userManager.service';
 
 describe('User Manager service', function() {
     let service: UserManagerService;
     let utilStub;
-    let prefixesStub;
     let httpMock: HttpTestingController;
     let helper: HelperService;
     let user: User;
     let group: Group;
     let userRdf: JSONLDObject;
     let groupRdf: JSONLDObject;
+
     const error = 'Error Message';
 
     configureTestSuite(function() {
@@ -55,7 +55,6 @@ describe('User Manager service', function() {
                 UserManagerService,
                 HelperService,
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'prefixes', useClass: mockPrefixes },
             ]
         });
     });
@@ -63,7 +62,6 @@ describe('User Manager service', function() {
     beforeEach(function() {
         service = TestBed.get(UserManagerService);
         utilStub = TestBed.get('utilService');
-        prefixesStub = TestBed.get('prefixes');
         httpMock = TestBed.get(HttpTestingController);
         helper = TestBed.get(HelperService);
 
@@ -82,11 +80,11 @@ describe('User Manager service', function() {
         userRdf = {
             '@id': user.iri,
             '@type': [],
-            [prefixesStub.user + 'username']: [{'@value': user.username}],
-            [prefixesStub.foaf + 'firstName']: [{'@value': user.firstName}],
-            [prefixesStub.foaf + 'lastName']: [{'@value': user.lastName}],
-            [prefixesStub.foaf + 'mbox']: [{'@id': user.email}],
-            [prefixesStub.user + 'hasUserRole']: [{'@id': prefixesStub.roles + user.roles[0]}]
+            [USER + 'username']: [{'@value': user.username}],
+            [FOAF + 'firstName']: [{'@value': user.firstName}],
+            [FOAF + 'lastName']: [{'@value': user.lastName}],
+            [FOAF + 'mbox']: [{'@id': user.email}],
+            [USER + 'hasUserRole']: [{'@id': ROLES + user.roles[0]}]
         };
         user.jsonld = userRdf;
         
@@ -101,24 +99,24 @@ describe('User Manager service', function() {
         groupRdf = {
             '@id': group.iri,
             '@type': [],
-            [prefixesStub.dcterms + 'title']: [{'@value': group.title}],
-            [prefixesStub.dcterms + 'description']: [{'@value': group.description}],
-            [prefixesStub.foaf + 'member']: [userRdf],
-            [prefixesStub.user + 'hasGroupRole']: [{'@id': prefixesStub.roles + group.roles[0]}]
+            [DCTERMS + 'title']: [{'@value': group.title}],
+            [DCTERMS + 'description']: [{'@value': group.description}],
+            [FOAF + 'member']: [userRdf],
+            [USER + 'hasGroupRole']: [{'@id': ROLES + group.roles[0]}]
         };
         group.jsonld = groupRdf;
         
         utilStub.getPropertyValue.and.callFake((jsonld, prop) => {
-            if (prop === prefixesStub.user + 'username') {
+            if (prop === USER + 'username') {
                 return user.username;
-            } else if (prop === prefixesStub.foaf + 'firstName') {
+            } else if (prop === FOAF + 'firstName') {
                 return user.firstName;
-            } else if (prop === prefixesStub.foaf + 'lastName') {
+            } else if (prop === FOAF + 'lastName') {
                 return user.lastName;
             }
         });
         utilStub.getPropertyId.and.callFake((jsonld, prop) => {
-            if (prop === prefixesStub.foaf + 'mbox') {
+            if (prop === FOAF + 'mbox') {
                 return user.email;
             }
         });
@@ -130,7 +128,7 @@ describe('User Manager service', function() {
             }
         });
         utilStub.getBeautifulIRI.and.callFake(iri => {
-            if (iri === prefixesStub.roles + 'user') {
+            if (iri === ROLES + 'user') {
                 return 'user';
             }
         });
@@ -140,7 +138,6 @@ describe('User Manager service', function() {
         cleanStylesFromDOM();
         service = null;
         utilStub = null;
-        prefixesStub = null;
         httpMock = null;
         helper = null;
         user = null;
@@ -166,20 +163,20 @@ describe('User Manager service', function() {
             spyOn(service, 'getGroupObj').and.returnValue(group);
         });
         it('successfully', fakeAsync(function() {
-            spyOn(service, 'getUsers').and.returnValue(Promise.resolve([userRdf]));
-            spyOn(service, 'getGroups').and.returnValue(Promise.resolve([groupRdf]));
+            spyOn(service, 'getUsers').and.resolveTo([userRdf]);
+            spyOn(service, 'getGroups').and.resolveTo([groupRdf]);
             service.initialize();
             tick();
-            expect(service.getUsers).toHaveBeenCalled();
-            expect(service.getGroups).toHaveBeenCalled();
+            expect(service.getUsers).toHaveBeenCalledWith();
+            expect(service.getGroups).toHaveBeenCalledWith();
             expect(service.getUserObj).toHaveBeenCalledWith(userRdf);
             expect(service.getGroupObj).toHaveBeenCalledWith(groupRdf);
             expect(service.users).toEqual([user]);
             expect(service.groups).toEqual([group]);
         }));
         it('unless there is an error', fakeAsync(function() {
-            spyOn(service, 'getUsers').and.returnValue(Promise.reject(error));
-            spyOn(service, 'getGroups').and.returnValue(Promise.resolve([groupRdf]));
+            spyOn(service, 'getUsers').and.rejectWith(error);
+            spyOn(service, 'getGroups').and.resolveTo([groupRdf]);
             service.initialize();
             tick();
             expect(service.getUsers).toHaveBeenCalled();
@@ -267,7 +264,7 @@ describe('User Manager service', function() {
     });
     describe('should add a user', function() {
         beforeEach(function() {
-            spyOn(service, 'getUser').and.returnValue(Promise.resolve(user));
+            spyOn(service, 'getUser').and.resolveTo(user);
         });
         it('unless an error occurs', function(done) {
             service.addUser(user, 'pw')
@@ -557,7 +554,7 @@ describe('User Manager service', function() {
     });
     describe('should add a group', function() {
         beforeEach(function() {
-            spyOn(service, 'getGroup').and.returnValue(Promise.resolve(group));
+            spyOn(service, 'getGroup').and.resolveTo(group);
         });
         it('unless an error occurs', function(done) {
             service.addGroup(group)
@@ -838,20 +835,20 @@ describe('User Manager service', function() {
     });
     it('should determine whether a user is external', function() {
         expect(service.isExternalUser(userRdf)).toBeFalse();
-        userRdf['@type'] = [prefixesStub.user + 'User', prefixesStub.user + 'ExternalUser'];
+        userRdf['@type'] = [USER + 'User', USER + 'ExternalUser'];
         expect(service.isExternalUser(userRdf)).toBeTrue();
-        userRdf['@type'] = [prefixesStub.user + 'User'];
+        userRdf['@type'] = [USER + 'User'];
         expect(service.isExternalUser(userRdf)).toBeFalse();
-        userRdf['@type'] = [prefixesStub.user + 'Group'];
+        userRdf['@type'] = [USER + 'Group'];
         expect(service.isExternalUser(userRdf)).toBeFalse();
     });
     it('should determine whether a group is external', function() {
         expect(service.isExternalGroup(groupRdf)).toBeFalse();
-        groupRdf['@type'] = [prefixesStub.user + 'Group', prefixesStub.user + 'ExternalGroup'];
+        groupRdf['@type'] = [USER + 'Group', USER + 'ExternalGroup'];
         expect(service.isExternalGroup(groupRdf)).toBeTrue();
-        groupRdf['@type'] = [prefixesStub.user + 'Group'];
+        groupRdf['@type'] = [USER + 'Group'];
         expect(service.isExternalGroup(groupRdf)).toBeFalse();
-        groupRdf['@type'] = [prefixesStub.user + 'User'];
+        groupRdf['@type'] = [USER + 'User'];
         expect(service.isExternalGroup(groupRdf)).toBeFalse();
     });
     describe('getUserDisplay should return the correct value', function() {
@@ -874,18 +871,18 @@ describe('User Manager service', function() {
         utilStub.getBeautifulIRI.and.callFake(x => x);
         utilStub.getPropertyId.and.returnValue('email');
         utilStub.getPropertyValue.and.callFake((obj, prop) => {
-            if (prop === prefixesStub.foaf + 'firstName') {
+            if (prop === FOAF + 'firstName') {
                 return 'first name';
-            } else if (prop === prefixesStub.foaf + 'lastName') {
+            } else if (prop === FOAF + 'lastName') {
                 return 'last name';
-            } else if (prop === prefixesStub.user + 'username') {
+            } else if (prop === USER + 'username') {
                 return 'username';
             } else {
                 return '';
             }
         });
         spyOn(service, 'isExternalUser').and.returnValue(false);
-        userRdf[prefixesStub.user + 'hasUserRole'] = [{'@id': 'role'}];
+        userRdf[USER + 'hasUserRole'] = [{'@id': 'role'}];
         const result = service.getUserObj(userRdf);
         expect(result.jsonld).toEqual(userRdf);
         expect(result.external).toEqual(false);
@@ -908,7 +905,7 @@ describe('User Manager service', function() {
             }
         });
         spyOn(service, 'isExternalGroup').and.returnValue(false);
-        groupRdf[prefixesStub.user + 'hasGroupRole'] = [{'@id': 'role'}];
+        groupRdf[USER + 'hasGroupRole'] = [{'@id': 'role'}];
         service.users = [user];
         const result = service.getGroupObj(groupRdf);
         expect(result.jsonld).toEqual(groupRdf);

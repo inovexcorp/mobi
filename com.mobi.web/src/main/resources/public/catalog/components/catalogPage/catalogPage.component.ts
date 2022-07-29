@@ -20,31 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component } from '@angular/core';
+
+import { CatalogStateService } from '../../../shared/services/catalogState.service';
+
 import './catalogPage.component.scss';
 
-const template = require('./catalogPage.component.html');
-
 /**
- * @ngdoc component
- * @name catalog.component:catalogPage
- * @requires shared.service:catalogStateService
- *
- * @description
- * `catalogPage` is a component which creates the main page of the Catalog module. The component contains different
- * content depending on whether a catalog Record has been selected.
+ * @class catalog.CatalogPageComponent
+ * 
+ * A component which creates the main page of the Catalog module. The component contains different content depending on
+ * whether a catalog Record has been selected.
  */
-const catalogPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: catalogPageComponentCtrl
-};
-
-catalogPageComponentCtrl.$inject = ['catalogStateService'];
-
-function catalogPageComponentCtrl(catalogStateService) {
-    const dvm = this;
-    dvm.state = catalogStateService;
+@Component({
+    selector: 'catalog-page',
+    templateUrl: './catalogPage.component.html'
+})
+export class CatalogPageComponent {
+    constructor(public state: CatalogStateService) {}
 }
-
-export default catalogPageComponent;

@@ -24,15 +24,16 @@ import { DebugElement, SimpleChange } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { fakeAsync, TestBed, tick, ComponentFixture } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { Subject } from 'rxjs';
 
 import { OntologyVisualizationService } from '../../services/ontologyVisualizaton.service';
 import { OntologyVisualization } from './ontologyVisualization.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
-import { SpinnerComponent } from '../../../shared/components/progress-spinner/spinner.component';
-import { MockOntologyVisualizationService, mockUtil, mockHttpService} from  '../../../../../../test/ts/Shared';
-import { Subject } from 'rxjs';
+import { SpinnerComponent } from '../../../shared/components/progress-spinner/components/spinner/spinner.component';
+import { MockOntologyVisualizationService, mockUtil } from  '../../../../../../test/ts/Shared';
 import { SidePanelPayloadI }  from '../../interfaces/visualization.interfaces';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 
 describe('Ontology Visualization component', () => {
     let component: OntologyVisualization;
@@ -40,7 +41,6 @@ describe('Ontology Visualization component', () => {
     let fixture: ComponentFixture<OntologyVisualization>;
     let serviceStub: OntologyVisualizationService;
     let utilStub;
-    let httpStub;
 
     configureTestSuite(() =>  {
         TestBed.configureTestingModule({
@@ -50,9 +50,9 @@ describe('Ontology Visualization component', () => {
                 MockComponent(InfoMessageComponent)
             ],
             providers: [
+                MockProvider(ProgressSpinnerService),
                 { provide: OntologyVisualizationService, useClass: MockOntologyVisualizationService },
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'httpService', useClass: mockHttpService }
             ]
         });
     });
@@ -63,7 +63,6 @@ describe('Ontology Visualization component', () => {
         element = fixture.debugElement;
         serviceStub = TestBed.get(OntologyVisualizationService);
         utilStub = TestBed.get('utilService');
-        httpStub = TestBed.get('httpService');
         serviceStub.sidePanelActionAction$ = new Subject<SidePanelPayloadI>().asObservable();
 
     }));

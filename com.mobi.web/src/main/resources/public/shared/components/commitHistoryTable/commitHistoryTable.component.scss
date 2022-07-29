@@ -46,10 +46,14 @@
                 width: 1%;
                 white-space: nowrap;
             }
-            td {
+            tbody td {
                 vertical-align: middle;
                 padding-bottom: 0;
                 padding-top: 0;
+
+            }
+            thead th {
+                height: initial;
             }
             .commit-id {
                 font-family: 'courier';

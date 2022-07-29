@@ -20,15 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="card record-card" ng-click="dvm.clickCard()" ng-class="{'clickable': !!dvm.clickCard}">
-    <div class="card-body">
-        <h5 class="card-title"><span click-to-copy="dvm.record['@id']" ng-click="$event.stopPropagation()" title="Copy Record IRI" tooltip-append-to-body="true">{{dvm.title}}</span></h5>
-        <h6 class="card-subtitle mb-2 text-muted"><record-icon record="dvm.record"></record-icon> <record-type record="dvm.record"></record-type> &bull; Updated {{dvm.modified}}</h6>
-        <p class="card-text record-description">{{dvm.description}}</p>
-        <catalog-record-keywords record="dvm.record"></catalog-record-keywords>
-    </div>
-    <div class="card-footer d-flex">
-        <entity-publisher entity="dvm.record" class="text-muted flex-1 align-self-center"></entity-publisher>
-        <open-record-button record="dvm.record" stop-prop flat></open-record-button>
-    </div>
-</div>
+<mat-card class="record-card" (click)="handleClick()" [ngClass]="{'clickable': !!clickCard}">
+    <!-- TODO: Come Angular 9, switch to Angular Material solution for click to copy -->
+    <mat-card-title><span [copy-clipboard]="record['@id']" matTooltip="Copy Record IRI" matTooltipPosition="above">{{title}}</span></mat-card-title>
+    <mat-card-subtitle><record-icon [record]="record"></record-icon> <record-type [record]="record"></record-type> &bull; Updated {{modified}}</mat-card-subtitle>
+    <mat-card-content>
+        <p class="record-description">{{description}}</p>
+        <catalog-record-keywords [record]="record"></catalog-record-keywords>
+    </mat-card-content>
+    <mat-divider></mat-divider>
+    <mat-card-actions class="d-flex">
+        <entity-publisher [entity]="record" class="text-muted flex-1 align-self-center"></entity-publisher>
+        <open-record-button [record]="record" [stopProp]="true" [flat]="true"></open-record-button>
+    </mat-card-actions>
+</mat-card>

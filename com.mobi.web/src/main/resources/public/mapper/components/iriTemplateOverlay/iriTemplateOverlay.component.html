@@ -20,36 +20,33 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Edit IRI Template</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
-</div>
-<div class="modal-body">
-    <form name="iriTemplateForm">
-        <div class="template-begins-with form-group">
-            <label class="control-label" for="beginsWith">Begins With</label>
-            <input type="text" id="beginsWith" name="beginsWith" class="form-control" aria-describedby="beginning" ng-model="dvm.beginsWith" ng-pattern="/^[a-zA-Z0-9._\-]+[:]+[a-zA-Z0-9._\-\/]+[a-zA-Z0-9._\-]$/" ng-class="{'is-invalid': iriTemplateForm.beginsWith.$invalid}" required focus-me="true">
-            <div ng-messages="iriTemplateForm.beginsWith.$error" class="invalid-feedback">
-                <ng-message when="required">This field is required</ng-message>
-                <ng-message when="pattern">This value is invalid</ng-message>
-            </div>
-        </div>
-        <div class="template-then form-group">
-            <label class="control-label" for="then">Then</label>
-            <select id="then" ng-model="dvm.then" class="form-control">
-                <option ng-value="'/'">/</option>
-                <option ng-value="'#'">#</option>
-                <option ng-value="':'">:</option>
-            </select>
-        </div>
-        <div class="template-ends-with form-group">
-            <label class="control-label" for="endsWith">Ends With</label>
-            <select id="endsWith" class="form-control" ng-model="dvm.endsWith" ng-options="localName as localName.text for localName in dvm.localNameOptions" aria-describedby="ends-with-form-text"></select>
-            <small id="ends-with-form-text" class="form-text">Duplicate values will create a single individual with combined data.<br>Blank values will not be skipped. They will instead generate instances with no local names.<br>Any whitespace will be removed to create valid IRIs.</small>
-        </div>
-    </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-click="dvm.set()" ng-disabled="iriTemplateForm.$invalid">Submit</button>
+<h1 mat-dialog-title>Edit IRI Template</h1>
+<form mat-dialog-content [formGroup]="iriTemplateForm">
+    <mat-form-field class="w-100 template-begins-with">
+        <mat-label>Begins With</mat-label>
+        <input type="text" matInput name="beginsWith" formControlName="beginsWith" required focus/>
+        <mat-error *ngIf="iriTemplateForm.get('beginsWith').errors?.pattern">This value is invalid</mat-error>
+        <mat-error *ngIf="iriTemplateForm.get('beginsWith').errors?.required">This value is required</mat-error>
+    </mat-form-field>
+    <mat-form-field class="template-then w-100">
+        <mat-label>Then</mat-label>
+        <mat-select name="then" formControlName="then" required>
+            <mat-option class="then-option" value="/">/</mat-option>
+            <mat-option class="then-option" value="#">#</mat-option>
+            <mat-option class="then-option" value=":">:</mat-option>
+        </mat-select>
+    </mat-form-field>
+    <mat-form-field class="template-ends-with w-100">
+        <mat-label class="control-label" for="endsWith">Ends With</mat-label>
+        <mat-select name="endsWith" formControlName="endsWith" required>
+            <mat-option *ngFor="let localName of localNameOptions" [value]="localName.value">
+                {{localName.text}}
+            </mat-option>
+        </mat-select>
+        <mat-hint>Duplicate values will create a single individual with combined data.<br>Blank values will not be skipped. They will instead generate instances with no local names.<br>Any whitespace will be removed to create valid IRIs.</mat-hint>
+    </mat-form-field>
+</form>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="">Cancel</button>
+    <button mat-raised-button color="primary" (click)="set()" [disabled]="iriTemplateForm.invalid">Submit</button>
 </div>

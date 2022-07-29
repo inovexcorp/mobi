@@ -20,155 +20,157 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { map, filter, get, sortBy, noop, remove, difference, includes, forEach, concat, find } from 'lodash';
+import { ENTER } from '@angular/cdk/keycodes';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatChipInputEvent, MatDialogRef } from '@angular/material';
+import { map, get, sortBy, remove, difference, includes, forEach, concat, find } from 'lodash';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+import { CATALOG, DATASET, ONTOLOGYEDITOR } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
+import { DatasetStateService } from '../../../shared/services/datasetState.service';
+import { OntologyDetails } from '../../models/ontologyDetails.interface';
 
 import './editDatasetOverlay.component.scss';
 
-const template = require('./editDatasetOverlay.component.html');
-
 /**
- * @ngdoc component
- * @name datasets.component:editDatasetOverlay
- * @requires shared.service:datasetStateService
- * @requires shared.service:datasetManagerService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @class datasets.EditDatasetOverlayComponent
  *
- * @description
- * `editDatasetOverlay` is a component that creates content for a modal with a form containing fields for
- * editing an existing Dataset Record. The form contains fields for the title, description,
- * {@link shared.component:keywordSelect keywords}, and
- * {@link datasets.component:datasetsOntologyPicker ontologies to be linked} to the Dataset
- * Record. Meant to be used in conjunction with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal with a form containing fields for editing an existing Dataset Record.
+ * The form contains fields for the title, description, keywords, and
+ * {@link datasets.DatasetsOntologyPickerComponent ontologies to be linked} to the Dataset Record. Meant to be used in
+ * conjunction with the `MatDialog` service.
  */
-const editDatasetOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: editDatasetOverlayComponentCtrl
-};
+@Component({
+    selector: 'edit-dataset-overlay',
+    templateUrl: './editDatasetOverlay.component.html'
+})
+export class EditDatasetOverlayComponent implements OnInit {
+    catalogId = '';
+    error = '';
+    datasetIRI = '';
+    repositoryId = '';
+    keywords = [];
+    selectedOntologies: OntologyDetails[] = [];
+    editDatasetForm: FormGroup;
+    readonly separatorKeysCodes: number[] = [ENTER];
 
-editDatasetOverlayComponentCtrl.$inject = ['$q', 'datasetStateService', 'datasetManagerService', 'catalogManagerService', 'utilService', 'prefixes'];
+    constructor(private dialogRef: MatDialogRef<EditDatasetOverlayComponent>, private fb: FormBuilder,
+        public state: DatasetStateService, public dm: DatasetManagerService, public cm: CatalogManagerService, 
+        @Inject('utilService') public util) {}
 
-function editDatasetOverlayComponentCtrl($q, datasetStateService, datasetManagerService, catalogManagerService, utilService, prefixes) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    var dm = datasetManagerService;
-    var ds = datasetStateService;
-    var catalogId = '';
-    dvm.util = utilService;
-    dvm.error = '';
-    dvm.recordConfig = {};
-    dvm.keywords = [];
-    dvm.selectedOntologies = [];
-
-    dvm.$onInit = function() {
-        catalogId = get(cm.localCatalog, '@id');
-        dvm.recordConfig = {
-            datasetIRI: dvm.util.getPropertyId(ds.selectedDataset.record, prefixes.dataset + 'dataset'),
-            repositoryId: dvm.util.getPropertyValue(ds.selectedDataset.record, prefixes.dataset + 'repository'),
-            title: dvm.util.getDctermsValue(ds.selectedDataset.record, 'title'),
-            description: dvm.util.getDctermsValue(ds.selectedDataset.record, 'description')
-        };
-        dvm.keywords = map(ds.selectedDataset.record[prefixes.catalog + 'keyword'], '@value');
-        dvm.keywords.sort();
-        var selectedOntologies = map(ds.selectedDataset.identifiers, identifier => dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
-        $q.all(map(selectedOntologies, id => cm.getRecord(id, catalogId)))
-            .then(responses => filter(responses, r => !!r), () => onError('A selected ontology could not be found'))
-            .then(filteredList => {
-                var matchingRecords = map(filteredList, response => find(response, mr => selectedOntologies.includes(mr['@id'])));
-                dvm.selectedOntologies = sortBy(map(matchingRecords, record => ({
+    ngOnInit(): void {
+        this.catalogId = get(this.cm.localCatalog, '@id');
+        const keywords = map(this.state.selectedDataset.record[CATALOG + 'keyword'], '@value');
+        keywords.sort();
+        this.editDatasetForm = this.fb.group({
+            title: [this.util.getDctermsValue(this.state.selectedDataset.record, 'title'), [ Validators.required]],
+            description: [this.util.getDctermsValue(this.state.selectedDataset.record, 'description')],
+            keywords: [keywords]
+        });
+        this.datasetIRI = this.util.getPropertyId(this.state.selectedDataset.record, DATASET + 'dataset');
+        this.repositoryId = this.util.getPropertyValue(this.state.selectedDataset.record, DATASET + 'repository');
+        
+        const selectedOntologies = this.state.selectedDataset.identifiers
+            .map(identifier => this.util.getPropertyId(identifier, DATASET + 'linksToRecord'));
+        forkJoin(selectedOntologies.map(id => this.cm.getRecord(id, this.catalogId).pipe(catchError(error => of(error)))))
+            .subscribe((responses: (JSONLDObject[] | string)[]) => {
+                const foundRecords = responses.filter((res):res is JSONLDObject[] => typeof res !== 'string');
+                const matchingRecords = foundRecords.map(response => find(response, mr => selectedOntologies.includes(mr['@id'])));
+                this.selectedOntologies = sortBy(matchingRecords.map(record => ({
                     recordId: record['@id'],
-                    ontologyIRI: dvm.getOntologyIRI(record),
-                    title: dvm.util.getDctermsValue(record, 'title'),
-                    selected: true
+                    ontologyIRI: this.getOntologyIRI(record),
+                    title: this.util.getDctermsValue(record, 'title'),
+                    selected: true,
+                    jsonld: record
                 })), 'title');
-            })
-            .catch(noop);
+            });
     }
-
-    dvm.selectOntology = function(ontology) {
-        dvm.selectedOntologies.push(ontology);
-        dvm.selectedOntologies = sortBy(dvm.selectedOntologies, 'title');
+    getOntologyIRI(record: JSONLDObject): string {
+        return this.util.getPropertyId(record, ONTOLOGYEDITOR + 'ontologyIRI');
     }
-    dvm.unselectOntology = function(ontology) {
-        remove(dvm.selectedOntologies, {recordId: ontology.recordId});
-    }
-    dvm.getOntologyIRI = function(record) {
-        return dvm.util.getPropertyId(record, prefixes.ontologyEditor + 'ontologyIRI');
-    }
-    dvm.update = function() {
-        var newRecord = angular.copy(ds.selectedDataset.record);
+    update(): void {
+        const newRecord = Object.assign({}, this.state.selectedDataset.record);
 
-        newRecord[prefixes.dcterms + 'title'] = [];
-        newRecord[prefixes.dcterms + 'description'] = [];
-        newRecord[prefixes.catalog + 'keyword'] = [];
+        this.util.updateDctermsValue(newRecord, 'title', this.editDatasetForm.controls.title.value.trim());
+        this.util.updateDctermsValue(newRecord, 'description', this.editDatasetForm.controls.description.value.trim());
 
-        dvm.util.setDctermsValue(newRecord, 'title', dvm.recordConfig.title.trim());
-        dvm.util.setDctermsValue(newRecord, 'description', dvm.recordConfig.description.trim());
-        forEach(dvm.keywords, kw => dvm.util.setPropertyValue(newRecord, prefixes.catalog + 'keyword', kw.trim()));
+        newRecord[CATALOG + 'keyword'] = [];
+        this.editDatasetForm.controls.keywords.value
+            .forEach(kw => this.util.setPropertyValue(newRecord, CATALOG + 'keyword', kw.trim()));
 
-        var curOntologies = map(dvm.selectedOntologies, 'recordId');
-        var oldOntologies = map(ds.selectedDataset.identifiers, identifier => dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
+        const curOntologies = map(this.selectedOntologies, 'recordId');
+        const oldOntologies = this.state.selectedDataset.identifiers
+            .map(identifier => this.util.getPropertyId(identifier, DATASET + 'linksToRecord'));
 
-        var newIdentifiers = angular.copy(ds.selectedDataset.identifiers);
+        const newIdentifiers = Object.assign([], this.state.selectedDataset.identifiers);
 
-        var added = difference(curOntologies, oldOntologies);
-        var deleted = remove(newIdentifiers, identifier => !includes(curOntologies, dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord')));
+        const added = difference(curOntologies, oldOntologies);
+        const deleted = remove(newIdentifiers, identifier => 
+                !includes(curOntologies, this.util.getPropertyId(identifier, DATASET + 'linksToRecord')));
 
         forEach(deleted, identifier => {
-            remove(newRecord[prefixes.dataset + 'ontology'], {'@id': identifier['@id']});
+            remove(newRecord[DATASET + 'ontology'], {'@id': identifier['@id']});
         });
 
         if (added.length > 0) {
-            $q.all(map(added, recordId => cm.getRecordMasterBranch(recordId, catalogId)))
-                    .then(responses => {
-                        forEach(responses, (branch, idx) => {
-                            var id = dvm.util.getSkolemizedIRI();
-                            newIdentifiers.push(createBlankNode(id, added[idx], branch['@id'], dvm.util.getPropertyId(branch, prefixes.catalog + 'head')));
-                            dvm.util.setPropertyId(newRecord, prefixes.dataset + 'ontology', id);
-                        });
-                        triggerUpdate(newRecord, newIdentifiers);
-                    }, onError);
+            forkJoin(added.map(recordId => this.cm.getRecordMasterBranch(recordId, this.catalogId)))
+                .subscribe(responses => {
+                    responses.forEach((branch, idx) => {
+                        const id = this.util.getSkolemizedIRI();
+                        newIdentifiers.push(this._createBlankNode(id, added[idx], branch['@id'], 
+                            this.util.getPropertyId(branch, CATALOG + 'head')));
+                        this.util.setPropertyId(newRecord, DATASET + 'ontology', id);
+                    });
+                    this._triggerUpdate(newRecord, newIdentifiers);
+                }, error => this.error = error);
         } else {
-            triggerUpdate(newRecord, newIdentifiers);
+            this._triggerUpdate(newRecord, newIdentifiers);
         }
     }
-    dvm.cancel = function() {
-        dvm.dismiss();
+    addKeyword(event: MatChipInputEvent): void {
+        const input = event.input;
+        const value = event.value;
+
+        if ((value || '').trim()) {
+            this.editDatasetForm.controls.keywords.setValue([...this.editDatasetForm.controls.keywords.value, value.trim()]);
+            this.editDatasetForm.controls.keywords.updateValueAndValidity();
+        }
+
+        // Reset the input value
+        if (input) {
+            input.value = '';
+        }
+    }
+    removeKeyword(keyword: string): void {
+        const idx = this.editDatasetForm.controls.keywords.value.indexOf(keyword);
+        if (idx >= 0) {
+            this.editDatasetForm.controls.keywords.value.splice(idx, 1);
+            this.editDatasetForm.controls.keywords.updateValueAndValidity();
+        }
     }
 
-    function onError(errorMessage) {
-        dvm.error = errorMessage;
-    }
-    function createBlankNode(id, recordId, branchId, commitId) {
+    private _createBlankNode(id, recordId, branchId, commitId) {
         return {
-                '@id': id,
-                [prefixes.dataset + 'linksToRecord']: [{ '@id': recordId }],
-                [prefixes.dataset + 'linksToBranch']: [{ '@id': branchId }],
-                [prefixes.dataset + 'linksToCommit']: [{ '@id': commitId }]
-            }
+            '@id': id,
+            [DATASET + 'linksToRecord']: [{ '@id': recordId }],
+            [DATASET + 'linksToBranch']: [{ '@id': branchId }],
+            [DATASET + 'linksToCommit']: [{ '@id': commitId }]
+        };
     }
-    function triggerUpdate(newRecord, newIdentifiers) {
-        var jsonld = concat(newIdentifiers, newRecord);
+    private _triggerUpdate(newRecord, newIdentifiers) {
+        const jsonld = concat(newIdentifiers, newRecord);
 
         // Send unparsed object to the update endpoint.
-        dm.updateDatasetRecord(newRecord['@id'], catalogId, jsonld, dvm.util.getDctermsValue(newRecord, 'title')).then(() => {
-            dvm.util.createSuccessToast('Dataset successfully updated');
-            ds.selectedDataset.identifiers = newIdentifiers;
-            ds.selectedDataset.record = newRecord;
-            ds.setResults();
-            dvm.close();
-        }, onError);
+        this.dm.updateDatasetRecord(newRecord['@id'], this.catalogId, jsonld).subscribe(() => {
+            this.util.createSuccessToast('Dataset successfully updated');
+            this.state.selectedDataset.identifiers = newIdentifiers;
+            this.state.selectedDataset.record = newRecord;
+            this.dialogRef.close(true);
+        }, error => this.error = error);
     }
 }
-
-export default editDatasetOverlayComponent;

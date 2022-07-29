@@ -20,84 +20,67 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { MatMarkdownEditorOptions } from 'mat-markdown-editor';
 
 import './markdownEditor.component.scss';
 
-const template = require('./markdownEditor.component.html');
-
 /**
- * @ngdoc component
- * @name shared.component:markdownEditor
+ * @class shared.MarkdownEditorComponent
  *
- * @description
- * `markdownEditor` is a component which creates a Bootstrap `.form-group` containing a textarea with a header
- * along with two buttons. One button has a configurable click action to "submit" the text and the other has a
- * configurable click action to "cancel" the text. The header contains a button for toggling a preview of the
- * contents of the textarea displayed as rendered Markdown. The header also contains a link to documentation on
- * Markdown. The value of the textarea is bound to `bindModel`, but only one way. The provided `changeEvent`
- * function is expected to update the value of `bindModel`.
+ * A component which creates a `mat-markdown-editor` for the provided markdown value and buttons to save or optionally
+ * cancel the editor. The editor also provided a help button to open the GitHub markdown information page.
  *
- * @param {*} bindModel The variable to bind the value of the text area to
- * @param {Function} changeEvent A function to be called when the value of the textarea changes. Expects an argument
- * called `value` and should update the value of `bindModel`.
- * @param {string} placeHolder A placeholder string for the text area
- * @param {boolean} [isFocusMe=false] An optional boolean for whether the text area should be focused on render
- * @param {string} buttonText The text for the button for submitting the markdown
- * @param {boolean} allowBlankValue Whether the input should allow a blank value to be "submitted"
- * @param {string} startRows An optional value for the "rows" attribute on the `textarea`
- * @param {Function} clickEvent A function to call when the "submit" button is clicked
+ * @param {string} markdown The variable containing the markdown value
+ * @param {number} height An optional pixel height for the editor
+ * @param {boolean} cancellable Whether the input should be able to be cancelled
+ * @param {boolean} allowBlank Whether the input should allow a blank value to be saved
+ * @param {Function} markdownChangeEvent A function to be called when the value of the markdown editor changes
+ * @param {Function} saveEvent A function to call when the save button is clicked
  * @param {Function} cancelEvent A function to call when the "cancel" button is clicked
  */
-const markdownEditorComponent = {
-    template,
-    bindings: {
-        bindModel: '<',
-        changeEvent: '&',
-        placeHolder: '<',
-        isFocusMe: '<?',
-        buttonText: '<',
-        allowBlankValue: '<',
-        startRows: '<?',
-        clickEvent: '&',
-        cancelEvent: '&?'
-    },
-    controllerAs: 'dvm',
-    controller: markdownEditorComponentCtrl,
-}
+@Component({
+    selector: 'markdown-editor',
+    templateUrl: './markdownEditor.component.html'
+})
+export class MarkdownEditorComponent implements OnInit {
+    markdownOptions: MatMarkdownEditorOptions = {
+        resizable: false,
+        mode: 'editor',
+        showBorder: true,
+        toolbarColor: 'primary',
+        hideIcons: {
+            Image: true,
+            Fullscreen: true,
+            Reference: true
+        },
+        height: '500px'
+    };
 
-markdownEditorComponentCtrl.$inject = ['$sce', 'showdown'];
+    @Input() allowBlank: boolean;
+    @Input() cancellable: boolean;
+    @Input() markdown: string;
+    @Input() height: number;
 
-function markdownEditorComponentCtrl($sce, showdown) {
-    var dvm = this;
-    dvm.converter = new showdown.Converter();
-    dvm.converter.setFlavor('github');
+    @Output() markdownChange = new EventEmitter<string>();
+    @Output() saveEvent = new EventEmitter<null>();
+    @Output() cancelEvent = new EventEmitter<null>();
+    
+    constructor() {}
 
-    dvm.showPreview = false;
-    dvm.preview = '';
-    dvm.markdownTooltip = $sce.trustAsHtml('For information about markdown syntax, see <a href="https://guides.github.com/features/mastering-markdown/" target="_blank">here</a>');
-
-    dvm.click = function() {
-        dvm.clickEvent();
-        dvm.preview = '';
-        dvm.showPreview = false;
-    }
-    dvm.cancel = function() {
-        dvm.cancelEvent();
-        dvm.preview = '';
-        dvm.showPreview = false;
-    }
-    dvm.isDisabled = function() {
-        return dvm.allowBlankValue ? false : !dvm.bindModel;
-    }
-    dvm.togglePreview = function() {
-        if (dvm.showPreview) {
-            dvm.preview = '';
-            dvm.showPreview = false;
-        } else {
-            dvm.preview = dvm.converter.makeHtml(dvm.bindModel);
-            dvm.showPreview = true;
+    ngOnInit(): void {
+        if (this.height) {
+            this.markdownOptions.height = this.height + 'px';
         }
     }
+    openHelp(): void {
+        window.open('https://guides.github.com/features/mastering-markdown/', '_blank');
+    }
+    cancel(): void {
+        this.cancelEvent.emit();
+    }
+    save(): void {
+        this.markdownChange.emit(this.markdown);
+        this.saveEvent.emit();
+    }
 }
-
-export default markdownEditorComponent;

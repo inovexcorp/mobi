@@ -27,15 +27,13 @@ import { forEach, filter, sortBy } from 'lodash';
 import { SettingUtils } from './settingUtils.class';
 import { SettingConstants } from './settingConstants.class';
 import { Setting } from './setting.interface';
-import { v } from '@angular/core/src/render3';
+import { RDFS, SETTING, SHACL } from '../../prefixes';
 
 /**
- * @ngdoc class
- * @name shared.models:SimpleSetting
+ * @class shared.SimpleSetting
  *
- * @description
- * `SimpleSetting` is an implementation of the Setting interface used for Settings that will always have
- * exactly one form field (there may be multiple instances of that form field) that can only hold a literal value.
+ * An implementation of the Setting interface used for Settings that will always have exactly one form field (there may
+ * be multiple instances of that form field) that can only hold a literal value.
  */
 export class SimpleSetting implements Setting {
     private _topLevelSettingNodeshapeInstanceId: string;
@@ -46,7 +44,7 @@ export class SimpleSetting implements Setting {
     private _json: any = {};
     private _requiredPropertyShape: any = {};
 
-    constructor(settingJson: any, shapeDefinitions: any, private util, private prefixes) {
+    constructor(settingJson: any, shapeDefinitions: any, private util) {
         settingJson.values = [];
         this.json = settingJson;
         this.requiredPropertyShape = shapeDefinitions[this.requiredPropertyShapeId];  
@@ -70,7 +68,7 @@ export class SimpleSetting implements Setting {
         // Find Node that corresponds to the top level instance of nodeshape of the given user setting 
         // NOTE: entity['@type'] = Arrays of IRIs
         this.topLevelSettingNodeshapeInstance = filter(setting, entity => {
-            return entity['@type'].includes(this.prefixes.setting + 'Setting');
+            return entity['@type'].includes(SETTING + 'Setting');
         });
 
         if (this.topLevelSettingNodeshapeInstance.length) {
@@ -86,7 +84,7 @@ export class SimpleSetting implements Setting {
         this._formFieldPropertyShapes = formFieldPropertyShapes;
         const formFieldProperties = [];
         forEach(formFieldPropertyShapes, formField => {
-            formFieldProperties.push(this.util.getPropertyId(formField, this.prefixes.shacl + 'path'));
+            formFieldProperties.push(this.util.getPropertyId(formField, SHACL + 'path'));
         });
         this._formFieldProperties = formFieldProperties;
     }
@@ -100,11 +98,11 @@ export class SimpleSetting implements Setting {
     }
 
     public get requiredPropertyShapeId(): string {
-        return this.util.getPropertyId(this.json, this.prefixes.shacl + 'property');
+        return this.util.getPropertyId(this.json, SHACL + 'property');
     }
 
     public get label(): string {
-        return this.util.getPropertyValue(this.json, this.prefixes.shacl + 'description');
+        return this.util.getPropertyValue(this.json, SHACL + 'description');
     }
 
     public get json(): any {
@@ -181,7 +179,7 @@ export class SimpleSetting implements Setting {
             const fg: FormGroup = new FormGroup({});
             const fieldsTemplate = {};
             this.formFieldPropertyShapes.forEach(field => {
-                fieldsTemplate[this.util.getPropertyId(field, this.prefixes.shacl + 'path')] = value['@value'];
+                fieldsTemplate[this.util.getPropertyId(field, SHACL + 'path')] = value['@value'];
             });
             for (const control in fieldsTemplate) {
                 const newFormGroup: FormGroup = new FormGroup({});
@@ -221,10 +219,10 @@ export class SimpleSetting implements Setting {
     }
 
     get settingType(): string {
-        if (this.util.hasPropertyId(this.json, this.prefixes.rdfs + 'subClassOf', this.prefixes.setting + 'ApplicationSetting')) {
-            return this.prefixes.setting + 'ApplicationSetting';
-        } else if (this.util.hasPropertyId(this.json, this.prefixes.rdfs + 'subClassOf', this.prefixes.setting + 'Preference')) {
-            return this.prefixes.setting + 'Preference';
+        if (this.util.hasPropertyId(this.json, RDFS + 'subClassOf', SETTING + 'ApplicationSetting')) {
+            return SETTING + 'ApplicationSetting';
+        } else if (this.util.hasPropertyId(this.json, RDFS + 'subClassOf', SETTING + 'Preference')) {
+            return SETTING + 'Preference';
         } else {
             this.util.createErrorToast('Setting Definition does not have a valid setting type.');
         }
@@ -234,7 +232,7 @@ export class SimpleSetting implements Setting {
         this.stripBlankValues();
         this.values.map(val => {
             if (!SettingUtils.isJsonLd(val)) {
-                SettingUtils.convertToJsonLd(val, [this.type, this.prefixes.setting + 'Setting', this.settingType]);
+                SettingUtils.convertToJsonLd(val, [this.type, SETTING + 'Setting', this.settingType]);
             }
         });
         return this.values;

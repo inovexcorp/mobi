@@ -25,7 +25,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
 
-import { cleanStylesFromDOM, mockPrefixes, mockUtil } from '../../../../../test/ts/Shared';
+import { cleanStylesFromDOM, mockUtil } from '../../../../../test/ts/Shared';
 import { HelperService } from './helper.service';
 import { PolicyManagerService } from './policyManager.service';
 
@@ -43,7 +43,6 @@ describe('Policy Manager service', function() {
                 PolicyManagerService,
                 HelperService,
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'prefixes', useClass: mockPrefixes }
             ]
         });
     });

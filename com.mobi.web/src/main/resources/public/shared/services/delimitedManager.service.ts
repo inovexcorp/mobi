@@ -20,331 +20,243 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { identity, get } from 'lodash';
-import * as angular from 'angular';
+import { get } from 'lodash';
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { catchError, map, switchMap } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
 
-delimitedManagerService.$inject = ['$http', '$httpParamSerializer', '$q', 'utilService', 'REST_PREFIX'];
+import { HelperService } from './helper.service';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { REST_PREFIX } from '../../constants';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
 
 /**
- * @ngdoc service
- * @name shared.service:delimitedManagerService
- * @requires shared.service:utilService
+ * @class shared.DelimitedManagerService
  *
- * @description
- * `delimitedManagerService` is a service that provides access to the Mobi CSV REST endpoints and various variables
- * to hold data pertaining to the parameters passed to the endpoints and the results of the endpoints.
+ * A service that provides access to the Mobi CSV REST endpoints and various variables to hold data pertaining to the
+ * parameters passed to the endpoints and the results of the endpoints.
  */
-function delimitedManagerService($http, $httpParamSerializer, $q, utilService, REST_PREFIX) {
-    var self = this,
-        util = utilService,
-        prefix = REST_PREFIX + 'delimited-files';
+@Injectable()
+export class DelimitedManagerService {
+    prefix = REST_PREFIX + 'delimited-files';
+    
+    constructor(private http: HttpClient, private helper: HelperService, private spinnerSvc: ProgressSpinnerService) {}
 
     /**
-     * @ngdoc property
-     * @name dataRows
-     * @propertyOf shared.service:delimitedManagerService
-     * @type {string[]}
-     *
-     * @description
-     * `dataRows` holds an array of a preview of delimited data. Set by the POST /mobirest/delimited-files endpoint.
+     * An array of a preview of delimited data. Set by the POST /mobirest/delimited-files endpoint.
+     * @type {string[][]}
      */
-    self.dataRows = undefined;
+    dataRows: string[][] = undefined;
     /**
-     * @ngdoc property
-     * @name fileName
-     * @propertyOf shared.service:delimitedManagerService
+     * A string with the name of the uploaded delimited file given back from the POST /mobirest/delimited-files endpoint
+     * calls.
      * @type {string}
-     *
-     * @description
-     * `fileName` holds a string with the name of the uploaded delimited file given back from the POST
-     * /mobirest/delimited-files endpoint calls.
      */
-    self.fileName = '';
+    fileName = '';
     /**
-     * @ngdoc property
-     * @name fileObj
-     * @propertyOf shared.service:delimitedManagerService
+     * The File object of the original uploaded delimited file that was sent to the POST /mobirest/delimited-files
+     * endpoint call.
      * @type {File}
-     *
-     * @description
-     * `fileObj` holds the File object of the original uploaded delimited file that was sent to the POST
-     * /mobirest/delimited-files endpoint call.
      */
-    self.fileObj = undefined;
+    fileObj: File = undefined;
     /**
-     * @ngdoc property
-     * @name separator
-     * @propertyOf shared.service:delimitedManagerService
-     * @type {string}
-     *
-     * @description
-     * `separator` holds a string with the character separating columns in the uploaded delimited file if it is an
+     * A string with the character separating columns in the uploaded delimited file if it is an
      * SV file. It is used in the GET /mobirest/delimited-files/{fileName}, the POST
      * /mobirest/delimited-files/{fileName}/map, and the GET /mobirest/delimited-files/{fileName}/map endpoint 
      * calls.
-     */
-    self.separator = ',';
-    /**
-     * @ngdoc property
-     * @name containsHeaders
-     * @propertyOf shared.service:delimitedManagerService
-     * @type {boolean}
-     *
-     * @description
-     * `separator` holds a boolean indicating whether the uploaded delimited file contains a
-     * header row or not. It is used in the GET /mobirest/delimited-files/{fileName}, the POST
-     * /mobirest/delimited-files/{fileName}/map-preview, and the
-     * GET /mobirest/delimited-files/{fileName}/map
-     * endpoints calls.
-     */
-    self.containsHeaders = true;
-    /**
-     * @ngdoc property
-     * @name preview
-     * @propertyOf shared.service:delimitedManagerService
-     * @type {string/Object}
-     *
-     * @description
-     * `preview` holds a string or Object containing a preview of mapped data to be used in the
-     * {@link rdfPreview.directive:rdfPreview RDF Preview} directive.
-     */
-    self.preview = '';
-    /**
-     * @ngdoc property
-     * @name serializeFormat
-     * @propertyOf shared.service:delimitedManagerService
      * @type {string}
-     *
-     * @description
-     * `serializeFormat` holds a string containing the format for the preview to be used in the
-     * {@link rdfPreview.directive:rdfPreview RDF Preview} directive.
      */
-    self.serializeFormat = 'turtle';
+    separator = ',';
+    /**
+     * A boolean indicating whether the uploaded delimited file contains a header row or not. It is used in the GET
+     * /mobirest/delimited-files/{fileName}, the POST /mobirest/delimited-files/{fileName}/map-preview, and the GET
+     * /mobirest/delimited-files/{fileName}/map endpoints calls.
+     * @type {boolean}
+     */
+    containsHeaders = true;
+    /**
+     * A string or JSONLDObject containing a preview of mapped data to be used in the
+     * {@link mapper.RdfPreviewTabComponent}.
+     * @type {string|JSONLDObject}
+     */
+    preview: string|JSONLDObject = '';
+    /**
+     * A string containing the format for the preview to be used in the {@link mapper.RdfPreviewTabComponent}
+     * @type {string}
+     */
+    serializeFormat = 'turtle';
 
     /**
-     * @ngdoc method
-     * @name upload
-     * @methodOf shared.service:delimitedManagerService
-     *
-     * @description
      * Makes a call to POST /mobirest/delimited-files to upload the passed File object to the repository.
      * Returns the resulting file name is a promise.
      *
      * @param {File} file a File object to upload (should be a SV or Excel file)
-     * @return {Promise} A Promise that resolves to the name of the uploaded delimited file; rejects with an
-     * error message otherwise
+     * @return {Observable<string>} An Observable that resolves to the name of the uploaded delimited file; rejects with
+     * an error message otherwise
      */
-    self.upload = function(file) {
-        var fd = new FormData(),
-            config = {
-                transformRequest: identity,
-                headers: {
-                    'Content-Type': undefined,
-                    'Accept': 'text/plain'
-                }
-            };
+    upload(file: File): Observable<string> {
+        const fd = new FormData();
         fd.append('delimitedFile', file);
-        return $http.post(prefix, fd, config)
-            .then(response => response.data, util.rejectError);
+        return this.spinnerSvc.track(this.http.post(this.prefix, fd, {responseType: 'text'}))
+            .pipe(catchError(this.helper.handleError));
     }
     /**
-     * @ngdoc method
-     * @name previewFile
-     * @methodOf shared.service:delimitedManagerService
-     *
-     * @description
-     * Makes a call to GET /mobirest/delimited-files/{fileName} to retrieve the passed in number of rows
-     * of an uploaded delimited file. Uses {@link delimitedManager.delimitedManager#separator separator} and
-     * {@link delimitedManager.delimitedManager#fileName fileName} to make the call. Depending on the value
-     * of {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, either uses the first
-     * returned row as headers or generates headers of the form "Column " + index. Sets the value
-     * of {@link delimitedManager.delimitedManager#dataRows dataRows}. Returns a Promise indicating the
-     * success of the REST call.
+     * Makes a call to GET /mobirest/delimited-files/{fileName} to retrieve the passed in number of rows of an uploaded
+     * delimited file. Uses {@link shared.DelimitedManagerService#r#separator} and
+     * {@link shared.DelimitedManagerService#fileName} to make the call. Depending on the value of
+     * {@link shared.DelimitedManagerService#containsHeaders}, either uses the first returned row as headers or
+     * generates headers of the form "Column " + index. Sets the value of
+     * {@link shared.DelimitedManagerService#dataRows}. Returns an Observable indicating the success of the REST call.
      *
      * @param {number} rowEnd the number of rows to retrieve from the uploaded delimited file
-     * @return {Promise} A Promise that resolves if the call succeeded; rejects if the preview was empty
+     * @return {Observable<null>} An Observable that resolves if the call succeeded; rejects if the preview was empty
      * or the call did not succeed
      */
-    self.previewFile = function(rowEnd) {
-        var config = {
-                params: {
-                    'rowCount': rowEnd ? rowEnd : 0,
-                    'separator': self.separator
-                }
-            };
-        return $http.get(prefix + '/' + encodeURIComponent(self.fileName), config)
-            .then(response => {
-                if (response.data.length === 0) {
-                    self.dataRows = undefined;
-                    return $q.reject("No rows were found");
-                } else {
-                    self.dataRows = response.data;
-                    return;
-                }
-            }, error => {
-                self.dataRows = undefined;
-                return util.rejectError(error);
-            });
+    previewFile(rowEnd: number): Observable<null> {
+        const params = {
+            rowCount: rowEnd ? rowEnd : 0,
+            separator: this.separator
+        };
+        return this.spinnerSvc.track(this.http.get<string[][]>(this.prefix + '/' + encodeURIComponent(this.fileName),
+            {params: this.helper.createHttpParams(params)}))
+            .pipe(
+                catchError(error => {
+                    this.dataRows = undefined;
+                    return this.helper.handleError(error);
+                }),
+                switchMap((response: string[][]) => {
+                    if (response.length === 0) {
+                        this.dataRows = undefined;
+                        return throwError('No rows were found');
+                    } else {
+                        this.containsHeaders = !response[0].every( item => item ==="");
+                        this.dataRows = response;
+                        return of(null);
+                    }
+                })
+            );
     }
     /**
-     * @ngdoc method
-     * @name previewMap
-     * @methodOf shared.service:delimitedManagerService
+     * Makes a call to POST /mobirest/delimited-files/{fileName}/map-preview to retrieve the first 10 rows of delimited
+     * data mapped into RDF data using the passed in JSON-LD mapping and returns the RDF data in the passed in format.
+     * Uses {@link shared.DelimitedManagerService#separator}, {@link shared.DelimitedManagerService#containsHeaders},
+     * and {@link shared.DelimitedManagerService#fileName} to make the call. If the format is "jsonld," sends the
+     * request with an Accept header of "application/json". Otherwise, sends the request with an Accept header of
+     * "text/plain". Returns an Observable with the body of the response
      *
-     * @description
-     * Makes a call to POST /mobirest/delimited-files/{fileName}/map-preview to retrieve the first 10 rows of
-     * delimited data mapped into RDF data using the passed in JSON-LD mapping and returns the RDF
-     * data in the passed in format. Uses {@link delimitedManager.delimitedManager#separator separator},
-     * {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, and
-     * {@link delimitedManager.delimitedManager#fileName fileName} to make the call. If the format is "jsonld,"
-     * sends the request with an Accept header of "applciation/jsond". Otherwise, sends the request
-     * with an Accept header of "text/plain". Returns a Promise with the result of the endpoint call.
-     *
-     * @param {object[]} jsonld the JSON-LD of a mapping
+     * @param {JSONLDObject[]} jsonld the JSON-LD of a mapping
      * @param {string} format the RDF serialization format to return the mapped data in
-     * @return {Promise} A Promise that resolves with the mapped data in the specified RDF format
+     * @return {Observable<string|JSONLDObject[]>} An Observable that resolves with the mapped data in the specified RDF
+     * format
      */
-    self.previewMap = function(jsonld, format) {
-        var fd = new FormData(),
-            config = {
-                transformRequest: identity,
-                params: {
-                    'format': format,
-                    'containsHeaders': self.containsHeaders,
-                    'separator': self.separator
-                },
-                headers: {
-                    'Content-Type': undefined,
-                    'Accept': (format === 'jsonld') ? 'application/json' : 'text/plain'
-                }
-            };
-        fd.append('jsonld', angular.toJson(jsonld));
-        return $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-preview', fd, config)
-            .then(response => response.data, util.rejectError);
+    previewMap(jsonld: JSONLDObject[], format: string): Observable<string|JSONLDObject[]> {
+        const fd = new FormData();
+        const params = {
+            format,
+            containsHeaders: this.containsHeaders,
+            separator: this.separator
+        };
+        let headers = new HttpHeaders();
+        headers = headers.append('Accept', (format === 'jsonld') ? 'application/json' : 'text/plain');
+        fd.append('jsonld', JSON.stringify(jsonld));
+        return this.spinnerSvc.track(this.http.post(this.prefix + '/' + encodeURIComponent(this.fileName) + '/map-preview',
+            fd, {headers, params: this.helper.createHttpParams(params), responseType: 'text'}))
+            .pipe(
+                catchError(this.helper.handleError),
+                map((data: string) => (format === 'jsonld') ? JSON.parse(data) : data)
+            );
     }
     /**
-     * @ngdoc method
-     * @name mapAndDownload
-     * @methodOf shared.service:delimitedManagerService
-     *
-     * @description
      * Calls the GET /mobirest/delimited-files/{fileName}/map endpoint using the `window.location` variable
      * which will start a file download of the complete mapped delimited data in the specified format
      * of an uploaded delimited file using a saved Mapping identified by the passed IRI. Uses
-     * {@link delimitedManager.delimitedManager#separator separator},
-     * {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, and
-     * {@link delimitedManager.delimitedManager#fileName fileName} to create the URL.
+     * {@link shared.DelimitedManagerService#separator},
+     * {@link shared.DelimitedManagerService#containsHeaders}, and
+     * {@link shared.DelimitedManagerService#fileName} to create the URL.
      *
      * @param {string} mappingRecordIRI the IRI of a saved MappingRecord
      * @param {string} format the RDF format for the mapped data
      * @param {string} fileName the file name for the downloaded mapped data
      */
-    self.mapAndDownload = function(mappingRecordIRI, format, fileName) {
-        var params: any = {
-            containsHeaders: self.containsHeaders,
-            separator: self.separator,
+    mapAndDownload(mappingRecordIRI: string, format: string, fileName: string): void {
+        const params = this.helper.createHttpParams({
+            containsHeaders: this.containsHeaders,
+            separator: this.separator,
             format,
-            mappingRecordIRI
-        };
-        if (fileName) {
-            params.fileName = fileName;
-        }
-        util.startDownload(prefix + '/' + encodeURIComponent(self.fileName) + '/map?' + $httpParamSerializer(params));
+            mappingRecordIRI,
+            fileName
+        });
+        window.open(this.prefix + '/' + encodeURIComponent(this.fileName) + '/map?' + params.toString());
     }
     /**
-     * @ngdoc method
-     * @name mapAndUpload
-     * @methodOf shared.service:delimitedManagerService
-     *
-     * @description
      * Calls the POST /mobirest/delimited-files/{fileName}/map to map the data of an uploaded delimited file
      * using a saved Mapping identified by the passed IRI into the Dataset associated with the DatasetRecord
      * identified by the passed IRI. Returns a Promise indicating the success of the request.
      *
      * @param {string} mappingIRI the IRI of a saved Mapping
      * @param {string} datasetRecordIRI the IRI of a DatasetRecord
-     * @return {Promise} A Promise that resolves if the upload was successful; rejects with an error message otherwise
+     * @return {Observable<null>} An Observable that resolves if the upload was successful; rejects with an error
+     *  message otherwise
      */
-    self.mapAndUpload = function(mappingRecordIRI, datasetRecordIRI) {
-        var config = {
-                params: {
-                    mappingRecordIRI,
-                    datasetRecordIRI,
-                    containsHeaders: self.containsHeaders,
-                    separator: self.separator
-                }
-            };
-        return $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map', null, config)
-            .then(response => response.data, util.rejectError);
+    mapAndUpload(mappingRecordIRI: string, datasetRecordIRI: string): Observable<null> {
+        const params = {
+            mappingRecordIRI,
+            datasetRecordIRI,
+            containsHeaders: this.containsHeaders,
+            separator: this.separator
+        };
+        return this.spinnerSvc.track(this.http.post(this.prefix + '/' + encodeURIComponent(this.fileName) + '/map', null, {params: this.helper.createHttpParams(params)}))
+           .pipe(catchError(this.helper.handleError));
     }
     /**
-     * @ngdoc method
-     * @name mapAndCommit
-     * @methodOf shared.service:delimitedManagerService
-     *
-     * @description
-     * Calls the POST /mobirest/delimited-files/{fileName}/map-to-ontology to commit the data of an uploaded delimited file
-     * using a saved Mapping identified by the passed IRI on the Ontology associated with the OntologyRecord
+     * Calls the POST /mobirest/delimited-files/{fileName}/map-to-ontology to commit the data of an uploaded delimited
+     * file using a saved Mapping identified by the passed IRI on the Ontology associated with the OntologyRecord
      * identified by the passed IRI. Returns a Promise with the whole HTTP response indicating the success of the request.
      *
      * @param {string} mappingIRI the IRI of a saved Mapping
      * @param {string} ontologyRecordIRI the IRI of a OntologyRecord
      * @param {string} branchIRI the IRI of record branch
      * @param {boolean} update True to update the ontology with new mapping results, false to add as new additions
-     * @return {Promise} A Promise of the whole HTTP response that resolves if the upload was successful; rejects with an error message otherwise
+     * @return {Promise} An Observable of the whole HTTP response that resolves if the upload was successful; rejects
+     * with an error message otherwise
      */
-    self.mapAndCommit = function(mappingRecordIRI, ontologyRecordIRI, branchIRI, update = false) {
-        var config = {
-            params: {
-                mappingRecordIRI,
-                ontologyRecordIRI,
-                branchIRI,
-                update,
-                containsHeaders: self.containsHeaders,
-                separator: self.separator
-            }
+    mapAndCommit(mappingRecordIRI: string, ontologyRecordIRI: string, branchIRI: string, update = false): Observable<HttpResponse<null>> {
+        const params = {
+            mappingRecordIRI,
+            ontologyRecordIRI,
+            branchIRI,
+            update,
+            containsHeaders: this.containsHeaders,
+            separator: this.separator
         };
-        return $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-to-ontology', null, config)
-            .then(identity, util.rejectError);
+        return this.spinnerSvc.track(this.http.post(this.prefix + '/' + encodeURIComponent(this.fileName) 
+            + '/map-to-ontology', null, {params: this.helper.createHttpParams(params), observe: 'response'}))
+           .pipe(catchError(this.helper.handleError));
     }
     /**
-     * @ngdoc method
-     * @name getHeader
-     * @methodOf shared.service:delimitedManagerService
+     * Retrieves the header name of a column based on its index. If {@link shared.DelimitedManagerService#dataRows} have
+     * been set and {@link shared.DelimitedManagerService#containsHeaders}, collects the header name from the first row.
+     * Otherwise, generates a name using the index.
      *
-     * @description
-     * Retrieves the header name of a column based on its index. If
-     * {@link shared.service:delimitedManagerService#dataRows data rows} have been
-     * set and {@link shared.service:delimitedManagerService#containsHeaders contain headers},
-     * collects the header name from the first row. Otherwise, generates a name using the index.
-     *
-     * @param {number/string} index The index number of the column to retrieve the header name from
+     * @param {number|string} index The index number of the column to retrieve the header name from
      * @return {string} A header name for the column at the specified index
      */
-    self.getHeader = function(index) {
-        return self.containsHeaders && self.dataRows ? get(self.dataRows[0], index, `Column ${index}`) : `Column ${index}`;
+    getHeader(index: string|number): string {
+        return this.containsHeaders && this.dataRows ? get(this.dataRows[0], index, `Column ${index}`) : `Column ${index}`;
     }
     /**
-     * @ngdoc method
-     * @name reset
-     * @methodOf shared.service:delimitedManagerService
-     *
-     * @description
-     * Resets the values of {@link delimitedManager.delimitedManager#dataRows dataRows}
-     * {@link delimitedManager.delimitedManager#preview preview},
-     * {@link delimitedManager.delimitedManager#fileName fileName},
-     * {@link delimitedManager.delimitedManager#separator separator}, and
-     * {@link delimitedManager.delimitedManager#containsHeaders containsHeaders} back to their default
-     * values.
+     * Resets the values of {@link shared.DelimitedManagerService#dataRows},
+     * {@link shared.DelimitedManagerServicer#preview}, {@link shared.DelimitedManagerService#fileName},
+     * {@link shared.DelimitedManagerService#separator}, and {@link shared.DelimitedManagerService#containsHeaders} back
+     * to their default values.
      */
-    self.reset = function() {
-        self.dataRows = undefined;
-        self.fileName = '';
-        self.fileObj = undefined;
-        self.separator = ',';
-        self.containsHeaders = true;
-        self.preview = '';
+    reset(): void {
+        this.dataRows = undefined;
+        this.fileName = '';
+        this.fileObj = undefined;
+        this.separator = ',';
+        this.containsHeaders = true;
+        this.preview = '';
     }
 }
-
-export default delimitedManagerService;

@@ -38,6 +38,9 @@ import {
     isArray
 } from 'lodash';
 
+import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
+import { SparqlManagerService } from '../../../shared/services/sparqlManager.service';
+
 /**
  * @ngdoc service
  * @name explore.service:exploreUtilsService
@@ -52,7 +55,7 @@ import {
  */
 exploreUtilsService.$inject = ['$q', 'sparqljs', 'prefixes', 'utilService', 'datasetManagerService', 'ontologyManagerService', 'sparqlManagerService'];
 
-function exploreUtilsService($q, sparqljs, prefixes, utilService, datasetManagerService, ontologyManagerService, sparqlManagerService) {
+function exploreUtilsService($q, sparqljs, prefixes, utilService, datasetManagerService: DatasetManagerService, ontologyManagerService, sparqlManagerService: SparqlManagerService) {
     var self = this;
     var util = utilService;
     var dm = datasetManagerService;

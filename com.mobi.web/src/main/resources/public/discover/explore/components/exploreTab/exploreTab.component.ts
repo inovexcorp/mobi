@@ -21,6 +21,11 @@
  * #L%
  */
 
+import { Directive, ElementRef, Injector } from '@angular/core';
+import { UpgradeComponent } from '@angular/upgrade/static';
+
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+
 const template = require('./exploreTab.component.html');
 
 /**
@@ -35,7 +40,7 @@ const template = require('./exploreTab.component.html');
  * managing instance data.
  *
  */
-const exploreTabComponent = {
+export const exploreTabComponent = {
     template,
     bindings: {},
     controllerAs: 'dvm',
@@ -44,9 +49,16 @@ const exploreTabComponent = {
 
 exploreTabComponentCtrl.$inject = ['discoverStateService'];
 
-function exploreTabComponentCtrl(discoverStateService) {
+function exploreTabComponentCtrl(discoverStateService: DiscoverStateService) {
     var dvm = this;
     dvm.ds = discoverStateService;
 }
 
-export default exploreTabComponent;
+@Directive({
+    selector: 'explore-tab'
+})
+export class ExploreTabDirective extends UpgradeComponent {
+    constructor(elementRef: ElementRef, injector: Injector) {
+        super('exploreTab', elementRef, injector);
+    }
+}

@@ -22,15 +22,16 @@
  */
 import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { ShapesGraphDetailsComponent } from './shapesGraphDetails.component';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
+
+import { cleanStylesFromDOM, mockOntologyManager } from '../../../../../../test/ts/Shared';
 import { StaticIriLimitedComponent } from '../staticIriLimited/staticIriLimited.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { cleanStylesFromDOM, mockOntologyManager, mockPrefixes } from '../../../../../../test/ts/Shared';
 import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
-import { DebugElement } from '@angular/core';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { By } from '@angular/platform-browser';
+import { ShapesGraphDetailsComponent } from './shapesGraphDetails.component';
 
 describe('Shapes Graph Details component', function() {
     let component: ShapesGraphDetailsComponent;
@@ -49,7 +50,6 @@ describe('Shapes Graph Details component', function() {
             providers: [
                 PrefixationPipe,
                 MockProvider(ShapesGraphStateService),
-                { provide: 'prefixes', useClass: mockPrefixes },
                 { provide: 'ontologyManagerService', useClass: mockOntologyManager }
             ]
         });

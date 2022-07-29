@@ -20,73 +20,57 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { uniq, get, map, find, head, forEach } from 'lodash';
+import { Component, Inject, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material';
+import { uniq, get, head } from 'lodash';
+
+import { Mapping } from '../../../shared/models/mapping.class';
+import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { MappingConfigOverlayComponent } from '../mappingConfigOverlay/mappingConfigOverlay.component';
+import { RunMappingDatasetOverlayComponent } from '../runMappingDatasetOverlay/runMappingDatasetOverlay.component';
+import { RunMappingDownloadOverlayComponent } from '../runMappingDownloadOverlay/runMappingDownloadOverlay.component';
+import { RunMappingOntologyOverlayComponent } from '../runMappingOntologyOverlay/runMappingOntologyOverlay.component';
 
 import './fileUploadPage.component.scss';
 
-const template = require('./fileUploadPage.component.html');
-
 /**
- * @ngdoc component
- * @name mapper.component:fileUploadPage
- * @requires shared.service:delimitedManagerService
- * @requires shared.service:mapperStateService
- * @requires shared.service:mappingManagerService
- * @requires shared.service:utilService
- * @requires shared.service:modalService
+ * @class mapper.FileUploadPageComponent
  *
- * @description
- * `fileUploadPage` is a component that creates a Bootstrap `row` div with two columns containing
- * {@link shared.component:block blocks} for uploading and previewing delimited data. The left column contains a
- * block with a {@link mapper.component:fileUploadForm file upload form} and buttons to cancel the current workflow
- * or continue. If there are invalid property mapping in the current mapping, you can only continue if editing a
- * mapping. The right column contains a {@link mapper.component:previewDataGrid preview} of the loaded delimited
- * data.
+ * A component that creates a Bootstrap `row` div with two columns containing sections for uploading and previewing
+ * delimited data. The left column contains a {@link mapper.FileUploadFormComponent} and buttons to cancel the current
+ * workflow or continue. If there are invalid property mapping in the current mapping, you can only continue if editing
+ * a mapping. The right column contains a {@link mapper.component:previewDataGrid preview} of the loaded delimited data.
  */
-const fileUploadPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: fileUploadPageComponentCtrl
-};
-
-fileUploadPageComponentCtrl.$inject = ['mapperStateService', 'mappingManagerService', 'delimitedManagerService', 'utilService', 'modalService'];
-
-function fileUploadPageComponentCtrl(mapperStateService, mappingManagerService, delimitedManagerService, utilService, modalService) {
-    var dvm = this;
-    dvm.state = mapperStateService;
-    dvm.mm = mappingManagerService;
-    dvm.dm = delimitedManagerService;
-    dvm.util = utilService;
-
-    dvm.runMappingDownload = function() {
-        modalService.openModal('runMappingDownloadOverlay', {}, undefined, 'sm');
+@Component({
+    selector: 'file-upload-page',
+    templateUrl: './fileUploadPage.component.html'
+})
+export class FileUploadPageComponent {
+    constructor(public state: MapperStateService, public dm: DelimitedManagerService, private dialog: MatDialog) {}
+    
+    runMappingDownload(): void {
+        this.dialog.open(RunMappingDownloadOverlayComponent);
     }
-    dvm.runMappingDataset = function() {
-        modalService.openModal('runMappingDatasetOverlay', {}, undefined, 'sm');
+    runMappingDataset(): void {
+        this.dialog.open(RunMappingDatasetOverlayComponent);
     }
-    dvm.runMappingOntology = function() {
-        modalService.openModal('runMappingOntologyOverlay');
+    runMappingOntology(): void {
+        this.dialog.open(RunMappingOntologyOverlayComponent);
     }
-    dvm.getDataMappingName = function(dataMappingId) {
-        var propMapping = find(dvm.state.mapping.jsonld, {'@id': dataMappingId});
-        var classMapping = dvm.mm.findClassWithDataMapping(dvm.state.mapping.jsonld, dataMappingId)
-        return dvm.mm.getPropMappingTitle(dvm.util.getDctermsValue(classMapping, 'title'), dvm.util.getDctermsValue(propMapping, 'title'));
+    cancel(): void {
+        this.state.initialize();
+        this.state.resetEdit();
+        this.dm.reset();
     }
-    dvm.cancel = function() {
-        dvm.state.initialize();
-        dvm.state.resetEdit();
-        dvm.dm.reset();
-    }
-    dvm.edit = function() {
-        var classMappings = dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld);
-        dvm.state.selectedClassMappingId = get(head(classMappings), '@id', '');
-        forEach(uniq(map(classMappings, dvm.mm.getClassIdByMapping)), dvm.state.setProps);
-        dvm.state.step = dvm.state.editMappingStep;
-        if (dvm.state.newMapping) {
-            modalService.openModal('mappingConfigOverlay', {}, undefined, 'lg');
+    edit(): void {
+        const classMappings = this.state.selected.mapping.getAllClassMappings();
+        this.state.selectedClassMappingId = get(head(classMappings), '@id', '');
+        uniq(classMappings.map(classMapping => Mapping.getClassIdByMapping(classMapping)))
+            .forEach(classMapping => this.state.setProps(classMapping));
+        this.state.step = this.state.editMappingStep;
+        if (this.state.newMapping) {
+            this.dialog.open(MappingConfigOverlayComponent);
         }
     }
 }
-
-export default fileUploadPageComponent;

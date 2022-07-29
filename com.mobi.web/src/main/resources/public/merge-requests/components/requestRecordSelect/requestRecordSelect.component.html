@@ -21,30 +21,23 @@
   #L%
   -->
 <div class="request-record-select h-100">
-    <form class="record-search-form">
-        <div class="input-group">
-            <input class="form-control" type="text" ng-model="dvm.config.searchText" placeholder="Search records..."/>
-            <span class="input-group-btn">
-                <button class="btn btn-primary" type="submit" ng-click="dvm.setInitialRecords()">Search</button>
-            </span>
-        </div>
-    </form>
-    <div class="records">
-        <div ng-repeat="chunk in dvm.records" class="row">
-            <div ng-repeat="record in chunk track by record['@id']" class="card-container record col-6">
-                <md-card class="card" ng-click="dvm.selectRecord(record)" ng-class="{'selected': record['@id'] === dvm.state.requestConfig.recordId}">
-                    <md-card-title>
-                        <md-card-title-text>
-                            <span class="md-headline text">{{dvm.util.getDctermsValue(record, 'title')}}</span>
-                            <span class="md-subhead text-muted text"><small>{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small></span>
-                        </md-card-title-text>
-                    </md-card-title>
-                    <md-card-content>
-                        <p class="overview">{{dvm.util.getDctermsValue(record, 'description') || 'No description'}}</p>
-                    </md-card-content>
-                </md-card>
-            </div>
-        </div>
+    <div class="record-search-form">
+        <mat-form-field class="w-100">
+            <input matInput class="record-search" placeholder="Search..." [(ngModel)]="config.searchText" (keyup.enter)="setInitialRecords()">
+        </mat-form-field>
     </div>
-    <paging current-page="dvm.currentPage" limit="dvm.config.limit" total="dvm.totalSize" change-event="dvm.setRecords(page)"></paging>
+    <div class="records" #mrRecords>
+        <mat-grid-list cols="2" rowHeight="200">
+            <mat-grid-tile *ngFor="let record of records">
+                <mat-card class="m-1 remove-min-width" (click)="selectRecord(record)" [ngClass]="{'selected': record['@id'] === state.requestConfig.recordId}">
+                    <mat-card-title class="text-truncate">{{util.getDctermsValue(record, 'title')}}</mat-card-title>
+                    <mat-card-subtitle class="text-truncate"><small>{{util.getPropertyId(record, ontologyEditorPrefix + 'ontologyIRI')}}</small></mat-card-subtitle>
+                    <mat-card-content>
+                        <p class="overview">{{util.getDctermsValue(record, 'description') || 'No description'}}</p>
+                    </mat-card-content>
+                </mat-card>
+            </mat-grid-tile>
+        </mat-grid-list>
+    </div>
+    <mat-paginator [pageIndex]="config.pageIndex" [length]="totalSize" [pageSize]="config.limit" (page)="getPage($event)"></mat-paginator>
 </div>

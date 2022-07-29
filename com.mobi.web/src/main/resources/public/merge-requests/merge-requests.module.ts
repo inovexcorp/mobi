@@ -20,38 +20,66 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { NgModule } from '@angular/core';
 import * as angular from 'angular';
+import { downgradeComponent } from '@angular/upgrade/static';
 
-import commentDisplayComponent from './components/commentDisplay/commentDisplay.component';
-import createRequestComponent from './components/createRequest/createRequest.component';
-import editRequestOverlayComponent from './components/editRequestOverlay/editRequestOverlay.component';
-import mergeRequestDiscussionComponent from './components/mergeRequestDiscussion/mergeRequestDiscussion.component';
-import mergeRequestListComponent from './components/mergeRequestList/mergeRequestList.component';
-import mergeRequestsPageComponent from './components/mergeRequestsPage/mergeRequestsPage.component';
-import mergeRequestTabsetComponent from './components/mergeRequestTabset/mergeRequestTabset.component';
-import mergeRequestViewComponent from './components/mergeRequestView/mergeRequestView.component';
-import replyCommentComponent from './components/replyComment/replyComment.component';
-import requestBranchSelectComponent from './components/requestBranchSelect/requestBranchSelect.component';
-import requestDetailsFormComponent from './components/requestDetailsForm/requestDetailsForm.component';
-import requestRecordSelectComponent from './components/requestRecordSelect/requestRecordSelect.component';
+import { SharedModule } from '../shared/shared.module';
+
+import { AssigneeInputComponent } from './components/assigneeInput/assigneeInput.component';
+import { CommentDisplayComponent } from './components/commentDisplay/commentDisplay.component';
+import { CreateRequestComponent } from './components/createRequest/createRequest.component';
+import { EditRequestOverlayComponent } from './components/editRequestOverlay/editRequestOverlay.component';
+import { MergeRequestDiscussionComponent } from './components/mergeRequestDiscussion/mergeRequestDiscussion.component';
+import { MergeRequestListComponent } from './components/mergeRequestList/mergeRequestList.component';
+import { MergeRequestsPageComponent } from './components/mergeRequestsPage/mergeRequestsPage.component';
+import { MergeRequestTabsetComponent } from './components/mergeRequestTabset/mergeRequestTabset.component';
+import { MergeRequestViewComponent } from './components/mergeRequestView/mergeRequestView.component';
+import { ReplyCommentComponent } from './components/replyComment/replyComment.component';
+import { RequestBranchSelectComponent } from './components/requestBranchSelect/requestBranchSelect.component';
+import { RequestDetailsFormComponent } from './components/requestDetailsForm/requestDetailsForm.component';
+import { RequestRecordSelectComponent } from './components/requestRecordSelect/requestRecordSelect.component';
 
 /**
- * @ngdoc overview
- * @name merge-requests
+ * @namespace merge-requests
  *
- * @description
  * The `merge-requests` module provides components that make up the Merge Requests module in the Mobi application.
  */
+@NgModule({
+    imports: [ SharedModule ],
+    declarations: [
+        AssigneeInputComponent,
+        CommentDisplayComponent,
+        CreateRequestComponent,
+        EditRequestOverlayComponent,
+        MergeRequestDiscussionComponent,
+        MergeRequestListComponent,
+        MergeRequestsPageComponent,
+        MergeRequestTabsetComponent,
+        MergeRequestViewComponent,
+        ReplyCommentComponent,
+        RequestBranchSelectComponent,
+        RequestDetailsFormComponent,
+        RequestRecordSelectComponent
+    ],
+    entryComponents: [
+        EditRequestOverlayComponent,
+        MergeRequestsPageComponent
+    ]
+})
+export class MergeRequestsModule {}
+
 angular.module('merge-requests', [])
-    .component('commentDisplay', commentDisplayComponent)
-    .component('createRequest', createRequestComponent)
-    .component('editRequestOverlay', editRequestOverlayComponent)
-    .component('mergeRequestDiscussion', mergeRequestDiscussionComponent)
-    .component('mergeRequestList', mergeRequestListComponent)
-    .component('mergeRequestsPage', mergeRequestsPageComponent)
-    .component('mergeRequestTabset', mergeRequestTabsetComponent)
-    .component('mergeRequestView', mergeRequestViewComponent)
-    .component('replyComment', replyCommentComponent)
-    .component('requestBranchSelect', requestBranchSelectComponent)
-    .component('requestDetailsForm', requestDetailsFormComponent)
-    .component('requestRecordSelect', requestRecordSelectComponent);
+    .directive('assigneeInput', downgradeComponent({component: AssigneeInputComponent}) as angular.IDirectiveFactory)
+    .directive('commentDisplay', downgradeComponent({component: CommentDisplayComponent}) as angular.IDirectiveFactory)
+    .directive('createRequest', downgradeComponent({component: CreateRequestComponent}) as angular.IDirectiveFactory)
+    .directive('editRequestOverlay', downgradeComponent({component: EditRequestOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('mergeRequestDiscussion', downgradeComponent({component: MergeRequestDiscussionComponent}) as angular.IDirectiveFactory)
+    .directive('mergeRequestList', downgradeComponent({component: MergeRequestListComponent}) as angular.IDirectiveFactory)
+    .directive('mergeRequestsPage', downgradeComponent({component: MergeRequestsPageComponent}) as angular.IDirectiveFactory)
+    .directive('mergeRequestTabset', downgradeComponent({component: MergeRequestTabsetComponent}) as angular.IDirectiveFactory)
+    .directive('mergeRequestView', downgradeComponent({component: MergeRequestViewComponent}) as angular.IDirectiveFactory)
+    .directive('replyComment', downgradeComponent({component: ReplyCommentComponent}) as angular.IDirectiveFactory)
+    .directive('requestBranchSelect', downgradeComponent({component: RequestBranchSelectComponent}) as angular.IDirectiveFactory)
+    .directive('requestDetailsForm', downgradeComponent({component: RequestDetailsFormComponent}) as angular.IDirectiveFactory)
+    .directive('requestRecordSelect', downgradeComponent({component: RequestRecordSelectComponent}) as angular.IDirectiveFactory);

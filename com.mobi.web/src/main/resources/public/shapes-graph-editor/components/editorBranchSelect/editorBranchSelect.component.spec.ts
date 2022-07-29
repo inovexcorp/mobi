@@ -20,10 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { HttpResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material';
+import { MatButtonModule, MatDialog } from '@angular/material';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -33,17 +34,18 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { find, get } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
-    mockCatalogManager,
-    mockModal,
-    mockPrefixes,
     mockUtil
 } from '../../../../../../test/ts/Shared';
+import { CATALOG, DCTERMS } from '../../../prefixes';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { EditorBranchSelectComponent } from './editorBranchSelect.component';
 
@@ -59,10 +61,9 @@ describe('Editor Branch Select component', function() {
     let component: EditorBranchSelectComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<EditorBranchSelectComponent>;
-    let shapesGraphStateStub;
-    let catalogManagerStub;
-    let modalStub;
-    let prefixesStub;
+    let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
+    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
+    let matDialog: jasmine.SpyObj<MatDialog>;
     let utilStub;
 
     let branch1Rdf: JSONLDObject;
@@ -118,14 +119,16 @@ describe('Editor Branch Select component', function() {
                 MatAutocompleteModule
             ],
             declarations: [
-                EditorBranchSelectComponent
+                EditorBranchSelectComponent,
+                MockComponent(ConfirmModalComponent)
             ],
             providers: [
                 MockProvider(ShapesGraphStateService),
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'prefixes', useClass: mockPrefixes },
-                { provide: 'catalogManagerService', useClass: mockCatalogManager },
-                { provide: 'modalService', useClass: mockModal }
+                MockProvider(CatalogManagerService),
+                { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
+                    open: { afterClosed: () => of(true)}
+                }) }
             ]
         });
     });
@@ -134,42 +137,43 @@ describe('Editor Branch Select component', function() {
         fixture = TestBed.createComponent(EditorBranchSelectComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        modalStub = TestBed.get('modalService');
+        matDialog = TestBed.get(MatDialog);
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
         shapesGraphStateStub.listItem = new ShapesGraphListItem();
 
-        prefixesStub = TestBed.get('prefixes');
         branch1Rdf = {
             '@id': branch1.branchIri,
             '@type': [],
-            [prefixesStub.catalog + 'head']: [{'@id': branch1.commitIri}],
-            [prefixesStub.dcterms + 'title']: [{'@value': branch1.title}],
-            [prefixesStub.dcterms + 'description']: [{'@value': branch1.description}]
+            [CATALOG + 'head']: [{'@id': branch1.commitIri}],
+            [DCTERMS + 'title']: [{'@value': branch1.title}],
+            [DCTERMS + 'description']: [{'@value': branch1.description}]
         };
         branch2Rdf = {
             '@id': branch2.branchIri,
             '@type': [],
-            [prefixesStub.catalog + 'head']: [{'@id': branch2.commitIri}],
-            [prefixesStub.dcterms + 'title']: [{'@value': branch2.title}]
+            [CATALOG + 'head']: [{'@id': branch2.commitIri}],
+            [DCTERMS + 'title']: [{'@value': branch2.title}]
         };
         tag1Rdf = {
             '@id': tag1.tagIri,
             '@type': [],
-            [prefixesStub.catalog + 'commit']: [{'@id': tag1.commitIri}],
-            [prefixesStub.dcterms + 'title']: [{'@value': tag1.title}],
-            [prefixesStub.dcterms + 'description']: [{'@value': tag1.description}]
+            [CATALOG + 'commit']: [{'@id': tag1.commitIri}],
+            [DCTERMS + 'title']: [{'@value': tag1.title}],
+            [DCTERMS + 'description']: [{'@value': tag1.description}]
         };
 
-        catalogManagerStub = TestBed.get('catalogManagerService');
-        catalogManagerStub.localCatalog = {'@id': 'catalog'};
-        catalogManagerStub.getRecordBranches.and.returnValue(Promise.resolve({data: [branch1Rdf, branch2Rdf]}));
-        catalogManagerStub.getRecordVersions.and.returnValue(Promise.resolve({data: [tag1Rdf]}));
-        catalogManagerStub.getRecordBranch.and.returnValue(Promise.resolve({
+        catalogManagerStub = TestBed.get(CatalogManagerService);
+        catalogManagerStub.localCatalog = {'@id': 'catalog', '@type': []};
+        catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse({body: [branch1Rdf, branch2Rdf]})));
+        catalogManagerStub.getRecordVersions.and.returnValue(of(new HttpResponse({body: [tag1Rdf]})));
+        catalogManagerStub.getRecordBranch.and.returnValue(of({
             '@id': branch1.branchIri,
-            [prefixesStub.catalog + 'head']: [{'@id': branch1.commitIri}]
+            '@type': [],
+            [CATALOG + 'head']: [{'@id': branch1.commitIri}]
         }));
-        catalogManagerStub.getCommit.and.returnValue(Promise.resolve({
-            '@id': tag1.commitIri
+        catalogManagerStub.getCommit.and.returnValue(of({
+            '@id': tag1.commitIri,
+            '@type': []
         }));
 
         utilStub = TestBed.get('utilService');
@@ -180,7 +184,7 @@ describe('Editor Branch Select component', function() {
             return get(entity, '[\'' + propertyIRI + '\'][0][\'@id\']', '');
         });
         utilStub.getDctermsValue.and.callFake((obj, prop) => {
-            return get(obj, "['" + prefixesStub.dcterms + prop + "'][0]['@value']", '');
+            return get(obj, '[\'' + DCTERMS + prop + '\'][0][\'@value\']', '');
         });
         utilStub.condenseCommitId.and.returnValue(commit1.title);
 
@@ -193,11 +197,9 @@ describe('Editor Branch Select component', function() {
         component = null;
         element = null;
         fixture = null;
-        modalStub = null;
+        matDialog = null;
         shapesGraphStateStub = null;
         catalogManagerStub = null;
-        prefixesStub = null;
-
     });
 
     describe('should initialize with the correct data for', function() {
@@ -214,15 +216,15 @@ describe('Editor Branch Select component', function() {
             spyOn<any>(component, 'updateDisabled');
             component.ngOnInit();
 
-            expect(component['setFilteredOptions']).toHaveBeenCalled();
-            expect(component['updateDisabled']).toHaveBeenCalled();
+            expect(component['setFilteredOptions']).toHaveBeenCalledWith();
+            expect(component['updateDisabled']).toHaveBeenCalledWith(component.recordIri);
         });
         it('should blur the input and call reset search on close', function() {
             spyOn(component, 'resetSearch');
             spyOn(component.textInput.nativeElement, 'blur');
             component.close();
-            expect(component.textInput.nativeElement.blur).toHaveBeenCalled();
-            expect(component.resetSearch).toHaveBeenCalled();
+            expect(component.textInput.nativeElement.blur).toHaveBeenCalledWith();
+            expect(component.resetSearch).toHaveBeenCalledWith();
         });
         describe('should enable and reset the search', function() {
             describe('if the record has changed', function() {
@@ -239,8 +241,8 @@ describe('Editor Branch Select component', function() {
                             }
                         }
                     });
-                    expect(component.retrieveBranchesAndTags).toHaveBeenCalled();
-                    expect(component.branchSearchControl.enable).toHaveBeenCalled();
+                    expect(component.retrieveBranchesAndTags).toHaveBeenCalledWith();
+                    expect(component.branchSearchControl.enable).toHaveBeenCalledWith();
                 });
                 it('unless it is the first change', function() {
                     spyOn(component.branchSearchControl, 'enable');
@@ -275,8 +277,8 @@ describe('Editor Branch Select component', function() {
                     });
                     expect(component.retrieveBranchesAndTags).not.toHaveBeenCalled();
                     expect(component.branchSearchControl.enable).not.toHaveBeenCalled();
-                    expect(component.branchSearchControl.disable).toHaveBeenCalled();
-                    expect(component.resetSearch).toHaveBeenCalled();
+                    expect(component.branchSearchControl.disable).toHaveBeenCalledWith();
+                    expect(component.resetSearch).toHaveBeenCalledWith();
                 });
             });
             describe('when the branch title has changed', function() {
@@ -294,7 +296,7 @@ describe('Editor Branch Select component', function() {
                         }
                     });
                     expect(component.retrieveBranchesAndTags).not.toHaveBeenCalled();
-                    expect(component.resetSearch).toHaveBeenCalled();
+                    expect(component.resetSearch).toHaveBeenCalledWith();
                 });
                 it('not for the first time', function() {
                     spyOn(component, 'retrieveBranchesAndTags');
@@ -309,8 +311,8 @@ describe('Editor Branch Select component', function() {
                             }
                         }
                     });
-                    expect(component.retrieveBranchesAndTags).toHaveBeenCalled();
-                    expect(component.resetSearch).toHaveBeenCalled();
+                    expect(component.retrieveBranchesAndTags).toHaveBeenCalledWith();
+                    expect(component.resetSearch).toHaveBeenCalledWith();
                 });
             });
         });
@@ -344,7 +346,7 @@ describe('Editor Branch Select component', function() {
             it('unless there is an in progress commit', function() {
                 shapesGraphStateStub.isCommittable.and.returnValue(true);
                 component.selectVersion(branchEvent);
-                expect(utilStub.createWarningToast).toHaveBeenCalled();
+                expect(utilStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
             });
             describe('for a branch and update state', function() {
                 it('successfully', async function() {
@@ -355,14 +357,14 @@ describe('Editor Branch Select component', function() {
                 });
                 describe('unless an error occurs', function() {
                     it('when retrieving the branch', async function() {
-                        catalogManagerStub.getRecordBranch.and.returnValue(Promise.reject('Error'));
+                        catalogManagerStub.getRecordBranch.and.returnValue(throwError('Error'));
                         await component.selectVersion(branchEvent);
                         expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branch1.branchIri, 'recordId', 'catalog');
                         expect(shapesGraphStateStub.changeShapesGraphVersion).not.toHaveBeenCalled();
                         expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
                     });
                     it('when updating the state', async function() {
-                        shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.reject('Error'));
+                        shapesGraphStateStub.changeShapesGraphVersion.and.rejectWith('Error');
                         await component.selectVersion(branchEvent);
                         expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith(branch1.branchIri, 'recordId', 'catalog');
                         expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('recordId', branch1.branchIri, branch1.commitIri, undefined, branch1.title);
@@ -379,14 +381,14 @@ describe('Editor Branch Select component', function() {
                 });
                 describe('unless an error occurs', function() {
                     it('when retrieving the commit', async function() {
-                        catalogManagerStub.getCommit.and.returnValue(Promise.reject('Error'));
+                        catalogManagerStub.getCommit.and.returnValue(throwError('Error'));
                         await component.selectVersion(tagEvent);
                         expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(tag1.commitIri);
                         expect(shapesGraphStateStub.changeShapesGraphVersion).not.toHaveBeenCalled();
                         expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
                     });
                     it('when updating the state', async function() {
-                        shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.reject('Error'));
+                        shapesGraphStateStub.changeShapesGraphVersion.and.rejectWith('Error');
                         await component.selectVersion(tagEvent);
                         expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(tag1.commitIri);
                         expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('recordId', undefined, tag1.commitIri, tag1.tagIri, tag1.title);
@@ -400,7 +402,7 @@ describe('Editor Branch Select component', function() {
                 component.ngOnInit();
                 fixture.detectChanges();
                 await fixture.whenStable();
-            })
+            });
             it('when no version title is set', function() {
                spyOn(component.branchSearchControl, 'setValue');
                component.resetSearch();
@@ -466,8 +468,8 @@ describe('Editor Branch Select component', function() {
                             expect(component.tags).toEqual([tag1]);
                             expect(shapesGraphStateStub.listItem.currentVersionTitle).toEqual(branch1.title);
                             expect(component['resetToMaster']).not.toHaveBeenCalled();
-                            expect(component['setFilteredOptions']).toHaveBeenCalled();
-                            expect(component.resetSearch).toHaveBeenCalled();
+                            expect(component['setFilteredOptions']).toHaveBeenCalledWith();
+                            expect(component.resetSearch).toHaveBeenCalledWith();
                         });
                         describe(' does not exists and it resets to master', function() {
                             beforeEach(function() {
@@ -475,8 +477,8 @@ describe('Editor Branch Select component', function() {
                                 shapesGraphStateStub.listItem.currentVersionTitle = 'Not Exists';
                             });
                             it('successfully', async function() {
-                                shapesGraphStateStub.deleteState.and.returnValue(Promise.resolve());
-                                shapesGraphStateStub.openShapesGraph.and.returnValue(Promise.resolve());
+                                shapesGraphStateStub.deleteState.and.resolveTo();
+                                shapesGraphStateStub.openShapesGraph.and.resolveTo();
                                 spyOn<any>(component, 'setFilteredOptions');
                                 spyOn(component.autocompleteTrigger, 'closePanel');
                                 await component.retrieveBranchesAndTags();
@@ -485,13 +487,13 @@ describe('Editor Branch Select component', function() {
                                 expect(component.tags).toEqual([tag1]);
                                 expect(shapesGraphStateStub.listItem.currentVersionTitle).toEqual('MASTER');
                                 expect(utilStub.createWarningToast).toHaveBeenCalledWith('Branch Not Exists cannot be found. Switching to MASTER');
-                                expect(component['setFilteredOptions']).toHaveBeenCalled();
+                                expect(component['setFilteredOptions']).toHaveBeenCalledWith();
                                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                                expect(component.autocompleteTrigger.closePanel).toHaveBeenCalled();
+                                expect(component.autocompleteTrigger.closePanel).toHaveBeenCalledWith();
                             });
                             describe('unless an error occurs', function() {
                                 it('when deleting state', async function() {
-                                    shapesGraphStateStub.deleteState.and.returnValue(Promise.reject('Error'));
+                                    shapesGraphStateStub.deleteState.and.rejectWith('Error');
                                     spyOn<any>(component, 'setFilteredOptions');
                                     spyOn(component.autocompleteTrigger, 'closePanel');
                                     await component.retrieveBranchesAndTags();
@@ -500,13 +502,13 @@ describe('Editor Branch Select component', function() {
                                     expect(component.tags).toEqual([tag1]);
                                     expect(shapesGraphStateStub.listItem.currentVersionTitle).toEqual('Not Exists');
                                     expect(utilStub.createWarningToast).toHaveBeenCalledWith('Branch Not Exists cannot be found. Switching to MASTER');
-                                    expect(component['setFilteredOptions']).toHaveBeenCalled();
+                                    expect(component['setFilteredOptions']).toHaveBeenCalledWith();
                                     expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
-                                    expect(component.autocompleteTrigger.closePanel).toHaveBeenCalled();
+                                    expect(component.autocompleteTrigger.closePanel).toHaveBeenCalledWith();
                                 });
                                 it('when opening a shapes graph', async function() {
-                                    shapesGraphStateStub.deleteState.and.returnValue(Promise.resolve());
-                                    shapesGraphStateStub.openShapesGraph.and.returnValue(Promise.reject('Error'));
+                                    shapesGraphStateStub.deleteState.and.resolveTo();
+                                    shapesGraphStateStub.openShapesGraph.and.rejectWith('Error');
                                     spyOn<any>(component, 'setFilteredOptions');
                                     spyOn(component.autocompleteTrigger, 'closePanel');
                                     await component.retrieveBranchesAndTags();
@@ -515,9 +517,9 @@ describe('Editor Branch Select component', function() {
                                     expect(component.tags).toEqual([tag1]);
                                     expect(shapesGraphStateStub.listItem.currentVersionTitle).toEqual('Not Exists');
                                     expect(utilStub.createWarningToast).toHaveBeenCalledWith('Branch Not Exists cannot be found. Switching to MASTER');
-                                    expect(component['setFilteredOptions']).toHaveBeenCalled();
+                                    expect(component['setFilteredOptions']).toHaveBeenCalledWith();
                                     expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
-                                    expect(component.autocompleteTrigger.closePanel).toHaveBeenCalled();
+                                    expect(component.autocompleteTrigger.closePanel).toHaveBeenCalledWith();
                                 });
                             });
                         });
@@ -538,8 +540,8 @@ describe('Editor Branch Select component', function() {
                             expect(component.tags).toEqual([tag1]);
                             expect(shapesGraphStateStub.listItem.currentVersionTitle).toEqual(tag1.title);
                             expect(component['resetToMaster']).not.toHaveBeenCalled();
-                            expect(component['setFilteredOptions']).toHaveBeenCalled();
-                            expect(component.resetSearch).toHaveBeenCalled();
+                            expect(component['setFilteredOptions']).toHaveBeenCalledWith();
+                            expect(component.resetSearch).toHaveBeenCalledWith();
                         });
                         describe('does not exists and it resets to master', function() {
                             beforeEach(function() {
@@ -549,8 +551,8 @@ describe('Editor Branch Select component', function() {
                                 shapesGraphStateStub.listItem.currentVersionTitle = 'Not Exists';
                             });
                             it('successfully', async function() {
-                                shapesGraphStateStub.deleteState.and.returnValue(Promise.resolve());
-                                shapesGraphStateStub.openShapesGraph.and.returnValue(Promise.resolve());
+                                shapesGraphStateStub.deleteState.and.resolveTo();
+                                shapesGraphStateStub.openShapesGraph.and.resolveTo();
                                 spyOn<any>(component, 'setFilteredOptions');
                                 spyOn(component.autocompleteTrigger, 'closePanel');
                                 await component.retrieveBranchesAndTags();
@@ -559,13 +561,13 @@ describe('Editor Branch Select component', function() {
                                 expect(component.tags).toEqual([tag1]);
                                 expect(shapesGraphStateStub.listItem.currentVersionTitle).toEqual('MASTER');
                                 expect(utilStub.createWarningToast).toHaveBeenCalledWith('Tag Not Exists cannot be found. Switching to MASTER');
-                                expect(component['setFilteredOptions']).toHaveBeenCalled();
+                                expect(component['setFilteredOptions']).toHaveBeenCalledWith();
                                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
-                                expect(component.autocompleteTrigger.closePanel).toHaveBeenCalled();
+                                expect(component.autocompleteTrigger.closePanel).toHaveBeenCalledWith();
                             });
                             describe('unless an error occurs', function() {
                                 it('when deleting state', async function() {
-                                    shapesGraphStateStub.deleteState.and.returnValue(Promise.reject('Error'));
+                                    shapesGraphStateStub.deleteState.and.rejectWith('Error');
                                     spyOn<any>(component, 'setFilteredOptions');
                                     spyOn(component.autocompleteTrigger, 'closePanel');
                                     await component.retrieveBranchesAndTags();
@@ -574,13 +576,13 @@ describe('Editor Branch Select component', function() {
                                     expect(component.tags).toEqual([tag1]);
                                     expect(shapesGraphStateStub.listItem.currentVersionTitle).toEqual('Not Exists');
                                     expect(utilStub.createWarningToast).toHaveBeenCalledWith('Tag Not Exists cannot be found. Switching to MASTER');
-                                    expect(component['setFilteredOptions']).toHaveBeenCalled();
+                                    expect(component['setFilteredOptions']).toHaveBeenCalledWith();
                                     expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
-                                    expect(component.autocompleteTrigger.closePanel).toHaveBeenCalled();
+                                    expect(component.autocompleteTrigger.closePanel).toHaveBeenCalledWith();
                                 });
                                 it('when opening a shapes graph', async function() {
-                                    shapesGraphStateStub.deleteState.and.returnValue(Promise.resolve());
-                                    shapesGraphStateStub.openShapesGraph.and.returnValue(Promise.reject('Error'));
+                                    shapesGraphStateStub.deleteState.and.resolveTo();
+                                    shapesGraphStateStub.openShapesGraph.and.rejectWith('Error');
                                     spyOn<any>(component, 'setFilteredOptions');
                                     spyOn(component.autocompleteTrigger, 'closePanel');
                                     await component.retrieveBranchesAndTags();
@@ -589,9 +591,9 @@ describe('Editor Branch Select component', function() {
                                     expect(component.tags).toEqual([tag1]);
                                     expect(shapesGraphStateStub.listItem.currentVersionTitle).toEqual('Not Exists');
                                     expect(utilStub.createWarningToast).toHaveBeenCalledWith('Tag Not Exists cannot be found. Switching to MASTER');
-                                    expect(component['setFilteredOptions']).toHaveBeenCalled();
+                                    expect(component['setFilteredOptions']).toHaveBeenCalledWith();
                                     expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
-                                    expect(component.autocompleteTrigger.closePanel).toHaveBeenCalled();
+                                    expect(component.autocompleteTrigger.closePanel).toHaveBeenCalledWith();
                                 });
                             });
                         });
@@ -612,47 +614,51 @@ describe('Editor Branch Select component', function() {
                         expect(component.tags).toEqual([tag1]);
                         expect(shapesGraphStateStub.listItem.currentVersionTitle).toEqual(commit1.title);
                         expect(component['resetToMaster']).not.toHaveBeenCalled();
-                        expect(component['setFilteredOptions']).toHaveBeenCalled();
-                        expect(component.resetSearch).toHaveBeenCalled();
+                        expect(component['setFilteredOptions']).toHaveBeenCalledWith();
+                        expect(component.resetSearch).toHaveBeenCalledWith();
                     });
                 });
             });
             it('unless there are no return values', async function() {
-                catalogManagerStub.getRecordBranches.and.returnValue(Promise.resolve({data: []}));
-                catalogManagerStub.getRecordVersions.and.returnValue(Promise.resolve({data: []}));
+                catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse({body: []})));
+                catalogManagerStub.getRecordVersions.and.returnValue(of(new HttpResponse({body: []})));
                 spyOn<any>(component, 'checkVersionDeleted');
                 spyOn<any>(component, 'setFilteredOptions');
                 spyOn(component, 'resetSearch');
                 await component.retrieveBranchesAndTags();
                 expect(component['checkVersionDeleted']).not.toHaveBeenCalled();
-                expect(component['setFilteredOptions']).toHaveBeenCalled();
-                expect(component.resetSearch).toHaveBeenCalled();
+                expect(component['setFilteredOptions']).toHaveBeenCalledWith();
+                expect(component.resetSearch).toHaveBeenCalledWith();
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             });
             it('unless the branch promise fails', async function() {
-                catalogManagerStub.getRecordBranches.and.returnValue(Promise.reject('Error'));
+                catalogManagerStub.getRecordBranches.and.returnValue(throwError('Error'));
                 await component.retrieveBranchesAndTags();
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
             });
             it('unless the tag promise fails', async function() {
-                catalogManagerStub.getRecordVersions.and.returnValue(Promise.reject('Error'));
+                catalogManagerStub.getRecordVersions.and.returnValue(throwError('Error'));
                 await component.retrieveBranchesAndTags();
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error');
             });
         });
         describe('should open the delete confirmation modal', function() {
-            it('when a branch', function() {
+            it('when a branch', fakeAsync(function() {
+                shapesGraphStateStub.deleteShapesGraphBranch.and.resolveTo(null);
                 spyOn(component.autocompleteTrigger, 'closePanel');
                 component.showDeleteBranchConfirmationOverlay(branch1, new Event('delete'));
-                expect(modalStub.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('Are you sure you want to delete'), jasmine.any(Function));
-                expect(component.autocompleteTrigger.closePanel).toHaveBeenCalled();
-            });
-            it('when a tag', function() {
+                tick();
+                expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, { data: { content: jasmine.stringMatching('Are you sure you want to delete') } });
+                expect(component.autocompleteTrigger.closePanel).toHaveBeenCalledWith();
+            }));
+            it('when a tag', fakeAsync(function() {
+                catalogManagerStub.deleteRecordVersion.and.returnValue(of(null));
                 spyOn(component.autocompleteTrigger, 'closePanel');
-                component.showDeleteBranchConfirmationOverlay(tag1, new Event('delete'));
-                expect(modalStub.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('Are you sure you want to delete'), jasmine.any(Function));
-                expect(component.autocompleteTrigger.closePanel).toHaveBeenCalled();
-            });
+                component.showDeleteTagConfirmationOverlay(tag1, new Event('delete'));
+                tick();
+                expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, { data: { content: jasmine.stringMatching('Are you sure you want to delete') } });
+                expect(component.autocompleteTrigger.closePanel).toHaveBeenCalledWith();
+            }));
         });
     });
     describe('contains the correct html', function() {
@@ -694,7 +700,7 @@ describe('Editor Branch Select component', function() {
         createButton.triggerEventHandler('click', null);
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(component.showDeleteBranchConfirmationOverlay).toHaveBeenCalled();
+        expect(component.showDeleteBranchConfirmationOverlay).toHaveBeenCalledWith(jasmine.any(Object), null);
     });
     it('should call showDeleteTagConfirmationOverlay when the branch delete button is clicked', async function() {
         spyOn(component, 'showDeleteTagConfirmationOverlay');
@@ -709,7 +715,7 @@ describe('Editor Branch Select component', function() {
         createButton.triggerEventHandler('click', null);
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(component.showDeleteTagConfirmationOverlay).toHaveBeenCalled();
+        expect(component.showDeleteTagConfirmationOverlay).toHaveBeenCalledWith(jasmine.any(Object), null);
     });
     it('should select a version when clicked', async function() {
         spyOn(component, 'selectVersion');
@@ -724,6 +730,6 @@ describe('Editor Branch Select component', function() {
         option.triggerEventHandler('click', null);
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(component.selectVersion).toHaveBeenCalled();
+        expect(component.selectVersion).toHaveBeenCalledWith(jasmine.any(Object));
     });
 });

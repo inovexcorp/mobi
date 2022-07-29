@@ -24,43 +24,7 @@
 @import "../../../css/variables";
 
 edit-request-overlay {
-    .edit-target-branch {
-        flex-direction: row;
-        justify-items: center;
-        align-items: baseline;
-
-        .form-control-static {
-            padding: 0;
-            flex-grow: unset;
-            word-break: break-all;
-
-            p {
-                margin-top: 0px;
-                margin-bottom: 0px;
-            }
-        }
-        .ui-select-toggle {
-            width: 100%;
-        }
-        input.ui-select-search {
-            width: 100% !important;
-
-            &.ng-hide {
-                display: block !important;
-                visibility: hidden;
-                height: 0;
-                border: 0;
-                padding: 0;
-            }
-        }
-        .select-branch {
-            margin: 0 25px 0px 5px;
-            box-sizing: content-box;
-        }
-    }
-    form{
-        .checkbox .form-check-label{
-            word-break: break-all;
-        }
+    branch-select mat-form-field {
+        width: 100%;
     }
 }

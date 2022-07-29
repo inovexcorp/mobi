@@ -20,76 +20,65 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { find, findIndex } from 'lodash';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
 
-const template = require('./iriTemplateOverlay.component.html');
+import { DELIM } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { MappingManagerService } from '../../../shared/services/mappingManager.service';
 
 /**
- * @ngdoc component
- * @name mapper.component:iriTemplateOverlay
- * @requires shared.service:prefixes
- * @requires shared.service:mappingManagerService
- * @requires shared.service:mapperStateService
- * @requires shared.service:delimitedManagerService
- * @requires shared.service:utilService
+ * @class mapper.IriTemplateOverlayComponent
  *
- * @description
- * `iriTemplateOverlay` is a component that creates content for a modal that changes the IRI template of the
- * {@link shared.service:mapperStateService selected class mapping}. The modal splits the IRI template
- * into the beginning of the namespace, the delimiter between the namespace and local name, and the dynamically
- * created local name. The local name can either be a UUID or a column header. Meant to be used in conjunction
- * with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that changes the IRI template of the
+ * {@link shared.MapperStateService#selectedClassMappingId selected class mapping}. The modal splits the IRI template
+ * into the beginning of the namespace, the delimiter between the namespace and local name, and the dynamically created
+ * local name. The local name can either be a UUID or a column header. Meant to be used in conjunction with the
+ * `MatDialog` service.
  */
-const iriTemplateOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: iriTemplateOverlayComponentCtrl,
-};
+@Component({
+    selector: 'iri-template-overlay',
+    templateUrl: './iriTemplateOverlay.component.html'
+})
+export class IriTemplateOverlayComponent implements OnInit {
+    classMapping: JSONLDObject;
+    uuidOption = {text: 'UUID', value: '${UUID}'};
+    localNameOptions: {text: string, value: string}[] = [this.uuidOption];
+    pattern = /^[a-zA-Z0-9._-]+[:]+[a-zA-Z0-9._\-/]+[a-zA-Z0-9._-]$/;
+    iriTemplateForm = this.fb.group({
+        beginsWith: ['', [Validators.required, Validators.pattern(this.pattern)]],
+        then: ['', Validators.required],
+        endsWith: ['', Validators.required]
+    })
 
-iriTemplateOverlayComponentCtrl.$inject = ['prefixes', 'utilService', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
+    constructor(private dialogRef: MatDialogRef<IriTemplateOverlayComponent>, private fb: FormBuilder, 
+        public state: MapperStateService, public mm: MappingManagerService, public dm: DelimitedManagerService, 
+        @Inject('utilService') private util) {}
 
-function iriTemplateOverlayComponentCtrl(prefixes, utilService, mapperStateService, mappingManagerService, delimitedManagerService) {
-    var dvm = this;
-    dvm.mm = mappingManagerService;
-    dvm.state = mapperStateService;
-    dvm.dm = delimitedManagerService;
-    dvm.util = utilService;
-    dvm.beginsWith = '';
-    dvm.then = '';
-    dvm.endsWith = '';
-    dvm.localNameOptions = [];
-
-    dvm.$onInit = function() {
-        var classMapping = find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
-        var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
-        dvm.beginsWith = prefix.slice(0, -1);
-        dvm.then = prefix[prefix.length - 1];
-        dvm.localNameOptions = [{text: 'UUID', value: '${UUID}'}];
-        for (var idx = 0; idx < dvm.dm.dataRows[0].length; idx++) {
-            dvm.localNameOptions.push({text: dvm.dm.getHeader(idx), value: '${' + idx + '}'});
-        };
-        var selectedIndex = findIndex(dvm.localNameOptions, {'value': dvm.util.getPropertyValue(classMapping, prefixes.delim + 'localName')});
-        dvm.endsWith = selectedIndex > 0 ? dvm.localNameOptions[selectedIndex] : dvm.localNameOptions[findIndex(dvm.localNameOptions, {'text': 'UUID'})];
+    ngOnInit(): void {
+        this.classMapping = this.state.selected.mapping.getClassMapping(this.state.selectedClassMappingId);
+        const prefix = this.util.getPropertyValue(this.classMapping, DELIM + 'hasPrefix');
+        this.iriTemplateForm.controls.beginsWith.setValue(prefix.slice(0, -1));
+        this.iriTemplateForm.controls.then.setValue(prefix[prefix.length - 1]);
+        for (let idx = 0; idx < this.dm.dataRows[0].length; idx++) {
+            this.localNameOptions.push({text: this.dm.getHeader(idx), value: '${' + idx + '}'});
+        }
+        const setLocalName = this.util.getPropertyValue(this.classMapping, DELIM + 'localName');
+        const selectedEnds = this.localNameOptions.find(option => option.value === setLocalName) || this.uuidOption;
+        this.iriTemplateForm.controls.endsWith.setValue(selectedEnds.value);
     }
-    dvm.set = function() {
-        var originalClassMapping = find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
-        var originalPrefix = dvm.util.getPropertyValue(originalClassMapping, prefixes.delim + 'hasPrefix');
-        var originalLocalName = dvm.util.getPropertyValue(originalClassMapping, prefixes.delim + 'localName');
-        dvm.mm.editIriTemplate(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId, dvm.beginsWith + dvm.then, dvm.endsWith.value);
-        dvm.state.changeProp(dvm.state.selectedClassMappingId, prefixes.delim + 'hasPrefix', dvm.beginsWith + dvm.then, originalPrefix);
-        dvm.state.changeProp(dvm.state.selectedClassMappingId, prefixes.delim + 'localName', dvm.endsWith.value, originalLocalName);
-        dvm.close();
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
+    set(): void {
+        const originalPrefix = this.util.getPropertyValue(this.classMapping, DELIM + 'hasPrefix');
+        const originalLocalName = this.util.getPropertyValue(this.classMapping, DELIM + 'localName');
+        const beginsWith = this.iriTemplateForm.controls.beginsWith.value;
+        const then = this.iriTemplateForm.controls.then.value;
+        const endsWith = this.iriTemplateForm.controls.endsWith.value;
+        this.mm.editIriTemplate(this.state.selected.mapping, this.state.selectedClassMappingId, beginsWith + then, endsWith);
+        this.state.changeProp(this.state.selectedClassMappingId, DELIM + 'hasPrefix', beginsWith + then, originalPrefix);
+        this.state.changeProp(this.state.selectedClassMappingId, DELIM + 'localName', endsWith, originalLocalName);
+        this.dialogRef.close();
     }
 }
-
-export default iriTemplateOverlayComponent;

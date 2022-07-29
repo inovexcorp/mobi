@@ -33,9 +33,10 @@
             margin-bottom: 0px;
         }
     }
-    form{
-        .checkbox{
-            word-break: break-all;
-        }
+    .remove-source {
+        word-break: break-all;
+    }
+    .commit-difference-tabset {
+        height: 100%;
     }
 }

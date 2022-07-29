@@ -21,14 +21,21 @@
  * #L%
  */
 
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { cloneDeep, get, includes, noop, set } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
-import { mockCatalogManager, mockPrefixes, mockStateManager, mockUtil } from '../../../../../test/ts/Shared';
+import { MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+
+import { mockStateManager, mockUtil } from '../../../../../test/ts/Shared';
+import { CATALOG, DCTERMS } from '../../prefixes';
+import { CommitDifference } from '../models/commitDifference.interface';
 import { Difference } from '../models/difference.class';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { State } from '../models/state.interface';
 import { VersionedRdfListItem } from '../models/versionedRdfListItem.class';
+import { CatalogManagerService } from './catalogManager.service';
 import { VersionedRdfState } from './versionedRdfState.service';
 
 class VersionedRdfStateImpl extends VersionedRdfState {
@@ -52,19 +59,17 @@ class VersionedRdfStateImpl extends VersionedRdfState {
         return Promise.resolve();
     }
 
-    public setServices(stateManager: any, catalogManager: any, prefixes: any, util: any) {
+    public setServices(stateManager: any, catalogManager: any, util: any) {
         this.sm = stateManager;
         this.cm = catalogManager;
-        this.prefixes = prefixes;
         this.util = util;
     }
 }
 
 describe('Versioned RDF State service', function() {
     let service: VersionedRdfStateImpl;
-    let catalogManagerStub;
+    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let stateManagerStub;
-    let prefixStub;
     let utilStub;
     const recordId = 'recordId';
     const branchId = 'branchId';
@@ -76,6 +81,7 @@ describe('Versioned RDF State service', function() {
     let branch: JSONLDObject;
     let tag: JSONLDObject;
     let version: JSONLDObject;
+    let commit: JSONLDObject;
     let recordState: JSONLDObject;
     let versionedRdfStateModel: JSONLDObject[];
     let versionedRdfState: State;
@@ -87,9 +93,8 @@ describe('Versioned RDF State service', function() {
         TestBed.configureTestingModule({
             providers: [
                 VersionedRdfStateImpl,
+                MockProvider(CatalogManagerService),
                 { provide: 'stateManagerService', useClass: mockStateManager },
-                { provide: 'prefixes', useClass: mockPrefixes },
-                { provide: 'catalogManagerService', useClass: mockCatalogManager },
                 { provide: 'utilService', useClass: mockUtil }
             ]
         });
@@ -101,19 +106,18 @@ describe('Versioned RDF State service', function() {
         service.initialize();
 
         stateManagerStub = TestBed.get('stateManagerService');
-        catalogManagerStub = TestBed.get('catalogManagerService');
-        prefixStub = TestBed.get('prefixes');
+        catalogManagerStub = TestBed.get(CatalogManagerService);
         utilStub = TestBed.get('utilService');
         utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {
-            return get(entity, '[\'' + propertyIRI + '\'][0][\'@id\']', '');
+            return get(entity, `['${propertyIRI}'][0]['@id']`, '');
         });
-        service.setServices(stateManagerStub, catalogManagerStub, prefixStub, utilStub);
+        service.setServices(stateManagerStub, catalogManagerStub, utilStub);
 
         branch = {
             '@id': branchId,
-            '@type': [prefixStub.catalog + 'branch'],
-            [prefixStub.catalog + 'head']: [{'@id': commitId}],
-            [prefixStub.dcterms + 'title']: [{'@value': 'MASTER'}]
+            '@type': [CATALOG + 'branch'],
+            [CATALOG + 'head']: [{'@id': commitId}],
+            [DCTERMS + 'title']: [{'@value': 'MASTER'}]
         };
         tag = {
             '@id': tagId,
@@ -122,6 +126,10 @@ describe('Versioned RDF State service', function() {
         version = {
             '@id': 'version',
             '@type': [VersionedRdfStateImpl.testPrefix + 'Version']
+        };
+        commit = {
+            '@id': commitId,
+            '@type': [CATALOG + 'Commit']
         };
 
         recordState = {
@@ -132,8 +140,8 @@ describe('Versioned RDF State service', function() {
         versionedRdfStateModel = [recordState];
         versionedRdfState = {id: stateId, model: versionedRdfStateModel};
         inProgressCommit = new Difference();
-        inProgressCommit.additions = [{'test': 'test'}];
-        inProgressCommit.deletions = [{'test': 'test'}];
+        inProgressCommit.additions = [{'@id': 'test'}];
+        inProgressCommit.deletions = [{'@id': 'test'}];
     });
 
     afterEach(function() {
@@ -232,7 +240,7 @@ describe('Versioned RDF State service', function() {
         it('if just the commit is provided', function() {
             service.updateState({recordId: recordId, commitId: commitId});
             expect(stateManagerStub.updateState).toHaveBeenCalledWith(stateId, [
-                set(recordState, "['" + VersionedRdfStateImpl.testPrefix + "currentState']", [{'@id': jasmine.any(String)}]),
+                set(recordState, `['${VersionedRdfStateImpl.testPrefix}currentState']`, [{'@id': jasmine.any(String)}]),
                 {
                     '@id': jasmine.any(String),
                     '@type': [VersionedRdfStateImpl.testPrefix + 'StateCommit'],
@@ -243,7 +251,7 @@ describe('Versioned RDF State service', function() {
         it('if a tag is in the update', function() {
             service.updateState({recordId: recordId, commitId: commitId, tagId: tagId});
             expect(stateManagerStub.updateState).toHaveBeenCalledWith(stateId, [
-                set(recordState, "['" + VersionedRdfStateImpl.testPrefix + "currentState']", [{'@id': jasmine.any(String)}]),
+                set(recordState, `['${VersionedRdfStateImpl.testPrefix}currentState']`, [{'@id': jasmine.any(String)}]),
                 {
                     '@id': jasmine.any(String),
                     '@type': [VersionedRdfStateImpl.testPrefix + 'StateCommit', VersionedRdfStateImpl.testPrefix + 'StateTag'],
@@ -276,7 +284,7 @@ describe('Versioned RDF State service', function() {
             it('and the branch had not been opened before', function() {
                 service.updateState({recordId: recordId, commitId: 'newCommit', branchId: branchId});
                 expect(stateManagerStub.updateState).toHaveBeenCalledWith(stateId, [
-                    set(set(recordState, "['" + VersionedRdfStateImpl.testPrefix + "branchStates']", [{'@id': jasmine.any(String)}]), "['" + VersionedRdfStateImpl.testPrefix + "currentState']", [{'@id': jasmine.any(String)}]),
+                    set(set(recordState, `['${VersionedRdfStateImpl.testPrefix}branchStates']`, [{'@id': jasmine.any(String)}]), `['${VersionedRdfStateImpl.testPrefix}currentState']`, [{'@id': jasmine.any(String)}]),
                     {
                         '@id': jasmine.any(String),
                         '@type': [VersionedRdfStateImpl.testPrefix + 'StateCommit', VersionedRdfStateImpl.testPrefix + 'StateBranch'],
@@ -318,7 +326,7 @@ describe('Versioned RDF State service', function() {
         expect(stateManagerStub.updateState).toHaveBeenCalledWith(stateId, tempState);
     });
     it('getCurrentStateIdByRecordId calls the correct methods', function() {
-        const baseState: State = {'id': 'state-id', model: [{'@id': 'id', '@type':[]}]}
+        const baseState: State = {'id': 'state-id', model: [{'@id': 'id', '@type': []}]};
         spyOn(service, 'getStateByRecordId').and.returnValue(baseState);
         spyOn(service, 'getCurrentStateId').and.returnValue('id');
         expect(service.getCurrentStateIdByRecordId('record')).toEqual('id');
@@ -326,7 +334,7 @@ describe('Versioned RDF State service', function() {
         expect(service.getCurrentStateId).toHaveBeenCalledWith(baseState);
     });
     it('getCurrentStateByRecordId calls the correct methods', function() {
-        const baseState: State = {'id': 'state-id', model: [{'@id': 'id', '@type':[]}]}
+        const baseState: State = {'id': 'state-id', model: [{'@id': 'id', '@type': []}]};
         spyOn(service, 'getStateByRecordId').and.returnValue(baseState);
         spyOn(service, 'getCurrentStateId').and.returnValue('id');
         expect(service.getCurrentStateByRecordId('record')).toEqual(baseState.model[0]);
@@ -334,7 +342,7 @@ describe('Versioned RDF State service', function() {
         expect(service.getCurrentStateId).toHaveBeenCalledWith(baseState);
     });
     it('getCurrentState calls the correct methods', function() {
-        const baseState: State = {'id': 'state-id', model: [{'@id': 'id', '@type':[]}]}
+        const baseState: State = {'id': 'state-id', model: [{'@id': 'id', '@type': []}]};
         spyOn(service, 'getCurrentStateId').and.returnValue('id');
         expect(service.getCurrentState(baseState)).toEqual(baseState.model[0]);
     });
@@ -402,7 +410,7 @@ describe('Versioned RDF State service', function() {
                 versionedRdfState = {id: stateId, model: versionedRdfStateModel};
                 spyOn(service, 'getStateByRecordId').and.returnValue(versionedRdfState);
                 this.deleteStateSpy = spyOn(service, 'deleteState');
-                utilStub.getPropertyId.and.callFake((entity, propertyIRI) => get(entity, "[" + propertyIRI + "][0]['@id']", ''))
+                utilStub.getPropertyId.and.callFake((entity, propertyIRI) => get(entity, `['${propertyIRI}'][0]['@id']`, ''));
             });
             describe('and a branch was last checked out', function() {
                 beforeEach(function() {
@@ -411,14 +419,14 @@ describe('Versioned RDF State service', function() {
                 });
                 describe('and getRecordBranch is resolved', function() {
                     beforeEach(function() {
-                        catalogManagerStub.getRecordBranch.and.returnValue(Promise.resolve(branch));
+                        catalogManagerStub.getRecordBranch.and.returnValue(of(branch));
                     });
                     describe('and getInProgressCommit is resolved', function() {
                         beforeEach(function() {
-                            catalogManagerStub.getInProgressCommit.and.returnValue(Promise.resolve(inProgressCommit));
+                            catalogManagerStub.getInProgressCommit.and.returnValue(of(inProgressCommit));
                         });
                         it('and getCommit is resolved', async function() {
-                            catalogManagerStub.getCommit.and.returnValue(Promise.resolve(commitId));
+                            catalogManagerStub.getCommit.and.returnValue(of({'@id': commitId, '@type': []}));
                             await service.getCatalogDetails(recordId)
                                 .then(response => {
                                     expect(response).toEqual(this.expected);
@@ -434,14 +442,14 @@ describe('Versioned RDF State service', function() {
                         });
                         describe('and getCommit is rejected', function() {
                             beforeEach(function() {
-                                catalogManagerStub.getCommit.and.returnValue(Promise.reject(this.error));
+                                catalogManagerStub.getCommit.and.returnValue(throwError(this.error));
                             });
                             describe('and deleteState is resolved', function() {
                                 beforeEach(function() {
-                                    this.deleteStateSpy.and.returnValue(Promise.resolve());
+                                    this.deleteStateSpy.and.resolveTo();
                                 });
                                 it('and getLatestMaster is resolved', async function() {
-                                    this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                                    this.getLatestMasterSpy.and.resolveTo(this.expected2);
                                     await service.getCatalogDetails(recordId)
                                         .then(response => {
                                             expect(response).toEqual(this.expected2);
@@ -456,7 +464,7 @@ describe('Versioned RDF State service', function() {
                                     expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                                 });
                                 it('and getLatestMaster is rejected', async function() {
-                                    this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                                    this.getLatestMasterSpy.and.rejectWith(this.error);
                                     await service.getCatalogDetails(recordId).then(() => {
                                         fail('Promise should have rejected');
                                     }, response => {
@@ -471,7 +479,7 @@ describe('Versioned RDF State service', function() {
                                 });
                             });
                             it('and deleteState is rejected', async function() {
-                                this.deleteStateSpy.and.returnValue(Promise.reject(this.error));
+                                this.deleteStateSpy.and.rejectWith(this.error);
                                 await service.getCatalogDetails(recordId).then(() => {
                                     fail('Promise should have rejected');
                                 }, response => {
@@ -489,10 +497,10 @@ describe('Versioned RDF State service', function() {
                     describe('and getInProgressCommit is rejected', function() {
                         describe('with a 404', function() {
                             beforeEach(function() {
-                                catalogManagerStub.getInProgressCommit.and.returnValue(Promise.reject({status: 404}));
+                                catalogManagerStub.getInProgressCommit.and.returnValue(throwError({status: 404}));
                             });
                             it('and getCommit is resolved', async function() {
-                                catalogManagerStub.getCommit.and.returnValue(Promise.resolve(commitId));
+                                catalogManagerStub.getCommit.and.returnValue(of(commit));
                                 await service.getCatalogDetails(recordId)
                                     .then(response => {
                                         expect(response).toEqual(this.expected2);
@@ -507,14 +515,14 @@ describe('Versioned RDF State service', function() {
                             });
                             describe('and getCommit is rejected', function() {
                                 beforeEach(function() {
-                                    catalogManagerStub.getCommit.and.returnValue(Promise.reject(this.error));
+                                    catalogManagerStub.getCommit.and.returnValue(throwError(this.error));
                                 });
                                 describe('and deleteState is resolved', function() {
                                     beforeEach(function() {
-                                        this.deleteStateSpy.and.returnValue(Promise.resolve());
+                                        this.deleteStateSpy.and.resolveTo();
                                     });
                                     it('and getLatestMaster is resolved', async function() {
-                                        this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                                        this.getLatestMasterSpy.and.resolveTo(this.expected2);
                                         await service.getCatalogDetails(recordId)
                                             .then(response => {
                                                 expect(response).toEqual(this.expected2);
@@ -529,7 +537,7 @@ describe('Versioned RDF State service', function() {
                                         expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                                     });
                                     it('and getLatestMaster is rejected', async function() {
-                                        this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                                        this.getLatestMasterSpy.and.rejectWith(this.error);
                                         await service.getCatalogDetails(recordId).then(() => {
                                             fail('Promise should have rejected');
                                         }, response => {
@@ -544,7 +552,7 @@ describe('Versioned RDF State service', function() {
                                     });
                                 });
                                 it('and deleteState is rejected', async function() {
-                                    this.deleteStateSpy.and.returnValue(Promise.reject(this.error));
+                                    this.deleteStateSpy.and.rejectWith(this.error);
                                     await service.getCatalogDetails(recordId).then(() => {
                                         fail('Promise should have rejected');
                                     }, response => {
@@ -561,14 +569,14 @@ describe('Versioned RDF State service', function() {
                         });
                         describe('without a 404', function() {
                             beforeEach(function() {
-                                catalogManagerStub.getInProgressCommit.and.returnValue(Promise.reject({status: 400}));
+                                catalogManagerStub.getInProgressCommit.and.returnValue(throwError({status: 400}));
                             });
                             describe('and deleteState is resolved', function() {
                                 beforeEach(function() {
-                                    this.deleteStateSpy.and.returnValue(Promise.resolve());
+                                    this.deleteStateSpy.and.resolveTo();
                                 });
                                 it('and getLatestMaster is resolved', async function() {
-                                    this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                                    this.getLatestMasterSpy.and.resolveTo(this.expected2);
                                     await service.getCatalogDetails(recordId)
                                         .then(response => {
                                             expect(response).toEqual(this.expected2);
@@ -581,7 +589,7 @@ describe('Versioned RDF State service', function() {
                                     expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
                                 });
                                 it('and getLatestMaster is rejected', async function() {
-                                    this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                                    this.getLatestMasterSpy.and.rejectWith(this.error);
                                     await service.getCatalogDetails(recordId).then(() => {
                                         fail('Promise should have rejected');
                                     }, response => {
@@ -594,7 +602,7 @@ describe('Versioned RDF State service', function() {
                                 });
                             });
                             it('and deleteState is rejected', async function() {
-                                this.deleteStateSpy.and.returnValue(Promise.reject(this.error));
+                                this.deleteStateSpy.and.rejectWith(this.error);
                                 await service.getCatalogDetails(recordId).then(() => {
                                     fail('Promise should have rejected');
                                 }, response => {
@@ -610,14 +618,14 @@ describe('Versioned RDF State service', function() {
                 });
                 describe('and getRecordBranch is rejected', function() {
                     beforeEach(function() {
-                        catalogManagerStub.getRecordBranch.and.returnValue(Promise.reject(this.error));
+                        catalogManagerStub.getRecordBranch.and.returnValue(throwError(this.error));
                     });
                     describe('and deleteState is resolved', function() {
                         beforeEach(function() {
-                            this.deleteStateSpy.and.returnValue(Promise.resolve());
+                            this.deleteStateSpy.and.resolveTo();
                         });
                         it('and getLatestMaster is resolved', async function() {
-                            this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                            this.getLatestMasterSpy.and.resolveTo(this.expected2);
                             await service.getCatalogDetails(recordId)
                                 .then(response => {
                                     expect(response).toEqual(this.expected2);
@@ -630,7 +638,7 @@ describe('Versioned RDF State service', function() {
                             expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
                         });
                         it('and getLatestMaster is rejected', async function() {
-                            this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                            this.getLatestMasterSpy.and.rejectWith(this.error);
                             await service.getCatalogDetails(recordId).then(() => {
                                 fail('Promise should have rejected');
                             }, response => {
@@ -645,7 +653,7 @@ describe('Versioned RDF State service', function() {
                         });
                     });
                     it('and deleteState is rejected', async function() {
-                        this.deleteStateSpy.and.returnValue(Promise.reject(this.error));
+                        this.deleteStateSpy.and.rejectWith(this.error);
                         await service.getCatalogDetails(recordId).then(() => {
                             fail('Promise should have rejected');
                         }, response => {
@@ -667,14 +675,14 @@ describe('Versioned RDF State service', function() {
                 });
                 describe('and getRecordVersion is resolved', function() {
                     beforeEach(function() {
-                        catalogManagerStub.getRecordVersion.and.returnValue(Promise.resolve(tag));
+                        catalogManagerStub.getRecordVersion.and.returnValue(of(tag));
                     });
                     describe('and getInProgressCommit is resolved', function() {
                         beforeEach(function() {
-                            catalogManagerStub.getInProgressCommit.and.returnValue(Promise.resolve(inProgressCommit));
+                            catalogManagerStub.getInProgressCommit.and.returnValue(of(inProgressCommit));
                         });
                         it('and getCommit is resolved', async function() {
-                            catalogManagerStub.getCommit.and.returnValue(Promise.resolve(commitId));
+                            catalogManagerStub.getCommit.and.returnValue(of(commit));
                             await service.getCatalogDetails(recordId)
                                 .then(response => {
                                     expect(response).toEqual(this.expected);
@@ -689,14 +697,14 @@ describe('Versioned RDF State service', function() {
                         });
                         describe('and getCommit is rejected', function() {
                             beforeEach(function() {
-                                catalogManagerStub.getCommit.and.returnValue(Promise.reject(this.error));
+                                catalogManagerStub.getCommit.and.returnValue(throwError(this.error));
                             });
                             describe('and deleteState is resolved', function() {
                                 beforeEach(function() {
-                                    this.deleteStateSpy.and.returnValue(Promise.resolve());
+                                    this.deleteStateSpy.and.resolveTo();
                                 });
                                 it('and getLatestMaster is resolved', async function() {
-                                    this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                                    this.getLatestMasterSpy.and.resolveTo(this.expected2);
                                     await service.getCatalogDetails(recordId)
                                         .then(response => {
                                             expect(response).toEqual(this.expected2);
@@ -710,7 +718,7 @@ describe('Versioned RDF State service', function() {
                                     expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
                                 });
                                 it('and getLatestMaster is rejected', async function() {
-                                    this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                                    this.getLatestMasterSpy.and.rejectWith(this.error);
                                     await service.getCatalogDetails(recordId).then(() => {
                                         fail('Promise should have rejected');
                                     }, response => {
@@ -724,7 +732,7 @@ describe('Versioned RDF State service', function() {
                                 });
                             });
                             it('and deleteState is rejected', async function() {
-                                this.deleteStateSpy.and.returnValue(Promise.reject(this.error));
+                                this.deleteStateSpy.and.rejectWith(this.error);
                                 await service.getCatalogDetails(recordId).then(() => {
                                     fail('Promise should have rejected');
                                 }, response => {
@@ -741,10 +749,10 @@ describe('Versioned RDF State service', function() {
                     describe('and getInProgressCommit is rejected', function() {
                         describe('with a 404', function() {
                             beforeEach(function() {
-                                catalogManagerStub.getInProgressCommit.and.returnValue(Promise.reject({status: 404}));
+                                catalogManagerStub.getInProgressCommit.and.returnValue(throwError({status: 404}));
                             });
                             it('and getCommit is resolved', async function() {
-                                catalogManagerStub.getCommit.and.returnValue(Promise.resolve(commitId));
+                                catalogManagerStub.getCommit.and.returnValue(of(commit));
                                 await service.getCatalogDetails(recordId)
                                     .then(response => {
                                         expect(response).toEqual(this.expected2);
@@ -759,14 +767,14 @@ describe('Versioned RDF State service', function() {
                             });
                             describe('and getCommit is rejected', function() {
                                 beforeEach(function() {
-                                    catalogManagerStub.getCommit.and.returnValue(Promise.reject(this.error));
+                                    catalogManagerStub.getCommit.and.returnValue(throwError(this.error));
                                 });
                                 describe('and deleteState is resolved', function() {
                                     beforeEach(function() {
-                                        this.deleteStateSpy.and.returnValue(Promise.resolve());
+                                        this.deleteStateSpy.and.resolveTo();
                                     });
                                     it('and getLatestMaster is resolved', async function() {
-                                        this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                                        this.getLatestMasterSpy.and.resolveTo(this.expected2);
                                         await service.getCatalogDetails(recordId)
                                             .then(response => {
                                                 expect(response).toEqual(this.expected2);
@@ -780,7 +788,7 @@ describe('Versioned RDF State service', function() {
                                         expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
                                     });
                                     it('and getLatestMaster is rejected', async function() {
-                                        this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                                        this.getLatestMasterSpy.and.rejectWith(this.error);
                                         await service.getCatalogDetails(recordId).then(() => {
                                             fail('Promise should have rejected');
                                         }, response => {
@@ -794,7 +802,7 @@ describe('Versioned RDF State service', function() {
                                     });
                                 });
                                 it('and deleteState is rejected', async function() {
-                                    this.deleteStateSpy.and.returnValue(Promise.reject(this.error));
+                                    this.deleteStateSpy.and.rejectWith(this.error);
                                     await service.getCatalogDetails(recordId).then(() => {
                                         fail('Promise should have rejected');
                                     }, response => {
@@ -810,14 +818,14 @@ describe('Versioned RDF State service', function() {
                         });
                         describe('without a 404', function() {
                             beforeEach(function() {
-                                catalogManagerStub.getInProgressCommit.and.returnValue(Promise.reject({status: 400}));
+                                catalogManagerStub.getInProgressCommit.and.returnValue(throwError({status: 400}));
                             });
                             describe('and deleteState is resolved', function() {
                                 beforeEach(function() {
-                                    this.deleteStateSpy.and.returnValue(Promise.resolve());
+                                    this.deleteStateSpy.and.resolveTo();
                                 });
                                 it('and getLatestMaster is resolved', async function() {
-                                    this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                                    this.getLatestMasterSpy.and.resolveTo(this.expected2);
                                     await service.getCatalogDetails(recordId)
                                         .then(response => {
                                             expect(response).toEqual(this.expected2);
@@ -831,7 +839,7 @@ describe('Versioned RDF State service', function() {
                                     expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
                                 });
                                 it('and getLatestMaster is rejected', async function() {
-                                    this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                                    this.getLatestMasterSpy.and.rejectWith(this.error);
                                     await service.getCatalogDetails(recordId).then(() => {
                                         fail('Promise should have rejected');
                                     }, response => {
@@ -844,7 +852,7 @@ describe('Versioned RDF State service', function() {
                                 });
                             });
                             it('and deleteState is rejected', async function() {
-                                this.deleteStateSpy.and.returnValue(Promise.reject(this.error));
+                                this.deleteStateSpy.and.rejectWith(this.error);
                                 await service.getCatalogDetails(recordId).then(() => {
                                     fail('Promise should have rejected');
                                 }, response => {
@@ -860,18 +868,18 @@ describe('Versioned RDF State service', function() {
                 });
                 describe('and getRecordVersion is rejected', function() {
                     beforeEach(function() {
-                        catalogManagerStub.getRecordVersion.and.returnValue(Promise.reject(this.error));
+                        catalogManagerStub.getRecordVersion.and.returnValue(throwError(this.error));
                     });
                     describe('and updateState is resolved', function() {
                         beforeEach(function() {
-                            spyOn(service, 'updateState').and.returnValue(Promise.resolve());
+                            spyOn(service, 'updateState').and.resolveTo();
                         });
                         describe('and getInProgressCommit is resolved', function() {
                             beforeEach(function() {
-                                catalogManagerStub.getInProgressCommit.and.returnValue(Promise.resolve(inProgressCommit));
+                                catalogManagerStub.getInProgressCommit.and.returnValue(of(inProgressCommit));
                             });
                             it('and getCommit is resolved', async function() {
-                                catalogManagerStub.getCommit.and.returnValue(Promise.resolve(commitId));
+                                catalogManagerStub.getCommit.and.returnValue(of(commit));
                                 await service.getCatalogDetails(recordId)
                                     .then(response => {
                                         expect(response).toEqual(this.expected);
@@ -889,14 +897,14 @@ describe('Versioned RDF State service', function() {
                             });
                             describe('and getCommit is rejected', function() {
                                 beforeEach(function() {
-                                    catalogManagerStub.getCommit.and.returnValue(Promise.reject(this.error));
+                                    catalogManagerStub.getCommit.and.returnValue(throwError(this.error));
                                 });
                                 describe('and deleteState is resolved', function() {
                                     beforeEach(function() {
-                                        this.deleteStateSpy.and.returnValue(Promise.resolve());
+                                        this.deleteStateSpy.and.resolveTo();
                                     });
                                     it('and getLatestMaster is resolved', async function() {
-                                        this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                                        this.getLatestMasterSpy.and.resolveTo(this.expected2);
                                         await service.getCatalogDetails(recordId)
                                             .then(response => {
                                                 expect(response).toEqual(this.expected2);
@@ -912,7 +920,7 @@ describe('Versioned RDF State service', function() {
                                         expect(utilStub.createWarningToast).toHaveBeenCalledWith('Commit ' + commitId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                                     });
                                     it('and getLatestMaster is rejected', async function() {
-                                        this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                                        this.getLatestMasterSpy.and.rejectWith(this.error);
                                         await service.getCatalogDetails(recordId).then(() => {
                                             fail('Promise should have rejected');
                                         }, response => {
@@ -928,7 +936,7 @@ describe('Versioned RDF State service', function() {
                                     });
                                 });
                                 it('and deleteState is rejected', async function() {
-                                    this.deleteStateSpy.and.returnValue(Promise.reject(this.error));
+                                    this.deleteStateSpy.and.rejectWith(this.error);
                                     await service.getCatalogDetails(recordId).then(() => {
                                         fail('Promise should have rejected');
                                     }, response => {
@@ -947,10 +955,10 @@ describe('Versioned RDF State service', function() {
                         describe('and getInProgressCommit is rejected', function() {
                             describe('with a 404', function() {
                                 beforeEach(function() {
-                                    catalogManagerStub.getInProgressCommit.and.returnValue(Promise.reject({status: 404}));
+                                    catalogManagerStub.getInProgressCommit.and.returnValue(throwError({status: 404}));
                                 });
                                 it('and getCommit is resolved', async function() {
-                                    catalogManagerStub.getCommit.and.returnValue(Promise.resolve(commitId));
+                                    catalogManagerStub.getCommit.and.returnValue(of(commit));
                                     await service.getCatalogDetails(recordId)
                                         .then(response => {
                                             expect(response).toEqual(this.expected2);
@@ -966,14 +974,14 @@ describe('Versioned RDF State service', function() {
                                 });
                                 describe('and getCommit is rejected', function() {
                                     beforeEach(function() {
-                                        catalogManagerStub.getCommit.and.returnValue(Promise.reject(this.error));
+                                        catalogManagerStub.getCommit.and.returnValue(throwError(this.error));
                                     });
                                     describe('and deleteState is resolved', function() {
                                         beforeEach(function() {
-                                            this.deleteStateSpy.and.returnValue(Promise.resolve());
+                                            this.deleteStateSpy.and.resolveTo();
                                         });
                                         it('and getLatestMaster is resolved', async function() {
-                                            this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                                            this.getLatestMasterSpy.and.resolveTo(this.expected2);
                                             await service.getCatalogDetails(recordId)
                                                 .then(response => {
                                                     expect(response).toEqual(this.expected2);
@@ -988,7 +996,7 @@ describe('Versioned RDF State service', function() {
                                             expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
                                         });
                                         it('and getLatestMaster is rejected', async function() {
-                                            this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                                            this.getLatestMasterSpy.and.rejectWith(this.error);
                                             await service.getCatalogDetails(recordId).then(() => {
                                                 fail('Promise should have rejected');
                                             }, response => {
@@ -1003,7 +1011,7 @@ describe('Versioned RDF State service', function() {
                                         });
                                     });
                                     it('and deleteState is rejected', async function() {
-                                        this.deleteStateSpy.and.returnValue(Promise.reject(this.error));
+                                        this.deleteStateSpy.and.rejectWith(this.error);
                                         await service.getCatalogDetails(recordId).then(() => {
                                             fail('Promise should have rejected');
                                         }, response => {
@@ -1020,14 +1028,14 @@ describe('Versioned RDF State service', function() {
                             });
                             describe('without a 404', function() {
                                 beforeEach(function() {
-                                    catalogManagerStub.getInProgressCommit.and.returnValue(Promise.reject({status: 400}));
+                                    catalogManagerStub.getInProgressCommit.and.returnValue(throwError({status: 400}));
                                 });
                                 describe('and deleteState is resolved', function() {
                                     beforeEach(function() {
-                                        this.deleteStateSpy.and.returnValue(Promise.resolve());
+                                        this.deleteStateSpy.and.resolveTo();
                                     });
                                     it('and getLatestMaster is resolved', async function() {
-                                        this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                                        this.getLatestMasterSpy.and.resolveTo(this.expected2);
                                         await service.getCatalogDetails(recordId)
                                             .then(response => {
                                                 expect(response).toEqual(this.expected2);
@@ -1042,7 +1050,7 @@ describe('Versioned RDF State service', function() {
                                         expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
                                     });
                                     it('and getLatestMaster is rejected', async function() {
-                                        this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                                        this.getLatestMasterSpy.and.rejectWith(this.error);
                                         await service.getCatalogDetails(recordId).then(() => {
                                             fail('Promise should have rejected');
                                         }, response => {
@@ -1057,7 +1065,7 @@ describe('Versioned RDF State service', function() {
                                     });
                                 });
                                 it('and deleteState is rejected', async function() {
-                                    this.deleteStateSpy.and.returnValue(Promise.reject(this.error));
+                                    this.deleteStateSpy.and.rejectWith(this.error);
                                     await service.getCatalogDetails(recordId).then(() => {
                                         fail('Promise should have rejected');
                                     }, response => {
@@ -1075,14 +1083,14 @@ describe('Versioned RDF State service', function() {
                     });
                     describe('and updateState is rejected', function() {
                         beforeEach(function() {
-                            spyOn(service, 'updateState').and.returnValue(Promise.reject());
+                            spyOn(service, 'updateState').and.rejectWith();
                         });
                         describe('and deleteState is resolved', function() {
                             beforeEach(function() {
-                                this.deleteStateSpy.and.returnValue(Promise.resolve());
+                                this.deleteStateSpy.and.resolveTo();
                             });
                             it('and getLatestMaster is resolved', async function() {
-                                this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                                this.getLatestMasterSpy.and.resolveTo(this.expected2);
                                 await service.getCatalogDetails(recordId)
                                     .then(response => {
                                         expect(response).toEqual(this.expected2);
@@ -1097,7 +1105,7 @@ describe('Versioned RDF State service', function() {
                                 expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
                             });
                             it('and getLatestMaster is rejected', async function() {
-                                this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                                this.getLatestMasterSpy.and.rejectWith(this.error);
                                 await service.getCatalogDetails(recordId).then(() => {
                                     fail('Promise should have rejected');
                                 }, response => {
@@ -1112,7 +1120,7 @@ describe('Versioned RDF State service', function() {
                             });
                         });
                         it('and deleteState is rejected', async function() {
-                            this.deleteStateSpy.and.returnValue(Promise.reject(this.error));
+                            this.deleteStateSpy.and.rejectWith(this.error);
                             await service.getCatalogDetails(recordId).then(() => {
                                 fail('Promise should have rejected');
                             }, response => {
@@ -1134,10 +1142,10 @@ describe('Versioned RDF State service', function() {
                 });
                 describe('and getInProgressCommit is resolved', function() {
                     beforeEach(function() {
-                        catalogManagerStub.getInProgressCommit.and.returnValue(Promise.resolve(inProgressCommit));
+                        catalogManagerStub.getInProgressCommit.and.returnValue(of(inProgressCommit));
                     });
                     it('and getCommit is resolved', async function() {
-                        catalogManagerStub.getCommit.and.returnValue(Promise.resolve(commitId));
+                        catalogManagerStub.getCommit.and.returnValue(of(commit));
                         await service.getCatalogDetails(recordId)
                             .then(response => {
                                 expect(response).toEqual(this.expected);
@@ -1152,28 +1160,28 @@ describe('Versioned RDF State service', function() {
                     });
                     describe('and getCommit is rejected', function() {
                         beforeEach(function() {
-                            catalogManagerStub.getCommit.and.returnValue(Promise.reject(this.error));
+                            catalogManagerStub.getCommit.and.returnValue(throwError(this.error));
                         });
                         describe('and deleteState is resolved', function() {
                             beforeEach(function() {
-                                this.deleteStateSpy.and.returnValue(Promise.resolve());
+                                this.deleteStateSpy.and.resolveTo();
                             });
                             it('and getLatestMaster is resolved', async function() {
-                                this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                                this.getLatestMasterSpy.and.resolveTo(this.expected2);
                                 await service.getCatalogDetails(recordId)
                                     .then(response => {
                                         expect(response).toEqual(this.expected2);
                                     }, () => {
                                         fail('Promise should have resolved');
                                     });
-                                expect(catalogManagerStub.getRecordBranch).not.toHaveBeenCalledWith();
+                                expect(catalogManagerStub.getRecordBranch).not.toHaveBeenCalled();
                                 expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
                                 expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                                 expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
                                 expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
                             });
                             it('and getLatestMaster is rejected', async function() {
-                                this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                                this.getLatestMasterSpy.and.rejectWith(this.error);
                                 await service.getCatalogDetails(recordId).then(() => {
                                     fail('Promise should have rejected');
                                 }, response => {
@@ -1187,7 +1195,7 @@ describe('Versioned RDF State service', function() {
                             });
                         });
                         it('and deleteState is rejected', async function() {
-                            this.deleteStateSpy.and.returnValue(Promise.reject(this.error));
+                            this.deleteStateSpy.and.rejectWith(this.error);
                             await service.getCatalogDetails(recordId).then(() => {
                                 fail('Promise should have rejected');
                             }, response => {
@@ -1204,17 +1212,17 @@ describe('Versioned RDF State service', function() {
                 describe('and getInProgressCommit is rejected', function() {
                     describe('with a 404', function() {
                         beforeEach(function() {
-                            catalogManagerStub.getInProgressCommit.and.returnValue(Promise.reject({status: 404}));
+                            catalogManagerStub.getInProgressCommit.and.returnValue(throwError({status: 404}));
                         });
                         it('and getCommit is resolved', async function() {
-                            catalogManagerStub.getCommit.and.returnValue(Promise.resolve(commitId));
+                            catalogManagerStub.getCommit.and.returnValue(of(commit));
                             await service.getCatalogDetails(recordId)
                                 .then(response => {
                                     expect(response).toEqual(this.expected2);
                                 }, () => {
                                     fail('Promise should have resolved');
                                 });
-                            expect(catalogManagerStub.getRecordBranch).not.toHaveBeenCalledWith();
+                            expect(catalogManagerStub.getRecordBranch).not.toHaveBeenCalled();
                             expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
                             expect(catalogManagerStub.getCommit).toHaveBeenCalledWith(commitId);
                             expect(this.deleteStateSpy).not.toHaveBeenCalled();
@@ -1222,14 +1230,14 @@ describe('Versioned RDF State service', function() {
                         });
                         describe('and getCommit is rejected', function() {
                             beforeEach(function() {
-                                catalogManagerStub.getCommit.and.returnValue(Promise.reject(this.error));
+                                catalogManagerStub.getCommit.and.returnValue(throwError(this.error));
                             });
                             describe('and deleteState is resolved', function() {
                                 beforeEach(function() {
-                                    this.deleteStateSpy.and.returnValue(Promise.resolve());
+                                    this.deleteStateSpy.and.resolveTo();
                                 });
                                 it('and getLatestMaster is resolved', async function() {
-                                    this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                                    this.getLatestMasterSpy.and.resolveTo(this.expected2);
                                     await service.getCatalogDetails(recordId)
                                         .then(response => {
                                             expect(response).toEqual(this.expected2);
@@ -1243,7 +1251,7 @@ describe('Versioned RDF State service', function() {
                                     expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
                                 });
                                 it('and getLatestMaster is rejected', async function() {
-                                    this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                                    this.getLatestMasterSpy.and.rejectWith(this.error);
                                     await service.getCatalogDetails(recordId).then(() => {
                                         fail('Promise should have rejected');
                                     }, response => {
@@ -1257,7 +1265,7 @@ describe('Versioned RDF State service', function() {
                                 });
                             });
                             it('and deleteState is rejected', async function() {
-                                this.deleteStateSpy.and.returnValue(Promise.reject(this.error));
+                                this.deleteStateSpy.and.rejectWith(this.error);
                                 await service.getCatalogDetails(recordId).then(() => {
                                     fail('Promise should have rejected');
                                 }, response => {
@@ -1273,14 +1281,14 @@ describe('Versioned RDF State service', function() {
                     });
                     describe('without a 404', function() {
                         beforeEach(function() {
-                            catalogManagerStub.getInProgressCommit.and.returnValue(Promise.reject({status: 400}));
+                            catalogManagerStub.getInProgressCommit.and.returnValue(throwError({status: 400}));
                         });
                         describe('and deleteState is resolved', function() {
                             beforeEach(function() {
-                                this.deleteStateSpy.and.returnValue(Promise.resolve());
+                                this.deleteStateSpy.and.resolveTo();
                             });
                             it('and getLatestMaster is resolved', async function() {
-                                this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                                this.getLatestMasterSpy.and.resolveTo(this.expected2);
                                 await service.getCatalogDetails(recordId)
                                     .then(response => {
                                         expect(response).toEqual(this.expected2);
@@ -1294,7 +1302,7 @@ describe('Versioned RDF State service', function() {
                                 expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
                             });
                             it('and getLatestMaster is rejected', async function() {
-                                this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                                this.getLatestMasterSpy.and.rejectWith(this.error);
                                 await service.getCatalogDetails(recordId).then(() => {
                                     fail('Promise should have rejected');
                                 }, response => {
@@ -1308,7 +1316,7 @@ describe('Versioned RDF State service', function() {
                             });
                         });
                         it('and deleteState is rejected', async function() {
-                            this.deleteStateSpy.and.returnValue(Promise.reject(this.error));
+                            this.deleteStateSpy.and.rejectWith(this.error);
                             await service.getCatalogDetails(recordId).then(() => {
                                 fail('Promise should have rejected');
                             }, response => {
@@ -1326,7 +1334,7 @@ describe('Versioned RDF State service', function() {
         });
         describe('if state does not exist', function() {
             it('and getLatestMaster is resolved', async function() {
-                this.getLatestMasterSpy.and.returnValue(Promise.resolve(this.expected2));
+                this.getLatestMasterSpy.and.resolveTo(this.expected2);
                 await service.getCatalogDetails(recordId)
                     .then(response => {
                         expect(response).toEqual(this.expected2);
@@ -1337,7 +1345,7 @@ describe('Versioned RDF State service', function() {
                 expect(this.getLatestMasterSpy).toHaveBeenCalledWith(recordId);
             });
             it('and getLatestMaster is rejected', async function() {
-                this.getLatestMasterSpy.and.returnValue(Promise.reject(this.error));
+                this.getLatestMasterSpy.and.rejectWith(this.error);
                 await service.getCatalogDetails(recordId)
                     .then(() => {
                         fail('Promise should have rejected');
@@ -1355,10 +1363,10 @@ describe('Versioned RDF State service', function() {
         });
         describe('if getRecordMasterBranch is resolved', function() {
             beforeEach(function() {
-                catalogManagerStub.getRecordMasterBranch.and.returnValue(Promise.resolve(branch));
+                catalogManagerStub.getRecordMasterBranch.and.returnValue(of(branch));
             });
             it('and createState is resolved', async function() {
-                this.createStateSpy.and.returnValue(Promise.resolve());
+                this.createStateSpy.and.resolveTo();
                 const expected = {
                     recordId: recordId,
                     branchId: branchId,
@@ -1376,7 +1384,7 @@ describe('Versioned RDF State service', function() {
                 expect(service.createState).toHaveBeenCalledWith({recordId: recordId, commitId: commitId, branchId: branchId});
             });
             it('and createState is rejected', async function() {
-                this.createStateSpy.and.returnValue(Promise.reject(this.error));
+                this.createStateSpy.and.rejectWith(this.error);
                 await service.getLatestMaster(recordId)
                     .then(() => {
                         fail('Promise should have rejected');
@@ -1388,7 +1396,7 @@ describe('Versioned RDF State service', function() {
             });
         });
         it('if getRecordMasterBranch is rejected', async function() {
-            catalogManagerStub.getRecordMasterBranch.and.returnValue(Promise.reject(this.error));
+            catalogManagerStub.getRecordMasterBranch.and.returnValue(throwError(this.error));
             await service.getLatestMaster(recordId)
                 .then(() => {
                     fail('Promise should have rejected');
@@ -1411,12 +1419,12 @@ describe('Versioned RDF State service', function() {
                 startIndex: 0
             };
             service.listItem.merge.difference = new Difference();
-            var data = {
-                additions: [{'@id': 'iri1'}],
-                deletions: [{'@id': 'iri2'}]
-            };
+            let data = new CommitDifference();
+            data.additions = [{'@id': 'iri1', '@type': []}];
+            data.deletions = [{'@id': 'iri2', '@type': []}];
+            data.commit = commit;
             this.headers = {'has-more-results': 'true'};
-            catalogManagerStub.getDifference.and.returnValue(Promise.resolve({data, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
+            catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse<CommitDifference>({body: data, headers: new HttpHeaders(this.headers)})));
             await service.getMergeDifferences('sourceId', 'targetId', 100, 0);
             expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceId', 'targetId', 100, 0);
             expect(service.listItem.merge.difference.additions).toEqual(data.additions);
@@ -1433,7 +1441,7 @@ describe('Versioned RDF State service', function() {
                 resolutions: new Difference(),
                 startIndex: 0
             };
-            catalogManagerStub.getDifference.and.returnValue(Promise.reject('Error'));
+            catalogManagerStub.getDifference.and.returnValue(throwError('Error'));
             await service.getMergeDifferences('sourceId', 'targetId', 100, 0).then(noop, error => {
                 expect(error).toEqual('Error');
             });
@@ -1442,8 +1450,8 @@ describe('Versioned RDF State service', function() {
     });
     describe('attemptMerge should return correctly if checkConflicts', function() {
         beforeEach(function() {
-            this.checkConflictsSpy = spyOn(service, 'checkConflicts').and.returnValue(Promise.resolve());
-            this.mergeSpy = spyOn<any>(service, 'merge').and.returnValue(Promise.resolve());
+            this.checkConflictsSpy = spyOn(service, 'checkConflicts').and.resolveTo();
+            this.mergeSpy = spyOn<any>(service, 'merge').and.resolveTo();
         });
         describe('resolves and merge', function() {
             it('resolves', async function() {
@@ -1455,7 +1463,7 @@ describe('Versioned RDF State service', function() {
                 expect(this.mergeSpy).toHaveBeenCalled();
             });
             it('rejects', async function() {
-                this.mergeSpy.and.returnValue(Promise.reject('Error'));
+                this.mergeSpy.and.rejectWith('Error');
                 await service.attemptMerge()
                     .then(() => {
                         fail('Promise should have rejected');
@@ -1467,7 +1475,7 @@ describe('Versioned RDF State service', function() {
             });
         });
         it('rejects', async function() {
-            this.checkConflictsSpy.and.returnValue(Promise.reject('Error'));
+            this.checkConflictsSpy.and.rejectWith('Error');
             await service.attemptMerge()
                 .then(() => {
                     fail('Promise should have rejected');
@@ -1493,6 +1501,7 @@ describe('Versioned RDF State service', function() {
         });
         describe('resolves with', function() {
             it('an empty array', async function() {
+                catalogManagerStub.getBranchConflicts.and.returnValue(of([]));
                 await service.checkConflicts()
                     .then(noop, () => {
                         fail('Promise should have resolved');
@@ -1501,7 +1510,11 @@ describe('Versioned RDF State service', function() {
                 expect(service.listItem.merge.conflicts).toEqual([]);
             });
             it('conflicts', async function() {
-                catalogManagerStub.getBranchConflicts.and.returnValue(Promise.resolve([{}]));
+                catalogManagerStub.getBranchConflicts.and.returnValue(of([{
+                    iri: '',
+                    left: new Difference(),
+                    right: new Difference(),
+                }]));
                 await service.checkConflicts()
                     .then(() => {
                         fail('Promise should have rejected');
@@ -1513,7 +1526,7 @@ describe('Versioned RDF State service', function() {
             });
         });
         it('rejects', async function() {
-            catalogManagerStub.getBranchConflicts.and.returnValue(Promise.reject('Error'));
+            catalogManagerStub.getBranchConflicts.and.returnValue(throwError('Error'));
             await service.checkConflicts()
                 .then(() => {
                     fail('Promise should have rejected');
@@ -1534,13 +1547,13 @@ describe('Versioned RDF State service', function() {
                 iri: 'iri',
                 left: new Difference(),
                 right: new Difference(),
-                resolved: ''
+                resolved: false
             }],
             resolutions: new Difference(),
             startIndex: 100
         };
-        service.listItem.merge.resolutions.additions.push({});
-        service.listItem.merge.resolutions.deletions.push({});
+        (service.listItem.merge.resolutions.additions as JSONLDObject[]).push({'@id': '', '@type': []});
+        (service.listItem.merge.resolutions.deletions as JSONLDObject[]).push({'@id': '', '@type': []});
         service.cancelMerge();
         expect(service.listItem.merge).toEqual({
             active: false,
