@@ -23,6 +23,21 @@ import { get } from "lodash";
  * #L%
  */
 
+import { first } from 'rxjs/operators';
+
+import { CatalogManagerService } from './catalogManager.service';
+import { CatalogStateService } from './catalogState.service';
+import { DatasetManagerService } from './datasetManager.service';
+import { DatasetStateService } from './datasetState.service';
+import { DelimitedManagerService } from './delimitedManager.service';
+import { DiscoverStateService } from './discoverState.service';
+import { MapperStateService } from './mapperState.service';
+import { MergeRequestsStateService } from './mergeRequestsState.service';
+import { ShapesGraphStateService } from './shapesGraphState.service';
+import { UserManagerService } from './userManager.service';
+import { UserStateService } from './userState.service';
+import { YasguiService } from './yasgui.service';
+
 loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
     'catalogManagerService',
     'catalogStateService',
@@ -35,7 +50,6 @@ loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
     'ontologyManagerService',
     'ontologyStateService',
     'shapesGraphStateService',
-    'sparqlManagerService',
     'stateManagerService',
     'userManagerService',
     'userStateService',
@@ -69,8 +83,16 @@ loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
  * `loginManagerService` is a service that provides access to the Mobi login REST
  * endpoints so users can log into and out of Mobi.
  */
-function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, shapesGraphStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService, utilService, yasguiService) {
-    var self = this,
+function loginManagerService($q, $http, $state, REST_PREFIX,
+                             catalogManagerService: CatalogManagerService,
+                             catalogStateService: CatalogStateService, datasetManagerService: DatasetManagerService,
+                             datasetStateService: DatasetStateService, delimitedManagerService: DelimitedManagerService,
+                             discoverStateService: DiscoverStateService, mapperStateService: MapperStateService,
+                             mergeRequestsStateService: MergeRequestsStateService, ontologyManagerService,
+                             ontologyStateService, shapesGraphStateService: ShapesGraphStateService,
+                             stateManagerService, userManagerService: UserManagerService,
+                             userStateService: UserStateService, utilService, yasguiService: YasguiService) {
+    const self = this,
         prefix = REST_PREFIX + 'session';
     
     self.weGood = false;
@@ -112,7 +134,7 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
      * with an error message if the log in attempt failed
      */
     self.login = function(username, password) {
-        var config = { params: { username, password } };
+        const config = { params: { username, password } };
         return $http.post(prefix, null, config)
             .then(response => {
                 if (response.status === 200 && response.data) {
@@ -155,7 +177,6 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
         mergeRequestsStateService.reset();
         ontologyManagerService.reset();
         ontologyStateService.reset();
-        sparqlManagerService.reset();
         shapesGraphStateService.reset();
         catalogStateService.reset();
         yasguiService.reset();
@@ -189,7 +210,7 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
      * response data if no user is logged in.
      */
     self.isAuthenticated = function() {
-        var handleError = function(data) {
+        const handleError = function(data) {
             self.currentUser = '';
             self.currentUserIRI = '';
             $state.go('login');
@@ -198,7 +219,7 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
             if (!data) {
                 return $q.reject(data);
             }
-            var promises = [
+            let promises = [
                 stateManagerService.initialize(),
                 userManagerService.initialize(),
                 userManagerService.getUser(data).then(user => {
@@ -208,14 +229,14 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
             ];
             if (!self.weGood) {
                 promises = promises.concat([
-                    catalogManagerService.initialize().then(() => {
+                    catalogManagerService.initialize().pipe(first()).toPromise().then(() => {
                         catalogStateService.initialize();
                         mergeRequestsStateService.initialize();
                         ontologyManagerService.initialize();
                         ontologyStateService.initialize();
                         shapesGraphStateService.initialize();
                     }),
-                    datasetManagerService.initialize()
+                    datasetManagerService.initialize().pipe(first()).toPromise()
                 ]);
             }
             if (self.checkMergedAccounts()) {
@@ -242,7 +263,7 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
      * unsuccessful
      */
     self.getCurrentLogin = function () {
-        var deferred = $q.defer();
+        const deferred = $q.defer();
 
         $http.get(prefix).then(response => {
             if (response.status === 200) {

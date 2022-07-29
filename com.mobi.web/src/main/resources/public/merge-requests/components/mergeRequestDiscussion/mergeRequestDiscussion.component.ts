@@ -20,56 +20,70 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
+import { switchMap } from 'rxjs/operators';
+
+import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
+import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
+
 import './mergeRequestDiscussion.component.scss';
 
-const template = require('./mergeRequestDiscussion.component.html');
-
 /**
- * @ngdoc component
- * @name merge-requests.component:mergeRequestDiscussion
- * @requires shared.service:mergeRequestManagerService
- * @requires shared.service:utilService
+ * @class merge-requests.MergeRequestDiscussionComponent
  *
- * @description
- * `mergeRequestDiscussion` is a component which creates a div containing
- * {@link commentDisplay.component:commentDisplay comment displays} of the comment chains on a merge request
- * along with a {@link shared.component:markdownEditor} for making new comments and
- * {@link replyComment.component:replyComment reply comments} on comment chains. If a request is accepted,
+ * A component which creates a div containing {@link marge-requsets.CommentDisplayComponent comment displays} of the
+ * comment chains on a merge request along with a {@link shared.MarkdownEditorComponent} for making new comments and
+ * {@link merge-requests.ReplyCommentComponent reply comments} on comment chains. If a request is accepted,
  * no markdown editors are shown since the discussion on the request is now read only.
  *
- * @param {Object} request An object representing a Merge Request with comments
- * @param {Function} updateRequest A function to be called when the value of `request` changes. Expects an argument
- * called `value` and should update the value of `request`.
+ * @param {MergeRequest} request A Merge Request with comments
  */
-const mergeRequestDiscussionComponent = {
-    template,
-    bindings: {
-        request: '<',
-        updateRequest: '&'
-    },
-    controllerAs: 'dvm',
-    controller: mergeRequestDiscussionComponentCtrl
-};
+@Component({
+    selector: 'merge-request-discussion',
+    templateUrl: './mergeRequestDiscussion.component.html'
+})
+export class MergeRequestDiscussionComponent {
+    newComment = '';
+    isAccepted = false;
 
-mergeRequestDiscussionComponentCtrl.$inject = ['$q', 'mergeRequestManagerService', 'utilService'];
+    private _request: MergeRequest;
 
-function mergeRequestDiscussionComponentCtrl($q, mergeRequestManagerService, utilService) {
-    var dvm = this;
-    var util = utilService;
-    dvm.mm = mergeRequestManagerService;
-    dvm.newComment = '';
+    @Input() set request(value: MergeRequest) {
+        this._request = value;
+        this.isAccepted = this.mm.isAccepted(this.request.jsonld);
+    }
 
-    dvm.comment = function() {
-        dvm.mm.createComment(dvm.request.jsonld['@id'], dvm.newComment)
-            .then(() => {
-                dvm.newComment = '';
-                return dvm.mm.getComments(dvm.request.jsonld['@id']);
-            }, $q.reject)
-            .then(comments => {
-                dvm.request.comments = comments;
-                dvm.updateRequest({value: dvm.request});
-            }, util.createErrorToast);
+    get request(): MergeRequest {
+        return this._request;
+    }
+
+    @Output() requestChange = new EventEmitter<MergeRequest>();
+
+    constructor(public mm: MergeRequestManagerService, @Inject('utilService') public util) {}
+
+    saveComment(): void {
+        this.mm.createComment(this.request.jsonld['@id'], this.newComment)
+            .pipe(
+                switchMap(() => {
+                    this.newComment = '';
+                    return this.mm.getComments(this.request.jsonld['@id']);
+                })
+            )
+            .subscribe(comments => {
+                this.request.comments = comments;
+                this.requestChange.emit(this.request);
+            }, error => this.util.createErrorToast(error));
+    }
+    deleteComment(commentId: string): void {
+        this.mm.deleteComment(this.request.jsonld['@id'], commentId)
+            .pipe(
+                switchMap(() => {
+                    return this.mm.getComments(this.request.jsonld['@id']);
+                })
+            )
+            .subscribe(comments => {
+                this.request.comments = comments;
+                this.requestChange.emit(this.request);
+            }, error => this.util.createErrorToast(error));
     }
 }
-
-export default mergeRequestDiscussionComponent;

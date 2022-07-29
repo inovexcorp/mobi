@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { some, find, noop, remove, get, isEmpty, forEach } from 'lodash';
 
+import { some, find, noop, remove, get, isEmpty } from 'lodash';
 import './openOntologyTab.component.scss';
 
 const template = require('./openOntologyTab.component.html');
@@ -138,15 +138,14 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
         modalService.openConfirmModal(msg + '<p>Are you sure that you want to delete <strong>' + dvm.util.getDctermsValue(record, 'title') + '</strong>?</p>', dvm.deleteOntology);
     }
     dvm.deleteOntology = function() {
-        dvm.om.deleteOntology(dvm.recordId)
-            .then(response => {
-                remove(ontologyRecords, record => get(record, '@id', '') === dvm.recordId);
+        return dvm.om.deleteOntology(dvm.recordId)
+            .then(() => {
                 dvm.os.closeOntology(dvm.recordId);
                 const state = dvm.os.getOntologyStateByRecordId(dvm.recordId);
                 if (!isEmpty(state)) {
                     dvm.os.deleteOntologyState(dvm.recordId);
                 }
-                dvm.getPageOntologyRecords(1, dvm.filterText);
+                return dvm.getPageOntologyRecords(1, dvm.filterText);
             }, dvm.util.createErrorToast);
     }
     dvm.getPageOntologyRecords = function(page, inputFilterText) {
@@ -160,10 +159,12 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
             searchText: inputFilterText
         };
         httpService.cancel(dvm.id);
-        catalogManagerService.getRecords(catalogId, paginatedConfig, dvm.id).then(response => {
-            dvm.filteredList = response.data;
-            if (response.headers() !== undefined) {
-                dvm.totalSize = get(response.headers(), 'x-total-count');
+        catalogManagerService.getRecords(catalogId, paginatedConfig, dvm.id).subscribe(response => {
+            dvm.filteredList = response.body.filter(item => {
+                return item['@type'].some(i => i === 'http://mobi.com/ontologies/ontology-editor#OntologyRecord');
+            });
+            if (response.headers !== undefined) {
+                dvm.totalSize = Number(response.headers.get('x-total-count')) || 0 ;
             }
         });
     }

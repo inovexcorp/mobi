@@ -24,10 +24,10 @@
     <h3>Mapped Classes and Properties</h3>
     <div class="class-list">
         <ul class="list">
-            <li ng-repeat="classMapping in dvm.classMappings track by classMapping['@id']">
+            <li *ngFor="let classMapping of classMappings">
                 {{classMapping.title}} <small class="text-muted">{{classMapping.iriTemplate}}</small>
                 <ul class="props">
-                    <li ng-repeat="propMapping in classMapping.propMappings track by propMapping['@id']" ng-class="{'text-danger font-weight-bold': propMapping.isInvalid}">
+                    <li *ngFor="let propMapping of classMapping.propMappings" [ngClass]="{'text-danger font-weight-bold': propMapping.isInvalid}">
                         {{propMapping.title}} - {{propMapping.value}}
                     </li>
                 </ul>

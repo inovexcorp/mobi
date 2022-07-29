@@ -22,17 +22,18 @@
  */
 import { Component, Input, OnInit } from '@angular/core';
 import { has, get } from 'lodash';
-import './statementDisplay.component.scss';
-import { CommitChange } from '../../models/commitChange.interface';
+
 import { PrefixationPipe } from '../../pipes/prefixation.pipe';
 import { SplitIRIPipe } from '../../pipes/splitIRI.pipe';
+import { JSONLDValue } from '../../models/JSONLDValue.interface';
+import { JSONLDId } from '../../models/JSONLDId.interface';
+
+import './statementDisplay.component.scss';
 
 /**
- * @ngdoc component
- * @name shared.component:statementDisplay
+ * @class shared.StatementDisplayComponent
  *
- * @description
- * `statementDisplay` is a component that creates a div displaying the provided predicate and object.
+ * A component that creates a div displaying the provided predicate and object.
  *
  * @param {string} predicate A string of the predicate to display
  * @param {Object} object An object representing the object of a triple to display
@@ -44,7 +45,7 @@ import { SplitIRIPipe } from '../../pipes/splitIRI.pipe';
 })
 export class StatementDisplayComponent implements OnInit {
     @Input() predicate: string;
-    @Input() object: CommitChange;
+    @Input() object: JSONLDValue|JSONLDId;
     @Input() entityNameFunc: (args: any) => string;
 
     fullObject: string;

@@ -25,8 +25,11 @@ import { map, find, chain, sortBy, isNull, forEach, some } from 'lodash';
 import './recordPermissionView.component.scss';
 
 import { Policy } from '../../../shared/models/policy.interface';
-
-const template = require('./recordPermissionView.component.html');
+import { Group } from '../../../shared/models/group.interface';
+import { User } from '../../../shared/models/user.interface';
+import { Component, Inject, Input, OnInit, Output } from '@angular/core';
+import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { UserManagerService } from '../../../shared/services/userManager.service';
 
 /**
  * @ngdoc component
@@ -40,72 +43,70 @@ const template = require('./recordPermissionView.component.html');
  * `recordPermissionView` is a component that creates a form to contain a `userAccessControls` module that will
  * control the access controls for a record policy.
  */
-const recordPermissionViewComponent = {
-    template,
-    bindings: {
-        resolve: '<',
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: recordPermissionViewComponentCtrl
-};
+@Component({
+   templateUrl: './recordPermissionView.component.html',
+   selector: 'record-permission-view'
+})
+export class RecordPermissionViewComponent implements OnInit {
+    @Input() resolve;
+    @Output() close;
+    @Output() dismiss;
+    recordId = undefined;
+    policies = [];
+    title = '';
 
-recordPermissionViewComponentCtrl.$inject = ['catalogStateService', 'utilService', 'userManagerService', 'recordPermissionsManagerService']
+    constructor(public state: CatalogStateService,
+        public ums: UserManagerService,
+        @Inject('recordPermissionsManagerService') public rps, 
+        @Inject('utilService') public utilService){}
 
-function recordPermissionViewComponentCtrl(catalogStateService, utilService, userManagerService, recordPermissionsManagerService) {
-    const dvm = this;
-    dvm.recordId = undefined;
-    dvm.policies = [];
-    dvm.title = '';
-
-    dvm.$onInit = function() {
-        dvm.title = utilService.getDctermsValue(catalogStateService.selectedRecord, 'title');
-        dvm.getPolicy(catalogStateService.selectedRecord['@id']);
+    ngOnInit() {
+        this.title = this.utilService.getDctermsValue(this.state.selectedRecord, 'title');
+        this.getPolicy(this.state.selectedRecord['@id']);
     }
-    dvm.getPolicy = function(recordId: string) {
-        recordPermissionsManagerService.getRecordPolicy(recordId)
+
+    getPolicy(recordId: string) {
+        this.rps.getRecordPolicy(recordId)
             .then(responsePolicy => {
-                dvm.recordId = recordId;
-                return convertResponsePolicy(responsePolicy);
-            }, utilService.createErrorToast).then(policies => {
-                dvm.policies = policies;
+                this.recordId = recordId;
+                return this.convertResponsePolicy(responsePolicy);
+            }, this.utilService.createErrorToast).then(policies => {
+                this.policies = policies;
             });
     }
-    dvm.hasChanges = function() {
-        return some(dvm.policies, 'changed');
+    public hasChanges() {
+        return some(this.policies, 'changed');
     }
-    dvm.save = function() {
-        if (dvm.hasChanges()) {
+    public save() {
+        if (this.hasChanges()) {
             const recordPolicyObject = {}
-            forEach(dvm.policies, currentPolicy =>{
+            forEach(this.policies, currentPolicy =>{
                 recordPolicyObject[currentPolicy.id] = {
                     everyone: currentPolicy.everyone,
                     users: map(currentPolicy.selectedUsers, user => user.iri),
                     groups: map(currentPolicy.selectedGroups, user => user.iri),
                 };
             });
-            recordPermissionsManagerService.updateRecordPolicy(dvm.recordId, recordPolicyObject)
+            this.rps.updateRecordPolicy(this.recordId, recordPolicyObject)
                 .then(() => {
-                    dvm.policies = map(dvm.policies, policyItem => {
-                        policyItem.changed = false
+                    this.policies = map(this.policies, policyItem => {
+                        policyItem.changed = false;
                         return policyItem;
                     });
-                    utilService.createSuccessToast('Permissions updated');
-                }, utilService.createErrorToast);
+                    this.utilService.createSuccessToast('Permissions updated');
+                }, this.utilService.createErrorToast);
         }
     }
-    dvm.goBack = function() {
-        catalogStateService.editPermissionSelectedRecord = false;
+    goBack() {
+        this.state.editPermissionSelectedRecord = false;
     }
-
-    function convertResponsePolicy(responsePolicy){
+    private convertResponsePolicy(responsePolicy: [any]) {
         const policies = [];
         Object.keys(responsePolicy).forEach(key => {
-            const ruleTitle = getRuleTitle(key);
+            const ruleTitle = this.getRuleTitle(key);
             const ruleInfo = responsePolicy[key];
 
-            let policy: Policy = {
+            const policy: Policy = {
                 policy: {},
                 id: key,
                 changed: false,
@@ -118,12 +119,12 @@ function recordPermissionViewComponentCtrl(catalogStateService, utilService, use
             if (ruleInfo.everyone) {
                 policy.everyone = true;
             } else {
-                policy.selectedUsers = sortUsers(chain(ruleInfo.users)
-                    .map(userIri => find(userManagerService.users, {iri: userIri}))
+                policy.selectedUsers = this.sortUsers(chain(ruleInfo.users)
+                    .map(userIri => find(this.ums.users, {iri: userIri}))
                     .reject(isNull)
                     .value());
-                policy.selectedGroups = sortGroups(chain(ruleInfo.groups)
-                    .map(userIri => find(userManagerService.groups, {iri: userIri}))
+                policy.selectedGroups  = this.sortGroups(chain(ruleInfo.groups)
+                    .map(userIri => find(this.ums.groups, {iri: userIri}))
                     .reject(isNull)
                     .value());
             }
@@ -131,13 +132,13 @@ function recordPermissionViewComponentCtrl(catalogStateService, utilService, use
         });
         return policies;
     }
-    function sortUsers(users) {
+    private sortUsers(users) {
         return sortBy(users, 'username');
     }
-    function sortGroups(groups) {
+    private sortGroups(groups) {
         return sortBy(groups, 'title');
     }
-    function getRuleTitle(ruleId): string {
+    private getRuleTitle(ruleId): string {
         switch (ruleId) {
             case 'urn:read':
                 return 'View Record';
@@ -152,5 +153,3 @@ function recordPermissionViewComponentCtrl(catalogStateService, utilService, use
         }
     }
 }
-
-export default recordPermissionViewComponent;

@@ -20,159 +20,173 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { forEach, concat, some, isEmpty, get, noop } from 'lodash';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material';
+import { forEach, concat, some, isEmpty, get } from 'lodash';
+import { from, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
+
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { Conflict } from '../../../shared/models/conflict.interface';
+import { Difference } from '../../../shared/models/difference.class';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
+import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+import { EditRequestOverlayComponent } from '../editRequestOverlay/editRequestOverlay.component';
 
 import './mergeRequestView.component.scss';
 
-const template = require('./mergeRequestView.component.html');
-
 /**
- * @ngdoc component
- * @name merge-requests.component:mergeRequestView
- * @requires shared.service:mergeRequestManagerService
- * @requires shared.service:mergeRequestStateService
- * @requires shared.service:utilService
- * @requires shared.service:modalService
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:ontologyStateService
+ * @class merge-requests.MergeRequestViewComponent
  *
- * @description
- * `mergeRequestView` is a component which creates a div containing a {@link shared.component:block}
- * which displays metadata about the
- * {@link shared.service:mergeRequestsStateService selected MergeRequest} including a
- * {@link shared.component:commitDifferenceTabset} to display the changes and commits
- * between the source and target branch of the MergeRequest. The block also contains buttons to delete
- * the MergeRequest, accept the MergeRequest, and go back to the
- * {@link merge-requests.component:mergeRequestList}. This component houses the method for opening a
+ * A component which creates a div containing a display of metadata about the
+ * {@link shared.MergeRequestsStateService selected MergeRequest} including a
+ * {@link shared.CommitDifferenceTabsetComponent} to display the changes and commits between the source and target
+ * branch of the MergeRequest. The block also contains buttons to delete the MergeRequest, accept the MergeRequest, and
+ * go back to the {@link merge-requests.MergeRequestListComponent}. This component houses the method for opening a
  * modal for accepting merge requests.
  */
-const mergeRequestViewComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: mergeRequestViewComponentCtrl
-};
+@Component({
+    selector: 'merge-request-view',
+    templateUrl: './mergeRequestView.component.html'
+})
+export class MergeRequestViewComponent implements OnInit, OnDestroy {
+    resolveConflicts = false;
+    copiedConflicts: Conflict[] = [];
+    resolveError = false;
+    isAccepted = false;
 
-mergeRequestViewComponentCtrl.$inject = ['$q', 'mergeRequestManagerService', 'mergeRequestsStateService', 'utilService', 'modalService', 'ontologyStateService', 'ontologyManagerService'];
+    constructor(public mm: MergeRequestManagerService, public state: MergeRequestsStateService, private dialog: MatDialog,
+        @Inject('utilService') public util, @Inject('ontologyStateService') public os,
+        @Inject('ontologyManagerService') public om) {}
 
-function mergeRequestViewComponentCtrl($q, mergeRequestManagerService, mergeRequestsStateService, utilService, modalService, ontologyStateService, ontologyManagerService) {
-    var dvm = this;
-    var os = ontologyStateService;
-    var om = ontologyManagerService;
-    dvm.mm = mergeRequestManagerService;
-    dvm.util = utilService;
-    dvm.state = mergeRequestsStateService;
-    dvm.resolveConflicts = false;
-    dvm.copiedConflicts = [];
-    dvm.resolveError = false;
-
-    dvm.$onInit = function() {
-        dvm.mm.getRequest(dvm.state.selected.jsonld['@id'])
-            .then(jsonld => {
-                dvm.state.selected.jsonld = jsonld;
-                return dvm.state.setRequestDetails(dvm.state.selected);
+    ngOnInit(): void {
+        this.mm.getRequest(this.state.selected.jsonld['@id'])
+            .subscribe(jsonld => {
+                this.state.selected.jsonld = jsonld;
+                this.isAccepted = this.mm.isAccepted(this.state.selected.jsonld);
+                this.state.setRequestDetails(this.state.selected).subscribe(() => {}, this.util.createErrorToast);
             }, () => {
-                dvm.util.createWarningToast('The request you had selected no longer exists');
-                dvm.back();
-            }).then(noop, dvm.util.createErrorToast);
-    }
-    dvm.back = function() {
-        dvm.state.selected = undefined;
-    }
-    dvm.showDelete = function() {
-        modalService.openConfirmModal('<p>Are you sure you want to delete <strong>' + dvm.state.selected.title + '</strong>?</p>', () => dvm.state.deleteRequest(dvm.state.selected));
-    }
-    dvm.showAccept = function() {
-        modalService.openConfirmModal('<p>Are you sure that you want to accept <strong>' + dvm.state.selected.title + '</strong>?</p>', dvm.acceptRequest);
-    }
-    dvm.acceptRequest = function() {
-        var requestToAccept = angular.copy(dvm.state.selected);
-        var targetBranchId = requestToAccept.targetBranch['@id'];
-        var sourceBranchId = requestToAccept.sourceBranch['@id'];
-        var removeSource = dvm.state.removeSource(requestToAccept.jsonld);
-        dvm.mm.acceptRequest(requestToAccept.jsonld['@id'])
-            .then(() => {
-                dvm.util.createSuccessToast('Request successfully accepted');
-                return dvm.mm.getRequest(requestToAccept.jsonld['@id'])
-            }, $q.reject)
-            .then(jsonld => {
-                requestToAccept.jsonld = jsonld;
-                return dvm.state.setRequestDetails(requestToAccept);
-            }, $q.reject)
-            .then(() => {
-                if (removeSource) {
-                    return om.deleteOntologyBranch(requestToAccept.recordIri, sourceBranchId)
-                        .then(() => {
-                            if (some(os.list, {ontologyRecord: {recordId: requestToAccept.recordIri}})) {
-                                os.removeBranch(requestToAccept.recordIri, sourceBranchId);
-                            }
-                        }, $q.reject);
-                }
-                return $q.when();
-            }, $q.reject)
-            .then(() => {
-                dvm.state.selected = requestToAccept;
-                if (!isEmpty(os.listItem)) {
-                    if (get(os.listItem, 'ontologyRecord.branchId') === targetBranchId) {
-                        os.listItem.upToDate = false;
-                        if (os.listItem.merge.active) {
-                            dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form.', {timeOut: 5000});
-                        }
-                    }
-                    if (os.listItem.merge.active && get(os.listItem.merge.target, '@id') === targetBranchId) {
-                        dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
-                    }
-                }
-            }, dvm.util.createErrorToast);
-    }
-    dvm.showResolutionForm = function() {
-        dvm.resolveConflicts = true;
-        dvm.copiedConflicts = angular.copy(dvm.state.selected.conflicts);
-        forEach(dvm.copiedConflicts, conflict => {
-            conflict.resolved = false;
-        });
-        dvm.resolveError = false;
-    }
-    dvm.resolve = function() {
-        var resolutions = createResolutions();
-        dvm.state.resolveRequestConflicts(dvm.state.selected, resolutions)
-            .then(() => {
-                dvm.util.createSuccessToast('Conflicts successfully resolved');
-                dvm.resolveConflicts = false;
-                dvm.copiedConflicts = [];
-                dvm.resolveError = false;
-            }, error => {
-                dvm.resolveError = true;
+                this.util.createWarningToast('The request you had selected no longer exists');
+                this.back();
             });
     }
-    dvm.cancelResolve = function() {
-        dvm.resolveConflicts = false;
-        dvm.copiedConflicts = [];
-        dvm.resolveError = false;
+    ngOnDestroy(): void {
+        this.state.clearDifference();
     }
-    dvm.allResolved = function() {
-        return !some(dvm.copiedConflicts, {resolved: false});
+    back(): void {
+        this.state.selected = undefined;
     }
-    dvm.editRequest = function() {
-        modalService.openModal('editRequestOverlay');
+    showDelete(): void {
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: '<p>Are you sure you want to delete <strong>' + this.state.selected.title + '</strong.?</p>'
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.state.deleteRequest(this.state.selected);
+            }
+        });
+    }
+    showAccept(): void {
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: '<p>Are you sure you want to accept <strong>' + this.state.selected.title + '</strong.?</p>'
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.acceptRequest();
+            }
+        });
+    }
+    acceptRequest(): void {
+        const requestToAccept = Object.assign({}, this.state.selected);
+        const targetBranchId = requestToAccept.targetBranch['@id'];
+        const sourceBranchId = requestToAccept.sourceBranch['@id'];
+        const removeSource = requestToAccept.removeSource;
+        
+        this.mm.acceptRequest(requestToAccept.jsonld['@id'])
+            .pipe(
+                switchMap(() => {
+                    this.util.createSuccessToast('Request successfully accepted');
+                    this.isAccepted = true;
+                    return this.mm.getRequest(requestToAccept.jsonld['@id']);
+                }),
+                switchMap((jsonld: JSONLDObject) => {
+                    requestToAccept.jsonld = jsonld;
+                    return this.state.setRequestDetails(requestToAccept);
+                }),
+                switchMap(() => {
+                    if (removeSource) {
+                        return from(this.om.deleteOntologyBranch(requestToAccept.recordIri, sourceBranchId)
+                            .then(() => {
+                                if (some(this.os.list, {ontologyRecord: {recordId: requestToAccept.recordIri}})) {
+                                    this.os.removeBranch(requestToAccept.recordIri, sourceBranchId);
+                                }
+                            }, error => Promise.reject(error)));
+                    }
+                    return of(null);
+                }))
+            .subscribe(() => {
+                this.state.selected = requestToAccept;
+                if (!isEmpty(this.os.listItem)) {
+                    if (get(this.os.listItem, 'ontologyRecord.branchId') === targetBranchId) {
+                        this.os.listItem.upToDate = false;
+                        if (this.os.listItem.merge.active) {
+                            this.util.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form.', {timeOut: 5000});
+                        }
+                    }
+                    if (this.os.listItem.merge.active && get(this.os.listItem.merge.target, '@id') === targetBranchId) {
+                        this.util.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
+                    }
+                }
+            }, error => this.util.createErrorToast(error));
+    }
+    showResolutionForm(): void {
+        this.resolveConflicts = true;
+        this.copiedConflicts = Object.assign([], this.state.selected.conflicts);
+        this.copiedConflicts.forEach(conflict => {
+            conflict.resolved = false;
+        });
+        this.resolveError = false;
+    }
+    resolve(): void {
+        const resolutions = this._createResolutions();
+        this.state.resolveRequestConflicts(this.state.selected, resolutions)
+            .subscribe(() => {
+                this.util.createSuccessToast('Conflicts successfully resolved');
+                this.resolveConflicts = false;
+                this.copiedConflicts = [];
+                this.resolveError = false;
+            }, error => {
+                this.util.createErrorToast(error);
+                this.resolveError = true;
+            });
+    }
+    cancelResolve(): void {
+        this.resolveConflicts = false;
+        this.copiedConflicts = [];
+        this.resolveError = false;
+    }
+    allResolved(): boolean {
+        return !some(this.copiedConflicts, conflict => !conflict.resolved);
+    }
+    editRequest(): void {
+        this.dialog.open(EditRequestOverlayComponent);
     }
 
-    function createResolutions() {
-        var resolutions = {
-            additions: [],
-            deletions: []
-        };
-        forEach(dvm.copiedConflicts, conflict => {
+    private _createResolutions(): Difference {
+        const resolutions = new Difference();
+        forEach(this.copiedConflicts, conflict => {
             if (conflict.resolved === 'left') {
-                addToResolutions(resolutions, conflict.right);
+                this._addToResolutions(resolutions, conflict.right);
             } else if (conflict.resolved === 'right') {
-                addToResolutions(resolutions, conflict.left);
+                this._addToResolutions(resolutions, conflict.left);
             }
         });
         return resolutions;
     }
-    function addToResolutions(resolutions, notSelected) {
+    private _addToResolutions(resolutions, notSelected) {
         if (notSelected.additions.length) {
             resolutions.deletions = concat(resolutions.deletions, notSelected.additions);
         } else {
@@ -180,5 +194,3 @@ function mergeRequestViewComponentCtrl($q, mergeRequestManagerService, mergeRequ
         }
     }
 }
-
-export default mergeRequestViewComponent;

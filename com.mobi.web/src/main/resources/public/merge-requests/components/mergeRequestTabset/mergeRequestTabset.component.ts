@@ -20,49 +20,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get } from 'lodash';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+
+import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
+import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 
 import './mergeRequestTabset.component.scss';
 
-const template = require('./mergeRequestTabset.component.html');
-
 /**
- * @ngdoc component
- * @name merge-requests.component:mergeRequestTabset
- * @requires shared.service:mergeRequestsStateService
+ * @class merge-requests.MergeRequestTabsetComponent
  *
- * @description
- * `mergeRequestTabset` is a component which creates a div containing a
- * {@link shared.component:materialTabset tabset} with tabs for the
- * {@link merge-requests.component:mergeRequestDiscussion},
- * {@link shared.component:commitChangesDisplay changes}, and
- * {@link shared.component:commitHistoryTable commits} of the provided Merge Request.
+ * A component which creates a div containing a `mat-tab-group` with tabs for the
+ * {@link merge-requests.MergeRequestDiscussionComponent},
+ * {@link shared.CommitChangesDisplayComponent changes}, and
+ * {@link shared.CommitHistoryTableComponent commits} of the provided Merge Request.
  *
- * @param {Object} request An object representing a Merge Request
- * @param {Function} updateRequest A function to be called when the value of `request` changes. Expects an argument
- * called `value` and should update the value of `request`.
+ * @param {MergeRequest} request The MergeRequest to display details about. Has a change function
  */
-const mergeRequestTabsetComponent = {
-    template,
-    bindings: {
-        request: '<',
-        updateRequest: '&'
-    },
-    controllerAs: 'dvm',
-    controller: mergeRequestTabsetComponentCtrl
-};
+@Component({
+    selector: 'merge-request-tabset',
+    templateUrl: './mergeRequestTabset.component.html'
+})
+export class MergeRequestTabsetComponent {
+    tabIndex = 0;
 
-mergeRequestTabsetComponentCtrl.$inject = ['mergeRequestsStateService'];
+    @Input() request: MergeRequest;
+    
+    @Output() requestChange = new EventEmitter<MergeRequest>();
 
-function mergeRequestTabsetComponentCtrl(mergeRequestsStateService) {
-    var dvm = this;
-    dvm.state = mergeRequestsStateService;
+    constructor(public state: MergeRequestsStateService) {}
 
-    dvm.tabs = {
-        discussion: true,
-        changes: false,
-        commits: false
-    };
+    getEntityName(iri: string): string {
+        return this.state.getEntityNameLabel(iri);
+    }
 }
-
-export default mergeRequestTabsetComponent;

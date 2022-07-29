@@ -21,6 +21,9 @@
  * #L%
  */
 import { get, reject, find, noop } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 import './mergeBlock.component.scss';
 
@@ -52,7 +55,7 @@ const mergeBlockComponent = {
 
 mergeBlockComponentCtrl.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', 'prefixes', '$q'];
 
-function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManagerService, prefixes, $q) {
+function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManagerService: CatalogManagerService, prefixes, $q) {
     var dvm = this;
     var cm = catalogManagerService;
     dvm.os = ontologyStateService;
@@ -84,7 +87,7 @@ function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManag
         dvm.os.listItem.merge.startIndex = 0;
         dvm.os.listItem.merge.target = value;
         if (dvm.os.listItem.merge.target) {
-            cm.getRecordBranch(dvm.os.listItem.merge.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
+            cm.getRecordBranch(dvm.os.listItem.merge.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise()
                 .then(target => {
                     dvm.targetHeadCommitId = dvm.util.getPropertyId(target, prefixes.catalog + 'head');
                     return dvm.os.getMergeDifferences(dvm.os.listItem.ontologyRecord.commitId, dvm.targetHeadCommitId, cm.differencePageSize, 0);

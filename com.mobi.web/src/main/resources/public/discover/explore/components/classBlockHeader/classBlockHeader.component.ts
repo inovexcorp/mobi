@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 import './classBlockHeader.component.scss';
 
 const template = require('./classBlockHeader.component.html');
@@ -48,7 +49,7 @@ const classBlockHeaderComponent = {
 
 classBlockHeaderComponentCtrl.$inject = ['discoverStateService', 'exploreService', 'exploreUtilsService', 'utilService', 'modalService', 'prefixes', 'policyEnforcementService'];
 
-function classBlockHeaderComponentCtrl(discoverStateService, exploreService, exploreUtilsService, utilService, modalService, prefixes, policyEnforcementService) {
+function classBlockHeaderComponentCtrl(discoverStateService: DiscoverStateService, exploreService, exploreUtilsService, utilService, modalService, prefixes, policyEnforcementService) {
     const dvm = this;
     const es = exploreService;
     const util = utilService;

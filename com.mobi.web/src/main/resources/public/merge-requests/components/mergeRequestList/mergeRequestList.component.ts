@@ -20,46 +20,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material';
+
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
+import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+
 import './mergeRequestList.component.scss';
 
-const template = require('./mergeRequestList.component.html');
-
 /**
- * @ngdoc component
- * @name merge-requests.component:mergeRequestList
- * @requires shared.service:mergeRequestsStateService
- * @requires shared.service:modalService
+ * @class merge-requests.MergeRequestListComponent
  *
- * @description
- * `mergeRequestList` is a component which creates a div containing a {@link shared.component:block}
- * with the list of MergeRequests retrieved by the
- * {@link shared.service:mergeRequestsStateService}. The component houses the method for opening a
- * modal for deleting merge requests.
+ * A component which creates a div containing a list of MergeRequests retrieved by the
+ * {@link shared.MergeRequestsStateService}. The component houses the method for opening a modal for deleting merge
+ * requests.
  */
-const mergeRequestListComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: mergeRequestListComponentCtrl
-};
-
-mergeRequestListComponentCtrl.$inject = ['mergeRequestsStateService', 'modalService'];
-
-function mergeRequestListComponentCtrl(mergeRequestsStateService, modalService) {
-    var dvm = this;
-    dvm.filterOptions = [
-        {value: false, label: 'Open'},
-        {value: true, label: 'Accepted'}
+@Component({
+    selector: 'merge-request-list',
+    templateUrl: './mergeRequestList.component.html'
+})
+export class MergeRequestListComponent implements OnInit {
+    filterOptions = [
+        { value: false, label: 'Open' },
+        { value: true, label: 'Accepted' }
     ];
-    dvm.state = mergeRequestsStateService;
 
-    dvm.$onInit = function() {
-        dvm.state.setRequests(dvm.state.acceptedFilter);
+    constructor(public state: MergeRequestsStateService, public dialog: MatDialog) {}
+
+    ngOnInit(): void {
+        this.state.setRequests(this.state.acceptedFilter);
     }
-    dvm.showDeleteOverlay = function(request, event) {
-        event.stopPropagation();
-        modalService.openConfirmModal('<p>Are you sure you want to delete ' + request.title + '?</p>', () => dvm.state.deleteRequest(request));
+    showDeleteOverlay(request: MergeRequest): void {
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: '<p>Are you sure you want to delete ' + request.title + '?</p>'
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.state.deleteRequest(request);
+            }
+        });
     }
 }
-
-export default mergeRequestListComponent;

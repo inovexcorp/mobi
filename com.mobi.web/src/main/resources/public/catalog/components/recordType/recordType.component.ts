@@ -20,52 +20,45 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Inject, Input } from '@angular/core';
 import { find, difference, includes, get} from 'lodash';
 
-const template = require('./recordType.component.html');
+import { CATALOG } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 /**
- * @ngdoc component
- * @name catalog.component:recordType
- * @requires shared.service:catalogManagerService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @class catalog.RecordTypeComponent
  *
- * @description
- * `recordType` is a directive that creates a span with the main type of the provided catalog Record. This type is
- * determined by removing the core Record types from the full list of Record types supported from the
- * {@link shared.service:catalogManagerService} and finding the first one of those types that is present on
- * the provided Record JSON-LD object.
+ * A component that creates a span with the main type of the provided catalog Record. This type is determined by
+ * removing the core Record types from the full list of Record types supported from the
+ * {@link shared.CatalogManagerService} and finding the first one of those types that is present on the provided Record
+ * JSON-LD object.
  *
- * @param {Object} record A JSON-LD object for a catalog Record
+ * @param {JSONLDObject} record A JSON-LD object for a catalog Record
  */
-const recordTypeComponent = {
-    template,
-    bindings: {
-        record: '<'
-    },
-    controllerAs: 'dvm',
-    controller: recordTypeComponentCtrl
-};
+@Component({
+    selector: 'record-type',
+    templateUrl: './recordType.component.html'
+})
+export class RecordTypeComponent {
+    type = '';
 
-recordTypeComponentCtrl.$inject = ['catalogManagerService', 'utilService', 'prefixes'];
+    private _record: JSONLDObject;
 
-function recordTypeComponentCtrl(catalogManagerService, utilService, prefixes) {
-    var dvm = this;
-    var util = utilService;
-    var cm = catalogManagerService;
-    dvm.type = '';
-
-    dvm.$onInit = function() {
-        dvm.type = getType();
+    @Input() set record(value: JSONLDObject) {
+        this._record = value;
+        this.type = this.getType(this._record);
     }
-    dvm.$onChanges = function() {
-        dvm.type = getType();
+
+    get record(): JSONLDObject {
+        return this._record;
     }
-    function getType() {
-        var type = find(difference(cm.recordTypes, cm.coreRecordTypes), type => includes(get(dvm.record, '@type', []), type));
-        return util.getBeautifulIRI(type || prefixes.catalog + 'Record');
+
+    constructor(public cm: CatalogManagerService, @Inject('utilService') public util) {}
+
+    getType(record: JSONLDObject): string {
+        const type = find(difference(this.cm.recordTypes, this.cm.coreRecordTypes), type => includes(get(record, '@type', []), type));
+        return this.util.getBeautifulIRI(type || CATALOG + 'Record');
     }
 }
-
-export default recordTypeComponent;

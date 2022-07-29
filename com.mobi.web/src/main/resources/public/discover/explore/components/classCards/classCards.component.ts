@@ -21,6 +21,7 @@
  * #L%
  */
 import { merge, chunk, orderBy, initial } from 'lodash';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 
 import './classCards.component.scss';
 
@@ -50,7 +51,7 @@ const classCardsComponent = {
 
 classCardsComponentCtrl.$inject = ['discoverStateService', 'exploreService', 'utilService', 'prefixes', 'policyEnforcementService'];
 
-function classCardsComponentCtrl(discoverStateService, exploreService, utilService, prefixes, policyEnforcementService) {
+function classCardsComponentCtrl(discoverStateService: DiscoverStateService, exploreService, utilService, prefixes, policyEnforcementService) {
     const dvm = this;
     const ds = discoverStateService;
     const es = exploreService;

@@ -20,168 +20,235 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, includes, map, filter, find, concat } from 'lodash';
+import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { MatDialog, PageEvent } from '@angular/material';
+import { get, map, find } from 'lodash';
+import { forkJoin, Observable, of } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
+
+import { CATALOG, DATASET, POLICY } from '../../../prefixes';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { Dataset } from '../../../shared/models/dataset.interface';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
+import { DatasetStateService } from '../../../shared/services/datasetState.service';
+import { EditDatasetOverlayComponent } from '../editDatasetOverlay/editDatasetOverlay.component';
+import { NewDatasetOverlayComponent } from '../newDatasetOverlay/newDatasetOverlay.component';
+import { UploadDataOverlayComponent } from '../uploadDataOverlay/uploadDataOverlay.component';
 
 import './datasetsList.component.scss';
 
-const template = require('./datasetsList.component.html');
-
-/**
- * @ngdoc component
- * @name datasets.component:datasetsList
- * @requires shared.service:datasetStateService
- * @requires shared.service:datasetManagerService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
- * @requires shared.service:modalService
- *
- * @description
- * `datasetsList` is a component which creates a Bootstrap row containing a {@link shared.component:block block}
- * with a {@link shared.component:paging paginated} list of
- * {@link shared.service:datasetStateService Dataset Records} and
- * {@link shared.component:confirmModal confirmModal}s for deleting and clearing
- * datasets. Each dataset only displays its title, dataset IRI, and a portion of its description until it is
- * opened. Only one dataset can be open at a time.
- */
-const datasetsListComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: datasetsListComponentCtrl
-};
-
-datasetsListComponentCtrl.$inject = ['$q', 'datasetManagerService', 'datasetStateService', 'catalogManagerService', 'utilService', 'prefixes', 'modalService', 'policyEnforcementService'];
-
-function datasetsListComponentCtrl($q, datasetManagerService, datasetStateService, catalogManagerService, utilService, prefixes, modalService, policyEnforcementService) {
-    var dvm = this;
-    var dm = datasetManagerService;
-    var cm = catalogManagerService;
-    var cachedOntologyRecords = [];
-    var pep = policyEnforcementService;
-    dvm.state = datasetStateService;
-    dvm.util = utilService;
-    dvm.prefixes = prefixes;
-    dvm.cachedOntologyIds = [];
-
-    dvm.$onInit = function() {
-        dvm.catalogId = get(cm.localCatalog, '@id', '');
-        dvm.currentPage = dvm.state.paginationConfig.pageIndex + 1;
-    }
-    dvm.getIdentifiedOntologyIds = function(dataset) {
-        return map(dataset.identifiers, identifier => identifier[prefixes.dataset + 'linksToRecord'][0]['@id']);
-    }
-    dvm.getOntologyTitle = function(id) {
-        return dvm.util.getDctermsValue(find(cachedOntologyRecords, {'@id': id}), 'title');
-    }
-    dvm.clickDataset = function(dataset) {
-        if (dvm.state.openedDatasetId === dataset.record['@id']) {
-            dvm.state.selectedDataset = undefined;
-            dvm.state.openedDatasetId = '';
-        } else {
-            dvm.state.selectedDataset = dataset;
-            dvm.state.openedDatasetId = dataset.record['@id'];
-            var toRetrieve = filter(dvm.getIdentifiedOntologyIds(dataset), id => !includes(dvm.cachedOntologyIds, id));
-            $q.all(map(toRetrieve, id => cm.getRecord(id, dvm.catalogId)))
-                .then(responses => {
-                    var matchingRecords = map(responses, response => find(response, mr => toRetrieve.includes(mr['@id'])));
-                    dvm.cachedOntologyIds = concat(dvm.cachedOntologyIds, map(matchingRecords, '@id'));
-                    cachedOntologyRecords = concat(cachedOntologyRecords, matchingRecords);
-                }, () => dvm.errorMessage = 'Unable to load all Dataset details.');
-        }
-    }
-    dvm.getPage = function(page) {
-        dvm.currentPage = page;
-        dvm.state.paginationConfig.pageIndex = dvm.currentPage - 1;
-        dvm.state.setResults();
-    }
-    dvm.delete = function(dataset) {
-        dm.deleteDatasetRecord(dataset.record['@id'])
-            .then(() => {
-                dvm.util.createSuccessToast('Dataset successfully deleted');
-                if (dvm.state.results.length === 1 && dvm.state.paginationConfig.pageIndex > 0) {
-                    dvm.state.paginationConfig.pageIndex -= 1;
-                }
-                dvm.state.setResults();
-                dvm.state.submittedSearch = !!dvm.state.paginationConfig.searchText;
-            }, dvm.util.createErrorToast);
-    }
-    dvm.clear = function(dataset) {
-        dm.clearDatasetRecord(dataset.record['@id'])
-            .then(() => {
-                dvm.util.createSuccessToast('Dataset successfully cleared');
-            }, dvm.util.createErrorToast);
-    }
-    dvm.showUploadData = function(dataset) {
-        const request = {
-            resourceId: dataset.record['@id'],
-            actionId: prefixes.catalog + 'Modify'
-        };
-        pep.evaluateRequest(request)
-            .then(response => {
-                const hasPermission = response !== pep.deny;
-                if (hasPermission) {
-                    dvm.state.selectedDataset = dataset;
-                    modalService.openModal('uploadDataOverlay');
-                } else {
-                    dvm.util.createErrorToast('You do not have permission to modify dataset record');
-                }
-            }, () => {
-                dvm.util.createErrorToast('Could not retrieve record permissions');
-            });
-    }
-    dvm.showEdit = function(dataset) {
-        const request = {
-            resourceId: dataset.record['@id'],
-            actionId: prefixes.policy + 'Update'
-        };
-        pep.evaluateRequest(request)
-            .then(response => {
-                const hasPermission = response !== pep.deny;
-                if (hasPermission) {
-                    dvm.state.selectedDataset = dataset;
-                    modalService.openModal('editDatasetOverlay');
-                } else {
-                    dvm.util.createErrorToast('You do not have permission to update dataset record');
-                }
-            }, () => {
-                dvm.util.createErrorToast('Could not retrieve record permissions');
-            });
-    }
-    dvm.showClear = function(dataset) {
-        const request = {
-            resourceId: dataset.record['@id'],
-            actionId: prefixes.catalog + 'Modify'
-        };
-        pep.evaluateRequest(request)
-            .then(response => {
-                const hasPermission = response !== pep.deny;
-                if (hasPermission) {
-                    modalService.openConfirmModal('<p>Are you sure that you want to clear <strong>' + dvm.util.getDctermsValue(dataset.record, 'title') + '</strong>?</p>', () => dvm.clear(dataset));
-                } else {
-                    dvm.util.createErrorToast('You do not have permission to modify dataset record');
-                }
-            }, () => {
-                dvm.util.createErrorToast('Could not retrieve record permissions');
-            });
-    }
-    dvm.showDelete = function(dataset) {
-        const request = {
-            resourceId: dataset.record['@id'],
-            actionId: prefixes.policy + 'Delete'
-        };
-        pep.evaluateRequest(request)
-            .then(response => {
-                const hasPermission = response !== pep.deny;
-                if (hasPermission) {
-                    modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.util.getDctermsValue(dataset.record, 'title') + '</strong>?</p>', () => dvm.delete(dataset));
-                } else {
-                    dvm.util.createErrorToast('You do not have permission to delete dataset record');
-                }
-            }, () => {
-                dvm.util.createErrorToast('Could not retrieve record permissions');
-            });
-    }
+interface DatasetDisplayItem {
+    title: string,
+    datasetIRI: string,
+    description: string,
+    modified: string
+    ontologies: string[],
+    repositoryId: string,
+    dataset: Dataset
 }
 
-export default datasetsListComponent;
+/**
+ * @class datasets.DatasetsListComponent
+ * 
+ * A component containing a paginated searchable list of {@link shared.DatasetStateService Dataset Records} and
+ * {@link shared.ConfirmModalComponent confirmModal}s for deleting and clearing datasets. Each dataset displays its
+ * title, dataset IRI, description, modified date, repository id, and attached ontologies.
+ */
+@Component({
+    selector: 'datasets-list',
+    templateUrl: './datasetsList.component.html'
+})
+export class DatasetsListComponent implements OnInit {
+    catalogId = '';
+    errorMessage = '';
+    cachedOntologyTitles = {};
+    results: DatasetDisplayItem[] = [];
+    searchText = '';
+
+    @ViewChild('datasetsList') datasetsList: ElementRef;
+    
+    constructor(public dm: DatasetManagerService, public state: DatasetStateService, public cm: CatalogManagerService, 
+        private dialog: MatDialog, private spinnerSvc: ProgressSpinnerService,
+        @Inject('policyEnforcementService') private pep, @Inject('utilService') public util) {}
+    
+    ngOnInit(): void {
+        this.catalogId = get(this.cm.localCatalog, '@id', '');
+        this.setResults();
+        this.searchText = this.state.paginationConfig.searchText;
+        this.state.submittedSearch = !!this.state.paginationConfig.searchText;
+    }
+    getIdentifiedOntologyIds(dataset: Dataset): string[] {
+        return map(dataset.identifiers, identifier => identifier[DATASET + 'linksToRecord'][0]['@id']);
+    }
+    getRecordTitle(record: JSONLDObject): string {
+        return this.util.getDctermsValue(record, 'title');
+    }
+    setCachedOntologyTitles(datasets: Dataset[]): Observable<null> {
+        const toRetrieve = [];
+        datasets.forEach((dataset: Dataset) => {
+            this.getIdentifiedOntologyIds(dataset).forEach(id => {
+                if (!(id in this.cachedOntologyTitles) && !toRetrieve.includes(id)) {
+                    toRetrieve.push(id);
+                }
+            });
+        });
+        if (toRetrieve.length) {
+            return forkJoin(map(toRetrieve, id => this.cm.getRecord(id, this.catalogId).pipe(catchError(error => of(error)))))
+                .pipe(switchMap((responses: (JSONLDObject[] | string)[]) => {
+                    responses.forEach((response, idx: number) => {
+                        if (typeof response === 'string') {
+                            this.cachedOntologyTitles[toRetrieve[idx]] = '(Ontology not found)';
+                        } else {
+                            const record = find(response, mr => toRetrieve.includes(mr['@id']));
+                            this.cachedOntologyTitles[record['@id']] = this.getRecordTitle(record);
+                        }
+                    });
+                    return of(null);
+                }));
+        } else {
+            return of(null);
+        }
+    }
+    getPage(pageEvent: PageEvent): void {
+        this.state.paginationConfig.pageIndex = pageEvent.pageIndex;
+        this.setResults();
+    }
+    delete(dataset: Dataset): void {
+        this.dm.deleteDatasetRecord(dataset.record['@id'])
+            .subscribe(() => {
+                this.util.createSuccessToast('Dataset successfully deleted');
+                if (this.results.length === 1 && this.state.paginationConfig.pageIndex > 0) {
+                    this.state.paginationConfig.pageIndex -= 1;
+                }
+                this.setResults();
+                this.state.submittedSearch = !!this.state.paginationConfig.searchText;
+            }, this.util.createErrorToast);
+    }
+    setResults(): void {
+        this.spinnerSvc.startLoadingForComponent(this.datasetsList);
+        this.state.setResults().subscribe(results => {
+            this.setCachedOntologyTitles(results).subscribe(() => {
+                this.results = results.map(dataset => ({
+                    title: this.util.getDctermsValue(dataset.record, 'title'),
+                    datasetIRI: this.util.getPropertyId(dataset.record, DATASET + 'dataset'),
+                    description: this.util.getDctermsValue(dataset.record, 'description') || '(No Description)',
+                    modified: this.util.getDate(this.util.getDctermsValue(dataset.record, 'modified'), 'short'),
+                    repositoryId: this.util.getPropertyValue(dataset.record, DATASET + 'repository'),
+                    ontologies: this.getIdentifiedOntologyIds(dataset).map(ontologyId => this.cachedOntologyTitles[ontologyId]),
+                    dataset
+                }));
+                this.spinnerSvc.finishLoadingForComponent(this.datasetsList);
+            });
+        });
+    }
+    clear(dataset: Dataset): void {
+        this.dm.clearDatasetRecord(dataset.record['@id'])
+            .subscribe(() => {
+                this.util.createSuccessToast('Dataset successfully cleared');
+            }, this.util.createErrorToast);
+    }
+    showUploadData(dataset: Dataset): void {
+        const request = {
+            resourceId: dataset.record['@id'],
+            actionId: CATALOG + 'Modify'
+        };
+        this.pep.evaluateRequest(request)
+            .then(response => {
+                const hasPermission = response !== this.pep.deny;
+                if (hasPermission) {
+                    this.state.selectedDataset = dataset;
+                    this.dialog.open(UploadDataOverlayComponent);
+                } else {
+                    this.util.createErrorToast('You do not have permission to modify dataset record');
+                }
+            }, () => {
+                this.util.createErrorToast('Could not retrieve record permissions');
+            });
+    }
+    showEdit(dataset: Dataset): void {
+        const request = {
+            resourceId: dataset.record['@id'],
+            actionId: POLICY + 'Update'
+        };
+        this.pep.evaluateRequest(request)
+            .then(response => {
+                const hasPermission = response !== this.pep.deny;
+                if (hasPermission) {
+                    this.state.selectedDataset = dataset;
+                    this.dialog.open(EditDatasetOverlayComponent).afterClosed().subscribe((result: boolean) => {
+                        if (result) {
+                            this.setResults();
+                        }
+                    });
+                } else {
+                    this.util.createErrorToast('You do not have permission to update dataset record');
+                }
+            }, () => {
+                this.util.createErrorToast('Could not retrieve record permissions');
+            });
+    }
+    showNew(): void {
+        this.dialog.open(NewDatasetOverlayComponent).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.setResults();
+            }
+        });
+    }
+    showClear(dataset: Dataset): void {
+        const request = {
+            resourceId: dataset.record['@id'],
+            actionId: CATALOG + 'Modify'
+        };
+        this.pep.evaluateRequest(request)
+            .then(response => {
+                const hasPermission = response !== this.pep.deny;
+                if (hasPermission) {
+                    this.dialog.open(ConfirmModalComponent, {
+                        data: {
+                            content: 'Are you sure you want to clear <strong>' + this.util.getDctermsValue(dataset.record, 'title') + '</strong>?'
+                        }
+                    }).afterClosed().subscribe((result: boolean) => {
+                        if (result) {
+                            this.clear(dataset);
+                        }
+                    });
+                } else {
+                    this.util.createErrorToast('Could not retrieve record permissions');
+                }
+            });
+    }
+    showDelete(dataset: Dataset): void {
+        const request = {
+            resourceId: dataset.record['@id'],
+            actionId: POLICY + 'Delete'
+        };
+        this.pep.evaluateRequest(request)
+            .then(response => {
+                const hasPermission = response !== this.pep.deny;
+                if (hasPermission) {
+                    this.dialog.open(ConfirmModalComponent, {
+                        data: {
+                            content: 'Are you sure you want to delete <strong>' + this.util.getDctermsValue(dataset.record, 'title') + '</strong>?'
+                        }
+                    }).afterClosed().subscribe((result: boolean) => {
+                        if (result) {
+                            this.delete(dataset);
+                        }
+                    });
+                } else {
+                    this.util.createErrorToast('You do not have permission to delete dataset record');
+                }
+            }, () => {
+                this.util.createErrorToast('Could not retrieve record permissions');
+            });
+    }
+    searchRecords(): void {
+        this.state.resetPagination();
+        this.state.paginationConfig.searchText = this.searchText;
+        this.setResults();
+        this.state.submittedSearch = !!this.state.paginationConfig.searchText;
+    }
+}

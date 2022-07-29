@@ -31,16 +31,18 @@ import { UIRouterUpgradeModule } from '@uirouter/angular-hybrid';
 import { MODULE_NAME } from './app.module.ajs';
 
 import { SharedModule } from './shared/shared.module';
-import { ShapesGraphEditorModule } from "./shapes-graph-editor/shapes-graph-editor.module";
+import { ShapesGraphEditorModule } from './shapes-graph-editor/shapes-graph-editor.module';
 import { LoginModule } from './login/login.module';
 import { SettingsModule } from './settings/settings.module';
 import { HomeModule } from './home/home.module';
 import { UserManagementModule } from './user-management/user-management.module';
+import { CatalogModule } from './catalog/catalog.module';
+import { DatasetsModule } from './datasets/datasets.module';
 import { OntologyVisualizationModule } from './ontology-visualization/ontologyVisualization.module';
 import { AppComponent } from './app.component';
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import { SpinnerInterceptor } from './spinner.interceptor';
-import { SpinnerService } from './spinner.service';
+import { MergeRequestsModule } from './merge-requests/merge-requests.module';
+import { MapperModule } from './mapper/mapper.module';
+import { DiscoverModule } from './discover/discover.module';
 
 @NgModule({
     imports: [
@@ -50,9 +52,14 @@ import { SpinnerService } from './spinner.service';
         BrowserAnimationsModule,
         UIRouterUpgradeModule.forRoot(),
         SharedModule,
+        CatalogModule,
+        DatasetsModule,
         LoginModule,
+        MapperModule,
         HomeModule,
+        DiscoverModule,
         OntologyVisualizationModule,
+        MergeRequestsModule,
         SettingsModule,
         ShapesGraphEditorModule,
         UserManagementModule
@@ -63,14 +70,7 @@ import { SpinnerService } from './spinner.service';
     entryComponents: [
         AppComponent
     ],
-    providers: [
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: SpinnerInterceptor,
-            multi: true
-        },
-        SpinnerService
-    ]
+    providers: []
 })
 export class AppModule {
     constructor(private upgrade: UpgradeModule) {

@@ -13,6 +13,7 @@
         "removeComments": false,
         "noImplicitAny": false,
         "suppressImplicitAnyIndexErrors": true,
+        "allowSyntheticDefaultImports": true,
         "typeRoots": [
             "node_modules/@types"
         ]
@@ -24,6 +25,7 @@
     "angularCompilerOptions": {
         "outDir": "aot",
         "disableTypeScriptVersionCheck": true,
+        "allowSyntheticDefaultImports": true,
         "preserveWhitespaces": "off"
     }
 }

@@ -25,9 +25,12 @@ import { MatDialogRef } from '@angular/material';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormBuilder } from '@angular/forms';
 import { get } from 'lodash';
+import { first } from 'rxjs/operators';
+
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { RdfUpdate } from '../../../shared/models/rdfUpdate.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 /**
  * @class shapes-graph-editor.UploadRecordModalComponent
@@ -45,7 +48,7 @@ export class UploadRecordModalComponent {
 
     constructor(private dialogRef: MatDialogRef<UploadRecordModalComponent>, private fb: FormBuilder,
                 private sm: ShapesGraphManagerService, private state: ShapesGraphStateService,
-                @Inject('utilService') private util, @Inject('catalogManagerService') private cm,
+                @Inject('utilService') private util, private cm: CatalogManagerService,
                 @Inject(MAT_DIALOG_DATA) public data: any) {}
 
     uploadChanges(): void {
@@ -67,7 +70,9 @@ export class UploadRecordModalComponent {
                     this.util.createWarningToast('No changes were found in the uploaded file.');
                     return Promise.reject('No changes');
                 }
-                return this.cm.getInProgressCommit(this.state.listItem.versionedRdfRecord.recordId, this.catalogId);
+                return this.cm.getInProgressCommit(this.state.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(first()).toPromise();
+            }, error => {
+                return Promise.reject(error);
             }).then(commit => {
                 this.state.listItem.inProgressCommit.additions = commit.additions;
                 this.state.listItem.inProgressCommit.deletions = commit.deletions;

@@ -38,11 +38,25 @@ import {
     MatAutocompleteModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
-    MatSelectModule } from '@angular/material';
-import { MatCheckboxModule } from '@angular/material/checkbox';
+    MatSelectModule, 
+    MatExpansionModule,
+    MatChipsModule,
+    MatCardModule,
+    MatCheckboxModule,
+    MatPaginatorModule,
+    MatDividerModule,
+    MatListModule,
+    MatStepperModule,
+    MatGridListModule,
+    MatRadioModule,
+    MatButtonToggleModule} from '@angular/material';
 import { MatTableModule } from '@angular/material/table';
 import { CdkTableModule } from '@angular/cdk/table';
 import { HttpClientModule } from '@angular/common/http';
+import { ShowdownModule } from 'ngx-showdown';
+import { FlexLayoutModule } from '@angular/flex-layout';
+import { MatMarkdownEditorModule } from 'mat-markdown-editor';
+import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 
 import actionMenuComponent from './components/actionMenu/actionMenu.component';
 import blankNodeValueDisplayComponent from './components/blankNodeValueDisplay/blankNodeValueDisplay.component';
@@ -60,11 +74,9 @@ import emailInputComponent from './components/emailInput/emailInput.component';
 import entityDatesComponent from './components/entityDates/entityDates.component';
 import entityDescriptionComponent from './components/entityDescription/entityDescription.component';
 import warningMessageComponent from './components/warningMessage/warningMessage.component';
-import inlineEditComponent from './components/inlineEdit/inlineEdit.component';
 import iriSelectComponent from './components/iriSelect/iriSelect.component';
 import keywordSelectComponent from './components/keywordSelect/keywordSelect.component';
 import languageSelectComponent from './components/languageSelect/languageSelect.component';
-import markdownEditorComponent from './components/markdownEditor/markdownEditor.component';
 import materialTabComponent from './components/materialTab/materialTab.component';
 import materialTabsetComponent from './components/materialTabset/materialTabset.component';
 import pagingComponent from './components/paging/paging.component';
@@ -106,21 +118,11 @@ import trusted from './filters/trusted.filter';
 import uniqueKey from './filters/uniqueKey.filter';
 import { CamelCasePipe } from './pipes/camelCase.pipe';
 
-import catalogManagerService from './services/catalogManager.service';
-import catalogStateService from './services/catalogState.service';
 import clickAnywhereButHereService from './services/clickAnywhereButHere.service';
 import d3TransformerService from './services/d3Transformer.service';
-import datasetManagerService from './services/datasetManager.service';
-import datasetStateService from './services/datasetState.service';
-import delimitedManagerService from './services/delimitedManager.service';
-import discoverStateService from './services/discoverState.service';
 import httpService from './services/http.service';
 import loginManagerService from './services/loginManager.service';
 import manchesterConverterService from './services/manchesterConverter.service';
-import mapperStateService from './services/mapperState.service';
-import mappingManagerService from './services/mappingManager.service';
-import mergeRequestManagerService from './services/mergeRequestManager.service';
-import mergeRequestsStateService from './services/mergeRequestsState.service';
 import modalService from './services/modal.service';
 import ontologyManagerService from './services/ontologyManager.service';
 import ontologyStateService from './services/ontologyState.service';
@@ -130,49 +132,62 @@ import prefixes from './services/prefixes.service';
 import propertyManagerService from './services/propertyManager.service';
 import provManagerService from './services/provManager.service';
 import recordPermissionsManagerService from './services/recordPermissionsManager.service';
-import sparqlManagerService from './services/sparqlManager.service';
 import stateManagerService from './services/stateManager.service';
 import updateRefsService from './services/updateRefs.service';
 import utilService from './services/util.service';
-import yasguiService from './services/yasgui.service';
 import { OntologyVisualizationService } from '../ontology-visualization/services/ontologyVisualizaton.service';
+import { ProgressSpinnerService } from '../shared/components/progress-spinner/services/progressSpinner.service';
+
 
 // NgUpgrade
 import {
     httpServiceProvider,
     loginManagerServiceProvider,
-    prefixesProvider,
-    settingManagerServiceProvider,
-    provManagerServiceProvider,
-    utilServiceProvider,
     modalServiceProvider,
-    ontologyStateServiceProvider,
-    discoverStateServiceProvider,
     ontologyManagerServiceProvider,
-    catalogManagerServiceProvider,
+    ontologyStateServiceProvider,
+    ontologyUtilsManagerServiceProvider,
+    policyManagerServiceProvider,
+    policyEnforcementServiceProvider,
+    recordPermissionsManagerServiceProvider,
+    propertyManagerServiceProvider,
+    provManagerServiceProvider,
+    settingManagerServiceProvider,
     stateManagerServiceProvider,
     toastrProvider,
-    propertyManagerServiceProvider,
-    ontologyUtilsManagerServiceProvider,
-    policyEnforcementServiceProvider
+    utilServiceProvider
 } from '../ajs.upgradedProviders';
 
 import { ConfirmModalComponent } from './components/confirmModal/confirmModal.component';
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from './components/infoMessage/infoMessage.component';
+import { InlineEditComponent } from './components/inlineEdit/inlineEdit.component';
 import { UnmaskPasswordComponent } from './components/unmaskPassword/unmaskPassword.component';
 import { UserAccessControlsComponent } from './components/userAccessControls/userAccessControls.component';
 
+import { CatalogManagerService } from './services/catalogManager.service';
+import { CatalogStateService } from './services/catalogState.service';
+import { DatasetManagerService } from './services/datasetManager.service';
+import { DatasetStateService } from './services/datasetState.service';
+import { DelimitedManagerService } from './services/delimitedManager.service';
+import { DiscoverStateService } from './services/discoverState.service';
 import { HelperService } from './services/helper.service';
+import { MapperStateService } from './services/mapperState.service';
+import { MappingManagerService } from './services/mappingManager.service';
+import { MergeRequestManagerService } from './services/mergeRequestManager.service';
+import { MergeRequestsStateService } from './services/mergeRequestsState.service';
 import { PolicyManagerService } from './services/policyManager.service';
 import { UserManagerService } from './services/userManager.service';
 import { UserStateService } from './services/userState.service';
 import { ShapesGraphManagerService } from './services/shapesGraphManager.service';
 import { ShapesGraphStateService } from './services/shapesGraphState.service';
+import { SparqlManagerService } from './services/sparqlManager.service';
+import { YasguiService } from './services/yasgui.service';
 import { WindowRef } from './services/windowRef.service';
 import { HighlightTextPipe } from './pipes/highlightText.pipe';
+import { MarkdownEditorComponent } from './components/markdownEditor/markdownEditor.component';
 import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
-import { SpinnerComponent } from './components/progress-spinner/spinner.component';
+import { SpinnerComponent } from './components/progress-spinner/components/spinner/spinner.component';
 import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
 import { FileInputComponent } from './components/fileInput/fileInput.component';
 import { CustomLabelComponent } from './components/customLabel/customLabel.component';
@@ -189,7 +204,9 @@ import { ResolveConflictsBlock } from './components/resolveConflictsBlock/resolv
 import { PrefixationPipe } from './pipes/prefixation.pipe';
 import { SplitIRIPipe } from './pipes/splitIRI.pipe';
 import { CopyClipboardDirective } from './directives/copyClipboard/copyClipboard.directive';
+import { FocusDirective } from './directives/focus/focus.directive';
 
+import { LimitDescriptionComponent } from '../shared/components/limitDescription/limitDescription.component';
 import { SettingEditPageComponent } from './components/settingEditPage/settingEditPage.component';
 import { SettingGroupComponent } from './components/settingGroup/settingGroup.component';
 import { SettingFormComponent } from './components/settingForm/settingForm.component';
@@ -209,27 +226,41 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         FormsModule,
         ReactiveFormsModule,
         HttpClientModule,
+        CodemirrorModule,
         CdkTableModule,
+        FlexLayoutModule,
+        MatMarkdownEditorModule,
         MatAutocompleteModule,
-        MatMenuModule,
-        MatDialogModule,
-        MatTabsModule,
-        MatFormFieldModule,
-        MatInputModule,
         MatButtonModule,
-        MatProgressSpinnerModule,
+        MatButtonToggleModule,
+        MatCardModule,
+        MatCheckboxModule,
+        MatChipsModule,
+        MatDialogModule,
+        MatDividerModule,
+        MatExpansionModule,
+        MatFormFieldModule,
+        MatGridListModule,
         MatIconModule,
-        MatSlideToggleModule,
+        MatInputModule,
+        MatListModule,
+        MatMenuModule,
+        MatPaginatorModule,
         MatProgressSpinnerModule,
-        MatTableModule,
-        MatTooltipModule,
+        MatRadioModule,
         MatSelectModule,
-        MatCheckboxModule
+        MatSlideToggleModule,
+        MatStepperModule,
+        MatTableModule,
+        MatTabsModule,
+        MatTooltipModule,
+        ShowdownModule.forRoot({flavor: 'github'})
     ],
     declarations: [
         ConfirmModalComponent,
         ErrorDisplayComponent,
         InfoMessageComponent,
+        InlineEditComponent,
         UnmaskPasswordComponent,
         UserAccessControlsComponent,
         SpinnerComponent,
@@ -253,10 +284,13 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         ResolveConflictsFormComponent,
         CommitDifferenceTabsetComponent,
         CheckboxComponent,
+        LimitDescriptionComponent,
         BranchSelectComponent,
         ResolveConflictsBlock,
         CopyClipboardDirective,
-        ValueDisplayComponent
+        FocusDirective,
+        ValueDisplayComponent,
+        MarkdownEditorComponent
     ],
     entryComponents: [
         ConfirmModalComponent,
@@ -284,24 +318,38 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         FormsModule,
         ReactiveFormsModule,
         HttpClientModule,
+        CodemirrorModule,
         CdkTableModule,
+        MatMarkdownEditorModule,
         MatAutocompleteModule,
-        MatProgressSpinnerModule,
         MatButtonModule,
+        MatButtonToggleModule,
+        MatCardModule,
+        MatCheckboxModule,
+        MatChipsModule,
         MatDialogModule,
-        MatIconModule,
-        MatMenuModule,
-        MatTabsModule,
-        MatSlideToggleModule,
+        MatDividerModule,
+        MatExpansionModule,
         MatFormFieldModule,
+        MatGridListModule,
+        MatIconModule,
         MatInputModule,
-        MatTableModule,
-        MatTooltipModule,
+        MatListModule,
+        MatMenuModule,
+        MatPaginatorModule,
         MatProgressSpinnerModule,
+        MatRadioModule,
         MatSelectModule,
+        MatSlideToggleModule,
+        MatStepperModule,
+        MatTableModule,
+        MatTabsModule,
+        MatTooltipModule,
+        ShowdownModule,
         ConfirmModalComponent,
         ErrorDisplayComponent,
         InfoMessageComponent,
+        InlineEditComponent,
         UnmaskPasswordComponent,
         SpinnerComponent,
         UserAccessControlsComponent,
@@ -323,36 +371,51 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
         CommitDifferenceTabsetComponent,
         CheckboxComponent,
         BranchSelectComponent,
+        LimitDescriptionComponent,
         ResolveConflictsBlock,
         CopyClipboardDirective,
-        ValueDisplayComponent
+        FocusDirective,
+        ValueDisplayComponent,
+        MarkdownEditorComponent
     ],
     providers: [
-        loginManagerServiceProvider,
-        utilServiceProvider,
-        settingManagerServiceProvider,
-        provManagerServiceProvider,
-        prefixesProvider,
         httpServiceProvider,
+        loginManagerServiceProvider,
         modalServiceProvider,
+        ontologyManagerServiceProvider,
         ontologyStateServiceProvider,
         propertyManagerServiceProvider,
+        recordPermissionsManagerServiceProvider,
         policyEnforcementServiceProvider,
         ontologyUtilsManagerServiceProvider,
-        discoverStateServiceProvider,
-        catalogManagerServiceProvider,
-        ontologyManagerServiceProvider,
+        policyManagerServiceProvider,
+        propertyManagerServiceProvider,
+        provManagerServiceProvider,
+        settingManagerServiceProvider,
         stateManagerServiceProvider,
         toastrProvider,
-        policyEnforcementServiceProvider,
+        utilServiceProvider,
+        CatalogManagerService,
+        CatalogStateService,
+        DatasetManagerService,
+        DatasetStateService,
+        DelimitedManagerService,
+        DiscoverStateService,
         HelperService,
+        MapperStateService,
+        MappingManagerService,
+        MergeRequestManagerService,
+        MergeRequestsStateService,
         PolicyManagerService,
         UserManagerService,
         UserStateService,
         ShapesGraphManagerService,
         ShapesGraphStateService,
+        SparqlManagerService,
+        YasguiService,
         WindowRef,
         OntologyVisualizationService,
+        ProgressSpinnerService,
         { provide: ErrorStateMatcher, useClass: MobiErrorStateMatcher },
         PrefixationPipe,
         SplitIRIPipe,
@@ -381,11 +444,9 @@ angular.module('shared', [])
     .component('entityDates', entityDatesComponent)
     .component('entityDescription', entityDescriptionComponent)
     .component('warningMessage', warningMessageComponent)
-    .component('inlineEdit', inlineEditComponent)
     .component('iriSelect', iriSelectComponent)
     .component('keywordSelect', keywordSelectComponent)
     .component('languageSelect', languageSelectComponent)
-    .component('markdownEditor', markdownEditorComponent)
     .component('materialTab', materialTabComponent)
     .component('materialTabset', materialTabsetComponent)
     .component('paging', pagingComponent)
@@ -423,20 +484,10 @@ angular.module('shared', [])
     .filter('splitIRI', splitIRI)
     .filter('trusted', trusted)
     .filter('uniqueKey', uniqueKey)
-    .service('catalogManagerService', catalogManagerService)
-    .service('catalogStateService', catalogStateService)
     .service('d3TransformerService', d3TransformerService)
-    .service('datasetManagerService', datasetManagerService)
-    .service('datasetStateService', datasetStateService)
-    .service('delimitedManagerService', delimitedManagerService)
-    .service('discoverStateService', discoverStateService)
     .service('httpService', httpService)
     .service('loginManagerService', loginManagerService)
     .service('manchesterConverterService', manchesterConverterService)
-    .service('mapperStateService', mapperStateService)
-    .service('mappingManagerService', mappingManagerService)
-    .service('mergeRequestManagerService', mergeRequestManagerService)
-    .service('mergeRequestsStateService', mergeRequestsStateService)
     .service('modalService', modalService)
     .service('ontologyManagerService', ontologyManagerService)
     .service('ontologyStateService', ontologyStateService)
@@ -446,26 +497,39 @@ angular.module('shared', [])
     .service('propertyManagerService', propertyManagerService)
     .service('provManagerService', provManagerService)
     .service('recordPermissionsManagerService', recordPermissionsManagerService)
-    .service('sparqlManagerService', sparqlManagerService)
     .service('stateManagerService', stateManagerService)
     .service('updateRefsService', updateRefsService)
     .service('utilService', utilService)
     .factory('clickAnywhereButHereService', clickAnywhereButHereService)
-    .service('yasguiService', yasguiService)
+    .factory('catalogManagerService', downgradeInjectable(CatalogManagerService))
+    .factory('catalogStateService', downgradeInjectable(CatalogStateService))
+    .factory('datasetManagerService', downgradeInjectable(DatasetManagerService))
+    .factory('datasetStateService', downgradeInjectable(DatasetStateService))
+    .factory('delimitedManagerService', downgradeInjectable(DelimitedManagerService))
+    .factory('discoverStateService', downgradeInjectable(DiscoverStateService))
+    .factory('mapperStateService', downgradeInjectable(MapperStateService))
+    .factory('mappingManagerService', downgradeInjectable(MappingManagerService))
+    .factory('mergeRequestManagerService', downgradeInjectable(MergeRequestManagerService))
+    .factory('mergeRequestsStateService', downgradeInjectable(MergeRequestsStateService))
     .factory('policyManagerService', downgradeInjectable(PolicyManagerService))
     .factory('userManagerService', downgradeInjectable(UserManagerService))
     .factory('userStateService', downgradeInjectable(UserStateService))
     .factory('shapesGraphManagerService', downgradeInjectable(ShapesGraphManagerService))
     .factory('shapesGraphStateService', downgradeInjectable(ShapesGraphStateService))
+    .factory('sparqlManagerService', downgradeInjectable(SparqlManagerService))
+    .factory('yasguiService', downgradeInjectable(YasguiService))
     .factory('ontologyVisualizationService', downgradeInjectable(OntologyVisualizationService))
+    .factory('progressSpinnerService', downgradeInjectable(ProgressSpinnerService)) 
     .directive('confirmModal', downgradeComponent({component: ConfirmModalComponent}) as angular.IDirectiveFactory)
     .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory)
     .directive('infoMessage', downgradeComponent({component: InfoMessageComponent}) as angular.IDirectiveFactory)
+    .directive('inlineEdit', downgradeComponent({component: InlineEditComponent}) as angular.IDirectiveFactory)
     .directive('unmaskPassword', downgradeComponent({component: UnmaskPasswordComponent}) as angular.IDirectiveFactory)
     .directive('progressSpinner', downgradeComponent({component: SpinnerComponent}) as angular.IDirectiveFactory)
     .directive('userAccessControls', downgradeComponent({component: UserAccessControlsComponent}) as angular.IDirectiveFactory)
     .directive('fileInput', downgradeComponent({component: FileInputComponent}) as angular.IDirectiveFactory)
     .directive('customLabel', downgradeComponent({component: CustomLabelComponent}) as angular.IDirectiveFactory)
+    .directive('limitDescription', downgradeComponent({component: LimitDescriptionComponent}) as angular.IDirectiveFactory)
     .directive('settingEditPage', downgradeComponent({component: SettingEditPageComponent}) as angular.IDirectiveFactory)
     .directive('settingGroup', downgradeComponent({component: SettingGroupComponent}) as angular.IDirectiveFactory)
     .directive('settingForm', downgradeComponent({component: SettingFormComponent}) as angular.IDirectiveFactory)
@@ -480,5 +544,6 @@ angular.module('shared', [])
     .directive('checkbox', downgradeComponent({component: CheckboxComponent}) as angular.IDirectiveFactory)
     .directive('branchSelect', downgradeComponent({component: BranchSelectComponent}) as angular.IDirectiveFactory)
     .directive('resolveConflictsBlock', downgradeComponent({component: ResolveConflictsBlock}) as angular.IDirectiveFactory)
+    .directive('markdownEditor', downgradeComponent({component: MarkdownEditorComponent}) as angular.IDirectiveFactory)
     .directive('valueDisplay', downgradeComponent({component: ValueDisplayComponent}) as angular.IDirectiveFactory)
     .directive('copyClipboard', downgradeComponent({component: CopyClipboardDirective}) as angular.IDirectiveFactory);

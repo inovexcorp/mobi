@@ -25,8 +25,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockPipe } from 'ng-mocks';
-import { cleanStylesFromDOM, mockPrefixes } from '../../../../../../test/ts/Shared';
-import { CommitChange } from '../../models/commitChange.interface';
+
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { PrefixationPipe } from '../../pipes/prefixation.pipe';
 import { SplitIRIPipe } from '../../pipes/splitIRI.pipe';
 import { StatementDisplayComponent } from './statementDisplay.component';
@@ -47,8 +47,7 @@ describe('Statement Display component', function() {
             ],
             providers: [
                 SplitIRIPipe,
-                PrefixationPipe,
-                { provide: 'prefixes', useClass: mockPrefixes },
+                PrefixationPipe
             ],
         });
     });
@@ -59,7 +58,7 @@ describe('Statement Display component', function() {
         component.predicate = 'predicate';
         component.object = {
             '@id': 'object'
-        } as CommitChange;
+        };
         entityNameSpy = jasmine.createSpy('entityNameFunc');
         component.entityNameFunc = entityNameSpy;
     });
@@ -78,7 +77,7 @@ describe('Statement Display component', function() {
         it('object', function() {
             expect(component.object).toEqual({
                 '@id': 'object'
-            } as CommitChange);
+            });
         });
         it('entityNameFunc', function() {
             expect(component.entityNameFunc).toBeDefined();
@@ -122,7 +121,7 @@ describe('Statement Display component', function() {
         it('when @value is present', function() {
             component.object = {
                 '@value': 'value'
-            } as CommitChange;
+            };
             component.ngOnInit();
             expect(component.o).toEqual('value');
             expect(component.fullObject).toEqual('value');
@@ -131,7 +130,7 @@ describe('Statement Display component', function() {
             component.object = {
                 '@value': 'value',
                 '@language': 'en'
-            } as CommitChange;
+            };
             component.ngOnInit();
             expect(component.o).toEqual('value [language: en]');
             expect(component.fullObject).toEqual('value [language: en]');

@@ -22,11 +22,11 @@
  */
 import { find, cloneDeep, replace } from 'lodash';
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { emailOrEmpty } from '../../../shared/validators/emailOrEmpty.validator';
 import { User } from '../../../shared/models/user.interface';
+import { FOAF } from '../../../prefixes';
 
 /**
  * @name settings.ProfileTabComponent
@@ -45,11 +45,11 @@ export class ProfileTabComponent implements OnInit {
     profileForm = this.fb.group({
         firstName: [''],
         lastName: [''],
-        email: ['', [ emailOrEmpty ]] // TODO: Replace Validators.email after Angular 6
+        email: ['', [ Validators.email ]]
     });
 
     constructor(private um: UserManagerService, @Inject('loginManagerService') private lm,
-        @Inject('prefixes') private prefixes, private fb: FormBuilder) {}
+        private fb: FormBuilder) {}
 
     ngOnInit(): void {
         this.currentUser = cloneDeep(find(this.um.users, { username: this.lm.currentUser }));
@@ -72,24 +72,24 @@ export class ProfileTabComponent implements OnInit {
     
     save(): void {
         if (this.profileForm.controls.firstName.value) {
-            this.currentUser.jsonld[this.prefixes.foaf + 'firstName'] = [{'@value': this.profileForm.controls.firstName.value}];
+            this.currentUser.jsonld[FOAF + 'firstName'] = [{'@value': this.profileForm.controls.firstName.value}];
             this.currentUser.firstName = this.profileForm.controls.firstName.value;
         } else {
-            delete this.currentUser.jsonld[this.prefixes.foaf + 'firstName'];
+            delete this.currentUser.jsonld[FOAF + 'firstName'];
             this.currentUser.firstName = '';
         }
         if (this.profileForm.controls.lastName.value) {
-            this.currentUser.jsonld[this.prefixes.foaf + 'lastName'] = [{'@value': this.profileForm.controls.lastName.value}];
+            this.currentUser.jsonld[FOAF + 'lastName'] = [{'@value': this.profileForm.controls.lastName.value}];
             this.currentUser.lastName = this.profileForm.controls.lastName.value;
         } else {
-            delete this.currentUser.jsonld[this.prefixes.foaf + 'lastName'];
+            delete this.currentUser.jsonld[FOAF + 'lastName'];
             this.currentUser.lastName = '';
         }
         if (this.profileForm.controls.email.value) {
-            this.currentUser.jsonld[this.prefixes.foaf + 'mbox'] = [{'@id': 'mailto:' + this.profileForm.controls.email.value}];
+            this.currentUser.jsonld[FOAF + 'mbox'] = [{'@id': 'mailto:' + this.profileForm.controls.email.value}];
             this.currentUser.email = this.profileForm.controls.email.value;
         } else {
-            delete this.currentUser.jsonld[this.prefixes.foaf + 'mbox'];
+            delete this.currentUser.jsonld[FOAF + 'mbox'];
             this.currentUser.email = '';
         }
         this.um.updateUser(this.currentUser.username, this.currentUser)

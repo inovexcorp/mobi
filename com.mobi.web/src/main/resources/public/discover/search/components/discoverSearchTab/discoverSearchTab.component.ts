@@ -20,6 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Directive, ElementRef, Injector } from '@angular/core';
+import { UpgradeComponent } from '@angular/upgrade/static';
+
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+
 import './discoverSearchTab.component.scss';
 
 const template = require('./discoverSearchTab.component.html');
@@ -34,7 +39,7 @@ const template = require('./discoverSearchTab.component.html');
  * {@link discover.component:sparqlResultTable} to create SPARQL queries based on inputs into the `searchForm` and
  * display the results of the queries.
  */
-const discoverSearchTabComponent = {
+export const discoverSearchTabComponent = {
     template,
     bindings: {},
     controllerAs: 'dvm',
@@ -43,9 +48,16 @@ const discoverSearchTabComponent = {
 
 discoverSearchTabComponentCtrl.$inject = ['discoverStateService'];
 
-function discoverSearchTabComponentCtrl(discoverStateService) {
+function discoverSearchTabComponentCtrl(discoverStateService: DiscoverStateService) {
     var dvm = this;
     dvm.ds = discoverStateService;
 }
 
-export default discoverSearchTabComponent;
+@Directive({
+    selector: 'discover-search-tab'
+})
+export class DiscoverSearchTabDirective extends UpgradeComponent {
+    constructor(elementRef: ElementRef, injector: Injector) {
+        super('discoverSearchTab', elementRef, injector);
+    }
+}

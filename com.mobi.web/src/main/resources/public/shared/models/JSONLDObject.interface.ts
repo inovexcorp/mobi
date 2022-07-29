@@ -21,10 +21,10 @@
  * #L%
  */
 /**
- * Represents any JSON-LD object. Only requires the `@id` and `@type` properties, but other properties are allowed
+ * Represents a JSON-LD object (not a blank node).
  */
 export interface JSONLDObject {
     '@id': string,
-    '@type': string[],
+    '@type'?: string[],
     [key: string]: any
 }

@@ -21,26 +21,24 @@
  * #L%
  */
 
-import './branchSelect.component.scss';
 import { Component, EventEmitter, Inject, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
+
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
+import './branchSelect.component.scss';
+
 /**
- * @ngdoc component
- * @name shared.component:branchSelect
- * @requires shared.service:utilService
+ * @class shared.BranchSelectComponent
  *
- * @description
- * `branchSelect` is a component which creates a Bootstrap form-group div containing a `ui-select` to select a
+ * A component which creates an Angular Material `mat-form-field` containing a `mat-autocomplete` to select a
  * Branch JSON-LD object from within the provided array of Branch JSON-LD objects. The selected Branch is bound to
- * `bindModel`, but only one way. The provided `changeEvent` function is expected to update the value of
- * `bindModel`. The select can be disabled and set to be required using parameters.
+ * `model`. The select can be disabled and set to be required using parameters.
  *
- * @param {Object} model The variable to bind the value of the select field to
+ * @param {JSONLDObject} model The variable to bind the value of the select field to
  * @param {Function} modelChange An event emitted when value of the select is changed. Should update the value
  * of `model`.
  * @param {JSONLDObject[]} branches An array of JSON-LD objects representing Branches
@@ -67,6 +65,9 @@ export class BranchSelectComponent implements OnInit, OnChanges {
 
     ngOnInit(): void {
         this._setFilteredBranches();
+        if (this.model) {
+            this.branchControl.setValue(this.model);
+        }
     }
     ngOnChanges(changes: SimpleChanges): void {
         if (changes?.isDisabledWhen) {
@@ -75,6 +76,9 @@ export class BranchSelectComponent implements OnInit, OnChanges {
             } else {
                 this.branchControl.disable();
             }
+        }
+        if (changes?.model) {
+            this.branchControl.setValue(changes.model.currentValue);
         }
         if (changes?.branches) {
             this._setFilteredBranches();

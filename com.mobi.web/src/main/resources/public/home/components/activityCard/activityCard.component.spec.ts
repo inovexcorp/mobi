@@ -30,13 +30,13 @@ import { MockComponent } from 'ng-mocks';
 import {
     mockProvManager,
     mockUtil,
-    mockPrefixes,
     mockHttpService,
     cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
 import { SharedModule } from '../../../shared/shared.module';
 import { ActivityTitleComponent } from '../activityTitle/activityTitle.component';
 import { ActivityCardComponent } from './activityCard.component';
+import { PROV } from '../../../prefixes';
 
 describe('Activity Card component', function() {
     let component: ActivityCardComponent;
@@ -44,7 +44,6 @@ describe('Activity Card component', function() {
     let fixture: ComponentFixture<ActivityCardComponent>;
     let provManagerStub;
     let utilStub;
-    let prefixesStub;
     let httpStub;
 
     configureTestSuite(function() {
@@ -57,7 +56,6 @@ describe('Activity Card component', function() {
             providers: [
                 { provide: 'provManagerService', useClass: mockProvManager },
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'prefixes', useClass: mockPrefixes },
                 { provide: 'httpService', useClass: mockHttpService }
             ],
         });
@@ -69,7 +67,6 @@ describe('Activity Card component', function() {
         element = fixture.debugElement;
         provManagerStub = TestBed.get('provManagerService');
         utilStub = TestBed.get('utilService');
-        prefixesStub = TestBed.get('prefixes');
         httpStub = TestBed.get('httpService');
 
         this.headers = {
@@ -91,17 +88,15 @@ describe('Activity Card component', function() {
         fixture = null;
         provManagerStub = null;
         utilStub = null;
-        prefixesStub = null;
         httpStub = null;
     });
     
     describe('should initialize with the correct data', function() {
         it('unless an error occurs', fakeAsync(function() {
-            provManagerStub.getActivities.and.returnValue(Promise.reject('Error message'));
+            provManagerStub.getActivities.and.rejectWith('Error message');
             component.ngOnInit();
             tick();
             expect(httpStub.cancel).toHaveBeenCalledWith(component.id);
-            expect(provManagerStub.getActivities).toHaveBeenCalled();
             expect(provManagerStub.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
             expect(component.activities).toEqual([]);
             expect(component.entities).toEqual([]);
@@ -110,7 +105,7 @@ describe('Activity Card component', function() {
             expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
         }));
         it('successfully', fakeAsync(function() {
-            provManagerStub.getActivities.and.returnValue(Promise.resolve(this.response));
+            provManagerStub.getActivities.and.resolveTo(this.response);
             component.ngOnInit();
             tick();
             expect(provManagerStub.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
@@ -124,7 +119,7 @@ describe('Activity Card component', function() {
     describe('controller methods', function() {
         describe('should set the page of Activities', function() {
             it('successfully', fakeAsync(function() {
-                provManagerStub.getActivities.and.returnValue(Promise.resolve(this.response));
+                provManagerStub.getActivities.and.resolveTo(this.response);
                 component.setPage();
                 tick();
                 expect(provManagerStub.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
@@ -133,7 +128,7 @@ describe('Activity Card component', function() {
                 expect(component.totalSize).toEqual(this.headers['x-total-count']);
             }));
             it('unless an error occurs', fakeAsync(function() {
-                provManagerStub.getActivities.and.returnValue(Promise.reject('Error message'));
+                provManagerStub.getActivities.and.rejectWith('Error message');
                 component.setPage();
                 tick();
                 expect(provManagerStub.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
@@ -144,13 +139,13 @@ describe('Activity Card component', function() {
             spyOn(component, 'setPage');
             component.loadMore();
             expect(component.limit).toEqual(limit + 10);
-            expect(component.setPage).toHaveBeenCalled();
+            expect(component.setPage).toHaveBeenCalledWith();
         });
         it('should get the time stamp of an Activity', function() {
             utilStub.getPropertyValue.and.returnValue('2017-01-01T00:00:00');
             utilStub.getDate.and.returnValue('date');
             expect(component.getTimeStamp({})).toEqual('date');
-            expect(utilStub.getPropertyValue).toHaveBeenCalledWith({}, prefixesStub.prov + 'endedAtTime');
+            expect(utilStub.getPropertyValue).toHaveBeenCalledWith({}, PROV + 'endedAtTime');
             expect(utilStub.getDate).toHaveBeenCalledWith('2017-01-01T00:00:00', 'short');
         });
     });

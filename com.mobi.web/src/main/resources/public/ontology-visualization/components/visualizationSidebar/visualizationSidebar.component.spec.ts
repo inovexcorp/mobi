@@ -35,7 +35,7 @@ import { MockComponent } from 'ng-mocks';
 
 import { OntologyVisualizationService } from '../../services/ontologyVisualizaton.service';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
-import { SpinnerComponent } from '../../../shared/components/progress-spinner/spinner.component';
+import { SpinnerComponent } from '../../../shared/components/progress-spinner/components/spinner/spinner.component';
 import { MockOntologyVisualizationService } from  '../../../../../../test/ts/Shared';
 import { VisualizationSidebar } from './visualizationSidebar.component';
 import {

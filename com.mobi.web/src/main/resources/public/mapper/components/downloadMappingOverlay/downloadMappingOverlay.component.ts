@@ -21,47 +21,34 @@
  * #L%
  */
 
-const template = require('./downloadMappingOverlay.component.html');
+import { Component, Inject } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
+import { MappingRecord } from '../../../shared/models/mappingRecord.interface';
+
+import { MappingManagerService } from '../../../shared/services/mappingManager.service';
 
 /**
- * @ngdoc component
- * @name mapper.component:downloadMappingOverlay
- * @requires shared.service:mappingManagerService
- * @requires shared.service:mapperStateService
+ * @class mapper.DownloadMappingOverlayComponent
  *
- * @description
- * `downloadMappingOverlay` is a component that content for a modal to download the current
- * {@link shared.service:mapperStateService#mapping mapping} in a variety of different formats using a
- * {@link mapper.component:mapperSerializationSelect mapperSerializationSelect}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that content for a modal to download the provided {@link MappingRecord} in a variety of different formats
+ * using a {@link mapper.MapperSerializationSelectComponent}. Meant to be used in conjunction with the `MatDialog`
+ * service.
  */
-const downloadMappingOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: downloadMappingOverlayComponentCtrl,
-};
+@Component({
+    selector: 'download-mapping-overlay',
+    templateUrl: './downloadMappingOverlay.component.html'
+})
+export class DownloadMappingOverlayComponent {
+    downloadMappingForm: FormGroup = this.fb.group({
+        serialization: ['turtle', Validators.required]
+    });
 
-downloadMappingOverlayComponentCtrl.$inject = ['mappingManagerService', 'mapperStateService'];
+    constructor(private dialogRef: MatDialogRef<DownloadMappingOverlayComponent>, private fb: FormBuilder,
+        @Inject(MAT_DIALOG_DATA) public data: {record: MappingRecord}, private mm: MappingManagerService) {}
 
-function downloadMappingOverlayComponentCtrl(mappingManagerService, mapperStateService) {
-    var dvm = this;
-    dvm.state = mapperStateService;
-    dvm.mm = mappingManagerService;
-    dvm.downloadFormat = 'turtle';
-
-    dvm.cancel = function() {
-        dvm.dismiss();
-    }
-    dvm.download = function() {
-        dvm.mm.downloadMapping(dvm.state.mapping.record.id, dvm.downloadFormat);
-        dvm.close();
+    download(): void {
+        this.mm.downloadMapping(this.data.record.id, this.downloadMappingForm.controls.serialization.value);
+        this.dialogRef.close(true);
     }
 }
-
-export default downloadMappingOverlayComponent;

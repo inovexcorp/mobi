@@ -21,6 +21,10 @@
  * #L%
  */
 import { unset, get } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 const template = require('./createBranchOverlay.component.html');
 
@@ -52,7 +56,7 @@ const createBranchOverlayComponent = {
 
 createBranchOverlayComponentCtrl.$inject = ['$q', 'catalogManagerService', 'ontologyStateService', 'prefixes'];
 
-function createBranchOverlayComponentCtrl($q, catalogManagerService, ontologyStateService, prefixes) {
+function createBranchOverlayComponentCtrl($q, catalogManagerService: CatalogManagerService, ontologyStateService, prefixes) {
     var dvm = this;
     var cm = catalogManagerService;
     var catalogId = get(cm.localCatalog, '@id', '');
@@ -69,21 +73,21 @@ function createBranchOverlayComponentCtrl($q, catalogManagerService, ontologySta
             unset(dvm.branchConfig, 'description');
         }
         var commitId;
-        cm.createRecordBranch(dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.branchConfig, dvm.os.listItem.ontologyRecord.commitId)
-        .then(branchId => cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId), $q.reject)
-        .then(branch => {
-            dvm.os.listItem.branches.push(branch);
-            dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
-            commitId = branch[prefixes.catalog + 'head'][0]['@id'];
-            dvm.os.collapseFlatLists();
-            dvm.os.listItem.upToDate = true;
-            dvm.os.resetStateTabs();
-            return dvm.os.updateOntologyState({recordId: dvm.os.listItem.ontologyRecord.recordId, commitId, branchId: dvm.os.listItem.ontologyRecord.branchId});
-        }, $q.reject)
-        .then(() => {
-            dvm.close();
-            dvm.os.resetStateTabs();
-        }, onError);
+        cm.createRecordBranch(dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.branchConfig, dvm.os.listItem.ontologyRecord.commitId).pipe(first()).toPromise()
+            .then((branchId: string) => cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise(), $q.reject)
+            .then((branch: JSONLDObject) => {
+                dvm.os.listItem.branches.push(branch);
+                dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
+                commitId = branch[prefixes.catalog + 'head'][0]['@id'];
+                dvm.os.collapseFlatLists();
+                dvm.os.listItem.upToDate = true;
+                dvm.os.resetStateTabs();
+                return dvm.os.updateOntologyState({recordId: dvm.os.listItem.ontologyRecord.recordId, commitId, branchId: dvm.os.listItem.ontologyRecord.branchId});
+            }, $q.reject)
+            .then(() => {
+                dvm.close();
+                dvm.os.resetStateTabs();
+            }, onError);
     }
     dvm.cancel = function() {
         dvm.dismiss();

@@ -29,9 +29,10 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { cleanStylesFromDOM, mockPrefixes, mockUtil } from '../../../../../../test/ts/Shared';
-import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 
+import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { FOAF } from '../../../prefixes';
+import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { EditUserProfileOverlayComponent } from './editUserProfileOverlay.component';
@@ -44,7 +45,6 @@ describe('Edit User Profile Overlay component', function() {
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<EditUserProfileOverlayComponent>>;
     let utilStub;
-    let prefixesStub;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -64,7 +64,6 @@ describe('Edit User Profile Overlay component', function() {
                 MockProvider(UserStateService),
                 MockProvider(UserManagerService),
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'prefixes', useClass: mockPrefixes },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -75,7 +74,6 @@ describe('Edit User Profile Overlay component', function() {
         userManagerStub = TestBed.get(UserManagerService);
         matDialogRef = TestBed.get(MatDialogRef);
         utilStub = TestBed.get('utilService');
-        prefixesStub = TestBed.get('prefixes');
         userStateStub.selectedUser = {
             username: 'batman',
             firstName: 'BATMAN',
@@ -102,7 +100,6 @@ describe('Edit User Profile Overlay component', function() {
         userStateStub = null;
         matDialogRef = null;
         utilStub = null;
-        prefixesStub = null;
     });
 
     it('initializes with the correct values', function() {
@@ -123,28 +120,28 @@ describe('Edit User Profile Overlay component', function() {
                 component.editProfileForm.controls.email.setValue(this.newUser.email);
             });
             it('unless an error occurs', fakeAsync(function() {
-                userManagerStub.updateUser.and.returnValue(Promise.reject('Error message'));
+                userManagerStub.updateUser.and.rejectWith('Error message');
                 component.set();
                 tick();
-                expect(utilStub.replacePropertyValue).toHaveBeenCalledWith(userStateStub.selectedUser.jsonld, prefixesStub.foaf + 'firstName', userStateStub.selectedUser.firstName, this.newUser.firstName);
-                expect(utilStub.replacePropertyValue).toHaveBeenCalledWith(userStateStub.selectedUser.jsonld, prefixesStub.foaf + 'lastName', userStateStub.selectedUser.lastName, this.newUser.lastName);
-                expect(utilStub.replacePropertyId).toHaveBeenCalledWith(userStateStub.selectedUser.jsonld, prefixesStub.foaf + 'mbox', userStateStub.selectedUser.email, this.newUser.email);
+                expect(utilStub.replacePropertyValue).toHaveBeenCalledWith(userStateStub.selectedUser.jsonld, FOAF + 'firstName', userStateStub.selectedUser.firstName, this.newUser.firstName);
+                expect(utilStub.replacePropertyValue).toHaveBeenCalledWith(userStateStub.selectedUser.jsonld, FOAF + 'lastName', userStateStub.selectedUser.lastName, this.newUser.lastName);
+                expect(utilStub.replacePropertyId).toHaveBeenCalledWith(userStateStub.selectedUser.jsonld, FOAF + 'mbox', userStateStub.selectedUser.email, this.newUser.email);
                 expect(userManagerStub.updateUser).toHaveBeenCalledWith(userStateStub.selectedUser.username, this.newUser);
                 expect(component.errorMessage).toEqual('Error message');
                 expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             }));
             it('successfully', fakeAsync(function() {
-                userManagerStub.updateUser.and.returnValue(Promise.resolve());
+                userManagerStub.updateUser.and.resolveTo();
                 component.set();
                 tick();
-                expect(utilStub.replacePropertyValue).toHaveBeenCalledWith(userStateStub.selectedUser.jsonld, prefixesStub.foaf + 'firstName', userStateStub.selectedUser.firstName, this.newUser.firstName);
-                expect(utilStub.replacePropertyValue).toHaveBeenCalledWith(userStateStub.selectedUser.jsonld, prefixesStub.foaf + 'lastName', userStateStub.selectedUser.lastName, this.newUser.lastName);
-                expect(utilStub.replacePropertyId).toHaveBeenCalledWith(userStateStub.selectedUser.jsonld, prefixesStub.foaf + 'mbox', userStateStub.selectedUser.email, this.newUser.email);
+                expect(utilStub.replacePropertyValue).toHaveBeenCalledWith(userStateStub.selectedUser.jsonld, FOAF + 'firstName', userStateStub.selectedUser.firstName, this.newUser.firstName);
+                expect(utilStub.replacePropertyValue).toHaveBeenCalledWith(userStateStub.selectedUser.jsonld, FOAF + 'lastName', userStateStub.selectedUser.lastName, this.newUser.lastName);
+                expect(utilStub.replacePropertyId).toHaveBeenCalledWith(userStateStub.selectedUser.jsonld, FOAF + 'mbox', userStateStub.selectedUser.email, this.newUser.email);
                 expect(userManagerStub.updateUser).toHaveBeenCalledWith(userStateStub.selectedUser.username, this.newUser);
                 expect(component.errorMessage).toEqual('');
-                expect(utilStub.createSuccessToast).toHaveBeenCalled();
-                expect(matDialogRef.close).toHaveBeenCalled();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(matDialogRef.close).toHaveBeenCalledWith();
             }));
         });
     });
@@ -202,13 +199,13 @@ describe('Edit User Profile Overlay component', function() {
         const cancelButton = element.queryAll(By.css('.mat-dialog-actions button:not([color="primary"])'))[0];
         cancelButton.triggerEventHandler('click', null);
         fixture.detectChanges();
-        expect(matDialogRef.close).toHaveBeenCalled();
+        expect(matDialogRef.close).toHaveBeenCalledWith(undefined);
     });
     it('should call add when the button is clicked', function() {
         spyOn(component, 'set');
         const setButton = element.queryAll(By.css('.mat-dialog-actions button[color="primary"]'))[0];
         setButton.triggerEventHandler('click', null);
         fixture.detectChanges();
-        expect(component.set).toHaveBeenCalled();
+        expect(component.set).toHaveBeenCalledWith();
     });
 });

@@ -20,21 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Inject, Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform } from '@angular/core';
 import { cloneDeep, forOwn, includes, merge, replace } from 'lodash';
+
+import * as prefixes from '../../prefixes';
+
 @Pipe({
     name: 'prefixation'
 })
 export class PrefixationPipe implements PipeTransform {
 
-    constructor(@Inject('prefixes') private prefixes) {}
+    constructor() {}
 
     public transform(iri: string, extraPrefixes={}): string {
         let result = cloneDeep(iri);
         if (typeof result === 'string') {
-            forOwn(merge({}, this.prefixes, extraPrefixes), (namespace, prefix) => {
+            forOwn(merge({}, prefixes, extraPrefixes), (namespace, prefix) => {
                 if (includes(result, namespace)) {
-                    result = replace(result, namespace, prefix + ':');
+                    result = replace(result, namespace, prefix.toLowerCase() + ':');
                     return;
                 }
             });

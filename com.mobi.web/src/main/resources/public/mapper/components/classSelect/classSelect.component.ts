@@ -20,102 +20,75 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { FormGroup } from '@angular/forms';
+import { MatAutocompleteSelectedEvent } from '@angular/material';
+import { includes, groupBy } from 'lodash';
+import { Observable } from 'rxjs';
+import { debounceTime, map, startWith } from 'rxjs/operators';
 
-import './classSelect.component.scss';
-const template = require('./classSelect.component.html');
+import { MappingClass } from '../../../shared/models/mappingClass.interface';
 
-/**
- * @ngdoc component
- * @name mapper.component:classSelect
- * @requires $filter
- * @requires shared.service:ontologyManagerService
- *
- * @description
- * `classSelect` is a component which creates a `ui-select` with the passed class list and binds the selected class
- * object to `selectedClass`, but only one way. The provided `changeEvent` function is expected to update the value
- * of `selectedClass`. The `ui-select` can optionally be disabled with the provided `isDisabledWhen`.
- *
- * @param {Object} selectedClass The currently selected class object
- * @param {string} selectedClass.ontologyid The id of the ontology that contains the class
- * @param {Object} selectedClass.classObj The JSON-LD class object
- * @param {Function} changeEvent An function to be called when the selected class is changed. Should update the
- * value of `selectedClass`. Expects an argument called `value`.
- * @param {Object[]} classes an array of class objects from the
- * {@link shared.service:mapperStateService mapperStateService}
- */
-const classSelectComponent = {
-    template,
-    bindings: {
-        selectedClass: '<',
-        changeEvent: '&',
-        isDisabledWhen: '<',
-    },
-    controllerAs: 'dvm',
-    controller: classSelectComponentCtrl
-};
-
-classSelectComponentCtrl.$inject = ['$filter', 'ontologyManagerService', 'mapperStateService', 'utilService', 'prefixes'];
-
-function classSelectComponentCtrl($filter, ontologyManagerService, mapperStateService, utilService, prefixes) {
-    const dvm = this;
-    const om = ontologyManagerService;
-    const ms = mapperStateService;
-    dvm.recordId = '';
-    dvm.sourceCommit = '';
-    dvm.selectClasses = [];
-    dvm.currentText = null;
-    dvm.isPending = false;
-
-    dvm.getOntologyId = function(clazz) {
-        return clazz.ontologyId || $filter('splitIRI')(clazz.classObj['@id']).begin;
-    }
-    dvm.setClasses = function(searchText) {
-        dvm.recordId = ms.mapping.ontology['@id'];
-        dvm.sourceCommit = ms.mapping.jsonld[0][prefixes.delim + 'sourceCommit'][0]['@id'];
-
-        if (searchText !== dvm.currentText) {
-            dvm.isPending = true;
-            dvm.selectClasses = [];
-            dvm.currentText = searchText;
-
-            if (searchText) {
-                om.retrieveClasses(dvm.recordId, '', dvm.sourceCommit, '100', searchText, 'class-dropdown')
-                    .then(response => {
-                        for(const [key, value] of Object.entries(response)) {
-                            processClasses(key, value);
-                        }
-                        dvm.isPending = false;
-                    }, () => dvm.isPending = false);
-            } else {
-                om.retrieveClasses(dvm.recordId, '', dvm.sourceCommit, '100', '', 'class-dropdown')
-                    .then(response => {
-                        for(const [key, value] of Object.entries(response)) {
-                            processClasses(key, value);
-                        }
-                        dvm.isPending = false;
-                    }, () => dvm.isPending = false);
-            }
-        }
-    }
-
-    function processClasses(ontology, classList) {
-        const classObjects = classList.results?.bindings
-        classObjects.forEach(classItem => {
-            let proposedClass = {
-                ontologyId: ontology,
-                classObj: {}
-            }
-
-            proposedClass['groupHeader'] = dvm.getOntologyId(proposedClass);
-            proposedClass['isDeprecated'] = classItem.deprecated ? classItem.deprecated.value : false;
-            proposedClass.classObj['@id'] = classItem.id.value;
-            proposedClass.classObj['@type'] = 'http://www/w3/org/2002/07/owl#Class';
-            proposedClass.classObj['name'] = classItem.label ? classItem.label.value : utilService.getBeautifulIRI(classItem.id.value);
-            proposedClass.classObj['description'] = classItem.description ? classItem.description.value : undefined;
-
-            dvm.selectClasses.push(proposedClass);
-        });
-    }
+interface ClassGroup {
+    ontologyId: string,
+    classes: MappingClass[]
 }
 
-export default classSelectComponent;
+/**
+ * @class mapper.ClassSelectComponent
+ *
+ * A component which creates a `mat-autocomplete` with the passed class list attached to a `class` control on the
+ * provided parent FormGroup and binds the selected class object to `selectedClass`.
+ * 
+ * @param {FormGroup} parentForm A FormGroup with a `class` control
+ * @param {MappingClass} selectedClass The currently selected class object
+ * @param {MappingClass[]} classes An array of class objects
+ */
+@Component({
+    selector: 'class-select',
+    templateUrl: './classSelect.component.html'
+})
+export class ClassSelectComponent implements OnInit {
+    @Input() parentForm: FormGroup;
+    @Input() classes: MappingClass[];
+    @Input() selectedClass: MappingClass;
+
+    @Output() selectedClassChange = new EventEmitter<MappingClass>();
+    
+    filteredClasses: Observable<ClassGroup[]>;
+
+    constructor() {}
+
+    ngOnInit(): void {
+        this.filteredClasses = this.parentForm.controls.class.valueChanges
+            .pipe(
+                debounceTime(500),
+                startWith<string | MappingClass>(''),
+                map(val => this.filter(val)),
+            );
+    }
+    filter(val: string | MappingClass): ClassGroup[] {
+        const searchText = typeof val === 'string' ?
+            val :
+            val ?
+                val.name :
+                '';
+        if (!this.classes) {
+            return [];
+        }
+        const filtered = this.classes.filter(mappingClass => includes(mappingClass.name.toLowerCase(), searchText.toLowerCase()));
+        filtered.sort((mappingClass1, mappingClass2) => mappingClass1.name.localeCompare(mappingClass2.name));
+        const grouped = groupBy(filtered, 'ontologyId');
+        return Object.keys(grouped).map(ontologyId => ({
+            ontologyId,
+            classes: grouped[ontologyId]
+        }));
+    }
+    getDisplayText(value: MappingClass): string {
+        return value ? value.name : '';
+    }
+    selectClass(event: MatAutocompleteSelectedEvent): void {
+        this.selectedClass = event.option.value;
+        this.selectedClassChange.emit(this.selectedClass);
+    }
+}

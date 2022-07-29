@@ -21,50 +21,41 @@
  * #L%
  */
 
-const template = require('./classMappingOverlay.component.html');
+import { Component } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
+
+import { MappingClass } from '../../../shared/models/mappingClass.interface';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
+
+import './classMappingOverlay.component.scss';
 
 /**
- * @ngdoc component
- * @name classMappingOverlay.component:classMappingOverlay
- * @requires shared.service:mapperStateService
+ * @class mapper.ClassMappingOverlayComponent
  *
- * @description
- * `classMappingOverlay` is a component that creates content for a modal that creates a ClassMapping in the
- * current {@link shared.service:mapperStateService#mapping mapping} and a preview of
- * the selected class. Meant to be used in conjunction with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal with a {@link mapper.ClassSelectComponent} and a
+ * {@link mapper.ClassPreviewComponent} to create a ClassMapping in the current
+ * {@link shared.MapperStateService#selected mapping}. Meant to be used in conjunction with the `MatDialog` service.
  */
-const classMappingOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: classMappingOverlayComponentCtrl,
-};
+@Component({
+    selector: 'class-mapping-overlay',
+    templateUrl: './classMappingOverlay.component.html'
+})
+export class ClassMappingOverlayComponent {
+    selectedClass: MappingClass;
+    classMappingForm = this.fb.group({
+        class: [{value: '', disabled: !this.state.availableClasses.length}]
+    });
+    
+    constructor(private dialogRef: MatDialogRef<ClassMappingOverlayComponent>, private fb: FormBuilder,
+        public state: MapperStateService) {}
 
-classMappingOverlayComponentCtrl.$inject = ['mapperStateService'];
-
-function classMappingOverlayComponentCtrl(mapperStateService) {
-    var dvm = this;
-    dvm.state = mapperStateService;
-    dvm.selectedClass = undefined;
-
-    dvm.addClass = function() {
-        var classMapping = dvm.state.addClassMapping(dvm.selectedClass);
-        if (!dvm.state.hasPropsSet(dvm.selectedClass.classObj['@id'])) {
-            dvm.state.setProps(dvm.selectedClass.classObj['@id']);
+    addClass(): void {
+        const classMapping = this.state.addClassMapping(this.selectedClass);
+        if (!this.state.hasPropsSet(this.selectedClass.classObj['@id'])) {
+            this.state.setProps(this.selectedClass.classObj['@id']);
         }
-        dvm.state.resetEdit();
-        dvm.state.selectedClassMappingId = classMapping['@id'];
-        dvm.close();
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
+        this.state.resetEdit();
+        this.dialogRef.close(classMapping);
     }
 }
-
-export default classMappingOverlayComponent;

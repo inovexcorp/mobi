@@ -20,52 +20,45 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
+
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+
 import './recordCard.component.scss';
 
-const template = require('./recordCard.component.html');
-
 /**
- * @ngdoc component
- * @name catalog.component:recordCard
- * @requires shared.service:utilService
+ * @class catalog.RecordCardComponent
  *
- * @description
- * `recordCard` is a component which creates a Material `card` div with information about the provided catalog
- * Record. This information includes its title, limited description, {@link catalog.component:recordType type} with
- * its associated {@link catalog.component:recordIcon icon}, modified date,
- * {@link catalog.component:catalogRecordKeywords keywords}, and
- * {@link catalog.component:entityPublisher publisher}. An optional function can be passed in that will be called
- * when the whole card is clicked.
+ * A component which creates a Material `card` div with information about the provided catalog Record. This information
+ * includes its title, limited description, {@link catalog.RecordTypeComponent type} with its associated
+ * {@link catalog.RecordIconComponent icon}, modified date, {@link catalog.CatalogRecordKeywordsComponent keywords}, and
+ * {@link catalog.EntityPublisherComponent publisher}. An optional function can be passed in that will be called when
+ * the whole card is clicked.
  * 
- * @param {Object} object A object with JSON-LD object for a catalog Record and permissions
- * @param {Function} [clickCard=undefined] An optional function that will be called when the whole card is clicked
+ * @param {JSONLDObject} record A JSON-LD object for a catalog Record
+ * @param {Function} clickCard An optional function that will be called when the whole card is clicked
  */
-const recordCardComponent = {
-    template,
-    bindings: {
-        record: '<',
-        clickCard: '&?'
-    },
-    controllerAs: 'dvm',
-    controller: recordCardComponentCtrl
-};
+@Component({
+    selector: 'record-card',
+    templateUrl: './recordCard.component.html'
+})
+export class RecordCardComponent implements OnInit {
+    @Input() record: JSONLDObject;
+    @Output() clickCard = new EventEmitter<JSONLDObject>();
 
-recordCardComponentCtrl.$inject = ['utilService'];
+    descriptionLimit = 200;
+    title = '';
+    description = '';
+    modified = '';
 
-function recordCardComponentCtrl(utilService) {
-    const dvm = this;
-    const util = utilService;
+    constructor(@Inject('utilService') public util) {}
 
-    dvm.descriptionLimit = 200;
-    dvm.title = '';
-    dvm.description = '';
-    dvm.modified = '';
-
-    dvm.$onInit = function() {
-        dvm.title = util.getDctermsValue(dvm.record, 'title');
-        dvm.description = util.getDctermsValue(dvm.record, 'description') || '(No description)';
-        dvm.modified = util.getDate(util.getDctermsValue(dvm.record, 'modified'), 'short');
+    ngOnInit(): void {
+        this.title = this.util.getDctermsValue(this.record, 'title');
+        this.description = this.util.getDctermsValue(this.record, 'description') || '(No description)';
+        this.modified = this.util.getDate(this.util.getDctermsValue(this.record, 'modified'), 'short');
+    }
+    handleClick(): void {
+        this.clickCard.emit(this.record);
     }
 }
-
-export default recordCardComponent;

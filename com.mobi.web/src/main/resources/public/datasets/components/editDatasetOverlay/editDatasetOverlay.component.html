@@ -20,24 +20,38 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>Edit Dataset</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+<h1 mat-dialog-title>Edit Dataset</h1>
+<div mat-dialog-content [formGroup]="editDatasetForm">
+    <div class="dataset-info">
+        <p><small><span class="field-label">Dataset IRI:</span> {{datasetIRI}}</small></p>
+        <p><small><span class="field-label">Repository ID:</span> {{repositoryId}}</small></p>
+    </div>
+    <error-display *ngIf="error">{{error}}</error-display>
+    <mat-form-field class="w-100">
+        <mat-label>Title</mat-label>
+        <input matInput type="text" name="title" formControlName="title" required focus/>
+    </mat-form-field>
+    <mat-form-field class="w-100">
+        <mat-label>Description</mat-label>
+        <textarea matInput name="description" formControlName="description"></textarea>
+    </mat-form-field>
+    <!-- TODO: Replace with keyword-select when upgraded -->
+    <mat-form-field class="flex-1 w-100">
+        <mat-chip-list #keywordSelect formControlName="keywords">
+            <mat-chip *ngFor="let keyword of editDatasetForm.get('keywords').value" [removable]="true" (removed)="removeKeyword(keyword)">
+                {{keyword}}
+                <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+        </mat-chip-list>
+        <input placeholder="Keywords"
+        [matChipInputFor]="keywordSelect"
+        [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+        [matChipInputAddOnBlur]="false"
+        (matChipInputTokenEnd)="addKeyword($event)">
+    </mat-form-field>
+    <datasets-ontology-picker class="w-100" [(selected)]="selectedOntologies"></datasets-ontology-picker>
 </div>
-<div class="modal-body">
-    <form name="dvm.infoForm" novalidate autocomplete="off">
-        <div class="dataset-info">
-            <p><small><custom-label>Dataset IRI:</custom-label> {{dvm.recordConfig.datasetIRI}}</small></p>
-            <p><small><custom-label>Repository ID:</custom-label> {{dvm.recordConfig.repositoryId}}</small></p>
-        </div>
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <text-input display-text="'Title'" bind-model="dvm.recordConfig.title" change-event="dvm.recordConfig.title = value" required="true" is-focus-me="true"></text-input>
-        <text-area bind-model="dvm.recordConfig.description" change-event="dvm.recordConfig.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
-        <keyword-select bind-model="dvm.keywords" change-event="dvm.keywords = value"></keyword-select>
-        <datasets-ontology-picker selected-ontologies="dvm.selectedOntologies" select-ontology="dvm.selectOntology(ontology)" unselect-ontology="dvm.unselectOntology(ontology)"></datasets-ontology-picker>
-    </form>
-</div>
-<div class="modal-footer">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-disabled="dvm.infoForm.$invalid" ng-click="dvm.update()">Submit</button>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
+    <button mat-raised-button color="primary" (click)="update()" [disabled]="editDatasetForm.invalid">Submit</button>
 </div>

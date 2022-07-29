@@ -20,92 +20,107 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
+import { ENTER } from '@angular/cdk/keycodes';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatChipInputEvent, MatDialogRef } from '@angular/material';
+import { map, trim, uniq } from 'lodash';
 
-const template = require('./createMappingOverlay.component.html');
+import { Mapping } from '../../../shared/models/mapping.class';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { MappingManagerService } from '../../../shared/services/mappingManager.service';
 
 /**
- * @ngdoc component
- * @name mapper.component:createMappingOverlay
- * @requires shared.service:mappingManagerService
- * @requires shared.service:mapperStateService
+ * @class mapper.CreateMappingOverlayComponent
  *
- * @description
- * `createMappingOverlay` is a component that creates content for a modal with three inputs for metadata about a
- * new MappingRecord: a text input for the title, a {@link shared.component:textArea} for the description,
- * and a {@link shared.component:keywordSelect}. Meant to be used in conjunction with the
- * {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal with three inputs for metadata about a new MappingRecord: a text input
+ * for the title, a textarea for the description, and a field for the keywords. Meant to be used in conjunction with the
+ * `MatDialog` service.
+ * 
  */
-const createMappingOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: createMappingOverlayComponentCtrl,
-};
+@Component({
+    selector: 'create-mapping-overlay',
+    templateUrl: './createMappingOverlay.component.html'
+})
+export class CreateMappingOverlayComponent implements OnInit {
+    errorMessage = '';
+    createMappingForm = this.fb.group({
+        title: ['', [ Validators.required]],
+        description: [''],
+        keywords: [[]]
+    });
+    readonly separatorKeysCodes: number[] = [ENTER];
 
-createMappingOverlayComponentCtrl.$inject = ['mappingManagerService', 'mapperStateService'];
-
-function createMappingOverlayComponentCtrl(mappingManagerService, mapperStateService) {
-    var dvm = this;
-    var state = mapperStateService;
-    var mm = mappingManagerService;
-
-    dvm.errorMessage = '';
-    dvm.newMapping = {};
-
-    dvm.$onInit = function() {
-        dvm.newMapping = state.createMapping();
-        if (state.mapping) {
-            dvm.newMapping.record = angular.copy(state.mapping.record);
-            dvm.newMapping.jsonld = angular.copy(state.mapping.jsonld);
-            dvm.newMapping.ontology = angular.copy(state.mapping.ontology);
+    constructor(private mm: MappingManagerService, private state: MapperStateService, private fb: FormBuilder,
+        private dialogRef: MatDialogRef<CreateMappingOverlayComponent>,) {}
+    
+    ngOnInit(): void {
+        if (this.state.selected.record) {
+            this.createMappingForm.controls.title.setValue(this.state.selected.record.title);
+            this.createMappingForm.controls.description.setValue(this.state.selected.record.description);
+            this.createMappingForm.controls.keywords.setValue(this.state.selected.record.keywords);
         }
     }
-    dvm.cancel = function() {
-        state.editMapping = false;
-        state.newMapping = false;
-        dvm.dismiss();
+    cancel(): void {
+        this.state.editMapping = false;
+        this.state.newMapping = false;
+        this.state.selected = undefined;
+        this.state.sourceOntologies = [];
+        this.state.availableClasses = [];
+        this.dialogRef.close();
     }
-    dvm.continue = function() {
-        var newId = mm.getMappingId(dvm.newMapping.record.title);
-        if (dvm.newMapping.jsonld.length === 0) {
-            dvm.newMapping.jsonld = mm.createNewMapping(newId);
-            dvm.sourceOntologies = [];
-            dvm.availableClasses = [];
-            nextStep();
+    continue(): void {
+        this.state.selected.config = {
+            title: this.createMappingForm.controls.title.value,
+            description: this.createMappingForm.controls.description.value,
+            keywords: uniq(map(this.createMappingForm.controls.keywords.value, trim))
+        };
+        const newId = this.mm.getMappingId(this.createMappingForm.controls.title.value);
+        if (this.state.selected.mapping) {
+            this.state.selected.mapping = this.state.selected.mapping.copy(newId);
+            const sourceOntologyInfo = this.state.selected.mapping.getSourceOntologyInfo();
+            this.mm.getSourceOntologies(sourceOntologyInfo)
+                .subscribe(ontologies => {
+                    this.state.sourceOntologies = ontologies;
+                    this.state.availableClasses = this.state.getClasses(ontologies);
+                    this._nextStep();
+                }, () => this._onError('Error retrieving mapping'));
         } else {
-            dvm.newMapping.jsonld = mm.copyMapping(dvm.newMapping.jsonld, newId);
-            var sourceOntologyInfo = mm.getSourceOntologyInfo(dvm.newMapping.jsonld);
-            mm.getSourceOntologies(sourceOntologyInfo)
-                .then(ontologies => {
-                    if (mm.areCompatible(dvm.newMapping.jsonld, ontologies)) {
-                        state.sourceOntologies = ontologies;
-                        state.availableClasses = state.getClasses(ontologies);
-                        nextStep();
-                    } else {
-                        onError('The selected mapping is incompatible with its source ontologies');
-                    }
-                }, () => onError('Error retrieving mapping'));
+            this.state.selected.mapping = new Mapping(newId);
+            this.state.sourceOntologies = [];
+            this.state.availableClasses = [];
+            this._nextStep();
+        }
+    }
+    addKeyword(event: MatChipInputEvent): void {
+        const input = event.input;
+        const value = event.value;
+
+        if ((value || '').trim()) {
+            this.createMappingForm.controls.keywords.setValue([...this.createMappingForm.controls.keywords.value, value.trim()]);
+            this.createMappingForm.controls.keywords.updateValueAndValidity();
+        }
+
+        // Reset the input value
+        if (input) {
+            input.value = '';
+        }
+    }
+    removeKeyword(keyword: string): void {
+        const idx = this.createMappingForm.controls.keywords.value.indexOf(keyword);
+        if (idx >= 0) {
+            this.createMappingForm.controls.keywords.value.splice(idx, 1);
+            this.createMappingForm.controls.keywords.updateValueAndValidity();
         }
     }
 
-    function nextStep() {
-        state.mapping = dvm.newMapping;
-        dvm.errorMessage = '';
-        state.mapping.difference.additions = angular.copy(state.mapping.jsonld);
-        state.mappingSearchString = '';
-        state.step = state.fileUploadStep;
-        dvm.close();
+    private _nextStep() {
+        this.errorMessage = '';
+        this.state.selected.difference.additions = Object.assign([], this.state.selected.mapping.getJsonld());
+        this.state.step = this.state.fileUploadStep;
+        this.dialogRef.close();
     }
-    function onError(message) {
-        dvm.errorMessage = message;
+    private _onError(message) {
+        this.errorMessage = message;
     }
 }
-
-export default createMappingOverlayComponent;

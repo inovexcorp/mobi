@@ -25,17 +25,22 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { cleanStylesFromDOM, mockUtil, mockCatalogManager, mockPrefixes } from '../../../../../../test/ts/Shared';
+import { range, map, forEach } from 'lodash';
+import { MatExpansionModule, MatTooltipModule } from '@angular/material';
+import { of, throwError } from 'rxjs';
+
+import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { Difference } from '../../../shared/models/difference.class';
-import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { ShapesGraphChangesPageComponent } from './shapesGraphChangesPage.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { MatExpansionModule, MatTooltipModule } from '@angular/material';
 import { StatementContainerComponent } from '../../../shared/components/statementContainer/statementContainer.component';
 import { StatementDisplayComponent } from '../../../shared/components/statementDisplay/statementDisplay.component';
 import { CommitHistoryTableComponent } from '../../../shared/components/commitHistoryTable/commitHistoryTable.component';
-import { range, map, forEach } from 'lodash';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { OWL, RDF } from '../../../prefixes';
+import { ShapesGraphChangesPageComponent } from './shapesGraphChangesPage.component';
 
 interface PredicateObject {
     p: string,
@@ -52,10 +57,9 @@ describe('Shapes Graph Changes Page component', function() {
     let component: ShapesGraphChangesPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ShapesGraphChangesPageComponent>;
-    let shapesGraphStateStub;
+    let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
     let utilStub;
-    let catalogManagerStub;
-    let prefixesStub;
+    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     const commitChanges: CommitChanges = {id: 'test', additions: [], deletions: [], disableAll: false};
 
     configureTestSuite(function() {
@@ -73,26 +77,25 @@ describe('Shapes Graph Changes Page component', function() {
             ],
             providers: [
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'catalogManagerService', useClass: mockCatalogManager },
-                { provide: 'prefixes', useClass: mockPrefixes },
+                MockProvider(CatalogManagerService),
                 MockProvider(ShapesGraphStateService)
             ]
         });
     });
     beforeEach(function() {
+        catalogManagerStub = TestBed.get(CatalogManagerService);
+        catalogManagerStub.localCatalog = {'@id': 'catalog', '@type': []};
+        catalogManagerStub.deleteInProgressCommit.and.returnValue(of(null));
         fixture = TestBed.createComponent(ShapesGraphChangesPageComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         shapesGraphStateStub = TestBed.get(ShapesGraphStateService);
-        shapesGraphStateStub.listItem = new VersionedRdfListItem();
+        shapesGraphStateStub.listItem = new ShapesGraphListItem();
         shapesGraphStateStub.listItem.versionedRdfRecord.recordId = 'record';
         shapesGraphStateStub.listItem.inProgressCommit = new Difference();
-        catalogManagerStub = TestBed.get('catalogManagerService');
-        catalogManagerStub.deleteInProgressCommit.and.returnValue(Promise.resolve());
         utilStub = TestBed.get('utilService');
         utilStub.getPredicatesAndObjects.and.returnValue([{p: '', o: ''}]);
         utilStub.condenseCommitId.and.returnValue('test');
-        prefixesStub = TestBed.get('prefixes');
     });
     afterEach(function() {
         cleanStylesFromDOM();
@@ -111,10 +114,10 @@ describe('Shapes Graph Changes Page component', function() {
             component.additions = [{'@id': '1', 'value': ['stuff']}];
             component.deletions = [{'@id': '1', 'value': ['otherstuff']}, {'@id': '2'}];
             component.ngOnChanges();
-            forEach(shapesGraphStateStub.listItem.inProgressCommit.additions, change => {
+            forEach(shapesGraphStateStub.listItem.inProgressCommit.additions as JSONLDObject[], change => {
                 expect(utilStub.getPredicatesAndObjects).toHaveBeenCalledWith(change);
             });
-            forEach(shapesGraphStateStub.listItem.inProgressCommit.deletions, change => {
+            forEach(shapesGraphStateStub.listItem.inProgressCommit.deletions as JSONLDObject[], change => {
                 expect(utilStub.getPredicatesAndObjects).toHaveBeenCalledWith(change);
             });
             expect(component.showList).toEqual([
@@ -123,10 +126,10 @@ describe('Shapes Graph Changes Page component', function() {
             ]);
         });
         it('if there are more than 100 changes', function() {
-            var ids = range(102);
-            component.additions = map(ids, id => ({'@id': id}));
+            let ids = range(102);
+            component.additions = map(ids, id => ({'@id': '' + id}));
             component.ngOnChanges();
-            forEach(shapesGraphStateStub.listItem.inProgressCommit.additions, change => {
+            forEach(shapesGraphStateStub.listItem.inProgressCommit.additions as JSONLDObject[], change => {
                 expect(utilStub.getPredicatesAndObjects).toHaveBeenCalledWith(change);
             });
             expect(component.showList.length).toEqual(100);
@@ -135,32 +138,28 @@ describe('Shapes Graph Changes Page component', function() {
     describe('controller methods', function() {
         describe('should remove in progress changes', function() {
             it('successfully', async function() {
-                shapesGraphStateStub.listItem.inProgressCommit = {
-                    additions: [{'@id': '12345'}],
-                    deletions: []
-                };
+                shapesGraphStateStub.listItem.inProgressCommit = new Difference();
+                shapesGraphStateStub.listItem.inProgressCommit.additions = [{'@id': '12345', '@type': []}];
                 component.removeChanges();
                 fixture.detectChanges();
                 await fixture.whenStable();
 
                 expect(shapesGraphStateStub.clearInProgressCommit).toHaveBeenCalled();
-                expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             });
             it('unless an error occurs', async function() {
-                catalogManagerStub.deleteInProgressCommit.and.returnValue(Promise.reject());
-                shapesGraphStateStub.listItem.inProgressCommit = {
-                    additions: [{'@id': '12345'}],
-                    deletions: []
-                };
+                catalogManagerStub.deleteInProgressCommit.and.returnValue(throwError(''));
+                let diff = new Difference();
+                diff.additions = [{'@id': '12345', '@type': []}];
+                shapesGraphStateStub.listItem.inProgressCommit = diff;
                 component.removeChanges();
                 fixture.detectChanges();
                 await fixture.whenStable();
 
-                expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual({
-                    additions: [{'@id': '12345'}],
-                    deletions: []
-                });
+                expect(shapesGraphStateStub.listItem.inProgressCommit).toEqual(diff);
                 expect(utilStub.createSuccessToast).not.toHaveBeenCalled();
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             });
         });
         it('should get more results', function() {
@@ -174,7 +173,7 @@ describe('Shapes Graph Changes Page component', function() {
         });
         describe('should check if a specific type exists', function() {
             it('when it exists', function() {
-                const commitChange: PredicateObject = {p: prefixesStub.rdf + 'type', o: prefixesStub.owl + 'Class'};
+                const commitChange: PredicateObject = {p: RDF + 'type', o: OWL + 'Class'};
                 expect(component.hasSpecificType([commitChange])).toBeTrue();
             });
             it('when it does not exist', function() {
@@ -192,14 +191,14 @@ describe('Shapes Graph Changes Page component', function() {
         });
         describe('should open a selected commit', function() {
             it('successfully', async function() {
-                shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.resolve());
+                shapesGraphStateStub.changeShapesGraphVersion.and.resolveTo();
 
                 await component.openCommit(commitChanges);
                 expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record', null, 'test', null, 'test');
                 expect(utilStub.createErrorToast).not.toHaveBeenCalled();
             });
             it('unless an error occurs', async function() {
-                shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.reject('Error'));
+                shapesGraphStateStub.changeShapesGraphVersion.and.rejectWith('Error');
 
                 await component.openCommit(commitChanges);
                 expect(shapesGraphStateStub.changeShapesGraphVersion).toHaveBeenCalledWith('record', null, 'test', null, 'test');

@@ -20,15 +20,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="column-select">
-    <ui-select ng-model="dvm.selectedColumn" ng-change="dvm.onChange()">
-        <ui-select-match placeholder="Select a column">
-            {{$select.selected.header}}
-        </ui-select-match>
-        <ui-select-choices repeat="column.num as column in dvm.columns | filter:$select.search:dvm.compare">
-            <div ng-bind-html="column.header | highlight:$select.search | trusted"></div>
-        </ui-select-choices>
-    </ui-select>
-    <small class="form-text">Columns are saved by zero-based index</small>
-    <div ng-if="dvm.selectedColumn" class="value-preview"><span class="field-name">Value: </span><span ng-class="{'text-muted': dvm.preview === '(None)'}">{{dvm.preview}}</span></div>
+<div [formGroup]="parentForm" class="column-select w-100">
+    <mat-form-field class="w-100">
+        <mat-label>Column</mat-label>
+        <mat-select placeholder="Column" formControlName="column" >
+            <mat-option *ngFor="let col of columns" [value]="col.idx">
+                {{col.header}}
+            </mat-option>
+        </mat-select>
+        <mat-hint>Columns are saved by zero-based index</mat-hint>
+    </mat-form-field>
+    <div *ngIf="parentForm.get('column').value !== undefined && parentForm.get('column').value !== null" class="value-preview"><span class="field-name">Value: </span><span [ngClass]="{'text-muted': preview === '(None)'}">{{preview}}</span></div>
 </div>

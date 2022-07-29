@@ -21,6 +21,9 @@
  * #L%
  */
 import { get, find } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 const template = require('./commitOverlay.component.html');
 
@@ -52,7 +55,7 @@ const commitOverlayComponent = {
 
 commitOverlayComponentCtrl.$inject = ['$q', 'ontologyStateService', 'catalogManagerService', 'utilService'];
 
-function commitOverlayComponentCtrl($q, ontologyStateService, catalogManagerService, utilService) {
+function commitOverlayComponentCtrl($q, ontologyStateService, catalogManagerService: CatalogManagerService, utilService) {
     var dvm = this;
     var cm = catalogManagerService;
     var catalogId = get(cm.localCatalog, '@id', '');
@@ -72,10 +75,10 @@ function commitOverlayComponentCtrl($q, ontologyStateService, catalogManagerServ
                 branchConfig.description = description;
             }
             var branchId;
-            cm.createRecordUserBranch(dvm.os.listItem.ontologyRecord.recordId, catalogId, branchConfig, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.branchId)
-                .then(branchIri => {
+            cm.createRecordUserBranch(dvm.os.listItem.ontologyRecord.recordId, catalogId, branchConfig, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.branchId).pipe(first()).toPromise()
+                .then((branchIri: string) => {
                     branchId = branchIri;
-                    return cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId);
+                    return cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise();
                 }, $q.reject)
                 .then(branch => {
                     dvm.os.listItem.branches.push(branch);
@@ -96,8 +99,8 @@ function commitOverlayComponentCtrl($q, ontologyStateService, catalogManagerServ
 
     function createCommit(branchId) {
         var commitId;
-        cm.createBranchCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.comment)
-            .then(commitIri => {
+        cm.createBranchCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.comment).pipe(first()).toPromise()
+            .then((commitIri: string) => {
                 commitId = commitIri;
                 return dvm.os.updateOntologyState({recordId: dvm.os.listItem.ontologyRecord.recordId, commitId, branchId});
             }, $q.reject)

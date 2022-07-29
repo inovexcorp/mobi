@@ -24,7 +24,11 @@ import { Inject, Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material';
 import { FormBuilder, Validators } from '@angular/forms';
 import { get } from 'lodash';
+import { first } from 'rxjs/operators';
+
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { CATALOG } from '../../../prefixes';
 
 /**
  * @class shapes-graph-editor.CommitModalComponent
@@ -46,13 +50,13 @@ export class CommitModalComponent {
     });
 
     constructor(private state: ShapesGraphStateService, @Inject('utilService') private util,
-                @Inject('catalogManagerService') private cm, private fb: FormBuilder,
-                private dialogRef: MatDialogRef<CommitModalComponent>, @Inject('prefixes') private prefixes) {}
+                private cm: CatalogManagerService, private fb: FormBuilder,
+                private dialogRef: MatDialogRef<CommitModalComponent>) {}
 
-    commit(): Promise<void> {
-        return this.cm.getRecordBranch(this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.recordId, this.catalogId)
-            .then(branch => {
-                this.state.listItem.upToDate = this.util.getPropertyId(branch, this.prefixes.catalog + 'head') === this.state.listItem.versionedRdfRecord.commitId;
+    commit(): void {
+        this.cm.getRecordBranch(this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.recordId, this.catalogId)
+            .subscribe(branch => {
+                this.state.listItem.upToDate = this.util.getPropertyId(branch, CATALOG + 'head') === this.state.listItem.versionedRdfRecord.commitId;
                 if (this.state.listItem.upToDate) {
                     this.createCommit(this.state.listItem.versionedRdfRecord.branchId);
                 } else {
@@ -62,14 +66,13 @@ export class CommitModalComponent {
     }
     createCommit(branchId: string): void {
         this.cm.createBranchCommit(branchId, this.state.listItem.versionedRdfRecord.recordId, this.catalogId,
-            this.createCommitForm.controls.comment.value)
-            .then(commitIri => {
-                return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId,
+            this.createCommitForm.controls.comment.value).pipe(first()).toPromise()
+            .then(commitIri => this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, 
                     this.state.listItem.versionedRdfRecord.branchId, commitIri, undefined, undefined, true,
-                    this.state.listItem.changesPageOpen)
-                    .then(() => {
-                        this.dialogRef.close(true);
-                    }, Promise.reject);
+                    this.state.listItem.changesPageOpen),
+                error => Promise.reject(error))
+            .then(() => {
+                this.dialogRef.close(true);
             }, error => {
                 this.errorMessage = error;
             });

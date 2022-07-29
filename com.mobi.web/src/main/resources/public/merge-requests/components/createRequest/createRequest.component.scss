@@ -24,36 +24,17 @@
 @import "../../../css/variables";
 
 .create-request {
-    .block-content {
-        padding: 10px 10px 0 10px;
-    }
-    .block-footer {
-        position: relative;
+    mat-horizontal-stepper {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
 
-        .progress-bar-container {
-            max-width: 300px;
-            margin: 0 auto;
+        .mat-horizontal-content-container {
+            flex: 1;
+            min-height: 0;
 
-            .progress {
-                margin-bottom: 0;
-            }
-        }
-        @media (max-width: 1200px) {
-            .btn-container {
-                position: relative !important;
-                right: auto !important;
-                top: auto !important;
-                transform: none !important;
-            }
-        }
-        .btn-container {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-
-            button {
-                margin-left: 10px;
+            .mat-horizontal-stepper-content[aria-expanded=true] {
+                height: 100%;
             }
         }
     }

@@ -27,6 +27,7 @@ import { StateService } from '@uirouter/core';
 import { WindowRef } from '../../../shared/services/windowRef.service';
 
 import './quickActionGrid.component.scss';
+import { DiscoverStateService } from '../../../shared/services/discoverState.service';
 
 /**
  * @class home.QuickActionGridComponent
@@ -43,7 +44,7 @@ export class QuickActionGridComponent implements OnInit {
     actions = [];
 
     constructor(private windowRef: WindowRef, private $state: StateService, @Inject('ontologyStateService') private os,
-                @Inject('discoverStateService') private ds) {}
+                private ds: DiscoverStateService) {}
     
     ngOnInit(): void {
         const actions = [
@@ -94,15 +95,11 @@ export class QuickActionGridComponent implements OnInit {
         this.windowRef.getNativeWindow().open('https://mobi.inovexcorp.com/docs/', '_blank');
     }
     exploreData(): void {
-        this.ds.explore.active = true;
-        this.ds.search.active = false;
-        this.ds.query.active = false;
+        this.ds.tabIndex = 0;
         this.$state.go('root.discover', null, { reload: true });
     }
     queryData(): void {
-        this.ds.explore.active = false;
-        this.ds.search.active = false;
-        this.ds.query.active = true;
+        this.ds.tabIndex = 2;
         this.$state.go('root.discover', null, { reload: true });
     }
     ingestData(): void {

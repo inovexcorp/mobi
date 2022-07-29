@@ -24,7 +24,6 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
-
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent } from 'ng-mocks';
 import { get } from 'lodash';
@@ -33,14 +32,13 @@ import {
     cleanStylesFromDOM,
     mockSettingManager,
     mockUtil,
-    mockPrefixes
 } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
-import { SettingEditPageComponent } from './settingEditPage.component';
 import { SettingGroupComponent } from '../settingGroup/settingGroup.component';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
 import { TrustedHtmlPipe } from '../../pipes/trustedHtml.pipe';
-
+import { RDFS } from '../../../prefixes';
+import { SettingEditPageComponent } from './settingEditPage.component';
 
 describe('Setting Edit Page Component', function() {
     let component: SettingEditPageComponent;
@@ -65,7 +63,6 @@ describe('Setting Edit Page Component', function() {
             providers: [
                 { provide: 'settingManagerService', useClass: mockSettingManager },
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'prefixes', useClass: mockPrefixes },
                 { provide: 'ErrorDisplayComponent', useClass: MockComponent(ErrorDisplayComponent) }
             ]
         });
@@ -87,14 +84,14 @@ describe('Setting Edit Page Component', function() {
         testGroups = [ {
             '@id': 'preference:TestGroupA',
             '@type': [ 'preference:PreferenceGroup' ],
-            'rdfs:label': [ {
+            [RDFS + 'label']: [ {
               '@language': 'en',
               '@value': 'Test Group A'
             } ]
           }, {
             '@id': 'preference:#TestGroupB',
             '@type': [ 'preference:PreferenceGroup' ],
-            'rdfs:label': [ {
+            [RDFS + 'label']: [ {
               '@language': 'en',
               '@value': 'Test Group B'
             } ]
@@ -102,7 +99,7 @@ describe('Setting Edit Page Component', function() {
 
         settingManagerStub.tabs = [];
 
-        component.settingType = { iri: `http://mobitest.com/Preference`, userText: 'Preferences'};
+        component.settingType = { iri: 'http://mobitest.com/Preference', userText: 'Preferences'};
     });
 
     afterEach(function() {
@@ -117,14 +114,14 @@ describe('Setting Edit Page Component', function() {
     describe('controller methods', function() {
         describe('should populate the sidebar', function() {
             it('unless an error occurs', fakeAsync(function() {
-                settingManagerStub.getSettingGroups.and.returnValue(Promise.reject('Error message'));
+                settingManagerStub.getSettingGroups.and.rejectWith('Error message');
                 component.setSettingTabs();
                 tick();
                 expect(settingManagerStub.tabs.length).toEqual(0);
-                expect(utilStub.createErrorToast).toHaveBeenCalled();
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             }));
             it('with new values', fakeAsync(function() {
-                settingManagerStub.getSettingGroups.and.returnValue(Promise.resolve({data: testGroups}));
+                settingManagerStub.getSettingGroups.and.resolveTo({data: testGroups});
                 component.setSettingTabs();
                 tick();
                 expect(component.tabs.length).toEqual(2);
@@ -140,13 +137,13 @@ describe('Setting Edit Page Component', function() {
                 };
                 component.addTab(testPreferenceGroup);
                 expect(component.tabs.length).toEqual(0);
-                expect(utilStub.createErrorToast).toHaveBeenCalled();
+                expect(utilStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
             });
             it('with the correct properties', function() {
                 const testPreferenceGroup = {
                     '@id': 'preference:TestGroupA',
                     '@type': [ 'preference:PreferenceGroup' ],
-                    'rdfs:label': [ {
+                    [RDFS + 'label']: [ {
                       '@language': 'en',
                       '@value': 'Test Group A'
                     } ]

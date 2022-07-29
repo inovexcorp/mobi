@@ -24,22 +24,12 @@
 @import "../../../css/variables";
 
 .edit-mapping-page {
-	.tab-headings {
-		.tab-heading {
-			border-top-left-radius: 10px;
-			border-top-right-radius: 10px;
-			background-color: var(--dark-light);
-			font-size: 1rem;
-
-			&:hover {
-				cursor: pointer;
-			}
-			&.active {
-				background-color: #fff;
-			}
-		}
-	}
-	.editor-column .block-content {
-		padding: 10px;
-	}
+    .mat-tab-labels {
+        justify-content: center;
+    }
+    .mat-tab-body-wrapper {
+        padding: 0.5rem 0;
+        flex: 1;
+        min-height: 0;
+    }
 }

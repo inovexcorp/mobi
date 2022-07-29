@@ -20,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { CommitChange } from './commitChange.interface';
 import { Conflict } from './conflict.interface';
 import { Difference } from './difference.class';
 import { JSONLDObject } from './JSONLDObject.interface';
@@ -39,9 +38,9 @@ export class VersionedRdfListItem {
         commitId: string,
         tagId?: string
     };
+    additions: JSONLDObject[];
+    deletions: JSONLDObject[];
     branches: JSONLDObject[];
-    additions: CommitChange[];
-    deletions: CommitChange[];
     inProgressCommit: Difference;
     merge: {
         active: boolean,

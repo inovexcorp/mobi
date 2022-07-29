@@ -21,60 +21,52 @@
  * #L%
  */
 
-const template = require('./replyComment.component.html');
+import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
+import { switchMap } from 'rxjs/operators';
+import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
+
+import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 
 /**
- * @ngdoc component
- * @name merge-requests.component:replyComment
- * @requires shared.service:mergeRequestManagerService
- * @requires shared.service:utilService
+ * @class merge-requests.ReplyCommentComponent
  *
- * @description
- * `replyComment` is a component which creates a div containing a box indicating a reply can be made. Once that
- * box is clicked, it is replaced with a {@link shared.component:markdownEditor} for submitting a reply
+ * A component which creates a div containing a box indicating a reply can be made. Once that
+ * box is clicked, it is replaced with a {@link shared.MarkdownEditorComponent} for submitting a reply
  * to the provided parent comment of the provided request.
  *
- * @param {Object} request An object representing the Merge Request with the parent comment
+ * @param {MergeRequest} request An object representing the Merge Request with the parent comment
  * @param {string} parentId The IRI id of the parent comment this component will reply to
- * @param {Function} updateRequest A function to be called when the value of `request` changes. Expects an argument
- * called `value` and should update the value of `request`.
  */
-const replyCommentComponent = {
-    template,
-    bindings: {
-        request: '<',
-        parentId: '<',
-        updateRequest: '&'
-    },
-    controllerAs: 'dvm',
-    controller: replyCommentComponentCtrl
-}
+@Component({
+    selector: 'reply-comment',
+    templateUrl: './replyComment.component.html'
+})
+export class ReplyCommentComponent {
+    edit = false;
+    replyComment = '';
 
-replyCommentComponentCtrl.$inject = ['$q', 'mergeRequestManagerService', 'utilService'];
+    @Input() parentId: string;
+    @Input() request: MergeRequest;
+    @Output() requestChange = new EventEmitter<MergeRequest>();
+    
+    constructor(public mm: MergeRequestManagerService, @Inject('utilService') public util) {}
 
-function replyCommentComponentCtrl($q, mergeRequestManagerService, utilService) {
-    var dvm = this;
-    var mm = mergeRequestManagerService;
-    var util = utilService;
-    dvm.edit = false;
-    dvm.replyComment = '';
-
-    dvm.reply = function() {
-        mm.createComment(dvm.request.jsonld['@id'], dvm.replyComment, dvm.parentId)
-            .then(() => {
-                dvm.replyComment = '';
-                dvm.edit = false;
-                return mm.getComments(dvm.request.jsonld['@id']);
-            }, $q.reject)
-            .then(comments => {
-                dvm.request.comments = comments;
-                dvm.updateRequest({value: dvm.request});
-            }, util.createErrorToast);
+    reply(): void {
+        this.mm.createComment(this.request.jsonld['@id'], this.replyComment, this.parentId)
+            .pipe(
+                switchMap(() => {
+                    this.replyComment = '';
+                    this.edit = false;
+                    return this.mm.getComments(this.request.jsonld['@id']);
+                })
+            )
+            .subscribe(comments => {
+                this.request.comments = comments;
+                this.requestChange.emit(this.request);
+            }, error => this.util.createErrorToast(error));
     }
-    dvm.cancel = function() {
-        dvm.replyComment = '';
-        dvm.edit = false;
+    cancel(): void {
+        this.replyComment = '';
+        this.edit = false;
     }
 }
-
-export default replyCommentComponent;

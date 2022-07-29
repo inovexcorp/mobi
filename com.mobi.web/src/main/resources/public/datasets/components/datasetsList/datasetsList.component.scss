@@ -26,19 +26,13 @@
 .datasets-list {
     flex: 1;
     min-height: 0;
-    margin: 0;
-    padding: 15px 0;
 
-    .block-content {
-        padding: 10px;
-    }
-    .col-8 {
-        display: flex;
-        flex-direction: column;
+    .results-list {
+        overflow: auto;
     }
     .dataset {
-        .record-keywords {
-            margin-bottom: 0;
+        .header h3 {
+            max-width: 75%;
         }
         .ontologies {
             li {
@@ -54,13 +48,6 @@
         }
         .description {
             @include textOverflow;
-        }
-        &.open {
-            .description {
-                text-overflow: clip;
-                white-space: normal;
-                overflow: visible;
-            }
         }
     }
 }

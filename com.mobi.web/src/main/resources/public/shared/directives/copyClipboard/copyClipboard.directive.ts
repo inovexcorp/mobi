@@ -20,38 +20,43 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Directive, Input, Output, EventEmitter, HostListener, Inject } from '@angular/core';
+import { Directive, Input, Output, EventEmitter, HostListener, Inject, HostBinding } from '@angular/core';
 
 @Directive({ selector: '[copy-clipboard]' })
 export class CopyClipboardDirective {
 
-    @Input("copy-clipboard")
+    @HostBinding('class')
+    elementClass = 'copy-clipboard';
+
+    @Input('copy-clipboard')
     public payload: string;
 
-    @Output("copied")
+    @Output('copied')
     public copied: EventEmitter<string> = new EventEmitter<string>();
 
     constructor(@Inject('toastr') private toastr) {
     }
 
-    @HostListener("click", ["$event"])
+    @HostListener('click', ['$event'])
     public onClick(event: MouseEvent): void {
 
         event.preventDefault();
-        if (!this.payload)
+        event.stopPropagation();
+        if (!this.payload) {
             return;
+        }
 
-        let listener = (e: ClipboardEvent) => {
-            let clipboard = e.clipboardData || window["clipboardData"];
-            clipboard.setData("text", this.payload.toString());
+        const listener = (e: ClipboardEvent) => {
+            const clipboard = e.clipboardData || window['clipboardData'];
+            clipboard.setData('text', this.payload.toString());
             e.preventDefault();
 
             this.copied.emit(this.payload);
             this.toastr.success('', 'Copied', {timeOut: 2000});
         };
 
-        document.addEventListener("copy", listener, false)
-        document.execCommand("copy");
-        document.removeEventListener("copy", listener, false);
+        document.addEventListener('copy', listener, false)
+        document.execCommand('copy');
+        document.removeEventListener('copy', listener, false);
     }
 }

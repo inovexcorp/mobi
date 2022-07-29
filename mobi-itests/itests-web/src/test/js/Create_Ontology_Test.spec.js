@@ -85,7 +85,7 @@ module.exports = {
             .waitForElementVisible('edit-iri-overlay')
             .setValue('edit-iri-overlay div.form-group.ends-container input', 'myOntology')
             .click('xpath', '//edit-iri-overlay//button[text()="Submit"]')
-            .waitForElementNotPresent('.spinner')
+            .waitForElementNotVisible('.spinner')
     },
 
     'Step 6: Open Commit overlay' : function(browser) { 
@@ -106,7 +106,7 @@ module.exports = {
             .useXpath()
             .click('//commit-overlay//button[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('.spinner')
+            .waitForElementNotVisible('.spinner')
             .waitForElementNotPresent('commit-overlay')
             .waitForElementPresent('ontology-editor-page ontology-tab')
     },
@@ -116,7 +116,7 @@ module.exports = {
             .useCss()  
             .waitForElementPresent('ontology-editor-page ontology-tab')
             .click('ontology-sidebar button.btn.btn-primary')
-            .waitForElementNotPresent('.spinner')
+            .waitForElementNotVisible('.spinner')
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
     },
 
@@ -127,7 +127,7 @@ module.exports = {
             .click('ontology-editor-page open-ontology-tab search-bar')
             .keys('myTitle')
             .keys(browser.Keys.ENTER)
-            .waitForElementNotPresent('.spinner')
+            .waitForElementNotVisible('.spinner')
             .waitForElementVisible('ontology-editor-page open-ontology-tab')
     },
 
@@ -142,7 +142,7 @@ module.exports = {
         // wait for loading to finish
         browser
             .useCss()
-            .waitForElementNotPresent('.spinner')
+            .waitForElementNotVisible('.spinner')
             .waitForElementPresent('ontology-editor-page ontology-tab')
             .waitForElementVisible('ontology-editor-page ontology-tab project-tab imports-block')
     },
@@ -326,11 +326,14 @@ module.exports = {
             .waitForElementVisible('//open-ontology-select//span[text()[contains(.,"newBranchTitle")]]')
             .useCss()
     },
-    
+
     'Step 23: Perform a merge': function(browser) {
+        browser.globals.wait_for_no_spinners(browser)
         browser
+            .useCss()
             .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
-            .waitForElementVisible('circle-button-stack .fa-random')
+            .waitForElementVisible('circle-button-stack .hidden-buttons')
+            .waitForElementVisible('circle-button-stack .fa-random',15000)
             .click('circle-button-stack .fa-random')
             .waitForElementVisible('.merge-message')
             .assert.textContains('.merge-message', 'newBranchTitle')
@@ -363,7 +366,7 @@ module.exports = {
 
     'Step 24: Validate Merged Commits': function(browser) {
         browser
-            .waitForElementNotPresent('.spinner')
+            .waitForElementNotVisible('.spinner')
             .useXpath()
             .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
             .useCss()

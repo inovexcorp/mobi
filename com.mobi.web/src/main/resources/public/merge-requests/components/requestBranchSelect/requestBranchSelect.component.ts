@@ -20,118 +20,120 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, noop } from 'lodash';
+import { HttpResponse } from '@angular/common/http';
+import { Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild, Input } from '@angular/core';
+import { get } from 'lodash';
+
+import { CATALOG } from '../../../prefixes';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 
 import './requestBranchSelect.component.scss';
 
-const template = require('./requestBranchSelect.component.html');
-
 /**
- * @ngdoc component
- * @name merge-requests.component:requestBranchSelect
- * @requires $q
- * @requires shared.service:mergeRequestsStateService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @class merge-requests.RequestBranchSelectComponent
  *
- * @description
- * `requestBranchSelect` is a component which creates a div containing a form with ui-selects
- * to choose the source and target Branch for a new MergeRequest. The Branch list is derived from
- * the previously selected VersionedRDFRecord for the MergeRequest. The div also contains a
- * {@link shared.component:commitDifferenceTabset} to display the changes and commits
- * between the selected branches.
+ * A component which creates a div containing a form with selects to choose the source and target Branch for a new
+ * MergeRequest. The Branch list is derived from the previously selected VersionedRDFRecord for the MergeRequest. The
+ * div also contains a {@link shared.component:commitDifferenceTabset} to display the changes and commits between the
+ * selected branches.
  */
-const requestBranchSelectComponent = {
-    template,
-    bindings: {
-        updateCommits: '&'
-    },
-    controllerAs: 'dvm',
-    controller: requestBranchSelectComponentCtrl
-};
+@Component({
+    selector: 'request-branch-select',
+    templateUrl: './requestBranchSelect.component.html'
+})
+export class RequestBranchSelectComponent implements OnInit, OnDestroy {
+    @Input() updateCommits:any;
+    branches: JSONLDObject[] = [];
+    sourceCommitId = '';
+    targetCommitId = '';
+    branchTitle = '';
+    recordTitle = '';
+    commits = [];
 
-requestBranchSelectComponentCtrl.$inject = ['$q', 'mergeRequestsStateService', 'catalogManagerService', 'utilService', 'prefixes'];
+    @ViewChild('commitDifferenceTabset') commitDifferenceTabset: ElementRef;
 
-function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalogManagerService, utilService, prefixes) {
-    const dvm = this;
-    const cm = catalogManagerService;
-    let catalogId = get(cm.localCatalog, '@id');
-    dvm.util = utilService;
-    dvm.state = mergeRequestsStateService;
-    dvm.prefixes = prefixes;
+    constructor(public state: MergeRequestsStateService, public cm: CatalogManagerService,
+        private spinnerSvc: ProgressSpinnerService, @Inject('utilService') public util) {}
 
-    dvm.state.requestConfig.difference = undefined;
-    dvm.branches = [];
-    dvm.commits = [];
-
-    dvm.$onInit = function() {
-        dvm.state.requestConfig.entityNames = {};
-        dvm.state.requestConfig.sourceBranchId = '';
-        dvm.state.requestConfig.targetBranchId = '';
-        dvm.state.requestConfig.sourceBranch = '';
-        dvm.state.requestConfig.targetBranch = '';
-        dvm.state.requestConfig.difference = undefined;
-        dvm.state.requestConfig.previousDiffIris = [];
-        dvm.state.requestConfig.startIndex = 0;
-        cm.getRecordBranches(dvm.state.requestConfig.recordId, catalogId)
-            .then(response => dvm.branches = response.data, $q.reject)
-            .then(noop, error => {
-                dvm.util.createErrorToast(error);
-                dvm.branches = [];
+    ngOnInit(): void {
+        this.recordTitle = this.util.getDctermsValue(this.state.selectedRecord, 'title');
+        this.state.clearDifference();
+        this.state.sameBranch = false;
+        this.cm.getRecordBranches(this.state.requestConfig.recordId, get(this.cm.localCatalog, '@id'))
+            .subscribe((response: HttpResponse<JSONLDObject[]>) => {
+                this.branches = response.body;
+                this.state.updateRequestConfigBranch('sourceBranch', this.branches);
+                this.state.updateRequestConfigBranch( 'targetBranch', this.branches);
+                if (this.state.requestConfig.sourceBranch && this.state.requestConfig.targetBranch) {
+                    this.state.sameBranch = this.state.requestConfig.sourceBranch['@id'] === this.state.requestConfig.targetBranch['@id'];
+                    this.branchTitle = this.util.getDctermsValue(this.state.requestConfig.sourceBranch, 'title');
+                    this.sourceCommitId = this.util.getPropertyId(this.state.requestConfig.sourceBranch, CATALOG + 'head');
+                    this.targetCommitId = this.util.getPropertyId(this.state.requestConfig.targetBranch, CATALOG + 'head');
+                    this._updateDifference(true);
+                }
+            }, error => {
+                this.util.createErrorToast(error);
+                this.branches = [];
             });
     }
-    dvm.$onDestroy = function() {
-        dvm.state.requestConfig.entityNames = {};
-        dvm.state.requestConfig.difference = undefined;
-        dvm.state.requestConfig.previousDiffIris = [];
-        dvm.state.requestConfig.startIndex = 0;
-        delete dvm.state.requestConfig.sameBranch;
+    ngOnDestroy(): void {
+        this.state.clearDifference();
+        this.state.sameBranch = false;
     }
-    dvm.changeSource = function(value) {
-        dvm.state.requestConfig.sourceBranch = value;
-        dvm.state.requestConfig.entityNames = {};
-        dvm.state.requestConfig.difference = undefined;
-        dvm.state.requestConfig.previousDiffIris = [];
-        dvm.state.requestConfig.startIndex = 0;
-        dvm.state.requestConfig.sameBranch = false;
-        if (dvm.state.requestConfig.sourceBranch) {
-            dvm.state.requestConfig.sourceBranchId = dvm.state.requestConfig.sourceBranch['@id'];
-            if (dvm.state.requestConfig.targetBranch) {
-                if (dvm.state.requestConfig.targetBranchId === dvm.state.requestConfig.sourceBranchId) {
-                    dvm.state.requestConfig.sameBranch = true;
-                } else { dvm.state.updateRequestConfigDifference().then(noop, dvm.util.createErrorToast) }
-            } else {
-                dvm.state.requestConfig.difference = undefined;
+    getEntityName(iri: string): string {
+        return this.state.getEntityNameLabel(iri);
+    }
+    changeSource(value: JSONLDObject): void {
+        this.state.requestConfig.sourceBranch = value;
+        this.state.sameBranch = false;
+        this.state.clearDifference();
+        if (this.state.requestConfig.sourceBranch) {
+            this.branchTitle = this.util.getDctermsValue(this.state.requestConfig.sourceBranch, 'title');
+            this.sourceCommitId = this.util.getPropertyId(this.state.requestConfig.sourceBranch, CATALOG + 'head');
+            this.state.requestConfig.sourceBranchId = this.state.requestConfig.sourceBranch['@id'];
+            if (this.state.requestConfig.targetBranch) {
+                this.state.sameBranch = this.state.requestConfig.sourceBranch['@id'] === this.state.requestConfig.targetBranch['@id'];
+                this._updateDifference(false);
             }
         } else {
-            dvm.state.requestConfig.difference = undefined;
+            this.branchTitle = '';
+            this.sourceCommitId = '';
         }
     }
-    dvm.changeTarget = function(value) {
-        dvm.state.requestConfig.targetBranch = value;
-        dvm.state.requestConfig.entityNames = {};
-        dvm.state.requestConfig.difference = undefined;
-        dvm.state.requestConfig.previousDiffIris = [];
-        dvm.state.requestConfig.startIndex = 0;
-        dvm.state.requestConfig.sameBranch = false;
-        if (dvm.state.requestConfig.targetBranch) {
-            dvm.state.requestConfig.targetBranchId = dvm.state.requestConfig.targetBranch['@id'];
-            if (dvm.state.requestConfig.sourceBranch) {
-                if (dvm.state.requestConfig.targetBranchId === dvm.state.requestConfig.sourceBranchId) {
-                    dvm.state.requestConfig.sameBranch = true;
-                } else { dvm.state.updateRequestConfigDifference().then(noop, dvm.util.createErrorToast) }
-            } else {
-                dvm.state.requestConfig.difference = undefined;
+    changeTarget(value: JSONLDObject): void {
+        this.state.requestConfig.targetBranch = value;
+        this.state.sameBranch = false;
+        this.state.clearDifference();
+        if (this.state.requestConfig.targetBranch) {
+            this.targetCommitId = this.util.getPropertyId(this.state.requestConfig.targetBranch, CATALOG + 'head');
+            this.state.requestConfig.targetBranchId = this.state.requestConfig.targetBranch['@id'];
+            if (this.state.requestConfig.sourceBranch) {
+                this.state.sameBranch = this.state.requestConfig.sourceBranch['@id'] === this.state.requestConfig.targetBranch['@id'];
+                this._updateDifference(false);
             }
         } else {
-            dvm.state.requestConfig.difference = undefined;
+            this.targetCommitId = '';
         }
     }
-    dvm.receiveCommits = function(value) {
-        dvm.commits = value;
-        dvm.updateCommits({commits: dvm.commits});
+
+    receiveCommits(value):void {
+        this.commits = value;
+        this.updateCommits({commits: this.commits});
+    }
+    
+    private _updateDifference(clearBranches: boolean): void {
+        this.spinnerSvc.startLoadingForComponent(this.commitDifferenceTabset);
+        this.state.updateRequestConfigDifference().subscribe(() => {
+            this.spinnerSvc.finishLoadingForComponent(this.commitDifferenceTabset);
+        }, error => {
+            this.util.createErrorToast(error);
+            if (clearBranches) {
+                this.branches = [];
+            }
+            this.spinnerSvc.finishLoadingForComponent(this.commitDifferenceTabset);
+        });
     }
 }
-
-export default requestBranchSelectComponent;

@@ -20,65 +20,54 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { has, isEqual, map } from 'lodash';
+import { Component, Inject, Input } from '@angular/core';
+import { isEqual } from 'lodash';
+
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { MappingOntology } from '../../../shared/models/mappingOntology.interface';
+import { MappingProperty } from '../../../shared/models/mappingProperty.interface';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
 
 import './classPreview.component.scss';
 
-const template = require('./classPreview.component.html');
-
 /**
- * @ngdoc component
- * @name mapper.component:classPreview
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:mapperStateService
+ * @class mapper.ClassPreviewComponent
  *
- * @description
- * `classPreview` is a component that creates a div with a brief description of the passed class and its properties.
- * It displays the name of the class, its IRI, its description, and the list of its properties.
+ * A component that creates a div with a brief description of the passed class and its properties. It displays the name
+ * of the class, its IRI, its description, and the list of its properties.
  *
  * @param {Object} classObj the class object from an ontology to preview
  * @param {Object[]} ontologies A list of ontologies containing the class and to pull properties
  * from.
  */
-const classPreviewComponent = {
-    template,
-    bindings: {
-        classObj: '<',
-        ontologies: '<'
-    },
-    controllerAs: 'dvm',
-    controller: classPreviewComponentCtrl
-};
+@Component({
+    selector: 'class-preview',
+    templateUrl: './classPreview.component.html'
+})
+export class ClassPreviewComponent {
+    name = '';
+    description = '';
+    props: MappingProperty[] = [];
+    total = 0;
 
-classPreviewComponentCtrl.$inject = ['mapperStateService', 'ontologyManagerService'];
+    private _classObj: JSONLDObject;
 
-function classPreviewComponentCtrl(mapperStateService, ontologyManagerService) {
-    const dvm = this;
-    dvm.om = ontologyManagerService;
-    dvm.state = mapperStateService;
-    dvm.name = '';
-    dvm.description = '';
-    dvm.props = [];
-    dvm.total = 0;
-
-    dvm.$onChanges = function(changesObj) {
-        if (has(changesObj, 'classObj')) {
-            const obj = changesObj.classObj.currentValue;
-            dvm.name = obj.name ? obj.name : dvm.om.getEntityName(obj);
-            dvm.description = obj.description ? obj.description : dvm.om.getEntityDescription(obj) || '(None Specified)';
-            let props = dvm.state.getClassProps(dvm.ontologies, obj['@id']);
-            if (!isEqual(changesObj.classObj.currentValue, changesObj.classObj.previousValue)) {
-                dvm.total = props.length;
-                dvm.props = map(props.slice(0, 10), originalProp => {
-                    var prop = angular.copy(originalProp);
-                    prop.name = dvm.om.getEntityName(prop.propObj);
-                    prop.isDeprecated = dvm.om.isDeprecated(prop.propObj);
-                    return prop;
-                });
-            }
+    @Input() ontologies: MappingOntology[];
+    @Input() set classObj(value: JSONLDObject) {
+        const previousValue = this._classObj;
+        this._classObj = value;
+        this.name = this.om.getEntityName(value);
+        this.description = this.om.getEntityDescription(value) || '(None Specified)';
+        if (!isEqual(value, previousValue)) {
+            const props = this.state.getClassProps(this.ontologies, value['@id']);
+            this.total = props.length;
+            this.props = props.slice(0, 10);
         }
     }
-}
 
-export default classPreviewComponent;
+    get classObj(): JSONLDObject {
+        return this._classObj;
+    }
+
+    constructor(public state: MapperStateService, @Inject('ontologyManagerService') public om) {}
+}

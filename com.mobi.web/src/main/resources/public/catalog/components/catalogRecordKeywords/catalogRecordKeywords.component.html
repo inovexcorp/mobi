@@ -20,13 +20,30 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="catalog-record-keywords" click-anywhere-but-here="dvm.cancelChanges()">
-    <div ng-if="dvm.canEdit && dvm.edit" class="d-flex p-2">
-        <keyword-select bind-model="dvm.keywords" change-event="dvm.keywords = value" hide-label="true" class="flex-1" is-focus-me></keyword-select>
-        <a ng-mousedown="dvm.saveChanges()" class="fa fa-save fa-2x"></a>
+<div class="catalog-record-keywords">
+    <div *ngIf="canEdit && edit" class="keyword-editor d-flex p-2">
+        <!-- TODO: Replace with keyword-select when upgraded -->
+        <mat-form-field class="flex-1">
+            <mat-chip-list #keywordSelect>
+                <mat-chip *ngFor="let keyword of editedKeywords" [removable]="true" (removed)="removeKeyword(keyword)">
+                    <span class="keyword-text">{{keyword}}</span>
+                    <mat-icon matChipRemove>cancel</mat-icon>
+                </mat-chip>
+            </mat-chip-list>
+            <input placeholder="Keywords"
+            [matChipInputFor]="keywordSelect"
+            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+            [matChipInputAddOnBlur]="false"
+            (matChipInputTokenEnd)="addKeyword($event)"
+            (keyup.escape)="cancelChanges()"
+            focus>
+        </mat-form-field>
+        <a (click)="saveChanges()" class="fa fa-save fa-2x"></a>
     </div>
-    <div class="static-area" ng-if="!dvm.canEdit || !dvm.edit" ng-click="dvm.edit = true" ng-class="{'hover-area': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}">
-        <span ng-if="dvm.keywords.length === 0">(No keywords specified)</span>
-        <span class="keyword badge badge-pill badge-dark mr-1 mb-1 text-truncate mw-100" ng-repeat="keyword in dvm.keywords">{{keyword}}</span>
+    <div class="static-area" *ngIf="!canEdit || !edit" (click)="edit = true" [ngClass]="{'hover-area': canEdit}" title="{{canEdit ? 'Click to edit' : undefined}}">
+        <span *ngIf="keywords.length === 0">(No keywords specified)</span>
+        <mat-chip-list>
+            <mat-chip *ngFor="let keyword of keywords"><span class="keyword-text">{{keyword}}</span></mat-chip>
+        </mat-chip-list>
     </div>
 </div>

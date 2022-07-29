@@ -23,9 +23,11 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { get, map, filter, forEach, some, chain, find, sortBy, isNull, head, isUndefined} from 'lodash';
 
+import { FOAF, RDF, USER } from '../../../prefixes';
 import { Group } from '../../../shared/models/group.interface';
 import { Policy } from '../../../shared/models/policy.interface';
 import { User } from '../../../shared/models/user.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 
@@ -46,14 +48,13 @@ import './permissionsPage.component.scss';
 export class PermissionsPageComponent implements OnInit {
     catalogId = '';
     systemRepoId = 'http://mobi.com/system-repo';
-    groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + this.prefixes.foaf + 'member' + '>') + ')';
+    groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + FOAF + 'member' + '>') + ')';
     userRole = 'http://mobi.com/roles/user';
     policies: Policy[] = [];
     policiesInQuestion = [];
 
-    constructor(private pm: PolicyManagerService, @Inject('catalogManagerService') private cm, 
-        @Inject('utilService') private util, @Inject('prefixes') private prefixes, 
-        private um: UserManagerService) {}
+    constructor(private pm: PolicyManagerService, private cm: CatalogManagerService, 
+        @Inject('utilService') private util, private um: UserManagerService) {}
     
     ngOnInit(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -106,7 +107,7 @@ export class PermissionsPageComponent implements OnInit {
         const allOfMatch = chain(target)
             .map('AllOf').flatten()
             .map('Match').flatten()
-            .find(['AttributeDesignator.AttributeId', this.prefixes.rdf + 'type']).value();
+            .find(['AttributeDesignator.AttributeId', RDF + 'type']).value();
         const attributeValue = get(allOfMatch, 'AttributeValue.content', []);
         const value =  head(attributeValue);
         return value;
@@ -120,7 +121,7 @@ export class PermissionsPageComponent implements OnInit {
                 value: get(match, 'AttributeValue.content[0]')
             }))
             .value();
-        if ( find( matches, { id: this.prefixes.user + 'hasUserRole', value: this.userRole } )) {
+        if ( find( matches, { id: USER + 'hasUserRole', value: this.userRole } )) {
             item.everyone = true;
         } else {
             item.selectedUsers = this.sortUsers(chain(matches)

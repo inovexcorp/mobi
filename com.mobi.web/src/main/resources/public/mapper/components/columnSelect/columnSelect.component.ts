@@ -20,60 +20,54 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { toUpper, includes, map, range, get, isNumber } from 'lodash';
+import { Component, Input, OnInit } from '@angular/core';
+import { FormGroup } from '@angular/forms';
+import { get } from 'lodash';
 
-const template = require('./columnSelect.component.html');
+import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 
-/**
- * @ngdoc component
- * @name mapper.component:columnSelect
- * @requires shared.service:delimitedManagerService
- *
- * @description
- * `columnSelect` is a component which creates a `ui-select` bound to the provided `selectedColumn`, but only one
- * way. The provided `changeEvent` function is expected to update the value of `selectedColumn`.
- *
- * @param {string} selectedColumn The currently selected column header index (0-based)
- * @param {Function} changeEvent The function to be called when the selected column changes. Should update the value
- * of `selectedColumn`. Expects an argument called `value`.
- */
-const columnSelectComponent = {
-    template,
-    bindings: {
-        selectedColumn: '<',
-        changeEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: columnSelectComponentCtrl
-};
-
-columnSelectComponentCtrl.$inject = ['delimitedManagerService'];
-
-function columnSelectComponentCtrl(delimitedManagerService) {
-    var dvm = this;
-    dvm.isNumber = isNumber;
-    dvm.dm = delimitedManagerService;
-    dvm.columns = [];
-    dvm.preview = '';
-
-    dvm.$onInit = function() {
-        dvm.columns = map(range(0, dvm.dm.dataRows[0].length), num => ({
-            num: '' + num,
-            header: dvm.dm.getHeader(num)
-        }));
-        dvm.preview = dvm.selectedColumn ? dvm.getValuePreview(dvm.selectedColumn) : '(None)';
-    }
-    dvm.compare = function(column, searchText) {
-        return includes(toUpper(column.header), toUpper(searchText));
-    }
-    dvm.getValuePreview = function(num) {
-        var firstRowIndex = dvm.dm.containsHeaders ? 1 : 0;
-        return get(dvm.dm.dataRows, '[' + firstRowIndex + '][' + num + ']', '(None)');
-    }
-    dvm.onChange = function() {
-        dvm.preview = dvm.selectedColumn ? dvm.getValuePreview(dvm.selectedColumn) : '(None)';
-        dvm.changeEvent({value: dvm.selectedColumn});
-    }
+interface ColumnOption {
+    idx: number,
+    header: string
 }
 
-export default columnSelectComponent;
+/**
+ * @class mapper.ColumnSelectComponent
+ *
+ * A component which creates a `mat-select` for a `column` control in the provided parent FormGroup. The value will be a
+ * 0-based index.
+ *
+ * @param {FormGroup} parentForm The parent FormGroup for the select. Expects a control called "column"
+ */
+@Component({
+    selector: 'column-select',
+    templateUrl: './columnSelect.component.html'
+})
+export class ColumnSelectComponent implements OnInit {
+    columns: ColumnOption[] = [];
+    preview = '';
+
+    @Input() parentForm: FormGroup;
+
+    constructor(public dm: DelimitedManagerService) {}
+
+    ngOnInit(): void {
+        this.columns = [...Array(this.dm.dataRows[0].length).keys()].map(idx => ({
+            idx,
+            header: this.dm.getHeader(idx)
+        }));
+        this.setValuePreview(this.parentForm.controls.column.value);
+        this.parentForm.controls.column.valueChanges
+            .subscribe(val => {
+                this.setValuePreview(val);
+            });
+    }
+    setValuePreview(num: number): void {
+        if (num !== undefined && num !== null) {
+            const firstRowIndex = this.dm.containsHeaders ? 1 : 0;
+            this.preview = get(this.dm.dataRows, `[${firstRowIndex}][${num}]`, '(None)');
+        } else {
+            this.preview = '(None)';
+        }
+    }
+}

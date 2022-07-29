@@ -23,6 +23,7 @@
 
 import {
     Component,
+    ElementRef,
     EventEmitter,
     Inject,
     Input,
@@ -30,18 +31,23 @@ import {
     OnDestroy,
     OnInit,
     Output,
-    SimpleChanges
+    SimpleChanges,
+    ViewChild
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { find, startsWith, split, forEach, includes, join, map, indexOf, head } from 'lodash';
-
-import './commitHistoryTable.component.scss';
-import { JSONLDObject } from '../../models/JSONLDObject.interface';
-import { UserManagerService } from '../../services/userManager.service';
 import { v4 } from 'uuid';
 import * as Snap from 'snapsvg';
 import * as chroma from 'chroma-js';
+import { first } from 'rxjs/operators';
+
+import { Commit } from '../../models/commit.interface';
+import { CatalogManagerService } from '../../services/catalogManager.service';
+import { UserManagerService } from '../../services/userManager.service';
 import { CommitInfoOverlayComponent } from '../commitInfoOverlay/commitInfoOverlay.component';
+import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
+
+import './commitHistoryTable.component.scss';
 
 /**
  * @ngdoc component
@@ -81,11 +87,12 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     @Input() recordId?: string;
     @Input() graph: boolean;
 
-    @Output() receiveCommits = new EventEmitter<JSONLDObject[]>();
+    @Output() receiveCommits = new EventEmitter<Commit[]>();
 
-    constructor(@Inject('httpService') private httpService, @Inject('catalogManagerService') private cm,
-                @Inject('utilService') private util, private um: UserManagerService,
-                private dialog: MatDialog) {
+    @ViewChild('commitHistoryTable') commitHistoryTable: ElementRef;
+
+    constructor(@Inject('utilService') private util, private cm: CatalogManagerService, private um: UserManagerService,
+        private dialog: MatDialog, private spinnerSvc: ProgressSpinnerService) {
     }
     
     titleWidth = 75;
@@ -119,7 +126,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
         }
     }
     ngOnDestroy(): void {
-        this.httpService.cancel(this.id);
+        this.spinnerSvc.finishLoadingForComponent(this.commitHistoryTable);
     }
     openCommitOverlay(commitId: string): void {
         this.dialog.open(CommitInfoOverlayComponent, {
@@ -131,15 +138,16 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     }
     getCommits(): void {
         if (this.commitId) {
-            this.httpService.cancel(this.id);
-            const promise = this.cm.getCommitHistory(this.commitId, this.targetId, this.entityId, this.id);
-            promise.then(commits => {
+            this.spinnerSvc.startLoadingForComponent(this.commitHistoryTable, 30);
+            const promise = this.cm.getCommitHistory(this.commitId, this.targetId, this.entityId, true).pipe(first()).toPromise();
+            promise.then((commits: Commit[]) => {
                 this.receiveCommits.emit(commits);
                 this.commits = commits;
                 this.error = '';
                 if (this.showGraph) {
                     this.drawGraph();
                 }
+                this.spinnerSvc.finishLoadingForComponent(this.commitHistoryTable);
             }, errorMessage => {
                 this.error = errorMessage;
                 this.commits = [];
@@ -147,6 +155,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
                 if (this.showGraph) {
                     this.reset();
                 }
+                this.spinnerSvc.finishLoadingForComponent(this.commitHistoryTable);
             });
         } else {
             this.commits = [];
@@ -163,7 +172,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
             // First draw circles in a straight line
             forEach(this.commits, (commit, index : number) => {
                 const circle = this.snap.circle(0, this.circleSpacing/2 + (index * this.circleSpacing), this.circleRadius);
-                const title = Snap.parse('<title>' + this.util.condenseCommitId(commit.id) + '</title>')
+                const title = Snap.parse('<title>' + this.util.condenseCommitId(commit.id) + '</title>');
                 circle.append(title);
                 circle.click(() => this.openCommitOverlay(commit.id));
                 this.wrapper.add(circle);
@@ -214,7 +223,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
         this.wrapper = undefined;
         this.deltaX = 5 + this.circleRadius;
     }
-    getCommitId(index: number, commit: any) {
+    getCommitId(index: number, commit: Commit): string {
         return commit.id;
     }
 

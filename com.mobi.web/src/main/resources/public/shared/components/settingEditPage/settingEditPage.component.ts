@@ -24,6 +24,8 @@ import { OnInit, Inject, Component, Input } from '@angular/core';
 
 import { forEach, isEqual } from 'lodash';
 
+import { RDFS } from '../../../prefixes';
+
 import './settingEditPage.component.scss';
 
 // The type of setting to get definitions for
@@ -34,14 +36,10 @@ interface TabType {
 }
 
 /**
- * @name settings.SettingEditPageComponent
- * @requires shared.service:settingManagerService
- * @requires shared.service.utilService
- * @requires shared.service.prefixes
+ * @class shared.SettingEditPageComponent
  *
- * `settingEditPage` is a component that creates a Bootstrap `row` with a both a sidebar 
- * containing Setting Groups configured in the application as well as another section 
- * displaying the various Setting forms contained within that Setting group.
+ * A component that creates a Bootstrap `row` with a both a sidebar containing Setting Groups configured in the
+ * application as well as another section displaying the various Setting forms contained within that Setting group.
  */
 @Component({
     selector: 'setting-edit-page',
@@ -51,21 +49,20 @@ export class SettingEditPageComponent implements OnInit {
     @Input() settingType;
     tabs: TabType[] = [];
     
-    constructor(@Inject('settingManagerService') private sm, 
-        @Inject('utilService') private util, @Inject('prefixes') private prefixes) {}
+    constructor(@Inject('settingManagerService') private sm, @Inject('utilService') private util) {}
     
     ngOnInit(): void {
         this.setSettingTabs();
     }
 
     addTab(settingGroup: any): void {
-        if (!settingGroup[this.prefixes.rdfs + 'label']) {
+        if (!settingGroup[RDFS + 'label']) {
             this.util.createErrorToast('Setting Group not configured with label.')
             return;
         }
         this.tabs.push({
             type: settingGroup['@id'],
-            heading: this.util.getPropertyValue(settingGroup, this.prefixes.rdfs + 'label'),
+            heading: this.util.getPropertyValue(settingGroup, RDFS + 'label'),
             active: false
         });
     }

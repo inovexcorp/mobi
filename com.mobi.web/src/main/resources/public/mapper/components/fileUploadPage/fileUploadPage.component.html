@@ -22,45 +22,34 @@
   -->
 <div class="file-upload-page container-fluid h-100 py-3">
     <div class="row h-100">
-        <div class="col-5 form-block h-100 d-flex flex-column">
-            <h3 class="mapping-title text-truncate">{{dvm.state.mapping.record.title}}</h3>
-            <block class="flex-1 remove-min-height">
-                <block-header>
-                    <span>Upload File</span>
-                </block-header>
-                <block-content>
-                    <file-upload-form></file-upload-form>
-                    <mapping-preview ng-if="!dvm.state.editMapping" mapping="dvm.state.mapping" invalid-props="dvm.state.invalidProps"></mapping-preview>
-                    <div ng-if="dvm.state.editMapping && dvm.state.invalidProps.length" class="invalid-props">
-                        <h3 class="text-danger">Missing Columns</h3>
-                        <ul>
-                            <li ng-repeat="columnObj in dvm.state.invalidProps">
-                                Column {{columnObj.index}} - {{dvm.getDataMappingName(columnObj['@id'])}}
-                            </li>
-                        </ul>
-                        <p class="form-text">Click continue to fix the mapping.</p>
-                    </div>
-                </block-content>
-                <block-footer>
-                    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-                    <button ng-if="dvm.state.editMapping" class="btn btn-primary float-right continue-btn" ng-click="dvm.edit()" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)">Continue</button>
-                    <div ng-if="!dvm.state.editMapping" class="btn-group dropup float-right">
-                        <button type="button" class="btn btn-primary dropdown-toggle run-btn" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Run Mapping</button>
-                        <div class="dropdown-menu">
-                            <button class="dropdown-item run-download" type="button" ng-click="dvm.runMappingDownload()">Download</button>
-                            <button class="dropdown-item run-dataset" type="button" ng-click="dvm.runMappingDataset()">Upload to Dataset</button>
-                            <button class="dropdown-item run-ontology" type="button" ng-click="dvm.runMappingOntology()">Commit to Ontology</button>
-                        </div>
-                    </div>
-                </block-footer>
-            </block>
+        <div class="col-5 h-100 d-flex flex-column">
+            <h3 class="mapping-title text-truncate">{{state.selected.record ? state.selected.record.title : state.selected.config.title}}</h3>
+            <div class="flex-1 remove-min-height">
+                <file-upload-form></file-upload-form>
+                <mapping-preview *ngIf="!state.editMapping" [mapping]="state.selected.mapping" [invalidProps]="state.invalidProps"></mapping-preview>
+                <div *ngIf="state.editMapping && state.invalidProps.length" class="invalid-props">
+                    <h3 class="text-danger">Missing Columns</h3>
+                    <ul>
+                        <li *ngFor="let invalidProp of state.invalidProps">
+                            Column {{invalidProp.index}} - {{invalidProp.dataPropName}}
+                        </li>
+                    </ul>
+                    <p class="form-text">Click continue to fix the mapping.</p>
+                </div>
+            </div>
+            <div class="button-footer">
+                <button mat-raised-button (click)="cancel()">Cancel</button>
+                <button *ngIf="state.editMapping" mat-raised-button color="primary" class="float-right continue-btn" (click)="edit()" [disabled]="!dm.dataRows || (!state.editMapping && state.invalidProps.length > 0)">Continue</button>
+                <button *ngIf="!state.editMapping" mat-raised-button color="primary" class="float-right run-btn" [matMenuTriggerFor]="runMenu" [disabled]="!dm.dataRows || (!state.editMapping && state.invalidProps.length > 0)">Run Mapping</button>
+                <mat-menu #runMenu="matMenu">
+                    <button mat-menu-item class="run-download" (click)="runMappingDownload()">Download</button>
+                    <button mat-menu-item class="run-dataset" (click)="runMappingDataset()">Upload to Dataset</button>
+                    <button mat-menu-item class="run-ontology" (click)="runMappingOntology()">Commit to Ontology</button>
+                </mat-menu>
+            </div>
         </div>
         <div class="col-7 h-100">
-            <block>
-                <block-content>
-                    <preview-data-grid rows="dvm.dm.dataRows" highlight-indexes="dvm.state.highlightIndexes" contains-headers="dvm.dm.containsHeaders"></preview-data-grid>
-                </block-content>
-            </block>
+            <preview-data-grid [rows]="dm.dataRows" [highlightIndexes]="state.highlightIndexes" [containsHeaders]="dm.containsHeaders"></preview-data-grid>
         </div>
     </div>
 </div>

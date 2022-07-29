@@ -21,34 +21,20 @@
  * #L%
  */
 
-import './mapperPage.component.scss';
+import { Component } from '@angular/core';
 
-const template = require('./mapperPage.component.html');
+import { MapperStateService } from '../../../shared/services/mapperState.service';
 
 /**
- * @ngdoc component
- * @name mapper.component:mapperPage
- * @requires  shared.service:mapperStateService
- *
- * @description
- * `mapperPage` is a component which creates a {@link shared.component:tabset tabset} with different pages depending
- * on the current {@link shared.service:mapperStateService#step step} of the mapping process. The three pages are
- * {@link mapper.component:mappingSelectPage mappingSelectPage},
- * {@link mapper.component:fileUploadPage fileUploadPage}, and the
- * {@link mapper.component:editMappingPage editMappingPage}.
+ * A component with different pages depending on the current {@link shared.MapperStateService#step} of the mapping
+ * process. The three pages are {@link mapper.MappingSelectPageComponent mappingSelectPage},
+ * {@link mapper.FileUploadPageComponent fileUploadPage}, and the
+ * {@link mapper.EditMappingPageComponent editMappingPage}.
  */
-const mapperPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: mapperPageComponentCtrl
-};
-
-mapperPageComponentCtrl.$inject = ['mapperStateService'];
-
-function mapperPageComponentCtrl(mapperStateService) {
-    var dvm = this;
-    dvm.state = mapperStateService;
+@Component({
+    selector: 'mapper-page',
+    templateUrl: './mapperPage.component.html'
+})
+export class MapperPageComponent {
+    constructor(public state: MapperStateService) {}
 }
-
-export default mapperPageComponent;

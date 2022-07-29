@@ -24,9 +24,6 @@
 @import "../../../css/variables";
 
 mapping-config-overlay {
-    .form-group {
-        clear: both;
-    }
     .info-message {
         padding: 10px;
     }
@@ -36,25 +33,5 @@ mapping-config-overlay {
     .ontologies {
         max-height: 300px;
         overflow-y: auto;
-
-        md-checkbox {
-            margin-right: 0;
-        }
-        .md-list-item-inner {
-            min-width: 0;
-
-            .md-list-item-text {
-                flex: 1;
-                min-width: 0;
-
-                h4 {
-                    margin-bottom: 0;
-                    @include textOverflow;
-                }
-                p {
-                    @include textOverflow;
-                }
-            }
-        }
     }
 }

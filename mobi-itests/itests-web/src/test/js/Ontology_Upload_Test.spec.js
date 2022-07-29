@@ -87,8 +87,11 @@ module.exports = {
            .keys(browser.Keys.ENTER)
    },
 
-    'Step 6: Open an Ontology called test-local-imports-1.ttl' : function (browser) {
-        browser.globals.open_ontology(browser, Onto1)
+    'Step 6: Open an Ontology called “test-local-imports-1.ttl' : function (browser) {
+        browser
+            .setValue('open-ontology-tab search-bar input', '')
+            .globals.open_ontology(browser, Onto1)
+
     },
 
     'Step 7: Click classes tab' : function (browser) {

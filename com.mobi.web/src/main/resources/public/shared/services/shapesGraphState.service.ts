@@ -21,7 +21,10 @@
  * #L%
  */
 import { Inject, Injectable } from '@angular/core';
-import { get, remove, find } from 'lodash';
+import { find, get, remove } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { CatalogManagerService } from './catalogManager.service';
 import { RecordSelectFiltered } from '../../shapes-graph-editor/models/recordSelectFiltered.interface';
 import { Difference } from '../models/difference.class';
 import { RdfUpload } from '../models/rdfUpload.interface';
@@ -31,8 +34,9 @@ import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { VersionedRdfState } from './versionedRdfState.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { OptionalJSONLD } from '../models/OptionalJSONLD.class';
+import { BRANCHID, COMMITID, SHAPESGRAPHSTATE, TAGID, GRAPHEDITOR, DCTERMS, CATALOG } from '../../prefixes';
 import { PolicyManagerService } from './policyManager.service';
+import { HttpResponse } from '@angular/common/http';
 
 /**
  * @class shared.ShapesGraphStateService
@@ -44,15 +48,16 @@ export class ShapesGraphStateService extends VersionedRdfState {
     listItem: ShapesGraphListItem;
     list: ShapesGraphListItem[];
 
-    constructor(@Inject('stateManagerService') protected sm, @Inject('prefixes') protected prefixes,
-                @Inject('catalogManagerService') protected cm, @Inject('utilService') protected util,
+    constructor(@Inject('stateManagerService') protected sm,
+                protected cm:CatalogManagerService, 
+                @Inject('utilService') protected util,
                 @Inject('policyEnforcementService') protected pep, 
                 private pm: PolicyManagerService, private sgm: ShapesGraphManagerService) {
-        super(prefixes.shapesGraphState,
-            'http://mobi.com/states/shapes-graph-editor/branch-id/',
-            'http://mobi.com/states/shapes-graph-editor/tag-id/',
-            'http://mobi.com/states/shapes-graph-editor/commit-id/',
-            'shapes-graph-editor'
+        super(SHAPESGRAPHSTATE,
+            BRANCHID,
+            TAGID,
+            COMMITID,
+            GRAPHEDITOR
         );
     }
 
@@ -109,7 +114,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
                 };
                 listItem.currentVersionTitle = 'MASTER';
                 return this.sgm.getShapesGraphMetadata(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, listItem.shapesGraphId)
-            .then((arr: Array<OptionalJSONLD>) => {
+            .then((arr: Array<JSONLDObject>) => {
                 listItem.metadata = find(arr, {'@id': listItem.shapesGraphId});
                 this.listItem = listItem;
                 return this.sgm.getShapesGraphContent(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId);
@@ -180,17 +185,17 @@ export class ShapesGraphStateService extends VersionedRdfState {
                 this.listItem.shapesGraphId = shapesGraphId;
                 return this.sgm.getShapesGraphMetadata(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId, this.listItem.shapesGraphId);
             })
-            .then((arr: Array<OptionalJSONLD>) => {
+            .then((arr: Array<JSONLDObject>) => {
                 this.listItem.metadata = find(arr, {'@id': this.listItem.shapesGraphId});
                 return this.sgm.getShapesGraphContent(this.listItem.versionedRdfRecord.recordId, this.listItem.versionedRdfRecord.branchId, this.listItem.versionedRdfRecord.commitId);
             })
             .then(content => {
                 this.listItem.content = content;
-                return this.cm.getRecordBranches(recordId, this.catalogId);
+                return this.cm.getRecordBranches(recordId, this.catalogId).toPromise();
             })
-            .then(branches => {
-                this.listItem.branches = branches.data;
-                const masterBranch = find(this.listItem.branches, {[this.prefixes.dcterms + 'title']: [{'@value': 'MASTER'}]});
+            .then((branches) => {
+                this.listItem.branches = branches.body;
+                const masterBranch = find(this.listItem.branches, {[DCTERMS + 'title']: [{'@value': 'MASTER'}]});
                 this.listItem.masterBranchIri = masterBranch ? masterBranch['@id'] : '';
                 const modifyRequest: any = {
                     resourceId: this.listItem.versionedRdfRecord.recordId,
@@ -202,7 +207,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
                 const modifyMasterRequest: any = {
                     resourceId: this.listItem.versionedRdfRecord.recordId,
                     actionId: this.pm.actionModify,
-                    actionAttrs: { [this.prefixes.catalog + 'branch']: this.listItem.masterBranchIri }
+                    actionAttrs: { [CATALOG + 'branch']: this.listItem.masterBranchIri }
                 };
                 this.listItem.userCanModify = decision === this.pep.permit;
                 return this.pep.evaluateRequest(modifyMasterRequest);
@@ -286,7 +291,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
      * @return {Promise} A Promise that resolves if the branch deletion was successful or not.
      */
     deleteShapesGraphBranch(recordId: string, branchId: string): Promise<any> {
-        return this.cm.deleteRecordBranch(branchId, recordId, this.catalogId)
+        return this.cm.deleteRecordBranch(branchId, recordId, this.catalogId).pipe(first()).toPromise()
             .then(() => this.deleteBranchState(recordId, branchId), error => Promise.reject(error));
     }
     /**
@@ -298,7 +303,7 @@ export class ShapesGraphStateService extends VersionedRdfState {
         const sourceId = this.listItem.versionedRdfRecord.branchId;
         const checkbox = this.listItem.merge.checkbox;
         let commitId;
-        return this.cm.mergeBranches(sourceId, this.listItem.merge.target['@id'], this.listItem.versionedRdfRecord.recordId, this.catalogId, this.listItem.merge.resolutions)
+        return this.cm.mergeBranches(sourceId, this.listItem.merge.target['@id'], this.listItem.versionedRdfRecord.recordId, this.catalogId, this.listItem.merge.resolutions).pipe(first()).toPromise()
             .then(commit => {
                 commitId = commit;
                 if (checkbox) {

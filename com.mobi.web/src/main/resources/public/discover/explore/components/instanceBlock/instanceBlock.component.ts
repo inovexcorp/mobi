@@ -21,6 +21,7 @@
  * #L%
  */
 import { initial, merge, head, last } from 'lodash';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 
 import './instanceBlock.component.scss';
 
@@ -52,7 +53,7 @@ const instanceBlockComponent = {
 
 instanceBlockComponentCtrl.$inject = ['$filter', 'discoverStateService', 'exploreService', 'utilService', 'uuid', 'prefixes', 'policyEnforcementService'];
 
-function instanceBlockComponentCtrl($filter, discoverStateService, exploreService, utilService, uuid, prefixes, policyEnforcementService) {
+function instanceBlockComponentCtrl($filter, discoverStateService: DiscoverStateService, exploreService, utilService, uuid, prefixes, policyEnforcementService) {
     const dvm = this;
     const es = exploreService;
     const util = utilService;

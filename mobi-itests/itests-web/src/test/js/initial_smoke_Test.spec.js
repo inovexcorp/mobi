@@ -29,7 +29,7 @@ module.exports = {
 
     'Step 1: login as admin' : function(browser) {
         browser
-            .url('https://localhost:' +browser.globals.globalPort+ '/mobi/index.html#/home')
+            .url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home')
             .useXpath()
             .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
             .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
@@ -56,7 +56,7 @@ module.exports = {
                     browser.waitForElementVisible("//li/a[@class='nav-link']/span[text()[contains(.,'" + pages[i] + "')]]")
                     browser.click("//li/a[@class='nav-link']/span[text()[contains(.,'" + pages[i] + "')]]")
                     .useCss()
-                    browser.waitForElementNotPresent('.spinner')
+                    browser.waitForElementNotVisible('.spinner')
                     .useXpath()
                     switch (pages[i]) {
                         case "Home":
@@ -69,7 +69,7 @@ module.exports = {
                             browser.waitForElementVisible("//a[@class='nav-link active'][text()[contains(.,'Recent Activity')]]");
                             break;
                         case "Catalog":
-                            browser.waitForElementVisible("//div[contains(@class,'input-group')]/input");
+                            browser.waitForElementVisible("//div[contains(@class,'mat-form-field')]/input");
                             break;
                         case "Ontology Editor":
                             browser.waitForElementVisible("//div[contains(@class, 'ontology-sidebar')]/div/button[text()[contains(.,'Ontologies')]]");
@@ -78,19 +78,19 @@ module.exports = {
                             browser.waitForElementVisible("//button[text()[contains(.,'Upload Ontology')]]");
                             break;
                         case "Merge Requests":
-                            browser.waitForElementVisible("//button[text()[contains(.,'Create Request')]]");
+                            browser.waitForElementVisible("//button/span[text()[contains(.,'New Request')]]");
                             break;
                         case "Mapping Tool":
-                            browser.waitForElementVisible("//button[text()[contains(.,'Create Mapping')]]");
-                            browser.waitForElementVisible("//i[@class='fa fa-search']/following-sibling::input");
+                            browser.waitForElementVisible("//button/span[text()[contains(.,'New Mapping')]]");
+                            // browser.waitForElementVisible("//i[@class='fa fa-search']/following-sibling::input");
                             break;
                         case "Datasets":
-                            browser.waitForElementVisible("//button[text()[contains(.,'New Dataset')]]");
+                            browser.waitForElementVisible("//button/span[text()[contains(.,'New Dataset')]]");
                             break;
                         case "Discover":
-                            browser.waitForElementVisible("//*[contains(@class, 'material-tabset-headings')]/ul/li/a/span[text()[contains(.,'Explore')]]");
-                            browser.waitForElementVisible("//*[contains(@class, 'material-tabset-headings')]/ul/li/a/span[text()[contains(.,'Search')]]");
-                            browser.waitForElementVisible("//*[contains(@class, 'material-tabset-headings')]/ul/li/a/span[text()[contains(.,'Query')]]");
+                            browser.waitForElementVisible('//*[contains(@class, "mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(.,"Explore")]]');
+                            browser.waitForElementVisible('//*[contains(@class, "mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(.,"Search")]]');
+                            browser.waitForElementVisible('//*[contains(@class, "mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(.,"Query")]]');
                             break;
                         default:
                             break;

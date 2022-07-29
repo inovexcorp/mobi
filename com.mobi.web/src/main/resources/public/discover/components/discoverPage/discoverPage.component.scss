@@ -24,12 +24,15 @@
 @import "../../../css/variables";
 
 .discover {
-    background-color: var(--light);
-    display: flex;
-    flex-direction: column;
-
-    .discover-page-content {
+    .mat-tab-labels {
+        justify-content: center;
+    }
+    .mat-tab-body-wrapper {
         flex: 1;
         min-height: 0;
+    }
+    // TODO: Remove after upgrading these components
+    .explore-tab, .discover-search-tab {
+        background-color: var(--light);
     }
 }

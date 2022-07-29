@@ -22,6 +22,7 @@
  */
 import * as angular from 'angular';
 import { filter, some, forEach, concat, includes, uniq, remove, map, join, find, get, flatten } from 'lodash';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 
 import './instanceForm.component.scss';
 
@@ -62,7 +63,7 @@ const instanceFormComponent = {
 
 instanceFormComponentCtrl.$inject = ['$q', '$filter', 'discoverStateService', 'utilService', 'exploreService', 'prefixes', 'REGEX', 'exploreUtilsService', 'modalService'];
 
-function instanceFormComponentCtrl($q, $filter, discoverStateService, utilService, exploreService, prefixes, REGEX, exploreUtilsService, modalService) {
+function instanceFormComponentCtrl($q, $filter, discoverStateService: DiscoverStateService, utilService, exploreService, prefixes, REGEX, exploreUtilsService, modalService) {
     var dvm = this;
     var es = exploreService;
     dvm.ds = discoverStateService;

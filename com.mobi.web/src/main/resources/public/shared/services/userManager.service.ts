@@ -25,6 +25,7 @@ import { Inject, Injectable } from '@angular/core';
 import { map, get, find, filter, set, noop, forEach, has, merge, remove, pull, assign, union, includes, flatten, without, some } from 'lodash';
 
 import { ADMIN_USER_IRI, REST_PREFIX } from '../../constants';
+import { FOAF, USER } from '../../prefixes';
 import { Group } from '../models/group.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { User } from '../models/user.interface';
@@ -41,8 +42,7 @@ export class UserManagerService {
     userPrefix = REST_PREFIX + 'users';
     groupPrefix = REST_PREFIX + 'groups';
 
-    constructor(private http: HttpClient, private helper: HelperService, @Inject('utilService') private util,
-        @Inject('prefixes') private prefixes) {}
+    constructor(private http: HttpClient, private helper: HelperService, @Inject('utilService') private util) {}
 
     /**
      * `groups` holds a list of Group objects representing the groups in Mobi.
@@ -521,7 +521,7 @@ export class UserManagerService {
      * @returns {boolean} true if the JSON-LD object is an ExternalUser; false otherwise
      */
     isExternalUser(jsonld: JSONLDObject): boolean {
-        return get(jsonld, '@type', []).includes(this.prefixes.user + 'ExternalUser');
+        return get(jsonld, '@type', []).includes(USER + 'ExternalUser');
     }
     /**
      * Determines whether the provided JSON-LD object is an ExternalGroup or not.
@@ -530,7 +530,7 @@ export class UserManagerService {
      * @returns {boolean} true if the JSON-LD object is ExternalGroup; false otherwise
      */
     isExternalGroup(jsonld: JSONLDObject): boolean {
-        return get(jsonld, '@type', []).includes(this.prefixes.user + 'ExternalGroup');
+        return get(jsonld, '@type', []).includes(USER + 'ExternalGroup');
     }
     /**
      * Returns a human readable form of a user. It will default to the "firstName lastName". If both of those
@@ -554,11 +554,11 @@ export class UserManagerService {
             jsonld,
             external: this.isExternalUser(jsonld),
             iri: jsonld['@id'],
-            username: this.util.getPropertyValue(jsonld, this.prefixes.user + 'username'),
-            firstName: this.util.getPropertyValue(jsonld, this.prefixes.foaf + 'firstName'),
-            lastName: this.util.getPropertyValue(jsonld, this.prefixes.foaf + 'lastName'),
-            email: this.util.getPropertyId(jsonld, this.prefixes.foaf + 'mbox'),
-            roles: map(jsonld[this.prefixes.user + 'hasUserRole'], role => this.util.getBeautifulIRI(role['@id']).toLowerCase())
+            username: this.util.getPropertyValue(jsonld, USER + 'username'),
+            firstName: this.util.getPropertyValue(jsonld, FOAF + 'firstName'),
+            lastName: this.util.getPropertyValue(jsonld, FOAF + 'lastName'),
+            email: this.util.getPropertyId(jsonld, FOAF + 'mbox'),
+            roles: map(jsonld[USER + 'hasUserRole'], role => this.util.getBeautifulIRI(role['@id']).toLowerCase())
         };
     }
     /**
@@ -579,13 +579,13 @@ export class UserManagerService {
             iri: jsonld['@id'],
             title: this.util.getDctermsValue(jsonld, 'title'),
             description: this.util.getDctermsValue(jsonld, 'description'),
-            members: map(jsonld[this.prefixes.foaf + 'member'], member => {
+            members: map(jsonld[FOAF + 'member'], member => {
                 const user = find(this.users, {'iri': member['@id']});
                 if (user !== undefined) {
                     return user.username;
                 }
             }),
-            roles: map(jsonld[this.prefixes.user + 'hasGroupRole'], role => this.util.getBeautifulIRI(role['@id']).toLowerCase())
+            roles: map(jsonld[USER + 'hasGroupRole'], role => this.util.getBeautifulIRI(role['@id']).toLowerCase())
         };
     }
     /**

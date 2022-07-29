@@ -21,6 +21,9 @@
  * #L%
  */
 import { unset, get } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 const template = require('./editBranchOverlay.component.html');
 
@@ -56,7 +59,7 @@ const editBranchOverlayComponent = {
 
 editBranchOverlayComponentCtrl.$inject = ['catalogManagerService', 'ontologyStateService', 'prefixes', 'utilService'];
 
-function editBranchOverlayComponentCtrl(catalogManagerService, ontologyStateService, prefixes, utilService) {
+function editBranchOverlayComponentCtrl(catalogManagerService: CatalogManagerService, ontologyStateService, prefixes, utilService) {
     var dvm = this;
     var cm = catalogManagerService;
     var os = ontologyStateService;
@@ -76,7 +79,7 @@ function editBranchOverlayComponentCtrl(catalogManagerService, ontologyStateServ
         } else {
             util.updateDctermsValue(dvm.resolve.branch, 'description', dvm.branchDescription);
         }
-        cm.updateRecordBranch(dvm.resolve.branch['@id'], os.listItem.ontologyRecord.recordId, catalogId, dvm.resolve.branch)
+        cm.updateRecordBranch(dvm.resolve.branch['@id'], os.listItem.ontologyRecord.recordId, catalogId, dvm.resolve.branch).pipe(first()).toPromise()
             .then(() => {
                 dvm.close();
             }, errorMessage => dvm.error = errorMessage);

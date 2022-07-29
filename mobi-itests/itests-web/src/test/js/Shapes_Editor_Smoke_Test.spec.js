@@ -138,6 +138,7 @@ module.exports = {
             .click('upload-record-modal button.mat-primary')
         browser.globals.wait_for_no_spinners(browser)
         browser
+            .click('xpath', '//div[@id="toast-container"]')
             .click('button.commit')
             .sendKeys('commit-modal textarea', 'A conflict commit on master')
             .click('commit-modal button.mat-primary')
@@ -190,7 +191,8 @@ module.exports = {
             .useXpath()
             .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "UHTC Test Branch")]/following-sibling::button')
             .click('//mat-optgroup//mat-option//span[contains(text(), "UHTC Test Branch")]/following-sibling::button')
-            .click('css selector', 'confirm-modal-ajs div.modal-footer button.btn-primary')
+            .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary')
+            // .click('css selector', 'confirm-modal-ajs div.modal-footer button.btn-primary')
         browser.globals.wait_for_no_spinners(browser)
         browser
             .click('editor-branch-select mat-form-field i')
@@ -218,6 +220,7 @@ module.exports = {
             .click('//mat-optgroup//mat-option//span[contains(text(), "MASTER")]')
         browser.globals.wait_for_no_spinners(browser)
         browser
+            .useCss()
             .click('editor-branch-select mat-form-field mat-icon')
             .useXpath()
             .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "UHTC Test Tag")]/following-sibling::button')
@@ -238,13 +241,13 @@ module.exports = {
 
     'Step 16: Verify both records are open': function (browser) {
         browser
-            .click('editor-record-select')
+            .click('shapes-graph-editor-page editor-record-select  mat-form-field mat-icon')
             .useXpath()
             .assert.visible('//mat-optgroup//label[contains(text(), "Open")]/..//span[contains(text(), "UHTC Test Graph")]')
             .assert.visible('//mat-optgroup//label[contains(text(), "Open")]/..//span[contains(text(), "Additional Test Graph")]')
     },
 
-    'Step 16: Delete the Records': function (browser) {
+    'Step 17: Delete the Records': function (browser) {
         browser.globals.delete_shapes_graph(browser, 'Additional Test Graph')
         browser.globals.wait_for_no_spinners(browser)
         browser.globals.delete_shapes_graph(browser, 'UHTC Test Graph')

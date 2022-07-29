@@ -22,6 +22,7 @@
  */
 import './resolveConflictsForm.component.scss';
 import { Component, Inject, Input } from '@angular/core';
+import { CommitChange } from '../../models/commitChange.interface';
 
 /**
  * @ngdoc component
@@ -63,7 +64,16 @@ export class ResolveConflictsFormComponent {
     
     index:number = undefined;
     selected = undefined;
-    changes = undefined;
+    changes: {
+        left: {
+            additions: CommitChange[],
+            deletions: CommitChange[]
+        },
+        right: {
+            additions: CommitChange[],
+            deletions: CommitChange[]
+        }
+    } = undefined;
 
     constructor(@Inject('utilService') private util) {
     }

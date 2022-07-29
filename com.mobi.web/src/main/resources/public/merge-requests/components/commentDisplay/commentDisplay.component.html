@@ -22,12 +22,12 @@
   -->
 <div class="comment-display">
     <p class="comment-title mb-1 pb-1 border-bottom">
-        <strong>{{dvm.getCreator()}}</strong> <span class="text-muted">{{dvm.isReply ? 'replied' : 'commented'}} on {{dvm.getIssued() | date:'short'}}</span>
+        <strong class="text-truncate">{{creator}}</strong> <span class="text-muted"> {{isReply ? 'replied' : 'commented'}} on {{issued | date:'short'}}</span>
     </p>
     <div class="comment-body d-flex p-1">
-        <div class="markdown comment-body-text flex-1 remove-min-width break-word" ng-bind-html="dvm.getComment() | trusted"></div>
+        <showdown class="markdown comment-body-text flex-1 remove-min-width break-word" [value]="commentText" sanitize></showdown>
         <div class="button-container">
-            <button ng-if="dvm.isCreator() && !dvm.mm.isAccepted(dvm.request.jsonld)" type="button" class="btn btn-link remove-min-width p-0 fa fa-times fa-fw" ng-click="dvm.confirmDelete()" title="Delete"></button>
+            <button *ngIf="isCreator && !accepted" mat-icon-button color="primary" (click)="confirmDelete()" title="Delete"><i class="fa fa-times fa-fw"></i></button>
         </div>
     </div>
 </div>

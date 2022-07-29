@@ -21,6 +21,9 @@
  * #L%
  */
 import { find, get } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 import './ontologyTab.component.scss';
 
@@ -54,7 +57,7 @@ const ontologyTabComponent = {
 
 ontologyTabComponentCtrl.$inject = ['$q', 'ontologyStateService', 'catalogManagerService', 'utilService', 'prefixes'];
 
-function ontologyTabComponentCtrl($q, ontologyStateService, catalogManagerService, utilService, prefixes) {
+function ontologyTabComponentCtrl($q, ontologyStateService, catalogManagerService: CatalogManagerService, utilService, prefixes) {
     var dvm = this;
     var cm = catalogManagerService;
     var util = utilService;
@@ -72,7 +75,7 @@ function ontologyTabComponentCtrl($q, ontologyStateService, catalogManagerServic
             var masterBranch = find(dvm.os.listItem.branches, branch => util.getDctermsValue(branch, 'title') === 'MASTER')['@id'];
             var state = dvm.os.getOntologyStateByRecordId(dvm.os.listItem.ontologyRecord.recordId);
             var commitId = util.getPropertyId(find(state.model, {[prefixes.ontologyState + 'branch']: [{'@id': masterBranch}]}), prefixes.ontologyState + 'commit');
-            cm.getBranchHeadCommit(masterBranch, dvm.os.listItem.ontologyRecord.recordId, catalogId)
+            cm.getBranchHeadCommit(masterBranch, dvm.os.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise()
                 .then(headCommit => {
                     var headCommitId = get(headCommit, "commit['@id']", '');
                     if (!commitId) {

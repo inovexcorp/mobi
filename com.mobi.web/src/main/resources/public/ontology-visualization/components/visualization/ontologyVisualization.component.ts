@@ -21,13 +21,25 @@
  * #L%
  */
 import cytoscape from 'cytoscape/dist/cytoscape.esm.js';
-
-import { Component, Inject, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { OntologyVisualizationService } from '../../services/ontologyVisualizaton.service';
-import './ontologyVisualization.component.scss';
+import {
+    Component,
+    ElementRef,
+    Inject,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    SimpleChanges,
+    ViewChild
+} from '@angular/core';
 import { Subscription } from 'rxjs';
-import {  SidePanelAction, SidePanelPayloadI as SidePanelPayload } from '../../interfaces/visualization.interfaces';
+
+import { OntologyVisualizationService } from '../../services/ontologyVisualizaton.service';
+import { SidePanelAction, SidePanelPayloadI as SidePanelPayload } from '../../interfaces/visualization.interfaces';
 import { GraphState } from '../../classes';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+
+import './ontologyVisualization.component.scss';
 
 /**
  * @class OntologyVisualization
@@ -46,6 +58,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
     @Input() commitId;
     @Input() branchId;
     @Input() inProgress;
+    @ViewChild('ontologyVis') ontoVis: ElementRef;
 
     public readonly spinnerId = 'ontology-visualization';
     private _toastrConfig = {
@@ -75,9 +88,11 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
 
     sidePanelActionSub$: Subscription; // Subscription to control cytoscape graph from different components
 
-    constructor(private ovis: OntologyVisualizationService,  @Inject('utilService') private util,  @Inject('httpService') public http) {}
+    constructor(private ovis: OntologyVisualizationService,  @Inject('utilService') private util, 
+        private spinnerSrv : ProgressSpinnerService) {}
 
     ngOnChanges(changes: SimpleChanges): void {
+        this.spinnerSrv.startLoadingForComponent(this.ontoVis);
         if (changes?.inProgress?.currentValue) {
             if (changes.inProgress.currentValue['additions'].length > 0  || 
                 changes.inProgress.currentValue['deletions'].length > 0) {
@@ -92,6 +107,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
         if (this.status.initialized) {
             this.clearErrorToasts();
             if (!changes.commitId && changes.branchId) {
+                this.spinnerSrv.finishLoadingForComponent(this.ontoVis);
                 this.status.loaded = true; 
             } else if (changes.ontology || changes.commitId ) {
                 this.status.loaded = false;
@@ -111,6 +127,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
                     error(reason) { 
                         self.clearGraph();
                         self.initFailed(reason);
+                        self.spinnerSrv.startLoadingForComponent(this.ontoVis);
                     }
                 });
             } else if (this.hasInProgressCommit) {
@@ -123,7 +140,6 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
     ngOnInit(): void {
         const self = this;
         this.cyChart = this.createCytoscapeInstance();
-        
         this.cyChart.ready(this.setChartBindings());
         this.sidePanelActionSub$ = this.ovis.sidePanelActionAction$
             .subscribe(this.sidePanelActionObserver());
@@ -134,11 +150,14 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             next(commitGraphState: GraphState) {
                 self.initGraph(commitGraphState);
                 self.updateMessages(commitGraphState.isOverLimit, commitGraphState.nodeLimit);
+                self.spinnerSrv.finishLoadingForComponent(self.ontoVis);
             },
             error(reason) {
+                self.spinnerSrv.finishLoadingForComponent(self.ontoVis);
                 self.status.initialized = true;
                 self.util.clearToast();
                 self.initFailed(reason);
+
             }
         });
     }
@@ -530,6 +549,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             },
             stop: function (nodes) {
                 self.status.loaded = true;
+                self.spinnerSrv.finishLoadingForComponent(self.ontoVis);
             },
             tick: function (progress) {
                 //empty

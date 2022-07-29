@@ -20,6 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="preview-data-grid h-100">
-    <hot-table hot-id="table" settings="dvm.settings" row-headers="true" col-headers="true" datarows="dvm.data"></hot-table>
+<div class="preview-data-grid vertical-scroll h-100">
+    <ng-container *ngIf="displayGrid else noGridMessage">
+        <gridjs-angular [config]="gridConfig"></gridjs-angular>
+    </ng-container>
+    <ng-template #noGridMessage>
+        <info-message>Please upload a file</info-message>
+    </ng-template>
 </div>

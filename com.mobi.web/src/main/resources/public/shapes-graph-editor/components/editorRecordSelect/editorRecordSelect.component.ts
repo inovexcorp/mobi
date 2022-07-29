@@ -20,31 +20,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { HttpResponse } from '@angular/common/http';
 import { Component, ElementRef, Inject, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent, MatDialog } from '@angular/material';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { find, forEach, get, remove } from 'lodash';
 import { Observable } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
+import { map, startWith, switchMap } from 'rxjs/operators';
+
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { RecordSelectFiltered } from '../../models/recordSelectFiltered.interface';
-
 import { NewShapesGraphRecordModalComponent } from '../newShapesGraphRecordModal/newShapesGraphRecordModal.component';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { DCTERMS, SHAPESGRAPHEDITOR, POLICY } from '../../../prefixes';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 import _ = require('lodash');
 
 interface OptionGroup {
     title: string,
     options: string[] | RecordSelectFiltered[]
-}
-
-interface SearchConfig {
-    sortOption: string,
-    recordType: string
 }
 
 /**
@@ -61,6 +62,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
     @Input() recordIri: string;
     @ViewChild(MatAutocompleteTrigger) autocompleteTrigger: MatAutocompleteTrigger;
     @ViewChild('textInput') textInput: ElementRef;
+    @ViewChild('editorRecordSelectSpinner') editorRecordSelectSpinner: ElementRef;
 
     recordSearchControl: FormControl = new FormControl();
     catalogId: string = get(this.cm.localCatalog, '@id', '');
@@ -72,21 +74,22 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
         options: ['Create Shapes Graph']
     };
 
-    shapesRecordSearchConfig: SearchConfig = {
-        sortOption: find(this.cm.sortOptions, {field: this.prefixes.dcterms + 'title', asc: true}),
-        recordType: this.prefixes.shapesGraphEditor + 'ShapesGraphRecord'
+    shapesRecordSearchConfig: PaginatedConfig = {
+        sortOption: find(this.cm.sortOptions, {field: DCTERMS + 'title', asc: true}),
+        type: SHAPESGRAPHEDITOR + 'ShapesGraphRecord'
     };
     spinnerId = 'editor-record-select';
 
     filteredOptions: Observable<OptionGroup[]>
-    disabledFlag: boolean = false;
+    disabledFlag = false;
    
-    constructor(private dialog: MatDialog, private state: ShapesGraphStateService,
-                @Inject('catalogManagerService') private cm, private sm: ShapesGraphManagerService,
-                private pm: PolicyManagerService, @Inject('policyEnforcementService') protected pep,
-                @Inject('modalService') private modalService, @Inject('prefixes') private prefixes,
+    constructor(private dialog: MatDialog,
+                private state: ShapesGraphStateService,
                 @Inject('utilService') private util,
-                @Inject('policyEnforcementService') private policyEnforcementService) {}
+                private spinnerSrv: ProgressSpinnerService,
+                private cm: CatalogManagerService,
+                private pm: PolicyManagerService,
+                @Inject('policyEnforcementService') protected pep) {}
 
     ngOnInit(): void {
         this.retrieveShapesGraphRecords();
@@ -94,7 +97,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
         this.resetSearch();
         this.permissionCheck();
     }
-    ngOnChanges(changes: SimpleChanges) {
+    ngOnChanges(changes: SimpleChanges): void {
         if (changes?.recordIri) {
             this.resetSearch();
         }
@@ -133,11 +136,12 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
         }
     }
     retrieveShapesGraphRecords(): void {
-        this.cm.getRecords(get(this.cm.localCatalog, '@id'), this.shapesRecordSearchConfig, this.spinnerId)
-            .then(response => {
+        this.spinnerSrv.startLoadingForComponent(this.editorRecordSelectSpinner, 15);
+        this.cm.getRecords(get(this.cm.localCatalog, '@id'), this.shapesRecordSearchConfig, true)
+            .pipe(map((response: HttpResponse<JSONLDObject[]>) => {
                 const openTmp: RecordSelectFiltered[] = [];
                 const unopenedTmp: RecordSelectFiltered[] = [];
-                forEach(response.data, (recordJsonld: JSONLDObject) => {
+                forEach(response.body, (recordJsonld: JSONLDObject) => {
                     const listItem = this.state.list.find(item => item.versionedRdfRecord.recordId === recordJsonld['@id']);
                     if (listItem) {
                         openTmp.push(this.getRecordSelectFiltered(recordJsonld));
@@ -157,8 +161,8 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
                 } else {
                     return Promise.resolve();
                 }
-            }, errorMessage => this.util.createErrorToast(errorMessage))
-            .then(decisions => {
+            }, errorMessage => this.util.createErrorToast(errorMessage)))
+            .subscribe(decisions => {
                 if (decisions !== undefined) {
                     const recordsForbiddenToDelete = _.map(_.filter(decisions, {'decision': this.pep.deny}), 'urn:oasis:names:tc:xacml:3.0:attribute-category:resource');
                     this.unopened.filter(item => recordsForbiddenToDelete.includes(item.recordId)).map((canNotDelete: RecordSelectFiltered) => {
@@ -167,7 +171,11 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
                 }
                 this.checkRecordDeleted();
                 this.setFilteredOptions();
-            }, errorMessage => this.util.createErrorToast(errorMessage));
+                this.spinnerSrv.finishLoadingForComponent(this.editorRecordSelectSpinner);
+            }, errorMessage => {
+                this.util.createErrorToast(errorMessage);
+                this.spinnerSrv.finishLoadingForComponent(this.editorRecordSelectSpinner);
+            });
     }
     closeShapesGraphRecord(recordIri: string): void {
         const closed = remove(this.opened, {recordId: recordIri})[0];
@@ -181,7 +189,15 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
     showDeleteConfirmationOverlay(record: RecordSelectFiltered, event: Event): void {
         this.autocompleteTrigger.closePanel();
         event.stopPropagation();
-        this.modalService.openConfirmModal('<p>Are you sure you want to delete <strong>' + record.title + '</strong>?</p>', () => this.deleteShapesGraphRecord(record.recordId));
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: '<p>Are you sure you want to delete <strong>' + record.title + '</strong>?</p>'
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.deleteShapesGraphRecord(record.recordId);
+            }
+        });
     }
     deleteShapesGraphRecord(recordIri: string): void {
         this.state.deleteShapesGraph(recordIri)
@@ -218,9 +234,9 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
     }
     private permissionCheck(): void {
         const pepRequest = this.createPepRequest();
-        this.policyEnforcementService.evaluateRequest(pepRequest, this.spinnerId)
+        this.pep.evaluateRequest(pepRequest, this.spinnerId)
             .then(response => {
-                const canRead = response !== this.policyEnforcementService.deny;
+                const canRead = response !== this.pep.deny;
                 if (!canRead) {
                     this.disabledFlag = true;
                 }
@@ -235,7 +251,7 @@ export class EditorRecordSelectComponent implements OnInit, OnChanges {
     private createPepRequest() {
         return {
             resourceId: 'http://mobi.com/catalog-local',
-            actionId: this.prefixes.policy + 'Create',
+            actionId: POLICY + 'Create',
             actionAttrs: {
                          "http://www.w3.org/1999/02/22-rdf-syntax-ns#type":"http://mobi.com/ontologies/shapes-graph-editor#ShapesGraphRecord"
             }

@@ -21,6 +21,8 @@
  * #L%
  */
 
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
+
 const template = require('./classBlock.component.html');
 
 /**
@@ -41,7 +43,7 @@ const classBlockComponent = {
 
 classBlockComponentCtrl.$inject = ['discoverStateService'];
 
-function classBlockComponentCtrl(discoverStateService) {
+function classBlockComponentCtrl(discoverStateService: DiscoverStateService) {
     this.ds = discoverStateService;
 }
 

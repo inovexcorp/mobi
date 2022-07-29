@@ -21,26 +21,50 @@
  * #L%
  */
 import * as angular from 'angular';
+import { NgModule } from '@angular/core';
+import { downgradeComponent } from '@angular/upgrade/static';
 
-import datasetFormGroupComponent from './components/datasetFormGroup/datasetFormGroup.component';
+import { QueryModule } from './query/query.module';
+import { DiscoverSharedModule } from './discoverShared.module';
+import { SharedModule } from '../shared/shared.module';
+
+import { datasetFormGroupComponent } from './components/datasetFormGroup/datasetFormGroup.component';
 import datasetSelectComponent from './components/datasetSelect/datasetSelect.component';
-import discoverPageComponent from './components/discoverPage/discoverPage.component';
-import discoverTabsetComponent from './components/discoverTabset/discoverTabset.component';
 import sparqlResultTableComponent from './components/sparqlResultTable/sparqlResultTable.component';
 
 import exploreService from './services/explore.service';
 
 import './explore/explore.module';
-import './query/query.module';
 import './search/search.module';
 
+import { DiscoverPageComponent } from './components/discoverPage/discoverPage.component';
+
+// TODO: Move to submodules once upgraded
+import { ExploreTabDirective } from './explore/components/exploreTab/exploreTab.component';
+import { DiscoverSearchTabDirective } from './search/components/discoverSearchTab/discoverSearchTab.component';
+
 /**
- * @ngdoc overview
- * @name discover
+ * @namespace discover
  *
- * @description
  * The `discover` module provides components that make up the Discover module in the Mobi application.
  */
+@NgModule({
+    imports: [ 
+        SharedModule,
+        DiscoverSharedModule,
+        QueryModule
+    ],
+    declarations: [
+        DiscoverPageComponent,
+        ExploreTabDirective,
+        DiscoverSearchTabDirective
+    ],
+    entryComponents: [
+        DiscoverPageComponent
+    ]
+})
+export class DiscoverModule {}
+
 angular.module('discover', [
         'explore',
         'query',
@@ -48,7 +72,6 @@ angular.module('discover', [
     ])
     .component('datasetFormGroup', datasetFormGroupComponent)
     .component('datasetSelect', datasetSelectComponent)
-    .component('discoverPage', discoverPageComponent)
-    .component('discoverTabset', discoverTabsetComponent)
     .component('sparqlResultTable', sparqlResultTableComponent)
-    .service('exploreService', exploreService);
+    .service('exploreService', exploreService)
+    .directive('discoverPage', downgradeComponent({component: DiscoverPageComponent}) as angular.IDirectiveFactory);

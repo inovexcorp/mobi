@@ -20,159 +20,117 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { find, noop, get, map, isEmpty } from 'lodash';
-import { RecordSelectFiltered } from '../../../shapes-graph-editor/models/recordSelectFiltered.interface';
+import { Component, Inject, Input } from '@angular/core';
+import { find, noop, isEmpty } from 'lodash';
+import { StateService } from '@uirouter/core';
 
-const template = require('./openRecordButton.component.html');
+import { RecordSelectFiltered } from '../../../shapes-graph-editor/models/recordSelectFiltered.interface';
+import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { DATASET, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../../prefixes';
 
 /**
- * @ngdoc component
- * @name catalog.component:openRecordButton
- * @requires shared.service:catalogManagerService
- * @requires shared.service:catalogStateService
- * @requires shared.service:mappingManagerService
- * @requires shared.service:mapperStateService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:policyEnforcementService
- * @requires shared.service:policyManagerService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @class catalog.OpenRecordButtonComponent
  *
- * @description
- * `openRecordButton` is a component which creates an Open Record button that will open the provided record in the
- * appropriate module.
+ * A component which creates an Open Record button that will open the provided record in the appropriate module.
  * 
- * @param {Object} record The record to open
- * @param {string} flat Whether the button should be flat. The presence of the attribute is enough to set it
- * @param {string} stopProp Whether propagation should be stopped on click event. The presence of the attribute is enough to set it
+ * @param {JSONLDObject} record The record to open
+ * @param {boolean} flat Whether the button should be flat
+ * @param {boolean} stopProp Whether propagation should be stopped on click event
  */
-const openRecordButtonComponent = {
-    template,
-    bindings: {
-        record: '<',
-        flat: '@',
-        stopProp: '@'
-    },
-    controllerAs: 'dvm',
-    controller: openRecordButtonComponentCtrl
-};
+@Component({
+    selector: 'open-record-button',
+    templateUrl: './openRecordButton.component.html'
+})
+export class OpenRecordButtonComponent {
+    recordType = '';
+    showButton = false;
 
-openRecordButtonComponentCtrl.$inject = ['$state', 'catalogStateService', 'mapperStateService', 'ontologyStateService', 'policyEnforcementService', 'policyManagerService', 'utilService', 'prefixes', 'shapesGraphStateService'];
+    private _record;
 
-function openRecordButtonComponentCtrl($state, catalogStateService, mapperStateService, ontologyStateService, policyEnforcementService, policyManagerService, utilService, prefixes, shapesGraphStateService) {
-    const dvm = this;
-    const cs = catalogStateService;
-    const ms = mapperStateService;
-    const os = ontologyStateService;
-    const pe = policyEnforcementService;
-    const pm = policyManagerService;
-    const util = utilService;
-    const sgs = shapesGraphStateService;
-
-    dvm.record = undefined;
-    dvm.stopPropagation = false;
-    dvm.recordType = '';
-    dvm.isFlat = false;
-    dvm.showButton = false;
-
-    dvm.$onInit = function() {
-        update();
+    @Input() set record(value: JSONLDObject) {
+        this._record = value;
+        this.update();
     }
-    dvm.$onChanges = function() {
-        update();
+
+    get record(): JSONLDObject {
+        return this._record;
     }
-    dvm.openRecord = function(event) {
-        if (dvm.stopPropagation) {
+
+    @Input() flat: boolean;
+    @Input() stopProp: boolean;
+
+    constructor(public $state: StateService, public cs: CatalogStateService, public ms: MapperStateService,
+        @Inject('ontologyStateService') public os, @Inject('policyEnforcementService') public pe,
+        @Inject('policyManagerService') public pm, public sgs: ShapesGraphStateService,
+        @Inject('utilService') public util) {}
+
+    openRecord(event: MouseEvent): void {
+        if (this.stopProp) {
             event.stopPropagation();
         }
-        switch (dvm.recordType) {
-            case prefixes.ontologyEditor + 'OntologyRecord':
-                dvm.openOntology();
+        switch (this.recordType) {
+            case ONTOLOGYEDITOR + 'OntologyRecord':
+                this.openOntology();
                 break;
-            case prefixes.delim + 'MappingRecord':
-                dvm.openMapping();
+            case DELIM + 'MappingRecord':
+                this.openMapping();
                 break;
-            case prefixes.dataset + 'DatasetRecord':
-                dvm.openDataset();
+            case DATASET + 'DatasetRecord':
+                this.openDataset();
                 break;
-            case prefixes.shapesGraphEditor + 'ShapesGraphRecord':
-                dvm.openShapesGraph();
+            case SHAPESGRAPHEDITOR + 'ShapesGraphRecord':
+                this.openShapesGraph();
                 break;
             default:
-                util.createWarningToast('No module for record type ' + dvm.recordType);
+                this.util.createWarningToast('No module for record type ' + this.recordType);
         }
     }
-    dvm.openOntology = function() {
-        $state.go('root.ontology-editor');
-        if (!isEmpty(os.listItem)) {
-            os.listItem.active = false;
+    openOntology(): void {
+        this.$state.go('root.ontology-editor', null, { reload: true });
+        if (!isEmpty(this.os.listItem)) {
+            this.os.listItem.active = false;
         }
-        var listItem = find(os.list, {ontologyRecord: {recordId: dvm.record['@id']}});
+        const listItem = find(this.os.list, {ontologyRecord: {recordId: this.record['@id']}});
         if (listItem) {
-            os.listItem = listItem;
-            os.listItem.active = true;
+            this.os.listItem = listItem;
+            this.os.listItem.active = true;
         } else {
-            os.openOntology(dvm.record['@id'], util.getDctermsValue(dvm.record, 'title'))
-                .then(noop, util.createErrorToast);
+            this.os.openOntology(this.record['@id'], this.util.getDctermsValue(this.record, 'title'))
+                .then(noop, this.util.createErrorToast);
         }
     }
-    dvm.openMapping = function() {
-        var formattedRecord = {
-            id: dvm.record['@id'],
-            title: util.getDctermsValue(dvm.record, 'title'),
-            description: util.getDctermsValue(dvm.record, 'description'),
-            keywords: map(get(dvm.record, "['" + prefixes.catalog + "keyword']", []), '@value'),
-            branch: util.getPropertyId(dvm.record, prefixes.catalog + 'masterBranch')
-        };
-        $state.go('root.mapper');
-        ms.selectMapping(formattedRecord);
+    openMapping(): void {
+        this.ms.paginationConfig.searchText = this.util.getDctermsValue(this.record, 'title');
+        this.$state.go('root.mapper', null, { reload: true });
     }
-    dvm.openDataset = function() {
-        $state.go('root.datasets');
+    openDataset(): void {
+        this.$state.go('root.datasets', null, { reload: true });
     }
-    dvm.openShapesGraph = function() {
+    openShapesGraph(): void {
         const recordSelect: RecordSelectFiltered = {
-            recordId: dvm.record['@id'],
-            title: util.getDctermsValue(dvm.record, 'title'),
-            description: util.getDctermsValue(dvm.record, 'description')
+            recordId: this.record['@id'],
+            title: this.util.getDctermsValue(this.record, 'title'),
+            description: this.util.getDctermsValue(this.record, 'description')
         };
-        $state.go('root.shapes-graph-editor');
-        sgs.openShapesGraph(recordSelect).then(noop, util.createErrorToast);
+        this.$state.go('root.shapes-graph-editor', null, { reload: true });
+        this.sgs.openShapesGraph(recordSelect).then(noop, this.util.createErrorToast);
     }
-    function update() {
-        dvm.isFlat = dvm.flat !== undefined;
-        dvm.stopPropagation = dvm.stopProp !== undefined;
-        dvm.recordType = cs.getRecordType(dvm.record);
-        if (dvm.record !== undefined){
-            const request = {
-                resourceId: dvm.record['@id'],
-                actionId: pm.actionRead
-            };
-            // As mobi adds more support for permissions, each record type can be checked for permissions
-            switch (dvm.recordType) {
-                case prefixes.ontologyEditor + 'OntologyRecord':
-                    pe.evaluateRequest(request).then(decision => {
-                        dvm.showButton = decision !== pe.deny;
-                    });
+    update(): void {
+        this.recordType = this.cs.getRecordType(this.record);
 
-                    dvm.showButton = true;
-                    break;
-                case prefixes.delim + 'MappingRecord':
-                    dvm.showButton = true;
-                    break;
-                case prefixes.dataset + 'DatasetRecord':
-                    dvm.showButton = true;
-                    break;
-                case prefixes.shapesGraphEditor + 'ShapesGraphRecord':
-                    dvm.showButton = true;
-                    break;
-                default:
-                    dvm.showButton = true;
-            }
+        if (this.recordType === ONTOLOGYEDITOR + 'OntologyRecord') {
+            const request = {
+                resourceId: this.record['@id'],
+                actionId: this.pm.actionRead
+            };
+            this.pe.evaluateRequest(request).then(decision => {
+                this.showButton = decision !== this.pe.deny;
+            });
         } else {
-            dvm.showButton = false;
+            this.showButton = true;
         }
     }
 }
-
-export default openRecordButtonComponent;

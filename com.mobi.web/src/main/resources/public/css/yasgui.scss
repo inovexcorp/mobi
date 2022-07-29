@@ -24,17 +24,21 @@
 .yasgui {
     .tabsList {
         display: none;
-    }
 
-    .tabsList + div {
-        height: 100%;
-        overflow-x: hidden;
+        & + div {
+            height: 100%;
+            overflow-x: hidden;
+        }
     }
 
     .tabPanel {
         &.active {
             display: flex;
             height: 100%;
+           
+            & > div {
+                flex:1;
+            }
 
             .tabMenu + div {
                 flex: 1;
@@ -68,9 +72,14 @@
             overflow-y: scroll;
         }
 
-        .yasr_header {
+        &_header {
             .yasr_external_ref_btn {
                 display: none;
+            }
+            .tableControls {
+                .switch {
+                    display: none;
+                }
             }
         }
 

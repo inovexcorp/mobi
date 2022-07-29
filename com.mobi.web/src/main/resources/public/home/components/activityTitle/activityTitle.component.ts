@@ -25,6 +25,7 @@ import { Component, Inject, Input, OnChanges, OnInit, SimpleChanges } from '@ang
 
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { User } from '../../../shared/models/user.interface';
+import { PROV } from '../../../prefixes';
 
 import './activityTitle.component.scss';
 
@@ -52,16 +53,16 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
     public entitiesStr = '(None)';
 
     constructor(@Inject('provManagerService') private pm, @Inject('utilService') private util,
-                private um: UserManagerService, @Inject('prefixes') private prefixes) {}
+                private um: UserManagerService) {}
     
     ngOnInit(): void {
-        this.setUsername(this.util.getPropertyId(this.activity, this.prefixes.prov + 'wasAssociatedWith'));
+        this.setUsername(this.util.getPropertyId(this.activity, PROV + 'wasAssociatedWith'));
         this.setWord(this.activity);
         this.setEntities(this.activity);
     }
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.activity) {
-            this.setUsername(this.util.getPropertyId(changes.activity.currentValue, this.prefixes.prov + 'wasAssociatedWith'));
+            this.setUsername(this.util.getPropertyId(changes.activity.currentValue, PROV + 'wasAssociatedWith'));
             this.setWord(changes.activity.currentValue);
             this.setEntities(changes.activity.currentValue);
         }

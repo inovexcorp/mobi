@@ -20,50 +20,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Inject, Input } from '@angular/core';
 import { get, find } from 'lodash';
 
-const template = require('./entityPublisher.component.html');
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { UserManagerService } from '../../../shared/services/userManager.service';
 
 /**
- * @ngdoc component
- * @name catalog.component:entityPublisher
- * @requires shared.service:userManagerService
- * @requires shared.service:utilService
+ * @class catalog.EntityPublisherComponent
  *
- * @description
- * `entityPublisher` is a component which creates a span with a display of a JSON-LD object's dcterms:publisher
- * property value. Retrieves the username of the publisher using the {@link shared.service:userManagerService}.
+ * A component which creates a span with a display of a JSON-LD object's dcterms:publisher property value. Retrieves the
+ * username of the publisher using the {@link shared.UserManagerService}.
  *
- * @param {Object} entity A JSON-LD object
+ * @param {JSONLDObject} entity A JSON-LD object
  */
-const entityPublisherComponent = {
-    template,
-    bindings: {
-        entity: '<'
-    },
-    controllerAs: 'dvm',
-    controller: entityPublisherComponentCtrl
-};
+@Component({
+    selector: 'entity-publisher',
+    templateUrl: './entityPublisher.component.html'
+})
+export class EntityPublisherComponent {
+    publisherName = '';
 
-entityPublisherComponentCtrl.$inject = ['userManagerService', 'utilService'];
+    private _entity: JSONLDObject;
 
-function entityPublisherComponentCtrl(userManagerService, utilService) {
-    var dvm = this;
-    var util = utilService;
-    var um = userManagerService;
-    dvm.publisherName = '';
-
-    dvm.$onInit = function() {
-        dvm.publisherName = getPublisherName();
-    }
-    dvm.$onChanges = function() {
-        dvm.publisherName = getPublisherName();
+    @Input() set entity(value: JSONLDObject) {
+        this._entity = value;
+        this.publisherName = this.getPublisherName(this._entity);
     }
 
-    function getPublisherName() {
-        var publisherId = util.getDctermsId(dvm.entity, 'publisher');
-        return publisherId ? get(find(um.users, {iri: publisherId}), 'username', '(None)') : '(None)';
+    get entity(): JSONLDObject {
+        return this._entity;
+    }
+
+    constructor(public um: UserManagerService, @Inject('utilService') public util) {}
+
+    getPublisherName(entity: JSONLDObject): string {
+        const publisherId = this.util.getDctermsId(entity, 'publisher');
+        return publisherId ? get(find(this.um.users, {iri: publisherId}), 'username', '(None)') : '(None)';
     }
 }
-
-export default entityPublisherComponent;

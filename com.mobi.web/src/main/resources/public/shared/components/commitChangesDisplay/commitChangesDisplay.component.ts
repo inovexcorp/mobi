@@ -21,11 +21,13 @@
  * #L%
  */
 
-import { Component, Inject, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Inject, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { map, forEach, filter, union, orderBy, isEmpty } from 'lodash';
 
-import './commitChangesDisplay.component.scss';
 import { CommitChange } from '../../models/commitChange.interface';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
+
+import './commitChangesDisplay.component.scss';
 /**
  * @ngdoc component
  * @name shared.component:commitChangesDisplay
@@ -50,18 +52,19 @@ import { CommitChange } from '../../models/commitChange.interface';
     templateUrl: './commitChangesDisplay.component.html'
 })
 export class CommitChangesDisplayComponent implements OnInit, OnChanges {
-    @Input() additions: CommitChange[];
-    @Input() deletions: CommitChange[];
+    @Input() additions: JSONLDObject[];
+    @Input() deletions: JSONLDObject[];
     @Input() entityNameFunc?: (args: any) => string;
     @Input() hasMoreResults: boolean;
     @Input() startIndex?: number;
-    @Input() showMoreResultsFunc: (limit: number, offset: number) => void
+
+    @Output() showMoreResultsFunc = new EventEmitter<{limit: number, offset: number}>();
 
     size = 100; // Must be the same as the limit prop in the commitHistoryTable
     index = 0;
     list = [];
     chunkList = [];
-    results = {};
+    results: { [key: string]: { additions: CommitChange[], deletions: CommitChange[] } } = {};
     showMore = false;
     
     constructor(@Inject('utilService') private util) {}
@@ -89,15 +92,15 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
     }
     addPagedChangesToResults(): void {
         forEach(this.list, id => {
-            this.addToResults(this.util.getChangesById(id, this.additions), this.util.getChangesById(id, this.deletions), id, this.results);
+            this._addToResults(this.util.getChangesById(id, this.additions), this.util.getChangesById(id, this.deletions), id, this.results);
         });
         this.showMore = this.hasMoreResults;
     }
     getMorePagedChanges(): void {
         this.index += this.size;
-        this.showMoreResultsFunc(this.size, this.index); // Should trigger ngOnChanges
+        this.showMoreResultsFunc.emit({limit: this.size, offset: this.index}); // Should trigger ngOnChanges
     }
-    private addToResults(additions, deletions, id, results): void {
+    private _addToResults(additions: CommitChange[], deletions: CommitChange[], id: string, results): void {
         results[id] = { additions: additions, deletions: deletions };
     }
 }

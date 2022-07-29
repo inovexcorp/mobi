@@ -20,25 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component } from '@angular/core';
+
+import { DiscoverStateService } from '../../../shared/services/discoverState.service';
+
 import './discoverPage.component.scss';
 
-const template = require('./discoverPage.component.html');
-
 /**
- * @ngdoc component
- * @name discover.component:discoverPage
+ * @class discover.DiscoverPageComponent
  *
- * @description
- * `discoverPage` is a component which creates the main page of the Discover module. The component contains
- * a {@link discover.component.discoverTabset discoverTabset} for navigating the Discover module
+ * A component which creates the main page of the Discover module. The component contains a `mat-tab-group` with tabs 
+ * for {@link explore.ExploreTabDirective}, {@link query.QueryTabDirective}, and {@link search.SearchTabComponent}.
  */
-const discoverPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: discoverPageComponentCtrl
-};
-
-function discoverPageComponentCtrl() {}
-
-export default discoverPageComponent;
+@Component({
+    selector: 'discover-page',
+    templateUrl: './discoverPage.component.html'
+})
+export class DiscoverPageComponent {
+    constructor(public state: DiscoverStateService) {}
+}

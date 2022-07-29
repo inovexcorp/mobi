@@ -29,7 +29,6 @@ import { REGEX } from '../../../constants';
 import { User } from '../../../shared/models/user.interface';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
-import { emailOrEmpty } from '../../../shared/validators/emailOrEmpty.validator';
 import { uniqueValue } from '../../../shared/validators/uniqueValue.validator';
 
 /**
@@ -51,7 +50,7 @@ export class CreateUserOverlayComponent {
         unmaskPassword: ['', [Validators.required]],
         firstName: [''],
         lastName: [''],
-        email: ['', [ emailOrEmpty ]], // TODO: Replace Validators.email after Angular 6
+        email: ['', [ Validators.email ]],
         admin: ''
     });
 

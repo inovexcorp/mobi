@@ -25,17 +25,21 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { HelperService } from './helper.service';
 import { configureTestSuite } from 'ng-bullet';
 import { TestBed } from '@angular/core/testing';
+
 import { cleanStylesFromDOM, mockUtil } from '../../../../../test/ts/Shared';
 import { RdfUpload } from '../models/rdfUpload.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
+import { MockProvider } from 'ng-mocks';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 
 describe('Shapes Graph Manager service', function() {
     let service: ShapesGraphManagerService;
     let utilStub;
     let httpMock: HttpTestingController;
     let helper: HelperService;
+    let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     const error = 'Error Message';
     const file: File = new File([''], 'filename', { type: 'text/html' });
     const rdfUpload: RdfUpload = {
@@ -66,6 +70,7 @@ describe('Shapes Graph Manager service', function() {
             providers: [
                 ShapesGraphManagerService,
                 HelperService,
+                MockProvider(ProgressSpinnerService),
                 { provide: 'utilService', useClass: mockUtil }
             ]
         });
@@ -76,6 +81,7 @@ describe('Shapes Graph Manager service', function() {
         utilStub = TestBed.get('utilService');
         httpMock = TestBed.get(HttpTestingController);
         helper = TestBed.get(HelperService);
+        progressSpinnerStub = TestBed.get(ProgressSpinnerService);
 
         spyOn(helper, 'createHttpParams').and.callThrough();
         utilStub.rejectErrorObject.and.callFake(() => Promise.reject(error));
@@ -94,6 +100,7 @@ describe('Shapes Graph Manager service', function() {
             fileName: 'filename',
             applyInProgressCommit: false
         };
+        progressSpinnerStub.track.and.callFake((ob) => ob);
     });
 
     afterEach(function() {
@@ -102,6 +109,7 @@ describe('Shapes Graph Manager service', function() {
         utilStub = null;
         httpMock = null;
         helper = null;
+        progressSpinnerStub = null;
     });
 
     afterEach(() => {

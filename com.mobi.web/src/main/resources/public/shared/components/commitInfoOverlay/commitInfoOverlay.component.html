@@ -30,7 +30,7 @@
     <div class="changes-container">
         <span class="field-name">Changes</span>
         <p *ngIf="additions?.length == 0 && deletions?.length == 0">(None)</p>
-        <commit-changes-display *ngIf="additions?.length > 0 || deletions?.length > 0" [additions]="additions" [deletions]="deletions" [entityNameFunc]="getEntityName.bind(this)" [showMoreResultsFunc]="retrieveMoreResults.bind(this)" [hasMoreResults]="hasMoreResults"></commit-changes-display>
+        <commit-changes-display *ngIf="additions?.length > 0 || deletions?.length > 0" [additions]="additions" [deletions]="deletions" [entityNameFunc]="getEntityName.bind(this)" (showMoreResultsFunc)="retrieveMoreResults($event?.limit, $event?.offset)" [hasMoreResults]="hasMoreResults"></commit-changes-display>
     </div>
 </div>
 <div mat-dialog-actions>

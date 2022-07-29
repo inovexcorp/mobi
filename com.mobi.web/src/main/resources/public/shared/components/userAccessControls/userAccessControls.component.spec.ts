@@ -22,7 +22,7 @@
  */
 
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, tick, fakeAsync, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule, MatFormFieldModule, MatInputModule, MatSlideToggleModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
@@ -30,7 +30,8 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
 import { MockProvider } from 'ng-mocks';
 
-import { cleanStylesFromDOM, mockLoginManager, mockPrefixes } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM, mockLoginManager } from '../../../../../../test/ts/Shared';
+import { USER, XSD } from '../../../prefixes';
 import { Group } from '../../models/group.interface';
 import { Policy } from '../../models/policy.interface';
 import { User } from '../../models/user.interface';
@@ -44,7 +45,6 @@ describe('User Access Controls component', function() {
     let fixture: ComponentFixture<UserAccessControlsComponent>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;
-    let prefixesStub;
     let loginManagerStub;
     let everyoneMatch;
     let userMatch;
@@ -70,7 +70,6 @@ describe('User Access Controls component', function() {
             providers: [
                 MockProvider(PolicyManagerService),
                 MockProvider(UserManagerService),
-                { provide: 'prefixes', useClass: mockPrefixes },
                 { provide: 'loginManagerService', useClass: mockLoginManager }
             ]
         });
@@ -82,20 +81,19 @@ describe('User Access Controls component', function() {
         element = fixture.debugElement;
         policyManagerStub = TestBed.get(PolicyManagerService);
         userManagerStub = TestBed.get(UserManagerService);
-        prefixesStub = TestBed.get('prefixes');
         loginManagerStub = TestBed.get('loginManagerService');
 
         everyoneMatch = {
             AttributeDesignator: {
-                AttributeId: prefixesStub.user + 'hasUserRole',
+                AttributeId: USER + 'hasUserRole',
                 Category: policyManagerStub.subjectCategory,
-                DataType: prefixesStub.xsd + 'string',
+                DataType: XSD + 'string',
                 MustBePresent: true
             },
             AttributeValue: {
                 content: ['http://mobi.com/roles/user'],
                 otherAttributes: {},
-                DataType: prefixesStub.xsd + 'string'
+                DataType: XSD + 'string'
             },
             MatchId: policyManagerStub.stringEqual
         };
@@ -103,13 +101,13 @@ describe('User Access Controls component', function() {
             AttributeDesignator: {
                 AttributeId: policyManagerStub.subjectId,
                 Category: policyManagerStub.subjectCategory,
-                DataType: prefixesStub.xsd + 'string',
+                DataType: XSD + 'string',
                 MustBePresent: true
             },
             AttributeValue: {
                 content: ['user1'],
                 otherAttributes: {},
-                DataType: prefixesStub.xsd + 'string'
+                DataType: XSD + 'string'
             },
             MatchId: policyManagerStub.stringEqual
         };
@@ -117,13 +115,13 @@ describe('User Access Controls component', function() {
             AttributeDesignator: {
                 AttributeId: component.groupAttributeId,
                 Category: policyManagerStub.subjectCategory,
-                DataType: prefixesStub.xsd + 'string',
+                DataType: XSD + 'string',
                 MustBePresent: true
             },
             AttributeValue: {
                 content: ['group1'],
                 otherAttributes: {},
-                DataType: prefixesStub.xsd + 'string'
+                DataType: XSD + 'string'
             },
             MatchId: policyManagerStub.stringEqual
         };
@@ -165,7 +163,6 @@ describe('User Access Controls component', function() {
         fixture = null;
         policyManagerStub = null;
         userManagerStub = null;
-        prefixesStub = null;
         everyoneMatch = null;
         userMatch = null;
         groupMatch = null;

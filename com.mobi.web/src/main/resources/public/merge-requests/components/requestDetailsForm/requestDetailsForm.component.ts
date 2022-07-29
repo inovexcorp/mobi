@@ -21,72 +21,72 @@
  * #L%
  */
 
-import {get, noop} from "lodash";
+import { HttpResponse } from '@angular/common/http';
+import { Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { get } from 'lodash';
 
-const template = require('./requestDetailsForm.component.html');
+import { CATALOG } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 
 import './requestDetailsForm.component.scss';
 
 /**
- * @ngdoc component
- * @name merge-requests.component:requestDetailsForm
- * @requires $q
- * @requires shared.service:mergeRequestsStateService
- * @requires shared.service:userManagerService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @class merge-requests.RequestDetailsFormComponent
  *
- * @description
- * `requestDetailsForm` is a component which creates a div containing a form with inputs for
- * the title, description, and other metadata about a new MergeRequest. The div also contains
- * {@link shared.component:commitDifferenceTabset} to display the changes and
+ * A component which creates a div containing a form with inputs for the title, description, and other metadata about a
+ * new MergeRequest. The div also contains {@link shared.CommitDifferenceTabsetComponent} to display the changes and
  * commits between the previously selected source and target branch of the Merge Request.
  */
-const requestDetailsFormComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: requestDetailsFormComponentCtrl
-}
+@Component({
+    selector: 'request-details-form',
+    templateUrl: './requestDetailsForm.component.html'
+})
+export class RequestDetailsFormComponent implements OnInit, OnDestroy {
+    recordTitle = '';
+    sourceCommitId = '';
+    targetCommitId = '';
+    branchTitle = '';
+    targetBranchTitle = '';
+    detailsForm: FormGroup = this.fb.group({
+        assignees: [''],
+    });
 
-requestDetailsFormComponentCtrl.$inject = ['$q', 'mergeRequestsStateService', 'userManagerService', 'catalogManagerService', 'utilService', 'prefixes'];
+    @ViewChild('assigneeInput') assigneeInput: ElementRef;
 
-function requestDetailsFormComponentCtrl($q, mergeRequestsStateService, userManagerService, catalogManagerService, utilService, prefixes) {
-    var dvm = this;
-    var cm = catalogManagerService;
-    var catalogId = get(cm.localCatalog, '@id');
-    dvm.util = utilService;
-    dvm.prefixes = prefixes;
-    dvm.state = mergeRequestsStateService;
-    dvm.um = userManagerService;
+    constructor(public state: MergeRequestsStateService, public cm: CatalogManagerService,
+        private fb: FormBuilder, @Inject('utilService') public util) {}
 
-    dvm.$onInit = function() {
-        dvm.state.requestConfig.entityNames = {};
-        dvm.state.requestConfig.difference = undefined;
-        dvm.state.requestConfig.previousDiffIris = [];
-        dvm.state.requestConfig.startIndex = 0;
-        dvm.state.requestConfig.title = dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title');
-        cm.getRecordBranches(dvm.state.requestConfig.recordId, catalogId)
-            .then(response => {
-                dvm.state.updateRequestConfigBranch('sourceBranch', response.data);
-                dvm.state.updateRequestConfigBranch( 'targetBranch', response.data);
-                if (dvm.state.requestConfig.sourceBranch && dvm.state.requestConfig.targetBranch) {
-                    return dvm.state.updateRequestConfigDifference();
+    ngOnInit(): void {
+        this.state.clearDifference();
+        this.recordTitle = this.util.getDctermsValue(this.state.selectedRecord, 'title');
+        this.state.requestConfig.title = this.util.getDctermsValue(this.state.requestConfig.sourceBranch, 'title');
+        this.cm.getRecordBranches(this.state.requestConfig.recordId, get(this.cm.localCatalog, '@id'))
+            .subscribe((response: HttpResponse<JSONLDObject[]>) => {
+                this.state.updateRequestConfigBranch('sourceBranch', response.body);
+                this.state.updateRequestConfigBranch( 'targetBranch', response.body);
+                if (this.state.requestConfig.sourceBranch && this.state.requestConfig.targetBranch) {
+                    this.branchTitle = this.util.getDctermsValue(this.state.requestConfig.sourceBranch, 'title');
+                    this.sourceCommitId = this.util.getPropertyId(this.state.requestConfig.sourceBranch, CATALOG + 'head');
+                    this.targetBranchTitle = this.util.getDctermsValue(this.state.requestConfig.targetBranch, 'title');
+                    this.targetCommitId = this.util.getPropertyId(this.state.requestConfig.targetBranch, CATALOG + 'head');
+                    this.state.updateRequestConfigDifference()
+                        .subscribe(() => {}, error => this.util.createErrorToast(error));
                 } else {
-                    dvm.state.createRequestStep = 1;
-                    dvm.state.requestConfig.difference = undefined;
-                    return $q.reject('Branch was deleted');
+                    this.state.createRequestStep = 1;
+                    this.state.difference = undefined;
+                    this.util.createErrorToast('Branch was deleted');
                 }
-            }, $q.reject)
-            .then(noop, dvm.util.createErrorToast);
+            }, error => {
+                this.util.createErrorToast(error);
+            });
     }
-    dvm.$onDestroy = function() {
-        dvm.state.requestConfig.entityNames = {};
-        dvm.state.requestConfig.difference = undefined;
-        dvm.state.requestConfig.previousDiffIris = [];
-        dvm.state.requestConfig.startIndex = 0;
+    ngOnDestroy(): void {
+        this.state.clearDifference();
+    }
+    getEntityName(iri: string): string {
+        return this.state.getEntityNameLabel(iri);
     }
 }
-
-export default requestDetailsFormComponent;

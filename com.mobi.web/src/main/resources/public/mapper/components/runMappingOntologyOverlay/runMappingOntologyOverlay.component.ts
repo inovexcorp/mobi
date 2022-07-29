@@ -20,145 +20,161 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { HttpResponse } from '@angular/common/http';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { MatAutocompleteSelectedEvent, MatDialogRef } from '@angular/material';
 import { find, get } from 'lodash';
+import { Observable } from 'rxjs';
+import { debounceTime, map, startWith, switchMap } from 'rxjs/operators';
 
-const template = require('./runMappingOntologyOverlay.component.html');
+import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
+
+import './runMappingOntologyOverlay.component.scss';
+
+interface OntologyPreview {
+    id: string,
+    title: string,
+    ontologyIRI: string
+}
 
 /**
- * @ngdoc component
- * @name mapper.component:runMappingOntologyOverlay
- * @requires shared.service:mapperStateService
- * @requires shared.service:delimitedManagerService
- * @requires shared.service:utilService
- * @requires shared.service:catalogManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:prefixes
+ * @class mapper.RunMappingOntologyOverlayComponent
  *
- * @description
- * `runMappingOntologyOverlay` is a component that creates content for a modal that contains a configuration
- * settings for running the currently selected {@link shared.service:mapperStateService#mapping mapping} against the
- * uploaded {@link shared.service:delimitedManagerService#dataRows delimited data} and committing the results to an
- * Ontology. This includes `ui-select`s to determine which ontology and which branch to commit the mapping to. The
- * user can also choose whether the result data should be considered additions or changes to the existing data on
- * that branch. Meant to be used in conjunction with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that contains a configuration settings for running the currently
+ * selected {@link shared.MapperStateService#selected mapping} against the uploaded
+ * {@link shared.DelimitedManagerService#dataRows delimited data} and committing the results to an Ontology. This
+ * includes `mat-autocomplete`s to determine which ontology and which branch to commit the mapping to. The user can also
+ * choose whether the result data should be considered additions or changes to the existing data on that branch. Meant
+ * to be used in conjunction with the `MatDialog` service.
  */
-const runMappingOntologyOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: runMappingOntologyOverlayComponentCtrl,
-};
+@Component({
+    selector: 'run-mapping-ontology-overlay',
+    templateUrl: './runMappingOntologyOverlay.component.html'
+})
+export class RunMappingOntologyOverlayComponent implements OnInit {
+    errorMessage = '';
+    catalogId = '';
+    ontologies = [];
+    branches = [];
+    branch: JSONLDObject = undefined;
+    ontology: OntologyPreview = undefined;
+    update = false;
 
-runMappingOntologyOverlayComponentCtrl.$inject = ['mapperStateService', 'delimitedManagerService', 'utilService', 'catalogManagerService', 'ontologyStateService', 'prefixes'];
+    ontologyControl = new FormControl();
+    filteredOntologies: Observable<OntologyPreview[]>;
 
-function runMappingOntologyOverlayComponentCtrl(mapperStateService, delimitedManagerService, utilService, catalogManagerService, ontologyStateService, prefixes) {
-    var dvm = this;
-    var state = mapperStateService;
-    var dm = delimitedManagerService;
-    var cm = catalogManagerService;
-    var os = ontologyStateService;
-    dvm.util = utilService;
-    dvm.errorMessage = '';
-    dvm.ontologies = [];
-    dvm.branches = [];
-    dvm.branchId = undefined;
-    dvm.ontology = undefined;
-    dvm.update = false;
+    constructor(private dialogRef: MatDialogRef<RunMappingOntologyOverlayComponent>, private state: MapperStateService,
+        private dm: DelimitedManagerService, private cm: CatalogManagerService,
+        @Inject('ontologyStateService') private os, @Inject('utilService') private util) {}
 
-    dvm.changeOntology = function(ontologyRecord) {
-        if (ontologyRecord) {
-            setOntologyBranches(ontologyRecord);
+    ngOnInit(): void {
+        this.catalogId = get(this.cm.localCatalog, '@id', '');
+        this.filteredOntologies = this.ontologyControl.valueChanges
+            .pipe(
+                debounceTime(500),
+                startWith<string | OntologyPreview>(''),
+                switchMap(val => {
+                    const searchText = typeof val === 'string' ?
+                        val :
+                        val ?
+                            val.title :
+                            undefined;
+                    const paginatedConfig = {
+                        limit: 50,
+                        type: ONTOLOGYEDITOR + 'OntologyRecord',
+                        sortOption: find(this.cm.sortOptions, {field: DCTERMS + 'title', asc: true}),
+                        searchText
+                    };
+                    return this.cm.getRecords(this.catalogId, paginatedConfig, true)
+                        .pipe(
+                            map((response: HttpResponse<JSONLDObject[]>) => {
+                                return response.body.map(record => ({
+                                    id: record['@id'],
+                                    title: this.util.getDctermsValue(record, 'title'),
+                                    ontologyIRI: this.getOntologyIRI(record)
+                                }));
+                            })
+                        );
+                })
+            );
+    }
+    getDisplayText(value: OntologyPreview): string {
+        return value ? value.title : '';
+    }
+    selectOntology(event: MatAutocompleteSelectedEvent): void {
+        if (event.option.value) {
+            this.ontology = event.option.value;
+            this._setOntologyBranches(event.option.value);
         }
     }
-    dvm.getOntologyIRI = function(ontology) {
-        return dvm.util.getPropertyId(ontology, prefixes.ontEdit + 'ontologyIRI');
+    getOntologyIRI(ontology: JSONLDObject): string {
+        return this.util.getPropertyId(ontology, ONTOLOGYEDITOR + 'ontologyIRI');
     }
-    dvm.getOntologies = function(searchText) {
-        var catalogId = get(cm.localCatalog, '@id', '');
-        var paginatedConfig = {
-            limit: 50,
-            recordType: prefixes.ontologyEditor + 'OntologyRecord',
-            sortOption: find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
-            searchText
-        };
-        cm.getRecords(catalogId, paginatedConfig, 'test')
-            .then(response => {
-                dvm.ontologies = response.data;
-            });
-    }
-    dvm.run = function() {
-        if (state.editMapping && state.isMappingChanged()) {
-            state.saveMapping().then(runMapping, onError);
+    run(): void {
+        if (this.state.editMapping && this.state.isMappingChanged()) {
+            this.state.saveMapping()
+                .subscribe(id => this._runMapping(id), error => this._onError(error));
         } else {
-            runMapping(state.mapping.record.id);
+            this._runMapping(this.state.selected.record.id);
         }
     }
-    dvm.cancel = function() {
-        dvm.dismiss();
+    private _onError(errorMessage: string): void {
+        this.errorMessage = errorMessage;
     }
-
-    function onError(errorMessage) {
-        dvm.errorMessage = errorMessage;
-    }
-    function runMapping(id) {
-        state.mapping.record.id = id;
-        dm.mapAndCommit(id, dvm.ontology['@id'], dvm.branchId, dvm.update).then(response => {
+    private _runMapping(id: string): void {
+        this.dm.mapAndCommit(id, this.ontology.id, this.branch['@id'], this.update).subscribe(response => {
             if (response.status === 204) {
-                dvm.util.createWarningToast('No commit was submitted, commit was empty due to duplicate data', {timeOut: 8000});
-                reset();
+                this.util.createWarningToast('No commit was submitted, commit was empty due to duplicate data', {timeOut: 8000});
+                this._reset();
             } else {
-                testOntology(dvm.ontology)
-                reset();
+                this._testOntology(this.ontology);
+                this._reset();
             }
-        }, onError);
+        }, error => this._onError(error));
     }
-    function reset() {
-        state.step = state.selectMappingStep;
-        state.initialize();
-        state.resetEdit();
-        dm.reset();
-        dvm.close();
+    private _reset(): void {
+        this.errorMessage = '';
+        this.state.step = this.state.selectMappingStep;
+        this.state.initialize();
+        this.state.resetEdit();
+        this.dm.reset();
+        this.dialogRef.close();
     }
-    function testOntology(ontologyRecord) {
-        var item = find(os.list, {ontologyRecord: {recordId: ontologyRecord['@id']}});
-        var toast = false;
+    private _testOntology(ontology: OntologyPreview): void {
+        const item = find(this.os.list, {ontologyRecord: {recordId: ontology.id}});
+        let toast = false;
         if (item) {
-            if (get(item, 'ontologyRecord.branchId') === dvm.branchId) {
+            if (get(item, 'ontologyRecord.branchId') === this.branch['@id']) {
                 item.upToDate = false;
                 if (item.merge.active) {
-                    dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor for ' + dvm.util.getDctermsValue(ontologyRecord, 'title') + ' that is out of date. Please reopen the merge form.', {timeOut: 5000});
+                    this.util.createWarningToast(`You have a merge in progress in the Ontology Editor for ${ontology.title} that is out of date. Please reopen the merge form.`, {timeOut: 5000});
                     toast = true;
                 }
             }
-            if (item.merge.active && get(item.merge.target, '@id') === dvm.branchId) {
-                dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor for ' + dvm.util.getDctermsValue(ontologyRecord, 'title') + ' that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
+            if (item.merge.active && get(item.merge.target, '@id') === this.branch['@id']) {
+                this.util.createWarningToast(`You have a merge in progress in the Ontology Editor for ${ontology.title} that is out of date. Please reopen the merge form to avoid conflicts.`, {timeOut: 5000});
                 toast = true;
             }
         }
         if (!toast) {
-            dvm.util.createSuccessToast('Successfully ran mapping');
+            this.util.createSuccessToast('Successfully ran mapping');
         }
     }
-    function setOntologyBranches(ontologyRecord) {
-        var catalogId = get(cm.localCatalog, '@id', '');
-        var recordId = get(ontologyRecord, '@id', '');
-        var paginatedConfig = {
-            sortOption: find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
+    private _setOntologyBranches(ontology: OntologyPreview): void {
+        const paginatedConfig = {
+            sortOption: find(this.cm.sortOptions, {field: DCTERMS + 'title', asc: true}),
         };
-        if (recordId) {
-            return cm.getRecordBranches(recordId, catalogId, paginatedConfig)
-                .then(response => {
-                    dvm.branches = response.data;
-                    dvm.branchId = get(find(dvm.branches, branch => dvm.util.getDctermsValue(branch, 'title') === 'MASTER'), '@id');
+        if (ontology.id) {
+            this.cm.getRecordBranches(ontology.id, this.catalogId, paginatedConfig)
+                .subscribe((response: HttpResponse<JSONLDObject[]>) => {
+                    this.branches = response.body;
+                    this.branch = this.branches.find(branch => this.util.getDctermsValue(branch, 'title') === 'MASTER');
                 });
         }
     }
 }
-
-export default runMappingOntologyOverlayComponent;

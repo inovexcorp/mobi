@@ -23,6 +23,8 @@
 import { get } from 'lodash';
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 
+import { PROV } from '../../../prefixes';
+
 /**
  * @class home.ActivityCardComponent
  *
@@ -44,7 +46,7 @@ export class ActivityCardComponent implements OnInit, OnDestroy {
     totalSize = 0;
     
     constructor(@Inject('provManagerService') public pm, @Inject('utilService') public util,
-                @Inject('prefixes') private prefixes, @Inject('httpService') private httpService) {}
+                @Inject('httpService') private httpService) {}
     
     ngOnInit(): void {
         this.setPage();
@@ -71,7 +73,7 @@ export class ActivityCardComponent implements OnInit, OnDestroy {
             });
     }
     getTimeStamp(activity): string {
-        const dateStr = this.util.getPropertyValue(activity, this.prefixes.prov + 'endedAtTime');
+        const dateStr = this.util.getPropertyValue(activity, PROV + 'endedAtTime');
         return this.util.getDate(dateStr, 'short');
     }
     getConfig(): any {

@@ -32,14 +32,14 @@ import {
     cleanStylesFromDOM,
     mockUtil,
     mockSettingManager,
-    mockPrefixes
 } from '../../../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
-import { SettingGroupComponent } from './settingGroup.component';
 import { SettingFormComponent } from '../settingForm/settingForm.component';
 import { SettingConstants } from '../../models/settingConstants.class';
 import { SimpleSetting } from '../../models/simpleSetting.class';
 import { SettingUtils } from '../../models/settingUtils.class';
+import { OWL, RDFS, SETTING, SHACL, XSD } from '../../../prefixes';
+import { SettingGroupComponent } from './settingGroup.component';
 
 describe('Setting Group component', function() {
     let component: SettingGroupComponent;
@@ -63,7 +63,6 @@ describe('Setting Group component', function() {
             providers: [
                 { provide: 'settingManagerService', useClass: mockSettingManager },
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'prefixes', useClass: mockPrefixes },
                 { provide: 'ErrorDisplayComponent', useClass: MockComponent(ErrorDisplayComponent) }
             ]
         });
@@ -78,61 +77,61 @@ describe('Setting Group component', function() {
         
         spyOn(SettingUtils, 'isSimpleSetting').and.returnValue(true);
         
-        component.settingType = { iri: `http://mobitest.com/Preference`, userText: 'Preferences'};
+        component.settingType = { iri: 'http://mobitest.com/Preference', userText: 'Preferences'};
         utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
-            return get(entity, "['" + propertyIRI + "'][0]['@value']", '');
+            return get(entity, '[\'' + propertyIRI + '\'][0][\'@value\']', '');
         });
 
         utilStub.getPropertyId.and.callFake((entity, propertyIRI) => {
-            return get(entity, "['" + propertyIRI + "'][0]['@id']", '');
+            return get(entity, '[\'' + propertyIRI + '\'][0][\'@id\']', '');
         });
 
         utilStub.setPropertyValue.and.callFake((entity, propertyIRI, value) => {
-            if (has(entity, "['" + propertyIRI + "']")) {
+            if (has(entity, '[\'' + propertyIRI + '\']')) {
                 entity[propertyIRI].push({'@value': value});
             } else {
-                set(entity, "['" + propertyIRI + "'][0]", {'@value': value});
+                set(entity, '[\'' + propertyIRI + '\'][0]', {'@value': value});
             }
         });
         testUserSettings = {
-            "setting:SomeSimpleBooleanPreference": [
+            [SETTING + 'SomeSimpleBooleanPreference']: [
                 {
-                    "@id": "http://mobi.com/setting#bff0d229-5691-455a-8e2b-8c09ccbc4ef6",
-                    "@type": [
-                        "http://www.w3.org/2002/07/owl#Thing",
-                        "setting:SomeSimpleBooleanPreference",
-                        "setting:Preference",
-                        "setting:Setting"
+                    '@id': 'http://mobi.com/setting#bff0d229-5691-455a-8e2b-8c09ccbc4ef6',
+                    '@type': [
+                        OWL + 'Thing',
+                        SETTING + 'SomeSimpleBooleanPreference',
+                        SETTING + 'Preference',
+                        SETTING + 'Setting'
                     ],
-                    "setting:forUser": [
+                    [SETTING + 'forUser']: [
                         {
-                            "@id": "http://mobi.com/users/111111111111111111111111111"
+                            '@id': 'http://mobi.com/users/111111111111111111111111111'
                         }
                     ],
-                    "http://mobi.com/ontologies/setting#hasDataValue": [
+                    [SETTING + 'hasDataValue']: [
                         {
-                            "@value": "true"
+                            '@value': 'true'
                         }
                     ]
                 }
             ],
-            "setting:SomeSimpleTextPreference": [
+            [SETTING + 'SomeSimpleTextPreference']: [
                 {
-                    "@id": "http://mobi.com/setting#45e225a4-90f6-4276-b435-1b2888fdc01e",
-                    "@type": [
-                        "http://www.w3.org/2002/07/owl#Thing",
-                        "setting:Preference",
-                        "setting:SomeSimpleTextPreference",
-                        "setting:Setting"
+                    '@id': 'http://mobi.com/setting#45e225a4-90f6-4276-b435-1b2888fdc01e',
+                    '@type': [
+                        OWL + 'Thing',
+                        SETTING + 'SomeSimpleTextPreference',
+                        SETTING + 'Preference',
+                        SETTING + 'Setting'
                     ],
-                    "setting:forUser": [
+                    [SETTING + 'forUser']: [
                         {
-                            "@id": "http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997"
+                            '@id': 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997'
                         }
                     ],
-                    "http://mobi.com/ontologies/setting#hasDataValue": [
+                    [SETTING + 'hasDataValue']: [
                         {
-                            "@value": "aaa"
+                            '@value': 'aaa'
                         }
                     ]
                 }
@@ -140,80 +139,80 @@ describe('Setting Group component', function() {
         };
 
         testSettingsDefinitions = [ {
-            "@id" : "setting:SomeSimpleBooleanPreference",
-            "@type" : [ "http://www.w3.org/2002/07/owl#Class", "shacl:NodeShape" ],
-            "setting:inGroup" : [ {
-              "@id" : "setting:TestPrefGroupA"
+            '@id': SETTING + 'SomeSimpleBooleanPreference',
+            '@type': [ OWL + 'Class', SHACL + 'NodeShape' ],
+            [SETTING + 'inGroup']: [ {
+              '@id': SETTING + 'TestPrefGroupA'
             } ],
-            "http://www.w3.org/2000/01/rdf-schema#subClassOf" : [ {
-              "@id" : "setting:Preference"
+            [RDFS + 'subClassOf']: [ {
+              '@id': SETTING + 'Preference'
             } ],
-            "shacl:description" : [ {
-              "@value" : "What is your value for the simple boolean preference?"
+            [SHACL + 'description']: [ {
+              '@value': 'What is your value for the simple boolean preference?'
             } ],
-            "shacl:property" : [ {
-              "@id" : "setting:SomeSimpleBooleanPreferencePropertyShape"
+            [SHACL + 'property']: [ {
+              '@id': SETTING + 'SomeSimpleBooleanPreferencePropertyShape'
             } ]
           }, {
-            "@id" : "setting:SomeSimpleBooleanPreferencePropertyShape",
-            "@type" : [ "shacl:PropertyShape" ],
-            "setting:usesFormField" : [ {
-              "@id" : "setting:ToggleInput"
+            '@id': SETTING + 'SomeSimpleBooleanPreferencePropertyShape',
+            '@type': [ SHACL + 'PropertyShape' ],
+            [SETTING + 'usesFormField']: [ {
+              '@id': SETTING + 'ToggleInput'
             } ],
-            "shacl:datatype" : [ {
-              "@id" : "http://www.w3.org/2001/XMLSchema#boolean"
+            [SHACL + 'datatype']: [ {
+              '@id': XSD + 'boolean'
             } ],
-            "shacl:maxCount" : [ {
-              "@type" : "http://www.w3.org/2001/XMLSchema#integer",
-              "@value" : "1"
+            [SHACL + 'maxCount']: [ {
+              '@type': XSD + 'integer',
+              '@value': '1'
             } ],
-            "shacl:minCount" : [ {
-              "@type" : "http://www.w3.org/2001/XMLSchema#integer",
-              "@value" : "1"
+            [SHACL + 'minCount']: [ {
+              '@type': XSD + 'integer',
+              '@value': '1'
             } ],
-            "shacl:path" : [ {
-              "@id" : "http://mobi.com/ontologies/setting#hasDataValue"
+            [SHACL + 'path']: [ {
+              '@id': SETTING + 'hasDataValue'
             } ]
           }, {
-            "@id" : "setting:SomeSimpleTextPreference",
-            "@type" : [ "http://www.w3.org/2002/07/owl#Class", "shacl:NodeShape" ],
-            "setting:inGroup" : [ {
-              "@id" : "setting:TestPrefGroupA"
+            '@id': SETTING + 'SomeSimpleTextPreference',
+            '@type': [ OWL + 'Class', SHACL + 'NodeShape' ],
+            [SETTING + 'inGroup']: [ {
+              '@id': SETTING + 'TestPrefGroupA'
             } ],
-            "http://www.w3.org/2000/01/rdf-schema#subClassOf" : [ {
-              "@id" : "setting:Preference"
+            [RDFS + 'subClassOf']: [ {
+              '@id': SETTING + 'Preference'
             } ],
-            "shacl:description" : [ {
-              "@language" : "en",
-              "@value" : "Enter a value for this simple text preference"
+            [SHACL + 'description']: [ {
+              '@language': 'en',
+              '@value': 'Enter a value for this simple text preference'
             } ],
-            "shacl:property" : [ {
-              "@id" : "setting:SomeSimpleTextPreferencePropertyShape"
+            [SHACL + 'property']: [ {
+              '@id': SETTING + 'SomeSimpleTextPreferencePropertyShape'
             } ]
           }, {
-            "@id" : "setting:SomeSimpleTextPreferencePropertyShape",
-            "@type" : [ "shacl:PropertyShape" ],
-            "setting:usesFormField" : [ {
-              "@id" : "setting:TextInput"
+            '@id': SETTING + 'SomeSimpleTextPreferencePropertyShape',
+            '@type': [ SHACL + 'PropertyShape' ],
+            [SETTING + 'usesFormField']: [ {
+              '@id': SETTING + 'TextInput'
             } ],
-            "shacl:datatype" : [ {
-              "@id" : "http://www.w3.org/2001/XMLSchema#string"
+            [SHACL + 'datatype']: [ {
+              '@id': XSD + 'string'
             } ],
-            "shacl:maxCount" : [ {
-              "@type" : "http://www.w3.org/2001/XMLSchema#integer",
-              "@value" : "2"
+            [SHACL + 'maxCount']: [ {
+              '@type': XSD + 'integer',
+              '@value': '2'
             } ],
-            "shacl:minCount" : [ {
-              "@type" : "http://www.w3.org/2001/XMLSchema#integer",
-              "@value" : "1"
+            [SHACL + 'minCount']: [ {
+              '@type': XSD + 'integer',
+              '@value': '1'
             } ],
-            "shacl:path" : [ {
-              "@id" : "http://mobi.com/ontologies/setting#hasDataValue"
+            [SHACL + 'path']: [ {
+              '@id': SETTING + 'hasDataValue'
             } ]
           } ];
-        settingManagerStub.getDefaultNamespace.and.returnValue(Promise.resolve(settingManagerStub.defaultNamespace));
-        settingManagerStub.getSettingDefinitions.and.returnValue(Promise.resolve({data: testSettingsDefinitions}));
-        settingManagerStub.getSettings.and.returnValue(Promise.resolve({data: testUserSettings}));
+        settingManagerStub.getDefaultNamespace.and.resolveTo(settingManagerStub.defaultNamespace);
+        settingManagerStub.getSettingDefinitions.and.resolveTo({data: testSettingsDefinitions});
+        settingManagerStub.getSettings.and.resolveTo({data: testUserSettings});
     });
 
     afterEach(function() {
@@ -231,40 +230,40 @@ describe('Setting Group component', function() {
                     component.retrieveSettings();
                     tick();
                     expect(Object.keys(component.settings).length).toEqual(2);
-                    expect(component.settings['setting:SomeSimpleBooleanPreference'].values[0][SettingConstants.HAS_DATA_VALUE][0]['@value']).toEqual('true');
-                    expect(component.settings['setting:SomeSimpleBooleanPreference'].topLevelSettingNodeshapeInstance.length).toEqual(1);
-                    expect(component.settings['setting:SomeSimpleBooleanPreference'].topLevelSettingNodeshapeInstanceId).toEqual('http://mobi.com/setting#bff0d229-5691-455a-8e2b-8c09ccbc4ef6');
-                    expect(component.settings['setting:SomeSimpleBooleanPreference']).toBeInstanceOf(SimpleSetting);
-                    expect(component.settings['setting:SomeSimpleBooleanPreference'].asJsonLD()).toEqual(testUserSettings['setting:SomeSimpleBooleanPreference']);
-                    expect(component.settings['setting:SomeSimpleTextPreference'].asJsonLD()).toEqual(testUserSettings['setting:SomeSimpleTextPreference']);
+                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference'].values[0][SettingConstants.HAS_DATA_VALUE][0]['@value']).toEqual('true');
+                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference'].topLevelSettingNodeshapeInstance.length).toEqual(1);
+                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference'].topLevelSettingNodeshapeInstanceId).toEqual('http://mobi.com/setting#bff0d229-5691-455a-8e2b-8c09ccbc4ef6');
+                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference']).toBeInstanceOf(SimpleSetting);
+                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference'].asJsonLD()).toEqual(testUserSettings[SETTING + 'SomeSimpleBooleanPreference']);
+                    expect(component.settings[SETTING + 'SomeSimpleTextPreference'].asJsonLD()).toEqual(testUserSettings[SETTING + 'SomeSimpleTextPreference']);
                 }));
                 it('when no user settings exist', fakeAsync(function() {
-                    settingManagerStub.getSettings.and.returnValue(Promise.resolve({data: []}));
+                    settingManagerStub.getSettings.and.resolveTo({data: []});
                     component.retrieveSettings();
                     tick();
                     expect(Object.keys(component.settings).length).toEqual(2);
-                    expect(component.settings['setting:SomeSimpleBooleanPreference'].values[0][SettingConstants.HAS_DATA_VALUE][0]['@value']).toEqual('');
-                    expect(component.settings['setting:SomeSimpleTextPreference'].values[0][SettingConstants.HAS_DATA_VALUE][0]['@value']).toEqual('');
-                    expect(component.settings['setting:SomeSimpleBooleanPreference'].topLevelSettingNodeshapeInstanceId).toEqual(undefined);
-                    expect(component.settings['setting:SomeSimpleBooleanPreference']).toBeInstanceOf(SimpleSetting);
+                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference'].values[0][SettingConstants.HAS_DATA_VALUE][0]['@value']).toEqual('');
+                    expect(component.settings[SETTING + 'SomeSimpleTextPreference'].values[0][SettingConstants.HAS_DATA_VALUE][0]['@value']).toEqual('');
+                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference'].topLevelSettingNodeshapeInstanceId).toEqual(undefined);
+                    expect(component.settings[SETTING + 'SomeSimpleBooleanPreference']).toBeInstanceOf(SimpleSetting);
                 }));
             });
         });
         it('should update a setting', fakeAsync(function() {
             component.retrieveSettings();
             tick();
-            const simpleSetting: SimpleSetting = component.settings['setting:SomeSimpleBooleanPreference'];
-            settingManagerStub.updateSetting.and.returnValue(Promise.resolve());
+            const simpleSetting: SimpleSetting = component.settings[SETTING + 'SomeSimpleBooleanPreference'];
+            settingManagerStub.updateSetting.and.resolveTo();
             component.updateSetting(simpleSetting);
             expect(settingManagerStub.updateSetting).toHaveBeenCalled();
             expect(settingManagerStub.createSetting).not.toHaveBeenCalled();
         }));
         it('should create a setting', fakeAsync(function() {
-            settingManagerStub.getSettings.and.returnValue(Promise.resolve({data: []}));
+            settingManagerStub.getSettings.and.resolveTo({data: []});
             component.retrieveSettings();
             tick();
-            const simpleSetting: SimpleSetting = component.settings['setting:SomeSimpleBooleanPreference'];
-            settingManagerStub.createUserPreference.and.returnValue(Promise.resolve());
+            const simpleSetting: SimpleSetting = component.settings[SETTING + 'SomeSimpleBooleanPreference'];
+            settingManagerStub.createUserPreference.and.resolveTo();
             component.updateSetting(simpleSetting);
             expect(settingManagerStub.updateSetting).not.toHaveBeenCalled();
             expect(settingManagerStub.createSetting).toHaveBeenCalled();
@@ -279,7 +278,7 @@ describe('Setting Group component', function() {
             expect(element.queryAll(By.css('error-display')).length).toEqual(0);
         }));
         it('when settings are can not be retrieved', fakeAsync(function() {
-            settingManagerStub.getSettings.and.returnValue(Promise.reject('Error message'));
+            settingManagerStub.getSettings.and.rejectWith('Error message');
             component.retrieveSettings();
             tick();
             fixture.detectChanges();

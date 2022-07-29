@@ -20,65 +20,67 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
 import { includes, get } from 'lodash';
 
-const template = require('./fileUploadForm.component.html');
+import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
 
 /**
- * @ngdoc component
- * @name mapper.component:fileUploadForm
- * @requires shared.service:delimitedManagerService
- * @requires shared.service:mapperStateService
+ * @class mapper.FileUploadFormComponent
  *
- * @description
- * `fileUploadForm` is a component that creates a form for uploaded delimited data into Mobi using the
- * {@link shared.service:delimitedManagerService delimitedManagerService}. If the chosen file is a SV file, the user
- * must select a separator for the columns and selecting a new value will automatically upload the file again. Tests
- * whether the selected file is compatible with the current {@link shared.service:mapperStateService mapping} and
- * outputs a list of any invalid data property mappings.
+ * A component that creates a form for uploaded delimited data into Mobi using the {@link shared.DelimitedManagerService}.
+ * If the chosen file is a SV file, the user must select a separator for the columns and selecting a new value will
+ * automatically upload the file again. Tests whether the selected file is compatible with the current
+ * {@link shared.MapperStateService#selected mapping} and outputs a list of any invalid data property mappings.
  */
-const fileUploadFormComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: fileUploadFormComponentCtrl
-};
+@Component({
+    selector: 'file-upload-form',
+    templateUrl: './fileUploadForm.component.html'
+})
+export class FileUploadFormComponent implements OnInit {
+    errorMessage = '';
+    uploadFileForm = this.fb.group({
+        containsHeaders: [true],
+        separator: [',']
+    });
+    isExcel = false;
 
-fileUploadFormComponentCtrl.$inject = ['$q', 'delimitedManagerService', 'mapperStateService'];
+    constructor(public dm: DelimitedManagerService, public state: MapperStateService, private fb: FormBuilder) {}
 
-function fileUploadFormComponentCtrl($q, delimitedManagerService, mapperStateService) {
-    var dvm = this;
-    dvm.state = mapperStateService;
-    dvm.dm = delimitedManagerService;
-    dvm.errorMessage = '';
-
-    dvm.isExcel = function() {
-        var fileName = get(dvm.dm.fileObj, 'name', '');
-        return includes(fileName, 'xls');
+    ngOnInit(): void {
+        this.uploadFileForm.controls.containsHeaders.valueChanges
+            .subscribe(newValue => {
+                this.dm.containsHeaders = newValue;
+            });
+        this.uploadFileForm.controls.separator.valueChanges
+            .subscribe(newValue => {
+                this.changeSeparator(newValue);
+            });
     }
-    dvm.upload = function(value) {
-        dvm.dm.fileObj = value;
-        if (dvm.dm.fileObj) {
-            dvm.dm.upload(dvm.dm.fileObj).then(data => {
-                dvm.dm.fileName = data;
-                dvm.errorMessage = '';
-                return dvm.dm.previewFile(50);
-            }, $q.reject).then(() => dvm.state.setInvalidProps(), onError);
+    upload(value: File): void {
+        this.dm.fileObj = value;
+        this.isExcel = includes(get(this.dm.fileObj, 'name', ''), 'xls');
+        if (this.dm.fileObj) {
+            this.dm.upload(this.dm.fileObj).subscribe(data => {
+                this.dm.fileName = data;
+                this.errorMessage = '';
+                this.dm.previewFile(50).subscribe(() => this.state.setInvalidProps(), error => this._onError(error));
+            }, error => this._onError(error));
         }
     }
-    dvm.changeSeparator = function(value) {
-        dvm.dm.separator = value;
-        dvm.dm.previewFile(50).then(() => {
-            dvm.errorMessage = '';
-            dvm.state.setInvalidProps();
-        }, onError);
+    changeSeparator(value: string): void {
+        this.dm.separator = value;
+        this.dm.previewFile(50).subscribe(() => {
+            this.errorMessage = '';
+            this.state.setInvalidProps();
+        }, error => this._onError(error));
     }
 
-    function onError(errorMessage) {
-        dvm.errorMessage = errorMessage;
-        dvm.dm.dataRows = undefined;
-        dvm.state.invalidProps = [];
+    private _onError(errorMessage) {
+        this.errorMessage = errorMessage;
+        this.dm.dataRows = undefined;
+        this.state.invalidProps = [];
     }
 }
-
-export default fileUploadFormComponent;

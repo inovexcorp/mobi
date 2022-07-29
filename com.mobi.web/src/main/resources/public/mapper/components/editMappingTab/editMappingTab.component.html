@@ -1,0 +1,63 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2022 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="edit-mapping-tab container-fluid h-100">
+    <div class="row h-100">
+        <div class="col-5 h-100 d-flex flex-column editor-column">
+            <h3 class="mapping-title text-truncate">{{state.selected.record ? state.selected.record.title : state.selected.config.title}}</h3>
+            <div class="flex-1 remove-min-height d-flex flex-column">
+                <div class="editor-form flex-1 remove-min-height vertical-scroll">
+                    <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+                    <div class="mapping-config">
+                        <div class="field-label">Ontology</div>
+                        <p>
+                            <span>{{util.getDctermsValue(state.selected.ontology, 'title') || '(None Specified)'}}</span>
+                            <button mat-icon-button color="primary" (click)="openMappingConfig()"><i class="fa fa-pencil"></i></button>
+                        </p>
+                    </div>
+                    <div class="class-mappings d-flex w-100">
+                        <class-mapping-select class="flex-1" [(classMappingId)]="state.selectedClassMappingId" [classMappings]="classMappings" (deleteClassMapping)="deleteClass($event)"></class-mapping-select>
+                        <button mat-button color="primary" class="add-class-mapping-button" (click)="openClassMappingOverlay()" [disabled]="state.availableClasses.length === 0"><i class="fa fa-plus"></i> Add Class</button>
+                    </div>
+                    <class-mapping-details [(classMappingId)]="state.selectedClassMappingId" (updateClassMappings)="setClassMappings()"></class-mapping-details>
+                </div>
+                <div class="button-container py-2">
+                    <button mat-raised-button class="cancel-mapping" (click)="cancel()">Cancel</button>
+                    <mat-button-toggle-group class="float-right" [disabled]="!isSaveable()">
+                        <mat-button-toggle [ngStyle]="{'pointer-events': isSaveable() ? 'auto' : 'none'}" class="save-button" (click)="save()">Save</mat-button-toggle>
+                        <mat-button-toggle [ngStyle]="{'pointer-events': isSaveable() ? 'auto' : 'none'}" class="drop-down-button" [matMenuTriggerFor]="saveMenu">
+                            <mat-icon>arrow_drop_down</mat-icon>
+                        </mat-button-toggle>
+                    </mat-button-toggle-group>
+                    <mat-menu #saveMenu>
+                        <button mat-menu-item class="run-download" (click)="openRunMappingDownload()">Download</button>
+                        <button mat-menu-item class="run-dataset" (click)="openRunMappingDataset()">Upload to Dataset</button>
+                        <button mat-menu-item class="run-ontology" (click)="openRunMappingOntology()">Commit to Ontology</button>
+                    </mat-menu>
+                </div>
+            </div>
+        </div>
+        <div class="col-7 h-100">
+            <preview-data-grid [rows]="dm.dataRows" [highlightIndexes]="state.highlightIndexes" [containsHeaders]="dm.containsHeaders"></preview-data-grid>
+        </div>
+    </div>
+</div>

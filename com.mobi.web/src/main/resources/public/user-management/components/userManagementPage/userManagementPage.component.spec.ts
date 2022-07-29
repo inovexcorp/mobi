@@ -28,11 +28,9 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import 'ng-mocks/dist/jasmine'; // Ensures every method in Mocked Components are Jasmine spies
-
 import { of } from 'rxjs';
 
-import { cleanStylesFromDOM, mockUtil, mockPrefixes} from '../../../../../../test/ts/Shared';
-
+import { cleanStylesFromDOM, mockUtil} from '../../../../../../test/ts/Shared';
 import { SettingEditPageComponent } from '../../../shared/components/settingEditPage/settingEditPage.component';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { GroupsPageComponent } from '../groupsPage/groupsPage.component';
@@ -62,7 +60,6 @@ describe('User Management Page component', function() {
             providers: [
                 MockProvider(UserStateService),
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'prefixes', useClass: mockPrefixes },
                 { provide: 'settingManagerService', useFactory: () => jasmine.createSpyObj('settingManagerService', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -103,7 +100,7 @@ describe('User Management Page component', function() {
                 const event = new MatTabChangeEvent();
                 event.index = 2;
                 component.onTabChanged(event);
-                expect(component.permissionsPage.reset).toHaveBeenCalled();
+                expect(component.permissionsPage.reset).toHaveBeenCalledWith();
             });
             it('to the application settings page', function() {
                 const event = new MatTabChangeEvent();

@@ -20,115 +20,99 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import {forEach, get, reject} from 'lodash';
+import { HttpResponse } from '@angular/common/http';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material';
+import { get } from 'lodash';
+
+import { MERGEREQ, XSD } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
+import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
+import { UserManagerService } from '../../../shared/services/userManager.service';
 
 import './editRequestOverlay.component.scss';
 
-const template = require('./editRequestOverlay.component.html');
-
 /**
- * @ngdoc component
- * @name merge-requests.component:editRequestOverlay
- * @requires shared.service:mergeRequestManagerService
- * @requires shared.service:mergeRequestStateService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @name merge-requests.EditRequestOverlayComponent
  *
- * @description
- * `editRequestOverlay` is a component that creates content for a modal that edits a merge request on the
- * {@link mergeRequestsState.service:mergeRequestsStateSvc selected entity}. Provides fields to edit Merge
- * Request title, description, target branch, assignees, and branch removal. Meant to be used in conjunction
- * with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal that edits a merge request on the
+ * {@link shared.MergeRequestsStateService selected entity}. Provides fields to edit Merge
+ * Request title, description, target branch, assignees, and branch removal. Meant to be used in
+ * conjunction with the `MatDialog` service.
  */
-const editRequestOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: editRequestOverlayComponentCtrl
-};
+@Component({
+    selector: 'edit-request-overlay',
+    templateUrl: './editRequestOverlay.component.html'
+})
+export class EditRequestOverlayComponent implements OnInit {
+    branches = [];
+    errorMessage = '';
+    assignees: string[] = [];
+    targetBranch: JSONLDObject;
+    editRequestForm: FormGroup;
 
-editRequestOverlayComponentCtrl.$inject = ['mergeRequestsStateService', 'mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'utilService', 'prefixes'];
-
-function editRequestOverlayComponentCtrl(mergeRequestsStateService, mergeRequestManagerService, catalogManagerService, userManagerService, utilService, prefixes) {
-    var cm = catalogManagerService;
-    var catalogId = get(cm.localCatalog, '@id');
-
-    var dvm = this;
-    dvm.mm = mergeRequestManagerService;
-    dvm.state = mergeRequestsStateService;
-    dvm.um = userManagerService;
-    dvm.util = utilService;
-    dvm.prefixes = prefixes;
-    dvm.branches = [];
-    dvm.request = {};
-    dvm.errorMessage = '';
-
-    dvm.$onInit = function() {
-        initRequestConfig();
-
-        cm.getRecordBranches(dvm.request.recordId, catalogId)
-            .then(response => {
-                let sourceBranchId = dvm.request.sourceBranch['@id']
-                dvm.branches = reject(response.data, {'@id': sourceBranchId});
+    constructor(private dialogRef: MatDialogRef<EditRequestOverlayComponent>, private fb: FormBuilder,
+        public state: MergeRequestsStateService, public mm: MergeRequestManagerService,
+        public cm: CatalogManagerService, public um: UserManagerService,
+        @Inject('utilService') public util) {}
+    
+    ngOnInit(): void {
+        this._initRequestConfig();
+        this.cm.getRecordBranches(this.state.selected.recordIri, get(this.cm.localCatalog, '@id'))
+            .subscribe((response: HttpResponse<JSONLDObject[]>) => {
+                this.branches = response.body;
             }, error => {
-                dvm.util.createErrorToast(error);
-                dvm.branches = [];
+                this.util.createErrorToast(error);
+                this.branches = [];
             });
+    } 
+    submit(): void {
+        const jsonld = this._getMergeRequestJson();
+        const emptyObject: JSONLDObject = {'@id': ''};
+        this.mm.updateRequest(jsonld['@id'], jsonld)
+            .subscribe(() => {
+                const recordTitle = this.state.selected.recordTitle;
+                this.util.createSuccessToast('Successfully updated request');
+                this.state.selected = this.state.getRequestObj(jsonld);
+                this.state.selected.recordTitle = recordTitle;
+                this.state.setRequestDetails(this.state.selected).subscribe(() => {}, this.util.createErrorToast);
+                this.state.selected.sourceBranch = Object.prototype.hasOwnProperty.call(this.state.selected,'sourceBranch')
+                    ? this.state.selected.sourceBranch : emptyObject;
+
+                this.dialogRef.close();
+            }, error => this.errorMessage = error);
     }
-    dvm.submit = function() {
-        var jsonld = getMergeRequestJson();
 
-        dvm.mm.updateRequest(jsonld['@id'], jsonld)
-            .then(() => {
-                var recordTitle = dvm.state.selected.recordTitle;
-                dvm.util.createSuccessToast('Successfully updated request');
-                dvm.state.selected = dvm.state.getRequestObj(jsonld);
-                dvm.state.selected.recordTitle = recordTitle;
-                dvm.state.setRequestDetails(dvm.state.selected);
-                dvm.close();
-            }, onError);
+    private _initRequestConfig() {
+        this.editRequestForm = this.fb.group({
+            title: [this.state.selected.title, [ Validators.required ]],
+            description: [this.state.selected.description === 'No description' ? '' : this.state.selected.description],
+            assignees: [''],
+            removeSource: [this.state.selected.removeSource]
+        });
+        this.targetBranch = Object.assign({}, this.state.selected.targetBranch);
+
+        this.assignees = this.state.selected.assignees;
     }
-    dvm.cancel = function() {
-        dvm.dismiss();
-    }
-    function initRequestConfig() {
-        dvm.request.recordId = dvm.state.selected.recordIri;
-        dvm.request.title = dvm.state.selected.title;
-        dvm.request.description = dvm.util.getDctermsValue(dvm.state.selected.jsonld, 'description');
-        dvm.request.sourceTitle = dvm.state.selected.sourceTitle;
-        dvm.request.sourceBranch = angular.copy(dvm.state.selected.sourceBranch);
-        dvm.request.targetBranch = angular.copy(dvm.state.selected.targetBranch);
-        dvm.request.difference = angular.copy(dvm.state.selected.difference);
-        dvm.request.assignees = [];
-        dvm.request.removeSource = dvm.state.selected.removeSource;
+    private _getMergeRequestJson() {
+        const jsonld = Object.assign({}, this.state.selected.jsonld);
 
-        forEach(dvm.state.selected.jsonld[prefixes.mergereq + 'assignee'], function(user) {
-            dvm.request.assignees.push(user['@id']);
-        })
-    }
-    function getMergeRequestJson() {
-        var jsonld = angular.copy(dvm.state.selected.jsonld)
+        this.util.updateDctermsValue(jsonld, 'title', this.editRequestForm.controls.title.value);
+        this.util.updateDctermsValue(jsonld, 'description', this.editRequestForm.controls.description.value);
+        jsonld[MERGEREQ + 'targetBranch'] = [{'@id': this.targetBranch['@id']}];
+        jsonld[MERGEREQ + 'assignee'] = [];
+        jsonld[MERGEREQ + 'removeSource'] = [{'@type': XSD + 'boolean', '@value': this.editRequestForm.controls.removeSource.value.toString()}];
 
-        dvm.util.updateDctermsValue(jsonld, 'title', dvm.request.title);
-        dvm.util.updateDctermsValue(jsonld, 'description', dvm.request.description);
-        jsonld[prefixes.mergereq + 'targetBranch'] = [{'@id': dvm.request.targetBranch['@id']}];
-        jsonld[prefixes.mergereq + 'assignee'] = [];
-        jsonld[prefixes.mergereq + 'removeSource'] = [{'@type': prefixes.xsd + 'boolean', '@value': dvm.request.removeSource.toString()}];
-
-        forEach(dvm.request.assignees, user => jsonld[prefixes.mergereq + 'assignee'].push({'@id': user }));
-
+        jsonld[MERGEREQ + 'assignee'] = [];
+        this.assignees.forEach(username => {
+            const user = this.um.users.find(user => user.username === username);
+            if (user) {
+                jsonld[MERGEREQ + 'assignee'].push({'@id': user.iri});
+            }
+        });
         return jsonld;
     }
-    function onError(message) {
-        dvm.errorMessage = message;
-    }
 }
-
-export default editRequestOverlayComponent;

@@ -1,3 +1,4 @@
+
 /*-
  * #%L
  * com.mobi.web
@@ -20,39 +21,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-const template = require('./downloadQueryOverlay.component.html');
 
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
+
+import { SparqlManagerService } from '../../../../shared/services/sparqlManager.service';
+
+interface FormatOption {
+    id: string,
+    name: string,
+    queryType: string
+}
 /**
- * @ngdoc component
- * @name query.component:downloadQueryOverlay
- * @requires shared.service:sparqlManagerService
+ * @class query.DownloadQueryOverlayComponent
  *
- * @description
- * `downloadQueryOverlay` is a component that creates content for a modal with a form to download the results
- * of a {@link shared.service:sparqlManagerService#queryString SPARQL query}. The form includes
- * a selector for the file type and the file name. Meant to be used in conjunction with the
- * {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal with a form to download the results of a SPARQL query. The form includes
+ * a selector for the file type and the file name. Meant to be used in conjunction with the `MatDialog`
+ * service.
  */
-const downloadQueryOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&',
-        resolve: '<'
-    },
-    controllerAs: 'dvm',
-    controller: downloadQueryOverlayComponentCtrl
-};
-
-downloadQueryOverlayComponentCtrl.$inject = ['sparqlManagerService'];
-
-function downloadQueryOverlayComponentCtrl(sparqlManagerService) {
-    const dvm = this;
-    const options =  [
-        {id: 'csv', name: 'CSV',queryType: 'select'},
+@Component({
+    selector: 'download-query-overlay',
+    templateUrl: './downloadQueryOverlay.component.html'
+})
+export class DownloadQueryOverlayComponent implements OnInit {
+    queryType = '';
+    options: FormatOption[] = [
+        {id: 'csv', name: 'CSV', queryType: 'select'},
         {id: 'tsv', name: 'TSV', queryType: 'select'},
         {id: 'xlsx', name: 'Excel (2007)', queryType: 'select' },
         {id: 'xls', name: 'Excel (97-2003)', queryType: 'select'},
@@ -60,26 +55,29 @@ function downloadQueryOverlayComponentCtrl(sparqlManagerService) {
         {id: 'rdf', name: 'RDF/XML', queryType: 'construct'},
         {id: 'jsonld', name: 'JSON-LD', queryType: 'construct'}
     ];
+    availableOptions: FormatOption[] = [];
+    downloadResultsForm = this.fb.group({
+        fileName: ['results', Validators.required],
+        fileType: ['', Validators.required]
+    })
 
-    const sparql = sparqlManagerService;
-    dvm.fileName = 'results';
-    dvm.fileType = '';
-    dvm.queryType = '';
-    dvm.availableOptions = '';
-
-    dvm.$onInit = function() {
-        dvm.queryType = dvm.resolve.queryType || 'select';
-        dvm.fileType = dvm.queryType == 'select' ? 'csv' : 'ttl';
-        dvm.availableOptions = options.filter( item => item.queryType === dvm.queryType );
+    constructor(private dialogRef: MatDialogRef<DownloadQueryOverlayComponent>, private fb: FormBuilder,
+        @Inject(MAT_DIALOG_DATA) public data: {query: string, queryType?: string, datasetRecordIRI?: string}, 
+        private sm: SparqlManagerService) {}
+    
+    ngOnInit(): void {
+        this.queryType = this.data.queryType || 'select';
+        this.downloadResultsForm.controls.fileType.setValue(this.queryType === 'select' ? 'csv' : 'ttl');
+        this.availableOptions = this.options.filter( item => item.queryType === this.queryType );
     }
-    dvm.download = function() {
-        sparql.downloadResultsPost(dvm.fileType, dvm.fileName)
-            .then(() => { dvm.close({'$value': ''}) }, 
-                error => { dvm.close({'$value': error}) });
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
+    download(): void {
+        const fileType = this.downloadResultsForm.controls.fileType.value;
+        const fileName = this.downloadResultsForm.controls.fileName.value;
+        this.sm.downloadResultsPost(this.data.query, fileType, fileName, this.data.datasetRecordIRI)
+            .subscribe(() => {
+                this.dialogRef.close();
+            }, error => {
+                this.dialogRef.close(error);
+            });
     }
 }
-
-export default downloadQueryOverlayComponent;

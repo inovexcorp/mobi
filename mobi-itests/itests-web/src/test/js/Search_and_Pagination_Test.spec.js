@@ -57,7 +57,7 @@ module.exports = {
             .waitForElementNotVisible('//div[contains(@class, "upload-snackbar")]')
             .click('//div[contains(@class, "paging")]//li[3]//a')
             .useCss()
-            .waitForElementNotPresent('div.spinner')
+            .waitForElementNotVisible('div.spinner')
             .useXpath()
             .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"pagination-ontology-4.ttl")]]')
     },
@@ -66,7 +66,7 @@ module.exports = {
         browser
             .click('xpath', '//div[contains(@class, "paging")]//li[1]//a')
             .useCss()
-            .waitForElementNotPresent('div.spinner')
+            .waitForElementNotVisible('div.spinner')
             .useXpath()
             .assert.visible('//open-ontology-tab//div[contains(@class, "ontologies")]//div//div[contains(@class, "list-group-item")][10]')
     },
@@ -78,7 +78,7 @@ module.exports = {
             .pause(1000)
             .click('xpath', '//div[contains(@class, "paging")]//li[3]//a')
             .useCss()
-            .waitForElementNotPresent('div.spinner')
+            .waitForElementNotVisible('div.spinner')
             .useXpath()
             .waitForElementVisible('//div[contains(@class, "ontologies")]')
             .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"pagination-ontology-4.ttl")]]')

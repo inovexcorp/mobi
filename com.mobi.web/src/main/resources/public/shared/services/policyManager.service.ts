@@ -26,6 +26,7 @@ import { noop } from 'lodash';
 
 import { REST_PREFIX } from '../../constants';
 import { HelperService } from './helper.service';
+import { CATALOG, POLICY } from '../../prefixes';
 
 /**
  * @class shared.PolicyManagerService
@@ -37,11 +38,11 @@ export class PolicyManagerService {
     prefix = REST_PREFIX + 'policies';
 
     // Common IRIs used in policies
-    actionCreate = this.prefixes.policy + 'Create';
-    actionRead = this.prefixes.policy + 'Read';
-    actionUpdate = this.prefixes.policy + 'Update';
-    actionDelete = this.prefixes.policy + 'Delete';
-    actionModify = this.prefixes.catalog + 'Modify';
+    actionCreate = POLICY + 'Create';
+    actionRead = POLICY + 'Read';
+    actionUpdate = POLICY + 'Update';
+    actionDelete = POLICY + 'Delete';
+    actionModify = CATALOG + 'Modify';
     subjectId = 'urn:oasis:names:tc:xacml:1.0:subject:subject-id';
     resourceId = 'urn:oasis:names:tc:xacml:1.0:resource:resource-id';
     actionId = 'urn:oasis:names:tc:xacml:1.0:action:action-id';
@@ -50,8 +51,7 @@ export class PolicyManagerService {
     actionCategory = 'urn:oasis:names:tc:xacml:3.0:attribute-category:action';
     stringEqual = 'urn:oasis:names:tc:xacml:1.0:function:string-equal';
 
-    constructor(private http: HttpClient, private helper: HelperService, @Inject('utilService') private util, 
-        @Inject('prefixes') private prefixes) {}
+    constructor(private http: HttpClient, private helper: HelperService, @Inject('utilService') private util) {}
 
     /**
      * Calls the GET /mobirest/policies endpoint with the passed filter values for

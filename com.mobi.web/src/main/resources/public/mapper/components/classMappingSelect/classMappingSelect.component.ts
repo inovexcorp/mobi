@@ -21,44 +21,105 @@
  * #L%
  */
 
-const template = require('./classMappingSelect.component.html');
+import { Component, ElementRef, EventEmitter, Inject, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger, MatDialog } from '@angular/material';
+import { includes } from 'lodash';
+import { Observable } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
+
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 /**
- * @ngdoc component
- * @name mapper.component:classMappingSelect
- * @requires shared.service:utilService
+ * @class mapper.ClassMappingSelectComponent
  *
- * @description
- * `classMappingSelect` is a component that creates a div with `ui-select` containing all the ClassMappings
- * in the passed list. The value of the `ui-select` will be the id of the selected ClassMapping and is bound to
- * `bindModel`, but only one way. The provided `changeEvent` function is expected to update the value of
- * `bindModel`. will be the id of the selected ClassMapping.
+ * A component that creates a div with `mat-autocomplete` containing all the ClassMappings in the passed list. The
+ * selected value is bound to `classMappingId`.
  *
- * @param {string} bindModel The id of the selected ClassMapping.
- * @param {Object[]} classMappings A list of ClassMapping JSON-LD objects
- * @param {Function} changeEvent The function to be called when the selected ClassMapping changes. Should update the
- * value of `bindModel`. Expects an argument called `value`.
+ * @param {string} classMappingId The id of the selected ClassMapping.
+ * @param {JSONLDObject[]} classMappings A list of ClassMapping JSON-LD objects
  */
-const classMappingSelectComponent = {
-    template,
-    bindings: {
-        bindModel: '<',
-        classMappings: '<',
-        changeEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: classMappingSelectComponentCtrl
-};
+@Component({
+    selector: 'class-mapping-select',
+    templateUrl: './classMappingSelect.component.html'
+})
+export class ClassMappingSelectComponent implements OnInit {
 
-classMappingSelectComponentCtrl.$inject = ['utilService'];
+    @ViewChild(MatAutocompleteTrigger) autocompleteTrigger: MatAutocompleteTrigger;
+    @ViewChild('textInput') textInput: ElementRef;
 
-function classMappingSelectComponentCtrl(utilService) {
-    var dvm = this;
-    dvm.util = utilService;
+    classMappingControl: FormControl = new FormControl();
 
-    dvm.getTitle = function(classMapping) {
-        return dvm.util.getDctermsValue(classMapping, 'title');
+    private _classMappingId: string;
+
+    @Input() classMappings: JSONLDObject[];
+    @Input() set classMappingId(value: string) {
+        this._classMappingId = value;
+        this.classMappingControl.setValue(this.classMappings.find(classMapping => classMapping['@id'] === value));
+    }
+
+    get classMappingId(): string {
+        return this._classMappingId;
+    }
+
+    @Output() classMappingIdChange = new EventEmitter<string>();
+    @Output() deleteClassMapping = new EventEmitter<JSONLDObject>();
+
+    filteredClassMappings: Observable<JSONLDObject[]>;
+
+    constructor(private dialog: MatDialog, @Inject('utilService') private util) {}
+
+    ngOnInit(): void {
+        this.filteredClassMappings = this.classMappingControl.valueChanges
+            .pipe(
+                startWith<string | JSONLDObject>(''),
+                map(val => this.filter(val))
+            );
+    }
+    filter(val: string | JSONLDObject): JSONLDObject[] {
+        const searchText = typeof val === 'string' ?
+            val :
+            val ?
+                this.getTitle(val) :
+                '';
+        if (!this.classMappings) {
+            return [];
+        }
+        const filteredClassMappings: JSONLDObject[] = this.classMappings.filter(classMapping => includes(this.getTitle(classMapping).toLowerCase(), searchText.toLowerCase()));
+        filteredClassMappings.sort((classMapping1, classMapping2) => this.getTitle(classMapping1).localeCompare(this.getTitle(classMapping2)));
+        return filteredClassMappings;
+    }
+    getTitle(classMapping: JSONLDObject): string {
+        return this.util.getDctermsValue(classMapping, 'title');
+    }
+    showClassMappings(): void{
+        //Resets the form control, marking it pristine and untouched , and resetting the value.
+        this.classMappingControl.reset();
+    }
+    selectClassMapping(event: MatAutocompleteSelectedEvent): void {
+        this.classMappingId = event.option.value ? event.option.value['@id'] : '';
+        this.classMappingIdChange.emit(this.classMappingId);
+    }
+    confirmDelete(classMapping: JSONLDObject): void {
+        this.autocompleteTrigger.closePanel();
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: `<p>Are you sure you want to delete <strong>${this.util.getDctermsValue(classMapping, 'title')}</strong>?</p><p class="form-text">Deleting a class will remove any properties that link to it.</p>`
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.deleteClassMapping.emit(classMapping);
+                this.classMappingControl.updateValueAndValidity({ onlySelf: false, emitEvent: true });
+            }
+        });
+    }
+    close(): void {
+        this.textInput.nativeElement.blur();
+        if (this.classMappingId) {
+            this.classMappingControl.setValue(this.classMappings.find(classMapping => classMapping['@id'] === this.classMappingId));
+        } else {
+            this.classMappingControl.setValue('');
+        }
     }
 }
-
-export default classMappingSelectComponent;

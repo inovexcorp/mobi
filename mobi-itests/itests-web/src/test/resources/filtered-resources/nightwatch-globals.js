@@ -78,6 +78,9 @@ module.exports = {
             .clearValue('open-ontology-tab search-bar input')
             .setValue('open-ontology-tab search-bar input', args[j].replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
             .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
+          browser.globals.wait_for_no_spinners(browser)
+          browser
+            .waitForElementVisible('open-ontology-tab search-bar input')
             .useXpath()
             .assert.visible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + args[j].replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
             .useCss()
@@ -86,10 +89,12 @@ module.exports = {
           .clearValue('open-ontology-tab search-bar input')
           .setValue('open-ontology-tab search-bar input', '')
           .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
-          .waitForElementNotPresent('.spinner')
+          .waitForElementNotVisible('.spinner')
+      browser.globals.wait_for_no_spinners(browser)
     },
 
     'open_ontology': function (browser, ontology) {
+      browser.globals.wait_for_no_spinners(browser)
       browser
           .useCss()
           .setValue('open-ontology-tab search-bar input', ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', ''))
@@ -102,15 +107,16 @@ module.exports = {
           .waitForElementVisible('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
           .click('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/rdf_files/', '') + '")]]')
           .useCss()
-          .waitForElementNotPresent('.spinner')
+          .waitForElementNotVisible('.spinner')
           .waitForElementVisible('div.material-tabset li.nav-item') // ensures that project tab is showing
     },
 
     'create_shapes_graph': function (browser, title, shapes_file) {
       browser
           .useCss()
+          .waitForElementNotVisible('.spinner')
           .waitForElementVisible('shapes-graph-editor-page editor-record-select')
-          .click('shapes-graph-editor-page editor-record-select')
+          .click('shapes-graph-editor-page editor-record-select  mat-form-field mat-icon')
           .waitForElementVisible('mat-option')
           .click('mat-option button.create-record')
           .waitForElementVisible('new-shapes-graph-record-modal')
@@ -156,13 +162,16 @@ module.exports = {
     'delete_shapes_graph': function (browser, title) {
         browser
             .useXpath()
-            .click('css selector', 'editor-record-select')
+            .click('css selector', 'shapes-graph-editor-page editor-record-select  mat-form-field mat-icon')
             .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "'+title+'")]/following-sibling::button')
             .click('//mat-optgroup//mat-option//span[contains(text(), "'+title+'")]/following-sibling::button')
-            .click('css selector', 'editor-record-select')
+            .click('css selector', 'shapes-graph-editor-page editor-record-select  mat-form-field mat-icon')
             .click('//mat-optgroup//mat-option//span[contains(text(), "'+title+'")]/following-sibling::button')
-            .click('css selector', 'confirm-modal-ajs div.modal-footer button.btn-primary')
-            .click('css selector', 'editor-record-select')
+            .waitForElementVisible('css selector', 'confirm-modal .mat-dialog-actions button.mat-primary')
+            .click('css selector', 'confirm-modal .mat-dialog-actions button.mat-primary')
+            .waitForElementVisible('xpath', '//div[@id="toast-container"]')
+            .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
+            .click('css selector', 'shapes-graph-editor-page editor-record-select  mat-form-field mat-icon')
             .assert.not.elementPresent('//mat-optgroup//mat-option//span[contains(text(), "'+title+'")]')
             .useCss()
     },
@@ -190,13 +199,14 @@ module.exports = {
                                 "[contains(., '" + newUser.firstName + "')]]", "new user is displayed")
     },
 
-    'wait_for_no_spinners': function (browser) {
+    'wait_for_no_spinners': function (browser, timeout) {
+        const t = timeout || 15000;
         browser
             .useCss()
-            .waitForElementNotPresent('div.spinner')
-            .waitForElementNotPresent('mat-spinner')
-            .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
-            .waitForElementNotPresent('div.fade')
+            .waitForElementNotVisible('div.spinner', t)
+            .waitForElementNotVisible('mat-spinner', t)
+            .waitForElementNotPresent('xpath', '//div[@id="toast-container"]', t)
+            .waitForElementNotPresent('div.fade', t)
     },
 
     'switchToPage': function(browser, page, waitForElement){

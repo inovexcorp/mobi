@@ -22,6 +22,8 @@
  */
 import { findIndex } from 'lodash';
 
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+
 const template = require('./seeHistory.component.html');
 
 /**
@@ -46,7 +48,7 @@ const seeHistoryComponent = {
 
 seeHistoryComponentCtrl.$inject = ['catalogManagerService', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'utilService'];
 
-function seeHistoryComponentCtrl(catalogManagerService, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, utilService) {
+function seeHistoryComponentCtrl(catalogManagerService: CatalogManagerService, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, utilService) {
     var dvm = this;
     dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.cm = catalogManagerService;

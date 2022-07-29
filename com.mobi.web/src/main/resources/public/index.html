@@ -29,6 +29,9 @@
         <link rel="icon" href="images/favicon.ico">
         <link href="css/Material_Icons/css2.css" rel="stylesheet">
         <title ng-bind="$state.current.data.title + ' | Mobi'"></title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.8/ace.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.6/marked.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
     </head>
     <body ng-class="{'collapsed-nav': $root.collapsedNav}" class="h-100">
         <div ng-if="!!$state.current.name && $state.current.name !== 'login'" class="container-fluid h-100">
@@ -39,7 +42,7 @@
         </div>
         <section ng-if="$state.current.name === 'login'" ui-view="container" class="view-container h-100"></section>
         <footer ui-view="footer"></footer>
-        <progress-spinner ng-if="pendingRequests > 0"></progress-spinner>
+        <progress-spinner></progress-spinner>
         <mobi-app></mobi-app>
     </body>
 </html>

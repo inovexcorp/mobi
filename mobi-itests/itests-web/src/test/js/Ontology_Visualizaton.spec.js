@@ -46,7 +46,7 @@ module.exports = {
             .waitForElementVisible('//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Visualization")]]')
             .click('//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Visualization")]]')
             .useCss()
-            .waitForElementNotPresent('div.spinner')
+            .waitForElementNotVisible('div.spinner')
             .waitForElementNotPresent('div.visualization-spinner')
             .waitForElementVisible('.ontology-visualization')
     }

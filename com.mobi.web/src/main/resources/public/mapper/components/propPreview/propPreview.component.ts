@@ -20,66 +20,61 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { find, has } from 'lodash';
+import { Component, Inject, Input } from '@angular/core';
+import { find } from 'lodash';
 
-const template = require('./propPreview.component.html');
+import { RDFS } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
 
 /**
- * @ngdoc component
- * @name mapper.component:propPreview
- * @requires $filter
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:mapperStateService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
+ * @class mapper.PropPreviewComponent
  *
- * @description
- * `propPreview` is a component that creates a div with a brief description of the passed property and its range. It
- * displays the name of the property, its IRI, its description, and its range datatype or class.
+ * A component that creates a div with a brief description of the passed property and its range. It displays the name of
+ * the property, its IRI, its description, and its range datatype or class.
  *
- * @param {Object} propObj the property object from an ontology to preview
- * @param {Object[]} ontologies A list of ontologies containing the property and to pull the range class from
+ * @param {JSONLDObject} propObj the property object from an ontology to preview
  */
-const propPreviewComponent = {
-    template,
-    bindings: {
-        propObj: '<',
-        ontologies: '<'
-    },
-    controllerAs: 'dvm',
-    controller: propPreviewComponentCtrl
-};
+@Component({
+    selector: 'prop-preview',
+    templateUrl: './propPreview.component.html'
+})
+export class PropPreviewComponent {
+    name = '';
+    description = '';
+    rangeId = '';
+    rangeName = '';
+    rangeIsDeprecated = false;
 
-propPreviewComponentCtrl.$inject = ['$filter', 'ontologyManagerService', 'mapperStateService', 'utilService', 'prefixes'];
+    private _propObj: JSONLDObject;
 
-function propPreviewComponentCtrl($filter, ontologyManagerService, mapperStateService, utilService, prefixes) {
-    var dvm = this;
-    var util = utilService;
-    var state = mapperStateService;
-    dvm.om = ontologyManagerService;
-    dvm.name = '';
-    dvm.rangeId = '';
-    dvm.rangeName = '';
-    dvm.rangeIsDeprecated = false;
-
-    dvm.$onChanges = function(changesObj) {
-        if (has(changesObj, 'propObj')) {
-            dvm.name = dvm.om.getEntityName(changesObj.propObj.currentValue);
-            dvm.description = dvm.om.getEntityDescription(changesObj.propObj.currentValue) || '(None Specified)';
-            var newRangeId = util.getPropertyId(changesObj.propObj.currentValue, prefixes.rdfs + 'range');
-            if (dvm.om.isObjectProperty(changesObj.propObj.currentValue)) {
-                if (newRangeId !== dvm.rangeId) {
-                    var availableClass = find(state.availableClasses, {classObj: {'@id': newRangeId}});
-                    dvm.rangeName = dvm.om.getEntityName(availableClass.classObj);
-                    dvm.rangeIsDeprecated = dvm.om.isDeprecated(availableClass.classObj);
+    @Input() set propObj(value: JSONLDObject) {
+        this._propObj = value;
+        this.name = this.om.getEntityName(value);
+        this.description = this.om.getEntityDescription(value) || '(None Specified)';
+        const newRangeId = this.util.getPropertyId(value, RDFS + 'range');
+        if (this.om.isObjectProperty(value)) {
+            if (newRangeId !== this.rangeId) {
+                const availableClass = find(this.state.availableClasses, {classObj: {'@id': newRangeId}});
+                if (availableClass) {
+                    this.rangeName = availableClass.name;
+                    this.rangeIsDeprecated = availableClass.isDeprecated;
+                } else {
+                    this.rangeName = '(No range)';
+                    this.rangeIsDeprecated = false;
                 }
-            } else {
-                dvm.rangeName = $filter('splitIRI')(newRangeId).end || 'string';
-                dvm.rangeIsDeprecated = false;
             }
-            dvm.rangeId = newRangeId;
+        } else {
+            this.rangeName = this.split.transform(newRangeId).end || 'string';
+            this.rangeIsDeprecated = false;
         }
+        this.rangeId = newRangeId;
     }
-}
+    get propObj(): JSONLDObject {
+        return this._propObj;
+    }
 
-export default propPreviewComponent;
+    constructor(private state: MapperStateService, private split: SplitIRIPipe, 
+        @Inject('ontologyManagerService') private om, @Inject('utilService') private util) {}
+}

@@ -20,68 +20,80 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { ENTER } from '@angular/cdk/keycodes';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { MatChipInputEvent } from '@angular/material';
 import { map, get } from 'lodash';
+
+import { CATALOG } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 import './catalogRecordKeywords.component.scss';
 
-const template = require('./catalogRecordKeywords.component.html');
-
 /**
- * @ngdoc component
- * @name catalog.component:catalogRecordKeywords
- * @requires shared.service:prefixes
+ * @class catalog.CatalogRecordKeywordsComponent
  *
- * @description
- * `catalogRecordKeywords` is a component which creates a div with Bootstrap `badge` spans for the keywords on the
+ * A component which creates a div with Bootstrap `badge` spans for the keywords on the
  * provided catalog Record. The keywords will be sorted alphabetically. If the user is allowed to edit
- * the content, upon clicking the area it provides a {@link shared.directive:keywordSelect}. A save icon is provided
- * to call the supplied callback. When changes are made to the field and the area is blurred, the display is reset
- * to the initial state.
+ * the content, upon clicking the area it provides a `mat-chips` input. A save icon is provided to call the supplied
+ * callback. When changes are made to the field and the area is blurred, the display is reset to the initial state.
  * 
- * @param {Object} record A JSON-LD object for a catalog Record
+ * @param {JSONLDObject} record A JSON-LD object for a catalog Record
  * @param {boolean} canEdit A boolean indicating if the user can edit the keywords
  * @param {Function} saveEvent A function to call with the current updated record as a parameter when the save button is pressed
  */
-const catalogRecordKeywordsComponent = {
-    template,
-    bindings: {
-        record: '<',
-        canEdit: '<',
-        saveEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: catalogRecordKeywordsComponentCtrl
-};
+@Component({
+    selector: 'catalog-record-keywords',
+    templateUrl: './catalogRecordKeywords.component.html'
+})
+export class CatalogRecordKeywordsComponent {
+    keywords: string[] = [];
+    editedKeywords: string[] = [];
+    edit = false;
+    readonly separatorKeysCodes: number[] = [ENTER];
 
-catalogRecordKeywordsComponentCtrl.$inject = ['prefixes'];
+    private _record: JSONLDObject;
 
-function catalogRecordKeywordsComponentCtrl(prefixes) {
-    var dvm = this;
-    dvm.keywords = [];
-    dvm.initialKeywords = [];
-    dvm.edit = false;
-
-    dvm.$onInit = function() {
-        dvm.keywords = getKeywords();
-        dvm.initialKeywords = dvm.keywords;
-    }
-    dvm.$onChanges = function() {
-        dvm.keywords = getKeywords();
-        dvm.initialKeywords = dvm.keywords;
-    }
-    dvm.saveChanges = function() {
-        dvm.edit = false;
-        dvm.record[prefixes.catalog + 'keyword'] = map(dvm.keywords, keyword => ({'@value': keyword}));
-        dvm.saveEvent({record: dvm.record});
-    }
-    dvm.cancelChanges = function() {
-        dvm.keywords = dvm.initialKeywords;
-        dvm.edit = false;
+    @Input() set record(value: JSONLDObject) {
+        this._record = value;
+        this.keywords = this.getKeywords(this._record);
+        this.editedKeywords = Object.assign([], this.keywords);
     }
 
-    function getKeywords() {
-        return map(get(dvm.record, prefixes.catalog + 'keyword', []), '@value').sort();
+    get record(): JSONLDObject {
+        return this._record;
+    }
+
+    @Input() canEdit: boolean;
+    @Output() saveEvent = new EventEmitter<JSONLDObject>();
+
+    constructor() {}
+
+    addKeyword(event: MatChipInputEvent): void {
+        if (event.value) {
+            this.editedKeywords.push(event.value);
+        }
+        if (event.input) {
+            event.input.value = '';
+        }
+    }
+    removeKeyword(keyword: string): void {
+        const index = this.editedKeywords.indexOf(keyword);
+        if (index >= 0) {
+            this.editedKeywords.splice(index, 1);
+        }
+    }
+    saveChanges(): void {
+        this.edit = false;
+        this.record[CATALOG + 'keyword'] = map(this.editedKeywords, keyword => ({'@value': keyword}));
+        this.saveEvent.emit(this.record);
+    }
+    cancelChanges(): void {
+        this.editedKeywords = this.keywords;
+        this.edit = false;
+    }
+
+    private getKeywords(record: JSONLDObject) {
+        return map(get(record, CATALOG + 'keyword', []), '@value').sort();
     }
 }
-
-export default catalogRecordKeywordsComponent;

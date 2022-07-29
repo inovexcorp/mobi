@@ -23,12 +23,15 @@
 import { Component, Inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { get } from 'lodash';
+import { first } from 'rxjs/operators';
+
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CreateBranchModal } from '../createBranchModal/createBranchModal.component';
 import { CreateTagModal } from '../createTagModal/createTagModal.component';
 import { DownloadRecordModalComponent } from '../downloadRecordModal/downloadRecordModal.component';
 import { UploadRecordModalComponent } from '../uploadRecordModal/uploadRecordModal.component';
 import { CommitModalComponent } from '../commitModal/commitModal.component';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 import './editorTopBar.component.scss';
 
@@ -44,7 +47,7 @@ import './editorTopBar.component.scss';
 export class EditorTopBarComponent {
 
     constructor(private dialog: MatDialog, public state: ShapesGraphStateService,
-                @Inject('catalogManagerService') private cm, @Inject('utilService') private util) {}
+                private cm: CatalogManagerService, @Inject('utilService') private util) {}
 
     createBranch(): void {
         this.dialog.open(CreateBranchModal, {});
@@ -82,7 +85,7 @@ export class EditorTopBarComponent {
     }
 
     update(): Promise<void> {
-        return this.cm.getBranchHeadCommit(this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.recordId, get(this.cm.localCatalog, '@id', ''))
+        return this.cm.getBranchHeadCommit(this.state.listItem.versionedRdfRecord.branchId, this.state.listItem.versionedRdfRecord.recordId, get(this.cm.localCatalog, '@id', '')).pipe(first()).toPromise()
             .then(headCommit => {
                 const commitId = get(headCommit, 'commit[\'@id\']', '');
                 return this.state.changeShapesGraphVersion(this.state.listItem.versionedRdfRecord.recordId, this.state.listItem.versionedRdfRecord.branchId, commitId, undefined, this.state.listItem.versionedRdfRecord.title);

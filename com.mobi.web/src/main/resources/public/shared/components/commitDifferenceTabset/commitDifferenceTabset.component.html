@@ -21,9 +21,9 @@
   #L%
   -->
 <div class="commit-difference-tabset">
-    <mat-tab-group>
+    <mat-tab-group class="h-100">
         <mat-tab label="Changes">
-            <commit-changes-display *ngIf="difference" [additions]="difference.additions" [deletions]="difference.deletions" [entityNameFunc]="entityNameFunc" [showMoreResultsFunc]="showMoreResultsFunc" [hasMoreResults]="difference.hasMoreResults" [startIndex]="startIndex"></commit-changes-display>
+            <commit-changes-display *ngIf="difference" [additions]="difference.additions" [deletions]="difference.deletions" [entityNameFunc]="entityNameFunc" (showMoreResultsFunc)="middleShowMoreResultsFunc($event)" [hasMoreResults]="difference.hasMoreResults" [startIndex]="startIndex"></commit-changes-display>
             <info-message *ngIf="!difference?.additions?.length && !difference?.deletions?.length">No changes to display</info-message>
         </mat-tab>
         <mat-tab label="Commits">

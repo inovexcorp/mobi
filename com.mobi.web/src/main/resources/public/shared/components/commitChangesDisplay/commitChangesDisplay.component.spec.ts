@@ -28,6 +28,7 @@ import { map, range } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent } from 'ng-mocks';
 import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
+import { CommitChange } from '../../models/commitChange.interface';
 import { StatementContainerComponent } from '../statementContainer/statementContainer.component';
 import { StatementDisplayComponent } from '../statementDisplay/statementDisplay.component';
 import { CommitChangesDisplayComponent } from './commitChangesDisplay.component';
@@ -37,6 +38,8 @@ describe('Commit Changes Display component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<CommitChangesDisplayComponent>;
     let utilStub;
+
+    const change: CommitChange = {p: '', o: {'@value': ''}};
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -64,7 +67,6 @@ describe('Commit Changes Display component', function() {
         component.additions = [];
         component.deletions = [];
         component.entityNameFunc = jasmine.createSpy('entityNameFunc');
-        component.showMoreResultsFunc = jasmine.createSpy('showMoreResultsFunc');
         component.hasMoreResults = false;
     });
 
@@ -95,8 +97,8 @@ describe('Commit Changes Display component', function() {
     });
     describe('controller methods', function() {
         it('ngOnChanges should produce current number of list elements', function() {
-            component.additions = map(range(0, 150), i => ({'@id': `${i}`}));
-            component.deletions = map(range(50, 200), i => ({'@id': `${i}`}));
+            component.additions = map(range(0, 150), i => ({'@id': `${i}`, '@type': []}));
+            component.deletions = map(range(50, 200), i => ({'@id': `${i}`, '@type': []}));
             utilStub.getChangesById.and.returnValue([]);
             component.ngOnChanges({
                 additions: new SimpleChange(null, {}, true),
@@ -145,7 +147,7 @@ describe('Commit Changes Display component', function() {
             expect(element.queryAll(By.css('div.property-values')).length).toEqual(0);
 
             component.list = ['id'];
-            component.results = {'id': {additions: [''], deletions: []}};
+            component.results = {'id': {additions: [change], deletions: []}};
             fixture.detectChanges();
             await fixture.whenStable();
             
@@ -155,7 +157,7 @@ describe('Commit Changes Display component', function() {
             expect(element.queryAll(By.css('statement-container')).length).toEqual(0);
             expect(element.queryAll(By.css('statement-display')).length).toEqual(0);
             component.list = ['id'];
-            component.results = {'id': {additions: [''], deletions: []}};
+            component.results = {'id': {additions: [change], deletions: []}};
             fixture.detectChanges();
             await fixture.whenStable();
             
@@ -166,7 +168,7 @@ describe('Commit Changes Display component', function() {
             expect(element.queryAll(By.css('statement-container')).length).toEqual(0);
             expect(element.queryAll(By.css('statement-display')).length).toEqual(0);
             component.list = ['id'];
-            component.results = {'id': {additions: [], deletions: ['']}};
+            component.results = {'id': {additions: [], deletions: [change]}};
             fixture.detectChanges();
             await fixture.whenStable();
             
@@ -177,7 +179,7 @@ describe('Commit Changes Display component', function() {
             expect(element.queryAll(By.css('statement-container')).length).toEqual(0);
             expect(element.queryAll(By.css('statement-display')).length).toEqual(0);
             component.list = ['id'];
-            component.results = {'id': {additions: [''], deletions: ['']}};
+            component.results = {'id': {additions: [change], deletions: [change]}};
             fixture.detectChanges();
             await fixture.whenStable();
             

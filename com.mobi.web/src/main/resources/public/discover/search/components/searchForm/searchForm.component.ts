@@ -21,6 +21,7 @@
  * #L%
  */
 import { groupBy, pullAt, map, last, join } from 'lodash';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 
 import './searchForm.component.scss';
 
@@ -51,7 +52,7 @@ const searchFormComponent = {
 
 searchFormComponentCtrl.$inject = ['searchService', 'discoverStateService', 'exploreService', 'utilService', 'modalService', 'prefixes', 'policyEnforcementService'];
 
-function searchFormComponentCtrl(searchService, discoverStateService, exploreService, utilService, modalService, prefixes, policyEnforcementService) {
+function searchFormComponentCtrl(searchService, discoverStateService: DiscoverStateService, exploreService, utilService, modalService, prefixes, policyEnforcementService) {
     const dvm = this;
     const s = searchService;
     const es = exploreService;

@@ -158,71 +158,12 @@ export class mockModal {
     openConfirmModal = jasmine.createSpy('openConfirmModal');
 }
 
-export class mockPrefixes {
-    owl = 'owl:';
-    delim = 'delim:';
-    data = 'data:';
-    mappings = 'mappings:';
-    rdfs = 'rdfs:';
-    dc = 'dc:';
-    dcterms = 'dcterms:';
-    rdf = 'rdf:';
-    ontologyState = 'ontologyState:';
-    catalog = 'catalog:';
-    skos = 'skos:';
-    xsd = 'xsd:';
-    ontologyEditor = 'ontEdit:';
-    dataset = 'dataset:';
-    matprov = 'matprov:';
-    prov = 'prov:';
-    mergereq = 'mergereq:';
-    user = 'user:';
-    policy = 'policy:';
-    roles = 'roles:';
-    foaf = 'foaf:';
-    shacl = 'shacl:';
-    setting = 'setting:';
-    shapesGraphEditor = 'shapesGraphEdit:'
-}
-
 export class mockHttpService {
     pending = [];
     isPending = jasmine.createSpy('isPending');
     cancel = jasmine.createSpy('cancel');
     get = jasmine.createSpy('get');
     post = jasmine.createSpy('post');
-}
-
-export class mockUserManager {
-    users = [];
-    groups = [];
-    reset = jasmine.createSpy('reset');
-    initialize = jasmine.createSpy('initialize');
-    getUsername = jasmine.createSpy('getUsername').and.returnValue(Promise.resolve(''));
-    setUsers = jasmine.createSpy('setUsers').and.returnValue(Promise.resolve());
-    setGroups = jasmine.createSpy('setGroups').and.returnValue(Promise.resolve());
-    addUser = jasmine.createSpy('addUser').and.returnValue(Promise.resolve());
-    getUser = jasmine.createSpy('getUser').and.returnValue(Promise.resolve());
-    updateUser = jasmine.createSpy('updateUser').and.returnValue(Promise.resolve());
-    changePassword = jasmine.createSpy('changePassword').and.returnValue(Promise.resolve());
-    resetPassword = jasmine.createSpy('resetPassword').and.returnValue(Promise.resolve());
-    deleteUser = jasmine.createSpy('deleteUser').and.returnValue(Promise.resolve());
-    addUserRoles = jasmine.createSpy('addUserRoles').and.returnValue(Promise.resolve());
-    deleteUserRole = jasmine.createSpy('deleteUserRole').and.returnValue(Promise.resolve());
-    addUserGroup = jasmine.createSpy('addUserGroup').and.returnValue(Promise.resolve());
-    deleteUserGroup = jasmine.createSpy('deleteUserGroup').and.returnValue(Promise.resolve());
-    addGroup = jasmine.createSpy('addGroup').and.returnValue(Promise.resolve());
-    getGroup = jasmine.createSpy('getGroup').and.returnValue(Promise.resolve());
-    updateGroup = jasmine.createSpy('updateGroup').and.returnValue(Promise.resolve());
-    deleteGroup = jasmine.createSpy('deleteGroup').and.returnValue(Promise.resolve());
-    addGroupRoles = jasmine.createSpy('addGroupRoles').and.returnValue(Promise.resolve());
-    deleteGroupRole = jasmine.createSpy('deleteGroupRole').and.returnValue(Promise.resolve());
-    getGroupUsers = jasmine.createSpy('getGroupUsers').and.returnValue(Promise.resolve([]));
-    addGroupUsers = jasmine.createSpy('addGroupUsers').and.returnValue(Promise.resolve());
-    deleteGroupUser = jasmine.createSpy('deleteGroupUser').and.returnValue(Promise.resolve());
-    getUserObj = jasmine.createSpy('getUserObj').and.returnValue({});
-    getGroupObj = jasmine.createSpy('getGroupObj').and.returnValue({});
-    isAdmin = jasmine.createSpy('isAdmin');
 }
 
 export class mockOntologyState {
@@ -493,130 +434,6 @@ export class mockOntologyState {
     getBnodeIndex = jasmine.createSpy('getBnodeIndex');
 }
 
-export class mockDiscoverState {
-    explore = {
-        active: true,
-        breadcrumbs: ['Classes'],
-        classDetails: [],
-        classId: '',
-        creating: false,
-        editing: false,
-        instance: {
-            changed: [],
-            entity: [{}],
-            metadata: {},
-            objectMap: {},
-            original: []
-        },
-        instanceDetails: {
-            currentPage: 1,
-            data: [],
-            limit: 99,
-            links: {
-                next: '',
-                prev: ''
-            },
-            total: 0
-        },
-        recordId: ''
-    };
-    query = {
-        active: false
-    };
-    search = {
-        active: false,
-        datasetRecordId: '',
-        filterMeta: [],
-        noDomains: undefined,
-        properties: undefined,
-        queryConfig: {
-            isOrKeywords: false,
-            isOrTypes: false,
-            keywords: [],
-            types: [],
-            filters: []
-        },
-        results: undefined,
-        targetedId: 'discover-search-results'
-    };
-    reset = jasmine.createSpy('reset');
-    resetPagedInstanceDetails = jasmine.createSpy('resetPagedInstanceDetails');
-    cleanUpOnDatasetDelete = jasmine.createSpy('cleanUpOnDatasetDelete');
-    cleanUpOnDatasetClear = jasmine.createSpy('cleanUpOnDatasetClear');
-    clickCrumb = jasmine.createSpy('clickCrumb');
-    getInstance = jasmine.createSpy('getInstance').and.returnValue({});
-    resetSearchQueryConfig = jasmine.createSpy('resetSearchQueryConfig');
-}
-
-export class mockCatalogManager {
-    coreRecordTypes = [];
-    sortOptions = [];
-    recordTypes = [];
-    localCatalog = {'@id': 'catalog'};
-    distributedCatalog = undefined;
-    initialize = jasmine.createSpy('initialize').and.returnValue(Promise.resolve());
-    getSortOptions = jasmine.createSpy('getSortOptions').and.returnValue(Promise.resolve([]));
-    getRecordTypes = jasmine.createSpy('getRecordTypes').and.returnValue(Promise.resolve([]));
-    getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue(Promise.resolve({}));
-    getRecords = jasmine.createSpy('getRecords').and.returnValue(Promise.resolve({}));
-    getRecord = jasmine.createSpy('getRecord').and.returnValue(Promise.resolve({}));
-    createRecord = jasmine.createSpy('createRecord').and.returnValue(Promise.resolve());
-    updateRecord = jasmine.createSpy('updateRecord').and.returnValue(Promise.resolve());
-    deleteRecord = jasmine.createSpy('deleteRecord').and.returnValue(Promise.resolve());
-    getRecordDistributions = jasmine.createSpy('getRecordDistributions').and.returnValue(Promise.resolve({}));
-    getRecordDistribution = jasmine.createSpy('getRecordDistribution').and.returnValue(Promise.resolve({}));
-    createRecordDistribution = jasmine.createSpy('createRecordDistribution').and.returnValue(Promise.resolve());
-    updateRecordDistribution = jasmine.createSpy('updateRecordDistribution').and.returnValue(Promise.resolve());
-    deleteRecordDistribution = jasmine.createSpy('deleteRecordDistribution').and.returnValue(Promise.resolve());
-    getRecordVersions = jasmine.createSpy('getRecordVersions').and.returnValue(Promise.resolve({}));
-    getRecordLatestVersion = jasmine.createSpy('getRecordLatestVersion').and.returnValue(Promise.resolve({}));
-    getRecordVersion = jasmine.createSpy('getRecordVersion').and.returnValue(Promise.resolve({}));
-    createRecordVersion = jasmine.createSpy('createRecordVersion').and.returnValue(Promise.resolve());
-    createRecordTag = jasmine.createSpy('createRecordTag').and.returnValue(Promise.resolve());
-    updateRecordVersion = jasmine.createSpy('updateRecordVersion').and.returnValue(Promise.resolve());
-    deleteRecordVersion = jasmine.createSpy('deleteRecordVersion').and.returnValue(Promise.resolve());
-    getVersionCommit = jasmine.createSpy('getVersionCommit').and.returnValue(Promise.resolve({}));
-    getVersionDistributions = jasmine.createSpy('getVersionDistributions').and.returnValue(Promise.resolve({}));
-    getVersionDistribution = jasmine.createSpy('getVersionDistribution').and.returnValue(Promise.resolve({}));
-    createVersionDistribution = jasmine.createSpy('createVersionDistribution').and.returnValue(Promise.resolve());
-    updateVersionDistribution = jasmine.createSpy('updateVersionDistribution').and.returnValue(Promise.resolve());
-    deleteVersionDistribution = jasmine.createSpy('deleteVersionDistribution').and.returnValue(Promise.resolve());
-    getRecordBranches = jasmine.createSpy('getRecordBranches').and.returnValue(Promise.resolve({}));
-    getRecordMasterBranch = jasmine.createSpy('getRecordMasterBranch').and.returnValue(Promise.resolve({}));
-    getRecordBranch = jasmine.createSpy('getRecordBranch').and.returnValue(Promise.resolve({}));
-    createRecordBranch = jasmine.createSpy('createRecordBranch').and.returnValue(Promise.resolve());
-    createRecordUserBranch = jasmine.createSpy('createRecordUserBranch').and.returnValue(Promise.resolve());
-    updateRecordBranch = jasmine.createSpy('updateRecordBranch').and.returnValue(Promise.resolve());
-    deleteRecordBranch = jasmine.createSpy('deleteRecordBranch').and.returnValue(Promise.resolve());
-    getCommit = jasmine.createSpy('getCommit').and.returnValue(Promise.resolve([]));
-    getCommitHistory = jasmine.createSpy('getCommitHistory').and.returnValue(Promise.resolve([]));
-    getCompiledResource = jasmine.createSpy('getCompiledResource').and.returnValue(Promise.resolve([]));
-    getDifference = jasmine.createSpy('getDifference').and.returnValue(Promise.resolve([]));
-    getDifferenceForSubject = jasmine.createSpy('getDifferenceForSubject').and.returnValue(Promise.resolve([]));
-    getBranchCommits = jasmine.createSpy('getBranchCommits').and.returnValue(Promise.resolve([]));
-    createBranchCommit = jasmine.createSpy('createBranchCommit').and.returnValue(Promise.resolve());
-    getBranchHeadCommit = jasmine.createSpy('getBranchHeadCommit').and.returnValue(Promise.resolve({}));
-    getBranchCommit = jasmine.createSpy('getBranchCommit').and.returnValue(Promise.resolve({}));
-    getBranchDifference = jasmine.createSpy('getBranchDifference').and.returnValue(Promise.resolve({}));
-    getBranchConflicts = jasmine.createSpy('getBranchConflicts').and.returnValue(Promise.resolve([]));
-    mergeBranches = jasmine.createSpy('mergeBranches').and.returnValue(Promise.resolve(''));
-    getResource = jasmine.createSpy('getResource').and.returnValue(Promise.resolve(''));
-    downloadResource = jasmine.createSpy('downloadResource');
-    createInProgressCommit = jasmine.createSpy('createInProgressCommit').and.returnValue(Promise.resolve());
-    getInProgressCommit = jasmine.createSpy('getInProgressCommit').and.returnValue(Promise.resolve({}));
-    updateInProgressCommit = jasmine.createSpy('updateInProgressCommit').and.returnValue(Promise.resolve());
-    deleteInProgressCommit = jasmine.createSpy('deleteInProgressCommit').and.returnValue(Promise.resolve());
-    getEntityName = jasmine.createSpy('getEntityName');
-    isRecord = jasmine.createSpy('isRecord');
-    isVersionedRDFRecord = jasmine.createSpy('isVersionedRDFRecord');
-    isDistribution = jasmine.createSpy('isDistribution');
-    isBranch = jasmine.createSpy('isBranch');
-    isUserBranch = jasmine.createSpy('isUserBranch');
-    isVersion = jasmine.createSpy('isVersion');
-    isTag = jasmine.createSpy('isTag');
-    isCommit = jasmine.createSpy('isCommit');
-}
-
 export class mockOntologyManager {
     ontologyRecords = [];
     entityNameProps = [];
@@ -716,24 +533,10 @@ export class mockPolicyEnforcement {
     evaluateRequest = jasmine.createSpy('evaulateRequest').and.returnValue(Promise.resolve());
     evaluateMultiDecisionRequest = jasmine.createSpy('evaulateMultiDecisionRequest').and.returnValue(Promise.resolve());
 }
-
-export class mockPolicyManager {
-    actionCreate = 'create';
-    actionRead = 'read';
-    actionUpdate = 'update';
-    actionDelete = 'delete';
-    subjectId = 'subjectId';
-    resourceId = 'resourceId';
-    actionId = 'actionId';
-    subjectCategory = 'actionCategory';
-    resourceCategory = 'resourceCategory';
-    actionCategory = 'actionCategory';
-    stringEqual = 'stringEqual';
-    getPolicies = jasmine.createSpy('getPolicies').and.returnValue(Promise.resolve([]));
-    getPolicy = jasmine.createSpy('getPolicy').and.returnValue(Promise.resolve({}));
-    updatePolicy = jasmine.createSpy('updatePolicy').and.returnValue(Promise.resolve());
+export class mockRecordPermissionsManager {
+    getRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue(Promise.resolve({}));
+    updateRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue(Promise.resolve());
 }
-
 export class MockOntologyVisualizationService {
     ERROR_MESSAGE: "ERROR_MESSAGE_1";
     IN_PROGRESS_COMMIT_MESSAGE: "IN_PROGRESS_COMMIT_MESSAGE_2";
@@ -860,6 +663,24 @@ export class MockOntologyVisualizationService {
             'ontologyId': 'http://www.co-ode.org/ontologies/pizza/pizza.owl'
         }
     ]);
+
+}
+
+export class mockPolicyManager {
+    actionCreate = 'create';
+    actionRead = 'read';
+    actionUpdate = 'update';
+    actionDelete = 'delete';
+    subjectId = 'subjectId';
+    resourceId = 'resourceId';
+    actionId = 'actionId';
+    subjectCategory = 'actionCategory';
+    resourceCategory = 'resourceCategory';
+    actionCategory = 'actionCategory';
+    stringEqual = 'stringEqual';
+    getPolicies = jasmine.createSpy('getPolicies').and.returnValue(Promise.resolve([]));
+    getPolicy = jasmine.createSpy('getPolicy').and.returnValue(Promise.resolve({}));
+    updatePolicy = jasmine.createSpy('updatePolicy').and.returnValue(Promise.resolve());
 }
 
 export class mockStateManager {

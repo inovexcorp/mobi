@@ -21,11 +21,11 @@
   #L%
   -->
 <div class="record-markdown">
-    <div ng-if="!dvm.edit" class="view-record-markdown break-word p-2" ng-click="dvm.showEdit()" ng-class="{'hover': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}">
-        <div ng-if="!dvm.markdownHTML" class="text-muted">(No overview)</div>
-        <div ng-if="dvm.markdownHTML" class="markdown" ng-bind-html="dvm.markdownHTML | trusted"></div>
+    <div *ngIf="!edit" class="view-record-markdown break-word p-2" (click)="showEdit()" [ngClass]="{'hover': canEdit}" [title]="canEdit ? 'Click to edit' : undefined">
+        <div *ngIf="!text; else elseBlock" class="text-muted">(No overview)</div>
+        <ng-template #elseBlock><showdown class="markdown" [value]="text" sanitize></showdown></ng-template>
     </div>
-    <div ng-if="dvm.edit" class="p-2">
-        <markdown-editor bind-model="dvm.editMarkdown" change-event="dvm.editMarkdown = value" click-event="dvm.saveEdit()" cancel-event="dvm.cancelEdit()" is-focus-me="true" button-text="'Save'" allow-blank-value="true" start-rows="'10'"></markdown-editor>
+    <div *ngIf="edit" class="p-2 clearfix edit-record-markdown">
+        <markdown-editor [(markdown)]="editMarkdown" (saveEvent)="saveEdit($event)" [cancellable]="true" (cancelEvent)="cancelEdit($event)" [allowBlank]="true"></markdown-editor>
     </div>
 </div>

@@ -20,28 +20,47 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { NgModule } from '@angular/core';
 import * as angular from 'angular';
+import { downgradeComponent } from '@angular/upgrade/static';
 
-import datasetsListComponent from './components/datasetsList/datasetsList.component';
-import datasetsOntologyPickerComponent from './components/datasetsOntologyPicker/datasetsOntologyPicker.component';
-import datasetsPageComponent from './components/datasetsPage/datasetsPage.component';
-import datasetsTabsetComponent from './components/datasetsTabset/datasetsTabset.component';
-import editDatasetOverlayComponent from './components/editDatasetOverlay/editDatasetOverlay.component';
-import newDatasetOverlayComponent from './components/newDatasetOverlay/newDatasetOverlay.component';
-import uploadDataOverlayComponent from './components/uploadDataOverlay/uploadDataOverlay.component';
+import { SharedModule } from '../shared/shared.module';
+
+import { DatasetsListComponent } from './components/datasetsList/datasetsList.component';
+import { DatasetsOntologyPickerComponent } from './components/datasetsOntologyPicker/datasetsOntologyPicker.component';
+import { DatasetsPageComponent } from './components/datasetsPage/datasetsPage.component';
+import { EditDatasetOverlayComponent } from './components/editDatasetOverlay/editDatasetOverlay.component';
+import { NewDatasetOverlayComponent } from './components/newDatasetOverlay/newDatasetOverlay.component';
+import { UploadDataOverlayComponent } from './components/uploadDataOverlay/uploadDataOverlay.component';
 
 /**
- * @ngdoc overview
- * @name datasets
+ * @namespace datasets
  *
- * @description
  * The `datasets` module provides components that make up the Datasets module in the Mobi application.
  */
+@NgModule({
+    imports: [ SharedModule ],
+    declarations: [
+        DatasetsListComponent,
+        DatasetsOntologyPickerComponent,
+        DatasetsPageComponent,
+        EditDatasetOverlayComponent,
+        NewDatasetOverlayComponent,
+        UploadDataOverlayComponent
+    ],
+    entryComponents: [
+        DatasetsPageComponent,
+        EditDatasetOverlayComponent,
+        NewDatasetOverlayComponent,
+        UploadDataOverlayComponent
+    ]
+})
+export class DatasetsModule {}
+
 angular.module('datasets', [])
-    .component('datasetsList', datasetsListComponent)
-    .component('datasetsOntologyPicker', datasetsOntologyPickerComponent)
-    .component('datasetsPage', datasetsPageComponent)
-    .component('datasetsTabset', datasetsTabsetComponent)
-    .component('editDatasetOverlay', editDatasetOverlayComponent)
-    .component('newDatasetOverlay', newDatasetOverlayComponent)
-    .component('uploadDataOverlay', uploadDataOverlayComponent);
+    .directive('datasetsList', downgradeComponent({component: DatasetsListComponent}) as angular.IDirectiveFactory)
+    .directive('datasetsOntologyPicker', downgradeComponent({component: DatasetsOntologyPickerComponent}) as angular.IDirectiveFactory)
+    .directive('datasetsPage', downgradeComponent({component: DatasetsPageComponent}) as angular.IDirectiveFactory)
+    .directive('editDatasetOverlay', downgradeComponent({component: EditDatasetOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('newDatasetOverlay', downgradeComponent({component: NewDatasetOverlayComponent}) as angular.IDirectiveFactory)
+    .directive('uploadDataOverlay', downgradeComponent({component: UploadDataOverlayComponent}) as angular.IDirectiveFactory);

@@ -20,88 +20,88 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { has, join, includes } from 'lodash';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { UserConfig } from 'gridjs';
+import { range } from 'lodash';
 
 import './previewDataGrid.component.scss';
 
-const template = require('./previewDataGrid.component.html');
-
 /**
- * @ngdoc component
- * @name mapper.component:previewDataGrid
+ * @class mapper.PreviewDataGridComponent
  *
- * @description 
- * `previewDataGrid` is a component that creates a HandsonTable (`hot-table`) with the provided delimited `rows`
- * array. The `hot-table` will automatically update whenever new data is provided, the provided `highlightIndexes`
- * change, and whether the data `containsHeaders` changes. The `hot-table` is uneditable and the user cannot select
- * a cell within it.
+ * A component that creates a grid with the provided delimited `rows` array. The grid should automatically update
+ * whenever new data is provided, the provided `highlightIndexes` change, and whether the data `containsHeaders`
+ * changes. The grid is uneditable and the user cannot select a cell within it.
  * 
- * @param {string[]} rows An array of arrays of delimited data.
+ * @param {string[][]} rows An array of arrays of delimited data.
  * @param {string[]} highlightIndexes An array of 0-based indexes in strings indicating which columns should be
  * highlighted.
  * @param {boolean} containsHeaders Whether the delimited data contains a header row
  */
-const previewDataGridComponent = {
-    template,
-    bindings: {
-        rows: '<',
-        highlightIndexes: '<',
-        containsHeaders: '<'
-    },
-    controllerAs: 'dvm',
-    controller: previewDataGridComponentCtrl
-};
+@Component({
+    selector: 'preview-data-grid',
+    templateUrl: './previewDataGrid.component.html'
+})
+export class PreviewDataGridComponent implements OnInit, OnChanges {
+    gridConfig: UserConfig;
+    displayGrid: boolean;
 
-function previewDataGridComponentCtrl() {
-    var dvm = this;
-    dvm.hotTable;
-    dvm.settings = {};
-    dvm.data = [];
-    
-    dvm.$onInit = function() {
-        dvm.data = angular.copy(dvm.rows);
-        dvm.settings = {
-            minCols: 50,
-            minRows: 50,
-            readOnly: true,
-            readOnlyCellClassName: 'text',
-            disableVisualSelection: 'current',
-            multiSelect: false,
-            fillHandle: false,
-            outsideClickDeselects: false,
-            cells: (row, col, prop) => {
-                var props: any = {};
-                props.renderer = (hotInstance, el, row, col, prop, value) => {
-                    var classes = [];
-                    if (row === 0 && dvm.containsHeaders && dvm.rows) {
-                        classes.push('header');
-                    }
-                    if (includes(dvm.highlightIndexes, '' + col)) {
-                        classes.push('highlight-col');
-                    }
-                    el.className = join(classes, ' ');
-                    el.innerHTML = value;
-                    return el;
-                };
-                return props;
-            },
-            onBeforeOnCellMouseDown: (event, coords) => {
-                event.stopImmediatePropagation();
-            },
-            onAfterInit: function() {
-                dvm.hotTable = this;
-            }
-        };
+    @Input() rows: string[][];
+    @Input() highlightIndexes: string[];
+    @Input() containsHeaders: boolean;
+
+    constructor() {}
+
+    ngOnInit(): void {
+        this.setGridConfig(this.rows, this.containsHeaders);
     }
-    dvm.$onChanges = function(changesObj) {
-        if (has(changesObj, 'rows')) {
-            dvm.data = angular.copy(changesObj.rows.currentValue);
+    ngOnChanges(changes: SimpleChanges): void {
+        if (!changes.rows?.firstChange || !changes.containsHeaders?.firstChange || changes.highlightIndexes?.firstChange) {
+            const containsHeaders = changes.containsHeaders ? changes.containsHeaders.currentValue : this.containsHeaders;
+            const rows = changes.rows ? changes.rows.currentValue : this.rows;
+            this.setGridConfig(rows, containsHeaders);
         }
-        if (dvm.hotTable && (has(changesObj, 'highlightIndexes') || (has(changesObj, 'containsHeaders') && dvm.rows))) {
-            dvm.hotTable.render();
+    }
+    setGridConfig(rows: string[][], containsHeaders: boolean): void {
+        if (rows && rows.length) {
+            this.displayGrid = true;
+            if (containsHeaders) {
+                this.gridConfig = {
+                    columns: this.createColumns(rows[0]),
+                    data: rows.slice(1)
+                };
+            } else {
+                this.gridConfig = {
+                    columns: this.createColumns(range(rows[0].length).map(num => 'Column ' + num)),
+                    data: rows
+                };
+            }
+        } else {
+            this.displayGrid = false;
+            this.gridConfig = {
+                data: Array(10).fill('')
+            };
+        }
+    }
+    createColumns(headers: string[]): any[] {
+        if (this.highlightIndexes && this.highlightIndexes.length) {
+            return headers.map((header, idx) => {
+                let obj: any = {
+                    name: header
+                };
+                if (this.highlightIndexes.includes('' + idx)) {
+                    obj.attributes = (cell) => {
+                        if (cell) {
+                            return {
+                                class: 'highlight-col gridjs-td'
+                            };
+                        }
+                    };
+                }
+                return obj;
+            });
+        } else {
+            return headers;
         }
     }
 }
-
-export default previewDataGridComponent;

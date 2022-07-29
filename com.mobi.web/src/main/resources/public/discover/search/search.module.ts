@@ -23,7 +23,7 @@
 import * as angular from 'angular';
 
 import searchService from './services/search.service';
-import discoverSearchTabComponent from './components/discoverSearchTab/discoverSearchTab.component';
+import { discoverSearchTabComponent } from './components/discoverSearchTab/discoverSearchTab.component';
 import filterSelectorComponent from './components/filterSelector/filterSelector.component';
 import propertyFilterOverlayComponent from './components/propertyFilterOverlay/propertyFilterOverlay.component';
 import searchFormComponent from './components/searchForm/searchForm.component';

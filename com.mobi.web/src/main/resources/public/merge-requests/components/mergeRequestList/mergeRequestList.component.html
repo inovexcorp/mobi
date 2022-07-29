@@ -21,31 +21,41 @@
   #L%
   -->
 <div class="merge-request-list d-flex flex-column h-100">
-    <form class="search-container form-inline justify-content-center">
-        <div class="form-group">
-            <select class="form-control" ng-model="dvm.state.acceptedFilter" ng-change="dvm.state.setRequests(dvm.state.acceptedFilter)" ng-options="option.value as option.label for option in dvm.filterOptions"></select>
-        </div>
-        <button class="btn btn-primary ml-2" ng-click="dvm.state.startCreate()">Create Request</button>
+    <form class="search-container">
+        <mat-form-field>
+            <mat-select placeholder="Request Status" [(value)]="state.acceptedFilter" (selectionChange)="state.setRequests(state.acceptedFilter)">
+                <mat-option *ngFor="let option of filterOptions" [value]="option.value">{{option.label}}</mat-option>
+            </mat-select>
+        </mat-form-field>
+        <button mat-raised-button color="primary" class="ml-2" (click)="state.startCreate()">New Request</button>
     </form>
-    <block class="flex-1 remove-min-height">
-        <block-content>
-            <info-message ng-if="!dvm.state.requests.length">No requests found</info-message>
-            <div class="request padding" ng-repeat="request in dvm.state.requests track by request.jsonld['@id']" ng-click="dvm.state.selected = request">
-                <div class="details">
-                    <h3>{{request.title}}</h3>
-                    <div class="request-info"><small>Created on {{request.date}} by {{request.creator}}</small></div>
-                    <div class="request-record"><span class="field-name">Record: </span>{{request.recordTitle}}</div>
-                    <div class="request-assignees"><span class="field-name">Assignee(s): </span>
-                        <ul class="assignees">
-                            <li ng-if="request.assignees.length === 0" class="last">(None specified)</li>
-                            <li ng-repeat="assignee in request.assignees" ng-class="{'last': $last}">{{assignee}}</li>
-                        </ul>
-                    </div>
+    <div class="flex-1 remove-min-height">
+        <info-message *ngIf="!state.requests.length">No requests found</info-message>
+        <div class="request padding" *ngFor="let request of state.requests; last as lastRequest" (click)="state.selected = request">
+            <div class="request-contents d-flex w-100">
+                <div class="details flex-1 remove-min-width">
+                    <h3 class="text-truncate">{{request.title}}</h3>
+                    <p class="request-info"><small>Created on {{request.date}} by {{request.creator}}</small></p>
+                    <dl>
+                        <dt class="text-muted">Record</dt>
+                        <dd class="text-truncate" [title]="request.recordTitle">{{request.recordTitle}}</dd>
+                        <dt class="text-muted">Assignee(s)</dt>
+                        <dd><ul class="assignees">
+                            <li *ngIf="request.assignees.length === 0" class="last">(None specified)</li>
+                            <li *ngFor="let assignee of request.assignees; last as lastAssignee" [ngClass]="{'last': lastAssignee}">{{assignee}}</li>
+                        </ul></dd>
+                    </dl>
                 </div>
-                <div class="action-container">
-                    <a ng-click="dvm.showDeleteOverlay(request, $event)" class="action text-muted d-inline-block"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
+                <div>
+                    <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Request Actions" (click)="$event.stopPropagation();$event.preventDefault();">
+                        <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #menu="matMenu">
+                        <button mat-menu-item (click)="showDeleteOverlay(request)"><i class="fa fa-fw fa-trash-o"></i> Delete</button>
+                    </mat-menu>
                 </div>
             </div>
-        </block-content>
-    </block>
+            <mat-divider *ngIf="!lastRequest"></mat-divider>
+        </div>
+    </div>
 </div>

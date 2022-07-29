@@ -24,48 +24,53 @@
 import { TestBed } from '@angular/core/testing';
 import { get } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
+import { MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+
 import {
-    mockCatalogManager,
-    mockPrefixes,
     mockShapesGraphManager,
     mockStateManager,
     mockUtil,
     mockPolicyEnforcement,
     mockPolicyManager
 } from '../../../../../test/ts/Shared';
+import {CATALOG, DCTERMS} from '../../prefixes';
 import { RecordSelectFiltered } from '../../shapes-graph-editor/models/recordSelectFiltered.interface';
 import { Difference } from '../models/difference.class';
 import { RdfUpload } from '../models/rdfUpload.interface';
 import { ShapesGraphListItem } from '../models/shapesGraphListItem.class';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
+import { CatalogManagerService } from './catalogManager.service';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { ShapesGraphStateService } from './shapesGraphState.service';
-import { MockProvider } from 'ng-mocks';
 import { PolicyManagerService } from './policyManager.service';
 import { OptionalJSONLD } from '../models/OptionalJSONLD.class';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
+
 
 describe('Shapes Graph State service', function() {
     let service: ShapesGraphStateService;
     let shapesGraphManagerStub;
     let utilStub;
-    let catalogManagerStub;
-    let prefixesStub;
+    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
+    const catalogId = 'catalog';
+    let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;;
     let policyEnforcementStub;
-    let policyManagerStub;
-    let catalogId;
     let branch;
     let branches;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
+            imports: [HttpClientTestingModule],
             providers: [
                 ShapesGraphStateService,
+                MockProvider(CatalogManagerService),
                 MockProvider(PolicyManagerService),
                 { provide: 'shapesGraphManagerService', useClass: mockShapesGraphManager },
                 { provide: 'stateManagerService', useClass: mockStateManager },
-                { provide: 'prefixes', useClass: mockPrefixes },
-                { provide: 'catalogManagerService', useClass: mockCatalogManager },
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: 'policyEnforcementService', useClass: mockPolicyEnforcement },
                 { provide: ShapesGraphManagerService, useClass: mockShapesGraphManager },
@@ -74,28 +79,27 @@ describe('Shapes Graph State service', function() {
     });
 
     beforeEach(function() {
+        
+        catalogManagerStub = TestBed.get(CatalogManagerService);
+        catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
         service = TestBed.get(ShapesGraphStateService);
-        service.listItem = new ShapesGraphListItem();
-        this.catalogId = 'catalog';
-        prefixesStub = TestBed.get('prefixes');
-        this.branch = {
-            '@id': 'branch123',
-            [prefixesStub.catalog + 'head']: [{'@id': 'commit123'}],
-            [prefixesStub.dcterms + 'title']: [{'@value': 'MASTER'}]
-        };
-        this.branches = [this.branch];
-
-        utilStub = TestBed.get('utilService');
-        utilStub.getDctermsValue.and.callFake((obj, prop) => {
-            return get(obj, "['" + prefixesStub.dcterms + prop + "'][0]['@value']", '');
-        });
-
         shapesGraphManagerStub = TestBed.get(ShapesGraphManagerService);
         policyManagerStub = TestBed.get(PolicyManagerService);
         policyEnforcementStub = TestBed.get('policyEnforcementService');
-        catalogManagerStub = TestBed.get('catalogManagerService');
+        service.listItem = new ShapesGraphListItem();
+        this.catalogId = 'catalog';
+        this.branch = {
+            '@id': 'branch123',
+            [CATALOG + 'head']: [{'@id': 'commit123'}],
+            [DCTERMS + 'title']: [{'@value': 'MASTER'}]
+        };
+        this.branches = [this.branch];
+        utilStub = TestBed.get('utilService');
+        utilStub.getDctermsValue.and.callFake((obj, prop) => {
+            return get(obj, `['${DCTERMS}${prop}'][0]['@value']`, '');
+        });
         catalogManagerStub.localCatalog = {'@id': this.catalogId};
-        catalogManagerStub.getRecordBranches.and.returnValue(Promise.resolve({data: this.branches}));
+        catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [{'@id': this.catalogId, data: this.branches}]})));
         service.initialize();
     });
 
@@ -104,7 +108,6 @@ describe('Shapes Graph State service', function() {
         utilStub = null;
         shapesGraphManagerStub = null;
         catalogManagerStub = null;
-        prefixesStub = null;
     });
 
     it('should reset variables', function() {
@@ -129,14 +132,12 @@ describe('Shapes Graph State service', function() {
             service.listItem.versionedRdfRecord.recordId = 'test';
             service.listItem.inProgressCommit = new Difference();
             service.listItem.inProgressCommit.additions = [{'@id': 'testId'}];
-            service.listItem.inProgressCommit.deletions = [];
             expect(service.isCommittable()).toEqual(true);
         });
     });
     it('should clear the in progress commit', function() {
         service.listItem.inProgressCommit = new Difference();
         service.listItem.inProgressCommit.additions = [{'@id': 'testId'}];
-        service.listItem.inProgressCommit.deletions = [];
         service.clearInProgressCommit();
         expect(service.listItem.inProgressCommit).toEqual(new Difference());
     });
@@ -149,7 +150,7 @@ describe('Shapes Graph State service', function() {
                 title: 'title',
                 shapesGraphId: 'shapesGraphId'
             } as VersionedRdfUploadResponse;
-            shapesGraphManagerStub.createShapesGraphRecord.and.returnValue(Promise.resolve(this.createResponse));
+            shapesGraphManagerStub.createShapesGraphRecord.and.resolveTo(this.createResponse);
             this.file = new File([''], 'filename', { type: 'text/html' });
             this.rdfUpload = {
                 title: 'Record Name',
@@ -165,9 +166,9 @@ describe('Shapes Graph State service', function() {
                describe('successfully', function() {
                    it('with a success toast', async function() {
                        await service.uploadShapesGraph(this.rdfUpload);
-                       shapesGraphManagerStub.getShapesGraphMetadata.and.returnValue(Promise.resolve('theId'));
+                       shapesGraphManagerStub.getShapesGraphMetadata.and.resolveTo('theId');
                        expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(this.rdfUpload);
-                       expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                       expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                        expect(shapesGraphManagerStub.getShapesGraphMetadata).toHaveBeenCalledWith(this.createResponse.recordId, this.createResponse.branchId, this.createResponse.commitId, this.createResponse.shapesGraphId);
                        expect(this.createStateSpy).toHaveBeenCalledWith({
                            recordId: this.createResponse.recordId,
@@ -212,7 +213,7 @@ describe('Shapes Graph State service', function() {
                });
                describe('unless an error occurs', function() {
                    beforeEach(function() {
-                      this.createStateSpy.and.returnValue(Promise.reject('Error'));
+                      this.createStateSpy.and.rejectWith('Error');
                    });
                    it('with a success toast', async function() {
                        await service.uploadShapesGraph(this.rdfUpload)
@@ -222,7 +223,7 @@ describe('Shapes Graph State service', function() {
                                expect(response).toEqual('Error');
                            });
                        expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(this.rdfUpload);
-                       expect(utilStub.createSuccessToast).toHaveBeenCalled();
+                       expect(utilStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                        expect(this.createStateSpy).toHaveBeenCalledWith({
                            recordId: this.createResponse.recordId,
                            branchId: this.createResponse.branchId,
@@ -271,7 +272,7 @@ describe('Shapes Graph State service', function() {
                });
             });
             it('unless an error occurs', async function() {
-                shapesGraphManagerStub.createShapesGraphRecord.and.returnValue(Promise.reject('Error'));
+                shapesGraphManagerStub.createShapesGraphRecord.and.rejectWith('Error');
                 await service.uploadShapesGraph(this.rdfUpload,)
                     .then(() => {
                         fail('Promise should have rejected');
@@ -297,7 +298,7 @@ describe('Shapes Graph State service', function() {
                 inProgressCommit: new Difference(),
                 upToDate: true
             };
-            this.catalogDetailsSpy = spyOn(service, 'getCatalogDetails').and.returnValue(Promise.resolve(this.catalogDetailsResponse));
+            this.catalogDetailsSpy = spyOn(service, 'getCatalogDetails').and.resolveTo(this.catalogDetailsResponse);
         });
         it('when the item is already opened', async function() {
             const tempItem = new ShapesGraphListItem();
@@ -311,8 +312,8 @@ describe('Shapes Graph State service', function() {
         });
         describe('when the item is not open and retrieves catalog details', function() {
             it('successfully', async function() {
-                shapesGraphManagerStub.getShapesGraphIRI.and.returnValue(Promise.resolve('theId'));
-                shapesGraphManagerStub.getShapesGraphMetadata.and.returnValue(Promise.resolve([{'@id': 'theId'}]));
+                shapesGraphManagerStub.getShapesGraphIRI.and.resolveTo('theId');
+                shapesGraphManagerStub.getShapesGraphMetadata.and.resolveTo([{'@id': 'theId'}]);
                 const updateShapesGraphMetadataSpy = spyOn(service, 'updateShapesGraphMetadata').and.returnValue(Promise.resolve());
                 await service.openShapesGraph(this.selectedRecord);
                 expect(this.catalogDetailsSpy).toHaveBeenCalledWith(this.selectedRecord.recordId);
@@ -329,7 +330,7 @@ describe('Shapes Graph State service', function() {
                 expect(service.listItem.upToDate).toBeTrue();
             });
             it('unless an error occurs', async function() {
-                this.catalogDetailsSpy.and.returnValue(Promise.reject('Error'));
+                this.catalogDetailsSpy.and.rejectWith('Error');
                 expect(service.listItem).toBeUndefined();
                 await service.openShapesGraph(this.selectedRecord)
                     .then(() => {
@@ -363,7 +364,7 @@ describe('Shapes Graph State service', function() {
             await service.updateShapesGraphMetadata('recordId', 'branch123', 'commitId');
             expect(service.listItem.shapesGraphId).toEqual('theId');
             expect(service.listItem.metadata['@id']).toEqual('theId');
-            expect(service.listItem.masterBranchIri).toEqual('branch123');
+            expect(service.listItem.masterBranchIri).toEqual('');
             expect(service.listItem.userCanModify).toEqual(true);
             expect(service.listItem.userCanModifyMaster).toEqual(true);
             expect(service.list.length).toEqual(1);
@@ -374,7 +375,7 @@ describe('Shapes Graph State service', function() {
             await service.updateShapesGraphMetadata('recordId', 'branch123', 'commitId');
             expect(service.listItem.shapesGraphId).toEqual('theId');
             expect(service.listItem.metadata['@id']).toEqual('theId');
-            expect(service.listItem.masterBranchIri).toEqual('branch123');
+            expect(service.listItem.masterBranchIri).toEqual('');
             expect(service.listItem.userCanModify).toEqual(false);
             expect(service.listItem.userCanModifyMaster).toEqual(false);
             expect(service.list.length).toEqual(1);
@@ -383,7 +384,7 @@ describe('Shapes Graph State service', function() {
     });
     describe('should delete shapes graph', function() {
         beforeEach(function() {
-           this.deleteStateSpy = spyOn(service, 'deleteState').and.returnValue(Promise.resolve());
+           this.deleteStateSpy = spyOn(service, 'deleteState').and.resolveTo();
         });
         describe('first deleting the state', function() {
             describe('then deleting the record', function() {
@@ -393,7 +394,7 @@ describe('Shapes Graph State service', function() {
                     expect(shapesGraphManagerStub.deleteShapesGraphRecord).toHaveBeenCalledWith('recordId');
                 });
                 it('unless an error occurs', async function() {
-                    shapesGraphManagerStub.deleteShapesGraphRecord.and.returnValue(Promise.reject('Error'));
+                    shapesGraphManagerStub.deleteShapesGraphRecord.and.rejectWith('Error');
                     await service.deleteShapesGraph('recordId')
                         .then(() => {
                             fail('Promise should have rejected');
@@ -405,7 +406,7 @@ describe('Shapes Graph State service', function() {
                 });
             });
             it('unless an error occurs', async function() {
-                this.deleteStateSpy.and.returnValue(Promise.reject('Error'));
+                this.deleteStateSpy.and.rejectWith('Error');
                 await service.deleteShapesGraph('recordId')
                     .then(() => {
                         fail('Promise should have rejected');
@@ -429,7 +430,7 @@ describe('Shapes Graph State service', function() {
             this.inProgressCommit = new Difference();
             this.inProgressCommit.additions.push({'change': 'change'});
             service.listItem.inProgressCommit = this.inProgressCommit;
-            this.updateStateSpy = spyOn(service, 'updateState').and.returnValue(Promise.resolve());
+            this.updateStateSpy = spyOn(service, 'updateState').and.resolveTo();
         });
         describe('for a branch and update state', function() {
             beforeEach(function() {
@@ -474,7 +475,7 @@ describe('Shapes Graph State service', function() {
             });
             it('unless an error occurs', async function() {
                 service.listItem = undefined;
-                this.updateStateSpy.and.returnValue(Promise.reject('Error'));
+                this.updateStateSpy.and.rejectWith('Error');
                 await service.changeShapesGraphVersion('recordId', 'branchId', 'commitId', undefined, 'versionTitle')
                     .then(() => {
                         fail('Promise should have rejected');
@@ -528,7 +529,7 @@ describe('Shapes Graph State service', function() {
             });
             it('unless an error occurs', async function() {
                 service.listItem = undefined;
-                this.updateStateSpy.and.returnValue(Promise.reject('Error'));
+                this.updateStateSpy.and.rejectWith('Error');
                 await service.changeShapesGraphVersion('recordId', undefined, 'commitId', 'tagId', 'versionTitle')
                     .then(() => {
                         fail('Promise should have rejected');
@@ -542,7 +543,8 @@ describe('Shapes Graph State service', function() {
     });
     describe('should delete shapes graph branch', function() {
         beforeEach(function() {
-            this.deleteBranchStateSpy = spyOn(service, 'deleteBranchState').and.returnValue(Promise.resolve());
+            this.deleteBranchStateSpy = spyOn(service, 'deleteBranchState').and.resolveTo();
+            catalogManagerStub.deleteRecordBranch.and.returnValue(of(null));
         });
         describe('first deleting the branch', function() {
             describe('then deleting the branch state', function() {
@@ -552,7 +554,7 @@ describe('Shapes Graph State service', function() {
                     expect(this.deleteBranchStateSpy).toHaveBeenCalledWith('recordId', 'branchId');
                 });
                 it('unless an error occurs', async function() {
-                    this.deleteBranchStateSpy.and.returnValue(Promise.reject('Error'));
+                    this.deleteBranchStateSpy.and.rejectWith('Error');
                     await service.deleteShapesGraphBranch('recordId', 'branchId')
                         .then(() => {
                             fail('Promise should have rejected');
@@ -564,7 +566,7 @@ describe('Shapes Graph State service', function() {
                 });
             });
             it('unless an error occurs', async function() {
-                catalogManagerStub.deleteRecordBranch.and.returnValue(Promise.reject('Error'));
+                catalogManagerStub.deleteRecordBranch.and.returnValue(throwError('Error'));
                 await service.deleteShapesGraphBranch('recordId', 'branchId')
                     .then(() => {
                         fail('Promise should have rejected');
@@ -577,16 +579,16 @@ describe('Shapes Graph State service', function() {
     });
     describe('should merge shapes graph branches', function() {
         beforeEach(function() {
-            service.listItem.versionedRdfRecord.recordId = 'recordId'
+            service.listItem.versionedRdfRecord.recordId = 'recordId';
             service.listItem.versionedRdfRecord.branchId = 'sourceBranchId';
             service.listItem.merge.target = {
                 '@id': 'targetBranchId',
                 '@type': [],
-                [prefixesStub.dcterms + 'title']: [{'@value': 'branchTitle'}]
+                [DCTERMS + 'title']: [{'@value': 'branchTitle'}]
             };
-            this.changeShapesGraphVersionSpy = spyOn(service, 'changeShapesGraphVersion').and.returnValue(Promise.resolve());
-            this.deleteShapesGraphBranchSpy = spyOn(service, 'deleteShapesGraphBranch').and.returnValue(Promise.resolve());
-            catalogManagerStub.mergeBranches.and.returnValue(Promise.resolve('commitId'));
+            this.changeShapesGraphVersionSpy = spyOn(service, 'changeShapesGraphVersion').and.resolveTo();
+            this.deleteShapesGraphBranchSpy = spyOn(service, 'deleteShapesGraphBranch').and.resolveTo();
+            catalogManagerStub.mergeBranches.and.returnValue(of('commitId'));
         });
         describe('and delete the branch if the checkbox is', function() {
             describe('checked', function() {
@@ -601,7 +603,7 @@ describe('Shapes Graph State service', function() {
                         expect(this.changeShapesGraphVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle');
                     });
                     it('unless an error occurs', async function() {
-                        this.changeShapesGraphVersionSpy.and.returnValue(Promise.reject('Error'));
+                        this.changeShapesGraphVersionSpy.and.rejectWith('Error');
                         await service.merge()
                             .then(() => {
                                 fail('Promise should have rejected');
@@ -614,7 +616,7 @@ describe('Shapes Graph State service', function() {
                     });
                 });
                 it('unless an error occurs', async function() {
-                    this.deleteShapesGraphBranchSpy.and.returnValue(Promise.reject('Error'));
+                    this.deleteShapesGraphBranchSpy.and.rejectWith('Error');
                     await service.merge()
                         .then(() => {
                             fail('Promise should have rejected');
@@ -638,7 +640,7 @@ describe('Shapes Graph State service', function() {
                         expect(this.changeShapesGraphVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle');
                     });
                     it('unless an error occurs', async function() {
-                        this.changeShapesGraphVersionSpy.and.returnValue(Promise.reject('Error'));
+                        this.changeShapesGraphVersionSpy.and.rejectWith('Error');
                         await service.merge()
                             .then(() => {
                                 fail('Promise should have rejected');
@@ -653,7 +655,7 @@ describe('Shapes Graph State service', function() {
             });
         });
         it('unless an error occurs', async function() {
-            catalogManagerStub.mergeBranches.and.returnValue(Promise.reject('Error'));
+            catalogManagerStub.mergeBranches.and.returnValue(throwError('Error'));
             await service.merge()
                 .then(() => {
                     fail('Promise should have rejected');

@@ -20,21 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component } from "@angular/core";
-import { SpinnerService } from "./spinner.service";
+import { Component } from '@angular/core';
 
 /**
  * @class AppComponent
  * 
- * Main component for the Mobi application. Currently just contains a MatSpinner that is displayed if there are any
- * pending HTTP requests coming from Angular code.
+ * Main component for the Mobi application.
  */
 @Component({
     selector: 'mobi-app',
     template: `
-        <div *ngIf="ss.pendingRequests > 0" class="app-spinner-container"><mat-spinner class="app-spinner" diameter="50"></mat-spinner></div>
+        <div></div>
     `
 })
 export class AppComponent {
-    constructor(public ss: SpinnerService) {}
+    constructor() {}
 }

@@ -20,80 +20,79 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { remove, sortBy, trim, map } from 'lodash';
+import { ENTER } from '@angular/cdk/keycodes';
+import { Component, Inject } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatChipInputEvent, MatDialogRef } from '@angular/material';
+import { trim, map } from 'lodash';
 
-const template = require('./newDatasetOverlay.component.html');
+import { REGEX } from '../../../constants';
+import { DatasetRecordConfig } from '../../../shared/models/datasetRecordConfig.interface';
+import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
+import { OntologyDetails } from '../../models/ontologyDetails.interface';
 
 /**
- * @ngdoc component
- * @name datasets.component:newDatasetOverlay
- * @requires shared.service:datasetManagerService
- * @requires shared.service:datasetStateService
- * @requires shared.service:utilService
+ * @class datasets.NewDatasetOverlayComponent
  *
- * @description
- * `newDatasetOverlay` is a component that creates content for a modal with a form containing fields for
- * creating a new Dataset Record. The fields are for the title, repository id, dataset IRI, description,
- * {@link shared.component:keywordSelect keywords}, and
- * {@link datasets.component:datasetsOntologyPicker ontologies to be linked} to the new Dataset
- * Record. The repository id is a static field for now. Meant to be used in conjunction with the
- * {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
+ * A component that creates content for a modal with a form containing fields for creating a new Dataset Record. The
+ * fields are for the title, repository id, dataset IRI, description, keywords, and
+ * {@link datasets.DatasetsOntologyPickerComponent ontologies to be linked} to the new Dataset Record. The repository
+ * id is a static field for now. Meant to be used in conjunction with the `MatDialog` service.
  */
-const newDatasetOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: newDatasetOverlayComponentCtrl
-};
+@Component({
+    selector: 'new-dataset-overlay',
+    templateUrl: './newDatasetOverlay.component.html'
+})
+export class NewDatasetOverlayComponent {
+    iriPattern = REGEX.IRI;
+    error = '';
+    createDatasetForm = this.fb.group({
+        title: ['', [ Validators.required]],
+        description: [''],
+        datasetIRI: ['', [Validators.pattern(this.iriPattern)]],
+        keywords: [[]]
+    });
+    repositoryId = 'system';
+    selectedOntologies: OntologyDetails[] = [];
+    readonly separatorKeysCodes: number[] = [ENTER];
 
-newDatasetOverlayComponentCtrl.$inject = ['REGEX', 'datasetManagerService', 'datasetStateService', 'utilService'];
+    constructor(private dialogRef: MatDialogRef<NewDatasetOverlayComponent>, private fb: FormBuilder,
+        public dm: DatasetManagerService, @Inject('utilService') public util) {}
 
-function newDatasetOverlayComponentCtrl(REGEX, datasetManagerService, datasetStateService, utilService) {
-    var dvm = this;
-    var state = datasetStateService;
-    var dm = datasetManagerService;
-    dvm.util = utilService;
-    dvm.error = '';
-    dvm.recordConfig = {
-        title: '',
-        repositoryId: 'system',
-        datasetIRI: '',
-        description: ''
-    };
-    dvm.keywords = [];
-    dvm.selectedOntologies = [];
-    dvm.iriPattern = REGEX.IRI;
+    create(): void {
+        const recordConfig: DatasetRecordConfig = {
+            title: this.createDatasetForm.controls.title.value,
+            description: this.createDatasetForm.controls.description.value,
+            repositoryId: this.repositoryId,
+            datasetIRI: this.createDatasetForm.controls.datasetIRI.value || '',
+            keywords: map(this.createDatasetForm.controls.keywords.value, trim),
+            ontologies: map(this.selectedOntologies, 'recordId')
+        };
+        this.dm.createDatasetRecord(recordConfig)
+            .subscribe(() => {
+                this.util.createSuccessToast('Dataset successfully created');
+                this.dialogRef.close(true);
+            }, error => this.error = error);
+    }
+    addKeyword(event: MatChipInputEvent): void {
+        const input = event.input;
+        const value = event.value;
 
-    dvm.selectOntology = function(ontology) {
-        dvm.selectedOntologies.push(ontology);
-        dvm.selectedOntologies = sortBy(dvm.selectedOntologies, 'title');
-    }
-    dvm.unselectOntology = function(ontology) {
-        remove(dvm.selectedOntologies, {recordId: ontology.recordId});
-    }
-    dvm.create = function() {
-        dvm.recordConfig.keywords = map(dvm.keywords, trim);
-        dvm.recordConfig.ontologies = map(dvm.selectedOntologies, 'recordId');
-        dm.createDatasetRecord(dvm.recordConfig)
-            .then(() => {
-                dvm.util.createSuccessToast('Dataset successfully created');
-                state.setResults();
-                dvm.close();
-            }, onError);
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
-    }
+        if ((value || '').trim()) {
+            this.createDatasetForm.controls.keywords.setValue([...this.createDatasetForm.controls.keywords.value, value.trim()]);
+            this.createDatasetForm.controls.keywords.updateValueAndValidity();
+        }
 
-    function onError(errorMessage) {
-        dvm.error = errorMessage;
+        // Reset the input value
+        if (input) {
+            input.value = '';
+        }
+    }
+    removeKeyword(keyword: string): void {
+        const idx = this.createDatasetForm.controls.keywords.value.indexOf(keyword);
+        if (idx >= 0) {
+            this.createDatasetForm.controls.keywords.value.splice(idx, 1);
+            this.createDatasetForm.controls.keywords.updateValueAndValidity();
+        }
     }
 }
-
-export default newDatasetOverlayComponent;

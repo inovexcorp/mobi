@@ -20,95 +20,110 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
-import { filter, map, includes } from 'lodash';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { MatAutocompleteSelectedEvent, MatDialogRef } from '@angular/material';
+import { Observable } from 'rxjs';
+import { debounceTime, map, startWith, switchMap } from 'rxjs/operators';
 
-const template = require('./runMappingDatasetOverlay.component.html');
+import { DCTERMS } from '../../../prefixes';
+import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
+import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
 
-/**
- * @ngdoc component
- * @name mapper.component:runMappingDatasetOverlay
- * @requires shared.service:mapperStateService
- * @requires shared.service:delimitedManagerService
- * @requires shared.service:datasetManagerService
- * @requires shared.service:utilService
- *
- * @description
- * `runMappingDatasetOverlay` is a component that creates content for a modal that contains a configuration
- * settings for running the currently selected {@link shared.service:mapperStateService#mapping mapping}
- * against the uploaded {@link shared.service:delimitedManagerService#dataRows delimited data}.
- * This includes a `ui-select` to determine which dataset to upload the results of a mapping into. Meant to be
- * used in conjunction with the {@link shared.service:modalService}.
- *
- * @param {Function} close A function that closes the modal
- * @param {Function} dismiss A function that dismisses the modal
- */
-const runMappingDatasetOverlayComponent = {
-    template,
-    bindings: {
-        close: '&',
-        dismiss: '&'
-    },
-    controllerAs: 'dvm',
-    controller: runMappingDatasetOverlayComponentCtrl,
-};
-
-runMappingDatasetOverlayComponentCtrl.$inject = ['mapperStateService', 'delimitedManagerService', 'datasetManagerService', 'utilService'];
-
-function runMappingDatasetOverlayComponentCtrl(mapperStateService, delimitedManagerService, datasetManagerService, utilService) {
-    var dvm = this;
-    var dam = datasetManagerService;
-    var state = mapperStateService;
-    var dm = delimitedManagerService;
-    var util = utilService;
-    dvm.errorMessage = '';
-    dvm.datasetRecordIRI = '';
-    dvm.datasetRecords = [];
-    dvm.selectRecords = [];
-
-    dvm.$onInit = function() {
-        dam.getDatasetRecords().then(response => {
-            dvm.datasetRecords = map(response.data, arr => {
-                var record = angular.copy(dam.getRecordFromArray(arr));
-                record.title = util.getDctermsValue(record, 'title');
-                return record;
-            });
-        }, onError);
-    }
-    dvm.setRecords = function(searchText) {
-        var tempRecords = angular.copy(dvm.datasetRecords);
-        if (searchText) {
-            tempRecords = filter(tempRecords, record => includes(record.title.toLowerCase(), searchText.toLowerCase()));
-        }
-        tempRecords.sort((record1, record2) => record1.title.localeCompare(record2.title));
-        dvm.selectRecords = tempRecords.slice(0, 100);
-    }
-    dvm.run = function() {
-        if (state.editMapping && state.isMappingChanged()) {
-            state.saveMapping().then(runMapping, onError);
-        } else {
-            runMapping(state.mapping.record.id);
-        }
-    }
-    dvm.cancel = function() {
-        dvm.dismiss();
-    }
-
-    function onError(errorMessage) {
-        dvm.errorMessage = errorMessage;
-    }
-    function runMapping(id) {
-        state.mapping.record.id = id;
-        dm.mapAndUpload(id, dvm.datasetRecordIRI).then(reset, onError);
-    }
-    function reset() {
-        state.step = state.selectMappingStep;
-        state.initialize();
-        state.resetEdit();
-        dm.reset();
-        util.createSuccessToast('Successfully ran mapping');
-        dvm.close();
-    }
+interface DatasetPreview {
+    id: string,
+    title: string
 }
 
-export default runMappingDatasetOverlayComponent;
+/**
+ * @class mapper.RunMappingDatasetOverlayComponent
+ *
+ * A component that creates content for a modal that contains a configuration settings for running the currently
+ * selected {@link shared.MapperStateService#selected mapping} against the uploaded
+ * {@link shared.DelimitedManagerService#dataRows}. This includes a `mat-autocomplete` to determine which dataset to
+ * upload the results of a mapping into. Meant to be used in conjunction with the `MatDialog` service.
+ */
+@Component({
+    selector: 'run-mapping-dataset-overlay',
+    templateUrl: './runMappingDatasetOverlay.component.html'
+})
+export class RunMappingDatasetOverlayComponent implements OnInit {
+    errorMessage = '';
+    datasetRecordIRI = '';
+    runMappingDatasetForm = this.fb.group({
+        datasetSelect: ['', Validators.required]
+    });
+
+    filteredDatasets: Observable<DatasetPreview[]>;
+
+    constructor(private dialogRef: MatDialogRef<RunMappingDatasetOverlayComponent>, private fb: FormBuilder,
+        private state: MapperStateService, private dm: DelimitedManagerService, private dam: DatasetManagerService,
+        @Inject('utilService') private util) {}
+
+    ngOnInit(): void {
+        this.filteredDatasets = this.runMappingDatasetForm.controls.datasetSelect.valueChanges
+            .pipe(
+                debounceTime(500),
+                startWith<string | DatasetPreview>(''),
+                switchMap(val => {
+                    const searchText = typeof val === 'string' ?
+                        val :
+                        val ?
+                            val.title :
+                            undefined;
+                    return this.dam.getDatasetRecords({
+                        searchText,
+                        limit: 100,
+                        pageIndex: 0,
+                        sortOption: {
+                            label: 'Title',
+                            field: DCTERMS + 'title',
+                            asc: true
+                        }
+                    }).pipe(
+                        map(response => {
+                            return response.body.map(arr => {
+                                const record = this.dam.getRecordFromArray(arr);
+                                return {
+                                    id: record['@id'],
+                                    title: this.util.getDctermsValue(record, 'title')
+                                };
+                            });
+                        })
+                    );
+                })
+            );
+    }
+    selectDataset(event: MatAutocompleteSelectedEvent): void {
+        this.datasetRecordIRI = event.option.value?.id;
+    }
+    getDisplayText(value: DatasetPreview): string {
+        return value ? value.title : '';
+    }
+    run(): void {
+        if (this.state.editMapping && this.state.isMappingChanged()) {
+            this.state.saveMapping()
+                .subscribe(id => this._runMapping(id), error => this._onError(error));
+        } else {
+            this._runMapping(this.state.selected.record.id);
+        }
+    }
+
+    private _onError(errorMessage: string): void {
+        this.errorMessage = errorMessage;
+    }
+    private _runMapping(id: string): void {
+        this.dm.mapAndUpload(id, this.datasetRecordIRI)
+            .subscribe(() => this._reset(), error => this._onError(error));
+    }
+    private _reset(): void {
+        this.errorMessage = '';
+        this.state.step = this.state.selectMappingStep;
+        this.state.initialize();
+        this.state.resetEdit();
+        this.dm.reset();
+        this.util.createSuccessToast('Successfully ran mapping');
+        this.dialogRef.close();
+    }
+}

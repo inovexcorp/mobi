@@ -26,7 +26,7 @@ import { MatButtonModule, MatDialogModule, MatDialogRef } from '@angular/materia
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { configureTestSuite } from 'ng-bullet';
 
-import { cleanStylesFromDOM, mockCatalogManager } from '../../../../../../test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -41,14 +41,16 @@ import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { SplitIRIPipe } from '../../../shared/pipes/splitIRI.pipe';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { CreateTagModal } from './createTagModal.component';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { of, throwError } from 'rxjs';
 
 describe('Create tag component', function() {
     let component: CreateTagModal;
     let element: DebugElement;
     let fixture: ComponentFixture<CreateTagModal>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<CreateTagModal>>;
+    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let shapesGraphStateStub;
-    let catalogManagerStub;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -72,7 +74,7 @@ describe('Create tag component', function() {
             ],
             providers: [
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
-                { provide: 'catalogManagerService', useClass: mockCatalogManager },
+                MockProvider(CatalogManagerService),
                 MockProvider(ShapesGraphStateService),
                 SplitIRIPipe,
                 CamelCasePipe
@@ -92,9 +94,9 @@ describe('Create tag component', function() {
         shapesGraphStateStub.listItem.versionedRdfRecord.commitId = 'commitId';
         shapesGraphStateStub.changeShapesGraphVersion.and.returnValue(Promise.resolve());
 
-        catalogManagerStub = TestBed.get('catalogManagerService');
+        catalogManagerStub = TestBed.get(CatalogManagerService);
         catalogManagerStub.localCatalog = {'@id': 'catalog'};
-        catalogManagerStub.createRecordTag.and.returnValue(Promise.resolve('urn:tag'));
+        catalogManagerStub.createRecordTag.and.returnValue(of('urn:tag'));
     });
 
     afterEach(function() {
@@ -172,7 +174,7 @@ describe('Create tag component', function() {
                 });
             });
             it('unless an error occurs', async function() {
-                catalogManagerStub.createRecordTag.and.returnValue(Promise.reject('Error'));
+                catalogManagerStub.createRecordTag.and.returnValue(throwError('Error'));
                 await component.createTag();
 
                 expect(catalogManagerStub.createRecordTag).toHaveBeenCalledWith('recordId', 'catalog', this.tagConfig);

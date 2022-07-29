@@ -27,6 +27,7 @@ import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent } from 'ng-mocks';
+
 import { cleanStylesFromDOM, mockUtil } from '../../../../../../test/ts/Shared';
 import { Difference } from '../../models/difference.class';
 import { StatementContainerComponent } from '../statementContainer/statementContainer.component';
@@ -188,8 +189,8 @@ describe('Resolve Conflicts Form component', function() {
             component.index = 0;
             component.selected = {};
             component.changes = {
-                left: {additions: [], deletions: [{}]},
-                right: {additions: [{}], deletions: []}
+                left: {additions: [], deletions: [{o: {'@value': ''}, p: ''}]},
+                right: {additions: [{o: {'@value': ''}, p: ''}], deletions: []}
             };
 
             fixture.detectChanges();

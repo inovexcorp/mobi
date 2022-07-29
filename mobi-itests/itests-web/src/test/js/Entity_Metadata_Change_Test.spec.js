@@ -149,7 +149,7 @@ module.exports = {
         browser
             .useCss()
             .waitForElementNotPresent('create-class-overlay .modal-header h3')
-            .waitForElementNotPresent('div.spinner')
+            .waitForElementNotVisible('div.spinner')
             .useXpath()
             .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
             .assert.visible('//value-display//div//span[text()[contains(.,"A Edited")]]')
@@ -192,7 +192,7 @@ module.exports = {
             .click('ontology-editor-page open-ontology-tab search-bar')
             .keys('Metadata Test Ontology')
             .keys(browser.Keys.ENTER)
-            .waitForElementNotPresent('.spinner')
+            .waitForElementNotVisible('.spinner')
             .waitForElementVisible('ontology-editor-page open-ontology-tab')
             .setValue('open-ontology-tab search-bar input', 'Metadata')
             .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
@@ -200,7 +200,7 @@ module.exports = {
             .assert.textContains('//open-ontology-tab//small', 'MetadataTestOntology')
             .click('//open-ontology-tab//small[text()[contains(.,"MetadataTestOntology")]]')
             .useCss()
-            .waitForElementNotPresent('.spinner')
+            .waitForElementNotVisible('.spinner')
             .waitForElementPresent('ontology-editor-page ontology-tab')
             .waitForElementVisible('ontology-editor-page ontology-tab project-tab imports-block')
     },

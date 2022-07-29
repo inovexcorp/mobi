@@ -21,7 +21,8 @@
  * #L%
  */
 
-const template = require('./manageRecordButton.component.html');
+import { Component, Inject, Input, OnChanges, OnInit, Output, SimpleChanges, EventEmitter } from '@angular/core';
+import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 
 /**
  * @ngdoc component
@@ -37,58 +38,59 @@ const template = require('./manageRecordButton.component.html');
  * @param {string} flat Whether the button should be flat. The presence of the attribute is enough to set it
  * @param {string} stopProp Whether propagation should be stopped on click event. The presence of the attribute is enough to set it
  */
-const manageRecordButtonComponent = {
-    template,
-    bindings: {
-        record: '<',
-        flat: '@',
-        stopProp: '@',
-        manageEvent: '&'
-    },
-    controllerAs: 'dvm',
-    controller: manageRecordButtonComponentCtrl
-};
 
-manageRecordButtonComponentCtrl.$inject = ['policyEnforcementService', 'policyManagerService'];
+@Component({
+    selector: 'manage-record-button',
+    templateUrl: './manageRecordButton.component.html'
+})
 
-function manageRecordButtonComponentCtrl(policyEnforcementService, policyManagerService) {
-    const dvm = this;
+export class ManageRecordButtonComponent implements OnInit, OnChanges {
+    @Input() record = undefined;
+    @Input() flat = false;
+    @Input() stopPropagation = false;
+    @Output() manageEvent = new EventEmitter<any>();
+   
+    recordType = '';
+    isFlat = false;
+    showButton = false;
 
-    dvm.record = undefined;
-    dvm.stopPropagation = false;
-    dvm.recordType = '';
-    dvm.isFlat = false;
-    dvm.showButton = false;
+    constructor(public pm: PolicyManagerService, @Inject('policyEnforcementService') public pe) {}
 
-    dvm.$onInit = function() {
-        update();
+    ngOnInit():void {
+        this.update();
     }
-    dvm.$onChanges = function() {
-        update();
+
+    ngOnChanges(changes: SimpleChanges): void {
+        this.update();
     }
-    dvm.manageRecord = function(event) {
-        if (dvm.stopPropagation) {
+
+    public manageRecord(event):void {
+        if (this.stopPropagation) {
             event.stopPropagation();
         }
-        dvm.manageEvent();
+        this.trigerManageEvent();
     }
-    function update() {
-        dvm.isFlat = dvm.flat !== undefined;
-        dvm.stopPropagation = dvm.stopProp !== undefined;
-        if (dvm.record !== undefined){
+
+    private trigerManageEvent(): void {
+        this.manageEvent.emit(true);
+    }
+
+    private update():void {
+        this.stopPropagation = this.stopPropagation !== undefined;
+        this.isFlat = this.flat !== undefined;
+        if (this.record !== undefined){
             const managePermissionRequest = {
-                resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(dvm.record['@id']),
-                actionId: policyManagerService.actionUpdate
+                resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(this.record['@id']),
+                actionId: this.pm.actionUpdate
             }
-            policyEnforcementService.evaluateRequest(managePermissionRequest).then(decision => {
-                dvm.showButton = decision == policyEnforcementService.permit;
+
+            this.pe.evaluateRequest(managePermissionRequest).then(decision => {
+                this.showButton = decision === this.pe.permit;
             }, () => { 
-                dvm.showButton = false;
+                this.showButton = false;
             });
         } else {
-            dvm.showButton = false;
+            this.showButton = false;
         }
     }
 }
-
-export default manageRecordButtonComponent;

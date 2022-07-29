@@ -32,7 +32,7 @@ var dropDownSelector = '//query-tab//form//dataset-form-group//ul[contains(@clas
 var Onto1 = process.cwd()+ '/src/test/resources/rdf_files/EventOntology.ttl'
 
 module.exports = {
-    '@tags': ['sanity', "ontology-editor"],
+    '@tags': ['sanity', 'ontology-editor'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
@@ -44,27 +44,31 @@ module.exports = {
 
     'Step 3: Navigate to datasets tab' : function (browser) {
         browser
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/datasets"]')
+            .click('xpath', '//div//ul//a[@class="nav-link"][@href= "#/datasets"]')
     },
 
     'Step 4: Create a new Dataset' : function (browser) {
+        browser.globals.wait_for_no_spinners(browser)
         browser
-            .waitForElementNotPresent('div.spinner')
-            .click('div.datasets-tabset button.btn-primary')
+            .click('div.datasets-page button.mat-primary')
             .waitForElementVisible('new-dataset-overlay')
-            .setValue('div.form-group input[name=title]', 'Event ontology data')
-            .setValue('div.form-group textarea.form-control', 'A dataset consisting of information about events')
-            .click('xpath', '//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"EventOntology.ttl")]]//ancestor::md-list-item//md-checkbox')
-            .waitForElementNotPresent('div.spinner')
-            .click('div.modal-footer button.btn-primary')
+            .waitForElementVisible('new-dataset-overlay input[name="title"]')
+            .setValue('div.mat-dialog-content input[name=title]', 'Event ontology data')
+            .setValue('div.mat-dialog-content textarea', 'A dataset consisting of information about events')
+            .click('xpath', '//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"EventOntology.ttl")]]//ancestor::mat-list-option')
+        browser.globals.wait_for_no_spinners(browser)
+        browser
+            .click('div.mat-dialog-actions button.mat-primary')
     },
     'Step 5: Validate dataset Appearance' : function (browser) {
+        browser.globals.wait_for_no_spinners(browser)
         browser
-            .waitForElementNotPresent('div.spinner')
             .waitForElementPresent('datasets-list')
+            .waitForElementPresent('div.dataset-info')
+            .waitForElementPresent('div.dataset-info h3')
             .useXpath()
-            .waitForElementPresent('//div[contains(@class, "dataset-info")]')
-            .assert.visible('//div[contains(@class, "dataset-info")]//h3[text()[contains(.,"Event ontology data")]]')
+            .assert.visible('//div[contains(@class, "dataset-info")]//div//h3[text()[contains(.,"Event ontology data")]]')
+            .useCss()
     },
     'Step 6: Click Upload data' : function (browser) {
         browser
@@ -79,23 +83,23 @@ module.exports = {
     },
     'Step 7: Submit data' : function (browser) {
         browser
-            .click('//button[text()[contains(.,"Submit")]]')
-            .waitForElementVisible('//div[@id="toast-container"]')
-            .assert.visible('//div[@id="toast-container"]')
-            .waitForElementNotPresent('//div[contains(@class, "ng-animate")]')
-            .waitForElementNotPresent('//div[contains(@class,"toast")]')
+            .click('div.mat-dialog-actions button.mat-primary')
+            .waitForElementVisible('div#toast-container')
+            .assert.visible('div#toast-container')
+        browser.globals.wait_for_no_spinners(browser)
     },
     'Step 8: Navigate to Discover' : function (browser) {
         browser
+            .useXpath()
             .click('//div//ul//a[@class="nav-link"][@href="#/discover"]')
             .waitForElementVisible('//discover-page')
-            .assert.visible('//material-tabset')
+            .assert.visible('//mat-tab-group')
     },
     'Step 9: Navigate to Discover Query tab' : function (browser) {
         browser
-            .click('//material-tabset//ul[contains(@class,"nav-tabs")]//li//a//span[text()[contains(., "Query")]]')
-            .waitForElementVisible('//discover-tabset//query-tab')
-            .waitForElementVisible('//discover-tabset//query-tab//form')
+            .click('//mat-tab-group//div[contains(@class,"mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(., "Query")]]')
+            .waitForElementVisible('//query-tab')
+            .waitForElementVisible('//query-tab//form')
             .assert.visible('//query-tab//form//dataset-form-group')
             .assert.visible('//query-tab//form//dataset-form-group//a[text()[contains(., "Clear")]]')
             .assert.visible('//query-tab//form//div[contains(@class, "discover-query")]')
@@ -110,7 +114,7 @@ module.exports = {
             .click('//query-tab//form//button')
             .waitForElementVisible('//query-tab//form//div[contains(@class, "yasr")]')
             .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "yasr_header")]')
-            .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "yasr_header")]//div[contains(@class, "yasr_btnGroup")]')
+            .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "yasr_header")]//ul[contains(@class, "yasr_btnGroup")]')
             .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "yasr_header")]//div[contains(@class, "yasr_response_chip")]')
             .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "yasr_header")]//div[contains(@class, "yasr_plugin_control")]')
             .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//table')

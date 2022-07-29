@@ -21,6 +21,10 @@
  * #L%
  */
 import { concat, find, get, noop, remove } from 'lodash';
+import { first } from 'rxjs/operators';
+
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 import './openOntologySelect.component.scss';
 
@@ -60,7 +64,7 @@ const openOntologySelectComponent = {
 
 openOntologySelectComponentCtrl.$inject = ['$q', '$timeout', 'catalogManagerService', 'ontologyStateService', 'prefixes', 'ontologyManagerService', 'utilService', 'modalService'];
 
-function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService, ontologyStateService, prefixes, ontologyManagerService, utilService, modalService) {
+function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService: CatalogManagerService, ontologyStateService, prefixes, ontologyManagerService, utilService, modalService) {
     var dvm = this;
     var om = ontologyManagerService;
 
@@ -111,9 +115,9 @@ function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService, on
         if (dvm.cm.isBranch(item)) {
             var branchId = item['@id'];
             var commitId = dvm.util.getPropertyId(find(dvm.state.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]}), prefixes.ontologyState + 'commit');
-            dvm.cm.getRecordBranch(branchId, dvm.listItem.ontologyRecord.recordId, catalogId)
-                .then(headCommit => {
-                    var headCommitId = get(headCommit, ["http://mobi.com/ontologies/catalog#head", 0, "@id"], '');
+            dvm.cm.getRecordBranch(branchId, dvm.listItem.ontologyRecord.recordId, catalogId).pipe(first()).toPromise()
+                .then((branch: JSONLDObject) => {
+                    var headCommitId = get(branch, ["http://mobi.com/ontologies/catalog#head", 0, "@id"], '');
                     if (!commitId) {
                         commitId = headCommitId;
                     }
@@ -126,8 +130,8 @@ function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService, on
         } else if (dvm.cm.isTag(item)) {
             var tagId = item['@id'];
             var commitId = dvm.util.getPropertyId(item, prefixes.catalog + 'commit');
-            dvm.cm.getCommit(commitId)
-                .then(commit => dvm.os.updateOntologyWithCommit(dvm.listItem.ontologyRecord.recordId, commitId, tagId), $q.reject)
+            dvm.cm.getCommit(commitId).pipe(first()).toPromise()
+                .then(() => dvm.os.updateOntologyWithCommit(dvm.listItem.ontologyRecord.recordId, commitId, tagId), $q.reject)
                 .then(() => {
                     setSelectList();
                     dvm.os.resetStateTabs(dvm.listItem);
@@ -157,7 +161,7 @@ function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService, on
             .then(() => dvm.os.deleteOntologyBranchState(dvm.listItem.ontologyRecord.recordId, branch['@id']), $q.reject)
             .then(() => {
                 if (!dvm.os.isStateBranch(dvm.currentState)) {
-                    dvm.cm.getCommit(dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'commit'))
+                    dvm.cm.getCommit(dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'commit')).pipe(first()).toPromise()
                         .then(noop, () => {
                             dvm.util.createWarningToast((dvm.os.isStateTag(dvm.currentState) ? 'Tag' : 'Commit') + ' no longer exists. Opening MASTER');
                             dvm.changeEntity({'@id': dvm.listItem.masterBranchIRI, '@type': [prefixes.catalog + 'Branch']});
@@ -172,7 +176,7 @@ function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService, on
             .then(() => {
                 remove(dvm.listItem.tags, {'@id': tag['@id']});
                 if (!dvm.os.isStateTag(dvm.currentState)) {
-                    dvm.cm.getCommit(dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'commit'))
+                    dvm.cm.getCommit(dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'commit')).pipe(first()).toPromise()
                         .then(noop, error => {
                             dvm.util.createWarningToast((dvm.os.isStateTag(dvm.currentState) ? 'Tag' : 'Commit') + ' no longer exists. Opening MASTER');
                             dvm.changeEntity({'@id': dvm.listItem.masterBranchIRI, '@type': [prefixes.catalog + 'Branch']});

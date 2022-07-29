@@ -20,48 +20,53 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="modal-header">
-    <h3>{{dvm.state.newProp ? 'Add' : 'Edit'}} Property</h3>
-    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
-</div>
-<div class="modal-body">
-    <form  name="dvm.propMappingForm">
-        <div class="form-group">
-            <custom-label>Property</custom-label>
-            <prop-select props="dvm.state.getPropsByClassMappingId(dvm.state.selectedClassMappingId)"
-                         selected-prop="dvm.selectedProp"
-                         is-disabled-when="!dvm.state.newProp"
-                         change-event="dvm.updateRange(value)"></prop-select>
+<h1 mat-dialog-title>{{state.newProp ? 'Add' : 'Edit'}} Property</h1>
+<form mat-dialog-content [formGroup]="propMappingForm">
+    <prop-select [parentForm]="propMappingForm" [selectedProp]="selectedProp" (selectedPropChange)="selectProp($event)" [properties]="availableProps" [isReadOnly]="!state.newProp"></prop-select>
+    <prop-preview *ngIf="selectedProp" [propObj]="selectedProp.propObj"></prop-preview>
+    <mat-form-field class="range-class-select-container w-100" *ngIf="selectedProp && selectedProp.isObjectProperty">
+        <mat-label>Link To</mat-label>
+        <mat-select placeholder="Link To" formControlName="rangeClass">
+            <mat-option *ngFor="let option of rangeClassOptions" [value]="option">
+                {{option.title}}
+            </mat-option>
+        </mat-select>
+        <mat-error *ngIf="!rangeClass">Range could not be found</mat-error>
+    </mat-form-field>
+    <div *ngIf="selectedProp && !selectedProp.isObjectProperty" class="data-property-container w-100">
+        <column-select [parentForm]="propMappingForm"></column-select>
+        <div class="datatype-select-container">
+            <button mat-button color="primary" (click)="showDatatype()"><i class="fa fa-fw" [ngClass]="showDatatypeSelect ? 'fa-times' : 'fa-plus'"></i>{{showDatatypeSelect ? 'Remove Datatype Override' : 'Override Datatype'}}</button>
+            <!-- TODO: Swap back to iri-select once upgraded -->
+            <mat-form-field *ngIf="showDatatypeSelect" class="datatype-select w-100">
+                <mat-label>Override Datatype</mat-label>
+                <input type="text" matInput
+                    placeholder="Select Datatype..."
+                    aria-label="Override Datatype"
+                    formControlName="datatype"
+                    [matAutocomplete]="datatypeAuto">
+                <mat-autocomplete #datatypeAuto="matAutocomplete" (optionSelected)="selectDatatype($event)" [displayWith]="getDatatypeText.bind(this)">
+                    <mat-optgroup *ngFor="let group of filteredDatatypes | async" [label]="group.ontologyId">
+                        <mat-option *ngFor="let datatypeOption of group.options" [value]="datatypeOption.iri" [title]="datatypeOption.iri">
+                            {{datatypeOption.display}}
+                        </mat-option>
+                    </mat-optgroup>
+                </mat-autocomplete>
+            </mat-form-field>
+            <!-- TODO: Swap back to language-select once upgraded -->
+            <mat-form-field *ngIf="langString && showDatatypeSelect" class="language-select w-100">
+                <mat-label>Language</mat-label>
+                <mat-select placeholder="Select Language..." formControlName="language">
+                    <mat-option *ngFor="let languageOption of languages" [value]="languageOption.value">
+                        <span>{{languageOption.label}} <small class="text-muted">@{{languageOption.label}}</small></span>
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
         </div>
-        <prop-preview ng-if="dvm.selectedProp" prop-obj="dvm.selectedProp.propObj" ontologies="dvm.state.sourceOntologies"></prop-preview>
-        <div class="range-class-select-container form-group" ng-if="dvm.selectedProp && dvm.om.isObjectProperty(dvm.selectedProp.propObj)">
-            <custom-label>Link To</custom-label>
-            <ui-select ng-model="dvm.rangeClassMappingId" ng-disabled="dvm.om.isDeprecated(dvm.rangeClass.classObj)">
-                <ui-select-match placeholder="Select a class...">
-                    <span>{{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
-                </ui-select-match>
-                <ui-select-choices repeat="classMapping['@id'] as classMapping in dvm.classMappings">
-                    <span ng-bind-html="dvm.util.getDctermsValue(classMapping, 'title') | trusted"></span>
-                </ui-select-choices>
-            </ui-select>
-        </div>
-        <div class="column-select-container form-group" ng-if="dvm.selectedProp && !dvm.om.isObjectProperty(dvm.selectedProp.propObj)">
-            <custom-label>Column</custom-label>
-            <column-select selected-column="dvm.selectedColumn" change-event="dvm.selectedColumn = value"></column-select>
-        </div>
-        <div class="datatype-select-container form-group" ng-if="dvm.selectedProp && !dvm.om.isObjectProperty(dvm.selectedProp.propObj)">
-            <a ng-if="!dvm.showDatatypeSelect" class="btn-link btn-show" ng-click="dvm.showDatatypeSelect = true"><i class="fa fa-fw fa-plus"></i>Override Datatype</a>
-            <div ng-if="dvm.showDatatypeSelect" class="btn-container clearfix">
-                <a class="btn-link btn-hide" ng-click="dvm.clearDatatype()"><i class="fa fa-fw fa-times"></i>Remove Datatype Override</a>
-                <iri-select bind-model="dvm.datatype" change-event="dvm.datatype = value" display-text="'Override Datatype'" muted-text="'(Optional)'" select-list="dvm.datatypeMap"></iri-select>
-            </div>
-        </div>
-        <div class="language-select-container" ng-if="dvm.isLangString() && dvm.showDatatypeSelect">
-            <language-select bind-model="dvm.language" change-event="dvm.language = value" disable-clear="true"></language-select>
-        </div>
-    </form>
-</div>
-<div class="modal-footer clearfix">
-    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-click="dvm.set()" ng-disabled="dvm.disableSet()">Submit</button>
+    </div>
+</form>
+<div mat-dialog-actions>
+    <button mat-raised-button (click)="cancel()">Cancel</button>
+    <!-- TODO: Getting expression changed after it was checked -->
+    <button mat-raised-button color="primary" (click)="addProp()" [disabled]="!selectedProp || propMappingForm.pristine || propMappingForm.invalid">Submit</button>
 </div>

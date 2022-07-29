@@ -21,19 +21,23 @@
  * #L%
  */
 
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+
 import {
     cleanStylesFromDOM,
-    mockCatalogManager,
     mockOntologyManager,
     mockUtil
 } from '../../../../../../test/ts/Shared';
 import { CopyClipboardDirective } from '../../directives/copyClipboard/copyClipboard.directive';
+import { CommitDifference } from '../../models/commitDifference.interface';
+import { CatalogManagerService } from '../../services/catalogManager.service';
 import { UserManagerService } from '../../services/userManager.service';
 import { CommitChangesDisplayComponent } from '../commitChangesDisplay/commitChangesDisplay.component';
 import { CommitInfoOverlayComponent } from './commitInfoOverlay.component';
@@ -42,7 +46,7 @@ describe('Commit Info Overlay component', function() {
     let component: CommitInfoOverlayComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<CommitInfoOverlayComponent>;
-    let catalogManagerStub;
+    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let ontologyManagerStub;
     let utilStub;
     let difference;
@@ -68,7 +72,7 @@ describe('Commit Info Overlay component', function() {
                 MockComponent(CopyClipboardDirective)
             ],
             providers: [
-                { provide: 'catalogManagerService', useClass: mockCatalogManager },
+                MockProvider(CatalogManagerService),
                 { provide: 'ontologyManagerService', useClass: mockOntologyManager },
                 { provide: 'utilService', useClass: mockUtil },
                 { provide: MAT_DIALOG_DATA, useValue: data },
@@ -84,10 +88,11 @@ describe('Commit Info Overlay component', function() {
         element = fixture.debugElement;
         difference = {};
         headers = {'has-more-results': 'false'};
-        catalogManagerStub = TestBed.get('catalogManagerService');
+        catalogManagerStub = TestBed.get(CatalogManagerService);
         ontologyManagerStub = TestBed.get('ontologyManagerService');
         utilStub = TestBed.get('utilService');
-        catalogManagerStub.getDifference.and.returnValue(Promise.resolve({data: difference, headers: jasmine.createSpy('headers').and.returnValue(headers)}));
+
+        catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse({body: difference, headers: new HttpHeaders(headers)})));
     });
 
     afterEach(function() {
@@ -118,7 +123,7 @@ describe('Commit Info Overlay component', function() {
 
             difference.additions = [{}];
             difference.deletions = [];
-            catalogManagerStub.getDifference.and.returnValue(Promise.resolve({data: difference, headers: jasmine.createSpy('headers').and.returnValue(headers)}));
+            catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse({body: difference, headers: new HttpHeaders(headers)})));
             await component.retrieveMoreResults(100, 0);
             fixture.detectChanges();
             await fixture.whenStable();
@@ -128,7 +133,7 @@ describe('Commit Info Overlay component', function() {
 
             difference.additions = [];
             difference.deletions = [{}];
-            catalogManagerStub.getDifference.and.returnValue(Promise.resolve({data: difference, headers: jasmine.createSpy('headers').and.returnValue(headers)}));
+            catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse<CommitDifference>({body: difference, headers: new HttpHeaders(headers)})));
             await component.retrieveMoreResults(100, 0);
             fixture.detectChanges();
             await fixture.whenStable();
@@ -152,12 +157,15 @@ describe('Commit Info Overlay component', function() {
             describe('if getDifference resolves', function() {
                 beforeEach(function() {
                     headers = {'has-more-results': 'true'};
-                    catalogManagerStub.getDifference.and.returnValue(Promise.resolve({data: {additions: [{'@id': 'iri1'}], deletions: []}, headers: jasmine.createSpy('headers').and.returnValue(headers)}));
+                    let data = new CommitDifference();
+                    data.additions = [{'@id': 'iri1', '@type': []}];
+                    data.commit = {'@id': commitId, '@type': []};
+                    catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse<CommitDifference>({body: data, headers: new HttpHeaders(headers)})));
                 });
                 describe('and resolve.ontRecordId is set', function() {
                     beforeEach( async function() {
                         component.data = {
-                            commit: {'id':'123'},
+                            commit: {'id': '123'},
                             ontRecordId: 'recordId'
                         };
                         fixture.detectChanges();
@@ -166,15 +174,15 @@ describe('Commit Info Overlay component', function() {
                     });
                     describe('and getOntologyEntityNames', function() {
                         it('resolves', async function() {
-                            ontologyManagerStub.getOntologyEntityNames.and.returnValue({'iri1':{label: 'label'}});
+                            ontologyManagerStub.getOntologyEntityNames.and.returnValue({'iri1': {label: 'label'}});
                             await component.retrieveMoreResults(100, 0);
 
                             expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
                             expect(ontologyManagerStub.getOntologyEntityNames).toHaveBeenCalledWith('recordId', '', '123', false, false, ['iri1']);
-                            expect(component.additions).toEqual([{'@id': 'iri1'}]);
+                            expect(component.additions).toEqual([{'@id': 'iri1', '@type': []}]);
                             expect(component.deletions).toEqual([]);
                             expect(component.hasMoreResults).toEqual(true);
-                            expect(component.entityNames).toEqual({'iri1':{label: 'label'}});
+                            expect(component.entityNames).toEqual({'iri1': {label: 'label'}});
                         });
                         it('rejects', async function() {
                             ontologyManagerStub.getOntologyEntityNames.and.returnValue(Promise.reject('Error Message'));
@@ -188,14 +196,14 @@ describe('Commit Info Overlay component', function() {
                 });
                 it('and resolve.recordId is not set', async function() {
                     component.data = {
-                        commit: {'id':'123'}
+                        commit: {'id': '123'}
                     };
                     fixture.detectChanges();
                     await fixture.whenStable();
 
                     await component.retrieveMoreResults(100, 0);
                     expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
-                    expect(component.additions).toEqual([{'@id': 'iri1'}]);
+                    expect(component.additions).toEqual([{'@id': 'iri1', '@type': []}]);
                     expect(component.deletions).toEqual([]);
                     expect(component.hasMoreResults).toEqual(true);
                     expect(component.entityNames).toEqual({});
@@ -203,12 +211,12 @@ describe('Commit Info Overlay component', function() {
             });
             it('unless getDifference rejects', async function() {
                 component.data = {
-                    commit: {'id':'123'}
+                    commit: {'id': '123'}
                 };
                 fixture.detectChanges();
                 await fixture.whenStable();
 
-                catalogManagerStub.getDifference.and.returnValue(Promise.reject('Error Message'));
+                catalogManagerStub.getDifference.and.returnValue(throwError('Error Message'));
                 await component.retrieveMoreResults(100, 0);
                 expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
                 expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error Message');

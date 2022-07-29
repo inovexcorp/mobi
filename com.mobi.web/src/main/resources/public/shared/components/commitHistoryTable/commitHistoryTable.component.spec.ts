@@ -29,25 +29,26 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { forEach } from 'lodash';
 import { configureTestSuite } from 'ng-bullet';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+
 import {
     cleanStylesFromDOM,
-    mockCatalogManager,
-    mockHttpService,
     mockUtil
 } from '../../../../../../test/ts/Shared';
-import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { Commit } from '../../models/commit.interface';
+import { CatalogManagerService } from '../../services/catalogManager.service';
 import { UserManagerService } from '../../services/userManager.service';
 import { CommitInfoOverlayComponent } from '../commitInfoOverlay/commitInfoOverlay.component';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
+import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
 import { CommitHistoryTableComponent } from './commitHistoryTable.component';
 
 describe('Commit History Table component', function() {
     let component: CommitHistoryTableComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<CommitHistoryTableComponent>;
-    let catalogManagerStub;
+    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
 
     configureTestSuite(function() {
@@ -62,10 +63,10 @@ describe('Commit History Table component', function() {
                 MockComponent(InfoMessageComponent)
             ],
             providers: [
-                { provide: 'utilService', useClass: mockUtil },
-                { provide: 'catalogManagerService', useClass: mockCatalogManager },
-                { provide: 'httpService', useClass: mockHttpService },
+                MockProvider(CatalogManagerService),
                 MockProvider(UserManagerService),
+                MockProvider(ProgressSpinnerService),
+                { provide: 'utilService', useClass: mockUtil },
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                         open: { afterClosed: () => of(true)}
                     })
@@ -80,7 +81,7 @@ describe('Commit History Table component', function() {
         element = fixture.debugElement;
 
         matDialog = TestBed.get(MatDialog);
-        catalogManagerStub = TestBed.get('catalogManagerService');
+        catalogManagerStub = TestBed.get(CatalogManagerService);
 
         this.error = 'error';
         this.commitId = 'commit';
@@ -101,7 +102,7 @@ describe('Commit History Table component', function() {
         component.targetId = this.commitId;
         component.entityId = this.entityId;
         component.recordId = this.recordId;
-        spyOn<EventEmitter<JSONLDObject[]>>(component.receiveCommits, 'emit');
+        spyOn<EventEmitter<Commit[]>>(component.receiveCommits, 'emit');
     });
 
     afterEach(function() {
@@ -206,24 +207,24 @@ describe('Commit History Table component', function() {
                 describe('successfully', function() {
                     describe('for a specific entity id', function() {
                         beforeEach(function() {
-                            catalogManagerStub.getCommitHistory.and.returnValue(Promise.resolve(this.commits));
+                            catalogManagerStub.getCommitHistory.and.returnValue(of(this.commits));
                         });
                         it('drawing the graph', async function() {
                             component.showGraph = true;
                             component.targetId = undefined;
                             await component.getCommits();
 
-                            expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, this.entityId, component.id);
+                            expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, this.entityId, true);
                             expect(component.error).toEqual('');
                             expect(component.commits).toEqual(this.commits);
-                            expect(component.drawGraph).toHaveBeenCalled();
+                            expect(component.drawGraph).toHaveBeenCalledWith();
                         });
                         it('without drawing a graph', async function() {
                             component.showGraph = false;
                             component.targetId = undefined;
                             await component.getCommits();
 
-                            expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, this.entityId, component.id);
+                            expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, this.entityId, true);
                             expect(component.error).toEqual('');
                             expect(component.commits).toEqual(this.commits);
                             expect(component.drawGraph).not.toHaveBeenCalled();
@@ -231,7 +232,7 @@ describe('Commit History Table component', function() {
                     });
                     describe('for a specific commit id', function() {
                         beforeEach(function() {
-                            catalogManagerStub.getCommitHistory.and.returnValue(Promise.resolve(this.commits));
+                            catalogManagerStub.getCommitHistory.and.returnValue(of(this.commits));
                         });
                         it('drawing the graph', async function() {
                             component.showGraph = true;
@@ -239,11 +240,11 @@ describe('Commit History Table component', function() {
                             component.entityId = undefined;
                             await component.getCommits();
 
-                            expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, undefined, component.id);
+                            expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, undefined, true);
                             expect(component.error).toEqual('');
                             expect(component.receiveCommits.emit).toHaveBeenCalledWith(this.commits);
                             expect(component.commits).toEqual(this.commits);
-                            expect(component.drawGraph).toHaveBeenCalled();
+                            expect(component.drawGraph).toHaveBeenCalledWith();
                         });
                         it('without drawing a graph', async function() {
                             component.showGraph = false;
@@ -251,7 +252,7 @@ describe('Commit History Table component', function() {
                             component.entityId = undefined;
                             await component.getCommits();
 
-                            expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, undefined, component.id);
+                            expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, undefined, true);
                             expect(component.error).toEqual('');
                             expect(component.receiveCommits.emit).toHaveBeenCalledWith(this.commits);
                             expect(component.commits).toEqual(this.commits);
@@ -260,25 +261,25 @@ describe('Commit History Table component', function() {
                     });
                     describe('for a difference between commits', function() {
                         beforeEach(function() {
-                            catalogManagerStub.getCommitHistory.and.returnValue(Promise.resolve(this.commits));
+                            catalogManagerStub.getCommitHistory.and.returnValue(of(this.commits));
                         });
                         it('drawing the graph', async function() {
                             component.showGraph = true;
                             component.entityId = undefined;
                             await component.getCommits();
 
-                            expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, this.commitId, undefined, component.id);
+                            expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, this.commitId, undefined, true);
                             expect(component.error).toEqual('');
                             expect(component.receiveCommits.emit).toHaveBeenCalledWith(this.commits);
                             expect(component.commits).toEqual(this.commits);
-                            expect(component.drawGraph).toHaveBeenCalled();
+                            expect(component.drawGraph).toHaveBeenCalledWith();
                         });
                         it('without drawing a graph', async function() {
                             component.showGraph = false;
                             component.entityId = undefined;
                             await component.getCommits();
 
-                            expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, this.commitId, undefined, component.id);
+                            expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, this.commitId, undefined, true);
                             expect(component.error).toEqual('');
                             expect(component.receiveCommits.emit).toHaveBeenCalledWith(this.commits);
                             expect(component.commits).toEqual(this.commits);
@@ -288,7 +289,7 @@ describe('Commit History Table component', function() {
                 });
                 describe('unless an error occurs', function() {
                     beforeEach(function() {
-                        catalogManagerStub.getCommitHistory.and.returnValue(Promise.reject(this.error));
+                        catalogManagerStub.getCommitHistory.and.returnValue(throwError(this.error));
                     });
                     it('with a graph', async function() {
                         component.showGraph = true;
@@ -296,11 +297,11 @@ describe('Commit History Table component', function() {
                         component.entityId = undefined;
                         await component.getCommits();
 
-                        expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, undefined, component.id);
+                        expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, undefined, true);
                         expect(component.error).toEqual(this.error);
                         expect(component.receiveCommits.emit).toHaveBeenCalledWith([]);
                         expect(component.commits).toEqual([]);
-                        expect(component.reset).toHaveBeenCalled();
+                        expect(component.reset).toHaveBeenCalledWith();
                     });
                     it('with no graph', async function() {
                         component.showGraph = false;
@@ -308,7 +309,7 @@ describe('Commit History Table component', function() {
                         component.entityId = undefined;
                         await component.getCommits();
 
-                        expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, undefined, component.id);
+                        expect(catalogManagerStub.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, undefined, true);
                         expect(component.error).toEqual(this.error);
                         expect(component.receiveCommits.emit).toHaveBeenCalledWith([]);
                         expect(component.commits).toEqual([]);
@@ -331,25 +332,25 @@ describe('Commit History Table component', function() {
             component.ngOnChanges({
                 commitId: new SimpleChange(null, 'new', true)
             });
-            expect(component.getCommits).toHaveBeenCalled();
+            expect(component.getCommits).toHaveBeenCalledWith();
         });
         it('headTitle', function() {
             component.ngOnChanges({
                 headTitle: new SimpleChange(null, 'new', true)
             });
-            expect(component.getCommits).toHaveBeenCalled();
+            expect(component.getCommits).toHaveBeenCalledWith();
         });
         it('targetId', function() {
             component.ngOnChanges({
                 targetId: new SimpleChange(null, 'new', true)
             });
-            expect(component.getCommits).toHaveBeenCalled();
+            expect(component.getCommits).toHaveBeenCalledWith();
         });
         it('entityId', function() {
             component.ngOnChanges({
                 entityId: new SimpleChange(null, 'new', true)
             });
-            expect(component.getCommits).toHaveBeenCalled();
+            expect(component.getCommits).toHaveBeenCalledWith();
         });
     });
     it('should call openModal for commitInfoOverlay when an id is clicked', async function() {

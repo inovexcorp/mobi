@@ -32,9 +32,8 @@ import { MockComponent } from 'ng-mocks';
 import { get, has, set } from 'lodash';
 
 import {
-    cleanStylesFromDOM, mockPrefixes, mockUtil
+    cleanStylesFromDOM, mockUtil
 } from '../../../../../../test/ts/Shared';
-import { SettingFormComponent } from './settingForm.component';
 import { SettingConstants } from '../../models/settingConstants.class';
 import { SimpleSetting } from '../../models/simpleSetting.class';
 import { Setting } from '../../models/setting.interface';
@@ -42,6 +41,8 @@ import { SettingFormFieldComponent } from '../settingFormField/settingFormField.
 import { CustomLabelComponent } from '../customLabel/customLabel.component';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
+import { OWL, RDFS, SETTING, SHACL, XSD } from '../../../prefixes';
+import { SettingFormComponent } from './settingForm.component';
 
 describe('Setting Form component', function() {
     let component: SettingFormComponent;
@@ -51,7 +52,6 @@ describe('Setting Form component', function() {
     let testPreferenceDefinitions;
     let testSetting: Setting;
     let utilStub;
-    let prefixStub;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -85,7 +85,6 @@ describe('Setting Form component', function() {
             ],
             providers: [
                 { provide: 'utilService', useClass: mockUtil },
-                { provide: 'prefixes', useClass: mockPrefixes }
             ]
         });
     });
@@ -95,7 +94,6 @@ describe('Setting Form component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         utilStub = TestBed.get('utilService');
-        prefixStub = TestBed.get('prefixes');
 
         utilStub.getPropertyValue.and.callFake((entity, propertyIRI) => {
             return get(entity, '[\'' + propertyIRI + '\'][0][\'@value\']', '');
@@ -116,7 +114,7 @@ describe('Setting Form component', function() {
         testUserSetting = [{
             '@id': 'http://mobi.com/setting#45e225a4-90f6-4276-b435-1b2888fdc01e',
             '@type': [
-                'http://www.w3.org/2002/07/owl#Thing',
+                OWL + 'Thing',
                 'preference:Preference',
                 'preference:SomeSimpleTextPreference',
                 'preference:Setting'
@@ -126,7 +124,7 @@ describe('Setting Form component', function() {
                     '@id': 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997'
                 }
             ],
-            'http://mobi.com/ontologies/setting#hasDataValue': [
+            [SETTING + 'hasDataValue']: [
                 {
                     '@value': 'first'
                 }
@@ -135,45 +133,45 @@ describe('Setting Form component', function() {
 
         testPreferenceDefinitions = {
             'preference:SomeSimpleTextPreference': { '@id': 'preference:SomeSimpleTextPreference',
-            '@type': [ 'http://www.w3.org/2002/07/owl#Class', 'shacl:NodeShape' ],
+            '@type': [ OWL + 'Class', SHACL + 'NodeShape' ],
             'preference:inGroup': [ {
               '@id': 'preference:TestPrefGroupA'
             } ],
-            'http://www.w3.org/2000/01/rdf-schema#subClassOf': [ {
+            [RDFS + 'subClassOf']: [ {
               '@id': 'preference:Preference'
             } ],
-            'shacl:description': [ {
+            [SHACL + 'description']: [ {
               '@language': 'en',
               '@value': 'Enter a value for this simple text preference'
             } ],
-            'shacl:property': [ {
+            [SHACL + 'property']: [ {
               '@id': 'preference:SomeSimpleTextPreferencePropertyShape'
             } ]
           },
           'preference:SomeSimpleTextPreferencePropertyShape': {
             '@id': 'preference:SomeSimpleTextPreferencePropertyShape',
-            '@type': [ 'shacl:PropertyShape' ],
+            '@type': [ SHACL + 'PropertyShape' ],
             'preference:usesFormField': [ {
               '@id': 'preference:TextInput'
             } ],
-            'shacl:datatype': [ {
-              '@id': 'http://www.w3.org/2001/XMLSchema#string'
+            [SHACL + 'datatype']: [ {
+              '@id': XSD + 'string'
             } ],
-            'shacl:maxCount': [ {
-              '@type': 'http://www.w3.org/2001/XMLSchema#integer',
+            [SHACL + 'maxCount']: [ {
+              '@type': XSD + 'integer',
               '@value': '2'
             } ],
-            'shacl:minCount': [ {
-              '@type': 'http://www.w3.org/2001/XMLSchema#integer',
+            [SHACL + 'minCount']: [ {
+              '@type': XSD + 'integer',
               '@value': '1'
             } ],
-            'shacl:path': [ {
-              '@id': 'http://mobi.com/ontologies/setting#hasDataValue'
+            [SHACL + 'path']: [ {
+              '@id': SETTING + 'hasDataValue'
             } ]
           }
         };
 
-        testSetting = new SimpleSetting(testPreferenceDefinitions['preference:SomeSimpleTextPreference'], testPreferenceDefinitions, utilStub, prefixStub);
+        testSetting = new SimpleSetting(testPreferenceDefinitions['preference:SomeSimpleTextPreference'], testPreferenceDefinitions, utilStub);
     });
 
     afterEach(function() {
@@ -195,7 +193,7 @@ describe('Setting Form component', function() {
                 });
                 it('when no shacl maximum exists', function() {
                     delete testPreferenceDefinitions['preference:SomeSimpleTextPreferencePropertyShape']['shacl:maxCount'];
-                    testSetting = new SimpleSetting(testPreferenceDefinitions['preference:SomeSimpleTextPreference'], testPreferenceDefinitions, utilStub, prefixStub);
+                    testSetting = new SimpleSetting(testPreferenceDefinitions['preference:SomeSimpleTextPreference'], testPreferenceDefinitions, utilStub);
                     testSetting.populate(testUserSetting);
                     component.setting = testSetting;
                     fixture.detectChanges();
@@ -234,7 +232,7 @@ describe('Setting Form component', function() {
                     fixture.detectChanges();
                     component.ngOnChanges();
                     expect(component.shaclShapes).toEqual({
-                        'http://mobi.com/ontologies/setting#hasDataValue': testPreferenceDefinitions['preference:SomeSimpleTextPreferencePropertyShape']
+                        [SETTING + 'hasDataValue']: testPreferenceDefinitions['preference:SomeSimpleTextPreferencePropertyShape']
                     });
                 });
             });
@@ -245,7 +243,7 @@ describe('Setting Form component', function() {
                     fixture.detectChanges();
                     component.ngOnChanges();
                     expect((component.form.get('formBlocks') as FormArray).length).toEqual(1);
-                    expect(component.form.get('formBlocks').get(['0', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('first');
+                    expect(component.form.get('formBlocks').get(['0', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('first');
                 });
                 it('when a multiple preference values exists', function() {
                     testUserSetting[0][SettingConstants.HAS_DATA_VALUE] = [
@@ -264,9 +262,9 @@ describe('Setting Form component', function() {
                     fixture.detectChanges();
                     component.ngOnChanges();
                     expect((component.form.get('formBlocks') as FormArray).length).toEqual(3);
-                    expect(component.form.get('formBlocks').get(['0', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('first');
-                    expect(component.form.get('formBlocks').get(['1', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('second');
-                    expect(component.form.get('formBlocks').get(['2', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('third');
+                    expect(component.form.get('formBlocks').get(['0', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('first');
+                    expect(component.form.get('formBlocks').get(['1', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('second');
+                    expect(component.form.get('formBlocks').get(['2', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('third');
                 });
             });
         });
@@ -283,7 +281,7 @@ describe('Setting Form component', function() {
             component.addFormBlock();
             fixture.detectChanges();
             expect((component.form.get('formBlocks') as FormArray).length).toEqual(2);
-            expect(component.form.get('formBlocks').get(['1', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('');
+            expect(component.form.get('formBlocks').get(['1', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('');
             expect(testSetting.values[0][SettingConstants.HAS_DATA_VALUE].length).toEqual(2);
             expect(component.numValues).toEqual(2);
             expect(component.form.dirty).toEqual(true);
@@ -291,8 +289,8 @@ describe('Setting Form component', function() {
             component.addFormBlock();
             fixture.detectChanges();
             expect((component.form.get('formBlocks') as FormArray).length).toEqual(3);
-            expect(component.form.get('formBlocks').get(['1', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('');
-            expect(component.form.get('formBlocks').get(['2', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('');
+            expect(component.form.get('formBlocks').get(['1', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('');
+            expect(component.form.get('formBlocks').get(['2', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('');
             expect(component.numValues).toEqual(3);
             expect(testSetting.values[0][SettingConstants.HAS_DATA_VALUE].length).toEqual(3);
             expect(component.form.dirty).toEqual(true);
@@ -320,8 +318,8 @@ describe('Setting Form component', function() {
             fixture.detectChanges();
             expect((component.form.get('formBlocks') as FormArray).length).toEqual(2);
             
-            expect(component.form.get('formBlocks').get(['0', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('first');
-            expect(component.form.get('formBlocks').get(['1', 'http://mobi.com/ontologies/setting#hasDataValue', 'http://mobi.com/ontologies/setting#hasDataValue']).value).toEqual('third');
+            expect(component.form.get('formBlocks').get(['0', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('first');
+            expect(component.form.get('formBlocks').get(['1', SETTING + 'hasDataValue', SETTING + 'hasDataValue']).value).toEqual('third');
 
             expect(component.form.dirty).toEqual(true);
         });

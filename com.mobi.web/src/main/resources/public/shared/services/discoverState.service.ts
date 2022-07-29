@@ -20,29 +20,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
+import { Injectable } from '@angular/core';
 import { take, includes, get, find } from 'lodash';
 
 /**
- * @ngdoc service
- * @name shared.service:discoverStateService
+ * @class shared.DiscoverStateService
  *
- * @description
- * `discoverStateService` is a service which contains various variables to hold the
- * state of the discover module along with some utility functions for those variables.
+ * A service which contains various variables to hold the state of the discover module along with some utility functions
+ * for those variables.
  */
-function discoverStateService() {
-    var self = this;
+@Injectable()
+export class DiscoverStateService {
 
+    constructor() {
+        this._setStates();
+    }
+    
     /**
-     * @ngdoc property
-     * @name explore
-     * @propertyOf shared.service:discoverStateService
-     * @type {Object}
-     *
-     * @description
-     * 'explore' is an object which holds properties associated with the explore tab in the
-     * discover section of the application. The structure is as follows:
+     * Determines which tab of the {@link discover.DiscoverPageComponent} should be displayed.
+     * @type {number}
+     */
+    tabIndex = 0;
+    
+    /**
+     * 'explore' is an object which holds properties associated with the {@link explore.ExploreTabDirective}.
+     * The structure is as follows:
      * ```
      * {
      *     recordId: '', // Selected DatasetRecord ID
@@ -70,57 +72,41 @@ function discoverStateService() {
      *     },
      * }
      * ```
-     */
-    self.explore = {};
-
-    /**
-     * @ngdoc property
-     * @name search
-     * @propertyOf shared.service:discoverStateService
      * @type {Object}
-     *
-     * @description
-     * 'search' is an object which holds properties associated with the search tab in the
-     * discover section of the application.
      */
-    self.search = {};
+    explore: any = {};
 
     /**
-     * @ngdoc property
-     * @name query
-     * @propertyOf shared.service:discoverStateService
+     * 'search' is an object which holds properties associated with the {@link search.DiscoverSearchTabDirective}
      * @type {Object}
-     *
-     * @description
-     * 'query' is an object which holds properties associated with the query tab in the
-     * discover section of the application.
      */
-    self.query = {};
-
-    setStates();
+    search: any = {};
 
     /**
-     * @ngdoc method
-     * @name reset
-     * @methodOf shared.service:discoverStateService
-     *
-     * @description
+     * 'query' is an object which holds properties associated with the {@link query.QueryTabComponent}.
+     * @type {Object}
+     */
+    query = {
+        datasetRecordId: '',
+        submitDisabled: false,
+        queryString: '',
+        response: {},
+        selectedPlugin: '',
+        executionTime: 0
+    };
+
+    /**
      * Resets all state variables.
      */
-    self.reset = function() {
-        setStates();
+    reset(): void {
+        this._setStates();
     }
 
     /**
-     * @ngdoc method
-     * @name resetPagedInstanceDetails
-     * @methodOf shared.service:discoverStateService
-     *
-     * @description
      * Resets the explore properties to be their initial values.
      */
-    self.resetPagedInstanceDetails = function() {
-        self.explore.instanceDetails = {
+    resetPagedInstanceDetails(): void {
+        this.explore.instanceDetails = {
             currentPage: 1,
             data: [],
             limit: 99,
@@ -133,83 +119,57 @@ function discoverStateService() {
     }
 
     /**
-     * @ngdoc method
-     * @name cleanUpOnDatasetDelete
-     * @methodOf shared.service:discoverStateService
-     *
-     * @description
-     * Resets the paged details and all data associated with the provided dataset if
-     * the provided datasetIRI matches the dataset that is selected. The recordId is
-     * also cleared.
+     * Resets the paged details and all data associated with the provided dataset if the provided datasetIRI matches the
+     * dataset that is selected in the {@link explore.ExploreTabDirective}. The recordId is also cleared.
      *
      * @param {string} datasetIRI The IRI of the DatasetRecord which was deleted.
      */
-    self.cleanUpOnDatasetDelete = function(datasetIRI) {
-        if (datasetIRI === self.explore.recordId) {
-            resetOnClear();
-            self.explore.recordId = '';
+    cleanUpOnDatasetDelete(datasetIRI: string): void {
+        if (datasetIRI === this.explore.recordId) {
+            this._resetOnClear();
+            this.explore.recordId = '';
         }
     }
 
     /**
-     * @ngdoc method
-     * @name cleanUpOnDatasetDelete
-     * @methodOf shared.service:discoverStateService
-     *
-     * @description
-     * Resets the paged details and all data associated with the provided dataset if
-     * the provided datasetIRI matches the dataset that is selected. The recordId is
-     * not cleared in this case.
+     * Resets the paged details and all data associated with the provided dataset if the provided datasetIRI matches the
+     * dataset that is selected in the {@link explore.ExploreTabDirective}. The recordId is not cleared in this case.
      *
      * @param {string} datasetIRI The IRI of the DatasetRecord which was cleared.
      */
-    self.cleanUpOnDatasetClear = function(datasetIRI) {
-        if (datasetIRI === self.explore.recordId) {
-            resetOnClear();
+    cleanUpOnDatasetClear(datasetIRI: string): void {
+        if (datasetIRI === this.explore.recordId) {
+            this._resetOnClear();
         }
     }
 
     /**
-     * @ngdoc method
-     * @name clickCrumb
-     * @methodOf shared.service:discoverStateService
-     *
-     * @description
-     * Removes the proper number of items from the breadcrumbs for the explore UI.
+     * Removes the proper number of items from the breadcrumbs for the {@link explore.ExploreTabDirective}.
      *
      * @param {number} index The index of the breadcrumb clicked.
      */
-    self.clickCrumb = function(index) {
-        self.explore.breadcrumbs = take(self.explore.breadcrumbs, index + 1);
-        self.explore.editing = false;
-        self.explore.creating = false;
+    clickCrumb(index: number): void {
+        this.explore.breadcrumbs = take(this.explore.breadcrumbs, index + 1);
+        this.explore.editing = false;
+        this.explore.creating = false;
     }
 
     /**
-     * @ngdoc method
-     * @name getInstance
-     * @methodOf shared.service:discoverStateService
-     *
-     * @description
-     * Gets the instance from the entity variable which contains the instance and reified statements.
+     * Gets the instance from the entity variable which contains the instance and reified statements within the
+     * {@link explore.ExploreTabDirective}.
      *
      * @returns {Object} An object which contains the instance's JSON-LD.
      */
-    self.getInstance = function() {
-        return find(self.explore.instance.entity, obj => includes(get(obj, '@type'), self.explore.classId));
+    getInstance(): any {
+        return find(this.explore.instance.entity, obj => includes(get(obj, '@type'), this.explore.classId));
     }
 
     /**
-     * @ngdoc method
-     * @name resetSearchQueryConfig
-     * @methodOf shared.service:discoverStateService
-     *
-     * @description
-     * Resets the search query config to be the default values.
+     * Resets the search query config to be the default values in the {@link search.DiscoverSearchTabDirective}.
      */
-    self.resetSearchQueryConfig = function() {
-        var variables = angular.copy(self.search.queryConfig.variables);
-        self.search.queryConfig = {
+    resetSearchQueryConfig(): void {
+        const variables = Object.assign({}, this.search.queryConfig.variables);
+        this.search.queryConfig = {
             isOrKeywords: false,
             isOrTypes: false,
             keywords: [],
@@ -219,9 +179,8 @@ function discoverStateService() {
         };
     }
 
-    function setStates() {
-        self.explore = {
-            active: true,
+    private _setStates() {
+        this.explore = {
             breadcrumbs: ['Classes'],
             classDeprecated: false,
             classDetails: [],
@@ -248,8 +207,7 @@ function discoverStateService() {
             recordId: '',
             hasPermissionError: false
         };
-        self.search = {
-            active: false,
+        this.search = {
             datasetRecordId: '',
             noDomains: undefined,
             properties: undefined,
@@ -265,31 +223,29 @@ function discoverStateService() {
             targetedId: 'discover-search-results',
             typeObject: undefined
         };
-        self.query = {
-            active: false,
+        this.query = {
             datasetRecordId: '',
             submitDisabled: false,
             queryString: '',
             response: {},
-            selectedPlugin: ''
+            selectedPlugin: '',
+            executionTime: 0
         };
     }
-    function resetOnClear() {
-        self.resetPagedInstanceDetails();
-        self.explore.breadcrumbs = ['Classes'];
-        self.explore.classDetails = [];
-        self.explore.classId = '';
-        self.explore.instance = {
+    private _resetOnClear() {
+        this.resetPagedInstanceDetails();
+        this.explore.breadcrumbs = ['Classes'];
+        this.explore.classDetails = [];
+        this.explore.classId = '';
+        this.explore.instance = {
             changed: [],
             entity: {},
             metadata: {}
         };
-        self.query.datasetRecordId = '',
-        self.query.submitDisabled = false;
-        self.query.queryString =  '';
-        self.query.response = {};
-        self.query.selectedPlugin = '';
+        this.query.datasetRecordId = '',
+        this.query.submitDisabled = false;
+        this.query.queryString =  '';
+        this.query.response = {};
+        this.query.selectedPlugin = '';
     }   
 }
-
-export default discoverStateService;

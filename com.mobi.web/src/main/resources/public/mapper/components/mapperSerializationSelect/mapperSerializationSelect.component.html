@@ -20,6 +20,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<select ng-model="dvm.format" class="mapper-serialization-select form-control" name="{{dvm.name}}" ng-required="dvm.isRequired" ng-class="{'is-invalid': dvm.form[dvm.name].$invalid}" ng-change="dvm.changeEvent({value: dvm.format})">
-    <option ng-repeat="option in dvm.options" value="{{option.value}}">{{option.name}}</option>
-</select>
+<div class="mapper-serialization-select" [formGroup]="parentForm">
+    <mat-form-field class="w-100">
+      <mat-label>{{label}}</mat-label>
+      <mat-select formControlName="serialization">
+      <!-- <mat-select formControlName="serialization" [required]="required"> -->
+          <mat-option *ngFor="let option of options" [value]="option.value">
+              {{option.name}}
+          </mat-option>
+      </mat-select>
+    </mat-form-field>
+</div>

@@ -20,14 +20,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<form class="file-upload-form" name="dvm.uploadForm">
-    <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-    <file-input [files]="dvm.dm.fileObj" [accept]="['.csv','.xls','.xlsx','.tsv']" (files-change)="dvm.upload($event)" required></file-input>
-    <checkbox [display-text]="'Contains headers'" [(model)]="dvm.dm.containsHeaders"></checkbox>
-    <div ng-if="dvm.dm.fileObj && !dvm.isExcel()" class="form-group">
-        <custom-label>Separator</custom-label>
-        <radio-button value="','" bind-model="dvm.dm.separator" change-event="dvm.changeSeparator(value)" display-text="'Comma'"></radio-button>
-        <radio-button value="'%09'" bind-model="dvm.dm.separator" change-event="dvm.changeSeparator(value)" display-text="'Tab'"></radio-button>
-        <radio-button value="':'" bind-model="dvm.dm.separator" change-event="dvm.changeSeparator(value)" display-text="'Colon'"></radio-button>
+<div class="file-upload-form">
+    <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+    <file-input [files]="dm.fileObj" [accept]="['.csv','.xls','.xlsx','.tsv']" (filesChange)="upload($event)" required></file-input>
+    <div class="pt-2" [formGroup]="uploadFileForm">
+        <mat-checkbox formControlName="containsHeaders">Contains Headers</mat-checkbox>
+        <div *ngIf="dm.fileObj && !isExcel">
+            <div class="field-label">Separator</div>
+            <mat-radio-group formControlName="separator" class="d-flex flex-column">
+                <mat-radio-button value=",">Comma</mat-radio-button>
+                <mat-radio-button [value]="'\t'">Tab</mat-radio-button>
+                <mat-radio-button value=":">Colon</mat-radio-button>
+            </mat-radio-group>
+        </div>  
     </div>
-</form>
+</div>

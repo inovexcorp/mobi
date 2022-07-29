@@ -21,11 +21,14 @@
   #L%
   -->
 <div class="prop-preview">
-    <h3>{{dvm.name}}</h3>
-    <p class="text-muted"><small>{{dvm.propObj['@id']}}</small></p>
+    <h3 class="break-word">{{name}}</h3>
+    <p class="text-muted break-word"><small>{{propObj ? propObj['@id'] : ''}}</small></p>
     <div class="description">
-        <span class="field-name">Description:</span>
-        <p>{{dvm.description}}</p>
+        <span class="field-label">Description</span>
+        <p>{{description}}</p>
     </div>
-    <p><span class="field-name">Range:</span> {{dvm.rangeName}} <span class="deprecated text-muted" ng-if="dvm.rangeIsDeprecated">(Deprecated)</span></p>
+    <div class="range">
+        <span class="field-label">Range</span> 
+        <p>{{rangeName}} <span class="deprecated text-muted" *ngIf="rangeIsDeprecated">(Deprecated)</span></p>
+    </div>
 </div>

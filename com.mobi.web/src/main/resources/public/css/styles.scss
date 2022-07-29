@@ -26,6 +26,9 @@
 .highlight-text {
     font-weight: bold;
 }
+.copy-clipboard:hover {
+    cursor: pointer;
+}
 
 // Fixes for AngularJS Material
 md-backdrop.md-select-backdrop {
@@ -157,17 +160,6 @@ body {
     overflow-y: hidden;
 
     /* Overall design styles */
-    .blue-bar {
-        height: 48px;
-        background-color: var(--primary);
-    }
-
-    .white-bar {
-        background-color: #fff;
-        box-shadow: 5px 5px 5px 0px var(--light-dark);
-        height: 52px;
-        text-align: center;
-    }
     .app-container {
         padding: 0;
         width: calc(100% - #{$sidebar-open-width});
@@ -192,6 +184,9 @@ body {
     .field-name {
         font-weight: bold;
     }
+    .field-label {
+        color: rgba(0,0,0,0.54);
+    }
 
     /* view container spacing with extra on the bottom for the icon buttons */
     > .view-container {
@@ -203,137 +198,31 @@ body {
         }
     }
 }
+body {
+    .main-page {
+        height: 100%;
+        margin-left: 200px;
+        padding-top: 42px;
+		transition: all .25s ease;
+    }
+}
+.modal-header h3 {
+    margin-bottom: 0;
+}
+.task-list-item input[type="checkbox"]{
+    margin-left: 0 !important;
+}
+mat-markdown-editor ul {
+    list-style: initial;
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
 
 /* clears out ul styles */
 ul {
     list-style: none;
     margin: 0;
     padding: 0;
-}
-
-/* Overlay styles */
-.overlay,
-.scrollable-overlay {
-    background-color: rgba(0,0,0,.5);
-    bottom: 0;
-    left: 0;
-    position: fixed;
-    right: 0;
-    top: 0;
-    z-index: 9000;
-
-    /* animation */
-    &.ng-enter {
-        -webkit-transition: 0.2s linear all;
-                transition: 0.2s linear all;
-        opacity: 0;
-        .content {
-            -webkit-transition: 0.2s linear all;
-                    transition: 0.2s linear all;
-            top: -100px;
-        }
-
-        &.ng-enter-active {
-            opacity: 1;
-            .content {
-                top: 0px;
-            }
-        }
-    }
-    &.ng-leave {
-        -webkit-transition: 0.2s linear all;
-                transition: 0.2s linear all;
-        opacity: 1;
-        .content {
-            -webkit-transition: 0.2s linear all;
-                    transition: 0.2s linear all;
-            top: 0px;
-        }
-
-        &.ng-leave-active {
-            opacity: 0;
-            .content {
-                top: 100px;
-            }
-        }
-    }
-
-    /* small sized overlay */
-    &.sm .content {
-        width: 350px;
-    }
-
-    /* large sized overlay */
-    &.lg .content {
-        width: 750px;
-    }
-
-    /* extra large sized overlay */
-    &.xlg .content {
-        width: 900px;
-    }
-
-    /* overlay content styles */
-    .content .main {
-        margin-bottom: 15px;
-        word-wrap: break-word;
-    }
-}
-
-.scrollable-overlay {
-    display: flex;
-
-    .content-wrapper {
-        border-radius: 5px;
-        display: flex;
-        flex-direction: column;
-        margin: 100px auto;
-        position: relative;
-        width: 500px;
-
-        > h6, > h1 {
-            background-color: var(--primary);
-            border: 1px solid #fff;
-            border-bottom: 0;
-            border-top-left-radius: 5px;
-            border-top-right-radius: 5px;
-            color: #fff;
-            font-size: 1.05em;
-            margin: 0;
-            padding: 10px;
-        }
-
-        .content {
-            background: #fff;
-            border-bottom-left-radius: 5px;
-            border-bottom-right-radius: 5px;
-            overflow-y: auto;
-            padding: 10px;
-        }
-    }
-}
-
-.overlay .content {
-    background: #fff;
-    border: 1px solid #fff;
-    border-radius: 5px;
-    left: 0;
-    margin: 100px auto 0;
-    padding: 10px;
-    position: absolute;
-    right: 0;
-    width: 500px;
-
-    /* header text style */
-    h6, h1 {
-        background-color: var(--primary);
-        border-top-left-radius: 5px;
-        border-top-right-radius: 5px;
-        color: #fff;
-        font-size: 1.05em;
-        margin: -10px -10px 10px;
-        padding: 10px;
-    }
 }
 
 /* button styles */
@@ -418,54 +307,7 @@ ul {
     }
 }
 
-/* table with inputs */
-.input-table {
-    margin: 0;
-
-    /* table header cell styles */
-    > thead > tr > th.action-button {
-        width: 37px;
-    }
-
-    /* table body cell styles */
-    > tbody > tr > td {
-        padding: 0;
-        position: relative;
-
-        &.action-button {
-            text-align: center;
-        }
-
-        /* Removes all input styles to make the table look better */
-        input {
-            background-color: transparent;
-            border: 0;
-            padding: 8px 35px 8px 8px;
-            width: 100%;
-        }
-
-        /* The plus button in the prefix table to add new rows */
-        .add,
-        .remove {
-            padding: 7px 12px;
-        }
-
-        /* absolutely positions the edit button */
-        .edit {
-            bottom: 0;
-            padding: 7px 8px;
-            position: absolute;
-            right: 0;
-        }
-    }
-}
-
-/* static form display spacing */
-.form-control-static {
-    min-height: auto;
-    padding: 0 0 0 13px;
-}
-
+/* ui-select adjustments */
 .ui-select-multiple.ui-select-bootstrap {
     padding: 3px;
 
@@ -476,29 +318,6 @@ ul {
 
 .ui-select-bootstrap .ui-select-choices-row.active > a .text-muted {
     color: #fff;
-}
-
-body {
-    .main-page {
-        height: 100%;
-        margin-left: 200px;
-        padding-top: 42px;
-		transition: all .25s ease;
-    }
-}
-
-.modal-header h3 {
-    margin-bottom: 0;
-}
-
-.task-list-item input[type="checkbox"]{
-    margin-left: 0 !important;
-}
-
-.markdown ul {
-    list-style: initial;
-    margin-bottom: 1rem;
-    padding-left: 2rem;
 }
 
 /* Helper Classes */
@@ -533,6 +352,13 @@ body {
     -moz-hyphens: auto;
     hyphens: auto;
 }
+.break-word {
+    word-break: break-word;
+}
+.mat-success {
+    background-color: var(--success) !important;
+    color: #fff;
+}
 
 // New Angular Styles
 .app-spinner-container {
@@ -559,4 +385,14 @@ body {
 // Fixes issue where mat-autocomplete panel appears behind Bootstrap modals
 .cdk-overlay-container {
     z-index: 1999;
+}
+
+// Fixes issue where mat-autocomplete panel appears behind mat-dialog
+.cdk-overlay-connected-position-bounding-box {
+    z-index: 9000;
+}
+
+// Fixes colliding styles between Angular Material and the Material skin on top of Bootstrap
+.material-icons {
+    line-height: 1 !important; 
 }

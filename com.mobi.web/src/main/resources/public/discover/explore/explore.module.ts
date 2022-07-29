@@ -25,7 +25,7 @@ import exploreUtilsService from './services/exploreUtils.service';
 import classBlockComponent from './components/classBlock/classBlock.component';
 import classBlockHeaderComponent from './components/classBlockHeader/classBlockHeader.component';
 import classCardsComponent from './components/classCards/classCards.component';
-import exploreTabComponent from './components/exploreTab/exploreTab.component';
+import { exploreTabComponent } from './components/exploreTab/exploreTab.component';
 import instanceBlockComponent from './components/instanceBlock/instanceBlock.component';
 import instanceCardsComponent from './components/instanceCards/instanceCards.component';
 import instanceCreatorComponent from './components/instanceCreator/instanceCreator.component';

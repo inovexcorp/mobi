@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
 import { forEach, get } from 'lodash';
 
@@ -30,6 +30,7 @@ import { RdfUpload } from '../models/rdfUpload.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { HelperService } from './helper.service';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 
 /**
  * @class shared.ShapesGraphManagerService
@@ -41,7 +42,7 @@ import { RdfUpdate } from '../models/rdfUpdate.interface';
 export class ShapesGraphManagerService {
     prefix = REST_PREFIX + 'shapes-graphs';
 
-    constructor(private http: HttpClient, private helper: HelperService, @Inject('utilService') private util) {}
+    constructor(private http: HttpClient, private helper: HelperService, @Inject('utilService') private util, private spinnerSvc: ProgressSpinnerService) {}
 
     /**
      * Calls the POST /mobirest/shapes-graphs endpoint to upload a SHACL shapes graph to Mobi. Returns a Promise that
@@ -64,7 +65,7 @@ export class ShapesGraphManagerService {
         }
         forEach(get(newRecord, 'keywords', []), keyword => fd.append('keywords', keyword));
 
-        return this.http.post(this.prefix, fd)
+        return this.spinnerSvc.track(this.http.post(this.prefix, fd))
             .toPromise()
             .then((response: any) => this.getVersionedRdfUpload(response), this.util.rejectErrorObject);
     }
@@ -92,7 +93,7 @@ export class ShapesGraphManagerService {
      * @returns {Promise} A Promise that resolves if the request was successful; rejects with an error message otherwise
      */
     deleteShapesGraphRecord(recordId: string): Promise<any> {
-        return this.http.delete(`${this.prefix}/${encodeURIComponent(recordId)}`)
+        return this.spinnerSvc.track(this.http.delete(`${this.prefix}/${encodeURIComponent(recordId)}`))
             .toPromise().then((response: any) => response, this.util.rejectErrorObject);
     }
     /**
@@ -119,7 +120,7 @@ export class ShapesGraphManagerService {
         if (rdfUpdate.replaceInProgressCommit) {
             fd.append('replaceInProgressCommit', rdfUpdate.replaceInProgressCommit ? 'true' : 'false');
         }
-        return this.http.put(`${this.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, fd, { observe: 'response'}).toPromise().then((response: any) => response, this.util.rejectErrorObject);
+        return this.spinnerSvc.track(this.http.put(`${this.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, fd, { observe: 'response'})).toPromise().then((response: any) => response, this.util.rejectErrorObject);
     }
 
     /**
@@ -138,7 +139,7 @@ export class ShapesGraphManagerService {
     getShapesGraphMetadata(recordId, branchId, commitId, entityId, format = 'jsonld', applyInProgressCommit = true): Promise<any>  {
         const config = { params: this.helper.createHttpParams({ branchId, commitId, format, applyInProgressCommit }) };
         const url = this.prefix + '/' + encodeURIComponent(recordId) + '/entities/' + encodeURIComponent(entityId);
-        const promise = this.http.get(url, config).toPromise();
+        const promise = this.spinnerSvc.track(this.http.get(url, config)).toPromise();
         return promise.then((response:any) => response, this.util.rejectError);
     }
 
@@ -154,7 +155,7 @@ export class ShapesGraphManagerService {
      */
     getShapesGraphContent(recordId, branchId, commitId, format = 'turtle', applyInProgressCommit = true): Promise<any>  {
         const url = this.prefix + '/' + encodeURIComponent(recordId) + '/content';
-        const promise = this.http.get(url, { params: this.helper.createHttpParams({ branchId, commitId, format, applyInProgressCommit }), responseType: 'text' }).toPromise();
+        const promise = this.spinnerSvc.track(this.http.get(url, { params: this.helper.createHttpParams({ branchId, commitId, format, applyInProgressCommit }), responseType: 'text' })).toPromise();
         return promise.then((response:any) => response, this.util.rejectError);
     }
 
@@ -171,7 +172,7 @@ export class ShapesGraphManagerService {
      */
     getShapesGraphIRI(recordId, branchId, commitId, applyInProgressCommit = true): Promise<string> {
         const url = this.prefix + '/' + encodeURIComponent(recordId) + '/id';
-        const promise = this.http.get(url, {params: this.helper.createHttpParams({ branchId, commitId, applyInProgressCommit }), responseType: 'text'}).toPromise();
+        const promise = this.spinnerSvc.track(this.http.get(url, {params: this.helper.createHttpParams({ branchId, commitId, applyInProgressCommit }), responseType: 'text'})).toPromise();
         return promise.then((response:string) => response, this.util.rejectError);
     }
 

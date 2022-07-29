@@ -21,6 +21,7 @@
  * #L%
  */
 import { toLower, get, filter, includes, some} from 'lodash';
+import { DiscoverStateService } from '../../../../shared/services/discoverState.service';
 
 const template = require('./propertySelector.component.html');
 
@@ -62,7 +63,7 @@ const propertySelectorComponent = {
 
 propertySelectorComponentCtrl.$inject = ['discoverStateService', 'ontologyManagerService', 'prefixes', 'utilService'];
 
-function propertySelectorComponentCtrl(discoverStateService, ontologyManagerService, prefixes, utilService) {
+function propertySelectorComponentCtrl(discoverStateService: DiscoverStateService, ontologyManagerService, prefixes, utilService) {
     var dvm = this;
     dvm.ds = discoverStateService;
     dvm.util = utilService;

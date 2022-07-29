@@ -20,23 +20,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { HttpResponse } from '@angular/common/http';
 import { cloneDeep, concat, find, forEach, get, head, includes, isEmpty, remove } from 'lodash';
+import { first } from 'rxjs/operators';
 import { v4 } from 'uuid';
+import { CATALOG } from '../../prefixes';
+import { CommitDifference } from '../models/commitDifference.interface';
 import { Conflict } from '../models/conflict.interface';
 import { Difference } from '../models/difference.class';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { State } from '../models/state.interface';
 import { VersionedRdfListItem } from '../models/versionedRdfListItem.class';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
+import { CatalogManagerService } from './catalogManager.service';
 
 /**
  * Service for common VersionedRdfState methods to be used in the ontology-editor or shapes-graph-editor.
  */
 export abstract class VersionedRdfState {
     protected sm: any;
-    protected cm: any;
+    protected cm: CatalogManagerService;
     protected util: any;
-    protected prefixes: any;
     protected statePrefix: string;
     protected branchStateNamespace: string;
     protected tagStateNamespace: string;
@@ -127,7 +131,7 @@ export abstract class VersionedRdfState {
         const stateId: string = stateObj.id;
         const model: JSONLDObject[] = stateObj.model;
         const recordState: JSONLDObject = find(model, {'@type': [this.statePrefix + 'StateRecord']});
-        let currentStateId: string = get(recordState, '[\'' + this.statePrefix + 'currentState' + '\'][0][\'@id\']');
+        let currentStateId: string = get(recordState, `[' ${this.statePrefix}currentState'][0]['@id']`);
         const currentState: JSONLDObject = find(model, {'@id': currentStateId});
 
         if (currentState && !includes(get(currentState, '@type', []), this.statePrefix + 'StateBranch')) {
@@ -141,7 +145,7 @@ export abstract class VersionedRdfState {
                 branchState[this.statePrefix + 'commit'] = [{'@id': versionedRdfStateBase.commitId}];
             } else {
                 currentStateId = this.branchStateNamespace + v4();
-                recordState[this.statePrefix + 'branchStates'] = concat(get(recordState, '[\'' + this.statePrefix + 'branchStates\']', []), [{'@id': currentStateId}]);
+                recordState[this.statePrefix + 'branchStates'] = concat(get(recordState, `['${this.statePrefix}branchStates']`, []), [{'@id': currentStateId}]);
                 model.push({
                     '@id': currentStateId,
                     '@type': [this.statePrefix + 'StateCommit', this.statePrefix + 'StateBranch'],
@@ -226,7 +230,7 @@ export abstract class VersionedRdfState {
      */
     getCurrentStateId(state: State): string {
         const recordState = find(state.model, {'@type': [this.statePrefix + 'StateRecord']});
-        return get(recordState, '[\'' + this.statePrefix + 'currentState\'][0][\'@id\']', '');
+        return get(recordState, `['${this.statePrefix}currentState'][0]['@id']`, '');
     }
     /**
      * Retrieves the current JSONLDObject state from the provided State object.
@@ -276,10 +280,10 @@ export abstract class VersionedRdfState {
             let promise;
             let branchToastShown = false;
             if (branchId) {
-                promise = this.cm.getRecordBranch(branchId, recordId, this.catalogId)
+                promise = this.cm.getRecordBranch(branchId, recordId, this.catalogId).pipe(first()).toPromise()
                     .then(branch => {
-                        upToDate = this.util.getPropertyId(branch, this.prefixes.catalog + 'head') === commitId;
-                        return this.cm.getInProgressCommit(recordId, this.catalogId);
+                        upToDate = this.util.getPropertyId(branch, CATALOG + 'head') === commitId;
+                        return this.cm.getInProgressCommit(recordId, this.catalogId).pipe(first()).toPromise();
                     }, error => {
                         this.util.createWarningToast('Branch ' + branchId + ' does not exist. Opening HEAD of MASTER.', {timeout: 5000});
                         branchToastShown = true;
@@ -287,27 +291,27 @@ export abstract class VersionedRdfState {
                     });
             } else if (tagId) {
                 upToDate = true;
-                promise = this.cm.getRecordVersion(tagId, recordId, this.catalogId)
+                promise = this.cm.getRecordVersion(tagId, recordId, this.catalogId).pipe(first()).toPromise()
                     .then(() => {
-                        return this.cm.getInProgressCommit(recordId, this.catalogId);
+                        return this.cm.getInProgressCommit(recordId, this.catalogId).pipe(first()).toPromise();
                     }, () => {
                         this.util.createWarningToast('Tag ' + tagId + ' does not exist. Opening commit ' + this.util.condenseCommitId(commitId), {timeout: 5000});
                         return this.updateState({recordId, commitId});
                     })
-                    .then(() => this.cm.getInProgressCommit(recordId, this.catalogId), error => {
+                    .then(() => this.cm.getInProgressCommit(recordId, this.catalogId).pipe(first()).toPromise(), error => {
                         return Promise.reject(error);
                     });
             } else {
                 upToDate = true;
-                promise = this.cm.getInProgressCommit(recordId, this.catalogId);
+                promise = this.cm.getInProgressCommit(recordId, this.catalogId).pipe(first()).toPromise();
             }
             return promise
                 .then(response => {
                     inProgressCommit = response;
-                    return this.cm.getCommit(commitId);
+                    return this.cm.getCommit(commitId).pipe(first()).toPromise();
                 }, response => {
                     if (get(response, 'status') === 404) {
-                        return this.cm.getCommit(commitId);
+                        return this.cm.getCommit(commitId).pipe(first()).toPromise();
                     }
                     return Promise.reject(response);
                 })
@@ -332,10 +336,11 @@ export abstract class VersionedRdfState {
      */
     getLatestMaster(recordId: string): Promise<any> {
         let branchId, commitId: string;
-        return this.cm.getRecordMasterBranch(recordId, this.catalogId)
+        // TODO: switch to observables
+        return this.cm.getRecordMasterBranch(recordId, this.catalogId).pipe(first()).toPromise()
             .then(masterBranch => {
                 branchId = get(masterBranch, '@id', '');
-                commitId = get(masterBranch, "['" + this.prefixes.catalog + "head'][0]['@id']", '');
+                commitId = get(masterBranch, '[\'' + CATALOG + 'head\'][0][\'@id\']', '');
                 return this.createState({recordId, commitId, branchId});
             }, error => Promise.reject(error))
             .then(() => {
@@ -353,15 +358,16 @@ export abstract class VersionedRdfState {
      */
     getMergeDifferences(sourceCommitId: string, targetCommitId: string, limit: number, offset: number): Promise<any> {
         this.listItem.merge.startIndex = offset;
-        return this.cm.getDifference(sourceCommitId, targetCommitId, limit, offset)
-            .then(response => {
+        // TODO: switch to observables
+        return this.cm.getDifference(sourceCommitId, targetCommitId, limit, offset).pipe(first()).toPromise()
+            .then((response: HttpResponse<CommitDifference>) => {
                 if (!this.listItem.merge.difference) {
-                    this.listItem.merge.difference = new Difference()
+                    this.listItem.merge.difference = new Difference();
                 }
-                this.listItem.merge.difference.additions = concat(this.listItem.merge.difference.additions, response.data.additions);
-                this.listItem.merge.difference.deletions = concat(this.listItem.merge.difference.deletions, response.data.deletions);
-                const headers = response.headers();
-                this.listItem.merge.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+                this.listItem.merge.difference.additions = concat(this.listItem.merge.difference.additions, response.body.additions);
+                this.listItem.merge.difference.deletions = concat(this.listItem.merge.difference.deletions, response.body.deletions);
+                const headers = response.headers;
+                this.listItem.merge.difference.hasMoreResults = (headers.get('has-more-results') || 'false') === 'true';
                 return Promise.resolve();
             }, error => Promise.reject(error));
     }
@@ -380,7 +386,8 @@ export abstract class VersionedRdfState {
      * @return {Promise} Promise that resolves if there are no conflicts.
      */
     checkConflicts(): Promise<any> {
-        return this.cm.getBranchConflicts(this.listItem.versionedRdfRecord.branchId, this.listItem.merge.target['@id'], this.listItem.versionedRdfRecord.recordId, this.catalogId)
+        // TODO: switch to observables
+        return this.cm.getBranchConflicts(this.listItem.versionedRdfRecord.branchId, this.listItem.merge.target['@id'], this.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(first()).toPromise()
             .then(conflicts => {
                 if (isEmpty(conflicts)) {
                     return Promise.resolve();
