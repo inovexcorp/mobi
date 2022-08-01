@@ -5,6 +5,10 @@
   "main": "index.html",
   "author": "Jordan Lewis",
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=14.15.0 <15.0.0",
+    "npm": ">=6.14.8 <7.0.0"
+  },
   "scripts": {
     "antlr": "rimraf ./src/main/resources/public/vendor/antlr4/dist && cd ./src/main/antlr4 && antlr4ts -o ../resources/public/vendor/antlr4/dist ./MOS.g4",
     "build:prod": "npm run build -- --env.env=prod",
