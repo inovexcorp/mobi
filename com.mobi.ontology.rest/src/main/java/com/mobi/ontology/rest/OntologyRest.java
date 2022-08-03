@@ -726,15 +726,17 @@ public class OntologyRest {
             Difference diff = catalogManager.getDiff(currentModel, uploadedModel);
             log.trace("uploadChangesToOntology getDiff took {} ms", System.currentTimeMillis() - startTime);
 
-            if (diff.getAdditions().size() == 0 && diff.getDeletions().size() == 0) {
+            if (diff.getAdditions().isEmpty() && diff.getDeletions().isEmpty()) {
                 return Response.noContent().build();
             }
 
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
             startTime = System.currentTimeMillis();
+            Model additionsRestored = BNodeUtils.restoreBNodes(diff.getAdditions(), uploadedBNodes, catalogBNodes,
+                    modelFactory);
+            Model deletionsRestored = BNodeUtils.restoreBNodes(diff.getDeletions(), catalogBNodes, modelFactory);
             catalogManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
-                    BNodeUtils.restoreBNodes(diff.getAdditions(), uploadedBNodes, modelFactory),
-                    BNodeUtils.restoreBNodes(diff.getDeletions(), catalogBNodes, modelFactory));
+                    additionsRestored, deletionsRestored);
             log.trace("uploadChangesToOntology getInProgressCommitIRI took {} ms",
                     System.currentTimeMillis() - startTime);
 
@@ -745,7 +747,7 @@ public class OntologyRest {
             if (ex instanceof ExecutionException) {
                 if (ex.getCause() instanceof IllegalArgumentException) {
                     throw RestUtils.getErrorObjBadRequest(ex.getCause());
-                } else if(ex.getCause() instanceof RDFParseException) {
+                } else if (ex.getCause() instanceof RDFParseException) {
                     throw RestUtils.getErrorObjBadRequest(ex.getCause());
                 }
             }

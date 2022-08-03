@@ -78,8 +78,10 @@ import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
+import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
+import org.eclipse.rdf4j.rio.helpers.TurtleWriterSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -565,20 +567,24 @@ public class SimpleOntology implements Ontology {
             RepositoryResult<Statement> statements = conn.getStatements(null, null, null,
                     conn.getSystemDefaultNamedGraph());
 
-            RDFHandler rdfWriter;
+            RDFHandler rdfHandler;
             if (prettyPrint) {
-                rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, outputStream));
+                RDFWriter writer = Rio.createWriter(format, outputStream);
+                setWriterOptions(writer, format);
+                rdfHandler = new BufferedGroupingRDFHandler(writer);
             } else {
-                rdfWriter = Rio.createWriter(format, outputStream);
+                RDFWriter writer = Rio.createWriter(format, outputStream);
+                setWriterOptions(writer, format);
+                rdfHandler = writer;
             }
 
             RemoveContextHandler removeContextSH = new RemoveContextHandler(vf);
             if (skolemize) {
                 SkolemizeHandler skolemizeSH = new SkolemizeHandler(bNodeService);
-                com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, skolemizeSH,
+                com.mobi.persistence.utils.rio.Rio.write(statements, rdfHandler, skolemizeSH,
                         removeContextSH);
             } else {
-                com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, removeContextSH);
+                com.mobi.persistence.utils.rio.Rio.write(statements, rdfHandler, removeContextSH);
             }
 
             undoApplyDifferenceIfPresent(conn);
@@ -587,6 +593,12 @@ public class SimpleOntology implements Ontology {
         }
         logTrace("getOntologyOutputStream(" + format.getName() + ", outputStream)", startTime);
         return outputStream;
+    }
+
+    private void setWriterOptions(RDFWriter writer, RDFFormat format) {
+        if (RDFFormat.TURTLE.equals(format) || RDFFormat.TRIG.equals(format)) {
+            writer.getWriterConfig().set(TurtleWriterSettings.ABBREVIATE_NUMBERS, false);
+        }
     }
 
     @Override
@@ -1075,7 +1087,8 @@ public class SimpleOntology implements Ontology {
                 }
                 GraphQueryResult statements = query.evaluate();
 
-                RDFHandler rdfWriter = Rio.createWriter(format, outputStream);
+                RDFWriter rdfWriter = Rio.createWriter(format, outputStream);
+                setWriterOptions(rdfWriter, format);
 
                 RemoveContextHandler removeContextSH = new RemoveContextHandler(vf);
                 if (skolemize) {
@@ -1394,7 +1407,7 @@ public class SimpleOntology implements Ontology {
                     .logOutput(true)
                     .printOutput(false)
                     .batchSize(50000)
-                    .format(RDFFormat.NQUADS)
+                    .format(RDFFormat.TURTLE)
                     .repository(repoId);
             importService.importFile(builder.build(), ontologyFile, graph);
             ontologyFile.delete();

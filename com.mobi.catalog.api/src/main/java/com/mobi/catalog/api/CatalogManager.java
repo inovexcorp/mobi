@@ -43,6 +43,7 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.security.policy.api.PDP;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.File;
 import java.util.List;
@@ -938,7 +939,7 @@ public interface CatalogManager {
 
     /**
      * Gets the File which represents the entity at the instance of the Commit identified by the provided Resource
-     * using previous Commit data to construct it.
+     * using previous Commit data to construct it. Uses the default RDFFormat.
      *
      * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
      *                 to retrieve.
@@ -946,6 +947,18 @@ public interface CatalogManager {
      * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */
     File getCompiledResourceFile(Resource commitId);
+
+    /**
+     * Gets the File which represents the entity at the instance of the Commit identified by the provided Resource
+     * using previous Commit data to construct it.
+     *
+     * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
+     *                 to retrieve.
+     * @param rdfFormat The RDF serialization format of the file.
+     * @return A {@link File} which represents the resource at the Commit's point in history.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found.
+     */
+    File getCompiledResourceFile(Resource commitId, RDFFormat rdfFormat);
 
     /**
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Commit List
@@ -976,13 +989,28 @@ public interface CatalogManager {
      * using previous Commit data to construct it. The File is a temporary file stored in the java.io.tmpdir directory.
      *
      * @param versionedRDFRecordId The Resource identifying the Record from where the Branch should originate.
+     * @param branchId             The Resource identifying the Branch from where the Commit should originate.
      * @param commitId             The Resource identifying the Commit identifying the spot in the entity's history that
      *                             you wish to retrieve.
-     * @param branchId             The Resource identifying the Branch from where the Commit should originate.
      * @return A {@link File} which represents the resource at the Commit's point in history.
      * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */
     File getCompiledResourceFile(Resource versionedRDFRecordId, Resource branchId, Resource commitId);
+
+    /**
+     * Gets the File which represents the entity at the instance of the Commit identified by the provided Resource
+     * using previous Commit data to construct it. The File is a temporary file stored in the java.io.tmpdir directory.
+     *
+     * @param versionedRDFRecordId The Resource identifying the Record from where the Branch should originate.
+     * @param branchId             The Resource identifying the Branch from where the Commit should originate.
+     * @param commitId             The Resource identifying the Commit identifying the spot in the entity's history that
+     *                             you wish to retrieve.
+     * @param rdfFormat            The RDF serialization format of the file.
+     * @return A {@link File} which represents the resource at the Commit's point in history.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found.
+     */
+    File getCompiledResourceFile(Resource versionedRDFRecordId, Resource branchId, Resource commitId,
+                                 RDFFormat rdfFormat);
 
     /**
      * Gets the Difference between the Commits identified by the two provided Resources. Essentially returns the

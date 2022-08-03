@@ -41,6 +41,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.File;
 import java.util.List;
@@ -578,6 +579,7 @@ public interface CatalogUtilsService {
      * the provided List using previous Commit data to construct it.
      *
      * @param commits The ordered List of Resource identifying the Commits to create a compiled resource from
+     * @param conn The RepositoryConnection used to retrieve the resource.
      * @param subjectIds Optional list of entity {@link Resource}s to filter the compiled resource by
      * @return Model which represents the resource at the Commit's point in history.
      */
@@ -588,10 +590,13 @@ public interface CatalogUtilsService {
      * the provided List using previous Commit data to construct it.
      *
      * @param commits The ordered List of Resource identifying the Commits to create a compiled resource from
+     * @param rdfFormat The RDF serialization format of the file.
+     * @param conn The RepositoryConnection used to retrieve the resource.
      * @param subjectIds Optional list of entity {@link Resource}s to filter the compiled resource by
      * @return A {@link File} which represents the resource at the Commit's point in history.
      */
-    File getCompiledResourceFile(List<Resource> commits, RepositoryConnection conn, Resource... subjectIds);
+    File getCompiledResourceFile(List<Resource> commits, RDFFormat rdfFormat, RepositoryConnection conn,
+                                 Resource... subjectIds);
 
     /**
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource
@@ -599,6 +604,7 @@ public interface CatalogUtilsService {
      *
      * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
      *                 to retrieve.
+     * @param conn The RepositoryConnection used to retrieve the resource.
      * @return Model which represents the resource at the Commit's point in history.
      */
     Model getCompiledResource(Resource commitId, RepositoryConnection conn);
@@ -609,9 +615,11 @@ public interface CatalogUtilsService {
      *
      * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
      *                 to retrieve.
+     * @param rdfFormat The RDF serialization format of the file.
+     * @param conn The RepositoryConnection used to retrieve the resource.
      * @return A {@link File} which represents the resource at the Commit's point in history.
      */
-    File getCompiledResourceFile(Resource commitId, RepositoryConnection conn);
+    File getCompiledResourceFile(Resource commitId, RDFFormat rdfFormat, RepositoryConnection conn);
 
     /**
      * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference. The

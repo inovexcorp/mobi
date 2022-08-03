@@ -105,30 +105,33 @@ public class SimpleBNodeService implements BNodeService {
 
         // Process every blank node chain that begins with an IRI
         model.subjects().stream()
-                .filter(resource -> resource instanceof IRI)
+                .filter(IRI.class::isInstance)
                 .sorted(Comparator.comparing(Value::stringValue))
                 .forEach(resource -> {
                     model.filter(resource, null, null, (Resource) null).stream()
                             // Sort attached nodes to handle attached blank nodes pointing to isomorphic blank nodes
                             .sorted(new ModelStatementComparator(model))
                             .forEach(statement -> {
-                        if (statement.getObject() instanceof BNode) {
-                            // If object is a BNode
-                            if (!skolemizedBNodes.containsKey(statement.getObject())) {
-                                Set<BNode> visited = new HashSet<>();
-                                Model cycleStmts = mf.createEmptyModel();
-                                result.addAll(deterministicSkolemize((BNode) statement.getObject(), model, skolemizedBNodes, hashCount, visited, cycleStmts));
-                            }
-                            if (statement.getContext() != null) {
-                                result.add(statement.getSubject(), statement.getPredicate(), skolemizedBNodes.get(statement.getObject()), statement.getContext());
-                            } else {
-                                result.add(statement.getSubject(), statement.getPredicate(), skolemizedBNodes.get(statement.getObject()));
-                            }
-                        } else {
-                            // Else object is an IRI or Literal
-                            result.add(statement);
-                        }
-                    });
+                                if (statement.getObject() instanceof BNode) {
+                                    // If object is a BNode
+                                    if (!skolemizedBNodes.containsKey(statement.getObject())) {
+                                        Set<BNode> visited = new HashSet<>();
+                                        Model cycleStmts = mf.createEmptyModel();
+                                        result.addAll(deterministicSkolemize((BNode) statement.getObject(), model,
+                                                skolemizedBNodes, hashCount, visited, cycleStmts));
+                                    }
+                                    if (statement.getContext() != null) {
+                                        result.add(statement.getSubject(), statement.getPredicate(),
+                                                skolemizedBNodes.get(statement.getObject()), statement.getContext());
+                                    } else {
+                                        result.add(statement.getSubject(), statement.getPredicate(),
+                                                skolemizedBNodes.get(statement.getObject()));
+                                    }
+                                } else {
+                                    // Else object is an IRI or Literal
+                                    result.add(statement);
+                                }
+                            });
                 });
 
         // Then process every other blank node chain
@@ -274,7 +277,7 @@ public class SimpleBNodeService implements BNodeService {
     /**
      * A comparator that sorts statements based on predicate and object values and attached blank nodes
      */
-    private static class ModelStatementComparator implements Comparator<Statement>{
+    private static class ModelStatementComparator implements Comparator<Statement> {
         private Model model;
 
         public ModelStatementComparator(Model model) {
@@ -323,12 +326,12 @@ public class SimpleBNodeService implements BNodeService {
      * standard 32-bit hash (int).
      */
     private static long hash(String string) {
-        long h = 1125899906842597L; // prime
+        long hash = 1125899906842597L; // prime
         int len = string.length();
 
         for (int i = 0; i < len; i++) {
-            h = 31*h + string.charAt(i);
+            hash = 31 * hash + string.charAt(i);
         }
-        return h;
+        return hash;
     }
 }

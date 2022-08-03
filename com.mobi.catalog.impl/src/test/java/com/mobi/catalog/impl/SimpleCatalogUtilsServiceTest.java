@@ -2103,7 +2103,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test 1 Title"));
             expected.add(VALUE_FACTORY.createIRI("http://mobi.com/test/class0"), typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
 
-            File file = service.getCompiledResourceFile(commitId, conn);
+            File file = service.getCompiledResourceFile(commitId, RDFFormat.TURTLE, conn);
             Model model = Models.createModel(new FileInputStream(file));
             assertEquals(expected.size(), model.size());
             expected.forEach(statement -> assertTrue(model.contains(statement)));
@@ -2121,7 +2121,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
             expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
 
-            File file = service.getCompiledResourceFile(commitId, conn);
+            File file = service.getCompiledResourceFile(commitId, RDFFormat.TURTLE, conn);
             Model model = Models.createModel(new FileInputStream(file));
             assertEquals(expected.size(), model.size());
             expected.forEach(statement -> assertTrue(model.contains(statement)));
@@ -2139,7 +2139,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             expected.add(blankNode, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
             expected.add(blankNode, titleIRI, VALUE_FACTORY.createLiteral("Test Blank 1 Title"));
 
-            File file = service.getCompiledResourceFile(commitId, conn);
+            File file = service.getCompiledResourceFile(commitId, RDFFormat.TURTLE, conn);
             Model model = Models.createModel(new FileInputStream(file));
             model.forEach(statement -> {
                 assertTrue(statement.getSubject() instanceof BNode);
@@ -2235,7 +2235,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createLiteral("Class Title 2"));
             expected.add(classStmt);
 
-            File file = service.getCompiledResourceFile(commits, conn);
+            File file = service.getCompiledResourceFile(commits, RDFFormat.TURTLE, conn);
             Model result = Models.createModel(new FileInputStream(file));
             assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
             file.delete();
@@ -2254,7 +2254,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createLiteral("Class Title 2"));
             expected.add(classStmt);
 
-            File file = service.getCompiledResourceFile(commits, conn, VALUE_FACTORY.createIRI("http://mobi.com/test/class"));
+            File file = service.getCompiledResourceFile(commits, RDFFormat.TURTLE, conn, VALUE_FACTORY.createIRI("http://mobi.com/test/class"));
             Model result = Models.createModel(new FileInputStream(file));
             assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
             file.delete();
@@ -2271,7 +2271,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
             expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
 
-            File file = service.getCompiledResourceFile(commits, conn);
+            File file = service.getCompiledResourceFile(commits, RDFFormat.TURTLE, conn);
             Model result = Models.createModel(new FileInputStream(file));
             assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
             file.delete();
@@ -2288,7 +2288,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             expected.add(ontologyId, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
             expected.add(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test Rename 0 Title"));
 
-            File file = service.getCompiledResourceFile(commits, conn, VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1"));
+            File file = service.getCompiledResourceFile(commits, RDFFormat.TURTLE, conn, VALUE_FACTORY.createIRI("http://mobi.com/test/ontology1"));
             Model result = Models.createModel(new FileInputStream(file));
             assertEquals(modelAssertHelper(expected), modelAssertHelper(result));
             file.delete();
@@ -2305,7 +2305,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             expected.add(blankNode, typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
             expected.add(blankNode, titleIRI, VALUE_FACTORY.createLiteral("Test Blank 1 Title"));
 
-            File file = service.getCompiledResourceFile(commits, conn);
+            File file = service.getCompiledResourceFile(commits, RDFFormat.TURTLE, conn);
             Model model = Models.createModel(new FileInputStream(file));
             model.forEach(statement -> {
                 assertTrue(statement.getSubject() instanceof BNode);
