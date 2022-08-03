@@ -67,6 +67,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,7 +87,8 @@ import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
-@Component(service = RecordPermissionsRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
+@Component(service = RecordPermissionsRest.class, immediate = true)
+@JaxrsResource
 @Path("/record-permissions")
 public class RecordPermissionsRest {
     private final Logger LOGGER = LoggerFactory.getLogger(RecordPermissionsRest.class);

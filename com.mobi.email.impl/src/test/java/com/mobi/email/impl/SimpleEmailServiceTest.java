@@ -117,7 +117,7 @@ public class SimpleEmailServiceTest {
         System.setProperty("karaf.etc", SimpleEmailServiceTest.class.getResource("/").getPath());
 
         try (MockedStatic<FrameworkUtil> frameworkUtil = Mockito.mockStatic(FrameworkUtil.class)) {
-            frameworkUtil.when(() -> FrameworkUtil.getBundle(any())).thenReturn(bundle);
+            frameworkUtil.when(() -> FrameworkUtil.getBundle(any(Class.class))).thenReturn(bundle);
 
             Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
             m.setAccessible(true);
@@ -138,7 +138,7 @@ public class SimpleEmailServiceTest {
         when(encryptionService.decrypt(anyString(), anyString(), any())).thenReturn("TEST_PASS");
 
         try (MockedStatic<FrameworkUtil> frameworkUtil = Mockito.mockStatic(FrameworkUtil.class)) {
-            frameworkUtil.when(() -> FrameworkUtil.getBundle(any())).thenReturn(bundle);
+            frameworkUtil.when(() -> FrameworkUtil.getBundle(any(Class.class))).thenReturn(bundle);
 
             Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
             m.setAccessible(true);
@@ -154,7 +154,7 @@ public class SimpleEmailServiceTest {
         when(encryptionService.decrypt(anyString(), anyString(), any())).thenReturn("TEST_PASS");
 
         try (MockedStatic<FrameworkUtil> frameworkUtil = Mockito.mockStatic(FrameworkUtil.class)) {
-            frameworkUtil.when(() -> FrameworkUtil.getBundle(any())).thenReturn(bundle);
+            frameworkUtil.when(() -> FrameworkUtil.getBundle(any(Class.class))).thenReturn(bundle);
 
             Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
             m.setAccessible(true);
@@ -198,7 +198,7 @@ public class SimpleEmailServiceTest {
     public void sendSimpleEmailInvalidPortTest() throws Exception {
         when(emailServiceConfig.port()).thenReturn(1);
         try (MockedStatic<FrameworkUtil> frameworkUtil = Mockito.mockStatic(FrameworkUtil.class)) {
-            frameworkUtil.when(() -> FrameworkUtil.getBundle(any())).thenReturn(bundle);
+            frameworkUtil.when(() -> FrameworkUtil.getBundle(any(Class.class))).thenReturn(bundle);
 
             Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
             m.setAccessible(true);
@@ -213,7 +213,7 @@ public class SimpleEmailServiceTest {
     public void sendSimpleEmailAbsoluteTemplateTest() throws Exception {
         when(emailServiceConfig.emailTemplate()).thenReturn(URLDecoder.decode(templatePath.getPath(), "UTF-8"));
         try (MockedStatic<FrameworkUtil> frameworkUtil = Mockito.mockStatic(FrameworkUtil.class)) {
-            frameworkUtil.when(() -> FrameworkUtil.getBundle(any())).thenReturn(bundle);
+            frameworkUtil.when(() -> FrameworkUtil.getBundle(any(Class.class))).thenReturn(bundle);
 
             Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
             m.setAccessible(true);
@@ -265,7 +265,7 @@ public class SimpleEmailServiceTest {
     public void sendEmailInvalidPortTest() throws Exception {
         when(emailServiceConfig.port()).thenReturn(1);
         try (MockedStatic<FrameworkUtil> frameworkUtil = Mockito.mockStatic(FrameworkUtil.class)) {
-            frameworkUtil.when(() -> FrameworkUtil.getBundle(any())).thenReturn(bundle);
+            frameworkUtil.when(() -> FrameworkUtil.getBundle(any(Class.class))).thenReturn(bundle);
 
             Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
             m.setAccessible(true);

@@ -80,6 +80,7 @@ import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -106,7 +107,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@Component(service = DatasetRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
+@Component(service = DatasetRest.class, immediate = true)
+@JaxrsResource
 @Path("/datasets")
 public class DatasetRest {
     private final ValueFactory vf = SimpleValueFactory.getInstance();

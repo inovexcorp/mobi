@@ -27,10 +27,11 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.ops4j.pax.web.service.whiteboard.ResourceMapping;
+import org.osgi.service.http.whiteboard.HttpWhiteboardConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Component(service = { WebResources.class, ResourceMapping.class })
+@Component(service = { WebResources.class, ResourceMapping.class }, immediate = true)
 public class WebResources implements ResourceMapping {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
@@ -46,7 +47,7 @@ public class WebResources implements ResourceMapping {
     }
 
     @Override
-    public String getHttpContextId() {
+    public String getContextId() {
         return UITokenContext.CONTEXT_ID;
     }
 
@@ -56,7 +57,18 @@ public class WebResources implements ResourceMapping {
     }
 
     @Override
+    public String[] getUrlPatterns() {
+        return new String[0];
+    }
+
+    @Override
     public String getPath() {
         return "build";
+    }
+
+    @Override
+    public String getContextSelectFilter() {
+        return String.format("(%s=%s)", HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME,
+                UITokenContext.CONTEXT_ID);
     }
 }

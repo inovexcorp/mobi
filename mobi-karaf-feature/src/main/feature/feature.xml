@@ -24,8 +24,8 @@
 
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.3.0" name="mobi-features">
     <feature name="mobi-server-deps" description="Mobi Server Dependency Bundles" version="${project.version}">
-        <feature>eventadmin</feature>
         <bundle>mvn:javax.ws.rs/javax.ws.rs-api/${jaxrs.version}</bundle>
+        <bundle>mvn:javax.annotation/javax.annotation-api/1.3.2</bundle>
         <bundle>mvn:org.apache.commons/commons-lang3/${commons-lang3.version}</bundle>
         <bundle>mvn:commons-io/commons-io/${commons-io.version}</bundle>
         <bundle>mvn:commons-beanutils/commons-beanutils/${commons-beanutils.version}</bundle>
@@ -40,27 +40,20 @@
         <bundle>mvn:ch.qos.logback/logback-core/${logback.version}</bundle>
     </feature>
     <feature name="mobi-server-core" description="Mobi Server Core Bundles" version="${project.version}">
-        <feature>jaas</feature>
-        <feature>http</feature>
         <feature>mobi-aries-whiteboard</feature>
-        <feature>obr</feature>
-        <feature>scr</feature>
-        <feature>scheduler</feature>
-        <feature>aries-blueprint</feature>
         <feature>mobi-server-deps</feature>
         <bundle>mvn:com.mobi/api/${project.version}</bundle>
         <bundle>mvn:com.mobi/server.api/${project.version}</bundle>
         <bundle>mvn:com.mobi/server.impl/${project.version}</bundle>
     </feature>
     <feature name="mobi-aries-whiteboard" description="Aries JAX-RS Whiteboard" version="${project.version}">
-        <feature>http-whiteboard</feature>
         <feature dependency="true">mobi-cxf</feature>
         <feature dependency="true">mobi-jaxb</feature>
         <bundle dependency="true">mvn:org.osgi/org.osgi.util.function/1.1.0</bundle>
         <bundle dependency="true">mvn:org.osgi/org.osgi.util.promise/1.1.1</bundle>
         <bundle dependency="true">mvn:org.osgi/org.osgi.service.jaxrs/1.0.0</bundle>
         <bundle>mvn:org.apache.aries.component-dsl/org.apache.aries.component-dsl.component-dsl/1.2.2</bundle>
-        <bundle>mvn:org.apache.aries.jax.rs/org.apache.aries.jax.rs.whiteboard/2.0.0</bundle>
+        <bundle>mvn:org.apache.aries.jax.rs/org.apache.aries.jax.rs.whiteboard/2.0.1</bundle>
 
         <bundle>mvn:com.fasterxml.jackson.jaxrs/jackson-jaxrs-base/${jackson.version}</bundle>
         <bundle>mvn:com.fasterxml.jackson.jaxrs/jackson-jaxrs-json-provider/${jackson.version}</bundle>
@@ -108,7 +101,6 @@
         <bundle>mvn:com.nimbusds/nimbus-jose-jwt/${jose-jwt.version}</bundle>
         <bundle>mvn:net.minidev/json-smart/2.4.8</bundle>
         <bundle>mvn:net.minidev/accessors-smart/2.4.8</bundle>
-        <bundle>mvn:org.ow2.asm/asm/9.1</bundle>
         <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.oro/2.0.8_6</bundle>
         <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/1.0_6</bundle>
         <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jcip-annotations/1.0_2</bundle>

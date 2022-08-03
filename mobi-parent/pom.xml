@@ -69,14 +69,18 @@
         <jaxrs.version>2.0.1</jaxrs.version> <!-- Can update to 3.x Jakarta post Java 9 -->
         <jose-jwt.version>9.22</jose-jwt.version>
         <junit.version>4.13.2</junit.version>
-        <karaf.version>4.3.7</karaf.version>
+        <karaf.version>4.4.1</karaf.version>
         <logback.version>1.2.11</logback.version>
         <maven-bundle-plugin.version>5.1.4</maven-bundle-plugin.version>
         <mockito.version>4.6.1</mockito.version>
         <opencsv.version>4.6</opencsv.version> <!-- 5.6 doesn't allow custom delimiters -->
-        <osgi-service.version>1.3.0</osgi-service.version>
+        <osgi-service-jaxrs.version>1.0.0</osgi-service-jaxrs.version>
+        <osgi-service-cm.version>1.6.1</osgi-service-cm.version>
+        <osgi-service-component>1.5.0</osgi-service-component>
+        <osgi-component-annotations.version>1.5.0</osgi-component-annotations.version>
+        <osgi-metatype-annotations.version>1.4.1</osgi-metatype-annotations.version>
         <osgi-versioning.version>1.1.2</osgi-versioning.version>
-        <osgi.version>7.0.0</osgi.version>
+        <osgi.version>8.0.0</osgi.version>
         <owlapi.version>5.1.19-MOBI</owlapi.version>
         <poi.version>3.14_1</poi.version>
         <rdf4j.version>3.7.6</rdf4j.version>
@@ -307,8 +311,13 @@
             </dependency>
             <dependency>
                 <groupId>org.osgi</groupId>
-                <artifactId>osgi.cmpn</artifactId>
-                <version>${osgi.version}</version>
+                <artifactId>org.osgi.service.cm</artifactId>
+                <version>${osgi-service-cm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>org.osgi.service.component</artifactId>
+                <version>${osgi-service-component}</version>
             </dependency>
             <dependency>
                 <groupId>org.osgi</groupId>
@@ -318,17 +327,22 @@
             <dependency>
                 <groupId>org.osgi</groupId>
                 <artifactId>org.osgi.service.metatype.annotations</artifactId>
-                <version>${osgi-service.version}</version>
+                <version>${osgi-metatype-annotations.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.osgi</groupId>
                 <artifactId>org.osgi.service.component.annotations</artifactId>
-                <version>${osgi-service.version}</version>
+                <version>${osgi-component-annotations.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.osgi</groupId>
                 <artifactId>org.osgi.annotation.versioning</artifactId>
                 <version>${osgi-versioning.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>org.osgi.service.jaxrs</artifactId>
+                <version>${osgi-service-jaxrs.version}</version>
             </dependency>
 
             <!-- Other Dependencies -->
@@ -430,7 +444,7 @@
             <dependency>
                 <groupId>javax.annotation</groupId>
                 <artifactId>javax.annotation-api</artifactId>
-                <version>1.2</version>
+                <version>1.3.2</version>
             </dependency>
             <dependency>
                 <groupId>org.ehcache</groupId>

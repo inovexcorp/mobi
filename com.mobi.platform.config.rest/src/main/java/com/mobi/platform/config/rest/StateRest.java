@@ -45,6 +45,7 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -67,7 +68,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Component(service = StateRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
+@Component(service = StateRest.class, immediate = true)
+@JaxrsResource
 @Path("/states")
 public class StateRest {
     protected StateManager stateManager;

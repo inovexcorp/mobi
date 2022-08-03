@@ -50,6 +50,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -69,7 +70,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Component(service = SettingRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
+@Component(service = SettingRest.class, immediate = true)
+@JaxrsResource
 @Path("/settings")
 public class SettingRest {
     private static final ObjectMapper mapper = new ObjectMapper();

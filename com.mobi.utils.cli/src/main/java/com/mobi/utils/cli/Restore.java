@@ -277,6 +277,12 @@ public class Restore implements Action {
                 // Blacklist karaf jre.properties file due to javax.xml.bind version for Java 8 in > 1.19
                 blacklistedFiles.add("jre.properties");
             }
+            if (mobiVersions.indexOf(version) < mobiVersions.indexOf("2.0")) {
+                LOGGER.trace("Version lower than 2.0 detected. Blacklisting additional files from backup.");
+                // Blacklist karaf org.ops4j.pax.web.cfg file due to Karaf 4.4 upgrade to Pax Web 8 which removed
+                // deprecated properties
+                blacklistedFiles.add("org.ops4j.pax.web.cfg");
+            }
 
             // Merge directories, replacing any file that already exists
             Path src = Paths.get(RESTORE_PATH + File.separator + "configurations" + File.separator);
