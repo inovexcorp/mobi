@@ -58,6 +58,7 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,7 +84,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Component(service = UserRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
+@Component(service = UserRest.class, immediate = true)
+@JaxrsResource
 @Path("/users")
 public class UserRest {
     private final Logger logger = LoggerFactory.getLogger(UserRest.class);

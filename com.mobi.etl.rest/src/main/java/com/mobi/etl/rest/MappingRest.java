@@ -65,6 +65,7 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,7 +97,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-@Component(service = MappingRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
+@Component(service = MappingRest.class, immediate = true)
+@JaxrsResource
 @Path("/mappings")
 public class MappingRest {
 

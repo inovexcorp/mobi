@@ -77,6 +77,7 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,7 +121,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-@Component(service = DelimitedRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
+@Component(service = DelimitedRest.class, immediate = true)
+@JaxrsResource
 @javax.ws.rs.Path("/delimited-files")
 public class DelimitedRest {
     private final ValueFactory vf = SimpleValueFactory.getInstance();

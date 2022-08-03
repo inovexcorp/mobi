@@ -45,6 +45,7 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +81,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 @Path("/translate")
-@Component(service = DocumentTranslatorRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
+@Component(service = DocumentTranslatorRest.class, immediate = true)
+@JaxrsResource
 public class DocumentTranslatorRest {
 
     /**

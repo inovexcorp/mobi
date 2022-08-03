@@ -46,6 +46,7 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -61,7 +62,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Component(service = PolicyRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
+@Component(service = PolicyRest.class, immediate = true)
+@JaxrsResource
 @Path("/policies")
 public class PolicyRest {
 

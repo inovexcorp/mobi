@@ -76,10 +76,8 @@
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>mobi-karaf-feature</artifactId>
-            <classifier>features</classifier>
             <version>${project.version}</version>
-            <type>xml</type>
-            <scope>runtime</scope>
+            <type>pom</type>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
@@ -192,48 +190,55 @@
                 <artifactId>karaf-maven-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
+                    <startupRepositories>
+                        <startupRepository>mvn:org.apache.karaf.features/spring/${karaf.version}/xml/features</startupRepository>
+                        <startupRepository>mvn:org.apache.karaf.features/standard/${karaf.version}/xml/features</startupRepository>
+                        <startupRepository>mvn:org.apache.karaf.features/enterprise/${karaf.version}/xml/features</startupRepository>
+                        <startupRepository>mvn:org.apache.karaf.features/framework/${karaf.version}/xml/features</startupRepository>
+                        <startupRepository>mvn:org.apache.karaf.features/specs/${karaf.version}/xml/features</startupRepository>
+                        <startupRepository>mvn:org.ops4j.pax.web/pax-web-features/8.0.6/xml/features</startupRepository>
+                    </startupRepositories>
                     <startupFeatures>
                         <feature>eventadmin</feature>
-                    </startupFeatures>
-                    <bootFeatures>
-                        <!-- Standard Features -->
-                        <feature>jaas</feature>
-                        <feature>shell</feature>
-                        <feature>feature</feature>
-                        <feature>scr</feature>
+                        <feature>instance</feature>
+                        <feature>eventadmin</feature>
+                        <feature>log</feature>
+                        <feature>framework</feature>
                         <feature>ssh</feature>
-                        <feature>management</feature>
-                        <feature>bundle</feature>
-                        <feature>config</feature>
+                        <feature>feature</feature>
+                        <feature>service-wrapper</feature>
+                        <feature>jaas</feature>
                         <feature>deployer</feature>
                         <feature>diagnostic</feature>
-                        <feature>instance</feature>
+                        <feature>bundle</feature>
                         <feature>kar</feature>
-                        <feature>log</feature>
+                        <feature>scr</feature>
                         <feature>package</feature>
-                        <feature>service</feature>
                         <feature>system</feature>
+                        <feature>shell</feature>
+                        <feature>management</feature>
+                        <feature>service</feature>
+                        <feature>http</feature>
+                        <feature>http-whiteboard</feature>
+                        <feature>pax-web-karaf</feature>
+                        <feature>asm</feature>
+                        <feature>spifly</feature>
                         <feature>shell-compat</feature>
-                        <feature>aries-blueprint</feature>
+                        <feature>config</feature>
                         <feature>wrap</feature>
-                        <feature>service-wrapper</feature>
+                        <feature>obr</feature>
                         <feature>transaction-api</feature>
                         <feature>transaction</feature>
                         <feature>eclipselink</feature>
                         <feature>jasypt-encryption</feature>
-
-                        <!-- Additional Features -->
-                        <feature>http</feature>
-                        <feature>pax-http-whiteboard</feature>
-                        <feature>obr</feature>
-
-                        <!-- Mobi Features -->
-                        <feature>mobi-server-deps</feature>
-                        <feature>mobi-server-core</feature>
-                        <feature>mobi-deps</feature>
-                        <feature>mobi-core</feature>
-                        <feature>mobi-cli</feature>
-                        <feature>mobi-web</feature>
+                        <feature>scheduler</feature>
+                    </startupFeatures>
+                    <bootRepositories>
+                        <bootRepository>mvn:com.mobi/mobi-karaf-feature/${project.version}/xml/features</bootRepository>
+                    </bootRepositories>
+                    <bootFeatures>
+                        <feature>aries-blueprint</feature>
+                        <feature>mobi-community</feature>
                     </bootFeatures>
                 </configuration>
             </plugin>

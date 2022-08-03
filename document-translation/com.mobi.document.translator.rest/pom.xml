@@ -37,7 +37,11 @@
     <dependencies>
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>osgi.cmpn</artifactId>
+            <artifactId>org.osgi.service.cm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.jaxrs</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.ws.rs</groupId>

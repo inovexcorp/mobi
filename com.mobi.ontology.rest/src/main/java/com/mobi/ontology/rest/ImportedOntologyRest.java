@@ -28,6 +28,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -39,7 +40,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 @Path("/imported-ontologies")
-@Component(service = ImportedOntologyRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
+@Component(service = ImportedOntologyRest.class, immediate = true)
+@JaxrsResource
 public class ImportedOntologyRest {
 
     /**

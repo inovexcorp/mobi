@@ -69,6 +69,7 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 
 import java.util.List;
 import java.util.Optional;
@@ -90,7 +91,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Component(service = MergeRequestRest.class, immediate = true, property = { "osgi.jaxrs.resource=true" })
+@Component(service = MergeRequestRest.class, immediate = true)
+@JaxrsResource
 @Path("/merge-requests")
 public class MergeRequestRest {
     private final ValueFactory vf = SimpleValueFactory.getInstance();

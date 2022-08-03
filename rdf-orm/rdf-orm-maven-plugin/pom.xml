@@ -64,7 +64,7 @@
 
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>osgi.cmpn</artifactId>
+            <artifactId>org.osgi.service.cm</artifactId>
             <scope>compile</scope>
         </dependency>
 
