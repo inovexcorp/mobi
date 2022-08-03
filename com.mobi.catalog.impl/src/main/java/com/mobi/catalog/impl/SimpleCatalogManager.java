@@ -42,6 +42,7 @@ import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
@@ -1467,9 +1468,14 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public File getCompiledResourceFile(Resource commitId) {
+        return getCompiledResourceFile(commitId, RDFFormat.TURTLE);
+    }
+
+    @Override
+    public File getCompiledResourceFile(Resource commitId, RDFFormat rdfFormat) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
-            return utils.getCompiledResourceFile(commitId, conn);
+            return utils.getCompiledResourceFile(commitId, rdfFormat, conn);
         }
     }
 
@@ -1492,10 +1498,16 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public File getCompiledResourceFile(Resource versionedRDFRecordId, Resource branchId, Resource commitId) {
+        return getCompiledResourceFile(versionedRDFRecordId, branchId, commitId, RDFFormat.TURTLE);
+    }
+
+    @Override
+    public File getCompiledResourceFile(Resource versionedRDFRecordId, Resource branchId, Resource commitId,
+                                        RDFFormat rdfFormat) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateCommitPath(configProvider.getLocalCatalogIRI(), versionedRDFRecordId, branchId, commitId,
                     conn);
-            return utils.getCompiledResourceFile(commitId, conn);
+            return utils.getCompiledResourceFile(commitId, rdfFormat, conn);
         }
     }
 

@@ -222,11 +222,6 @@ public class BNodeUtilsTest {
         assertFalse(result.contains(testIRI, type, bnode5));
     }
 
-
-
-
-
-
     @Test
     public void oneToOneSubObjTest() {
         Model model = mf.createEmptyModel();
@@ -293,6 +288,65 @@ public class BNodeUtilsTest {
         expected.add(testIRI, type, owlClass);
 
         Model result = BNodeUtils.restoreBNodes(model, bNodeIRIMap, mf);
+        assertEquals(expected.size(), result.size());
+        for (Statement statement : expected) {
+            assertTrue(result.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        }
+    }
+
+    @Test
+    public void blankNodeFallback_MCS_167() {
+        Map<BNode, IRI> systemMap = new HashMap<>();
+        BNode systemBNode = vf.createBNode();
+        systemMap.put(systemBNode, detSko3);
+
+        Model model = mf.createEmptyModel();
+        model.add(testIRI, type, detSko3);
+
+        Model expected = mf.createEmptyModel();
+        expected.add(testIRI, type, systemBNode);
+
+        Model result = BNodeUtils.restoreBNodes(model, bNodeIRIMap, systemMap, mf);
+        assertEquals(expected.size(), result.size());
+        for (Statement statement : expected) {
+            assertTrue(result.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        }
+    }
+
+    @Test
+    public void blankNodeFallback_MCS_167_NotInMap() {
+        Map<BNode, IRI> systemMap = new HashMap<>();
+        BNode systemBNode = vf.createBNode();
+        systemMap.put(systemBNode, detSko1);
+
+        Model model = mf.createEmptyModel();
+        model.add(testIRI, type, detSko3);
+
+        Model expected = mf.createEmptyModel();
+        expected.add(testIRI, type, bnode3);
+
+        Model result = BNodeUtils.restoreBNodes(model, bNodeIRIMap, systemMap, mf);
+        assertEquals(expected.size(), result.size());
+        for (Statement statement : expected) {
+            assertTrue(result.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        }
+    }
+
+    @Test
+    public void blankNodeFallback_MCS_167_hasBNodeSubject() {
+        Map<BNode, IRI> systemMap = new HashMap<>();
+        BNode systemBNode = vf.createBNode();
+        systemMap.put(systemBNode, detSko3);
+
+        Model model = mf.createEmptyModel();
+        model.add(testIRI, type, detSko3);
+        model.add(detSko3, type, owlClass);
+
+        Model expected = mf.createEmptyModel();
+        expected.add(testIRI, type, bnode3);
+        expected.add(bnode3, type, owlClass);
+
+        Model result = BNodeUtils.restoreBNodes(model, bNodeIRIMap, systemMap, mf);
         assertEquals(expected.size(), result.size());
         for (Statement statement : expected) {
             assertTrue(result.contains(statement.getSubject(), statement.getPredicate(), statement.getObject()));

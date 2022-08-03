@@ -85,6 +85,7 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
+import org.eclipse.rdf4j.rio.helpers.TurtleWriterSettings;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -522,7 +523,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                     List<Resource> temp = new ArrayList<>();
                     conn.getStatements(null, iri, commitId).forEach(statement -> temp.add(statement.getSubject()));
                     temp.removeAll(deletedCommits);
-                    return temp.size() > 0;
+                    return !temp.isEmpty();
                 })
                 .reduce(false, (iri1, iri2) -> iri1 || iri2);
         return isHeadCommit || isParent;
@@ -733,7 +734,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         Optional<Resource> recordOpt = getRecordFromBranch(branch, conn);
         recordOpt.ifPresent(recordId -> {
             conn.getStatements(recordId, vf.createIRI(_Thing.modified_IRI), null)
-                    .forEach(statement -> conn.remove(statement));
+                    .forEach(conn::remove);
             conn.add(recordId, vf.createIRI(_Thing.modified_IRI), vf.createLiteral(OffsetDateTime.now()), recordId);
         });
 
@@ -928,7 +929,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
         subjects.retainAll(subjects.stream()
                 .skip(offset)
-                .limit(limit + 1)
+                .limit(limit + 1L)
                 .collect(Collectors.toSet()));
 
         if (subjects.size() > limit) {
@@ -1086,14 +1087,14 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public File getCompiledResourceFile(Resource commitId, RepositoryConnection conn) {
-        return getCompiledResourceFile(getCommitChain(commitId, true, conn), conn);
+    public File getCompiledResourceFile(Resource commitId, RDFFormat rdfFormat, RepositoryConnection conn) {
+        return getCompiledResourceFile(getCommitChain(commitId, true, conn), rdfFormat, conn);
     }
 
     @Override
     public Model getCompiledResource(List<Resource> commits, RepositoryConnection conn, Resource... subjectIds) {
         Model compiledResource = mf.createEmptyModel();
-        if (commits.size() == 0) {
+        if (commits.isEmpty()) {
             return compiledResource;
         }
         buildCompiledResource(commits, conn, compiledResource::add, subjectIds);
@@ -1101,16 +1102,20 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public File getCompiledResourceFile(List<Resource> commits, RepositoryConnection conn, Resource... subjectIds) {
+    public File getCompiledResourceFile(List<Resource> commits, RDFFormat rdfFormat, RepositoryConnection conn,
+                                        Resource... subjectIds) {
         try {
             long writeTimeStart = System.currentTimeMillis();
-            if (commits.size() == 0) {
+            if (commits.isEmpty()) {
                 throw new IllegalArgumentException("List of commits must contain at least one Resource");
             }
             String tmpDir = System.getProperty("java.io.tmpdir");
             Path tmpFile = Files.createFile(Paths.get(tmpDir + File.separator + UUID.randomUUID()));
             try (OutputStream outputStream = Files.newOutputStream(tmpFile)) {
-                RDFWriter writer = Rio.createWriter(RDFFormat.NQUADS, outputStream);
+                RDFWriter writer = Rio.createWriter(rdfFormat, outputStream);
+                if (RDFFormat.TURTLE.equals(rdfFormat) || RDFFormat.TRIG.equals(rdfFormat)) {
+                    writer.getWriterConfig().set(TurtleWriterSettings.ABBREVIATE_NUMBERS, false);
+                }
                 writer.getWriterConfig().set(BasicParserSettings.PRESERVE_BNODE_IDS, true);
                 writer.startRDF();
                 Consumer<Statement> consumer = statement ->
@@ -1142,13 +1147,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         // These are the commits of interest for comparing changes
         Set<Resource> commitsOfInterest = getCommitWithSubjects(commits, conn, deletionSubjects, subjectIds);
 
-        if (deletionSubjects.size() > 0) {
+        if (!deletionSubjects.isEmpty()) {
             // Write any addition statement in commitsOfInterest whose subject is NOT a deletionsSubject
             String additionsFromCoisQueryString = replaceCommitList(GET_ADDITIONS_FROM_COIS, commits);
             additionsFromCoisQueryString = replaceSubjectList(additionsFromCoisQueryString,
-                    "deletionSubject", "%SUBJECTLIST%",subjectIds);
+                    "deletionSubject", "%SUBJECTLIST%", subjectIds);
             additionsFromCoisQueryString = replaceSubjectList(additionsFromCoisQueryString,
-                    "addSubject", "%SUBJECTLISTADD%",subjectIds);
+                    "addSubject", "%SUBJECTLISTADD%", subjectIds);
 
             GraphQuery additionsInCOIQuery = conn.prepareGraphQuery(additionsFromCoisQueryString);
             additionsInCOIQuery.evaluate().forEach(statement -> {
@@ -1168,7 +1173,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         List<Resource> commitsAdditionsOnly = commits.stream()
                 .filter(commit -> !commitsOfInterest.contains(commit))
                 .collect(Collectors.toList());
-        if (commitsAdditionsOnly.size() > 0) {
+        if (!commitsAdditionsOnly.isEmpty()) {
             String additionInCommitQuery =  replaceCommitList(GET_ADDITIONS_IN_COMMIT, commitsAdditionsOnly);
             additionInCommitQuery = replaceSubjectList(additionInCommitQuery, "s", "%SUBJECTLIST%", subjectIds);
             GraphQuery additionsQuery = conn.prepareGraphQuery(additionInCommitQuery);
@@ -1191,7 +1196,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                                        Set<Resource> deletionSubjects, Resource... subjectIds) {
 
         Set<Resource> commitsOfInterest = new HashSet<>();
-        if (deletionSubjects.size() > 0) {
+        if (!deletionSubjects.isEmpty()) {
             String query = replaceCommitList(GET_COMMITS_WITH_SUBJECT, commits);
             query = replaceSubjectList(query, "deletionSubject", "%SUBJECTLIST%", subjectIds);
             TupleQuery commitsQuery = conn.prepareTupleQuery(query);
@@ -1302,13 +1307,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             });
 
             // Check for deletion in left and addition in right if there are common parents
-            if (commonCommits.size() != 0) {
+            if (!commonCommits.isEmpty()) {
                 Model targetSubjectAdd = targetAdds.filter(subject, null, null);
                 boolean sourceEntityDeleted = !sourceAddSubjects.contains(subject)
                         && sourceDelSubjectStatements.equals(original.filter(subject, null, null));
                 boolean targetEntityDeleted = targetDels.containsAll(sourceDelSubjectStatements);
 
-                if (sourceEntityDeleted && !targetEntityDeleted && targetSubjectAdd.size() > 0) {
+                if (sourceEntityDeleted && !targetEntityDeleted && !targetSubjectAdd.isEmpty()) {
                     result.add(createConflict(subject, null, sourceAdds, sourceDels, targetAdds, targetDels));
                     statementsToRemove.addAll(targetSubjectAdd);
                 }
@@ -1318,7 +1323,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         statementsToRemove.forEach(statement -> Stream.of(sourceAdds, sourceDels, targetAdds, targetDels)
                 .forEach(model -> model.remove(statement.getSubject(), statement.getPredicate(), null)));
 
-        if (commonCommits.size() != 0) {
+        if (!commonCommits.isEmpty()) {
             targetDels.subjects().forEach(subject -> {
                 // Check for deletion in right and addition in left if there are common parents
                 Model targetDelSubjectStatements = targetDels.filter(subject, null, null);
@@ -1327,7 +1332,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                         && targetDelSubjectStatements.equals(original.filter(subject, null, null));
                 boolean sourceEntityDeleted = sourceDels.containsAll(targetDelSubjectStatements);
 
-                if (targetEntityDeleted && !sourceEntityDeleted && sourceSubjectAdd.size() > 0) {
+                if (targetEntityDeleted && !sourceEntityDeleted && !sourceSubjectAdd.isEmpty()) {
                     result.add(createConflict(subject, null, sourceAdds, sourceDels, targetAdds, targetDels));
                 }
             });
@@ -1566,7 +1571,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private Optional<Resource> getRecordFromBranch(Branch branch, RepositoryConnection conn) {
         TupleQuery query = conn.prepareTupleQuery(VERSIONED_RDF_RECORD_IRI_QUERY);
         query.setBinding(BRANCH_BINDING, branch.getResource());
-        TupleQueryResult result = query.evaluate(); // TODO: NOT SURE return......
+        TupleQueryResult result = query.evaluate();
         if (!result.hasNext()) {
             return Optional.empty();
         }
